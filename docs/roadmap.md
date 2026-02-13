@@ -1,37 +1,50 @@
-# Core/SaaS Roadmap
+# Hoja De Ruta Core/SaaS
 
-## Scope
-Execution backlog for moving to the target architecture defined in `docs/architecture.md`.
+## Alcance
+Backlog de ejecucion para alcanzar la arquitectura objetivo definida en `docs/architecture.md`.
 
-## Current Status
-- Frontend split between `coreApi` and `saas api`.
-- Frontend build is green.
-- Architecture contract documented.
+## Estado Actual
+- Frontend separado entre `coreApi` y `saas api`.
+- Build del frontend en verde.
+- Contrato de arquitectura documentado.
 
-## Phases
+## Fases
 
-### Phase 1: Compatibility Layer in SaaS
-- Create a dedicated service layer in `saas` for ownership assignment and usage checks.
-- Remove ownership rule duplication from view/serializer layers.
-- Add tests for edit/delete constraints when ownership is in use.
+### Fase 1: Capa De Compatibilidad En SaaS
+Estado: no completada.
 
-### Phase 2: Remove Premium Domain from Core
-- [x] Remove ownership/member models from `core`.
-- [x] Remove ownership/member endpoints from `core` net-worth API.
-- [x] Keep `core` workflows usable with unassigned/basic ownership semantics.
-- [x] Release with migration notes and version bump.
+- [ ] Crear una capa de servicios dedicada en `saas` para asignacion de ownership y validaciones de uso.
+- [ ] Eliminar duplicacion de reglas de ownership en vistas/serializers.
+- [ ] Anadir tests para restricciones de editar/eliminar cuando ownership esta en uso.
 
-### Phase 3: Finalize Premium Extension in SaaS
-- Add/activate premium link tables from ownership to base entities.
-- Ensure `is_in_use` is computed from real links (not hardcoded).
-- Adapt frontend premium views to consume only SaaS ownership APIs.
+Notas de revision actual:
+- En `backend/memberships` no existe modulo `services/` y la logica sigue repartida en `views.py` y `serializers.py`.
+- `is_in_use` sigue hardcoded en `backend/memberships/serializers.py` (`return False`).
+- `backend/memberships/tests.py` no contiene casos de negocio.
 
-### Phase 4: Hardening
-- Add integration tests for cross-domain flows (`core` + `saas`).
-- Add rollout checklist for submodule upgrade and compatibility verification.
-- Document recovery plan for mixed/legacy datasets.
+### Fase 2: Eliminar Dominio Premium De Core
+Estado: completada.
 
-## Acceptance Criteria
-- `core` runs standalone as a full basic product.
-- `saas` delivers ownership premium features without reintroducing premium entities into `core`.
-- Frontend has explicit and unambiguous endpoint boundaries between base and premium domains.
+- [x] Eliminar modelos ownership/member de `core`.
+- [x] Eliminar endpoints ownership/member de `core` en net-worth API.
+- [x] Mantener `core` usable con flujos basicos sin ownership premium.
+- [x] Publicar notas de migracion y versionado.
+
+### Fase 3: Cerrar Extension Premium En SaaS
+Estado: pendiente.
+
+- [ ] Anadir/activar tablas de enlace premium desde ownership hacia entidades base.
+- [ ] Asegurar que `is_in_use` se calcule con enlaces reales (no hardcoded).
+- [ ] Adaptar frontend premium para consumir solo APIs SaaS de ownership.
+
+### Fase 4: Hardening
+Estado: pendiente.
+
+- [ ] Anadir tests de integracion para flujos cruzados (`core` + `saas`).
+- [ ] Anadir checklist de rollout para upgrade de submodulo y verificacion de compatibilidad.
+- [ ] Documentar plan de recuperacion para datasets mixtos/legacy.
+
+## Criterios De Aceptacion
+- `core` funciona standalone como producto basico completo.
+- `saas` ofrece features premium de ownership sin reintroducir entidades premium en `core`.
+- El frontend mantiene fronteras explicitas y no ambiguas entre endpoints base y premium.
