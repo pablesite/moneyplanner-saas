@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { coreApi } from "@/lib/api";
+import { api, coreApi } from "@/lib/api";
 
 export type Asset = {
   id: number;
@@ -51,35 +51,6 @@ export type Summary = {
 
 };
 
-export type MemberMini = {
-  id: number;
-  name: string;
-  role: "adult" | "child";
-};
-
-export type ByMemberRow = {
-  member: MemberMini;
-  total_assets: string;
-  total_liabilities: string;
-  net_worth: string;
-};
-
-export type ByMemberSummary = {
-  base_currency: string;
-  totals: {
-    total_assets: string;
-    total_liabilities: string;
-    net_worth: string;
-  };
-  by_member: ByMemberRow[];
-  unassigned: {
-    assets: string;
-    liabilities: string;
-    net_worth: string;
-  };
-};
-
-
 export type Ownership = {
   id: number;
   kind: "individual" | "shared";
@@ -110,29 +81,11 @@ export const useNetWorthStore = defineStore("netWorth", {
     liabilities: [] as Liability[],
     snapshots: [] as Snapshot[],
 
-    byMemberSummary: null as ByMemberSummary | null,
     ownerships: [] as Ownership[],
 
   }),
 
   getters: {
-    byMemberRows(state): ByMemberRow[] {
-      return state.byMemberSummary?.by_member ?? [];
-    },
-
-    byMemberChart(state) {
-      const rows = state.byMemberSummary?.by_member ?? [];
-      const unit = state.byMemberSummary?.base_currency ?? state.baseCurrency ?? "EUR";
-
-      return {
-        unit,
-        labels: rows.map(r => r.member.name),
-        assets: rows.map(r => Math.max(0, toNumber(r.total_assets))),
-        liabilities: rows.map(r => Math.max(0, toNumber(r.total_liabilities))),
-        net: rows.map(r => toNumber(r.net_worth)),
-      };
-    },
-
     byCategoryChart(state) {
         const s = state.summary;
         const unit = state.baseCurrency ?? s?.base_currency ?? "EUR";
@@ -166,14 +119,14 @@ export const useNetWorthStore = defineStore("netWorth", {
           coreApi.get("/api/net-worth/liabilities/"),
           coreApi.get("/api/net-worth/snapshots/"),
         ]);
+        const ownershipsRes = await api.get("/api/ownerships/");
 
         this.summary = summaryRes.data;
         this.baseCurrency = summaryRes.data.base_currency;
         this.assets = assetsRes.data;
         this.liabilities = liabilitiesRes.data;
         this.snapshots = snapshotsRes.data;
-        this.byMemberSummary = null;
-        this.ownerships = [];
+        this.ownerships = ownershipsRes.data;
 
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -292,18 +245,6 @@ export const useNetWorthStore = defineStore("netWorth", {
         this.error = e?.response?.data
           ? JSON.stringify(e.response.data)
           : (e?.message || "Error");
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async fetchByMemberSummary() {
-      this.loading = true;
-      this.error = null;
-      try {
-        this.byMemberSummary = null;
-      } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
       } finally {
         this.loading = false;
       }
