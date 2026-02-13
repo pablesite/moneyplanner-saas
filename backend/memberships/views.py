@@ -66,5 +66,3 @@ class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
         if instance.kind == Ownership.Kind.INDIVIDUAL:
             raise DRFValidationError({"detail": "La titularidad individual no se puede eliminar."})
         return super().destroy(request, *args, **kwargs)
-
-# Create your views here.

@@ -4,9 +4,17 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+def env_bool(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name: str, default: str = "") -> list[str]:
+    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret")
-DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",") if h.strip()]
+DEBUG = env_bool("DJANGO_DEBUG", "0")
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -80,8 +88,11 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()]
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOW_CREDENTIALS = env_bool("CORS_ALLOW_CREDENTIALS", "0")
+CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", "0")
+# Restrict CORS headers to API endpoints only.
+CORS_URLS_REGEX = r"^/api/.*$"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

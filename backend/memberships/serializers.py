@@ -35,7 +35,7 @@ class OwnershipReadSerializer(serializers.ModelSerializer):
         fields = ["id", "kind", "member", "splits", "is_in_use"]
 
     def get_is_in_use(self, obj):
-        # En el SaaS no hay assets/liabilities locales.
+        # En el SaaS no hay assets/liabilities locales (de momento).
         return False
 
 
