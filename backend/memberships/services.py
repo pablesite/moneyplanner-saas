@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
-from .models import FamilyMember, Ownership
+from .models import FamilyMember, Ownership, OwnershipLink
 
 
 def ensure_individual_ownership_for_member(*, user, member: FamilyMember) -> Ownership:
@@ -14,13 +14,7 @@ def ensure_individual_ownership_for_member(*, user, member: FamilyMember) -> Own
 
 
 def ownership_is_in_use(ownership: Ownership) -> bool:
-    """
-    Placeholder for premium usage checks.
-
-    Phase 1 extracts the check into a single service so callers stop
-    duplicating business rules in view/serializer layers.
-    """
-    return False
+    return OwnershipLink.objects.filter(ownership=ownership).exists()
 
 
 def member_is_in_use(member: FamilyMember) -> bool:

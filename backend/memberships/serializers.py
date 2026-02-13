@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import FamilyMember, Ownership, OwnershipSplit
+from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
 from .services import ownership_is_in_use
 
 
@@ -159,3 +159,32 @@ class OwnershipWriteSerializer(serializers.ModelSerializer):
                 )
 
         return instance
+
+
+class OwnershipLinkReadSerializer(serializers.ModelSerializer):
+    ownership_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = OwnershipLink
+        fields = ["id", "target_type", "target_id", "ownership_id", "updated_at"]
+
+
+class OwnershipLinkSyncSerializer(serializers.Serializer):
+    target_type = serializers.ChoiceField(choices=OwnershipLink.TargetType.choices)
+    target_id = serializers.IntegerField(min_value=1)
+    ownership_id = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        ownership_id = attrs.get("ownership_id", None)
+        if ownership_id is None:
+            attrs["ownership"] = None
+            return attrs
+
+        try:
+            ownership = Ownership.objects.get(id=ownership_id, user=user)
+        except Ownership.DoesNotExist:
+            raise serializers.ValidationError({"ownership_id": "La titularidad no existe para este usuario."})
+
+        attrs["ownership"] = ownership
+        return attrs

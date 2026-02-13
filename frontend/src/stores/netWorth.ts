@@ -59,6 +59,12 @@ export type Ownership = {
   notes: string;
 };
 
+type OwnershipLink = {
+  target_type: "asset" | "liability";
+  target_id: number;
+  ownership_id: number;
+};
+
 
 function normalizeNumberInput(raw: unknown) {
   return String(raw ?? "").trim().replace(/\s/g, "").replace(/,/g, ".");
@@ -119,12 +125,28 @@ export const useNetWorthStore = defineStore("netWorth", {
           coreApi.get("/api/net-worth/liabilities/"),
           coreApi.get("/api/net-worth/snapshots/"),
         ]);
-        const ownershipsRes = await api.get("/api/ownerships/");
+        const [ownershipsRes, linksRes] = await Promise.all([
+          api.get("/api/ownerships/"),
+          api.get("/api/ownership-links/"),
+        ]);
+        const links = linksRes.data as OwnershipLink[];
+        const assetOwnership = new Map(
+          links.filter((l) => l.target_type === "asset").map((l) => [l.target_id, l.ownership_id] as const),
+        );
+        const liabilityOwnership = new Map(
+          links.filter((l) => l.target_type === "liability").map((l) => [l.target_id, l.ownership_id] as const),
+        );
 
         this.summary = summaryRes.data;
         this.baseCurrency = summaryRes.data.base_currency;
-        this.assets = assetsRes.data;
-        this.liabilities = liabilitiesRes.data;
+        this.assets = assetsRes.data.map((a: any) => ({
+          ...a,
+          ownership_ref: assetOwnership.get(a.id) ?? null,
+        }));
+        this.liabilities = liabilitiesRes.data.map((l: any) => ({
+          ...l,
+          ownership_ref: liabilityOwnership.get(l.id) ?? null,
+        }));
         this.snapshots = snapshotsRes.data;
         this.ownerships = ownershipsRes.data;
 
@@ -160,11 +182,19 @@ export const useNetWorthStore = defineStore("netWorth", {
       }
     },
 
-    async createAsset(payload: Partial<Asset>) {
+    async createAsset(payload: Partial<Asset> & { ownership_id?: number | null }) {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.post("/api/net-worth/assets/", payload);
+        const { ownership_id = null, ...corePayload } = payload as any;
+        const res = await coreApi.post("/api/net-worth/assets/", corePayload);
+        if (res?.data?.id) {
+          await api.post("/api/ownership-links/sync/", {
+            target_type: "asset",
+            target_id: res.data.id,
+            ownership_id,
+          });
+        }
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -173,11 +203,17 @@ export const useNetWorthStore = defineStore("netWorth", {
       }
     },
 
-    async updateAsset(id: number, payload: Partial<Asset>) {
+    async updateAsset(id: number, payload: Partial<Asset> & { ownership_id?: number | null }) {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.patch(`/api/net-worth/assets/${id}/`, payload);
+        const { ownership_id = null, ...corePayload } = payload as any;
+        await coreApi.patch(`/api/net-worth/assets/${id}/`, corePayload);
+        await api.post("/api/ownership-links/sync/", {
+          target_type: "asset",
+          target_id: id,
+          ownership_id,
+        });
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -190,11 +226,19 @@ export const useNetWorthStore = defineStore("netWorth", {
       return this.updateAsset(id, { is_active: false });
     },
 
-    async createLiability(payload: Partial<Liability>) {
+    async createLiability(payload: Partial<Liability> & { ownership_id?: number | null }) {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.post("/api/net-worth/liabilities/", payload);
+        const { ownership_id = null, ...corePayload } = payload as any;
+        const res = await coreApi.post("/api/net-worth/liabilities/", corePayload);
+        if (res?.data?.id) {
+          await api.post("/api/ownership-links/sync/", {
+            target_type: "liability",
+            target_id: res.data.id,
+            ownership_id,
+          });
+        }
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -203,11 +247,17 @@ export const useNetWorthStore = defineStore("netWorth", {
       }
     },
 
-    async updateLiability(id: number, payload: Partial<Liability>) {
+    async updateLiability(id: number, payload: Partial<Liability> & { ownership_id?: number | null }) {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.patch(`/api/net-worth/liabilities/${id}/`, payload);
+        const { ownership_id = null, ...corePayload } = payload as any;
+        await coreApi.patch(`/api/net-worth/liabilities/${id}/`, corePayload);
+        await api.post("/api/ownership-links/sync/", {
+          target_type: "liability",
+          target_id: id,
+          ownership_id,
+        });
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");

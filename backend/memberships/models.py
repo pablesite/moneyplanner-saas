@@ -79,4 +79,32 @@ class OwnershipSplit(models.Model):
     def __str__(self) -> str:
         return f"{self.ownership_id} - {self.member_id} - {self.percent}%"
 
+
+class OwnershipLink(models.Model):
+    class TargetType(models.TextChoices):
+        ASSET = "asset", "Activo"
+        LIABILITY = "liability", "Pasivo"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ownership_links")
+    ownership = models.ForeignKey(Ownership, on_delete=models.CASCADE, related_name="links")
+    target_type = models.CharField(max_length=16, choices=TargetType.choices)
+    target_id = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "target_type", "target_id"]),
+            models.Index(fields=["ownership"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "target_type", "target_id"],
+                name="uniq_target_per_user",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} - {self.target_type}:{self.target_id} -> ownership:{self.ownership_id}"
+
 # Create your models here.
