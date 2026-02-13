@@ -46,30 +46,5 @@
 - Upgrade `core` in `saas` through controlled bumps (submodule update + compatibility checks).
 - Avoid cross-repo breaking changes without migration notes.
 
-## Migration Plan
-
-### Phase 0: Stabilize (completed)
-- Frontend split between `coreApi` and `saas api`.
-- Build is green.
-
-### Phase 1: Define compatibility layer
-- Add explicit service layer in `saas` for ownership assignment/use checks.
-- Keep current behavior, but centralize rules.
-
-### Phase 2: Remove premium domain from core
-- Delete ownership/member models and endpoints from `core`.
-- Keep `core` fully usable with unassigned/basic ownership semantics.
-- Release as a new major/minor version depending on API impact.
-
-### Phase 3: Finalize premium extension in saas
-- Implement/activate link tables and premium constraints in `saas`.
-- Ensure premium UI consumes only `saas` ownership APIs.
-
-### Phase 4: Hardening
-- Add integration tests for cross-domain flows.
-- Document upgrade path from previous mixed model.
-
-## Acceptance Criteria
-- `core` can run alone and cover a complete basic net-worth workflow.
-- `saas` can run with premium ownership features without reintroducing premium entities into `core`.
-- Frontend has no endpoint ambiguity between base and premium domains.
+## Related
+- Pending work and migration tasks are tracked in `docs/roadmap.md`.

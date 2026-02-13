@@ -42,3 +42,4 @@ docker compose up --build
 
 ## Arquitectura
 - Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture.md`.
+- Tareas y fases de migracion: `docs/roadmap.md`.
