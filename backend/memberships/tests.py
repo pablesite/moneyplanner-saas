@@ -94,3 +94,14 @@ class OwnershipLinkTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("ownership_id", response.data)
+
+    def test_delete_shared_ownership_blocked_when_linked_without_mock(self):
+        m2 = FamilyMember.objects.create(user=self.user, name="Bob", role=FamilyMember.Role.ADULT, is_active=True)
+        shared = Ownership.objects.create(user=self.user, kind=Ownership.Kind.SHARED, member=None)
+        OwnershipSplit.objects.create(ownership=shared, member=self.own.member, percent="50.00")
+        OwnershipSplit.objects.create(ownership=shared, member=m2, percent="50.00")
+        OwnershipLink.objects.create(user=self.user, ownership=shared, target_type="asset", target_id=99)
+
+        response = self.client.delete(f"/api/ownerships/{shared.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("en uso", str(response.data).lower())

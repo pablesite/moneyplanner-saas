@@ -31,16 +31,22 @@ Estado: completada.
 - [x] Publicar notas de migracion y versionado.
 
 ### Fase 3: Cerrar Extension Premium En SaaS
-Estado: pendiente.
+Estado: completada.
 
-- [ ] Anadir/activar tablas de enlace premium desde ownership hacia entidades base.
-- [ ] Asegurar que `is_in_use` se calcule con enlaces reales (no hardcoded).
-- [ ] Adaptar frontend premium para consumir solo APIs SaaS de ownership.
+- [x] Anadir/activar tablas de enlace premium desde ownership hacia entidades base.
+- [x] Asegurar que `is_in_use` se calcule con enlaces reales (no hardcoded).
+- [x] Adaptar frontend premium para consumir solo APIs SaaS de ownership.
+
+Notas:
+- Se anadio `OwnershipLink` en `backend/memberships/models.py` con migracion dedicada.
+- Se expusieron endpoints SaaS `GET /api/ownership-links/` y `POST /api/ownership-links/sync/`.
+- El store de patrimonio sincroniza ownership via API SaaS al crear/editar activos y pasivos del core.
+- `ownership_is_in_use` ahora se basa en enlaces reales (`OwnershipLink`) en lugar de placeholder.
 
 ### Fase 4: Hardening
 Estado: pendiente.
 
-- [ ] Anadir tests de integracion para flujos cruzados (`core` + `saas`).
+- [ ] Anadir tests de integracion para flujos cruzados (`core` + `saas`) y cubrir escenarios completos de API dual.
 - [ ] Anadir checklist de rollout para upgrade de submodulo y verificacion de compatibilidad.
 - [ ] Documentar plan de recuperacion para datasets mixtos/legacy.
 
