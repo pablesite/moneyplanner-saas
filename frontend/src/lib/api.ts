@@ -7,9 +7,18 @@ function getFallbackBaseURL() {
   return `${window.location.protocol}//${window.location.hostname}:8001`;
 }
 
+function getFallbackCoreBaseURL() {
+  if (typeof window === "undefined") {
+    return "http://localhost:8000";
+  }
+  return `${window.location.protocol}//${window.location.hostname}:8000`;
+}
+
 const baseURL = import.meta.env.VITE_API_BASE_URL || getFallbackBaseURL();
+const coreBaseURL = import.meta.env.VITE_CORE_API_BASE_URL || getFallbackCoreBaseURL();
 
 export const api = axios.create({ baseURL });
+export const coreApi = axios.create({ baseURL: coreBaseURL });
 const refreshClient = axios.create({ baseURL });
 
 type PendingCallback = (token: string | null) => void;
@@ -43,58 +52,67 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-// Attach access token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+function attachRequestInterceptor(client: typeof api) {
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem("access_token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+}
 
-api.interceptors.response.use(
-  (r) => r,
-  async (error) => {
-    const status = error.response?.status;
-    const original = error.config || {};
-    const isRefreshCall = original.url?.includes("/api/auth/refresh/");
+attachRequestInterceptor(api);
+attachRequestInterceptor(coreApi);
 
-    if (status !== 401 || isRefreshCall || original._retry) {
-      return Promise.reject(error);
-    }
+function attachResponseInterceptor(client: typeof api) {
+  client.interceptors.response.use(
+    (r) => r,
+    async (error) => {
+      const status = error.response?.status;
+      const original = error.config || {};
+      const isRefreshCall = original.url?.includes("/api/auth/refresh/");
 
-    const refresh = localStorage.getItem("refresh_token");
-    if (!refresh) {
-      clearAuth();
-      window.location.href = "/login";
-      return Promise.reject(error);
-    }
+      if (status !== 401 || isRefreshCall || original._retry) {
+        return Promise.reject(error);
+      }
 
-    original._retry = true;
-
-    if (!isRefreshing) {
-      isRefreshing = true;
-      const newToken = await refreshAccessToken();
-      isRefreshing = false;
-
-      if (!newToken) {
+      const refresh = localStorage.getItem("refresh_token");
+      if (!refresh) {
         clearAuth();
-        notifyPending(null);
         window.location.href = "/login";
         return Promise.reject(error);
       }
 
-      notifyPending(newToken);
-    }
+      original._retry = true;
 
-    return new Promise((resolve, reject) => {
-      pending.push((token) => {
-        if (!token) {
-          reject(error);
-          return;
+      if (!isRefreshing) {
+        isRefreshing = true;
+        const newToken = await refreshAccessToken();
+        isRefreshing = false;
+
+        if (!newToken) {
+          clearAuth();
+          notifyPending(null);
+          window.location.href = "/login";
+          return Promise.reject(error);
         }
-        original.headers = original.headers || {};
-        original.headers.Authorization = `Bearer ${token}`;
-        resolve(api(original));
+
+        notifyPending(newToken);
+      }
+
+      return new Promise((resolve, reject) => {
+        pending.push((token) => {
+          if (!token) {
+            reject(error);
+            return;
+          }
+          original.headers = original.headers || {};
+          original.headers.Authorization = `Bearer ${token}`;
+          resolve(client(original));
+        });
       });
-    });
-  }
-);
+    }
+  );
+}
+
+attachResponseInterceptor(api);
+attachResponseInterceptor(coreApi);

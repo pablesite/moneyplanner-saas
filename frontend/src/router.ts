@@ -1,13 +1,16 @@
 import { createRouter, createWebHistory } from "vue-router";
+import NetWorthView from "./views/NetWorthView.vue";
 import LoginView from "./views/LoginView.vue";
 import PeopleView from "./views/PeopleView.vue";
+import AuxDataView from "./views/AuxDataView.vue";
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/login", name: "login", component: LoginView },
-    { path: "/", redirect: "/people" },
+    { path: "/", name: "networth", component: NetWorthView },
     { path: "/people", name: "people", component: PeopleView },
+    { path: "/data", name: "aux-data", component: AuxDataView },
   ],
 });
 
@@ -19,11 +22,8 @@ router.beforeEach((to) => {
   }
 
   if (token && to.path === "/login") {
-    return { path: "/people" };
+    return { path: "/" };
   }
 
   return true;
 });
-
-
-

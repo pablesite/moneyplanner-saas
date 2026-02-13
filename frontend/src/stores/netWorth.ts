@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { api } from "@/lib/api";
+import { coreApi } from "@/lib/api";
 
 export type Asset = {
   id: number;
@@ -161,12 +161,12 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.error = null;
       try {
         const [summaryRes, assetsRes, liabilitiesRes, snapshotsRes, byMemberRes, ownershipsRes] = await Promise.all([
-          api.get("/api/net-worth/summary/"),
-          api.get("/api/net-worth/assets/"),
-          api.get("/api/net-worth/liabilities/"),
-          api.get("/api/net-worth/snapshots/"),
-          api.get("/api/net-worth/summary/by-member/"),
-          api.get("/api/net-worth/ownerships/"),
+          coreApi.get("/api/net-worth/summary/"),
+          coreApi.get("/api/net-worth/assets/"),
+          coreApi.get("/api/net-worth/liabilities/"),
+          coreApi.get("/api/net-worth/snapshots/"),
+          coreApi.get("/api/net-worth/summary/by-member/"),
+          coreApi.get("/api/net-worth/ownerships/"),
         ]);
 
         this.summary = summaryRes.data;
@@ -188,7 +188,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await api.post("/api/net-worth/snapshots/from-current/");
+        await coreApi.post("/api/net-worth/snapshots/from-current/");
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -200,7 +200,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await api.delete(`/api/net-worth/snapshots/${id}/`);
+        await coreApi.delete(`/api/net-worth/snapshots/${id}/`);
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -213,7 +213,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await api.post("/api/net-worth/assets/", payload);
+        await coreApi.post("/api/net-worth/assets/", payload);
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -226,7 +226,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await api.patch(`/api/net-worth/assets/${id}/`, payload);
+        await coreApi.patch(`/api/net-worth/assets/${id}/`, payload);
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -243,7 +243,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await api.post("/api/net-worth/liabilities/", payload);
+        await coreApi.post("/api/net-worth/liabilities/", payload);
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -256,7 +256,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await api.patch(`/api/net-worth/liabilities/${id}/`, payload);
+        await coreApi.patch(`/api/net-worth/liabilities/${id}/`, payload);
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -272,7 +272,7 @@ export const useNetWorthStore = defineStore("netWorth", {
 
     async fetchSettings() {
       try {
-        const res = await api.get("/api/auth/settings/");
+        const res = await coreApi.get("/api/auth/settings/");
         this.baseCurrency = res.data.base_currency;
       } catch (e: any) {
         this.error = e?.response?.data
@@ -285,7 +285,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        const res = await api.put("/api/auth/settings/", {
+        const res = await coreApi.put("/api/auth/settings/", {
           base_currency: currency,
         });
         this.baseCurrency = res.data.base_currency;
@@ -303,7 +303,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        const res = await api.get("/api/net-worth/summary/by-member/");
+        const res = await coreApi.get("/api/net-worth/summary/by-member/");
         this.byMemberSummary = res.data;
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
