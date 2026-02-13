@@ -167,18 +167,13 @@ export const useNetWorthStore = defineStore("netWorth", {
           coreApi.get("/api/net-worth/snapshots/"),
         ]);
 
-        const [byMemberRes, ownershipsRes] = await Promise.allSettled([
-          coreApi.get("/api/net-worth/summary/by-member/"),
-          coreApi.get("/api/net-worth/ownerships/"),
-        ]);
-
         this.summary = summaryRes.data;
         this.baseCurrency = summaryRes.data.base_currency;
         this.assets = assetsRes.data;
         this.liabilities = liabilitiesRes.data;
         this.snapshots = snapshotsRes.data;
-        this.byMemberSummary = byMemberRes.status === "fulfilled" ? byMemberRes.value.data : null;
-        this.ownerships = ownershipsRes.status === "fulfilled" ? ownershipsRes.value.data : [];
+        this.byMemberSummary = null;
+        this.ownerships = [];
 
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
@@ -306,8 +301,7 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        const res = await coreApi.get("/api/net-worth/summary/by-member/");
-        this.byMemberSummary = res.data;
+        this.byMemberSummary = null;
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
       } finally {
