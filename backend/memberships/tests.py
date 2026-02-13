@@ -105,3 +105,65 @@ class OwnershipLinkTests(APITestCase):
         response = self.client.delete(f"/api/ownerships/{shared.id}/")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("en uso", str(response.data).lower())
+
+
+class DualApiFlowTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username="u4", password="pass1234")
+        self.other = get_user_model().objects.create_user(username="u5", password="pass1234")
+        self.client.force_authenticate(user=self.user)
+
+        m1 = FamilyMember.objects.create(user=self.user, name="Alice", role=FamilyMember.Role.ADULT, is_active=True)
+        m2 = FamilyMember.objects.create(user=self.user, name="Bob", role=FamilyMember.Role.ADULT, is_active=True)
+
+        self.shared = Ownership.objects.create(user=self.user, kind=Ownership.Kind.SHARED, member=None)
+        OwnershipSplit.objects.create(ownership=self.shared, member=m1, percent="60.00")
+        OwnershipSplit.objects.create(ownership=self.shared, member=m2, percent="40.00")
+
+        other_member = FamilyMember.objects.create(
+            user=self.other, name="Mallory", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        self.other_individual = Ownership.objects.create(
+            user=self.other, kind=Ownership.Kind.INDIVIDUAL, member=other_member
+        )
+
+    def test_sync_link_toggles_is_in_use_on_ownership(self):
+        before = self.client.get("/api/ownerships/")
+        self.assertEqual(before.status_code, status.HTTP_200_OK)
+        shared_before = next(o for o in before.data if o["id"] == self.shared.id)
+        self.assertFalse(shared_before["is_in_use"])
+
+        sync_res = self.client.post(
+            "/api/ownership-links/sync/",
+            {"target_type": "asset", "target_id": 101, "ownership_id": self.shared.id},
+            format="json",
+        )
+        self.assertEqual(sync_res.status_code, status.HTTP_200_OK)
+
+        after_sync = self.client.get("/api/ownerships/")
+        self.assertEqual(after_sync.status_code, status.HTTP_200_OK)
+        shared_after_sync = next(o for o in after_sync.data if o["id"] == self.shared.id)
+        self.assertTrue(shared_after_sync["is_in_use"])
+
+        unsync_res = self.client.post(
+            "/api/ownership-links/sync/",
+            {"target_type": "asset", "target_id": 101, "ownership_id": None},
+            format="json",
+        )
+        self.assertEqual(unsync_res.status_code, status.HTTP_200_OK)
+
+        after_unsync = self.client.get("/api/ownerships/")
+        self.assertEqual(after_unsync.status_code, status.HTTP_200_OK)
+        shared_after_unsync = next(o for o in after_unsync.data if o["id"] == self.shared.id)
+        self.assertFalse(shared_after_unsync["is_in_use"])
+
+    def test_list_links_is_scoped_per_user(self):
+        OwnershipLink.objects.create(user=self.user, ownership=self.shared, target_type="asset", target_id=1)
+        OwnershipLink.objects.create(user=self.other, ownership=self.other_individual, target_type="liability", target_id=2)
+
+        res = self.client.get("/api/ownership-links/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]["target_type"], "asset")
+        self.assertEqual(res.data[0]["target_id"], 1)
+        self.assertEqual(res.data[0]["ownership_id"], self.shared.id)

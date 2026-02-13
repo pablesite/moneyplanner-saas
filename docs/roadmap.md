@@ -44,15 +44,16 @@ Notas:
 - `ownership_is_in_use` ahora se basa en enlaces reales (`OwnershipLink`) en lugar de placeholder.
 
 ### Fase 4: Hardening
-Estado: pendiente.
+Estado: completada.
 
-- [ ] Anadir tests de integracion para flujos cruzados (`core` + `saas`) y cubrir escenarios completos de API dual.
+- [x] Anadir tests de integracion para flujos cruzados (`core` + `saas`) y cubrir escenarios completos de API dual.
 - [x] Anadir checklist de rollout para upgrade de submodulo y verificacion de compatibilidad.
 - [x] Documentar plan de recuperacion para datasets mixtos/legacy.
 
 Notas:
 - Checklist de rollout documentado en `docs/release-checklist.md`.
 - Plan de recuperacion documentado en `docs/recovery-plan.md`.
+- Tests de integracion API dual en `backend/memberships/tests.py` (sync/unsync de links, `is_in_use`, y aislamiento por usuario).
 
 ## Criterios De Aceptacion
 - `core` funciona standalone como producto basico completo.
