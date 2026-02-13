@@ -11,16 +11,16 @@ Backlog de ejecucion para alcanzar la arquitectura objetivo definida en `docs/ar
 ## Fases
 
 ### Fase 1: Capa De Compatibilidad En SaaS
-Estado: no completada.
+Estado: completada.
 
-- [ ] Crear una capa de servicios dedicada en `saas` para asignacion de ownership y validaciones de uso.
-- [ ] Eliminar duplicacion de reglas de ownership en vistas/serializers.
-- [ ] Anadir tests para restricciones de editar/eliminar cuando ownership esta en uso.
+- [x] Crear una capa de servicios dedicada en `saas` para asignacion de ownership y validaciones de uso.
+- [x] Eliminar duplicacion de reglas de ownership en vistas/serializers.
+- [x] Anadir tests para restricciones de editar/eliminar cuando ownership esta en uso.
 
-Notas de revision actual:
-- En `backend/memberships` no existe modulo `services/` y la logica sigue repartida en `views.py` y `serializers.py`.
-- `is_in_use` sigue hardcoded en `backend/memberships/serializers.py` (`return False`).
-- `backend/memberships/tests.py` no contiene casos de negocio.
+Notas:
+- Se creo `backend/memberships/services.py` y `views.py`/`serializers.py` consumen esa capa.
+- `is_in_use` se resuelve via servicio (`ownership_is_in_use`), preparado para evolucionar con enlaces reales en Fase 3.
+- Se anadieron tests API en `backend/memberships/tests.py` para bloqueos de update/delete en escenarios de uso.
 
 ### Fase 2: Eliminar Dominio Premium De Core
 Estado: completada.

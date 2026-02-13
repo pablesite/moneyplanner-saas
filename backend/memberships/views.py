@@ -1,10 +1,14 @@
-from django.db import IntegrityError
 from rest_framework import viewsets
-from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from .models import FamilyMember, Ownership
 from .serializers import FamilyMemberSerializer, OwnershipReadSerializer, OwnershipWriteSerializer
+from .services import (
+    assert_member_can_be_deleted,
+    assert_ownership_can_be_deleted,
+    assert_ownership_can_be_updated,
+    ensure_individual_ownership_for_member,
+)
 
 
 class UserScopedQuerySetMixin:
@@ -20,26 +24,13 @@ class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         member = serializer.save(user=self.request.user)
-        Ownership.objects.get_or_create(
-            user=self.request.user,
-            kind=Ownership.Kind.INDIVIDUAL,
-            member=member,
-        )
+        ensure_individual_ownership_for_member(user=self.request.user, member=member)
 
     def destroy(self, request, *args, **kwargs):
         member = self.get_object()
-
-        if Ownership.objects.filter(user=request.user, kind=Ownership.Kind.SHARED, splits__member=member).exists():
-            raise DRFValidationError(
-                {"detail": "Este miembro aparece en una titularidad compartida. Elimina/ajusta esa titularidad antes."}
-            )
-
+        assert_member_can_be_deleted(member)
         Ownership.objects.filter(user=request.user, kind=Ownership.Kind.INDIVIDUAL, member=member).delete()
-
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except IntegrityError:
-            raise DRFValidationError({"detail": "No se puede eliminar este miembro porque esta en uso."})
+        return super().destroy(request, *args, **kwargs)
 
 
 class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
@@ -57,12 +48,10 @@ class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = self.get_object()
-        if instance.kind == Ownership.Kind.INDIVIDUAL:
-            raise DRFValidationError({"detail": "La titularidad individual no se puede editar."})
+        assert_ownership_can_be_updated(instance)
         serializer.save()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.kind == Ownership.Kind.INDIVIDUAL:
-            raise DRFValidationError({"detail": "La titularidad individual no se puede eliminar."})
+        assert_ownership_can_be_deleted(instance)
         return super().destroy(request, *args, **kwargs)

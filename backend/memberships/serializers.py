@@ -3,6 +3,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from .models import FamilyMember, Ownership, OwnershipSplit
+from .services import ownership_is_in_use
 
 
 class FamilyMemberSerializer(serializers.ModelSerializer):
@@ -35,8 +36,7 @@ class OwnershipReadSerializer(serializers.ModelSerializer):
         fields = ["id", "kind", "member", "splits", "is_in_use"]
 
     def get_is_in_use(self, obj):
-        # En el SaaS no hay assets/liabilities locales (de momento).
-        return False
+        return ownership_is_in_use(obj)
 
 
 class OwnershipSplitInputSerializer(serializers.Serializer):
