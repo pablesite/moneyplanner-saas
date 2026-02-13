@@ -39,3 +39,6 @@ docker compose up --build
 ## Notas
 - El core vive en `core/` como submodulo.
 - Cualquier codigo SaaS privado debe vivir fuera de `core/`.
+
+## Arquitectura
+- Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture.md`.
