@@ -47,8 +47,11 @@ Notas:
 Estado: pendiente.
 
 - [ ] Anadir tests de integracion para flujos cruzados (`core` + `saas`) y cubrir escenarios completos de API dual.
-- [ ] Anadir checklist de rollout para upgrade de submodulo y verificacion de compatibilidad.
+- [x] Anadir checklist de rollout para upgrade de submodulo y verificacion de compatibilidad.
 - [ ] Documentar plan de recuperacion para datasets mixtos/legacy.
+
+Notas:
+- Checklist de rollout documentado en `docs/release-checklist.md`.
 
 ## Criterios De Aceptacion
 - `core` funciona standalone como producto basico completo.
