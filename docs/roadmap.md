@@ -59,3 +59,6 @@ Notas:
 - `core` funciona standalone como producto basico completo.
 - `saas` ofrece features premium de ownership sin reintroducir entidades premium en `core`.
 - El frontend mantiene fronteras explicitas y no ambiguas entre endpoints base y premium.
+
+## Siguiente Release
+- Roadmap de la siguiente release (refactor completo): `docs/roadmap-release-v2.md`.
