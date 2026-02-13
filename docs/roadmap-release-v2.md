@@ -41,6 +41,11 @@ Estado: pendiente.
 
 - [ ] Reorganizar stores/componentes por dominio funcional.
 - [ ] Simplificar flujos de estado y side effects.
+- [ ] Definir arquitectura sin duplicacion entre core y saas:
+  - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
+  - [ ] mantener apps separadas `core-web` y `saas-web` consumiendo el mismo paquete base.
+  - [ ] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
+  - [ ] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
 - [ ] Introducir sistema de estilos profesional:
   - [ ] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
@@ -90,6 +95,7 @@ Estado: pendiente.
 - [ ] Linters y type checks bloquean merges en CI.
 - [ ] Cobertura minima de tests cumplida y reportada.
 - [ ] UI consistente con sistema CSS profesional documentado.
+- [ ] Evolucion de frontend `core` y `saas` sin duplicacion estructural de codigo.
 - [ ] Codigo simplificado y comentado donde aporte contexto real.
 
 ## Riesgos Y Mitigacion
