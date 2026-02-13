@@ -19,7 +19,7 @@ Execution backlog for moving to the target architecture defined in `docs/archite
 - [x] Remove ownership/member models from `core`.
 - [x] Remove ownership/member endpoints from `core` net-worth API.
 - [x] Keep `core` workflows usable with unassigned/basic ownership semantics.
-- [ ] Release with migration notes and version bump.
+- [x] Release with migration notes and version bump.
 
 ### Phase 3: Finalize Premium Extension in SaaS
 - Add/activate premium link tables from ownership to base entities.
