@@ -16,7 +16,7 @@ Execution backlog for moving to the target architecture defined in `docs/archite
 - Add tests for edit/delete constraints when ownership is in use.
 
 ### Phase 2: Remove Premium Domain from Core
-- [ ] Remove ownership/member models from `core`.
+- [x] Remove ownership/member models from `core`.
 - [x] Remove ownership/member endpoints from `core` net-worth API.
 - [x] Keep `core` workflows usable with unassigned/basic ownership semantics.
 - [ ] Release with migration notes and version bump.
