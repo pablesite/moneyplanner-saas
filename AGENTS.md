@@ -29,10 +29,12 @@ Comandos adicionales permitidos si ayudan a encontrar causa raíz:
 1. Diagnóstico primero.
 2. Explicar qué se pretende hacer, preguntar para decidir la mejor opción.
 3. Acordada la opción: aplicar cambios.
-4. Refactorizar siguiendo el estilo existente.
-5. Validar resultado y reportar estado final.
-6. Al terminar, actualizar la documentación en `docs/` donde sea necesario.
-7. Tras validar y actualizar documentación, terminar con un commit.
+4. Validar resultado.
+5. Refactorizar siguiendo el estilo existente y revalidar.
+6. Reportar estado final.
+7. Al terminar, actualizar la documentación en `docs/` donde sea necesario.
+8. Tras validar y actualizar documentación, terminar con un commit, siguiendo la guía: https://www.conventionalcommits.org/en/v1.0.0/.
+9. Actualizar los repos core y saas en github.
 
 ## Validación (estado actual)
 Hay comandos oficiales de calidad en ambos repos (`core` y `saas`) y validación en CI.
