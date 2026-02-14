@@ -42,6 +42,7 @@ Estado: en progreso.
 - [x] Revisar contratos API y documentar cambios.
   - Avance: contrato consolidado en `docs/api-contracts.md`.
 - [ ] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.
+  - Avance: script `scripts/check_mirrored_backend_files.py` para controlar drift en archivos espejo `core/saas` (handler de errores API).
 
 ### Fase 2: Refactor Frontend + UI Profesional
 Estado: pendiente.
