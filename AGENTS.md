@@ -28,10 +28,11 @@ Comandos adicionales permitidos si ayudan a encontrar causa raíz:
 ## Flujo de trabajo acordado
 1. Diagnóstico primero.
 2. Explicar qué se pretende hacer, preguntar para decidir la mejor opción.
-3. Acordada la opción: aplicar cambios teniendo en cuenta no cambiar nada gordo.
-4. Validar resultado y reportar estado final.
-5. Al terminar, actualizar la documentación en `docs/` donde sea necesario.
-6. Tras validar y actualizar documentación, terminar con un commit.
+3. Acordada la opción: aplicar cambios.
+4. Refactorizar siguiendo el estilo existente.
+5. Validar resultado y reportar estado final.
+6. Al terminar, actualizar la documentación en `docs/` donde sea necesario.
+7. Tras validar y actualizar documentación, terminar con un commit.
 
 ## Validación (estado actual)
 Hay comandos oficiales de calidad en ambos repos (`core` y `saas`) y validación en CI.
