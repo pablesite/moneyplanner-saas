@@ -33,6 +33,7 @@ Estado: en progreso.
 - [ ] Revisar y simplificar capas: `views -> serializers -> services`.
 - [x] Estandarizar manejo de errores y codigos HTTP.
 - [ ] Consolidar validaciones de negocio en servicios.
+  - Avance: aplicado en dominio `memberships` (SaaS).
 - [ ] Revisar contratos API y documentar cambios.
 - [ ] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.
 
