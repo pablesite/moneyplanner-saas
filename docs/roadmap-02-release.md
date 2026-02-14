@@ -36,6 +36,7 @@ Estado: en progreso.
   - Avance: `core/backend/net_worth` mueve validaciones de `Asset/Liability` de serializers a servicios.
   - Avance: `core/backend/net_worth` mueve `create` de serializers (`Asset/Liability/Snapshot`) a servicios.
   - Avance: `core/backend/net_worth` mueve serializacion de respuesta de `summary` a servicios.
+  - Avance: `core/backend/net_worth` mueve conversion de `amount_base` de serializers a servicios.
   - Avance: `backend/memberships` mueve alta/baja de `FamilyMember` a servicios transaccionales.
   - Avance: `backend/memberships` mueve update/delete de `Ownership` a servicios.
   - Avance: `backend/memberships` delega validacion de escritura/sync de `Ownership` desde serializers a servicios.
