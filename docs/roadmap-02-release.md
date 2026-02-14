@@ -62,7 +62,7 @@ Estado: en progreso.
   - [x] `eslint` (TS + Vue)
   - [x] `prettier` (formato)
   - [x] `vue-tsc` en CI
-- [ ] Convenciones de comentarios y complejidad ciclomatica maxima por funcion.
+- [x] Convenciones de comentarios y complejidad ciclomatica maxima por funcion.
 - [x] Hooks pre-commit (lint/format rapido).
 
 ### Fase 4: Estrategia De Testing Potente
