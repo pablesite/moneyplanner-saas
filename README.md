@@ -1,4 +1,4 @@
-# moneyplanner-saas
+﻿# moneyplanner-saas
 
 Repositorio privado para la version SaaS.
 
@@ -21,14 +21,14 @@ git submodule update --init --recursive
 
 ```bash
 cd core
-docker compose up --build
+docker compose up --build -d
 ```
 
 3. Arranca el SaaS (backend + DB + frontend):
 
 ```bash
 cd ..
-docker compose up --build
+docker compose up --build -d
 ```
 
 - API SaaS: `http://localhost:8001`
@@ -41,5 +41,7 @@ docker compose up --build
 - Cualquier codigo SaaS privado debe vivir fuera de `core/`.
 
 ## Arquitectura
+- Roadmap global de producto: `docs/roadmap.md`.
 - Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture.md`.
-- Tareas y fases de migracion: `docs/roadmap.md`.
+- Roadmap actual de refactor (V2): `docs/roadmap-02-release.md`.
+- Roadmap historico inicial (V1, completado): `docs/roadmap-01-core-saas.md`.

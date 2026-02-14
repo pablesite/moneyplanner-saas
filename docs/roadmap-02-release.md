@@ -1,4 +1,4 @@
-# Roadmap Release V2 (Refactor Core/SaaS)
+# Roadmap 02 Release (Refactor Core/SaaS)
 
 ## Objetivo
 Realizar un refactor completo de `core` y `saas`, incluyendo la creacion de un nuevo repo publico para `core`, elevando calidad tecnica, mantenibilidad y consistencia visual.

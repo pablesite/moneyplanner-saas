@@ -1,4 +1,4 @@
-# Release Summary Core/SaaS V1
+﻿# Release Summary Core/SaaS V1
 
 ## Fecha
 2026-02-13
@@ -36,7 +36,7 @@
 - Fase 2: completada.
 - Fase 3: completada.
 - Fase 4: completada.
-- Referencia: `docs/roadmap.md`.
+- Referencia: `docs/roadmap-01-core-saas.md`.
 
 ## Operacion
 - Checklist de rollout: `docs/release-checklist.md`.
@@ -45,3 +45,5 @@
 ## Riesgos Residuales
 - Falta ampliar tests de integracion fuera del dominio `memberships` si se incorporan mas dominios premium.
 - Cualquier cambio de contrato futuro en `core` requiere revalidacion con checklist de rollout.
+
+

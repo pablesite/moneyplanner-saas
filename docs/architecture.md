@@ -1,50 +1,58 @@
-# Core/SaaS Architecture Contract
+﻿# Contrato de Arquitectura Core/SaaS
 
-## Goal
-- `core` is public OSS and must be usable on its own.
-- `saas` is private and adds premium capabilities without forcing premium concepts into `core`.
+## Objetivo
+- `core` es OSS público y debe poder usarse por sí solo.
+- `saas` es privado y agrega capacidades premium sin forzar conceptos premium dentro de `core`.
 
-## Bounded Responsibilities
+## Responsabilidades delimitadas
 
-### Core (public)
-- Basic net-worth domain: assets, liabilities, snapshots, summary.
-- Auth basics required for standalone use.
-- Currency and inflation support used by base net-worth flows.
-- Stable API contract for basic users.
+### Core (público)
+- Dominio base de patrimonio: activos, pasivos, snapshots, resumen.
+- Autenticación básica necesaria para uso standalone.
+- Soporte de moneda e inflación para flujos base de patrimonio.
+- Contrato de API estable para usuarios base.
 
-### SaaS (private)
-- Premium ownership model: family members, ownerships, splits, usage constraints.
-- Advanced validations and premium workflows.
-- Premium UI/UX and feature gating.
+### SaaS (privado)
+- Modelo premium de titularidad (ownership): miembros familiares, ownerships, splits y restricciones de uso.
+- Validaciones avanzadas y flujos premium.
+- UI/UX premium y feature gating.
 
-## Non-Goals
-- `core` must not contain premium-only domain entities.
-- `saas` should not duplicate core business logic unless explicitly unavoidable.
+## No objetivos
+- `core` no debe contener entidades de dominio exclusivas premium.
+- `saas` no debe duplicar lógica de negocio de `core` salvo que sea explícitamente inevitable.
 
-## Data Model Strategy
+## Estrategia del modelo de datos
 
-### Target state
-- `core` models do not include ownership entities.
-- `saas` owns ownership entities and links them to base entities.
+### Estado objetivo
+- Los modelos de `core` no incluyen entidades de titularidad (ownership).
+- `saas` es dueño de las entidades de titularidad (ownership) y las enlaza con entidades base.
 
-### Recommended linkage
-- In `saas`, keep premium link tables referencing base entity IDs:
-  - `asset_id -> core asset`
-  - `liability_id -> core liability`
-  - `ownership_id -> saas ownership`
-- Enforce premium invariants in `saas` services/APIs (for example, "ownership in use").
+### Enlace recomendado
+- En `saas`, mantener tablas de enlace premium que referencien IDs de entidades base:
+  - `asset_id -> activo de core`
+  - `liability_id -> pasivo de core`
+  - `ownership_id -> ownership de saas`
+- Forzar invariantes premium en servicios/APIs de `saas` (por ejemplo, "titularidad (ownership) en uso").
 
-## API Contract Strategy
-- Keep base net-worth endpoints in `core`.
-- Expose premium endpoints from `saas`.
-- Frontend uses explicit clients:
-  - `coreApi` for base domain.
-  - `api` (saas) for premium domain.
+## Estrategia de contrato de API
+- Mantener endpoints base de patrimonio en `core`.
+- Exponer endpoints premium desde `saas`.
+- El frontend usa clientes explícitos:
+  - `coreApi` para dominio base.
+  - `api` (saas) para dominio premium.
 
-## Operational Strategy
-- Version `core` independently.
-- Upgrade `core` in `saas` through controlled bumps (submodule update + compatibility checks).
-- Avoid cross-repo breaking changes without migration notes.
+## Estrategia operativa
+- Versionar `core` de forma independiente.
+- Actualizar `core` en `saas` mediante bumps controlados (update de submódulo + checks de compatibilidad).
+- Evitar cambios rompientes entre repos sin notas de migración.
 
-## Related
-- Pending work and migration tasks are tracked in `docs/roadmap.md`.
+## Relacionado
+- Roadmap actual de refactor y trabajo pendiente: `docs/roadmap-02-release.md`.
+- Roadmap histórico (V1, completado): `docs/roadmap-01-core-saas.md`.
+
+## Arquitectura funcional relacionada
+- Arquitectura de módulos y dependencias funcionales: `docs/product-architecture.md`.
+
+
+
+
