@@ -34,12 +34,33 @@ Comandos adicionales permitidos si ayudan a encontrar causa raíz:
 6. Tras validar y actualizar documentación, terminar con un commit.
 
 ## Validación (estado actual)
-Actualmente no hay cobertura ni lint estandarizados en ambos repos.
-Objetivo futuro:
-1. tests en `core` y `saas` (backend y frontend)
-2. lint en `core` y `saas` (backend y frontend)
+Hay comandos oficiales de calidad en ambos repos (`core` y `saas`) y validación en CI.
 
-Cuando existan comandos oficiales, agregarlos aquí y ejecutarlos en cada cambio relevante.
+Comandos de calidad:
+1. Backend SaaS (`backend/`):
+   - `ruff check .`
+   - `ruff format --check .`
+   - `mypy .`
+2. Backend Core (`core/backend/`):
+   - `ruff check .`
+   - `ruff format --check .`
+   - `mypy .`
+3. Frontend SaaS (`frontend/`):
+   - `npm run lint`
+   - `npm run format:check`
+   - `npm run typecheck`
+4. Frontend Core (`core/frontend/`):
+   - `npm run lint`
+   - `npm run format:check`
+   - `npm run typecheck`
+
+Tests disponibles actualmente:
+1. Backend SaaS: `python manage.py test memberships` (suite en `backend/memberships/tests.py`).
+2. Backend Core: hay archivos `tests.py` base, pero cobertura funcional todavía parcial.
+
+Referencia de CI:
+1. SaaS: `.github/workflows/quality-saas.yml`
+2. Core: `core/.github/workflows/quality-core.yml`
 
 ## Documentación recomendada
 1. Arquitectura de plataforma: `docs/architecture.md`

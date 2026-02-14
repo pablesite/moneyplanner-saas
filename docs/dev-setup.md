@@ -172,6 +172,15 @@ CI configurado:
 2. Core: `core/.github/workflows/quality-core.yml`
 3. Convenciones de calidad: `docs/code-quality-conventions.md`
 
+## Tests actuales
+1. Backend SaaS (dominio memberships):
+```bash
+cd backend
+python manage.py test memberships
+```
+2. Backend Core:
+- Existen archivos base de tests (`core/backend/*/tests.py`), pero la cobertura funcional principal sigue concentrada en SaaS por ahora.
+
 Formato de errores API (Roadmap-02 / Fase 1):
 ```json
 {

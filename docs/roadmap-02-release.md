@@ -74,6 +74,7 @@ Estado: pendiente.
   - [ ] tests unitarios por servicio.
   - [ ] tests API por endpoint critico.
   - [ ] tests de integracion API dual (`core` + `saas`) ampliados.
+  - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
 - [ ] Frontend:
   - [ ] tests unitarios de componentes y stores.
   - [ ] tests de integracion de vistas principales.
