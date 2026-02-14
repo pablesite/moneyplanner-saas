@@ -16,6 +16,7 @@ from .services import (
     assert_ownership_can_be_deleted,
     assert_ownership_can_be_updated,
     ensure_individual_ownership_for_member,
+    sync_ownership_link,
 )
 
 
@@ -81,22 +82,10 @@ class OwnershipLinkViewSet(UserScopedQuerySetMixin, viewsets.GenericViewSet):
         serializer = OwnershipLinkSyncSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
-        target_type = serializer.validated_data["target_type"]
-        target_id = serializer.validated_data["target_id"]
-        ownership = serializer.validated_data.get("ownership")
-
-        if ownership is None:
-            OwnershipLink.objects.filter(
-                user=request.user,
-                target_type=target_type,
-                target_id=target_id,
-            ).delete()
-            return Response({"ok": True, "ownership_id": None}, status=status.HTTP_200_OK)
-
-        link, _created = OwnershipLink.objects.update_or_create(
+        result = sync_ownership_link(
             user=request.user,
-            target_type=target_type,
-            target_id=target_id,
-            defaults={"ownership": ownership},
+            target_type=serializer.validated_data["target_type"],
+            target_id=serializer.validated_data["target_id"],
+            ownership=serializer.validated_data.get("ownership"),
         )
-        return Response({"ok": True, "ownership_id": link.ownership_id}, status=status.HTTP_200_OK)
+        return Response(result, status=status.HTTP_200_OK)

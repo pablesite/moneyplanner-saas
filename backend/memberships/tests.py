@@ -115,7 +115,8 @@ class OwnershipLinkTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("ownership_id", response.data)
+        details = response.data.get("error", {}).get("details", response.data)
+        self.assertIn("ownership_id", details)
 
     def test_delete_shared_ownership_blocked_when_linked_without_mock(self):
         m2 = FamilyMember.objects.create(
