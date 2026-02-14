@@ -1,5 +1,5 @@
-import { defineStore } from "pinia";
-import { api, coreApi } from "@/lib/api";
+import { defineStore } from 'pinia';
+import { api, coreApi } from '@/lib/api';
 
 export type Asset = {
   id: number;
@@ -7,11 +7,11 @@ export type Asset = {
   category: string;
   subcategory: string;
   tracking_mode: string;
-    accounting_account_id: number | null;
-    currency: string;
-    amount: string;
-    amount_base?: string;
-    is_active: boolean;
+  accounting_account_id: number | null;
+  currency: string;
+  amount: string;
+  amount_base?: string;
+  is_active: boolean;
   notes: string;
 };
 
@@ -48,26 +48,27 @@ export type Summary = {
 
   assets_by_category_real: Record<string, string> | null;
   liabilities_by_category_real: Record<string, string> | null;
-
 };
 
 export type Ownership = {
   id: number;
-  kind: "individual" | "shared";
-  member: { id: number; name: string; role: "adult" | "child" } | null;
-  splits: { member: { id: number; name: string; role: "adult" | "child" }; percent: string }[];
+  kind: 'individual' | 'shared';
+  member: { id: number; name: string; role: 'adult' | 'child' } | null;
+  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
   notes: string;
 };
 
 type OwnershipLink = {
-  target_type: "asset" | "liability";
+  target_type: 'asset' | 'liability';
   target_id: number;
   ownership_id: number;
 };
 
-
 function normalizeNumberInput(raw: unknown) {
-  return String(raw ?? "").trim().replace(/\s/g, "").replace(/,/g, ".");
+  return String(raw ?? '')
+    .trim()
+    .replace(/\s/g, '')
+    .replace(/,/g, '.');
 }
 
 function toNumber(v: unknown) {
@@ -75,7 +76,7 @@ function toNumber(v: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
-export const useNetWorthStore = defineStore("netWorth", {
+export const useNetWorthStore = defineStore('netWorth', {
   state: () => ({
     loading: false as boolean,
     error: null as string | null,
@@ -88,30 +89,26 @@ export const useNetWorthStore = defineStore("netWorth", {
     snapshots: [] as Snapshot[],
 
     ownerships: [] as Ownership[],
-
   }),
 
   getters: {
     byCategoryChart(state) {
-        const s = state.summary;
-        const unit = state.baseCurrency ?? s?.base_currency ?? "EUR";
+      const s = state.summary;
+      const unit = state.baseCurrency ?? s?.base_currency ?? 'EUR';
 
-        const assetsBy = s?.assets_by_category ?? {};
-        const liabsBy = s?.liabilities_by_category ?? {};
+      const assetsBy = s?.assets_by_category ?? {};
+      const liabsBy = s?.liabilities_by_category ?? {};
 
-        // Unificamos claves para que el gráfico tenga filas consistentes
-        const keys = Array.from(
-          new Set<string>([...Object.keys(assetsBy), ...Object.keys(liabsBy)])
-        );
+      // Unificamos claves para que el gráfico tenga filas consistentes
+      const keys = Array.from(new Set<string>([...Object.keys(assetsBy), ...Object.keys(liabsBy)]));
 
-        return {
-          unit,
-          keys,
-          assets: keys.map((k) => Math.max(0, toNumber(assetsBy[k]))),
-          liabilities: keys.map((k) => Math.max(0, toNumber(liabsBy[k]))),
-        };
-      },
-
+      return {
+        unit,
+        keys,
+        assets: keys.map((k) => Math.max(0, toNumber(assetsBy[k]))),
+        liabilities: keys.map((k) => Math.max(0, toNumber(liabsBy[k]))),
+      };
+    },
   },
 
   actions: {
@@ -120,21 +117,25 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.error = null;
       try {
         const [summaryRes, assetsRes, liabilitiesRes, snapshotsRes] = await Promise.all([
-          coreApi.get("/api/net-worth/summary/"),
-          coreApi.get("/api/net-worth/assets/"),
-          coreApi.get("/api/net-worth/liabilities/"),
-          coreApi.get("/api/net-worth/snapshots/"),
+          coreApi.get('/api/net-worth/summary/'),
+          coreApi.get('/api/net-worth/assets/'),
+          coreApi.get('/api/net-worth/liabilities/'),
+          coreApi.get('/api/net-worth/snapshots/'),
         ]);
         const [ownershipsRes, linksRes] = await Promise.all([
-          api.get("/api/ownerships/"),
-          api.get("/api/ownership-links/"),
+          api.get('/api/ownerships/'),
+          api.get('/api/ownership-links/'),
         ]);
         const links = linksRes.data as OwnershipLink[];
         const assetOwnership = new Map(
-          links.filter((l) => l.target_type === "asset").map((l) => [l.target_id, l.ownership_id] as const),
+          links
+            .filter((l) => l.target_type === 'asset')
+            .map((l) => [l.target_id, l.ownership_id] as const),
         );
         const liabilityOwnership = new Map(
-          links.filter((l) => l.target_type === "liability").map((l) => [l.target_id, l.ownership_id] as const),
+          links
+            .filter((l) => l.target_type === 'liability')
+            .map((l) => [l.target_id, l.ownership_id] as const),
         );
 
         this.summary = summaryRes.data;
@@ -149,9 +150,8 @@ export const useNetWorthStore = defineStore("netWorth", {
         }));
         this.snapshots = snapshotsRes.data;
         this.ownerships = ownershipsRes.data;
-
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
@@ -161,10 +161,10 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.post("/api/net-worth/snapshots/from-current/");
+        await coreApi.post('/api/net-worth/snapshots/from-current/');
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
         this.loading = false;
       }
     },
@@ -176,7 +176,7 @@ export const useNetWorthStore = defineStore("netWorth", {
         await coreApi.delete(`/api/net-worth/snapshots/${id}/`);
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
@@ -187,17 +187,17 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
-        const res = await coreApi.post("/api/net-worth/assets/", corePayload);
+        const res = await coreApi.post('/api/net-worth/assets/', corePayload);
         if (res?.data?.id) {
-          await api.post("/api/ownership-links/sync/", {
-            target_type: "asset",
+          await api.post('/api/ownership-links/sync/', {
+            target_type: 'asset',
             target_id: res.data.id,
             ownership_id,
           });
         }
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
@@ -209,14 +209,14 @@ export const useNetWorthStore = defineStore("netWorth", {
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
         await coreApi.patch(`/api/net-worth/assets/${id}/`, corePayload);
-        await api.post("/api/ownership-links/sync/", {
-          target_type: "asset",
+        await api.post('/api/ownership-links/sync/', {
+          target_type: 'asset',
           target_id: id,
           ownership_id,
         });
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
@@ -231,36 +231,39 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
-        const res = await coreApi.post("/api/net-worth/liabilities/", corePayload);
+        const res = await coreApi.post('/api/net-worth/liabilities/', corePayload);
         if (res?.data?.id) {
-          await api.post("/api/ownership-links/sync/", {
-            target_type: "liability",
+          await api.post('/api/ownership-links/sync/', {
+            target_type: 'liability',
             target_id: res.data.id,
             ownership_id,
           });
         }
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
     },
 
-    async updateLiability(id: number, payload: Partial<Liability> & { ownership_id?: number | null }) {
+    async updateLiability(
+      id: number,
+      payload: Partial<Liability> & { ownership_id?: number | null },
+    ) {
       this.loading = true;
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
         await coreApi.patch(`/api/net-worth/liabilities/${id}/`, corePayload);
-        await api.post("/api/ownership-links/sync/", {
-          target_type: "liability",
+        await api.post('/api/ownership-links/sync/', {
+          target_type: 'liability',
           target_id: id,
           ownership_id,
         });
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
@@ -270,15 +273,12 @@ export const useNetWorthStore = defineStore("netWorth", {
       return this.updateLiability(id, { is_active: false });
     },
 
-
     async fetchSettings() {
       try {
-        const res = await coreApi.get("/api/auth/settings/");
+        const res = await coreApi.get('/api/auth/settings/');
         this.baseCurrency = res.data.base_currency;
       } catch (e: any) {
-        this.error = e?.response?.data
-          ? JSON.stringify(e.response.data)
-          : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       }
     },
 
@@ -286,21 +286,16 @@ export const useNetWorthStore = defineStore("netWorth", {
       this.loading = true;
       this.error = null;
       try {
-        const res = await coreApi.put("/api/auth/settings/", {
+        const res = await coreApi.put('/api/auth/settings/', {
           base_currency: currency,
         });
         this.baseCurrency = res.data.base_currency;
         await this.refreshAll();
       } catch (e: any) {
-        this.error = e?.response?.data
-          ? JSON.stringify(e.response.data)
-          : (e?.message || "Error");
+        this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
       } finally {
         this.loading = false;
       }
     },
-
   },
-
 });
-

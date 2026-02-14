@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import FamilyMemberManager from "@/components/people/FamilyMemberManager.vue";
-import OwnershipManager from "@/components/people/OwnershipManager.vue";
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import FamilyMemberManager from '@/components/people/FamilyMemberManager.vue';
+import OwnershipManager from '@/components/people/OwnershipManager.vue';
 
 const router = useRouter();
-type Tab = "members" | "ownerships";
-const tab = ref<Tab>("members");
+type Tab = 'members' | 'ownerships';
+const tab = ref<Tab>('members');
 </script>
 
 <template>
@@ -15,9 +15,7 @@ const tab = ref<Tab>("members");
       <h1 class="h1 page-title">Personas</h1>
 
       <div class="page-actions">
-        <button class="btn" type="button" @click="router.push('/')">
-          Volver a Patrimonio
-        </button>
+        <button class="btn" type="button" @click="router.push('/')">Volver a Patrimonio</button>
       </div>
     </div>
 
@@ -51,42 +49,42 @@ const tab = ref<Tab>("members");
 </template>
 
 <style scoped>
-.page-header{
+.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.page-title{
+.page-title {
   margin: 0;
 }
 
-.page-actions{
+.page-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.people-content-card{
+.people-content-card {
   margin-top: 14px;
 }
 
-.people-tabs{
+.people-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 14px;
 }
 
-.tab-btn{
+.tab-btn {
   opacity: 0.6;
 }
 
-.tab-btn.is-active{
+.tab-btn.is-active {
   opacity: 1;
 }
 
-.people-panel{
+.people-panel {
   display: grid;
   gap: 14px;
 }

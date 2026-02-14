@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import BaseModal from "@/components/BaseModal.vue";
-import { usePeopleStore } from "@/stores/people";
+import { computed, onMounted, reactive, ref } from 'vue';
+import BaseModal from '@/components/BaseModal.vue';
+import { usePeopleStore } from '@/stores/people';
 
 const store = usePeopleStore();
 
 const form = reactive({
-  name: "",
-  role: "adult" as "adult" | "child",
+  name: '',
+  role: 'adult' as 'adult' | 'child',
 });
 
 const saving = ref(false);
@@ -18,8 +18,8 @@ const createOpen = ref(false);
 const editOpen = ref(false);
 const editForm = reactive({
   id: null as number | null,
-  name: "",
-  role: "adult" as "adult" | "child",
+  name: '',
+  role: 'adult' as 'adult' | 'child',
 });
 
 const prettyError = computed(() => store.error);
@@ -27,7 +27,7 @@ const prettyError = computed(() => store.error);
 const membersSorted = computed(() => {
   const arr = [...store.members];
   arr.sort((a, b) => {
-    if (a.role !== b.role) return a.role === "adult" ? -1 : 1;
+    if (a.role !== b.role) return a.role === 'adult' ? -1 : 1;
     if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
@@ -43,8 +43,8 @@ async function submit() {
 
   try {
     await store.createMember({ name, role: form.role });
-    form.name = "";
-    form.role = "adult";
+    form.name = '';
+    form.role = 'adult';
     createOpen.value = false;
   } finally {
     saving.value = false;
@@ -53,8 +53,8 @@ async function submit() {
 
 function openCreate() {
   store.clearError();
-  form.name = "";
-  form.role = "adult";
+  form.name = '';
+  form.role = 'adult';
   createOpen.value = true;
 }
 
@@ -131,7 +131,12 @@ onMounted(async () => {
           <button class="btn" type="button" :disabled="store.loading" @click="store.fetchMembers()">
             Refrescar
           </button>
-          <button class="btn btn-primary" type="button" :disabled="store.loading" @click="openCreate">
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="store.loading"
+            @click="openCreate"
+          >
             Nuevo miembro
           </button>
         </div>
@@ -164,8 +169,8 @@ onMounted(async () => {
                 class="btn"
                 type="button"
                 :disabled="store.loading || rowBusy[m.id]"
-                @click="toggleActive(m.id, !m.is_active)"
                 :class="{ 'member-status-inactive': !m.is_active }"
+                @click="toggleActive(m.id, !m.is_active)"
               >
                 {{ m.is_active ? 'Activo' : 'Inactivo' }}
               </button>
@@ -198,9 +203,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!membersSorted.length">
-            <td colspan="4" class="subtle member-empty">
-              No hay miembros todavía.
-            </td>
+            <td colspan="4" class="subtle member-empty">No hay miembros todavía.</td>
           </tr>
         </tbody>
       </table>
@@ -210,7 +213,8 @@ onMounted(async () => {
     <BaseModal :open="createOpen" title="Nuevo miembro" @close="closeCreate">
       <div class="member-edit-grid">
         <div class="subtle member-card-subtitle">
-          Crea miembros de la familia. Al crear un adulto, se generara automaticamente su titularidad individual.
+          Crea miembros de la familia. Al crear un adulto, se generara automaticamente su
+          titularidad individual.
         </div>
 
         <div>
@@ -228,7 +232,12 @@ onMounted(async () => {
 
         <div class="member-edit-actions">
           <button class="btn" type="button" @click="closeCreate">Cancelar</button>
-          <button class="btn btn-primary" type="button" :disabled="saving || store.loading" @click="submit">
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="saving || store.loading"
+            @click="submit"
+          >
             Crear
           </button>
         </div>
@@ -268,66 +277,66 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.member-alert{
+.member-alert {
   margin-bottom: 12px;
 }
 
-.member-card-subtitle{
+.member-card-subtitle {
   margin-bottom: 10px;
 }
 
-.member-header-actions{
+.member-header-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.member-table{
+.member-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.member-th{
+.member-th {
   text-align: left;
   padding: 8px 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.member-th-right{
+.member-th-right {
   text-align: right;
 }
 
-.member-td{
+.member-td {
   padding: 8px 6px;
 }
 
-.member-td-right{
+.member-td-right {
   text-align: right;
 }
 
-.member-actions{
+.member-actions {
   display: inline-flex;
   gap: 10px;
 }
 
-.member-empty{
+.member-empty {
   padding: 10px 6px;
 }
 
-.member-status-inactive{
+.member-status-inactive {
   opacity: 0.7;
 }
 
-.member-edit-grid{
+.member-edit-grid {
   display: grid;
   gap: 12px;
 }
 
-.member-field-label{
+.member-field-label {
   margin-bottom: 6px;
 }
 
-.member-edit-actions{
+.member-edit-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;

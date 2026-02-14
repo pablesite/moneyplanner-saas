@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import BaseModal from "@/components/BaseModal.vue";
-import { usePeopleStore } from "@/stores/people";
-import OwnershipLabel from "@/components/people/OwnershipLabel.vue";
+import { computed, onMounted, reactive, ref } from 'vue';
+import BaseModal from '@/components/BaseModal.vue';
+import { usePeopleStore } from '@/stores/people';
+import OwnershipLabel from '@/components/people/OwnershipLabel.vue';
 
 const store = usePeopleStore();
 
@@ -20,12 +20,12 @@ const canCreate = computed(() => {
   if (form.memberIds.length < 2) return false;
 
   for (const id of form.memberIds) {
-    const p = Number(String(form.percents[id] ?? "").replace(",", "."));
+    const p = Number(String(form.percents[id] ?? '').replace(',', '.'));
     if (!Number.isFinite(p) || p <= 0 || p > 100) return false;
   }
 
   const total = form.memberIds.reduce((acc, id) => {
-    const p = Number(String(form.percents[id] ?? "0").replace(",", "."));
+    const p = Number(String(form.percents[id] ?? '0').replace(',', '.'));
     return acc + (Number.isFinite(p) ? p : 0);
   }, 0);
 
@@ -39,7 +39,7 @@ function toggleMember(id: number) {
     delete form.percents[id];
   } else {
     form.memberIds.push(id);
-    form.percents[id] = form.percents[id] ?? "";
+    form.percents[id] = form.percents[id] ?? '';
   }
 }
 
@@ -60,7 +60,7 @@ async function submit() {
 
   const splits = form.memberIds.map((id) => ({
     member_id: id,
-    percent: String(form.percents[id]).replace(",", "."),
+    percent: String(form.percents[id]).replace(',', '.'),
   }));
 
   if (editId.value != null) {
@@ -73,7 +73,7 @@ async function submit() {
 }
 
 async function removeOwnership(id: number) {
-  const ok = window.confirm("¿Eliminar esta titularidad compartida? (Solo si no está en uso)");
+  const ok = window.confirm('¿Eliminar esta titularidad compartida? (Solo si no está en uso)');
   if (!ok) return;
   await store.deleteOwnership(id);
 }
@@ -93,12 +93,12 @@ function openCreate() {
 }
 
 function openEdit(o: any) {
-  if (o.kind !== "shared") return;
+  if (o.kind !== 'shared') return;
   editId.value = o.id;
   form.memberIds = (o.splits ?? []).map((s: any) => s.member?.id).filter((id: any) => id != null);
   form.percents = {};
   (o.splits ?? []).forEach((s: any) => {
-    if (s.member?.id != null) form.percents[s.member.id] = String(s.percent ?? "");
+    if (s.member?.id != null) form.percents[s.member.id] = String(s.percent ?? '');
   });
   showModal.value = true;
 }
@@ -111,9 +111,9 @@ onMounted(async () => {
 const ownershipsSorted = computed(() => {
   const arr = [...store.ownerships];
   arr.sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === "individual" ? -1 : 1;
-    const an = a.member?.name ?? "";
-    const bn = b.member?.name ?? "";
+    if (a.kind !== b.kind) return a.kind === 'individual' ? -1 : 1;
+    const an = a.member?.name ?? '';
+    const bn = b.member?.name ?? '';
     return an.localeCompare(bn);
   });
   return arr;
@@ -131,10 +131,20 @@ const ownershipsSorted = computed(() => {
         <h2 class="card-header-title">Titularidades</h2>
 
         <div class="ownership-actions">
-          <button class="btn" type="button" :disabled="store.loading" @click="store.fetchOwnerships()">
+          <button
+            class="btn"
+            type="button"
+            :disabled="store.loading"
+            @click="store.fetchOwnerships()"
+          >
             Refrescar
           </button>
-          <button class="btn btn-primary" type="button" :disabled="store.loading" @click="openCreate">
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="store.loading"
+            @click="openCreate"
+          >
             Nueva compartida
           </button>
         </div>
@@ -188,9 +198,7 @@ const ownershipsSorted = computed(() => {
           </tr>
 
           <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="subtle ownership-empty">
-              No hay titularidades todavía.
-            </td>
+            <td colspan="2" class="subtle ownership-empty">No hay titularidades todavía.</td>
           </tr>
         </tbody>
       </table>
@@ -214,8 +222,8 @@ const ownershipsSorted = computed(() => {
               :key="m.id"
               class="btn"
               type="button"
-              @click="toggleMember(m.id)"
               :class="{ 'ownership-member-inactive': !form.memberIds.includes(m.id) }"
+              @click="toggleMember(m.id)"
             >
               {{ m.name }}
             </button>
@@ -224,14 +232,12 @@ const ownershipsSorted = computed(() => {
           <div v-if="form.memberIds.length" class="ownership-splits">
             <div class="ownership-splits-header">
               <div class="subtle">Porcentajes</div>
-              <button class="btn" type="button" @click="setEqualSplit">
-                Reparto igual
-              </button>
+              <button class="btn" type="button" @click="setEqualSplit">Reparto igual</button>
             </div>
 
             <div v-for="id in form.memberIds" :key="id" class="ownership-split-row">
               <div class="ownership-split-name">
-                {{ adults.find(a => a.id === id)?.name ?? ('ID ' + id) }}
+                {{ adults.find((a) => a.id === id)?.name ?? 'ID ' + id }}
               </div>
 
               <input
@@ -257,97 +263,97 @@ const ownershipsSorted = computed(() => {
 </template>
 
 <style scoped>
-.ownership-alert{
+.ownership-alert {
   margin-bottom: 12px;
 }
 
-.ownership-actions{
+.ownership-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.ownership-table{
+.ownership-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.ownership-th{
+.ownership-th {
   text-align: left;
   padding: 8px 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.ownership-th-right{
+.ownership-th-right {
   text-align: right;
 }
 
-.ownership-td{
+.ownership-td {
   padding: 8px 6px;
 }
 
-.ownership-td-right{
+.ownership-td-right {
   text-align: right;
 }
 
-.ownership-row-actions{
+.ownership-row-actions {
   display: inline-flex;
   gap: 10px;
   align-items: center;
 }
 
-.ownership-empty{
+.ownership-empty {
   padding: 10px 6px;
 }
 
-.ownership-modal-grid{
+.ownership-modal-grid {
   display: grid;
   gap: 12px;
 }
 
-.ownership-splits-card{
+.ownership-splits-card {
   padding: 12px;
 }
 
-.ownership-member-list{
+.ownership-member-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.ownership-member-inactive{
+.ownership-member-inactive {
   opacity: 0.65;
 }
 
-.ownership-splits{
+.ownership-splits {
   margin-top: 12px;
   display: grid;
   gap: 10px;
 }
 
-.ownership-splits-header{
+.ownership-splits-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
-.ownership-split-row{
+.ownership-split-row {
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.ownership-split-name{
+.ownership-split-name {
   min-width: 160px;
 }
 
-.ownership-percent-input{
+.ownership-percent-input {
   max-width: 140px;
 }
 
-.ownership-modal-actions{
+.ownership-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;

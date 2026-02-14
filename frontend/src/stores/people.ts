@@ -1,21 +1,21 @@
-import { defineStore } from "pinia";
-import { api } from "@/lib/api";
-import axios from "axios";
+import { defineStore } from 'pinia';
+import { api } from '@/lib/api';
+import axios from 'axios';
 
 export type FamilyMember = {
   id: number;
   name: string;
-  role: "adult" | "child";
+  role: 'adult' | 'child';
   is_active: boolean;
 };
 
-export type OwnershipKind = "individual" | "shared";
+export type OwnershipKind = 'individual' | 'shared';
 
 export type OwnershipRead = {
   id: number;
   kind: OwnershipKind;
-  member: { id: number; name: string; role: "adult" | "child" } | null;
-  splits: { member: { id: number; name: string; role: "adult" | "child" }; percent: string }[];
+  member: { id: number; name: string; role: 'adult' | 'child' } | null;
+  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
   is_in_use: boolean;
 };
 
@@ -25,19 +25,19 @@ function extractAxiosError(err: unknown): string {
   const data: any = err.response?.data;
   if (!data) return err.message;
 
-  if (typeof data === "string") return data;
+  if (typeof data === 'string') return data;
   if (data.detail) return data.detail;
 
   const firstKey = Object.keys(data)[0];
   if (!firstKey) return err.message;
   const v = data[firstKey];
   if (Array.isArray(v)) return v[0] ?? err.message;
-  if (typeof v === "string") return v;
+  if (typeof v === 'string') return v;
 
   return err.message;
 }
 
-export const usePeopleStore = defineStore("people", {
+export const usePeopleStore = defineStore('people', {
   state: () => ({
     loading: false as boolean,
     error: null as string | null,
@@ -47,7 +47,7 @@ export const usePeopleStore = defineStore("people", {
 
   getters: {
     activeAdults(state) {
-      return state.members.filter((m) => m.is_active && m.role === "adult");
+      return state.members.filter((m) => m.is_active && m.role === 'adult');
     },
   },
 
@@ -62,7 +62,7 @@ export const usePeopleStore = defineStore("people", {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.get<FamilyMember[]>("/api/family-members/");
+        const { data } = await api.get<FamilyMember[]>('/api/family-members/');
         this.members = data;
       } catch (e) {
         this.error = extractAxiosError(e);
@@ -71,17 +71,17 @@ export const usePeopleStore = defineStore("people", {
       }
     },
 
-    async createMember(payload: { name: string; role: "adult" | "child" }) {
+    async createMember(payload: { name: string; role: 'adult' | 'child' }) {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.post<FamilyMember>("/api/family-members/", {
+        const { data } = await api.post<FamilyMember>('/api/family-members/', {
           ...payload,
           is_active: true,
         });
 
         this.members = [...this.members, data].sort((a, b) => {
-          if (a.role !== b.role) return a.role === "adult" ? -1 : 1;
+          if (a.role !== b.role) return a.role === 'adult' ? -1 : 1;
           return a.name.localeCompare(b.name);
         });
 
@@ -96,7 +96,7 @@ export const usePeopleStore = defineStore("people", {
 
     async updateMember(
       id: number,
-      patch: Partial<Pick<FamilyMember, "name" | "role" | "is_active">>
+      patch: Partial<Pick<FamilyMember, 'name' | 'role' | 'is_active'>>,
     ) {
       this.loading = true;
       this.error = null;
@@ -132,7 +132,7 @@ export const usePeopleStore = defineStore("people", {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.get<OwnershipRead[]>("/api/ownerships/");
+        const { data } = await api.get<OwnershipRead[]>('/api/ownerships/');
         this.ownerships = data;
       } catch (e) {
         this.error = extractAxiosError(e);
@@ -145,8 +145,8 @@ export const usePeopleStore = defineStore("people", {
       this.loading = true;
       this.error = null;
       try {
-        await api.post("/api/ownerships/", {
-          kind: "shared",
+        await api.post('/api/ownerships/', {
+          kind: 'shared',
           member: null,
           splits: payload.splits,
         });
@@ -160,12 +160,15 @@ export const usePeopleStore = defineStore("people", {
       }
     },
 
-    async updateSharedOwnership(id: number, payload: { splits: { member_id: number; percent: string }[] }) {
+    async updateSharedOwnership(
+      id: number,
+      payload: { splits: { member_id: number; percent: string }[] },
+    ) {
       this.loading = true;
       this.error = null;
       try {
         await api.patch(`/api/ownerships/${id}/`, {
-          kind: "shared",
+          kind: 'shared',
           member: null,
           splits: payload.splits,
         });

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue";
+import { computed, reactive, watch } from 'vue';
 
 type Ownership = {
   id: number;
-  kind: "individual" | "shared";
-  member: { id: number; name: string; role: "adult" | "child" } | null;
-  splits: { member: { id: number; name: string; role: "adult" | "child" }; percent: string }[];
+  kind: 'individual' | 'shared';
+  member: { id: number; name: string; role: 'adult' | 'child' } | null;
+  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
   notes: string;
 };
 
@@ -19,7 +19,7 @@ type Props = {
   assets?: { id: number; name: string; category: string }[];
   showFinancedAsset?: boolean;
   allowNegative?: boolean;
-  mode?: "create" | "edit";
+  mode?: 'create' | 'edit';
   initial?: Partial<{
     name: string;
     category: string;
@@ -37,23 +37,23 @@ type Props = {
 const props = defineProps<Props>();
 
 const currencies = [
-  { value: "EUR", label: "EUR" },
-  { value: "USD", label: "USD" },
-  { value: "BTC", label: "BTC" },
-  { value: "ETH", label: "ETH" },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'USD', label: 'USD' },
+  { value: 'BTC', label: 'BTC' },
+  { value: 'ETH', label: 'ETH' },
 ];
 
 const ownershipLabel = (o: Ownership) => {
-  if (o.kind === "individual") {
-    return o.member ? `Individual · ${o.member.name}` : "Individual";
+  if (o.kind === 'individual') {
+    return o.member ? `Individual · ${o.member.name}` : 'Individual';
   }
   const parts = (o.splits || []).map((s) => `${s.member.name} ${s.percent}%`);
-  return `Compartido · ${parts.join(" · ") || "sin splits"}`;
+  return `Compartido · ${parts.join(' · ') || 'sin splits'}`;
 };
 
 const ownershipOptions = computed(() => {
   return [
-    { value: null, label: "Selecciona titularidad" },
+    { value: null, label: 'Selecciona titularidad' },
     ...(props.ownerships || []).map((o) => ({ value: o.id, label: ownershipLabel(o) })),
   ];
 });
@@ -72,24 +72,24 @@ const decimalsByCurrency: Record<string, number> = {
 };
 
 const form = reactive({
-  name: "",
-  category: "",
-  subcategory: "",
-  amount: "",
-  notes: "",
-  currency: "",
-  tracking_mode: "manual",
+  name: '',
+  category: '',
+  subcategory: '',
+  amount: '',
+  notes: '',
+  currency: '',
+  tracking_mode: 'manual',
   is_active: true,
   ownership_id: null as number | null,
   financed_asset_id: null as number | null,
 });
 
-const isEdit = computed(() => props.mode === "edit");
+const isEdit = computed(() => props.mode === 'edit');
 
 const financedAssetOptions = computed(() => {
   const list = Array.isArray(props.assets) ? props.assets : [];
   return [
-    { value: null, label: "No financia ningun activo" },
+    { value: null, label: 'No financia ningun activo' },
     ...list
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -110,17 +110,19 @@ watch(
   () => {
     if (!props.subcategories) return;
     const valid = subcategoriesForCategory.value.some((s) => s.value === form.subcategory);
-    if (!valid) form.subcategory = "";
-  }
+    if (!valid) form.subcategory = '';
+  },
 );
 
 function normalizeLooseNumber(raw: unknown) {
   // Allow only digits and separators, remove spaces (including NBSP)
-  let s = String(raw ?? "").trim().replace(/\s/g, "");
-  if (props.allowNegative && s.startsWith("-")) {
-    s = `-${s.slice(1).replace(/[^\d.,]/g, "")}`;
+  let s = String(raw ?? '')
+    .trim()
+    .replace(/\s/g, '');
+  if (props.allowNegative && s.startsWith('-')) {
+    s = `-${s.slice(1).replace(/[^\d.,]/g, '')}`;
   } else {
-    s = s.replace(/[^\d.,]/g, "");
+    s = s.replace(/[^\d.,]/g, '');
   }
   return s;
 }
@@ -128,48 +130,48 @@ function normalizeLooseNumber(raw: unknown) {
 function sanitizeAmount(raw: unknown, decimals: number) {
   let s = normalizeLooseNumber(raw);
 
-  if (!s) return { value: "", error: "" };
+  if (!s) return { value: '', error: '' };
 
-  const isNegative = props.allowNegative && s.startsWith("-");
+  const isNegative = props.allowNegative && s.startsWith('-');
   if (isNegative) s = s.slice(1);
 
   // If contains both ',' and '.', assume last separator is decimal and the other is thousands
-  const lastComma = s.lastIndexOf(",");
-  const lastDot = s.lastIndexOf(".");
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
   if (lastComma !== -1 && lastDot !== -1) {
-    const decimalSep = lastComma > lastDot ? "," : ".";
-    const thousandSep = decimalSep === "," ? "." : ",";
-    s = s.split(thousandSep).join(""); // remove thousand separators
-    s = s.replace(decimalSep, "."); // normalize decimal to dot
+    const decimalSep = lastComma > lastDot ? ',' : '.';
+    const thousandSep = decimalSep === ',' ? '.' : ',';
+    s = s.split(thousandSep).join(''); // remove thousand separators
+    s = s.replace(decimalSep, '.'); // normalize decimal to dot
   } else {
     // Only comma -> decimal comma
-    s = s.replace(/,/g, ".");
+    s = s.replace(/,/g, '.');
   }
 
   // More than one dot => invalid
-  if ((s.match(/\./g) || []).length > 1) return { value: "", error: "Importe inválido" };
+  if ((s.match(/\./g) || []).length > 1) return { value: '', error: 'Importe inválido' };
 
   // Limit decimals
-  const [intPart, decPart = ""] = s.split(".");
+  const [intPart, decPart = ''] = s.split('.');
   const limitedDec = decPart.slice(0, decimals);
   const normalized = decPart.length ? `${intPart}.${limitedDec}` : intPart;
 
   // Avoid weird states
-  if (!normalized || normalized === ".") return { value: "", error: "" };
+  if (!normalized || normalized === '.') return { value: '', error: '' };
 
   // If starts with dot, prefix 0
-  const finalValue = normalized.startsWith(".") ? `0${normalized}` : normalized;
+  const finalValue = normalized.startsWith('.') ? `0${normalized}` : normalized;
   const signedValue = isNegative ? `-${finalValue}` : finalValue;
 
   // Validate numeric
-  if (Number.isNaN(Number(signedValue))) return { value: "", error: "Importe inválido" };
+  if (Number.isNaN(Number(signedValue))) return { value: '', error: 'Importe inválido' };
 
   // Block negatives (we removed '-' already, but keep for safety)
-  if (!props.allowNegative && finalValue.includes("-")) {
-    return { value: "", error: "No se permiten importes negativos" };
+  if (!props.allowNegative && finalValue.includes('-')) {
+    return { value: '', error: 'No se permiten importes negativos' };
   }
 
-  return { value: signedValue, error: "" };
+  return { value: signedValue, error: '' };
 }
 
 const amountError = computed(() => {
@@ -202,12 +204,12 @@ async function submit() {
 
   await props.onSubmit(payload);
 
-  form.name = "";
-  form.category = "";
-  form.subcategory = "";
-  form.amount = "";
-  form.notes = "";
-  form.currency = "";
+  form.name = '';
+  form.category = '';
+  form.subcategory = '';
+  form.amount = '';
+  form.notes = '';
+  form.currency = '';
   form.ownership_id = null;
   form.financed_asset_id = null;
 }
@@ -216,23 +218,23 @@ watch(
   () => props.initial,
   (initial) => {
     if (!initial) return;
-    form.name = initial.name ?? "";
-    form.category = initial.category ?? "";
-    form.subcategory = initial.subcategory ?? "";
-    form.amount = initial.amount ?? "";
-    form.notes = initial.notes ?? "";
-    form.currency = initial.currency ?? "";
-    form.tracking_mode = initial.tracking_mode ?? "manual";
+    form.name = initial.name ?? '';
+    form.category = initial.category ?? '';
+    form.subcategory = initial.subcategory ?? '';
+    form.amount = initial.amount ?? '';
+    form.notes = initial.notes ?? '';
+    form.currency = initial.currency ?? '';
+    form.tracking_mode = initial.tracking_mode ?? 'manual';
     form.is_active = initial.is_active ?? true;
     form.ownership_id = initial.ownership_id ?? null;
     form.financed_asset_id = initial.financed_asset_id ?? null;
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 );
 </script>
 
 <template>
-  <div class="card" style="margin-bottom: 12px;">
+  <div class="card" style="margin-bottom: 12px">
     <h3 class="h3">{{ title }}</h3>
 
     <div class="form-grid">
@@ -245,7 +247,11 @@ watch(
         </option>
       </select>
 
-      <select v-if="props.subcategories" v-model="form.subcategory" :class="['select', { 'is-placeholder': !form.subcategory }]">
+      <select
+        v-if="props.subcategories"
+        v-model="form.subcategory"
+        :class="['select', { 'is-placeholder': !form.subcategory }]"
+      >
         <option value="" disabled>Selecciona subcategoria</option>
         <option v-for="s in subcategoriesForCategory" :key="s.value" :value="s.value">
           {{ s.label }}
@@ -259,19 +265,17 @@ watch(
         </option>
       </select>
 
-      <input
-        v-model="form.amount"
-        inputmode="decimal"
-        placeholder="Importe"
-        class="input"
-      />
+      <input v-model="form.amount" inputmode="decimal" placeholder="Importe" class="input" />
 
       <div v-if="amountError" class="form-help form-help-error">
         {{ amountError }}
       </div>
 
       <!-- Ownership -->
-      <select v-model="form.ownership_id" :class="['select', { 'is-placeholder': form.ownership_id == null }]">
+      <select
+        v-model="form.ownership_id"
+        :class="['select', { 'is-placeholder': form.ownership_id == null }]"
+      >
         <option v-for="o in ownershipOptions" :key="String(o.value)" :value="o.value">
           {{ o.label }}
         </option>
@@ -295,11 +299,9 @@ watch(
       </label>
 
       <div class="form-actions">
-        <button v-if="onCancel" class="btn" type="button" @click="onCancel">
-          Cancelar
-        </button>
-        <button @click="submit" class="btn btn-primary" :disabled="!!amountError">
-          {{ isEdit ? "Guardar" : "Crear" }}
+        <button v-if="onCancel" class="btn" type="button" @click="onCancel">Cancelar</button>
+        <button class="btn btn-primary" :disabled="!!amountError" @click="submit">
+          {{ isEdit ? 'Guardar' : 'Crear' }}
         </button>
       </div>
     </div>
@@ -307,25 +309,25 @@ watch(
 </template>
 
 <style scoped>
-.form-help{
+.form-help {
   grid-column: 1 / -1;
   font-size: 12px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.form-help-error{
+.form-help-error {
   color: #b00020;
 }
-.select.is-placeholder{
-  color: rgba(255,255,255,0.45);
+.select.is-placeholder {
+  color: rgba(255, 255, 255, 0.45);
 }
-.form-actions{
+.form-actions {
   grid-column: 1 / -1;
   display: flex;
   justify-content: center;
   gap: 10px;
 }
-.form-actions .btn{
+.form-actions .btn {
   width: auto;
   min-width: 140px;
 }
