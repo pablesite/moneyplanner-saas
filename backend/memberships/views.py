@@ -12,10 +12,10 @@ from .serializers import (
     OwnershipWriteSerializer,
 )
 from .services import (
-    assert_member_can_be_deleted,
     assert_ownership_can_be_deleted,
     assert_ownership_can_be_updated,
-    ensure_individual_ownership_for_member,
+    create_member_with_default_ownership,
+    delete_member_and_individual_ownership,
     sync_ownership_link,
 )
 
@@ -32,16 +32,16 @@ class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
     queryset = FamilyMember.objects.all()
 
     def perform_create(self, serializer):
-        member = serializer.save(user=self.request.user)
-        ensure_individual_ownership_for_member(user=self.request.user, member=member)
+        member = create_member_with_default_ownership(
+            user=self.request.user,
+            validated_data=serializer.validated_data,
+        )
+        serializer.instance = member
 
     def destroy(self, request, *args, **kwargs):
         member = self.get_object()
-        assert_member_can_be_deleted(member)
-        Ownership.objects.filter(
-            user=request.user, kind=Ownership.Kind.INDIVIDUAL, member=member
-        ).delete()
-        return super().destroy(request, *args, **kwargs)
+        delete_member_and_individual_ownership(member=member)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):

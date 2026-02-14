@@ -134,6 +134,46 @@ class OwnershipLinkTests(APITestCase):
         self.assertIn("en uso", str(response.data).lower())
 
 
+class FamilyMemberLifecycleTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username="u_members", password="pass1234")
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_member_creates_individual_ownership(self):
+        response = self.client.post(
+            "/api/family-members/",
+            {"name": "Eva", "role": FamilyMember.Role.ADULT, "is_active": True},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        member_id = response.data["id"]
+        self.assertTrue(
+            Ownership.objects.filter(
+                user=self.user,
+                kind=Ownership.Kind.INDIVIDUAL,
+                member_id=member_id,
+            ).exists()
+        )
+
+    def test_delete_member_removes_individual_ownership(self):
+        member = FamilyMember.objects.create(
+            user=self.user, name="Leo", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        Ownership.objects.create(user=self.user, kind=Ownership.Kind.INDIVIDUAL, member=member)
+
+        response = self.client.delete(f"/api/family-members/{member.id}/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(FamilyMember.objects.filter(id=member.id).exists())
+        self.assertFalse(
+            Ownership.objects.filter(
+                user=self.user,
+                kind=Ownership.Kind.INDIVIDUAL,
+                member_id=member.id,
+            ).exists()
+        )
+
+
 class DualApiFlowTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="u4", password="pass1234")

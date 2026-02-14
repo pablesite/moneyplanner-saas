@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from django.db import transaction
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
@@ -13,6 +14,24 @@ def ensure_individual_ownership_for_member(*, user, member: FamilyMember) -> Own
         kind=Ownership.Kind.INDIVIDUAL,
         member=member,
     )[0]
+
+
+@transaction.atomic
+def create_member_with_default_ownership(*, user, validated_data: dict) -> FamilyMember:
+    member = FamilyMember.objects.create(user=user, **validated_data)
+    ensure_individual_ownership_for_member(user=user, member=member)
+    return member
+
+
+@transaction.atomic
+def delete_member_and_individual_ownership(*, member: FamilyMember) -> None:
+    assert_member_can_be_deleted(member)
+    Ownership.objects.filter(
+        user=member.user,
+        kind=Ownership.Kind.INDIVIDUAL,
+        member=member,
+    ).delete()
+    member.delete()
 
 
 def assert_member_belongs_to_user(*, user, member: FamilyMember | None) -> None:
