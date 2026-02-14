@@ -28,10 +28,10 @@ Estado: pendiente.
 - [ ] Definir estrategia de deprecacion del repo `core` anterior (privado/archivo).
 
 ### Fase 1: Refactor Arquitectonico Backend
-Estado: pendiente.
+Estado: en progreso.
 
 - [ ] Revisar y simplificar capas: `views -> serializers -> services`.
-- [ ] Estandarizar manejo de errores y codigos HTTP.
+- [x] Estandarizar manejo de errores y codigos HTTP.
 - [ ] Consolidar validaciones de negocio en servicios.
 - [ ] Revisar contratos API y documentar cambios.
 - [ ] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.

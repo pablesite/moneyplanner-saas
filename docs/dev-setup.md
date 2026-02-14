@@ -172,6 +172,19 @@ CI configurado:
 2. Core: `core/.github/workflows/quality-core.yml`
 3. Convenciones de calidad: `docs/code-quality-conventions.md`
 
+Formato de errores API (Roadmap-02 / Fase 1):
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Request failed.",
+    "details": {
+      "campo": ["motivo"]
+    }
+  }
+}
+```
+
 ## Referencias
 1. Runbook operativo: `docs/runbook.md`
 2. Contrato `core` vs `saas`: `docs/architecture.md`
