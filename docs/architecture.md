@@ -49,6 +49,7 @@
 ## Relacionado
 - Roadmap actual de refactor y trabajo pendiente: `docs/roadmap-02-release.md`.
 - Roadmap histórico (V1, completado): `docs/roadmap-01-core-saas.md`.
+- Contratos API vigentes (core + saas): `docs/api-contracts.md`.
 
 ## Arquitectura funcional relacionada
 - Arquitectura de módulos y dependencias funcionales: `docs/product-architecture.md`.
