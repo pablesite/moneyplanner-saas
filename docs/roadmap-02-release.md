@@ -39,6 +39,7 @@ Estado: en progreso.
 - [x] Estandarizar manejo de errores y codigos HTTP.
 - [ ] Consolidar validaciones de negocio en servicios.
   - Avance: aplicado en dominio `memberships` (SaaS).
+  - Avance: `core/backend/core` mueve validaciones de FX e inflation de serializers a services.
 - [x] Revisar contratos API y documentar cambios.
   - Avance: contrato consolidado en `docs/api-contracts.md`.
 - [ ] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.
