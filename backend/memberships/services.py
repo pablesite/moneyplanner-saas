@@ -121,6 +121,19 @@ def save_ownership(*, user, instance: Ownership | None, validated_data: dict) ->
     return instance
 
 
+@transaction.atomic
+def update_ownership(*, ownership: Ownership, user, validated_data: dict) -> Ownership:
+    assert_member_belongs_to_user(user=user, member=ownership.member)
+    assert_ownership_can_be_updated(ownership)
+    return save_ownership(user=user, instance=ownership, validated_data=validated_data)
+
+
+@transaction.atomic
+def delete_ownership(*, ownership: Ownership) -> None:
+    assert_ownership_can_be_deleted(ownership)
+    ownership.delete()
+
+
 def get_ownership_for_user(*, user, ownership_id: int) -> Ownership:
     try:
         return Ownership.objects.get(id=ownership_id, user=user)

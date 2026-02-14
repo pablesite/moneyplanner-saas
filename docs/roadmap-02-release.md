@@ -34,6 +34,7 @@ Estado: en progreso.
   - Avance: `core/backend/accounts` delega persistencia de `UserSettings` a `services.py`.
   - Avance: `core/backend/net_worth` mueve calculo de snapshot/summary a `services.py`.
   - Avance: `backend/memberships` mueve alta/baja de `FamilyMember` a servicios transaccionales.
+  - Avance: `backend/memberships` mueve update/delete de `Ownership` a servicios.
 - [x] Estandarizar manejo de errores y codigos HTTP.
 - [ ] Consolidar validaciones de negocio en servicios.
   - Avance: aplicado en dominio `memberships` (SaaS).

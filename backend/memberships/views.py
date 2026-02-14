@@ -12,11 +12,11 @@ from .serializers import (
     OwnershipWriteSerializer,
 )
 from .services import (
-    assert_ownership_can_be_deleted,
-    assert_ownership_can_be_updated,
     create_member_with_default_ownership,
     delete_member_and_individual_ownership,
+    delete_ownership,
     sync_ownership_link,
+    update_ownership,
 )
 
 
@@ -59,13 +59,17 @@ class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = self.get_object()
-        assert_ownership_can_be_updated(instance)
-        serializer.save()
+        updated = update_ownership(
+            ownership=instance,
+            user=self.request.user,
+            validated_data=serializer.validated_data,
+        )
+        serializer.instance = updated
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        assert_ownership_can_be_deleted(instance)
-        return super().destroy(request, *args, **kwargs)
+        delete_ownership(ownership=instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class OwnershipLinkViewSet(UserScopedQuerySetMixin, viewsets.GenericViewSet):

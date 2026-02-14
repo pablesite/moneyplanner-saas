@@ -56,6 +56,30 @@ class OwnershipUsageConstraintsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("en uso", str(response.data).lower())
 
+    def test_update_individual_ownership_is_blocked(self):
+        individual = Ownership.objects.create(
+            user=self.user,
+            kind=Ownership.Kind.INDIVIDUAL,
+            member=self.m1,
+        )
+        response = self.client.patch(
+            f"/api/ownerships/{individual.id}/",
+            {"kind": "individual", "member": self.m2.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("no se puede editar", str(response.data).lower())
+
+    def test_delete_individual_ownership_is_blocked(self):
+        individual = Ownership.objects.create(
+            user=self.user,
+            kind=Ownership.Kind.INDIVIDUAL,
+            member=self.m1,
+        )
+        response = self.client.delete(f"/api/ownerships/{individual.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("no se puede eliminar", str(response.data).lower())
+
 
 class OwnershipLinkTests(APITestCase):
     def setUp(self):
