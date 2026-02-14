@@ -53,17 +53,17 @@ Estado: pendiente.
 - [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
-Estado: pendiente.
+Estado: en progreso.
 
-- [ ] Backend:
-  - [ ] `ruff` (lint + formato)
-  - [ ] `mypy` (tipado gradual)
-- [ ] Frontend:
-  - [ ] `eslint` (TS + Vue)
-  - [ ] `prettier` (formato)
+- [x] Backend:
+  - [x] `ruff` (lint + formato)
+  - [x] `mypy` (tipado gradual)
+- [x] Frontend:
+  - [x] `eslint` (TS + Vue)
+  - [x] `prettier` (formato)
   - [ ] `vue-tsc` en CI
 - [ ] Convenciones de comentarios y complejidad ciclomatica maxima por funcion.
-- [ ] Hooks pre-commit (lint/format rapido).
+- [x] Hooks pre-commit (lint/format rapido).
 
 ### Fase 4: Estrategia De Testing Potente
 Estado: pendiente.

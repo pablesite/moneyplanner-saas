@@ -127,6 +127,46 @@ Para ver ayuda:
 ```powershell
 .\scripts\dev.ps1 help
 ```
+
+## Chequeos de calidad (Roadmap-02 / Fase 3)
+1. Backend SaaS:
+```bash
+cd backend
+ruff check .
+ruff format --check .
+mypy .
+```
+
+2. Backend Core:
+```bash
+cd core/backend
+ruff check .
+ruff format --check .
+mypy .
+```
+
+3. Frontend SaaS:
+```bash
+cd frontend
+npm run lint
+npm run format:check
+npm run typecheck
+```
+
+4. Frontend Core:
+```bash
+cd core/frontend
+npm run lint
+npm run format:check
+npm run typecheck
+```
+
+5. Hooks pre-commit:
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
 ## Referencias
 1. Runbook operativo: `docs/runbook.md`
 2. Contrato `core` vs `saas`: `docs/architecture.md`
