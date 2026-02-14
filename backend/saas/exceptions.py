@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""
+Mirror of canonical API error contract handler from
+`core/backend/config/exceptions.py`.
+
+Keep this file synchronized intentionally (no cross-repo imports).
+"""
+
 from rest_framework import status
 from rest_framework.exceptions import ErrorDetail, ValidationError
 from rest_framework.views import exception_handler

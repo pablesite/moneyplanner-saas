@@ -28,9 +28,9 @@ Estado: pendiente.
 - [ ] Definir estrategia de deprecacion del repo `core` anterior (privado/archivo).
 
 ### Fase 1: Refactor Arquitectonico Backend
-Estado: en progreso.
+Estado: completada.
 
-- [ ] Revisar y simplificar capas: `views -> serializers -> services`.
+- [x] Revisar y simplificar capas: `views -> serializers -> services`.
   - Avance: `core/backend/accounts` delega persistencia de `UserSettings` a `services.py`.
   - Avance: `core/backend/net_worth` mueve calculo de snapshot/summary a `services.py`.
   - Avance: `core/backend/net_worth` mueve validaciones de `Asset/Liability` de serializers a servicios.
@@ -47,12 +47,15 @@ Estado: en progreso.
   - Avance: `core/backend/net_worth` mueve validacion de `NetWorthSnapshotSerializer` a servicios.
   - Avance: `core/backend/net_worth` extrae el helper de error API fuera de la vista (`api.py`).
 - [x] Estandarizar manejo de errores y codigos HTTP.
-- [ ] Consolidar validaciones de negocio en servicios.
+- [x] Consolidar validaciones de negocio en servicios.
   - Avance: aplicado en dominio `memberships` (SaaS).
   - Avance: `core/backend/core` mueve validaciones de FX e inflation de serializers a services.
 - [x] Revisar contratos API y documentar cambios.
   - Avance: contrato consolidado en `docs/api-contracts.md`.
-- [ ] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.
+- [x] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.
+  - Avance: inventario inicial completado; la duplicacion backend activa mas clara esta en el manejo uniforme de errores (`custom_exception_handler`) entre `core/backend/config` y `backend/saas`.
+  - Avance: fuente canonica definida (`core/backend/config/exceptions.py`) y estrategia de sincronizacion aplicada sin acoplar importaciones cruzadas entre repos.
+  - Avance: fronteras y reglas de sincronizacion documentadas en `docs/core-saas-boundaries.md`.
 
 ### Fase 2: Refactor Frontend + UI Profesional
 Estado: pendiente.
