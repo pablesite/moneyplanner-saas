@@ -2,9 +2,10 @@ from rest_framework import serializers
 
 from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
 from .services import (
+    create_ownership,
     ownership_is_in_use,
     resolve_ownership_for_sync,
-    save_ownership,
+    update_ownership,
     validate_ownership_write_payload,
 )
 
@@ -74,12 +75,14 @@ class OwnershipWriteSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        user = self._get_user()
-        return save_ownership(user=user, instance=None, validated_data=validated_data)
+        return create_ownership(user=self._get_user(), validated_data=validated_data)
 
     def update(self, instance, validated_data):
-        user = self._get_user()
-        return save_ownership(user=user, instance=instance, validated_data=validated_data)
+        return update_ownership(
+            ownership=instance,
+            user=self._get_user(),
+            validated_data=validated_data,
+        )
 
 
 class OwnershipLinkReadSerializer(serializers.ModelSerializer):

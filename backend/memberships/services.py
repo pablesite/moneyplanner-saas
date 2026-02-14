@@ -134,6 +134,12 @@ def save_ownership(*, user, instance: Ownership | None, validated_data: dict) ->
 
 
 @transaction.atomic
+def create_ownership(*, user, validated_data: dict) -> Ownership:
+    validate_ownership_write_payload(user=user, instance=None, attrs=validated_data)
+    return save_ownership(user=user, instance=None, validated_data=validated_data)
+
+
+@transaction.atomic
 def update_ownership(*, ownership: Ownership, user, validated_data: dict) -> Ownership:
     assert_member_belongs_to_user(user=user, member=ownership.member)
     assert_ownership_can_be_updated(ownership)

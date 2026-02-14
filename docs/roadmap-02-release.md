@@ -34,9 +34,12 @@ Estado: en progreso.
   - Avance: `core/backend/accounts` delega persistencia de `UserSettings` a `services.py`.
   - Avance: `core/backend/net_worth` mueve calculo de snapshot/summary a `services.py`.
   - Avance: `core/backend/net_worth` mueve validaciones de `Asset/Liability` de serializers a servicios.
+  - Avance: `core/backend/net_worth` mueve `create` de serializers (`Asset/Liability/Snapshot`) a servicios.
+  - Avance: `core/backend/net_worth` mueve serializacion de respuesta de `summary` a servicios.
   - Avance: `backend/memberships` mueve alta/baja de `FamilyMember` a servicios transaccionales.
   - Avance: `backend/memberships` mueve update/delete de `Ownership` a servicios.
   - Avance: `backend/memberships` delega validacion de escritura/sync de `Ownership` desde serializers a servicios.
+  - Avance: `backend/memberships` delega create/update de `Ownership` desde serializer a servicios.
 - [x] Estandarizar manejo de errores y codigos HTTP.
 - [ ] Consolidar validaciones de negocio en servicios.
   - Avance: aplicado en dominio `memberships` (SaaS).
