@@ -167,11 +167,6 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-6. Chequeo de archivos espejo `core`/`saas`:
-```bash
-python scripts/check_mirrored_backend_files.py
-```
-
 CI configurado:
 1. SaaS: `.github/workflows/quality-saas.yml`
 2. Core: `core/.github/workflows/quality-core.yml`
