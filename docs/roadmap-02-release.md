@@ -42,7 +42,10 @@ Estado: en progreso.
   - Avance: `backend/memberships` delega validacion de escritura/sync de `Ownership` desde serializers a servicios.
   - Avance: `backend/memberships` delega create/update de `Ownership` desde serializer a servicios.
   - Avance: `backend/memberships` mueve orquestacion de `OwnershipLink` (`list/sync`) de views a servicios.
+  - Avance: `backend/memberships` mueve validacion de `percent` de `OwnershipSplitInputSerializer` a servicios.
   - Avance: `core/backend/net_worth` mueve el queryset dinamico de `financed_asset_id` desde serializer a service+view context.
+  - Avance: `core/backend/net_worth` mueve validacion de `NetWorthSnapshotSerializer` a servicios.
+  - Avance: `core/backend/net_worth` extrae el helper de error API fuera de la vista (`api.py`).
 - [x] Estandarizar manejo de errores y codigos HTTP.
 - [ ] Consolidar validaciones de negocio en servicios.
   - Avance: aplicado en dominio `memberships` (SaaS).

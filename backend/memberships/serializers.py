@@ -5,6 +5,7 @@ from .services import (
     create_ownership,
     ownership_is_in_use,
     update_ownership,
+    validate_split_percent,
     validate_ownership_write_payload,
 )
 
@@ -47,10 +48,7 @@ class OwnershipSplitInputSerializer(serializers.Serializer):
     percent = serializers.DecimalField(max_digits=5, decimal_places=2)
 
     def validate_percent(self, value):
-        if value <= 0:
-            raise serializers.ValidationError("El porcentaje debe ser > 0.")
-        if value > 100:
-            raise serializers.ValidationError("El porcentaje no puede ser > 100.")
+        validate_split_percent(percent=value)
         return value
 
 

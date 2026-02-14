@@ -81,6 +81,13 @@ def validate_ownership_payload(*, user, kind, member, splits) -> None:
         )
 
 
+def validate_split_percent(*, percent) -> None:
+    if percent <= 0:
+        raise DRFValidationError({"percent": "El porcentaje debe ser > 0."})
+    if percent > 100:
+        raise DRFValidationError({"percent": "El porcentaje no puede ser > 100."})
+
+
 def validate_ownership_write_payload(*, user, instance: Ownership | None, attrs: dict) -> None:
     member = attrs.get("member", getattr(instance, "member", None))
     assert_member_belongs_to_user(user=user, member=member)
