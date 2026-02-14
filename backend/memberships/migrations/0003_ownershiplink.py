@@ -6,7 +6,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("memberships", "0002_remove_ownership_ownership_individual_requires_member_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
@@ -16,24 +15,44 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="OwnershipLink",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("target_type", models.CharField(choices=[("asset", "Activo"), ("liability", "Pasivo")], max_length=16)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "target_type",
+                    models.CharField(
+                        choices=[("asset", "Activo"), ("liability", "Pasivo")], max_length=16
+                    ),
+                ),
                 ("target_id", models.PositiveIntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "ownership",
-                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="links", to="memberships.ownership"),
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="links",
+                        to="memberships.ownership",
+                    ),
                 ),
                 (
                     "user",
-                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="ownership_links", to=settings.AUTH_USER_MODEL),
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="ownership_links",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
                 ),
             ],
         ),
         migrations.AddIndex(
             model_name="ownershiplink",
-            index=models.Index(fields=["user", "target_type", "target_id"], name="memberships_user_id_247f36_idx"),
+            index=models.Index(
+                fields=["user", "target_type", "target_id"], name="memberships_user_id_247f36_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="ownershiplink",
@@ -41,6 +60,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="ownershiplink",
-            constraint=models.UniqueConstraint(fields=("user", "target_type", "target_id"), name="uniq_target_per_user"),
+            constraint=models.UniqueConstraint(
+                fields=("user", "target_type", "target_id"), name="uniq_target_per_user"
+            ),
         ),
     ]

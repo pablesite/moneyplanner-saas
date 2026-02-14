@@ -61,7 +61,7 @@ Estado: en progreso.
 - [x] Frontend:
   - [x] `eslint` (TS + Vue)
   - [x] `prettier` (formato)
-  - [ ] `vue-tsc` en CI
+  - [x] `vue-tsc` en CI
 - [ ] Convenciones de comentarios y complejidad ciclomatica maxima por funcion.
 - [x] Hooks pre-commit (lint/format rapido).
 

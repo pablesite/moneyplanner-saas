@@ -78,24 +78,36 @@ class OwnershipWriteSerializer(serializers.ModelSerializer):
 
         splits = attrs.get("splits", None)
         if splits is None and self.instance is not None:
-            splits = [{"member_id": s.member_id, "percent": s.percent} for s in self.instance.splits.all()]
+            splits = [
+                {"member_id": s.member_id, "percent": s.percent} for s in self.instance.splits.all()
+            ]
 
         if kind == Ownership.Kind.INDIVIDUAL:
             if member is None:
-                raise serializers.ValidationError({"member": "Obligatorio para titularidad individual."})
+                raise serializers.ValidationError(
+                    {"member": "Obligatorio para titularidad individual."}
+                )
             if splits:
-                raise serializers.ValidationError({"splits": "No se permiten splits en titularidad individual."})
+                raise serializers.ValidationError(
+                    {"splits": "No se permiten splits en titularidad individual."}
+                )
 
         elif kind == Ownership.Kind.SHARED:
             if member is not None:
-                raise serializers.ValidationError({"member": "Debe ser null en titularidad compartida."})
+                raise serializers.ValidationError(
+                    {"member": "Debe ser null en titularidad compartida."}
+                )
             if not splits:
-                raise serializers.ValidationError({"splits": "Obligatorio indicar splits en titularidad compartida."})
+                raise serializers.ValidationError(
+                    {"splits": "Obligatorio indicar splits en titularidad compartida."}
+                )
 
             member_ids = [s["member_id"] for s in splits]
 
             if len(member_ids) != len(set(member_ids)):
-                raise serializers.ValidationError({"splits": "No puede haber miembros duplicados en splits."})
+                raise serializers.ValidationError(
+                    {"splits": "No puede haber miembros duplicados en splits."}
+                )
 
             members = FamilyMember.objects.filter(id__in=member_ids)
 
@@ -103,14 +115,20 @@ class OwnershipWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"splits": "Algun member_id no existe."})
 
             if user is not None and members.exclude(user=user).exists():
-                raise serializers.ValidationError({"splits": "Los miembros deben pertenecer a este usuario."})
+                raise serializers.ValidationError(
+                    {"splits": "Los miembros deben pertenecer a este usuario."}
+                )
 
             if members.exclude(role=FamilyMember.Role.ADULT).exists():
-                raise serializers.ValidationError({"splits": "Solo se permiten adultos en compartidos."})
+                raise serializers.ValidationError(
+                    {"splits": "Solo se permiten adultos en compartidos."}
+                )
 
             total = sum(Decimal(str(s["percent"])) for s in splits)
             if total != Decimal("100"):
-                raise serializers.ValidationError({"splits": f"La suma de porcentajes debe ser 100. Ahora es {total}."})
+                raise serializers.ValidationError(
+                    {"splits": f"La suma de porcentajes debe ser 100. Ahora es {total}."}
+                )
 
         else:
             raise serializers.ValidationError({"kind": "Tipo de titularidad invalido."})
@@ -184,7 +202,9 @@ class OwnershipLinkSyncSerializer(serializers.Serializer):
         try:
             ownership = Ownership.objects.get(id=ownership_id, user=user)
         except Ownership.DoesNotExist:
-            raise serializers.ValidationError({"ownership_id": "La titularidad no existe para este usuario."})
+            raise serializers.ValidationError(
+                {"ownership_id": "La titularidad no existe para este usuario."}
+            )
 
         attrs["ownership"] = ownership
         return attrs

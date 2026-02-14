@@ -167,6 +167,10 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+CI configurado:
+1. SaaS: `.github/workflows/quality-saas.yml`
+2. Core: `core/.github/workflows/quality-core.yml`
+
 ## Referencias
 1. Runbook operativo: `docs/runbook.md`
 2. Contrato `core` vs `saas`: `docs/architecture.md`

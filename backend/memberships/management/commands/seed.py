@@ -60,4 +60,3 @@ class Command(BaseCommand):
             self.stdout.write(f"Admin user created: {username}")
         else:
             self.stdout.write(f"Admin user ensured: {username}")
-

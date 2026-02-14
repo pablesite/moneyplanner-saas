@@ -37,7 +37,9 @@ class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         member = self.get_object()
         assert_member_can_be_deleted(member)
-        Ownership.objects.filter(user=request.user, kind=Ownership.Kind.INDIVIDUAL, member=member).delete()
+        Ownership.objects.filter(
+            user=request.user, kind=Ownership.Kind.INDIVIDUAL, member=member
+        ).delete()
         return super().destroy(request, *args, **kwargs)
 
 

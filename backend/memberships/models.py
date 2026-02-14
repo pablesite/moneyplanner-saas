@@ -9,7 +9,9 @@ class FamilyMember(models.Model):
         ADULT = "adult", "Adulto"
         CHILD = "child", "Nino"
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="family_members")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="family_members"
+    )
 
     name = models.CharField(max_length=80)
     role = models.CharField(max_length=16, choices=Role.choices, default=Role.ADULT)
@@ -35,7 +37,9 @@ class Ownership(models.Model):
         INDIVIDUAL = "individual", "Individual"
         SHARED = "shared", "Compartido"
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ownerships")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ownerships"
+    )
     kind = models.CharField(max_length=16, choices=Kind.choices)
 
     member = models.ForeignKey(
@@ -53,7 +57,10 @@ class Ownership(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="ownership_individual_requires_member",
-                condition=(Q(kind="individual", member__isnull=False) | Q(kind="shared", member__isnull=True)),
+                condition=(
+                    Q(kind="individual", member__isnull=False)
+                    | Q(kind="shared", member__isnull=True)
+                ),
             ),
         ]
 
@@ -63,7 +70,9 @@ class Ownership(models.Model):
 
 class OwnershipSplit(models.Model):
     ownership = models.ForeignKey(Ownership, on_delete=models.CASCADE, related_name="splits")
-    member = models.ForeignKey(FamilyMember, on_delete=models.PROTECT, related_name="ownership_splits")
+    member = models.ForeignKey(
+        FamilyMember, on_delete=models.PROTECT, related_name="ownership_splits"
+    )
 
     percent = models.DecimalField(
         max_digits=5,
@@ -73,7 +82,9 @@ class OwnershipSplit(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["ownership", "member"], name="uniq_split_member_per_ownership"),
+            models.UniqueConstraint(
+                fields=["ownership", "member"], name="uniq_split_member_per_ownership"
+            ),
         ]
 
     def __str__(self) -> str:
@@ -85,7 +96,9 @@ class OwnershipLink(models.Model):
         ASSET = "asset", "Activo"
         LIABILITY = "liability", "Pasivo"
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ownership_links")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ownership_links"
+    )
     ownership = models.ForeignKey(Ownership, on_delete=models.CASCADE, related_name="links")
     target_type = models.CharField(max_length=16, choices=TargetType.choices)
     target_id = models.PositiveIntegerField()
@@ -105,6 +118,9 @@ class OwnershipLink(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.user_id} - {self.target_type}:{self.target_id} -> ownership:{self.ownership_id}"
+        return (
+            f"{self.user_id} - {self.target_type}:{self.target_id} -> ownership:{self.ownership_id}"
+        )
+
 
 # Create your models here.

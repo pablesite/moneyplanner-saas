@@ -36,18 +36,26 @@ def member_is_in_use(member: FamilyMember) -> bool:
 
     return any(
         ownership_is_in_use(o)
-        for o in Ownership.objects.filter(id__in=candidate_ids).only("id", "user_id", "kind", "member_id")
+        for o in Ownership.objects.filter(id__in=candidate_ids).only(
+            "id", "user_id", "kind", "member_id"
+        )
     )
 
 
 def assert_member_can_be_deleted(member: FamilyMember) -> None:
-    if Ownership.objects.filter(user=member.user, kind=Ownership.Kind.SHARED, splits__member=member).exists():
+    if Ownership.objects.filter(
+        user=member.user, kind=Ownership.Kind.SHARED, splits__member=member
+    ).exists():
         raise DRFValidationError(
-            {"detail": "Este miembro aparece en una titularidad compartida. Elimina/ajusta esa titularidad antes."}
+            {
+                "detail": "Este miembro aparece en una titularidad compartida. Elimina/ajusta esa titularidad antes."
+            }
         )
 
     if member_is_in_use(member):
-        raise DRFValidationError({"detail": "No se puede eliminar este miembro porque esta en uso."})
+        raise DRFValidationError(
+            {"detail": "No se puede eliminar este miembro porque esta en uso."}
+        )
 
 
 def assert_ownership_can_be_updated(ownership: Ownership) -> None:
@@ -55,7 +63,9 @@ def assert_ownership_can_be_updated(ownership: Ownership) -> None:
         raise DRFValidationError({"detail": "La titularidad individual no se puede editar."})
 
     if ownership_is_in_use(ownership):
-        raise DRFValidationError({"detail": "Esta titularidad ya esta en uso. Crea una nueva en lugar de editarla."})
+        raise DRFValidationError(
+            {"detail": "Esta titularidad ya esta en uso. Crea una nueva en lugar de editarla."}
+        )
 
 
 def assert_ownership_can_be_deleted(ownership: Ownership) -> None:
@@ -63,4 +73,6 @@ def assert_ownership_can_be_deleted(ownership: Ownership) -> None:
         raise DRFValidationError({"detail": "La titularidad individual no se puede eliminar."})
 
     if ownership_is_in_use(ownership):
-        raise DRFValidationError({"detail": "Esta titularidad ya esta en uso. No se puede eliminar."})
+        raise DRFValidationError(
+            {"detail": "Esta titularidad ya esta en uso. No se puede eliminar."}
+        )
