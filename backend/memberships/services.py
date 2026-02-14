@@ -81,6 +81,18 @@ def validate_ownership_payload(*, user, kind, member, splits) -> None:
         )
 
 
+def validate_ownership_write_payload(*, user, instance: Ownership | None, attrs: dict) -> None:
+    member = attrs.get("member", getattr(instance, "member", None))
+    assert_member_belongs_to_user(user=user, member=member)
+
+    kind = attrs.get("kind", getattr(instance, "kind", None))
+    splits = attrs.get("splits", None)
+    if splits is None and instance is not None:
+        splits = [{"member_id": s.member_id, "percent": s.percent} for s in instance.splits.all()]
+
+    validate_ownership_payload(user=user, kind=kind, member=member, splits=splits)
+
+
 def save_ownership(*, user, instance: Ownership | None, validated_data: dict) -> Ownership:
     splits = validated_data.pop("splits", None)
 
@@ -141,6 +153,12 @@ def get_ownership_for_user(*, user, ownership_id: int) -> Ownership:
         raise DRFValidationError(
             {"ownership_id": "La titularidad no existe para este usuario."}
         ) from err
+
+
+def resolve_ownership_for_sync(*, user, ownership_id: int | None) -> Ownership | None:
+    if ownership_id is None:
+        return None
+    return get_ownership_for_user(user=user, ownership_id=ownership_id)
 
 
 def sync_ownership_link(

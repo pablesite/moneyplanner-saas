@@ -2,11 +2,10 @@ from rest_framework import serializers
 
 from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
 from .services import (
-    assert_member_belongs_to_user,
-    get_ownership_for_user,
     ownership_is_in_use,
+    resolve_ownership_for_sync,
     save_ownership,
-    validate_ownership_payload,
+    validate_ownership_write_payload,
 )
 
 
@@ -66,25 +65,12 @@ class OwnershipWriteSerializer(serializers.ModelSerializer):
         req = self.context.get("request")
         return getattr(req, "user", None)
 
-    def validate_member(self, value):
-        user = self._get_user()
-        assert_member_belongs_to_user(user=user, member=value)
-        return value
-
     def validate(self, attrs):
-        user = self._get_user()
-
-        kind = attrs.get("kind", getattr(self.instance, "kind", None))
-        member = attrs.get("member", getattr(self.instance, "member", None))
-
-        splits = attrs.get("splits", None)
-        if splits is None and self.instance is not None:
-            splits = [
-                {"member_id": s.member_id, "percent": s.percent} for s in self.instance.splits.all()
-            ]
-
-        validate_ownership_payload(user=user, kind=kind, member=member, splits=splits)
-
+        validate_ownership_write_payload(
+            user=self._get_user(),
+            instance=self.instance,
+            attrs=attrs,
+        )
         return attrs
 
     def create(self, validated_data):
@@ -112,9 +98,5 @@ class OwnershipLinkSyncSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context["request"].user
         ownership_id = attrs.get("ownership_id", None)
-        if ownership_id is None:
-            attrs["ownership"] = None
-            return attrs
-
-        attrs["ownership"] = get_ownership_for_user(user=user, ownership_id=ownership_id)
+        attrs["ownership"] = resolve_ownership_for_sync(user=user, ownership_id=ownership_id)
         return attrs
