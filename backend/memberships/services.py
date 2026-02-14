@@ -167,6 +167,20 @@ def resolve_ownership_for_sync(*, user, ownership_id: int | None) -> Ownership |
     return get_ownership_for_user(user=user, ownership_id=ownership_id)
 
 
+def list_ownership_links_for_user(*, user):
+    return OwnershipLink.objects.filter(user=user).select_related("ownership")
+
+
+def sync_ownership_link_from_payload(*, user, payload: dict) -> dict[str, object]:
+    ownership = resolve_ownership_for_sync(user=user, ownership_id=payload.get("ownership_id"))
+    return sync_ownership_link(
+        user=user,
+        target_type=payload["target_type"],
+        target_id=payload["target_id"],
+        ownership=ownership,
+    )
+
+
 def sync_ownership_link(
     *, user, target_type: str, target_id: int, ownership: Ownership | None
 ) -> dict[str, object]:

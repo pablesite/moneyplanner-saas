@@ -4,7 +4,6 @@ from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
 from .services import (
     create_ownership,
     ownership_is_in_use,
-    resolve_ownership_for_sync,
     update_ownership,
     validate_ownership_write_payload,
 )
@@ -97,9 +96,3 @@ class OwnershipLinkSyncSerializer(serializers.Serializer):
     target_type = serializers.ChoiceField(choices=OwnershipLink.TargetType.choices)
     target_id = serializers.IntegerField(min_value=1)
     ownership_id = serializers.IntegerField(required=False, allow_null=True)
-
-    def validate(self, attrs):
-        user = self.context["request"].user
-        ownership_id = attrs.get("ownership_id", None)
-        attrs["ownership"] = resolve_ownership_for_sync(user=user, ownership_id=ownership_id)
-        return attrs

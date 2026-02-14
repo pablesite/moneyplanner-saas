@@ -15,7 +15,8 @@ from .services import (
     create_member_with_default_ownership,
     delete_member_and_individual_ownership,
     delete_ownership,
-    sync_ownership_link,
+    list_ownership_links_for_user,
+    sync_ownership_link_from_payload,
     update_ownership,
 )
 
@@ -77,7 +78,7 @@ class OwnershipLinkViewSet(UserScopedQuerySetMixin, viewsets.GenericViewSet):
     queryset = OwnershipLink.objects.all()
 
     def list(self, request):
-        qs = self.get_queryset().select_related("ownership")
+        qs = list_ownership_links_for_user(user=request.user)
         serializer = OwnershipLinkReadSerializer(qs, many=True)
         return Response(serializer.data)
 
@@ -86,10 +87,8 @@ class OwnershipLinkViewSet(UserScopedQuerySetMixin, viewsets.GenericViewSet):
         serializer = OwnershipLinkSyncSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
-        result = sync_ownership_link(
+        result = sync_ownership_link_from_payload(
             user=request.user,
-            target_type=serializer.validated_data["target_type"],
-            target_id=serializer.validated_data["target_id"],
-            ownership=serializer.validated_data.get("ownership"),
+            payload=serializer.validated_data,
         )
         return Response(result, status=status.HTTP_200_OK)
