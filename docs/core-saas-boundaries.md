@@ -1,4 +1,4 @@
-# Core/SaaS Backend Boundaries
+# Core/SaaS Boundaries
 
 ## Objetivo
 Reducir duplicacion entre `core` y `saas` sin mezclar dependencias entre repositorios.
@@ -24,6 +24,20 @@ Reducir duplicacion entre `core` y `saas` sin mezclar dependencias entre reposit
 - Validaciones de negocio:
   - Deben vivir en `services.py` de cada dominio, no en `views.py` ni en `serializers.py`.
 
+## Fuente Canonica Actual (Frontend)
+- Canonico frontend base: `core/frontend/src`.
+- Regla de independencia:
+  - `core` no depende de archivos fuera de `core/`.
+  - `saas` puede sincronizar archivos base desde `core`, pero no al reves.
+- Sincronizacion declarada:
+  - Manifest de archivos canonicos: `scripts/frontend-sync-manifest.txt`.
+  - Check de drift: `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1`
+  - Aplicar sync: `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply`
+- Zona premium SaaS (no sincronizar desde core):
+  - `frontend/src/views/PeopleView.vue`
+  - `frontend/src/stores/people.ts`
+  - `frontend/src/components/people/*`
+
 ## Checklist Rapido Para Evitar Duplicacion Nueva
 - Antes de crear modulo nuevo en `saas`, revisar si ya existe equivalente en `core`.
 - Si se replica codigo por frontera de repos, documentar:
@@ -31,3 +45,8 @@ Reducir duplicacion entre `core` y `saas` sin mezclar dependencias entre reposit
   - archivo canonico,
   - regla de sincronizacion.
 - Mantener contratos API documentados en `docs/api-contracts.md`.
+- Cuando se toque frontend base:
+  - cambiar primero en `core/frontend/src`,
+  - correr check de drift,
+  - aplicar sync en SaaS solo para archivos del manifest,
+  - validar typecheck/lint en ambos frontends.

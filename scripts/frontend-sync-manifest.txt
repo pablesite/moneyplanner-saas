@@ -1,0 +1,14 @@
+# Canonical frontend files copied from core/frontend/src -> frontend/src
+App.vue
+assets/vue.svg
+components/BaseModal.vue
+components/HelloWorld.vue
+components/NetWorthByCategoryBar.vue
+components/NetWorthByMemberBar.vue
+components/NetWorthDonut.vue
+components/SettingsPopover.vue
+lib/format.ts
+main.ts
+style.css
+styles/app.css
+views/LoginView.vue

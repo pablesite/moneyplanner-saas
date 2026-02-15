@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { api, coreApi } from '@/lib/api';
+import { coreNetWorthApi, premiumOwnershipApi } from '@/lib/netWorthApi';
 
 export type Asset = {
   id: number;
@@ -117,14 +117,14 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.error = null;
       try {
         const [summaryRes, assetsRes, liabilitiesRes, snapshotsRes] = await Promise.all([
-          coreApi.get('/api/net-worth/summary/'),
-          coreApi.get('/api/net-worth/assets/'),
-          coreApi.get('/api/net-worth/liabilities/'),
-          coreApi.get('/api/net-worth/snapshots/'),
+          coreNetWorthApi.getSummary(),
+          coreNetWorthApi.getAssets(),
+          coreNetWorthApi.getLiabilities(),
+          coreNetWorthApi.getSnapshots(),
         ]);
         const [ownershipsRes, linksRes] = await Promise.all([
-          api.get('/api/ownerships/'),
-          api.get('/api/ownership-links/'),
+          premiumOwnershipApi.getOwnerships(),
+          premiumOwnershipApi.getOwnershipLinks(),
         ]);
         const links = linksRes.data as OwnershipLink[];
         const assetOwnership = new Map(
@@ -161,7 +161,7 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.post('/api/net-worth/snapshots/from-current/');
+        await coreNetWorthApi.createSnapshotFromCurrent();
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
@@ -173,7 +173,7 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.loading = true;
       this.error = null;
       try {
-        await coreApi.delete(`/api/net-worth/snapshots/${id}/`);
+        await coreNetWorthApi.deleteSnapshot(id);
         await this.refreshAll();
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
@@ -187,9 +187,9 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
-        const res = await coreApi.post('/api/net-worth/assets/', corePayload);
+        const res = await coreNetWorthApi.createAsset(corePayload);
         if (res?.data?.id) {
-          await api.post('/api/ownership-links/sync/', {
+          await premiumOwnershipApi.syncOwnershipLink({
             target_type: 'asset',
             target_id: res.data.id,
             ownership_id,
@@ -208,8 +208,8 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
-        await coreApi.patch(`/api/net-worth/assets/${id}/`, corePayload);
-        await api.post('/api/ownership-links/sync/', {
+        await coreNetWorthApi.updateAsset(id, corePayload);
+        await premiumOwnershipApi.syncOwnershipLink({
           target_type: 'asset',
           target_id: id,
           ownership_id,
@@ -231,9 +231,9 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
-        const res = await coreApi.post('/api/net-worth/liabilities/', corePayload);
+        const res = await coreNetWorthApi.createLiability(corePayload);
         if (res?.data?.id) {
-          await api.post('/api/ownership-links/sync/', {
+          await premiumOwnershipApi.syncOwnershipLink({
             target_type: 'liability',
             target_id: res.data.id,
             ownership_id,
@@ -255,8 +255,8 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.error = null;
       try {
         const { ownership_id = null, ...corePayload } = payload as any;
-        await coreApi.patch(`/api/net-worth/liabilities/${id}/`, corePayload);
-        await api.post('/api/ownership-links/sync/', {
+        await coreNetWorthApi.updateLiability(id, corePayload);
+        await premiumOwnershipApi.syncOwnershipLink({
           target_type: 'liability',
           target_id: id,
           ownership_id,
@@ -275,7 +275,7 @@ export const useNetWorthStore = defineStore('netWorth', {
 
     async fetchSettings() {
       try {
-        const res = await coreApi.get('/api/auth/settings/');
+        const res = await coreNetWorthApi.getSettings();
         this.baseCurrency = res.data.base_currency;
       } catch (e: any) {
         this.error = e?.response?.data ? JSON.stringify(e.response.data) : e?.message || 'Error';
@@ -286,9 +286,7 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.loading = true;
       this.error = null;
       try {
-        const res = await coreApi.put('/api/auth/settings/', {
-          base_currency: currency,
-        });
+        const res = await coreNetWorthApi.updateSettings({ base_currency: currency });
         this.baseCurrency = res.data.base_currency;
         await this.refreshAll();
       } catch (e: any) {

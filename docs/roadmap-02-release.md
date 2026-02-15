@@ -58,15 +58,20 @@ Estado: completada.
   - Avance: fronteras y reglas de sincronizacion documentadas en `docs/core-saas-boundaries.md`.
 
 ### Fase 2: Refactor Frontend + UI Profesional
-Estado: pendiente.
+Estado: en progreso.
 
 - [ ] Reorganizar stores/componentes por dominio funcional.
 - [ ] Simplificar flujos de estado y side effects.
+  - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
+  - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
   - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
+  - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.
+  - Avance: manifest y script de sincronizacion definidos en `scripts/frontend-sync-manifest.txt` y `scripts/sync_frontend_from_core.ps1`.
   - [ ] mantener apps separadas `core-web` y `saas-web` consumiendo el mismo paquete base.
   - [ ] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
   - [ ] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
+  - Avance: `frontend/src/lib/netWorthApi.ts` separa adapters de `core` y `premium` para net worth; `frontend/src/stores/netWorth.ts` queda como orquestador de estado.
 - [ ] Introducir sistema de estilos profesional:
   - [ ] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.

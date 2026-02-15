@@ -40,6 +40,21 @@ docker compose up --build -d
 - El core vive en `core/` como submodulo.
 - Cualquier codigo SaaS privado debe vivir fuera de `core/`.
 
+## Sync frontend core -> saas
+- Fuente canonica del frontend base: `core/frontend/src`.
+- Archivos sincronizables declarados en: `scripts/frontend-sync-manifest.txt`.
+- Verificar drift:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1
+```
+
+- Aplicar sincronizacion:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply
+```
+
 ## Arquitectura
 - Roadmap global de producto: `docs/roadmap.md`.
 - Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture.md`.
