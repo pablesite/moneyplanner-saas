@@ -83,6 +83,7 @@ Estado: en progreso.
   - [ ] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
 - [ ] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
+  - Avance: guia minima inicial en `docs/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
 - [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
