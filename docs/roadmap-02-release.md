@@ -65,6 +65,7 @@ Estado: en progreso.
   - Avance: calculo de `byCategoryChart` extraido a `frontend/src/lib/netWorthCharts.ts` y `core/frontend/src/lib/netWorthCharts.ts`; stores delegan la transformacion.
   - Avance: estructura de dominio `net-worth` creada en `frontend/src/domains/net-worth/*` y `core/frontend/src/domains/net-worth/*` con `stores/netWorth.ts` y `lib/netWorth*.ts` mantenidos como reexports de compatibilidad.
   - Avance: estructura de dominio `auth` creada en `frontend/src/domains/auth/*` y `core/frontend/src/domains/auth/*` con `lib/authApi.ts` y `lib/authSession.ts` como reexports de compatibilidad.
+  - Avance: estructura de dominio `aux-data` creada en `frontend/src/domains/aux-data/api.ts` y `core/frontend/src/domains/aux-data/api.ts` con `lib/auxDataApi.ts` como reexport de compatibilidad.
 - [ ] Simplificar flujos de estado y side effects.
   - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
   - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.
