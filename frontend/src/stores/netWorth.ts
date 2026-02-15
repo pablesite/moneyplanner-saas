@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/lib/netWorthApi';
 import { attachOwnershipRef, buildOwnershipMaps, type OwnershipLink } from '@/lib/netWorthOwnership';
+import { buildByCategoryChart } from '@/lib/netWorthCharts';
 
 export type Asset = {
   id: number;
@@ -59,18 +60,6 @@ export type Ownership = {
   notes: string;
 };
 
-function normalizeNumberInput(raw: unknown) {
-  return String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-}
-
-function toNumber(v: unknown) {
-  const n = Number(normalizeNumberInput(v));
-  return Number.isFinite(n) ? n : 0;
-}
-
 export const useNetWorthStore = defineStore('netWorth', {
   state: () => ({
     loading: false as boolean,
@@ -88,21 +77,7 @@ export const useNetWorthStore = defineStore('netWorth', {
 
   getters: {
     byCategoryChart(state) {
-      const s = state.summary;
-      const unit = state.baseCurrency ?? s?.base_currency ?? 'EUR';
-
-      const assetsBy = s?.assets_by_category ?? {};
-      const liabsBy = s?.liabilities_by_category ?? {};
-
-      // Unificamos claves para que el gráfico tenga filas consistentes
-      const keys = Array.from(new Set<string>([...Object.keys(assetsBy), ...Object.keys(liabsBy)]));
-
-      return {
-        unit,
-        keys,
-        assets: keys.map((k) => Math.max(0, toNumber(assetsBy[k]))),
-        liabilities: keys.map((k) => Math.max(0, toNumber(liabsBy[k]))),
-      };
+      return buildByCategoryChart(state.summary, state.baseCurrency);
     },
   },
 

@@ -8,6 +8,7 @@ components/NetWorthByMemberBar.vue
 components/NetWorthDonut.vue
 components/SettingsPopover.vue
 lib/format.ts
+lib/netWorthCharts.ts
 main.ts
 style.css
 styles/app.css
