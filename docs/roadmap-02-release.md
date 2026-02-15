@@ -65,6 +65,7 @@ Estado: en progreso.
   - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
   - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.
   - Avance: gestion de tokens centralizada en `frontend/src/lib/authSession.ts`, reutilizada por `frontend/src/lib/api.ts` y `frontend/src/router.ts`.
+  - Avance: mismo patron de sesion aplicado en `core/frontend/src/lib/authSession.ts`, `core/frontend/src/lib/api.ts` y `core/frontend/src/router.ts`.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
   - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.
