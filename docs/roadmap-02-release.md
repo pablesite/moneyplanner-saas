@@ -61,6 +61,7 @@ Estado: completada.
 Estado: en progreso.
 
 - [ ] Reorganizar stores/componentes por dominio funcional.
+  - Avance: logica de ownership de net worth extraida a `frontend/src/lib/netWorthOwnership.ts`; `frontend/src/stores/netWorth.ts` reduce responsabilidad de transformacion.
 - [ ] Simplificar flujos de estado y side effects.
   - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
   - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.

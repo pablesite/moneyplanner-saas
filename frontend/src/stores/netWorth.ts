@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/lib/netWorthApi';
+import { attachOwnershipRef, buildOwnershipMaps, type OwnershipLink } from '@/lib/netWorthOwnership';
 
 export type Asset = {
   id: number;
@@ -56,12 +57,6 @@ export type Ownership = {
   member: { id: number; name: string; role: 'adult' | 'child' } | null;
   splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
   notes: string;
-};
-
-type OwnershipLink = {
-  target_type: 'asset' | 'liability';
-  target_id: number;
-  ownership_id: number;
 };
 
 function normalizeNumberInput(raw: unknown) {
@@ -127,27 +122,12 @@ export const useNetWorthStore = defineStore('netWorth', {
           premiumOwnershipApi.getOwnershipLinks(),
         ]);
         const links = linksRes.data as OwnershipLink[];
-        const assetOwnership = new Map(
-          links
-            .filter((l) => l.target_type === 'asset')
-            .map((l) => [l.target_id, l.ownership_id] as const),
-        );
-        const liabilityOwnership = new Map(
-          links
-            .filter((l) => l.target_type === 'liability')
-            .map((l) => [l.target_id, l.ownership_id] as const),
-        );
+        const { assetOwnership, liabilityOwnership } = buildOwnershipMaps(links);
 
         this.summary = summaryRes.data;
         this.baseCurrency = summaryRes.data.base_currency;
-        this.assets = assetsRes.data.map((a: any) => ({
-          ...a,
-          ownership_ref: assetOwnership.get(a.id) ?? null,
-        }));
-        this.liabilities = liabilitiesRes.data.map((l: any) => ({
-          ...l,
-          ownership_ref: liabilityOwnership.get(l.id) ?? null,
-        }));
+        this.assets = attachOwnershipRef(assetsRes.data, assetOwnership);
+        this.liabilities = attachOwnershipRef(liabilitiesRes.data, liabilityOwnership);
         this.snapshots = snapshotsRes.data;
         this.ownerships = ownershipsRes.data;
       } catch (e: any) {
