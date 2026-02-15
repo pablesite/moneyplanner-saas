@@ -76,6 +76,7 @@ Estado: en progreso.
   - [ ] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
   - [ ] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
   - Avance: `frontend/src/lib/netWorthApi.ts` separa adapters de `core` y `premium` para net worth; `frontend/src/stores/netWorth.ts` queda como orquestador de estado.
+  - Avance: `core/frontend/src/lib/netWorthApi.ts` extrae adapter base para net worth y `core/frontend/src/stores/netWorth.ts` delega llamadas HTTP.
 - [ ] Introducir sistema de estilos profesional:
   - [ ] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
