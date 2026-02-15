@@ -7,6 +7,9 @@ components/NetWorthByCategoryBar.vue
 components/NetWorthByMemberBar.vue
 components/NetWorthDonut.vue
 components/SettingsPopover.vue
+domains/auth/api.ts
+domains/auth/session.ts
+domains/net-worth/charts.ts
 lib/authApi.ts
 lib/authSession.ts
 lib/errors.ts
