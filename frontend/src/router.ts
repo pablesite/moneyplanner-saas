@@ -4,6 +4,7 @@ import LoginView from './views/LoginView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AuxDataView from './views/AuxDataView.vue';
 import { coreApi } from '@/lib/api';
+import { clearAuthTokens, getAccessToken } from '@/lib/authSession';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -19,7 +20,7 @@ let authChecked = false;
 let authCheckPromise: Promise<boolean> | null = null;
 
 async function ensureAuthValid(): Promise<boolean> {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   if (!token) return false;
   if (authChecked) return true;
 
@@ -31,8 +32,7 @@ async function ensureAuthValid(): Promise<boolean> {
         return true;
       })
       .catch(() => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        clearAuthTokens();
         authChecked = false;
         return false;
       })
@@ -45,7 +45,7 @@ async function ensureAuthValid(): Promise<boolean> {
 }
 
 router.beforeEach(async (to) => {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
 
   if (!token && to.path !== '/login') {
     return { path: '/login' };

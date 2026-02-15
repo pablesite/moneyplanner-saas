@@ -1,4 +1,10 @@
 import axios from 'axios';
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  setAccessToken,
+} from '@/lib/authSession';
 
 function getFallbackBaseURL() {
   if (typeof window === 'undefined') {
@@ -25,25 +31,20 @@ type PendingCallback = (token: string | null) => void;
 let isRefreshing = false;
 let pending: PendingCallback[] = [];
 
-function clearAuth() {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-}
-
 function notifyPending(token: string | null) {
   pending.forEach((cb) => cb(token));
   pending = [];
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const refresh = localStorage.getItem('refresh_token');
+  const refresh = getRefreshToken();
   if (!refresh) return null;
 
   try {
     const res = await refreshClient.post('/api/auth/refresh/', { refresh });
     const access = res.data?.access;
     if (access) {
-      localStorage.setItem('access_token', access);
+      setAccessToken(access);
       return access;
     }
     return null;
@@ -54,7 +55,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
 function attachRequestInterceptor(client: typeof api) {
   client.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
@@ -75,9 +76,9 @@ function attachResponseInterceptor(client: typeof api) {
         return Promise.reject(error);
       }
 
-      const refresh = localStorage.getItem('refresh_token');
+      const refresh = getRefreshToken();
       if (!refresh) {
-        clearAuth();
+        clearAuthTokens();
         window.location.href = '/login';
         return Promise.reject(error);
       }
@@ -90,7 +91,7 @@ function attachResponseInterceptor(client: typeof api) {
         isRefreshing = false;
 
         if (!newToken) {
-          clearAuth();
+          clearAuthTokens();
           notifyPending(null);
           window.location.href = '/login';
           return Promise.reject(error);
