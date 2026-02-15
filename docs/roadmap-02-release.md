@@ -70,6 +70,7 @@ Estado: en progreso.
   - Avance: mismo patron de sesion aplicado en `core/frontend/src/lib/authSession.ts`, `core/frontend/src/lib/api.ts` y `core/frontend/src/router.ts`.
   - Avance: `core/frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `core/frontend/src/lib/auxDataApi.ts`.
   - Avance: manejo de errores HTTP unificado en `frontend/src/lib/errors.ts` y `core/frontend/src/lib/errors.ts`, aplicado en `LoginView`, `AuxDataView` y `stores/netWorth`.
+  - Avance: login delega autenticacion en adapters `frontend/src/lib/authApi.ts` y `core/frontend/src/lib/authApi.ts`, usando `authSession` para persistencia de tokens.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
   - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.
