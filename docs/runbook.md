@@ -28,6 +28,26 @@ Guía rápida para diagnosticar y recuperar el entorno local de `moneyplanner`.
 
 ## Playbooks de incidencia
 
+### 0) Checks fallan tras reiniciar contexto/sesión
+Síntoma:
+- `eslint: not found`, `prettier: not found`, `No module named ruff` o `No module named mypy`.
+
+Causa común:
+- Contenedores desactualizados o dependencias no disponibles dentro del contenedor actual.
+
+Recuperación rápida:
+1. Rebuild completo en orden:
+- `cd core && docker compose up --build -d`
+- `cd .. && docker compose up --build -d`
+2. Reinstalar dependencias frontend en contenedores:
+- `docker compose exec saas_frontend npm install`
+- `cd core && docker compose exec frontend npm install`
+3. Reintentar checks oficiales (siempre dentro de Docker):
+- SaaS frontend: `docker compose exec saas_frontend npm run lint && docker compose exec saas_frontend npm run format:check && docker compose exec saas_frontend npm run typecheck`
+- Core frontend: `cd core && docker compose exec frontend npm run lint && docker compose exec frontend npm run format:check && docker compose exec frontend npm run typecheck`
+- SaaS backend: `docker compose exec saas_backend python -m ruff check . && docker compose exec saas_backend python -m ruff format --check . && docker compose exec saas_backend python -m mypy .`
+- Core backend: `cd core && docker compose exec backend python -m ruff check . && docker compose exec backend python -m ruff format --check . && docker compose exec backend python -m mypy .`
+
 ### 1) `core_backend` en `Exited`
 Síntoma:
 - `core_backend` no aparece `Up` en `core/docker compose ps`.

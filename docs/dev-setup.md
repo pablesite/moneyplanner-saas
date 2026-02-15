@@ -129,36 +129,49 @@ Para ver ayuda:
 ```
 
 ## Chequeos de calidad (Roadmap-02 / Fase 3)
-1. Backend SaaS:
+Regla obligatoria:
+- En este repo, los checks se ejecutan dentro de contenedores Docker, no en el host.
+
+Si acabas de reiniciar contexto/sesión:
+1. Rebuild y arranque (en orden):
 ```bash
-cd backend
-ruff check .
-ruff format --check .
-mypy .
+cd core && docker compose up --build -d
+cd .. && docker compose up --build -d
+```
+2. Asegurar dependencias frontend en contenedores:
+```bash
+docker compose exec saas_frontend npm install
+cd core && docker compose exec frontend npm install
 ```
 
-2. Backend Core:
+1. Backend SaaS (en Docker):
 ```bash
-cd core/backend
-ruff check .
-ruff format --check .
-mypy .
+docker compose exec saas_backend python -m ruff check .
+docker compose exec saas_backend python -m ruff format --check .
+docker compose exec saas_backend python -m mypy .
 ```
 
-3. Frontend SaaS:
+2. Backend Core (en Docker):
 ```bash
-cd frontend
-npm run lint
-npm run format:check
-npm run typecheck
+cd core
+docker compose exec backend python -m ruff check .
+docker compose exec backend python -m ruff format --check .
+docker compose exec backend python -m mypy .
 ```
 
-4. Frontend Core:
+3. Frontend SaaS (en Docker):
 ```bash
-cd core/frontend
-npm run lint
-npm run format:check
-npm run typecheck
+docker compose exec saas_frontend npm run lint
+docker compose exec saas_frontend npm run format:check
+docker compose exec saas_frontend npm run typecheck
+```
+
+4. Frontend Core (en Docker):
+```bash
+cd core
+docker compose exec frontend npm run lint
+docker compose exec frontend npm run format:check
+docker compose exec frontend npm run typecheck
 ```
 
 5. Hooks pre-commit:

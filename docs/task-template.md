@@ -28,7 +28,10 @@ Ejemplo:
 - `docker compose ps`
 - `docker compose logs --tail 100 <servicio>`
 
-2. Validación funcional específica:
+2. Calidad (obligatorio en Docker):
+- `<comando docker compose exec ... lint/format/typecheck/test>`
+
+3. Validación funcional específica:
 - `<curl, endpoint, test manual, etc.>`
 
 ## Restricciones
