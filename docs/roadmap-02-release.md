@@ -113,6 +113,8 @@ Estado: en progreso.
   - Avance: componentes `net-worth` (`ItemForm.vue` y `ItemList.vue` en `frontend` y `core/frontend`) reducen `any` en props/payloads y se alinean a modelos tipados de dominio.
   - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` reduce `any` en flujo de edicion (`editItem`/handlers) y tipa el acceso a campos extendidos de `summary`.
   - Avance: `LoginView.vue` en `frontend` y `core/frontend` elimina `catch (e: any)` y se normalizan textos mojibake visibles en dominio `people` (SaaS).
+  - Avance: `NetWorthView.vue` migra layout visual repetido a utilidades Tailwind y elimina CSS scoped duplicado entre `core/frontend` y `frontend`.
+  - Avance: `BaseModal.vue` en `domains/ui/components` se homogeneiza con una base visual unica utilitaria (overlay/card/header/body) en `core/frontend` y `frontend`.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.

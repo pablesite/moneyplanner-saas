@@ -34,4 +34,5 @@ Variables clave:
 ## Estado actual (Roadmap-02 / Fase 2)
 - Base de espaciado/radio/focus/error aplicada en `styles/app.css`.
 - Tailwind integrado en `core/frontend` y `frontend` con mapeo de tokens desde CSS variables.
+- `NetWorthView` y `BaseModal` ya migrados a layout utilitario Tailwind en `core/frontend` y `frontend`.
 - Siguiente paso: homogeneizar componentes base (`button`, `form`, `table`, `modal`) migrando estilos repetidos a utilidades y componentes comunes.
