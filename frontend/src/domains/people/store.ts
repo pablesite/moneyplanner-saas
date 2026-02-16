@@ -1,41 +1,9 @@
 import { defineStore } from 'pinia';
-import { api } from '@/lib/api';
-import axios from 'axios';
+import { peopleApi } from '@/domains/people/api';
+import { toPeopleErrorMessage } from '@/domains/people/errors';
+import type { FamilyMember, OwnershipRead } from '@/domains/people/types';
 
-export type FamilyMember = {
-  id: number;
-  name: string;
-  role: 'adult' | 'child';
-  is_active: boolean;
-};
-
-export type OwnershipKind = 'individual' | 'shared';
-
-export type OwnershipRead = {
-  id: number;
-  kind: OwnershipKind;
-  member: { id: number; name: string; role: 'adult' | 'child' } | null;
-  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
-  is_in_use: boolean;
-};
-
-function extractAxiosError(err: unknown): string {
-  if (!axios.isAxiosError(err)) return String(err);
-
-  const data: any = err.response?.data;
-  if (!data) return err.message;
-
-  if (typeof data === 'string') return data;
-  if (data.detail) return data.detail;
-
-  const firstKey = Object.keys(data)[0];
-  if (!firstKey) return err.message;
-  const v = data[firstKey];
-  if (Array.isArray(v)) return v[0] ?? err.message;
-  if (typeof v === 'string') return v;
-
-  return err.message;
-}
+export type { FamilyMember, OwnershipKind, OwnershipRead } from '@/domains/people/types';
 
 export const usePeopleStore = defineStore('people', {
   state: () => ({
@@ -62,10 +30,10 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.get<FamilyMember[]>('/api/family-members/');
+        const { data } = await peopleApi.getMembers();
         this.members = data;
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
       } finally {
         this.loading = false;
       }
@@ -75,7 +43,7 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.post<FamilyMember>('/api/family-members/', {
+        const { data } = await peopleApi.createMember({
           ...payload,
           is_active: true,
         });
@@ -87,7 +55,7 @@ export const usePeopleStore = defineStore('people', {
 
         return data;
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
         throw e;
       } finally {
         this.loading = false;
@@ -101,11 +69,11 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.patch<FamilyMember>(`/api/family-members/${id}/`, patch);
+        const { data } = await peopleApi.updateMember(id, patch);
         this.members = this.members.map((m) => (m.id === id ? data : m));
         return data;
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
         throw e;
       } finally {
         this.loading = false;
@@ -116,10 +84,10 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        await api.delete(`/api/family-members/${id}/`);
+        await peopleApi.deleteMember(id);
         this.members = this.members.filter((m) => m.id !== id);
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
         throw e;
       } finally {
         this.loading = false;
@@ -132,10 +100,10 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        const { data } = await api.get<OwnershipRead[]>('/api/ownerships/');
+        const { data } = await peopleApi.getOwnerships();
         this.ownerships = data;
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
       } finally {
         this.loading = false;
       }
@@ -145,15 +113,10 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        await api.post('/api/ownerships/', {
-          kind: 'shared',
-          member: null,
-          splits: payload.splits,
-        });
-
+        await peopleApi.createSharedOwnership(payload);
         await this.fetchOwnerships();
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
         throw e;
       } finally {
         this.loading = false;
@@ -167,14 +130,10 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        await api.patch(`/api/ownerships/${id}/`, {
-          kind: 'shared',
-          member: null,
-          splits: payload.splits,
-        });
+        await peopleApi.updateSharedOwnership(id, payload);
         await this.fetchOwnerships();
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
         throw e;
       } finally {
         this.loading = false;
@@ -185,10 +144,10 @@ export const usePeopleStore = defineStore('people', {
       this.loading = true;
       this.error = null;
       try {
-        await api.delete(`/api/ownerships/${id}/`);
+        await peopleApi.deleteOwnership(id);
         this.ownerships = this.ownerships.filter((o) => o.id !== id);
       } catch (e) {
-        this.error = extractAxiosError(e);
+        this.error = toPeopleErrorMessage(e);
         throw e;
       } finally {
         this.loading = false;
