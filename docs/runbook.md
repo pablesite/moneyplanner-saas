@@ -12,14 +12,18 @@ Guía rápida para diagnosticar y recuperar el entorno local de `moneyplanner`.
 
 ## Arranque estándar
 1. Levantar `core`:
-`cd core && docker compose up --build -d`
+`cd core`
+`docker compose up --build -d`
 2. Levantar `saas`:
-`cd .. && docker compose up --build -d`
+`cd ..`
+`docker compose up --build -d`
 
 ## Verificación rápida
 1. Estado de contenedores:
-- `cd core && docker compose ps`
-- `cd .. && docker compose ps`
+- `cd core`
+- `docker compose ps`
+- `cd ..`
+- `docker compose ps`
 2. Endpoints esperados:
 - Core frontend: `http://localhost:5173`
 - Core backend: `http://localhost:8000`
@@ -37,16 +41,37 @@ Causa común:
 
 Recuperación rápida:
 1. Rebuild completo en orden:
-- `cd core && docker compose up --build -d`
-- `cd .. && docker compose up --build -d`
+- `cd core`
+- `docker compose up --build -d`
+- `cd ..`
+- `docker compose up --build -d`
 2. Reinstalar dependencias frontend en contenedores:
 - `docker compose exec saas_frontend npm install`
-- `cd core && docker compose exec frontend npm install`
+- `cd core`
+- `docker compose exec frontend npm install`
 3. Reintentar checks oficiales (siempre dentro de Docker):
-- SaaS frontend: `docker compose exec saas_frontend npm run lint && docker compose exec saas_frontend npm run format:check && docker compose exec saas_frontend npm run typecheck`
-- Core frontend: `cd core && docker compose exec frontend npm run lint && docker compose exec frontend npm run format:check && docker compose exec frontend npm run typecheck`
-- SaaS backend: `docker compose exec saas_backend python -m ruff check . && docker compose exec saas_backend python -m ruff format --check . && docker compose exec saas_backend python -m mypy .`
-- Core backend: `cd core && docker compose exec backend python -m ruff check . && docker compose exec backend python -m ruff format --check . && docker compose exec backend python -m mypy .`
+- SaaS frontend:
+  - `docker compose exec saas_frontend npm run lint`
+  - `docker compose exec saas_frontend npm run format:check`
+  - `docker compose exec saas_frontend npm run typecheck`
+- Core frontend:
+  - `cd core`
+  - `docker compose exec frontend npm run lint`
+  - `docker compose exec frontend npm run format:check`
+  - `docker compose exec frontend npm run typecheck`
+- SaaS backend:
+  - `docker compose exec saas_backend python -m ruff check .`
+  - `docker compose exec saas_backend python -m ruff format --check .`
+  - `docker compose exec saas_backend python -m mypy .`
+- Core backend:
+  - `cd core`
+  - `docker compose exec backend python -m ruff check .`
+  - `docker compose exec backend python -m ruff format --check .`
+  - `docker compose exec backend python -m mypy .`
+
+Nota PowerShell:
+- No usar `&&` para encadenar comandos.
+- Usar secuencia compatible: `cmd1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; cmd2`.
 
 ### 1) `core_backend` en `Exited`
 Síntoma:
@@ -78,13 +103,15 @@ Diagnóstico:
 1. Revisar `core/backend/.env`:
 - `CORS_ALLOWED_ORIGINS`
 2. Ver logs:
-- `cd core && docker compose logs --tail 100 backend`
+- `cd core`
+- `docker compose logs --tail 100 backend`
 
 Corrección típica:
 - `CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174`
 
 Reiniciar backend core:
-- `cd core && docker compose up -d --force-recreate backend`
+- `cd core`
+- `docker compose up -d --force-recreate backend`
 
 Verificación preflight (ejemplo):
 ```bash
@@ -112,7 +139,8 @@ Diagnóstico/acción:
 1. Confirmar contenedor frontend `Up`.
 2. Revisar logs frontend:
 - `docker compose logs --tail 100 saas_frontend`
-- `cd core && docker compose logs --tail 100 frontend`
+- `cd core`
+- `docker compose logs --tail 100 frontend`
 3. Hard refresh del navegador (`Ctrl+F5`).
 
 ## Operaciones seguras
@@ -127,13 +155,17 @@ Diagnóstico/acción:
 
 ## Comandos útiles
 1. Ver estado completo `core`:
-- `cd core && docker compose ps`
+- `cd core`
+- `docker compose ps`
 2. Ver estado completo `saas`:
-- `cd .. && docker compose ps`
+- `cd ..`
+- `docker compose ps`
 3. Logs backend core:
-- `cd core && docker compose logs --tail 200 backend`
+- `cd core`
+- `docker compose logs --tail 200 backend`
 4. Logs backend saas:
-- `cd .. && docker compose logs --tail 200 saas_backend`
+- `cd ..`
+- `docker compose logs --tail 200 saas_backend`
 
 ## Referencias
 1. Arquitectura de plataforma: `docs/architecture.md`

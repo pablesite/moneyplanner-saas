@@ -7,8 +7,10 @@ Este repositorio contiene dos stacks que se trabajan en paralelo:
 
 ## Arranque estándar
 Para levantar el proyecto entero, seguir este orden:
-1. `cd core && docker compose up --build -d`
-2. `cd .. && docker compose up --build -d`
+1. `cd core`
+2. `docker compose up --build -d`
+3. `cd ..`
+4. `docker compose up --build -d`
 
 ## Diagnóstico estándar
 Comandos base de diagnóstico:
@@ -24,6 +26,8 @@ Comandos adicionales permitidos si ayudan a encontrar causa raíz:
 1. No borrar volúmenes de base de datos.
 2. No ejecutar comandos destructivos tipo `docker compose down -v` salvo pedido explícito.
 3. Se puede modificar `core/` y `saas` (se evolucionan ambos en paralelo).
+4. Los chequeos de calidad (lint/format/typecheck/tests) se ejecutan siempre dentro de contenedores Docker (`docker compose exec ...`), no en host.
+5. En PowerShell, no encadenar comandos con `&&`; usar secuencia compatible (`;` y control de `$LASTEXITCODE` cuando aplique).
 
 ## Flujo de trabajo acordado
 1. Diagnóstico primero.
