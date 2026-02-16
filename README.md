@@ -1,4 +1,4 @@
-﻿# moneyplanner-saas
+# moneyplanner-saas
 
 Repositorio privado para la version SaaS.
 
@@ -56,7 +56,8 @@ powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Ap
 ```
 
 ## Arquitectura
-- Roadmap global de producto: `docs/roadmap.md`.
-- Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture.md`.
-- Roadmap actual de refactor (V2): `docs/roadmap-02-release.md`.
-- Roadmap historico inicial (V1, completado): `docs/roadmap-01-core-saas.md`.
+- Roadmap global de producto: `docs/roadmap/roadmap.md`.
+- Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture/architecture.md`.
+- Roadmap actual de refactor (V2): `docs/roadmap/roadmap-02-release.md`.
+- Roadmap historico inicial (V1, completado): `docs/roadmap/roadmap-01-core-saas.md`.
+

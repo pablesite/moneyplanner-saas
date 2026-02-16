@@ -5,7 +5,7 @@ Definir una base visual comun para `core/frontend` y `frontend` sin bloquear ite
 
 ## Stack de estilos
 - Base recomendada activa: `Tailwind CSS` + tokens CSS propios.
-- Flujo operativo y reglas de trabajo: `docs/frontend-css-workflow.md`
+- Flujo operativo y reglas de trabajo: `docs/frontend/frontend-css-workflow.md`
 - Configuracion:
   - `core/frontend/tailwind.config.cjs`
   - `frontend/tailwind.config.cjs`
@@ -47,3 +47,4 @@ Variables clave:
   - dominio `people` (`frontend`) con mensajes de exito en `FamilyMemberManager` y `OwnershipManager`.
 - Microcopy UI alineado en español en vistas/componentes principales (`core/frontend` y `frontend`) para evitar drift de encoding (acentos y signos de apertura).
 - Siguiente paso: homogeneizar componentes base (`button`, `form`, `table`, `modal`) migrando estilos repetidos a utilidades y componentes comunes.
+

@@ -51,11 +51,11 @@ Estado: completada.
   - Avance: aplicado en dominio `memberships` (SaaS).
   - Avance: `core/backend/core` mueve validaciones de FX e inflation de serializers a services.
 - [x] Revisar contratos API y documentar cambios.
-  - Avance: contrato consolidado en `docs/api-contracts.md`.
+  - Avance: contrato consolidado en `docs/architecture/api-contracts.md`.
 - [x] Reducir duplicacion entre `core` y `saas` manteniendo fronteras claras.
   - Avance: inventario inicial completado; la duplicacion backend activa mas clara esta en el manejo uniforme de errores (`custom_exception_handler`) entre `core/backend/config` y `backend/saas`.
   - Avance: fuente canonica definida (`core/backend/config/exceptions.py`) y estrategia de sincronizacion aplicada sin acoplar importaciones cruzadas entre repos.
-  - Avance: fronteras y reglas de sincronizacion documentadas en `docs/core-saas-boundaries.md`.
+  - Avance: fronteras y reglas de sincronizacion documentadas en `docs/architecture/core-saas-boundaries.md`.
 
 ### Fase 2: Refactor Frontend + UI Profesional
 Estado: en progreso.
@@ -92,7 +92,7 @@ Estado: en progreso.
   - [x] Mantener apps separadas `core/frontend` (base) y `frontend` (SaaS) bajo estrategia overlay de extensiones premium.
   - Avance: manifest y script de sincronizacion definidos en `scripts/frontend-sync-manifest.txt` y `scripts/sync_frontend_from_core.ps1`.
   - [x] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
-  - Avance: contrato minimo de extension definido en `docs/core-saas-boundaries.md` (seccion "Contrato De Extension Frontend (Slots/Hooks)").
+  - Avance: contrato minimo de extension definido en `docs/architecture/core-saas-boundaries.md` (seccion "Contrato De Extension Frontend (Slots/Hooks)").
   - Avance: `NetWorthView` migra accion premium de header a contrato `useNetWorthViewExtensions()` con fallback no-op en `core/frontend/src/domains/net-worth/extensions.ts` e implementacion SaaS en `frontend/src/domains/net-worth/extensions.ts`.
   - Avance: limpieza 2 aplicada en `NetWorthView` para inyectar props premium (`ownerships`) via `itemFormProps`/`itemListProps` desde extensiones, dejando la vista base alineada entre `core/frontend` y `frontend`.
   - [x] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
@@ -108,7 +108,7 @@ Estado: en progreso.
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
   - Avance: `Tailwind CSS` integrado en `core/frontend` y `frontend` (config + PostCSS + entrada `src/styles/tailwind.css`) con mapeo de tokens canonicos (`app.css`) para colores, spacing, radius y tipografia.
 - [x] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
-  - Avance: guia minima inicial en `docs/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
+  - Avance: guia minima inicial en `docs/frontend/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
   - Avance: visual de `NetWorthDonut.vue` alineada a clases compartidas (`@layer components`) y tipografia canonica de app en el render central de Chart.js para `core/frontend` y `frontend`.
   - Avance: estados y layout de vistas principales normalizados con primitivas compartidas (`ui-page-*`, `ui-section-header`, `ui-status-line`, `ui-data-*`) en `core/frontend/src/views/AuxDataView.vue`, `frontend/src/views/AuxDataView.vue`, `frontend/src/views/PeopleView.vue`, `core/frontend/src/views/NetWorthView.vue` y `frontend/src/views/NetWorthView.vue`.
   - Avance: feedback de accion y estados vacios incorporados con primitivas compartidas (`ui-alert-success`, `ui-table-empty`) en `core/frontend/src/views/AuxDataView.vue`, `frontend/src/views/AuxDataView.vue`, `frontend/src/domains/people/components/FamilyMemberManager.vue` y `frontend/src/domains/people/components/OwnershipManager.vue`.
@@ -168,7 +168,7 @@ Estado: pendiente.
 ### Fase 5: Documentacion Y Release
 Estado: pendiente.
 
-- [ ] Actualizar `docs/architecture.md` con arquitectura refactorizada.
+- [ ] Actualizar `docs/architecture/architecture.md` con arquitectura refactorizada.
 - [ ] Actualizar checklists de rollout y recovery.
 - [ ] Publicar `release-summary-v2.md` con cambios y breaking changes.
 - [ ] Ejecutar smoke test final y criterios de salida.
@@ -197,4 +197,5 @@ Estado: pendiente.
 4. Fase 2 (frontend/UI)
 5. Fase 4 (testing profundo)
 6. Fase 5 (documentacion + release)
+
 

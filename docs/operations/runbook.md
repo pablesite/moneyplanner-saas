@@ -1,7 +1,12 @@
 ﻿# Runbook Operativo
 
 ## Objetivo
-Guía rápida para diagnosticar y recuperar el entorno local de `moneyplanner`.
+Guía rápida para operar, diagnosticar y recuperar el entorno local de `moneyplanner`.
+
+## Alcance de este documento
+1. Arranque, verificación y diagnóstico diario.
+2. Playbooks de incidencia.
+3. Operaciones seguras.
 
 ## Convenciones
 1. Stack `core`: carpeta `core/`.
@@ -12,11 +17,11 @@ Guía rápida para diagnosticar y recuperar el entorno local de `moneyplanner`.
 
 ## Arranque estándar
 1. Levantar `core`:
-`cd core`
-`docker compose up --build -d`
+- `cd core`
+- `docker compose up --build -d`
 2. Levantar `saas`:
-`cd ..`
-`docker compose up --build -d`
+- `cd ..`
+- `docker compose up --build -d`
 
 ## Verificación rápida
 1. Estado de contenedores:
@@ -76,25 +81,8 @@ Recuperación rápida:
 - `docker compose exec saas_frontend npm install`
 - `cd core`
 - `docker compose exec frontend npm install`
-3. Reintentar checks oficiales (siempre dentro de Docker):
-- SaaS frontend:
-  - `docker compose exec saas_frontend npm run lint`
-  - `docker compose exec saas_frontend npm run format:check`
-  - `docker compose exec saas_frontend npm run typecheck`
-- Core frontend:
-  - `cd core`
-  - `docker compose exec frontend npm run lint`
-  - `docker compose exec frontend npm run format:check`
-  - `docker compose exec frontend npm run typecheck`
-- SaaS backend:
-  - `docker compose exec saas_backend python -m ruff check .`
-  - `docker compose exec saas_backend python -m ruff format --check .`
-  - `docker compose exec saas_backend python -m mypy .`
-- Core backend:
-  - `cd core`
-  - `docker compose exec backend python -m ruff check .`
-  - `docker compose exec backend python -m ruff format --check .`
-  - `docker compose exec backend python -m mypy .`
+3. Reintentar matriz oficial de checks:
+- `docs/operations/dev-setup.md` (sección `Chequeos de calidad`).
 
 Nota PowerShell:
 - No usar `&&` para encadenar comandos.
@@ -170,6 +158,14 @@ Diagnóstico/acción:
 - `docker compose logs --tail 100 frontend`
 3. Hard refresh del navegador (`Ctrl+F5`).
 
+## Apagado
+1. Detener `saas`:
+- `cd ..`
+- `docker compose down`
+2. Detener `core`:
+- `cd core`
+- `docker compose down`
+
 ## Operaciones seguras
 1. Permitido para diagnóstico:
 - `docker compose ps`
@@ -195,6 +191,7 @@ Diagnóstico/acción:
 - `docker compose logs --tail 200 saas_backend`
 
 ## Referencias
-1. Arquitectura de plataforma: `docs/architecture.md`
-2. Arquitectura funcional: `docs/product-architecture.md`
-3. Recovery plan de datos: `docs/recovery-plan.md`
+1. Setup y matriz de calidad: `docs/operations/dev-setup.md`
+2. Arquitectura de plataforma: `docs/architecture/architecture.md`
+3. Arquitectura funcional: `docs/architecture/product-architecture.md`
+4. Recovery plan de datos: `docs/operations/recovery-plan.md`

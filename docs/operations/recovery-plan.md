@@ -45,6 +45,7 @@ Definir un procedimiento seguro para recuperar consistencia cuando existen datos
 - Confirmar ausencia de enlaces huerfanos con auditoria SQL.
 
 ## Prevencion
-- Mantener este plan junto al checklist de rollout (`docs/release-checklist.md`).
+- Mantener este plan junto al checklist de rollout (`docs/operations/release-checklist.md`).
 - Ejecutar validaciones de API dual en cada upgrade de submodulo `core`.
 - No desplegar cambios de contrato sin migracion y notas de compatibilidad.
+

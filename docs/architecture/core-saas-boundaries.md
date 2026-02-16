@@ -62,10 +62,11 @@ Reducir duplicacion entre `core` y `saas` sin mezclar dependencias entre reposit
   - motivo de la replica,
   - archivo canonico,
   - regla de sincronizacion.
-- Mantener contratos API documentados en `docs/api-contracts.md`.
+- Mantener contratos API documentados en `docs/architecture/api-contracts.md`.
 - Cuando se toque frontend base:
   - cambiar primero en `core/frontend/src`,
   - correr check de drift,
   - aplicar sync en SaaS solo para archivos del manifest,
   - validar typecheck/lint en ambos frontends.
+
 

@@ -1,7 +1,7 @@
-﻿# Roadmap 01 Core/SaaS
+# Roadmap 01 Core/SaaS
 
 ## Alcance
-Backlog de ejecucion para alcanzar la arquitectura objetivo definida en `docs/architecture.md`.
+Backlog de ejecucion para alcanzar la arquitectura objetivo definida en `docs/architecture/architecture.md`.
 
 ## Estado Actual
 - Frontend separado entre `coreApi` y `saas api`.
@@ -51,8 +51,8 @@ Estado: completada.
 - [x] Documentar plan de recuperacion para datasets mixtos/legacy.
 
 Notas:
-- Checklist de rollout documentado en `docs/release-checklist.md`.
-- Plan de recuperacion documentado en `docs/recovery-plan.md`.
+- Checklist de rollout documentado en `docs/operations/release-checklist.md`.
+- Plan de recuperacion documentado en `docs/operations/recovery-plan.md`.
 - Tests de integracion API dual en `backend/memberships/tests.py` (sync/unsync de links, `is_in_use`, y aislamiento por usuario).
 
 ## Criterios De Aceptacion
@@ -61,6 +61,7 @@ Notas:
 - El frontend mantiene fronteras explicitas y no ambiguas entre endpoints base y premium.
 
 ## Siguiente Release
-- Roadmap de la siguiente release (refactor completo): `docs/roadmap-02-release.md`.
+- Roadmap de la siguiente release (refactor completo): `docs/roadmap/roadmap-02-release.md`.
+
 
 

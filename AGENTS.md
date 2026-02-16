@@ -70,12 +70,9 @@ Referencia de CI:
 2. Core: `core/.github/workflows/quality-core.yml`
 
 ## Documentación recomendada
-1. Arquitectura de plataforma: `docs/architecture.md`
-2. Arquitectura funcional del producto: `docs/product-architecture.md`
-3. Operación y troubleshooting: `docs/runbook.md`
-4. Configuración de desarrollo: `docs/dev-setup.md`
-5. Plantilla de tareas para sesiones nuevas: `docs/task-template.md`
-6. Glosario de términos canónicos: `docs/glossary.md`
-
-
-
+1. Índice de documentación (punto de entrada): `docs/README.md`
+2. Operación y troubleshooting: `docs/operations/runbook.md`
+3. Configuración de desarrollo: `docs/operations/dev-setup.md`
+4. Arquitectura de plataforma: `docs/architecture/architecture.md`
+5. Arquitectura funcional del producto: `docs/architecture/product-architecture.md`
+6. Roadmap actual de release: `docs/roadmap/roadmap-02-release.md`

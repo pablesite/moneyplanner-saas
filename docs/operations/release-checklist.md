@@ -1,4 +1,4 @@
-﻿# Checklist De Rollout Core/SaaS
+# Checklist De Rollout Core/SaaS
 
 ## Objetivo
 Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romper compatibilidad.
@@ -10,7 +10,7 @@ Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romp
   - [ ] `git -C core fetch --all --tags`
   - [ ] `git -C core log --oneline --decorate <actual>..<objetivo>`
   - [ ] `git -C core diff --name-only <actual>..<objetivo>`
-- [ ] Identificar cambios de contrato API en `core/backend/net_worth` y `core/backend/accounts` usando `docs/api-contracts.md`.
+- [ ] Identificar cambios de contrato API en `core/backend/net_worth` y `core/backend/accounts` usando `docs/architecture/api-contracts.md`.
 - [ ] Revisar notas de migracion/version en `core/README.md`.
 
 ## 2. Actualizacion Del Submodulo
@@ -49,8 +49,9 @@ Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romp
   - [ ] Repetir `check` + tests criticos.
 
 ## 7. Cierre
-- [ ] Actualizar `docs/roadmap-01-core-saas.md` con estado real.
+- [ ] Actualizar `docs/roadmap/roadmap-01-core-saas.md` con estado real.
 - [ ] Registrar incidencias y decisiones en PR/commit.
 - [ ] Etiquetar release si el cambio queda estable.
+
 
 

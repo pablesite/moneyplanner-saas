@@ -49,6 +49,7 @@ Definir un flujo unico para construir UI nueva sin drift entre `core/frontend` y
 5. `lint` y `typecheck` pasan en ambos frontends.
 
 ## Referencias
-1. `docs/frontend-visual-guide.md`
-2. `docs/core-saas-boundaries.md`
-3. `docs/dev-setup.md`
+1. `docs/frontend/frontend-visual-guide.md`
+2. `docs/architecture/core-saas-boundaries.md`
+3. `docs/operations/dev-setup.md`
+
