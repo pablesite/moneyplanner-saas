@@ -38,6 +38,24 @@ Reducir duplicacion entre `core` y `saas` sin mezclar dependencias entre reposit
   - `frontend/src/stores/people.ts`
   - `frontend/src/components/people/*`
 
+## Contrato De Extension Frontend (Slots/Hooks)
+- Objetivo: evitar forks de vistas base y extender comportamiento premium desde `frontend` (SaaS) con puntos de extension explicitos.
+- Regla 1: las vistas base del canonico (`core/frontend/src/views/*`) no importan dominios premium (`people`, `memberships`, etc.).
+- Regla 2: cada punto de extension se define en `core` como contrato tipado (props/eventos/retornos) y en `saas` se resuelve con implementacion concreta.
+- Regla 3: el valor por defecto en `core` debe ser no-op o UI neutra para mantener funcionamiento standalone.
+- Regla 4: los flags de `domains/capabilities` solo habilitan features; no sustituyen el contrato de extension.
+
+### Patron Recomendado
+- Slot de UI: secciones inyectables en componentes base (por ejemplo: acciones extra en `NetWorthView`).
+- Hook/composable de dominio: funcion registrada para comportamiento premium opcional (por ejemplo: ownership sync posterior a alta/edicion).
+- Registry por dominio: modulo de resolucion en SaaS con fallback a implementacion base.
+
+### Criterio De Done Para Este Punto
+- Existe al menos un flujo base migrado a extension por contrato (sin copia de vista completa).
+- El contrato tipado del punto de extension esta en `core/frontend/src/domains/*`.
+- SaaS implementa el override en `frontend/src/domains/*` sin tocar la vista base sincronizada.
+- Se valida lint/typecheck en `core/frontend` y `frontend` tras sync.
+
 ## Checklist Rapido Para Evitar Duplicacion Nueva
 - Antes de crear modulo nuevo en `saas`, revisar si ya existe equivalente en `core`.
 - Si se replica codigo por frontera de repos, documentar:
@@ -50,3 +68,4 @@ Reducir duplicacion entre `core` y `saas` sin mezclar dependencias entre reposit
   - correr check de drift,
   - aplicar sync en SaaS solo para archivos del manifest,
   - validar typecheck/lint en ambos frontends.
+

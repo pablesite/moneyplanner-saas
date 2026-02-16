@@ -86,12 +86,15 @@ Estado: en progreso.
   - Avance: guard de autenticacion del router movido a `domains/auth/guard.ts` en `frontend` y `core/frontend`, manteniendo `router.ts` como declaracion de rutas + registro de guard.
   - Avance: `AuxDataView.vue` en `frontend` y `core/frontend` delega auto-carga inicial a `useAuxDataPage()` en `domains/aux-data/composables.ts`, eliminando efectos de montaje directos en la vista.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
-  - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
+  - [x] Definir `core/frontend` como frontend maestro para capacidades base (OSS).
+  - [x] Reemplazar la opcion de paquete compartido runtime por sincronizacion unidireccional `core -> saas`.
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.
+  - [x] Mantener apps separadas `core/frontend` (base) y `frontend` (SaaS) bajo estrategia overlay de extensiones premium.
   - Avance: manifest y script de sincronizacion definidos en `scripts/frontend-sync-manifest.txt` y `scripts/sync_frontend_from_core.ps1`.
-  - [ ] mantener apps separadas `core-web` y `saas-web` consumiendo el mismo paquete base.
-  - [ ] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
-  - [ ] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
+  - [x] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
+  - Avance: contrato minimo de extension definido en `docs/core-saas-boundaries.md` (seccion "Contrato De Extension Frontend (Slots/Hooks)").
+  - Avance: `NetWorthView` migra accion premium de header a contrato `useNetWorthViewExtensions()` con fallback no-op en `core/frontend/src/domains/net-worth/extensions.ts` e implementacion SaaS en `frontend/src/domains/net-worth/extensions.ts`.
+  - [x] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
   - Avance: `frontend/src/lib/netWorthApi.ts` separa adapters de `core` y `premium` para net worth; `frontend/src/stores/netWorth.ts` queda como orquestador de estado.
   - Avance: `core/frontend/src/lib/netWorthApi.ts` extrae adapter base para net worth y `core/frontend/src/stores/netWorth.ts` delega llamadas HTTP.
   - Avance: contratos tipados explicitos en adapters de `net-worth` (`frontend/src/domains/net-worth/api.ts` y `core/frontend/src/domains/net-worth/api.ts`) y modelos compartidos de dominio (`models.ts`) para reducir casts y ambiguedad en `store.ts`.
