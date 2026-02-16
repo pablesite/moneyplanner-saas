@@ -1,10 +1,13 @@
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 from rest_framework import status
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
 
 from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
+from .services import sync_ownership_link, validate_ownership_payload
 
 
 class OwnershipUsageConstraintsTests(APITestCase):
@@ -268,3 +271,130 @@ class DualApiFlowTests(APITestCase):
         self.assertEqual(res.data[0]["target_type"], "asset")
         self.assertEqual(res.data[0]["target_id"], 1)
         self.assertEqual(res.data[0]["ownership_id"], self.shared.id)
+
+
+class OwnershipServicesUnitTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="u_services",
+            password="pass1234",
+        )
+        self.adult = FamilyMember.objects.create(
+            user=self.user,
+            name="Adult",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        self.child = FamilyMember.objects.create(
+            user=self.user,
+            name="Child",
+            role=FamilyMember.Role.CHILD,
+            is_active=True,
+        )
+
+    def test_validate_ownership_payload_rejects_duplicate_split_members(self):
+        with self.assertRaises(DRFValidationError) as err:
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=None,
+                splits=[
+                    {"member_id": self.adult.id, "percent": "60.00"},
+                    {"member_id": self.adult.id, "percent": "40.00"},
+                ],
+            )
+
+        self.assertIn("duplicados", str(err.exception).lower())
+
+    def test_validate_ownership_payload_rejects_non_adult_split_member(self):
+        with self.assertRaises(DRFValidationError) as err:
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=None,
+                splits=[
+                    {"member_id": self.adult.id, "percent": "50.00"},
+                    {"member_id": self.child.id, "percent": "50.00"},
+                ],
+            )
+
+        self.assertIn("adultos", str(err.exception).lower())
+
+    def test_validate_ownership_payload_rejects_percent_sum_not_100(self):
+        with self.assertRaises(DRFValidationError) as err:
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=None,
+                splits=[
+                    {"member_id": self.adult.id, "percent": "80.00"},
+                ],
+            )
+
+        self.assertIn("debe ser 100", str(err.exception).lower())
+
+    def test_sync_ownership_link_create_update_and_remove(self):
+        ownership_1 = Ownership.objects.create(
+            user=self.user,
+            kind=Ownership.Kind.INDIVIDUAL,
+            member=self.adult,
+        )
+        other_member = FamilyMember.objects.create(
+            user=self.user,
+            name="Other adult",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        ownership_2 = Ownership.objects.create(
+            user=self.user,
+            kind=Ownership.Kind.INDIVIDUAL,
+            member=other_member,
+        )
+
+        create_result = sync_ownership_link(
+            user=self.user,
+            target_type=OwnershipLink.TargetType.ASSET,
+            target_id=77,
+            ownership=ownership_1,
+        )
+        self.assertEqual(create_result, {"ok": True, "ownership_id": ownership_1.id})
+        self.assertEqual(
+            OwnershipLink.objects.filter(
+                user=self.user,
+                target_type=OwnershipLink.TargetType.ASSET,
+                target_id=77,
+            ).count(),
+            1,
+        )
+
+        update_result = sync_ownership_link(
+            user=self.user,
+            target_type=OwnershipLink.TargetType.ASSET,
+            target_id=77,
+            ownership=ownership_2,
+        )
+        self.assertEqual(update_result, {"ok": True, "ownership_id": ownership_2.id})
+        self.assertEqual(
+            OwnershipLink.objects.filter(
+                user=self.user,
+                target_type=OwnershipLink.TargetType.ASSET,
+                target_id=77,
+                ownership=ownership_2,
+            ).count(),
+            1,
+        )
+
+        remove_result = sync_ownership_link(
+            user=self.user,
+            target_type=OwnershipLink.TargetType.ASSET,
+            target_id=77,
+            ownership=None,
+        )
+        self.assertEqual(remove_result, {"ok": True, "ownership_id": None})
+        self.assertFalse(
+            OwnershipLink.objects.filter(
+                user=self.user,
+                target_type=OwnershipLink.TargetType.ASSET,
+                target_id=77,
+            ).exists()
+        )

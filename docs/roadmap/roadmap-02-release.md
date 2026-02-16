@@ -146,10 +146,11 @@ Estado: en progreso.
 - [x] Hooks pre-commit (lint/format rapido).
 
 ### Fase 4: Estrategia De Testing Potente
-Estado: pendiente.
+Estado: en progreso.
 
 - [ ] Backend:
   - [ ] tests unitarios por servicio.
+  - Avance: tests unitarios de servicios anadidos en `backend/memberships/tests.py` para validaciones de `validate_ownership_payload` y flujo de `sync_ownership_link` (create/update/remove).
   - [ ] tests API por endpoint critico.
   - [ ] tests de integracion API dual (`core` + `saas`) ampliados.
   - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
