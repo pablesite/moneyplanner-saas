@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import BaseModal from '@/components/BaseModal.vue';
+import BaseModal from '@/domains/ui/components/BaseModal.vue';
 import { usePeopleMembers } from '@/domains/people/composables';
 
 const {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import BaseModal from '@/components/BaseModal.vue';
+import BaseModal from '@/domains/ui/components/BaseModal.vue';
 import { usePeopleOwnerships } from '@/domains/people/composables';
 import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
 

@@ -68,6 +68,7 @@ Estado: en progreso.
   - Avance: estructura de dominio `aux-data` creada en `frontend/src/domains/aux-data/api.ts` y `core/frontend/src/domains/aux-data/api.ts` con `lib/auxDataApi.ts` como reexport de compatibilidad.
   - Avance: componentes de `net-worth` movidos a `frontend/src/domains/net-worth/components/*` y `core/frontend/src/domains/net-worth/components/*`, con imports de vistas actualizados.
   - Avance: dominio `people` en SaaS consolidado en `frontend/src/domains/people/*` (store + componentes), manteniendo `frontend/src/stores/people.ts` como reexport de compatibilidad.
+  - Avance: componentes transversales reorganizados por dominio: `AppHeader` en `domains/auth/components` y `BaseModal` en `domains/ui/components` para `frontend` y `core/frontend`, manteniendo `src/components/*` como aliases de compatibilidad.
 - [ ] Simplificar flujos de estado y side effects.
   - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
   - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.
