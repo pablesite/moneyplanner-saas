@@ -69,7 +69,7 @@ Estado: en progreso.
   - Avance: componentes de `net-worth` movidos a `frontend/src/domains/net-worth/components/*` y `core/frontend/src/domains/net-worth/components/*`, con imports de vistas actualizados.
   - Avance: dominio `people` en SaaS consolidado en `frontend/src/domains/people/*` (store + componentes), manteniendo `frontend/src/stores/people.ts` como reexport de compatibilidad.
   - Avance: componentes transversales reorganizados por dominio: `AppHeader` en `domains/auth/components` y `BaseModal` en `domains/ui/components` para `frontend` y `core/frontend`, manteniendo `src/components/*` como aliases de compatibilidad.
-- [ ] Simplificar flujos de estado y side effects.
+- [x] Simplificar flujos de estado y side effects.
   - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
   - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.
   - Avance: `frontend/src/views/AuxDataView.vue` extrae side effects de carga/alta/baja y formateo a `frontend/src/domains/aux-data/composables.ts`.
@@ -84,6 +84,7 @@ Estado: en progreso.
   - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` extrae orquestacion de estado/efectos (watchers, carga inicial, modal flows y derivados) a `domains/net-worth/composables.ts`, dejando la vista enfocada en composicion de UI.
   - Avance: `LoginView.vue` en `frontend` y `core/frontend` extrae submit/loading/error/redirect a `domains/auth/composables.ts`, reduciendo side effects directos en la vista.
   - Avance: guard de autenticacion del router movido a `domains/auth/guard.ts` en `frontend` y `core/frontend`, manteniendo `router.ts` como declaracion de rutas + registro de guard.
+  - Avance: `AuxDataView.vue` en `frontend` y `core/frontend` delega auto-carga inicial a `useAuxDataPage()` en `domains/aux-data/composables.ts`, eliminando efectos de montaje directos en la vista.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
   - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.
