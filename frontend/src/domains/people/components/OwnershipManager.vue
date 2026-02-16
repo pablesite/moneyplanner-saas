@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import BaseModal from '@/components/BaseModal.vue';
-import { usePeopleStore } from '@/stores/people';
-import OwnershipLabel from '@/components/people/OwnershipLabel.vue';
+import { usePeopleStore } from '@/domains/people/store';
+import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
 
 const store = usePeopleStore();
 
@@ -359,3 +359,4 @@ const ownershipsSorted = computed(() => {
   gap: 10px;
 }
 </style>
+

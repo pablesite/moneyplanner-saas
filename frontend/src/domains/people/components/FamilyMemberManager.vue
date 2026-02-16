@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import BaseModal from '@/components/BaseModal.vue';
-import { usePeopleStore } from '@/stores/people';
+import { usePeopleStore } from '@/domains/people/store';
 
 const store = usePeopleStore();
 
@@ -342,3 +342,4 @@ onMounted(async () => {
   gap: 10px;
 }
 </style>
+

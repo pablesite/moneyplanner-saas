@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import FamilyMemberManager from '@/components/people/FamilyMemberManager.vue';
-import OwnershipManager from '@/components/people/OwnershipManager.vue';
+import FamilyMemberManager from '@/domains/people/components/FamilyMemberManager.vue';
+import OwnershipManager from '@/domains/people/components/OwnershipManager.vue';
 
 const router = useRouter();
 type Tab = 'members' | 'ownerships';
@@ -89,3 +89,4 @@ const tab = ref<Tab>('members');
   gap: 14px;
 }
 </style>
+
