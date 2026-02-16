@@ -97,6 +97,7 @@ Estado: en progreso.
   - Avance: guia minima inicial en `docs/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
 - [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
   - Avance: componentes `net-worth` (`ItemForm.vue` y `ItemList.vue` en `frontend` y `core/frontend`) reducen `any` en props/payloads y se alinean a modelos tipados de dominio.
+  - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` reduce `any` en flujo de edicion (`editItem`/handlers) y tipa el acceso a campos extendidos de `summary`.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.
