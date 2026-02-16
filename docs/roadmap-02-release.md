@@ -107,7 +107,7 @@ Estado: en progreso.
   - [x] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
   - Avance: `Tailwind CSS` integrado en `core/frontend` y `frontend` (config + PostCSS + entrada `src/styles/tailwind.css`) con mapeo de tokens canonicos (`app.css`) para colores, spacing, radius y tipografia.
-- [ ] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
+- [x] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
   - Avance: guia minima inicial en `docs/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
   - Avance: visual de `NetWorthDonut.vue` alineada a clases compartidas (`@layer components`) y tipografia canonica de app en el render central de Chart.js para `core/frontend` y `frontend`.
   - Avance: estados y layout de vistas principales normalizados con primitivas compartidas (`ui-page-*`, `ui-section-header`, `ui-status-line`, `ui-data-*`) en `core/frontend/src/views/AuxDataView.vue`, `frontend/src/views/AuxDataView.vue`, `frontend/src/views/PeopleView.vue`, `core/frontend/src/views/NetWorthView.vue` y `frontend/src/views/NetWorthView.vue`.
