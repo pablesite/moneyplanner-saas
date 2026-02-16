@@ -10,82 +10,39 @@ const tab = ref<Tab>('members');
 
 <template>
   <div class="container">
-    <div class="page-header">
-      <h1 class="h1 page-title">Personas</h1>
+    <div class="ui-page-header">
+      <h1 class="h1 ui-page-title">Personas</h1>
 
-      <div class="page-actions">
+      <div class="ui-page-actions">
         <button class="btn" type="button" @click="router.push('/')">Volver a Patrimonio</button>
       </div>
     </div>
 
-    <div class="card people-content-card">
-      <div class="people-tabs">
+    <div class="card mt-3.5">
+      <div class="mb-3.5 flex gap-2.5">
         <button
-          class="btn"
+          class="btn opacity-60"
           type="button"
-          :class="['tab-btn', { 'is-active': tab === 'members' }]"
+          :class="{ '!opacity-100': tab === 'members' }"
           @click="tab = 'members'"
         >
           Miembros
         </button>
 
         <button
-          class="btn"
+          class="btn opacity-60"
           type="button"
-          :class="['tab-btn', { 'is-active': tab === 'ownerships' }]"
+          :class="{ '!opacity-100': tab === 'ownerships' }"
           @click="tab = 'ownerships'"
         >
           Titularidades
         </button>
       </div>
 
-      <div class="people-panel">
+      <div class="grid gap-3.5">
         <FamilyMemberManager v-if="tab === 'members'" />
         <OwnershipManager v-else />
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.page-title {
-  margin: 0;
-}
-
-.page-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.people-content-card {
-  margin-top: 14px;
-}
-
-.people-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.tab-btn {
-  opacity: 0.6;
-}
-
-.tab-btn.is-active {
-  opacity: 1;
-}
-
-.people-panel {
-  display: grid;
-  gap: 14px;
-}
-</style>
-

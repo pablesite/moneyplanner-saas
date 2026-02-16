@@ -36,4 +36,8 @@ Variables clave:
 - Tailwind integrado en `core/frontend` y `frontend` con mapeo de tokens desde CSS variables.
 - `NetWorthView` y `BaseModal` ya migrados a layout utilitario Tailwind en `core/frontend` y `frontend`.
 - Capa `@layer components` activa en `src/styles/tailwind.css` para primitivas de formularios (`ui-form-help`, `ui-select-placeholder`, `ui-form-actions`).
+- Primitivas de pagina/datos unificadas en `src/styles/tailwind.css` para vistas principales:
+  - `ui-page-header`, `ui-page-title`, `ui-page-actions`
+  - `ui-section-header`, `ui-status-line`
+  - `ui-data-form-grid`, `ui-data-field`, `ui-data-table`, `ui-data-table-actions`
 - Siguiente paso: homogeneizar componentes base (`button`, `form`, `table`, `modal`) migrando estilos repetidos a utilidades y componentes comunes.
