@@ -15,6 +15,7 @@ export function usePeopleMembers() {
   const saving = ref(false);
   const rowBusy = ref<Record<number, boolean>>({});
   const createOpen = ref(false);
+  const successMessage = ref<string | null>(null);
 
   const editOpen = ref(false);
   const editForm = reactive({
@@ -45,6 +46,7 @@ export function usePeopleMembers() {
 
   function openCreate() {
     store.clearError();
+    successMessage.value = null;
     form.name = '';
     form.role = 'adult';
     createOpen.value = true;
@@ -60,12 +62,14 @@ export function usePeopleMembers() {
 
     saving.value = true;
     store.clearError();
+    successMessage.value = null;
 
     try {
       await store.createMember({ name, role: form.role });
       form.name = '';
       form.role = 'adult';
       createOpen.value = false;
+      successMessage.value = 'Miembro creado correctamente.';
     } finally {
       saving.value = false;
     }
@@ -75,6 +79,7 @@ export function usePeopleMembers() {
     if (rowBusy.value[id]) return;
     rowBusy.value[id] = true;
     store.clearError();
+    successMessage.value = null;
     try {
       await fn();
     } finally {
@@ -85,11 +90,15 @@ export function usePeopleMembers() {
   async function toggleActive(id: number, next: boolean) {
     await withRowBusy(id, async () => {
       await store.updateMember(id, { is_active: next });
+      successMessage.value = next
+        ? 'Miembro activado correctamente.'
+        : 'Miembro desactivado correctamente.';
     });
   }
 
   function openEdit(member: FamilyMember) {
     store.clearError();
+    successMessage.value = null;
     editForm.id = member.id;
     editForm.name = member.name;
     editForm.role = member.role;
@@ -108,6 +117,7 @@ export function usePeopleMembers() {
     await withRowBusy(editForm.id, async () => {
       await store.updateMember(editForm.id!, { name, role: editForm.role });
       editOpen.value = false;
+      successMessage.value = 'Miembro actualizado correctamente.';
     });
   }
 
@@ -116,6 +126,7 @@ export function usePeopleMembers() {
     if (!ok) return;
     await withRowBusy(member.id, async () => {
       await store.deleteMember(member.id);
+      successMessage.value = 'Miembro eliminado correctamente.';
     });
   }
 
@@ -125,6 +136,7 @@ export function usePeopleMembers() {
     saving,
     rowBusy,
     createOpen,
+    successMessage,
     editOpen,
     editForm,
     prettyError,
@@ -147,6 +159,7 @@ export function usePeopleOwnerships() {
 
   const showModal = ref(false);
   const editId = ref<number | null>(null);
+  const successMessage = ref<string | null>(null);
 
   const form = reactive({
     memberIds: [] as number[],
@@ -199,6 +212,7 @@ export function usePeopleOwnerships() {
   }
 
   function openCreate() {
+    successMessage.value = null;
     editId.value = null;
     form.memberIds = [];
     form.percents = {};
@@ -207,6 +221,7 @@ export function usePeopleOwnerships() {
 
   function openEdit(ownership: OwnershipRead) {
     if (ownership.kind !== 'shared') return;
+    successMessage.value = null;
     editId.value = ownership.id;
     form.memberIds = (ownership.splits ?? [])
       .map((split) => split.member?.id)
@@ -243,6 +258,7 @@ export function usePeopleOwnerships() {
 
   async function submit() {
     if (!canCreate.value) return;
+    successMessage.value = null;
 
     const splits = form.memberIds.map((id) => ({
       member_id: id,
@@ -251,8 +267,10 @@ export function usePeopleOwnerships() {
 
     if (editId.value != null) {
       await store.updateSharedOwnership(editId.value, { splits });
+      successMessage.value = 'Titularidad compartida actualizada correctamente.';
     } else {
       await store.createSharedOwnership({ splits });
+      successMessage.value = 'Titularidad compartida creada correctamente.';
     }
 
     resetModal();
@@ -261,13 +279,16 @@ export function usePeopleOwnerships() {
   async function removeOwnership(id: number) {
     const ok = window.confirm('?Eliminar esta titularidad compartida? (Solo si no esta en uso)');
     if (!ok) return;
+    successMessage.value = null;
     await store.deleteOwnership(id);
+    successMessage.value = 'Titularidad compartida eliminada correctamente.';
   }
 
   return {
     store,
     showModal,
     editId,
+    successMessage,
     form,
     adults,
     canCreate,

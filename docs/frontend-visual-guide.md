@@ -40,4 +40,8 @@ Variables clave:
   - `ui-page-header`, `ui-page-title`, `ui-page-actions`
   - `ui-section-header`, `ui-status-line`
   - `ui-data-form-grid`, `ui-data-field`, `ui-data-table`, `ui-data-table-actions`
+  - `ui-alert-success`, `ui-table-empty`
+- Feedback de accion y estado vacio aplicado en:
+  - `AuxDataView` (`core/frontend` y `frontend`) con mensajes de exito post CRUD y filas vacias por tabla.
+  - dominio `people` (`frontend`) con mensajes de exito en `FamilyMemberManager` y `OwnershipManager`.
 - Siguiente paso: homogeneizar componentes base (`button`, `form`, `table`, `modal`) migrando estilos repetidos a utilidades y componentes comunes.

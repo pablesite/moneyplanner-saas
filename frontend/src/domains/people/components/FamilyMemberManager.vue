@@ -9,6 +9,7 @@ const {
   saving,
   rowBusy,
   createOpen,
+  successMessage,
   editOpen,
   editForm,
   prettyError,
@@ -34,6 +35,9 @@ onMounted(async () => {
   <div>
     <div v-if="prettyError" class="alert member-alert">
       {{ prettyError }}
+    </div>
+    <div v-if="successMessage" class="ui-alert-success">
+      {{ successMessage }}
     </div>
     <!-- Lista -->
     <section class="card member-section">
@@ -115,11 +119,13 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!membersSorted.length">
-            <td colspan="4" class="subtle member-empty">No hay miembros todavia.</td>
+            <td colspan="4" class="ui-table-empty">No hay miembros todavia.</td>
           </tr>
         </tbody>
       </table>
     </section>
+
+    <div v-if="store.loading" class="ui-status-line">Cargando miembros...</div>
 
     <!-- Modal crear -->
     <BaseModal :open="createOpen" title="Nuevo miembro" @close="closeCreate">
@@ -229,10 +235,6 @@ onMounted(async () => {
 .member-actions {
   display: inline-flex;
   gap: 10px;
-}
-
-.member-empty {
-  padding: 10px 6px;
 }
 
 .member-status-inactive {

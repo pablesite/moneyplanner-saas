@@ -8,6 +8,7 @@ const {
   store,
   showModal,
   editId,
+  successMessage,
   form,
   adults,
   canCreate,
@@ -32,6 +33,9 @@ onMounted(async () => {
   <div>
     <div v-if="store.error" class="alert ownership-alert">
       {{ store.error }}
+    </div>
+    <div v-if="successMessage" class="ui-alert-success">
+      {{ successMessage }}
     </div>
 
     <section class="section card ownership-section">
@@ -96,11 +100,13 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="subtle ownership-empty">No hay titularidades todavia.</td>
+            <td colspan="2" class="ui-table-empty">No hay titularidades todavia.</td>
           </tr>
         </tbody>
       </table>
     </section>
+
+    <div v-if="store.loading" class="ui-status-line">Cargando titularidades...</div>
 
     <BaseModal
       :open="showModal"
@@ -195,10 +201,6 @@ onMounted(async () => {
   display: inline-flex;
   gap: 10px;
   align-items: center;
-}
-
-.ownership-empty {
-  padding: 10px 6px;
 }
 
 .ownership-modal-grid {
