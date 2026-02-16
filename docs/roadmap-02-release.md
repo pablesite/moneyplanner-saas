@@ -143,6 +143,7 @@ Estado: pendiente.
   - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
 - [ ] Frontend:
   - [ ] tests unitarios de componentes y stores.
+  - Avance: suite inicial Vitest + Vue Test Utils añadida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
   - [ ] tests de integracion de vistas principales.
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
 - [ ] Objetivo minimo de cobertura:
