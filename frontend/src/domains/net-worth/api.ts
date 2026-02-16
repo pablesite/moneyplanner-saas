@@ -1,54 +1,69 @@
 import { api, coreApi } from '@/lib/api';
+import type {
+  Asset,
+  Liability,
+  NetWorthWritePayload,
+  Ownership,
+  Snapshot,
+  Summary,
+} from '@/domains/net-worth/models';
+import type { OwnershipLink } from '@/domains/net-worth/ownership';
 
 type TargetType = 'asset' | 'liability';
+type Settings = { base_currency: string };
+type OwnershipSyncPayload = {
+  target_type: TargetType;
+  target_id: number;
+  ownership_id: number | null;
+};
 
 export const coreNetWorthApi = {
   getSummary() {
-    return coreApi.get('/api/net-worth/summary/');
+    return coreApi.get<Summary>('/api/net-worth/summary/');
   },
   getAssets() {
-    return coreApi.get('/api/net-worth/assets/');
+    return coreApi.get<Asset[]>('/api/net-worth/assets/');
   },
   getLiabilities() {
-    return coreApi.get('/api/net-worth/liabilities/');
+    return coreApi.get<Liability[]>('/api/net-worth/liabilities/');
   },
   getSnapshots() {
-    return coreApi.get('/api/net-worth/snapshots/');
+    return coreApi.get<Snapshot[]>('/api/net-worth/snapshots/');
   },
   createSnapshotFromCurrent() {
-    return coreApi.post('/api/net-worth/snapshots/from-current/');
+    return coreApi.post<Snapshot>('/api/net-worth/snapshots/from-current/');
   },
   deleteSnapshot(id: number) {
     return coreApi.delete(`/api/net-worth/snapshots/${id}/`);
   },
-  createAsset(payload: Record<string, unknown>) {
-    return coreApi.post('/api/net-worth/assets/', payload);
+  createAsset(payload: NetWorthWritePayload) {
+    return coreApi.post<Asset>('/api/net-worth/assets/', payload);
   },
-  updateAsset(id: number, payload: Record<string, unknown>) {
-    return coreApi.patch(`/api/net-worth/assets/${id}/`, payload);
+  updateAsset(id: number, payload: NetWorthWritePayload) {
+    return coreApi.patch<Asset>(`/api/net-worth/assets/${id}/`, payload);
   },
-  createLiability(payload: Record<string, unknown>) {
-    return coreApi.post('/api/net-worth/liabilities/', payload);
+  createLiability(payload: NetWorthWritePayload) {
+    return coreApi.post<Liability>('/api/net-worth/liabilities/', payload);
   },
-  updateLiability(id: number, payload: Record<string, unknown>) {
-    return coreApi.patch(`/api/net-worth/liabilities/${id}/`, payload);
+  updateLiability(id: number, payload: NetWorthWritePayload) {
+    return coreApi.patch<Liability>(`/api/net-worth/liabilities/${id}/`, payload);
   },
   getSettings() {
-    return coreApi.get('/api/auth/settings/');
+    return coreApi.get<Settings>('/api/auth/settings/');
   },
-  updateSettings(payload: { base_currency: string }) {
-    return coreApi.put('/api/auth/settings/', payload);
+  updateSettings(payload: Settings) {
+    return coreApi.put<Settings>('/api/auth/settings/', payload);
   },
 };
 
 export const premiumOwnershipApi = {
   getOwnerships() {
-    return api.get('/api/ownerships/');
+    return api.get<Ownership[]>('/api/ownerships/');
   },
   getOwnershipLinks() {
-    return api.get('/api/ownership-links/');
+    return api.get<OwnershipLink[]>('/api/ownership-links/');
   },
-  syncOwnershipLink(payload: { target_type: TargetType; target_id: number; ownership_id: number | null }) {
+  syncOwnershipLink(payload: OwnershipSyncPayload) {
     return api.post('/api/ownership-links/sync/', payload);
   },
 };
