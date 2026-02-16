@@ -1,20 +1,15 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue';
+import type { NetWorthWritePayload, Ownership } from '@/domains/net-worth/models';
 
-type Ownership = {
-  id: number;
-  kind: 'individual' | 'shared';
-  member: { id: number; name: string; role: 'adult' | 'child' } | null;
-  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
-  notes: string;
-};
+type ItemFormPayload = NetWorthWritePayload & { ownership_id?: number | null };
 
 type Props = {
   title: string;
   categories: { value: string; label: string }[];
   subcategories?: { value: string; label: string; category: string }[];
   ownerships: Ownership[];
-  onSubmit: (payload: any) => Promise<void>;
+  onSubmit: (payload: ItemFormPayload) => Promise<void>;
   onCancel?: () => void;
   assets?: { id: number; name: string; category: string }[];
   showFinancedAsset?: boolean;
@@ -186,7 +181,7 @@ async function submit() {
   const { value: normalizedAmount, error } = sanitizeAmount(form.amount, maxDecimals.value);
   if (!normalizedAmount || error) return;
 
-  const payload: any = {
+  const payload: ItemFormPayload = {
     name: form.name,
     category: form.category,
     subcategory: form.subcategory || undefined,

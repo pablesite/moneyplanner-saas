@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { formatAmount } from '@/lib/format';
-
-type Ownership = {
-  id: number;
-  kind: 'individual' | 'shared';
-  member: { id: number; name: string; role: 'adult' | 'child' } | null;
-  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
-  notes: string;
-};
+import type { Asset, NetWorthWritePayload, Ownership } from '@/domains/net-worth/models';
 
 type AssetMini = {
   id: number;
@@ -16,16 +9,7 @@ type AssetMini = {
   category: string;
 };
 
-type Item = {
-  id: number;
-  name: string;
-  category: string;
-  subcategory?: string;
-  amount: string;
-  amount_base?: string;
-  currency: string;
-  notes: string;
-  is_active: boolean;
+type Item = Asset & {
   ownership_ref?: number | null;
   _displayAmount?: number;
   _sharePercent?: number;
@@ -47,7 +31,7 @@ type Props = {
   ownerships: Ownership[];
   onUpdate: (
     id: number,
-    payload: Partial<Item> & { ownership_id?: number | null; financed_asset_id?: number | null },
+    payload: NetWorthWritePayload & { ownership_id?: number | null },
   ) => Promise<void>;
   onArchive: (id: number) => Promise<void>;
   onAdd?: () => void;
@@ -85,7 +69,7 @@ const expandedCats = ref<Set<string>>(new Set());
 
 const isLiabilitiesList = computed(() => props.title === 'Pasivos');
 
-const ownershipLabel = (o: any) => {
+const ownershipLabel = (o: Ownership | null | undefined) => {
   if (!o) return '';
 
   if (o.kind === 'individual') {
@@ -96,16 +80,14 @@ const ownershipLabel = (o: any) => {
   }
 
   const splits = Array.isArray(o.splits) ? o.splits : [];
-  const parts = splits.map((s: any) => {
+  const parts = splits.map((s) => {
     const m = s.member;
     const name =
       m && typeof m === 'object'
         ? m.name
         : typeof m === 'number'
           ? `#${m}`
-          : s.member_id != null
-            ? `#${s.member_id}`
-            : '¿?';
+          : '¿?';
     return `${name} ${s.percent ?? ''}%`.trim();
   });
 
@@ -116,7 +98,7 @@ const ownershipOptions = computed(() => {
   const list = Array.isArray(props.ownerships) ? props.ownerships : [];
   return [
     { value: null, label: '— Sin asignar —' },
-    ...list.map((o: any) => ({
+    ...list.map((o) => ({
       value: o.id,
       label: ownershipLabel(o) || `Ownership #${o.id}`,
     })),
@@ -610,7 +592,7 @@ async function saveEdit(id: number) {
 
   if (!isValidAmountString(clamped)) return;
 
-  const payload: any = {
+  const payload: NetWorthWritePayload & { ownership_id?: number | null } = {
     ...draft.value,
     amount: clamped,
     subcategory: draft.value.subcategory || undefined,
@@ -1196,3 +1178,5 @@ async function saveEdit(id: number) {
   font-size: 12px;
 }
 </style>
+
+
