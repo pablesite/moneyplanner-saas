@@ -163,6 +163,7 @@ Estado: en progreso.
   - Avance: tests de integracion iniciales para `NetWorthView` añadidos en `frontend/src/views/__tests__/NetWorthView.spec.ts` y `core/frontend/src/views/__tests__/NetWorthView.spec.ts` (wiring de acciones principales, toggle de desglose y render estructural).
   - Avance: tests de integracion para `LoginView` añadidos en `frontend/src/views/__tests__/LoginView.spec.ts` y `core/frontend/src/views/__tests__/LoginView.spec.ts` (render de formulario, estados loading/error y submit del flujo de login).
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
+  - Avance: base E2E con Playwright añadida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegación a `ownership` (SaaS) mediante mocks de API.
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.

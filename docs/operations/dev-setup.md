@@ -138,6 +138,19 @@ docker compose exec saas_backend python manage.py test memberships
 ```
 2. Backend Core:
 - Existen archivos base de tests (`core/backend/*/tests.py`), pero la cobertura funcional principal sigue concentrada en SaaS por ahora.
+3. Frontend SaaS E2E (Playwright, en Docker):
+```bash
+docker compose exec saas_frontend npx playwright install chromium
+docker compose exec saas_frontend npm run test:e2e -- --list
+docker compose exec saas_frontend npm run test:e2e -- --project=chromium
+```
+4. Frontend Core E2E (Playwright, en Docker):
+```bash
+cd core
+docker compose exec frontend npx playwright install chromium
+docker compose exec frontend npm run test:e2e -- --list
+docker compose exec frontend npm run test:e2e -- --project=chromium
+```
 
 Formato de errores API (Roadmap-02 / Fase 1):
 ```json
