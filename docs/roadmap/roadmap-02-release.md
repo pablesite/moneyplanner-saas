@@ -164,6 +164,7 @@ Estado: en progreso.
   - Avance: tests de integracion para `LoginView` añadidos en `frontend/src/views/__tests__/LoginView.spec.ts` y `core/frontend/src/views/__tests__/LoginView.spec.ts` (render de formulario, estados loading/error y submit del flujo de login).
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
   - Avance: base E2E con Playwright añadida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegación a `ownership` (SaaS) mediante mocks de API.
+  - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecución validada en contenedores (`npm run test:e2e -- --project=chromium`).
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
