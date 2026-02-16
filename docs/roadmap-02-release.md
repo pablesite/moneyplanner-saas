@@ -118,6 +118,7 @@ Estado: en progreso.
   - Avance: `ItemForm.vue` y `ItemList.vue` adoptan clases base compartidas (`@layer components` en `styles/tailwind.css`) para ayudas de formulario, placeholders y acciones, reduciendo estilos inline/scoped duplicados.
   - Avance: `ItemList.vue` extrae subcomponentes `ItemCategoryHeader.vue` y `EditableItemRow.vue` en `core/frontend` y `frontend`, reduciendo complejidad de plantilla y favoreciendo pruebas unitarias de UI.
   - Avance: `ItemList.vue` extrae `ItemSubgroupHeader.vue` (cabecera de subcategoria + totales) en `core/frontend` y `frontend` para desacoplar el bloque de detalle de subcategorias.
+  - Avance: `ItemList.vue` extrae `ItemDisplayRow.vue` (fila no editable con acciones) en `core/frontend` y `frontend`, consolidando estilos de lectura y dejando la vista como orquestador de subcomponentes.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.
