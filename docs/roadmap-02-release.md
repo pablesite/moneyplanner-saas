@@ -109,6 +109,7 @@ Estado: en progreso.
   - Avance: `Tailwind CSS` integrado en `core/frontend` y `frontend` (config + PostCSS + entrada `src/styles/tailwind.css`) con mapeo de tokens canonicos (`app.css`) para colores, spacing, radius y tipografia.
 - [ ] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
   - Avance: guia minima inicial en `docs/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
+  - Avance: visual de `NetWorthDonut.vue` alineada a clases compartidas (`@layer components`) y tipografia canonica de app en el render central de Chart.js para `core/frontend` y `frontend`.
 - [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
   - Avance: componentes `net-worth` (`ItemForm.vue` y `ItemList.vue` en `frontend` y `core/frontend`) reducen `any` en props/payloads y se alinean a modelos tipados de dominio.
   - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` reduce `any` en flujo de edicion (`editItem`/handlers) y tipa el acceso a campos extendidos de `summary`.
@@ -119,6 +120,7 @@ Estado: en progreso.
   - Avance: `ItemList.vue` extrae subcomponentes `ItemCategoryHeader.vue` y `EditableItemRow.vue` en `core/frontend` y `frontend`, reduciendo complejidad de plantilla y favoreciendo pruebas unitarias de UI.
   - Avance: `ItemList.vue` extrae `ItemSubgroupHeader.vue` (cabecera de subcategoria + totales) en `core/frontend` y `frontend` para desacoplar el bloque de detalle de subcategorias.
   - Avance: `ItemList.vue` extrae `ItemDisplayRow.vue` (fila no editable con acciones) en `core/frontend` y `frontend`, consolidando estilos de lectura y dejando la vista como orquestador de subcomponentes.
+  - Avance: `ItemDisplayRow.vue` y `NetWorthDonut.vue` eliminan CSS scoped duplicado y adoptan clases base compartidas (`nw-*`) en `styles/tailwind.css` para `core/frontend` y `frontend`; se normaliza microcopy de submeta de pasivos (`Financia:`).
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.
