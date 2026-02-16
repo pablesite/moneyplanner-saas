@@ -1,120 +1,32 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted } from 'vue';
 import BaseModal from '@/components/BaseModal.vue';
-import { usePeopleStore } from '@/domains/people/store';
+import { usePeopleMembers } from '@/domains/people/composables';
 
-const store = usePeopleStore();
-
-const form = reactive({
-  name: '',
-  role: 'adult' as 'adult' | 'child',
-});
-
-const saving = ref(false);
-const rowBusy = ref<Record<number, boolean>>({});
-const createOpen = ref(false);
-
-// modal edición
-const editOpen = ref(false);
-const editForm = reactive({
-  id: null as number | null,
-  name: '',
-  role: 'adult' as 'adult' | 'child',
-});
-
-const prettyError = computed(() => store.error);
-
-const membersSorted = computed(() => {
-  const arr = [...store.members];
-  arr.sort((a, b) => {
-    if (a.role !== b.role) return a.role === 'adult' ? -1 : 1;
-    if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
-  return arr;
-});
-
-async function submit() {
-  const name = form.name.trim();
-  if (!name) return;
-
-  saving.value = true;
-  store.clearError();
-
-  try {
-    await store.createMember({ name, role: form.role });
-    form.name = '';
-    form.role = 'adult';
-    createOpen.value = false;
-  } finally {
-    saving.value = false;
-  }
-}
-
-function openCreate() {
-  store.clearError();
-  form.name = '';
-  form.role = 'adult';
-  createOpen.value = true;
-}
-
-function closeCreate() {
-  createOpen.value = false;
-}
-
-async function toggleActive(id: number, next: boolean) {
-  if (rowBusy.value[id]) return;
-
-  rowBusy.value[id] = true;
-  store.clearError();
-
-  try {
-    await store.updateMember(id, { is_active: next });
-  } finally {
-    rowBusy.value[id] = false;
-  }
-}
-
-function openEdit(m: any) {
-  store.clearError();
-  editForm.id = m.id;
-  editForm.name = m.name;
-  editForm.role = m.role;
-  editOpen.value = true;
-}
-
-async function saveEdit() {
-  if (editForm.id == null) return;
-  const name = editForm.name.trim();
-  if (!name) return;
-
-  rowBusy.value[editForm.id] = true;
-  store.clearError();
-
-  try {
-    await store.updateMember(editForm.id, { name, role: editForm.role });
-    editOpen.value = false;
-  } finally {
-    rowBusy.value[editForm.id] = false;
-  }
-}
-
-async function removeMember(m: any) {
-  const ok = window.confirm(`¿Eliminar a "${m.name}"?\n\nSolo se podrá si no está en uso.`);
-  if (!ok) return;
-
-  rowBusy.value[m.id] = true;
-  store.clearError();
-
-  try {
-    await store.deleteMember(m.id);
-  } finally {
-    rowBusy.value[m.id] = false;
-  }
-}
+const {
+  store,
+  form,
+  saving,
+  rowBusy,
+  createOpen,
+  editOpen,
+  editForm,
+  prettyError,
+  membersSorted,
+  ensureLoaded,
+  refreshMembers,
+  openCreate,
+  closeCreate,
+  submit,
+  toggleActive,
+  openEdit,
+  closeEdit,
+  saveEdit,
+  removeMember,
+} = usePeopleMembers();
 
 onMounted(async () => {
-  if (!store.members.length) await store.fetchMembers();
+  await ensureLoaded();
 });
 </script>
 
@@ -128,7 +40,7 @@ onMounted(async () => {
       <div class="card-header">
         <h2 class="card-header-title">Miembros</h2>
         <div class="member-header-actions">
-          <button class="btn" type="button" :disabled="store.loading" @click="store.fetchMembers()">
+          <button class="btn" type="button" :disabled="store.loading" @click="refreshMembers()">
             Refrescar
           </button>
           <button
@@ -245,7 +157,7 @@ onMounted(async () => {
     </BaseModal>
 
     <!-- Modal editar -->
-    <BaseModal :open="editOpen" title="Editar miembro" @close="editOpen = false">
+    <BaseModal :open="editOpen" title="Editar miembro" @close="closeEdit">
       <div class="member-edit-grid">
         <div>
           <div class="subtle member-field-label">Nombre</div>
@@ -261,7 +173,7 @@ onMounted(async () => {
         </div>
 
         <div class="member-edit-actions">
-          <button class="btn" type="button" @click="editOpen = false">Cancelar</button>
+          <button class="btn" type="button" @click="closeEdit">Cancelar</button>
           <button
             class="btn"
             type="button"

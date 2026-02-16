@@ -77,6 +77,7 @@ Estado: en progreso.
   - Avance: manejo de errores HTTP unificado en `frontend/src/lib/errors.ts` y `core/frontend/src/lib/errors.ts`, aplicado en `LoginView`, `AuxDataView` y `stores/netWorth`.
   - Avance: login delega autenticacion en adapters `frontend/src/lib/authApi.ts` y `core/frontend/src/lib/authApi.ts`, usando `authSession` para persistencia de tokens.
   - Avance: dominio `people` extrae side effects de red a `frontend/src/domains/people/api.ts` y normalizacion de errores a `frontend/src/domains/people/errors.ts`; `frontend/src/domains/people/store.ts` queda como orquestador de estado.
+  - Avance: side effects UI de `people` extraidos a `frontend/src/domains/people/composables.ts`; `FamilyMemberManager.vue` y `OwnershipManager.vue` quedan mas declarativos.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
   - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.

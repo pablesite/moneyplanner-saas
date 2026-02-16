@@ -1,122 +1,30 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted } from 'vue';
 import BaseModal from '@/components/BaseModal.vue';
-import { usePeopleStore } from '@/domains/people/store';
+import { usePeopleOwnerships } from '@/domains/people/composables';
 import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
 
-const store = usePeopleStore();
-
-const showModal = ref(false);
-const editId = ref<number | null>(null);
-
-const form = reactive({
-  memberIds: [] as number[],
-  percents: {} as Record<number, string>,
-});
-
-const adults = computed(() => store.activeAdults);
-
-const canCreate = computed(() => {
-  if (form.memberIds.length < 2) return false;
-
-  for (const id of form.memberIds) {
-    const p = Number(String(form.percents[id] ?? '').replace(',', '.'));
-    if (!Number.isFinite(p) || p <= 0 || p > 100) return false;
-  }
-
-  const total = form.memberIds.reduce((acc, id) => {
-    const p = Number(String(form.percents[id] ?? '0').replace(',', '.'));
-    return acc + (Number.isFinite(p) ? p : 0);
-  }, 0);
-
-  return Math.abs(total - 100) < 0.0001;
-});
-
-function toggleMember(id: number) {
-  const idx = form.memberIds.indexOf(id);
-  if (idx >= 0) {
-    form.memberIds.splice(idx, 1);
-    delete form.percents[id];
-  } else {
-    form.memberIds.push(id);
-    form.percents[id] = form.percents[id] ?? '';
-  }
-}
-
-function setEqualSplit() {
-  if (form.memberIds.length < 2) return;
-  const each = (100 / form.memberIds.length).toFixed(2);
-  for (const id of form.memberIds) form.percents[id] = each;
-
-  const sum = (form.memberIds.length - 1) * Number(each);
-  const last = (100 - sum).toFixed(2);
-  const lastMemberId = form.memberIds[form.memberIds.length - 1];
-  if (lastMemberId == null) return;
-  form.percents[lastMemberId] = last;
-}
-
-async function submit() {
-  if (!canCreate.value) return;
-
-  const splits = form.memberIds.map((id) => ({
-    member_id: id,
-    percent: String(form.percents[id]).replace(',', '.'),
-  }));
-
-  if (editId.value != null) {
-    await store.updateSharedOwnership(editId.value, { splits });
-  } else {
-    await store.createSharedOwnership({ splits });
-  }
-
-  resetModal();
-}
-
-async function removeOwnership(id: number) {
-  const ok = window.confirm('¿Eliminar esta titularidad compartida? (Solo si no está en uso)');
-  if (!ok) return;
-  await store.deleteOwnership(id);
-}
-
-function resetModal() {
-  showModal.value = false;
-  form.memberIds = [];
-  form.percents = {};
-  editId.value = null;
-}
-
-function openCreate() {
-  editId.value = null;
-  form.memberIds = [];
-  form.percents = {};
-  showModal.value = true;
-}
-
-function openEdit(o: any) {
-  if (o.kind !== 'shared') return;
-  editId.value = o.id;
-  form.memberIds = (o.splits ?? []).map((s: any) => s.member?.id).filter((id: any) => id != null);
-  form.percents = {};
-  (o.splits ?? []).forEach((s: any) => {
-    if (s.member?.id != null) form.percents[s.member.id] = String(s.percent ?? '');
-  });
-  showModal.value = true;
-}
+const {
+  store,
+  showModal,
+  editId,
+  form,
+  adults,
+  canCreate,
+  ownershipsSorted,
+  ensureLoaded,
+  refreshOwnerships,
+  resetModal,
+  openCreate,
+  openEdit,
+  toggleMember,
+  setEqualSplit,
+  submit,
+  removeOwnership,
+} = usePeopleOwnerships();
 
 onMounted(async () => {
-  if (!store.ownerships.length) await store.fetchOwnerships();
-  if (!store.members.length) await store.fetchMembers();
-});
-
-const ownershipsSorted = computed(() => {
-  const arr = [...store.ownerships];
-  arr.sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === 'individual' ? -1 : 1;
-    const an = a.member?.name ?? '';
-    const bn = b.member?.name ?? '';
-    return an.localeCompare(bn);
-  });
-  return arr;
+  await ensureLoaded();
 });
 </script>
 
@@ -131,20 +39,10 @@ const ownershipsSorted = computed(() => {
         <h2 class="card-header-title">Titularidades</h2>
 
         <div class="ownership-actions">
-          <button
-            class="btn"
-            type="button"
-            :disabled="store.loading"
-            @click="store.fetchOwnerships()"
-          >
+          <button class="btn" type="button" :disabled="store.loading" @click="refreshOwnerships()">
             Refrescar
           </button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            :disabled="store.loading"
-            @click="openCreate"
-          >
+          <button class="btn btn-primary" type="button" :disabled="store.loading" @click="openCreate">
             Nueva compartida
           </button>
         </div>
@@ -198,22 +96,19 @@ const ownershipsSorted = computed(() => {
           </tr>
 
           <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="subtle ownership-empty">No hay titularidades todavía.</td>
+            <td colspan="2" class="subtle ownership-empty">No hay titularidades todavia.</td>
           </tr>
         </tbody>
       </table>
     </section>
 
-    <!-- Modal crear compartida -->
     <BaseModal
       :open="showModal"
       :title="editId != null ? 'Editar titularidad compartida' : 'Nueva titularidad compartida'"
       @close="resetModal"
     >
       <div class="ownership-modal-grid">
-        <div class="subtle">
-          Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).
-        </div>
+        <div class="subtle">Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).</div>
 
         <div class="card ownership-splits-card">
           <div class="ownership-member-list">
@@ -359,4 +254,3 @@ const ownershipsSorted = computed(() => {
   gap: 10px;
 }
 </style>
-
