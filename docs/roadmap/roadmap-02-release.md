@@ -58,7 +58,7 @@ Estado: completada.
   - Avance: fronteras y reglas de sincronizacion documentadas en `docs/architecture/core-saas-boundaries.md`.
 
 ### Fase 2: Refactor Frontend + UI Profesional
-Estado: en progreso.
+Estado: completada.
 
 - [x] Reorganizar stores/componentes por dominio funcional.
   - Avance: logica de ownership de net worth extraida a `frontend/src/lib/netWorthOwnership.ts`; `frontend/src/stores/netWorth.ts` reduce responsabilidad de transformacion.
@@ -105,7 +105,7 @@ Estado: en progreso.
   - Avance: entrypoints de dominio consolidados (`domains/auth|aux-data|net-worth|people|ui/index.ts`) y vistas migradas a imports desde `@/domains/*` (sin imports directos a `lib/*`).
 - [x] Introducir sistema de estilos profesional:
   - [x] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
-  - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
+  - [x] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion. (no aplica)
   - Avance: `Tailwind CSS` integrado en `core/frontend` y `frontend` (config + PostCSS + entrada `src/styles/tailwind.css`) con mapeo de tokens canonicos (`app.css`) para colores, spacing, radius y tipografia.
 - [x] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
   - Avance: guia minima inicial en `docs/frontend/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
@@ -197,5 +197,4 @@ Estado: pendiente.
 4. Fase 2 (frontend/UI)
 5. Fase 4 (testing profundo)
 6. Fase 5 (documentacion + release)
-
 

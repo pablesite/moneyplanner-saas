@@ -86,12 +86,7 @@ const ownershipLabel = (o: Ownership | null | undefined) => {
   const splits = Array.isArray(o.splits) ? o.splits : [];
   const parts = splits.map((s) => {
     const m = s.member;
-    const name =
-      m && typeof m === 'object'
-        ? m.name
-        : typeof m === 'number'
-          ? `#${m}`
-          : '?';
+    const name = m && typeof m === 'object' ? m.name : typeof m === 'number' ? `#${m}` : '?';
     return `${name} ${s.percent ?? ''}%`.trim();
   });
 
@@ -697,7 +692,9 @@ async function saveEdit(id: number) {
                 <ItemDisplayRow
                   v-if="editingId !== it.id"
                   :item="it"
-                  :formatted-amount="formatAmount(String(displayAmount(it)), { currency: it.currency })"
+                  :formatted-amount="
+                    formatAmount(String(displayAmount(it)), { currency: it.currency })
+                  "
                   :is-liabilities-list="isLiabilitiesList"
                   :financed-asset-name="financedAssetName(it.financed_asset_ref)"
                   :ownership-label="ownershipShortLabel(it.ownership_ref)"
@@ -728,7 +725,3 @@ async function saveEdit(id: number) {
     </div>
   </div>
 </template>
-
-
-
-

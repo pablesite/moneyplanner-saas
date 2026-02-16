@@ -46,7 +46,12 @@ onMounted(async () => {
           <button class="btn" type="button" :disabled="store.loading" @click="refreshOwnerships()">
             Refrescar
           </button>
-          <button class="btn btn-primary" type="button" :disabled="store.loading" @click="openCreate">
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="store.loading"
+            @click="openCreate"
+          >
             Nueva compartida
           </button>
         </div>
@@ -114,7 +119,9 @@ onMounted(async () => {
       @close="resetModal"
     >
       <div class="form-grid">
-        <div class="subtle">Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).</div>
+        <div class="subtle">
+          Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).
+        </div>
 
         <div class="card ui-people-splits-card">
           <div class="ui-people-member-list">

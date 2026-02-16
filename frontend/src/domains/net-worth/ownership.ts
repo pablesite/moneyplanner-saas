@@ -10,7 +10,9 @@ type WithId = {
 
 export function buildOwnershipMaps(links: OwnershipLink[]) {
   const assetOwnership = new Map(
-    links.filter((link) => link.target_type === 'asset').map((link) => [link.target_id, link.ownership_id] as const),
+    links
+      .filter((link) => link.target_type === 'asset')
+      .map((link) => [link.target_id, link.ownership_id] as const),
   );
 
   const liabilityOwnership = new Map(
@@ -22,7 +24,10 @@ export function buildOwnershipMaps(links: OwnershipLink[]) {
   return { assetOwnership, liabilityOwnership };
 }
 
-export function attachOwnershipRef<T extends WithId>(items: T[], ownershipMap: Map<number, number>) {
+export function attachOwnershipRef<T extends WithId>(
+  items: T[],
+  ownershipMap: Map<number, number>,
+) {
   return items.map((item) => ({
     ...item,
     ownership_ref: ownershipMap.get(item.id) ?? null,

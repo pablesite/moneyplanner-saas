@@ -149,7 +149,9 @@ onMounted(async () => {
         </div>
 
         <div class="ui-form-actions">
-          <button class="btn ui-form-action-btn" type="button" @click="closeCreate">Cancelar</button>
+          <button class="btn ui-form-action-btn" type="button" @click="closeCreate">
+            Cancelar
+          </button>
           <button
             class="btn btn-primary ui-form-action-btn"
             type="button"

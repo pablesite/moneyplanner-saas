@@ -3,7 +3,14 @@ import { toApiErrorMessage } from '@/lib/errors';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 import { buildByCategoryChart } from '@/domains/net-worth/charts';
 import { attachOwnershipRef, buildOwnershipMaps } from '@/domains/net-worth/ownership';
-import type { Asset, Liability, NetWorthWritePayload, Ownership, Snapshot, Summary } from '@/domains/net-worth/models';
+import type {
+  Asset,
+  Liability,
+  NetWorthWritePayload,
+  Ownership,
+  Snapshot,
+  Summary,
+} from '@/domains/net-worth/models';
 
 export type { Asset, Liability, Ownership, Snapshot, Summary } from '@/domains/net-worth/models';
 
@@ -151,10 +158,7 @@ export const useNetWorthStore = defineStore('netWorth', {
       }
     },
 
-    async updateLiability(
-      id: number,
-      payload: OwnershipAwarePayload,
-    ) {
+    async updateLiability(id: number, payload: OwnershipAwarePayload) {
       this.loading = true;
       this.error = null;
       try {
