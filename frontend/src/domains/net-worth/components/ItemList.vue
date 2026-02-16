@@ -28,7 +28,7 @@ type Props = {
   categoryTotalsBase?: Record<string, string>;
   subcategoryTotalsBase?: Record<string, string>;
   totalBase?: string;
-  ownerships: Ownership[];
+  ownerships?: Ownership[];
   onUpdate: (
     id: number,
     payload: NetWorthWritePayload & { ownership_id?: number | null },

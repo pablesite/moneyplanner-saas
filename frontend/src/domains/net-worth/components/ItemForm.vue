@@ -8,7 +8,7 @@ type Props = {
   title: string;
   categories: { value: string; label: string }[];
   subcategories?: { value: string; label: string; category: string }[];
-  ownerships: Ownership[];
+  ownerships?: Ownership[];
   onSubmit: (payload: ItemFormPayload) => Promise<void>;
   onCancel?: () => void;
   assets?: { id: number; name: string; category: string }[];

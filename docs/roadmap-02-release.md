@@ -94,6 +94,7 @@ Estado: en progreso.
   - [x] implementar puntos de extension premium (slots/hooks/capability flags) en lugar de copiar vistas.
   - Avance: contrato minimo de extension definido en `docs/core-saas-boundaries.md` (seccion "Contrato De Extension Frontend (Slots/Hooks)").
   - Avance: `NetWorthView` migra accion premium de header a contrato `useNetWorthViewExtensions()` con fallback no-op en `core/frontend/src/domains/net-worth/extensions.ts` e implementacion SaaS en `frontend/src/domains/net-worth/extensions.ts`.
+  - Avance: limpieza 2 aplicada en `NetWorthView` para inyectar props premium (`ownerships`) via `itemFormProps`/`itemListProps` desde extensiones, dejando la vista base alineada entre `core/frontend` y `frontend`.
   - [x] separar adapters de API (`coreApi` base, `saasApi` premium) con contratos claros.
   - Avance: `frontend/src/lib/netWorthApi.ts` separa adapters de `core` y `premium` para net worth; `frontend/src/stores/netWorth.ts` queda como orquestador de estado.
   - Avance: `core/frontend/src/lib/netWorthApi.ts` extrae adapter base para net worth y `core/frontend/src/stores/netWorth.ts` delega llamadas HTTP.
