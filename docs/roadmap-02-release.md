@@ -103,9 +103,10 @@ Estado: en progreso.
   - Avance: dominio `people` en SaaS adopta adapter tipado (`PeopleApiAdapter`) con seleccion por capacidad (`premium` activo, `core` bloqueado explicitamente).
   - Avance: capability flags introducidos en `domains/capabilities/index.ts` para `frontend` y `core/frontend`; router y `NetWorthView` usan estas capacidades para habilitar/ocultar flujo `people` sin bifurcar vistas.
   - Avance: entrypoints de dominio consolidados (`domains/auth|aux-data|net-worth|people|ui/index.ts`) y vistas migradas a imports desde `@/domains/*` (sin imports directos a `lib/*`).
-- [ ] Introducir sistema de estilos profesional:
-  - [ ] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
+- [x] Introducir sistema de estilos profesional:
+  - [x] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.
+  - Avance: `Tailwind CSS` integrado en `core/frontend` y `frontend` (config + PostCSS + entrada `src/styles/tailwind.css`) con mapeo de tokens canonicos (`app.css`) para colores, spacing, radius y tipografia.
 - [ ] Definir guia visual minima (tipografia, grid, espaciados, estados de error/loading).
   - Avance: guia minima inicial en `docs/frontend-visual-guide.md` y tokens base de spacing/radius/focus/error aplicados en `core/frontend/src/styles/app.css` y `frontend/src/styles/app.css`.
 - [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
