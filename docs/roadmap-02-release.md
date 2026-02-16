@@ -95,6 +95,10 @@ Estado: en progreso.
   - Avance: `frontend/src/lib/netWorthApi.ts` separa adapters de `core` y `premium` para net worth; `frontend/src/stores/netWorth.ts` queda como orquestador de estado.
   - Avance: `core/frontend/src/lib/netWorthApi.ts` extrae adapter base para net worth y `core/frontend/src/stores/netWorth.ts` delega llamadas HTTP.
   - Avance: contratos tipados explicitos en adapters de `net-worth` (`frontend/src/domains/net-worth/api.ts` y `core/frontend/src/domains/net-worth/api.ts`) y modelos compartidos de dominio (`models.ts`) para reducir casts y ambiguedad en `store.ts`.
+  - Avance: patron de adapters tipados extendido a `auth` y `aux-data` en `frontend` y `core/frontend` (`domains/*/api.ts` con contratos `*ApiAdapter`, variantes `core/premium` y adapter activo por capacidad).
+  - Avance: dominio `people` en SaaS adopta adapter tipado (`PeopleApiAdapter`) con seleccion por capacidad (`premium` activo, `core` bloqueado explicitamente).
+  - Avance: capability flags introducidos en `domains/capabilities/index.ts` para `frontend` y `core/frontend`; router y `NetWorthView` usan estas capacidades para habilitar/ocultar flujo `people` sin bifurcar vistas.
+  - Avance: entrypoints de dominio consolidados (`domains/auth|aux-data|net-worth|people|ui/index.ts`) y vistas migradas a imports desde `@/domains/*` (sin imports directos a `lib/*`).
 - [ ] Introducir sistema de estilos profesional:
   - [ ] opcion recomendada: `Tailwind CSS` + tokens CSS propios (color, spacing, typography).
   - [ ] alternativa: `UnoCSS` o `Bootstrap` si prefieres menor personalizacion.

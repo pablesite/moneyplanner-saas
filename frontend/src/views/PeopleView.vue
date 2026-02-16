@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import FamilyMemberManager from '@/domains/people/components/FamilyMemberManager.vue';
-import OwnershipManager from '@/domains/people/components/OwnershipManager.vue';
+import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
 
 const router = useRouter();
 type Tab = 'members' | 'ownerships';
