@@ -112,7 +112,7 @@ Estado: en progreso.
   - Avance: visual de `NetWorthDonut.vue` alineada a clases compartidas (`@layer components`) y tipografia canonica de app en el render central de Chart.js para `core/frontend` y `frontend`.
   - Avance: estados y layout de vistas principales normalizados con primitivas compartidas (`ui-page-*`, `ui-section-header`, `ui-status-line`, `ui-data-*`) en `core/frontend/src/views/AuxDataView.vue`, `frontend/src/views/AuxDataView.vue`, `frontend/src/views/PeopleView.vue`, `core/frontend/src/views/NetWorthView.vue` y `frontend/src/views/NetWorthView.vue`.
   - Avance: feedback de accion y estados vacios incorporados con primitivas compartidas (`ui-alert-success`, `ui-table-empty`) en `core/frontend/src/views/AuxDataView.vue`, `frontend/src/views/AuxDataView.vue`, `frontend/src/domains/people/components/FamilyMemberManager.vue` y `frontend/src/domains/people/components/OwnershipManager.vue`.
-- [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
+- [x] Homogeneizar componentes base (botones, formularios, tablas, modales).
   - Avance: componentes `net-worth` (`ItemForm.vue` y `ItemList.vue` en `frontend` y `core/frontend`) reducen `any` en props/payloads y se alinean a modelos tipados de dominio.
   - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` reduce `any` en flujo de edicion (`editItem`/handlers) y tipa el acceso a campos extendidos de `summary`.
   - Avance: `LoginView.vue` en `frontend` y `core/frontend` elimina `catch (e: any)` y se normalizan textos mojibake visibles en dominio `people` (SaaS).
@@ -126,6 +126,11 @@ Estado: en progreso.
   - Avance: `AuxDataView.vue` en `core/frontend` y `frontend` elimina CSS scoped de layout/tabla y reutiliza clases base de UI (`ui-page-*`, `ui-data-*`) para reducir duplicacion.
   - Avance: `domains/aux-data/composables.ts` (`core/frontend` y `frontend`) y `domains/people/composables.ts` (`frontend`) agregan feedback de exito transaccional para operaciones CRUD, con render uniforme en vistas/componentes.
   - Avance: pasada de microcopy/encoding aplicada en `core/frontend` y `frontend` para textos UI (acentos, signos de apertura y etiquetas de formularios/estados), incluyendo `AuxDataView`, `NetWorthView`, `ItemForm`, `ItemList`, `NetWorthDonut` y dominio `people`.
+  - Avance: `AppHeader.vue` (core/SaaS) y `LoginView.vue` (core/SaaS) migran a primitivas compartidas (`ui-app-header-*`, `ui-auth-*`) y eliminan CSS scoped duplicado.
+  - Avance: `FamilyMemberManager.vue` y `OwnershipManager.vue` (SaaS) migran estilos locales a `ui-people-*` en `styles/tailwind.css`, con tablas/formularios/modales homogeneizados y sin `style scoped`.
+  - Avance: `ItemCategoryHeader.vue`, `ItemSubgroupHeader.vue`, `SettingsPopover.vue`, `NetWorthByCategoryBar.vue` y `NetWorthByMemberBar.vue` (core/SaaS) eliminan CSS scoped y pasan a clases compartidas `nw-*`.
+  - Avance: `ItemList.vue` y `EditableItemRow.vue` (core/SaaS) consolidan layout/acciones en clases compartidas (`nw-list-*`, `nw-edit-grid`, `ui-form-actions`), reduciendo duplicacion estructural.
+  - Avance: `src/style.css` (core/SaaS) queda neutralizado para evitar conflicto con estilos legacy de Vite; fuente canonica de estilos queda en `src/styles/app.css` + `src/styles/tailwind.css`.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.
