@@ -75,6 +75,7 @@ Estado: en progreso.
   - Avance: gestion de tokens centralizada en `frontend/src/lib/authSession.ts`, reutilizada por `frontend/src/lib/api.ts` y `frontend/src/router.ts`.
   - Avance: mismo patron de sesion aplicado en `core/frontend/src/lib/authSession.ts`, `core/frontend/src/lib/api.ts` y `core/frontend/src/router.ts`.
   - Avance: `core/frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `core/frontend/src/lib/auxDataApi.ts`.
+  - Avance: `core/frontend/src/views/AuxDataView.vue` extrae side effects de carga/alta/baja y formateo a `core/frontend/src/domains/aux-data/composables.ts`.
   - Avance: manejo de errores HTTP unificado en `frontend/src/lib/errors.ts` y `core/frontend/src/lib/errors.ts`, aplicado en `LoginView`, `AuxDataView` y `stores/netWorth`.
   - Avance: login delega autenticacion en adapters `frontend/src/lib/authApi.ts` y `core/frontend/src/lib/authApi.ts`, usando `authSession` para persistencia de tokens.
   - Avance: dominio `people` extrae side effects de red a `frontend/src/domains/people/api.ts` y normalizacion de errores a `frontend/src/domains/people/errors.ts`; `frontend/src/domains/people/store.ts` queda como orquestador de estado.
