@@ -71,6 +71,7 @@ Estado: en progreso.
 - [ ] Simplificar flujos de estado y side effects.
   - Avance: guard de autenticacion en `frontend/src/router.ts` alineado al patron robusto de `core` (validacion real de token con `coreApi` y memoizacion de chequeo).
   - Avance: `frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `frontend/src/lib/auxDataApi.ts` para reducir side effects en la vista.
+  - Avance: `frontend/src/views/AuxDataView.vue` extrae side effects de carga/alta/baja y formateo a `frontend/src/domains/aux-data/composables.ts`.
   - Avance: gestion de tokens centralizada en `frontend/src/lib/authSession.ts`, reutilizada por `frontend/src/lib/api.ts` y `frontend/src/router.ts`.
   - Avance: mismo patron de sesion aplicado en `core/frontend/src/lib/authSession.ts`, `core/frontend/src/lib/api.ts` y `core/frontend/src/router.ts`.
   - Avance: `core/frontend/src/views/AuxDataView.vue` delega llamadas HTTP en `core/frontend/src/lib/auxDataApi.ts`.
