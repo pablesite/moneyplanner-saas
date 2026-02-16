@@ -14,7 +14,7 @@ export type LoginResponse = {
 
 export type AuthApiAdapter = {
   login(payload: LoginPayload): Promise<AxiosResponse<LoginResponse>>;
-  validateSession(): Promise<AxiosResponse<{ base_currency: string }>>;
+  validateSession(): Promise<AxiosResponse<unknown>>;
 };
 
 export const coreAuthApi: AuthApiAdapter = {
@@ -22,7 +22,7 @@ export const coreAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get<{ base_currency: string }>('/api/auth/settings/');
+    return api.get('/api/family-members/');
   },
 };
 
@@ -31,7 +31,7 @@ export const premiumAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get<{ base_currency: string }>('/api/auth/settings/');
+    return api.get('/api/family-members/');
   },
 };
 
