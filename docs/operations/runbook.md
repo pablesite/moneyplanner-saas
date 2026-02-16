@@ -14,6 +14,7 @@ Guía rápida para operar, diagnosticar y recuperar el entorno local de `moneypl
 3. Diagnóstico mínimo obligatorio:
 - `docker compose ps`
 - `docker compose logs --tail 100 <servicio>`
+4. Archivos de documentación/configuración: guardar siempre en `UTF-8` (ver `.editorconfig`).
 
 ## Arranque estándar
 1. Levantar `core`:

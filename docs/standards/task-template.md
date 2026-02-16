@@ -1,37 +1,37 @@
-# Plantilla de Tarea (Sesión Nueva)
+# Plantilla de Tarea (SesiÃ³n Nueva)
 
 ## Objetivo
 Describe una sola meta concreta y medible.
 
 Ejemplo:
-- Definir el contrato API inicial del módulo Presupuesto en `core`.
+- Definir el contrato API inicial del mÃ³dulo Presupuesto en `core`.
 
-## Contexto mínimo
+## Contexto mÃ­nimo
 1. Rama actual: `<rama>`
-2. Estado breve: `<en qué punto estás>`
-3. Documento guía (si aplica): `<ruta .md>`
+2. Estado breve: `<en quÃ© punto estÃ¡s>`
+3. Documento guÃ­a (si aplica): `<ruta .md>`
 
 ## Alcance
-### Sí
-- `<carpetas/archivos/servicios que sí se tocan>`
+### SÃ­
+- `<carpetas/archivos/servicios que sÃ­ se tocan>`
 
 ### No
 - `<carpetas/archivos/servicios que no se tocan>`
 
-## Definición de terminado
+## DefiniciÃ³n de terminado
 1. `<resultado verificable 1>`
 2. `<resultado verificable 2>`
 3. `<resultado verificable 3>`
 
-## Validación esperada
-1. Comandos de diagnóstico mínimos:
+## ValidaciÃ³n esperada
+1. Comandos de diagnÃ³stico mÃ­nimos:
 - `docker compose ps`
 - `docker compose logs --tail 100 <servicio>`
 
 2. Calidad (obligatorio en Docker):
 - `<comando docker compose exec ... lint/format/typecheck/test>`
 
-3. Validación funcional específica:
+3. ValidaciÃ³n funcional especÃ­fica:
 - `<curl, endpoint, test manual, etc.>`
 
 4. Si hay cambios de frontend `core`/`saas`, seguir este flujo:
@@ -41,14 +41,14 @@ Ejemplo:
 - Validar ambos frontends en Docker (`lint` + `typecheck`).
 
 ## Restricciones
-1. No borrar volúmenes DB.
-2. No usar `docker compose down -v` salvo autorización explícita.
-3. Mantener límites `core` vs `saas` según `docs/architecture/architecture.md`.
+1. No borrar volÃºmenes DB.
+2. No usar `docker compose down -v` salvo autorizaciÃ³n explÃ­cita.
+3. Mantener lÃ­mites `core` vs `saas` segÃºn `docs/architecture/architecture.md`.
 
 ## Forma de trabajo
-1. Diagnóstico primero.
+1. DiagnÃ³stico primero.
 2. Explicar opciones y tradeoffs.
-3. Preguntar decisiones clave si hay ambigüedad.
+3. Preguntar decisiones clave si hay ambigÃ¼edad.
 4. Implementar cambios acordados.
 5. Validar y reportar estado final.
 
@@ -58,28 +58,28 @@ Ejemplo:
 
 ---
 
-## Prompt rápido (copiar/pegar)
+## Prompt rÃ¡pido (copiar/pegar)
 ```txt
 Proyecto: moneyplanner.
 Rama: <rama>.
-Objetivo de esta sesión: <objetivo único>.
+Objetivo de esta sesiÃ³n: <objetivo Ãºnico>.
 
 Alcance:
-- Sí: <qué sí>
-- No: <qué no>
+- SÃ­: <quÃ© sÃ­>
+- No: <quÃ© no>
 
-Definición de terminado:
+DefiniciÃ³n de terminado:
 1) <resultado 1>
 2) <resultado 2>
-3) <cómo validar>
+3) <cÃ³mo validar>
 
 Documento de referencia principal: <ruta .md>.
 
 Forma de trabajo:
-- Diagnóstico primero.
+- DiagnÃ³stico primero.
 - Luego propuestas con tradeoffs.
 - Preguntas si hay decisiones.
-- Después implementas y validas.
-- No borrar volúmenes DB.
+- DespuÃ©s implementas y validas.
+- No borrar volÃºmenes DB.
 ```
 

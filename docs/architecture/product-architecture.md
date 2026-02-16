@@ -1,69 +1,69 @@
 # Arquitectura del Producto
 
 ## Objetivo
-Definir la arquitectura funcional por mÛdulos de negocio, separada de la arquitectura de plataforma (`core` vs `saas`).
+Definir la arquitectura funcional por m√≥dulos de negocio, separada de la arquitectura de plataforma (`core` vs `saas`).
 
 ## Alcance de este documento
-1. Describe capacidades funcionales y lÌmites entre mÛdulos.
-2. Define quÈ es obligatorio en `core` y quÈ puede extenderse en `saas`.
-3. Sirve como contrato evolutivo para refactor y nuevos mÛdulos.
+1. Describe capacidades funcionales y l√≠mites entre m√≥dulos.
+2. Define qu√© es obligatorio en `core` y qu√© puede extenderse en `saas`.
+3. Sirve como contrato evolutivo para refactor y nuevos m√≥dulos.
 
-## RelaciÛn con otros documentos
-1. LÌmites de plataforma (`core` OSS vs `saas` privado): `docs/architecture/architecture.md`.
+## Relaci√≥n con otros documentos
+1. L√≠mites de plataforma (`core` OSS vs `saas` privado): `docs/architecture/architecture.md`.
 2. Hoja de ruta inicial ya ejecutada (V1): `docs/roadmap/roadmap-01-core-saas.md`.
-3. PrÛxima release/refactor (V2): `docs/roadmap/roadmap-02-release.md`.
+3. Pr√≥xima release/refactor (V2): `docs/roadmap/roadmap-02-release.md`.
 
 ## Principios de arquitectura
-1. Core-first: cada mÛdulo debe aportar valor end-to-end en `core`.
-2. ExtensiÛn premium: `saas` agrega capacidades, no reemplaza las bases de `core`.
-3. No duplicaciÛn: evitar lÛgica duplicada entre `core` y `saas`.
-4. Contratos explÌcitos: APIs y eventos versionados entre mÛdulos.
-5. EvoluciÛn incremental: completar mÛdulos por etapas con trazabilidad.
+1. Core-first: cada m√≥dulo debe aportar valor end-to-end en `core`.
+2. Extensi√≥n premium: `saas` agrega capacidades, no reemplaza las bases de `core`.
+3. No duplicaci√≥n: evitar l√≥gica duplicada entre `core` y `saas`.
+4. Contratos expl√≠citos: APIs y eventos versionados entre m√≥dulos.
+5. Evoluci√≥n incremental: completar m√≥dulos por etapas con trazabilidad.
 
-## MÛdulo transversal
+## M√≥dulo transversal
 ### Plataforma Core
-PropÛsito: fundamentos compartidos para todos los mÛdulos.
+Prop√≥sito: fundamentos compartidos para todos los m√≥dulos.
 
-Capacidades mÌnimas en core:
-1. Usuarios, autenticaciÛn y perfil/configuraciÛn base.
-2. Entidades y cat·logos compartidos.
+Capacidades m√≠nimas en core:
+1. Usuarios, autenticaci√≥n y perfil/configuraci√≥n base.
+2. Entidades y cat√°logos compartidos.
 3. Modelos base de activos y pasivos.
 4. Soporte de moneda (tipos de cambio y conversiones).
-5. Soporte de inflaciÛn e indicadores relacionados.
-6. Convenciones de API, permisos y primitivas de auditorÌa compartidas.
+5. Soporte de inflaci√≥n e indicadores relacionados.
+6. Convenciones de API, permisos y primitivas de auditor√≠a compartidas.
 
 Extensiones permitidas en SaaS:
 1. Reglas avanzadas de permisos por capacidad premium.
-2. AuditorÌa y controles avanzados orientados a features premium.
+2. Auditor√≠a y controles avanzados orientados a features premium.
 
-## Relaciones entre mÛdulos
+## Relaciones entre m√≥dulos
 1. `Contabilidad -> Patrimonio`: coherencia de estado y consistencia de cifras.
-2. `Contabilidad -> Presupuesto`: comparaciÛn real vs plan.
-3. `Cartera de InversiÛn -> Contabilidad`: eventos de inversiÛn impactan movimientos contables.
-4. `Cartera de InversiÛn -> Patrimonio`: valoraciÛn de cartera impacta patrimonio neto.
-5. `Simulador -> (Patrimonio, Contabilidad, Presupuesto, Cartera de InversiÛn)`: lectura por API para proyectar escenarios.
+2. `Contabilidad -> Presupuesto`: comparaci√≥n real vs plan.
+3. `Cartera de Inversi√≥n -> Contabilidad`: eventos de inversi√≥n impactan movimientos contables.
+4. `Cartera de Inversi√≥n -> Patrimonio`: valoraci√≥n de cartera impacta patrimonio neto.
+5. `Simulador -> (Patrimonio, Contabilidad, Presupuesto, Cartera de Inversi√≥n)`: lectura por API para proyectar escenarios.
 
-## Estilo de integraciÛn
-1. REST API para lecturas y operaciones sincrÛnicas.
-2. Eventos para propagaciÛn de cambios cuando exista causalidad clara.
-3. Contratos explÌcitos entre mÛdulos para evitar acoplamientos ocultos.
+## Estilo de integraci√≥n
+1. REST API para lecturas y operaciones sincr√≥nicas.
+2. Eventos para propagaci√≥n de cambios cuando exista causalidad clara.
+3. Contratos expl√≠citos entre m√≥dulos para evitar acoplamientos ocultos.
 
-## Contrato por mÛdulo (v0.1)
+## Contrato por m√≥dulo (v0.1)
 ### Patrimonio
 Objetivo:
-- Gestionar inventario de activos/pasivos y c·lculo de patrimonio neto con evoluciÛn temporal.
+- Gestionar inventario de activos/pasivos y c√°lculo de patrimonio neto con evoluci√≥n temporal.
 
 Entidades core (modelo de datos):
-1. `Asset` (activo): categorÌa/subcategorÌa, moneda, importe, modo de seguimiento, estado activo.
-2. `Liability` (pasivo): categorÌa, moneda, importe, financiaciÛn asociada opcional a activo.
+1. `Asset` (activo): categor√≠a/subcategor√≠a, moneda, importe, modo de seguimiento, estado activo.
+2. `Liability` (pasivo): categor√≠a, moneda, importe, financiaci√≥n asociada opcional a activo.
 3. `NetWorthSnapshot` (snapshot): foto diaria en moneda base con total activos, pasivos y patrimonio neto.
 
-Casos de uso core (flujos mÌnimos obligatorios):
+Casos de uso core (flujos m√≠nimos obligatorios):
 1. CRUD de activos por usuario.
 2. CRUD de pasivos por usuario.
-3. C·lculo de resumen de patrimonio con conversiÛn a moneda base del usuario.
+3. C√°lculo de resumen de patrimonio con conversi√≥n a moneda base del usuario.
 4. Guardado de snapshot diario desde estado actual (`from-current`).
-5. VisualizaciÛn de desglose por categorÌa/subcategorÌa y pasivos respaldados/no respaldados.
+5. Visualizaci√≥n de desglose por categor√≠a/subcategor√≠a y pasivos respaldados/no respaldados.
 
 APIs core (endpoints y contrato):
 1. `GET/POST/PUT/PATCH/DELETE /api/net-worth/assets/`
@@ -74,9 +74,9 @@ APIs core (endpoints y contrato):
 6. `DELETE /api/net-worth/snapshots/{id}/`
 
 Eventos emitidos/consumidos:
-1. Estado actual: no hay bus de eventos asÌncrono en producciÛn para Patrimonio.
-2. IntegraciÛn vigente: sincronizaciÛn explÌcita por API desde SaaS (titularidad) tras cambios de activos/pasivos.
-3. Evento lÛgico de dominio a formalizar m·s adelante: `asset_updated`, `liability_updated`, `snapshot_created`.
+1. Estado actual: no hay bus de eventos as√≠ncrono en producci√≥n para Patrimonio.
+2. Integraci√≥n vigente: sincronizaci√≥n expl√≠cita por API desde SaaS (titularidad) tras cambios de activos/pasivos.
+3. Evento l√≥gico de dominio a formalizar m√°s adelante: `asset_updated`, `liability_updated`, `snapshot_created`.
 
 Extensiones SaaS (feature premium):
 1. Titularidad avanzada:
@@ -90,30 +90,30 @@ Extensiones SaaS (feature premium):
 - `GET /api/ownership-links/`
 - `POST /api/ownership-links/sync/`
 3. Validaciones premium de uso:
-- bloqueo de operaciones cuando la titularidad est· en uso
+- bloqueo de operaciones cuando la titularidad est√° en uso
 - consistencia de enlaces de titularidad sobre activos/pasivos
 
-Riesgos de acoplamiento y decisiones de diseÒo:
-1. No duplicar c·lculos base de patrimonio en SaaS; usar `core` como fuente de verdad para totales.
+Riesgos de acoplamiento y decisiones de dise√±o:
+1. No duplicar c√°lculos base de patrimonio en SaaS; usar `core` como fuente de verdad para totales.
 2. Mantener titularidad fuera de modelos `core` para preservar el contrato OSS.
 3. Versionar contratos de API dual (`coreApi` y `saasApi`) para evitar roturas en frontend.
-4. Si se introduce mensajerÌa asÌncrona, mantener idempotencia en sincronizaciÛn de `OwnershipLink`.
+4. Si se introduce mensajer√≠a as√≠ncrona, mantener idempotencia en sincronizaci√≥n de `OwnershipLink`.
 
 Estado:
 - `in_progress` (funcionalmente casi completo, en refactor activo).
 
 ### Contabilidad
 Objetivo:
-- Gestionar quÈ est· pasando en los flujos reales de dinero.
+- Gestionar qu√© est√° pasando en los flujos reales de dinero.
 
 Capacidades obligatorias en core:
 1. Cuentas y movimientos/transacciones.
-2. CategorizaciÛn base de ingresos y gastos.
+2. Categorizaci√≥n base de ingresos y gastos.
 3. Cierres mensuales/anuales y comparativas.
-4. IntegraciÛn de salidas para comparaciÛn con presupuesto.
+4. Integraci√≥n de salidas para comparaci√≥n con presupuesto.
 
 Extensiones permitidas en SaaS:
-1. Reglas avanzadas de clasificaciÛn.
+1. Reglas avanzadas de clasificaci√≥n.
 2. Automatizaciones y controles guiados premium.
 3. Validaciones avanzadas de consistencia.
 
@@ -125,68 +125,68 @@ Objetivo:
 - Definir el plan financiero y medir su cumplimiento.
 
 Capacidades obligatorias en core:
-1. DefiniciÛn de presupuesto base.
+1. Definici√≥n de presupuesto base.
 2. Versionado de presupuesto.
-3. ComparaciÛn real vs plan.
+3. Comparaci√≥n real vs plan.
 4. Indicadores de cumplimiento de metas.
 
 Extensiones permitidas en SaaS:
-1. Multiescenario y polÌticas avanzadas de flexibilidad.
+1. Multiescenario y pol√≠ticas avanzadas de flexibilidad.
 2. Recomendaciones y proyecciones premium.
-3. Flujos guiados de optimizaciÛn.
+3. Flujos guiados de optimizaci√≥n.
 
 Estado funcional:
-- PrÛximo mÛdulo objetivo.
+- Pr√≥ximo m√≥dulo objetivo.
 
-### Cartera de InversiÛn
+### Cartera de Inversi√≥n
 Objetivo:
-- Gestionar posiciones de inversiÛn y su impacto financiero.
+- Gestionar posiciones de inversi√≥n y su impacto financiero.
 
 Capacidades obligatorias en core:
-1. Posiciones y valoraciÛn base.
-2. Registro de eventos de inversiÛn relevantes.
+1. Posiciones y valoraci√≥n base.
+2. Registro de eventos de inversi√≥n relevantes.
 3. Impacto de cartera en patrimonio.
 
 Extensiones permitidas en SaaS:
-1. MÈtricas avanzadas de rendimiento/riesgo.
-2. Alertas premium y controles de concentraciÛn.
+1. M√©tricas avanzadas de rendimiento/riesgo.
+2. Alertas premium y controles de concentraci√≥n.
 3. Herramientas avanzadas de seguimiento.
 
 Estado funcional:
-- Definido a nivel arquitectura, pendiente de implementaciÛn completa.
+- Definido a nivel arquitectura, pendiente de implementaci√≥n completa.
 
 ### Simulador
 Objetivo:
 - Probar escenarios futuros antes de tomar decisiones.
 
 Capacidades obligatorias en core:
-1. Consumo de datos de mÛdulos vÌa API.
+1. Consumo de datos de m√≥dulos v√≠a API.
 2. Proyecciones base de escenarios.
-3. ComparaciÛn de resultados contra metas.
+3. Comparaci√≥n de resultados contra metas.
 
 Extensiones permitidas en SaaS:
-1. Restricciones y motores avanzados de simulaciÛn.
+1. Restricciones y motores avanzados de simulaci√≥n.
 2. Plantillas premium de estrategia.
-3. Asistentes de an·lisis "what-if".
+3. Asistentes de an√°lisis "what-if".
 
 Estado funcional:
-- Definido a nivel arquitectura, pendiente de implementaciÛn completa.
+- Definido a nivel arquitectura, pendiente de implementaci√≥n completa.
 
-## Plantilla para completar cada mÛdulo (iterativo)
-Usar esta plantilla cuando se refine un mÛdulo en detalle:
+## Plantilla para completar cada m√≥dulo (iterativo)
+Usar esta plantilla cuando se refine un m√≥dulo en detalle:
 
 1. Entidades core (modelo de datos).
-2. Casos de uso core (flujos mÌnimos obligatorios).
+2. Casos de uso core (flujos m√≠nimos obligatorios).
 3. APIs core (endpoints + contratos).
 4. Eventos emitidos/consumidos.
 5. Extensiones SaaS (features premium).
-6. Riesgos de acoplamiento y decisiones de diseÒo.
+6. Riesgos de acoplamiento y decisiones de dise√±o.
 7. Estado (`planned`, `in_progress`, `done`).
 
-## PrÛximos pasos de documentaciÛn
+## Pr√≥ximos pasos de documentaci√≥n
 1. Completar Presupuesto con el formato de plantilla completo.
 2. Completar Contabilidad con el formato de plantilla completo.
-3. Definir cat·logo de eventos de dominio cross-mÛdulo (aunque inicialmente se implementen por API sÌncrona).
+3. Definir cat√°logo de eventos de dominio cross-m√≥dulo (aunque inicialmente se implementen por API s√≠ncrona).
 
 
 

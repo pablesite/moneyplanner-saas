@@ -1,21 +1,21 @@
 # Roadmap Global Del Producto
 
 ## Objetivo
-Mantener una visi髇 de alto nivel de los hitos del producto, desde lo ya completado hasta lo que sigue.
+Mantener una visi贸n de alto nivel de los hitos del producto, desde lo ya completado hasta lo que sigue.
 
 ## Estado global
-- Proyecto en transici髇 de fase de base t閏nica hacia fase de crecimiento de producto y salida a producci髇.
+- Proyecto en transici贸n de fase de base t茅cnica hacia fase de crecimiento de producto y salida a producci贸n.
 
-## L韓ea temporal de hitos
+## L铆nea temporal de hitos
 
 ### Hito 01 (completado)
-Lanzar el primer repositorio y construir el m骴ulo de Patrimonio base.
+Lanzar el primer repositorio y construir el m贸dulo de Patrimonio base.
 
 Resultado:
-- Primera versi髇 funcional de patrimonio (activos, pasivos, resumen, snapshots).
+- Primera versi贸n funcional de patrimonio (activos, pasivos, resumen, snapshots).
 
 ### Hito 02 (completado)
-Separar en dos repositorios/l韓eas: `core` (OSS) y `saas` (privado premium).
+Separar en dos repositorios/l铆neas: `core` (OSS) y `saas` (privado premium).
 
 Resultado:
 - Frontera `core`/`saas` definida y aplicada en dominio de titularidad premium.
@@ -28,7 +28,7 @@ Referencias:
 Mejorar el flujo de trabajo del proyecto con Codex.
 
 Resultado:
-- Documentaci髇 base de operaci髇 y colaboraci髇.
+- Documentaci贸n base de operaci贸n y colaboraci贸n.
 - Plantillas y scripts para acelerar sesiones.
 
 Referencias:
@@ -39,28 +39,28 @@ Referencias:
 - `docs/standards/glossary.md`
 - `scripts/dev.ps1`
 
-## Pr髕imos hitos (alto nivel)
+## Pr贸ximos hitos (alto nivel)
 
 ### Hito 04 (siguiente)
-Ejecutar Roadmap 02: refactorizaci髇 y a馻dir tests + linters.
+Ejecutar Roadmap 02: refactorizaci贸n y a帽adir tests + linters.
 
 Referencia:
 - `docs/roadmap/roadmap-02-release.md`
 
 ### Hito 05
-Dise馻r identidad centralizada: `core` como IdP para usuario 鷑ico real.
+Dise帽ar identidad centralizada: `core` como IdP para usuario 煤nico real.
 
 Objetivo:
-1. Definir modelo de autenticaci髇 unificado `core` + `saas`.
-2. Planificar migraci髇 gradual sin romper flujo actual.
+1. Definir modelo de autenticaci贸n unificado `core` + `saas`.
+2. Planificar migraci贸n gradual sin romper flujo actual.
 
 ### Hito 06
-Mejorar m骴ulo Patrimonio (especialmente frontend):
-1. A馻dir visualizaciones/gr醘icos con m醩 informaci髇 鷗il.
-2. Mejorar UX de an醠isis de evoluci髇 y composici髇.
+Mejorar m贸dulo Patrimonio (especialmente frontend):
+1. A帽adir visualizaciones/gr谩ficos con m谩s informaci贸n 煤til.
+2. Mejorar UX de an谩lisis de evoluci贸n y composici贸n.
 
 ### Hito 07
-Poner en producci髇 la primera versi髇 para demo y validaci髇 con usuarios.
+Poner en producci贸n la primera versi贸n para demo y validaci贸n con usuarios.
 
 Entregables sugeridos:
 1. Entorno productivo estable.
@@ -68,26 +68,26 @@ Entregables sugeridos:
 3. Demo funcional guiada.
 
 ### Hito 08
-Versi髇 m髒il.
+Versi贸n m贸vil.
 
 Objetivo:
-- Definir e implementar estrategia mobile (responsive avanzado, PWA o app nativa/h韇rida).
+- Definir e implementar estrategia mobile (responsive avanzado, PWA o app nativa/h铆brida).
 
 ### Hito 09
 Landing y sistema de pagos para SaaS.
 
 Objetivo:
 1. Landing comercial clara (valor, pricing, CTA).
-2. Flujo de alta/checkout y activaci髇 de plan.
-3. Integraci髇 de facturaci髇/pagos.
+2. Flujo de alta/checkout y activaci贸n de plan.
+3. Integraci贸n de facturaci贸n/pagos.
 
 ### Hito 10
-Construcci髇 del resto de m骴ulos funcionales.
+Construcci贸n del resto de m贸dulos funcionales.
 
-M骴ulos pendientes (despu閟 de Patrimonio):
+M贸dulos pendientes (despu茅s de Patrimonio):
 1. Presupuesto
 2. Contabilidad
-3. Cartera de Inversi髇
+3. Cartera de Inversi贸n
 4. Simulador
 
 Referencia funcional:
@@ -96,25 +96,25 @@ Referencia funcional:
 ### Hito 11 (continuo)
 Escalar calidad y producto de forma iterativa.
 
-L韓eas continuas:
-1. Observabilidad y m閠ricas de uso.
+L铆neas continuas:
+1. Observabilidad y m茅tricas de uso.
 2. Mejora de rendimiento.
 3. Seguridad y hardening.
 4. Mejora UX/UI basada en feedback real.
 
-## Orden recomendado de ejecuci髇
-1. Hito 04 (refactor + calidad autom醫ica)
-2. Hito 05 (dise駉 IdP centralizado en core)
+## Orden recomendado de ejecuci贸n
+1. Hito 04 (refactor + calidad autom谩tica)
+2. Hito 05 (dise帽o IdP centralizado en core)
 3. Hito 06 (mejora de patrimonio frontend)
-4. Hito 07 (producci髇 v1 para ense馻r)
+4. Hito 07 (producci贸n v1 para ense帽ar)
 5. Hito 09 (landing + pagos)
-6. Hito 08 (m髒il)
-7. Hito 10 (resto de m骴ulos)
-8. Hito 11 (iteraci髇 continua)
+6. Hito 08 (m贸vil)
+7. Hito 10 (resto de m贸dulos)
+8. Hito 11 (iteraci贸n continua)
 
-## Criterio de actualizaci髇
+## Criterio de actualizaci贸n
 Actualizar este documento cuando:
 1. Se completa un hito.
 2. Cambia prioridad de negocio.
-3. Aparece un nuevo bloque estrat間ico relevante.
+3. Aparece un nuevo bloque estrat茅gico relevante.
 

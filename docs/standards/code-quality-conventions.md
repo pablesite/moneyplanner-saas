@@ -17,6 +17,11 @@ Definir reglas minimas de legibilidad y control de complejidad para `core` y `sa
    - Maximo: `20`
    - Configurado en `frontend/.eslintrc.cjs` y `core/frontend/.eslintrc.cjs`.
 
+## Encoding De Archivos
+1. Todos los archivos de texto del repositorio se guardan en `UTF-8`.
+2. Si aparecen caracteres corruptos (`�`, `?` en tildes/eñes), convertir el archivo afectado a `UTF-8` antes de seguir editando.
+3. Regla automática de editor en raíz: `.editorconfig` (`charset = utf-8`).
+
 ## Aplicacion
 1. CI valida estas reglas en:
    - `.github/workflows/quality-saas.yml`
