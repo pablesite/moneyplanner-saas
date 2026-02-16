@@ -1,5 +1,5 @@
 import type { AxiosResponse } from 'axios';
-import { api } from '@/lib/api';
+import { api, coreApi } from '@/lib/api';
 import { capabilities } from '@/domains/capabilities';
 
 export type LoginPayload = {
@@ -22,7 +22,7 @@ export const coreAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get<{ base_currency: string }>('/api/auth/settings/');
+    return coreApi.get<{ base_currency: string }>('/api/auth/settings/');
   },
 };
 
@@ -31,7 +31,7 @@ export const premiumAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get<{ base_currency: string }>('/api/auth/settings/');
+    return coreApi.get<{ base_currency: string }>('/api/auth/settings/');
   },
 };
 
