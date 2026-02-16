@@ -161,6 +161,7 @@ Estado: en progreso.
   - Avance: tests unitarios añadidos en SaaS para `FamilyMemberManager` y `OwnershipManager` (`frontend/src/domains/people/components/__tests__/*.spec.ts`) cubriendo estados empty/success y acciones principales de cabecera.
   - [ ] tests de integracion de vistas principales.
   - Avance: tests de integracion iniciales para `NetWorthView` añadidos en `frontend/src/views/__tests__/NetWorthView.spec.ts` y `core/frontend/src/views/__tests__/NetWorthView.spec.ts` (wiring de acciones principales, toggle de desglose y render estructural).
+  - Avance: tests de integracion para `LoginView` añadidos en `frontend/src/views/__tests__/LoginView.spec.ts` y `core/frontend/src/views/__tests__/LoginView.spec.ts` (render de formulario, estados loading/error y submit del flujo de login).
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
