@@ -98,6 +98,7 @@ Estado: en progreso.
 - [ ] Homogeneizar componentes base (botones, formularios, tablas, modales).
   - Avance: componentes `net-worth` (`ItemForm.vue` y `ItemList.vue` en `frontend` y `core/frontend`) reducen `any` en props/payloads y se alinean a modelos tipados de dominio.
   - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` reduce `any` en flujo de edicion (`editItem`/handlers) y tipa el acceso a campos extendidos de `summary`.
+  - Avance: `LoginView.vue` en `frontend` y `core/frontend` elimina `catch (e: any)` y se normalizan textos mojibake visibles en dominio `people` (SaaS).
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.

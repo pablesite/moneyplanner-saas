@@ -72,7 +72,7 @@ onMounted(async () => {
 
             <td class="member-td">
               <span class="subtle">
-                {{ m.role === 'adult' ? 'Adulto' : 'Niño' }}
+                {{ m.role === 'adult' ? 'Adulto' : 'Nino' }}
               </span>
             </td>
 
@@ -115,7 +115,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!membersSorted.length">
-            <td colspan="4" class="subtle member-empty">No hay miembros todavía.</td>
+            <td colspan="4" class="subtle member-empty">No hay miembros todavia.</td>
           </tr>
         </tbody>
       </table>
@@ -168,7 +168,7 @@ onMounted(async () => {
           <div class="subtle member-field-label">Rol</div>
           <select v-model="editForm.role">
             <option value="adult">Adulto</option>
-            <option value="child">Niño</option>
+            <option value="child">Nino</option>
           </select>
         </div>
 
@@ -254,4 +254,5 @@ onMounted(async () => {
   gap: 10px;
 }
 </style>
+
 
