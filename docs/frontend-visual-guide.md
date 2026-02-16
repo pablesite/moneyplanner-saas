@@ -5,6 +5,7 @@ Definir una base visual comun para `core/frontend` y `frontend` sin bloquear ite
 
 ## Stack de estilos
 - Base recomendada activa: `Tailwind CSS` + tokens CSS propios.
+- Flujo operativo y reglas de trabajo: `docs/frontend-css-workflow.md`
 - Configuracion:
   - `core/frontend/tailwind.config.cjs`
   - `frontend/tailwind.config.cjs`

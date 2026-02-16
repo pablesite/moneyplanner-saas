@@ -108,6 +108,7 @@ powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Ap
 
 Referencia de frontera/contrato:
 - `docs/core-saas-boundaries.md`
+- Flujo CSS frontend (Tailwind + tokens): `docs/frontend-css-workflow.md`
 
 ## Problemas frecuentes
 Para incidencias operativas y playbooks detallados (CORS, backend caído, auth DB, colisiones de puertos), usar:
