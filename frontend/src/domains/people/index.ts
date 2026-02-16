@@ -6,4 +6,3 @@ export * from './types';
 export { default as FamilyMemberManager } from './components/FamilyMemberManager.vue';
 export { default as OwnershipLabel } from './components/OwnershipLabel.vue';
 export { default as OwnershipManager } from './components/OwnershipManager.vue';
-export { default as OwnershipSplitEditor } from './components/OwnershipSplitEditor.vue';
