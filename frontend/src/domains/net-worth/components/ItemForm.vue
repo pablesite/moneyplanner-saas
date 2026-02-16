@@ -40,10 +40,10 @@ const currencies = [
 
 const ownershipLabel = (o: Ownership) => {
   if (o.kind === 'individual') {
-    return o.member ? `Individual Â· ${o.member.name}` : 'Individual';
+    return o.member ? `Individual - ${o.member.name}` : 'Individual';
   }
   const parts = (o.splits || []).map((s) => `${s.member.name} ${s.percent}%`);
-  return `Compartido Â· ${parts.join(' Â· ') || 'sin splits'}`;
+  return `Compartido - ${parts.join(' - ') || 'sin splits'}`;
 };
 
 const ownershipOptions = computed(() => {
