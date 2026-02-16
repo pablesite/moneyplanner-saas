@@ -151,6 +151,8 @@ Estado: pendiente.
 - [ ] Frontend:
   - [ ] tests unitarios de componentes y stores.
   - Avance: suite inicial Vitest + Vue Test Utils añadida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
+  - Avance: tests unitarios añadidos para `AuxDataView` en `core/frontend` y `frontend` (`src/views/__tests__/AuxDataView.spec.ts`) cubriendo estados empty/loading/error/success y navegación base.
+  - Avance: tests unitarios añadidos en SaaS para `FamilyMemberManager` y `OwnershipManager` (`frontend/src/domains/people/components/__tests__/*.spec.ts`) cubriendo estados empty/success y acciones principales de cabecera.
   - [ ] tests de integracion de vistas principales.
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
 - [ ] Objetivo minimo de cobertura:
