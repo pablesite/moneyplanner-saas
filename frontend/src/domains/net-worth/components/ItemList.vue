@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { formatAmount } from '@/lib/format';
 import type { Asset, NetWorthWritePayload, Ownership } from '@/domains/net-worth/models';
@@ -91,17 +91,17 @@ const ownershipLabel = (o: Ownership | null | undefined) => {
         ? m.name
         : typeof m === 'number'
           ? `#${m}`
-          : '¿?';
+          : '?';
     return `${name} ${s.percent ?? ''}%`.trim();
   });
 
-  return `Compartido · ${parts.join(' · ') || 'sin splits'}`;
+  return `Compartido | ${parts.join(' | ') || 'sin splits'}`;
 };
 
 const ownershipOptions = computed(() => {
   const list = Array.isArray(props.ownerships) ? props.ownerships : [];
   return [
-    { value: null, label: '— Sin asignar —' },
+    { value: null, label: 'Sin asignar' },
     ...list.map((o) => ({
       value: o.id,
       label: ownershipLabel(o) || `Ownership #${o.id}`,
@@ -155,7 +155,7 @@ function ownershipShortLabel(ownershipRef?: number | null) {
   if (isAllHalf) return names.join('/');
 
   const parts = splits.map((s) => `${s.member?.name ?? '?'} ${s.percent}%`);
-  return parts.join(' · ');
+  return parts.join(' | ');
 }
 
 // ---- financed asset helpers (solo pasivos) ----
@@ -174,7 +174,7 @@ function financedAssetName(financedAssetRef?: number | null) {
 const financedAssetOptions = computed(() => {
   const list = Array.isArray(props.assets) ? props.assets : [];
   return [
-    { value: null, label: '— No financia ningún activo —' },
+    { value: null, label: 'No financia ningun activo' },
     ...list
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -228,8 +228,8 @@ const amountError = computed(() => {
 
   if (!draft.value.amount) return '';
   if ((normalizeAmountInput(draft.value.amount).match(/\./g) || []).length > 1)
-    return 'Importe inválido';
-  if (Number.isNaN(Number(normalizeAmountInput(clamped)))) return 'Importe inválido';
+    return 'Importe invalido';
+  if (Number.isNaN(Number(normalizeAmountInput(clamped)))) return 'Importe invalido';
   return '';
 });
 
@@ -406,7 +406,7 @@ function formatTotalsLine(totals: Record<string, number>) {
   const parts = Object.entries(totals)
     .filter(([, v]) => v !== 0)
     .map(([cur, v]) => `${formatAmount(String(v), { currency: cur })} ${cur}`);
-  return parts.join(' · ');
+  return parts.join(' | ');
 }
 
 function rawValue(v: string) {
@@ -614,10 +614,10 @@ async function saveEdit(id: number) {
 
 <template>
   <div class="card">
-    <div class="card-header">
-      <div class="card-header-left">
+    <div class="nw-list-header">
+      <div class="nw-list-header-left">
         <h2 class="card-header-title mt-0">{{ title }}</h2>
-        <select v-model="ownershipFilter" class="select select-sm">
+        <select v-model="ownershipFilter" class="select nw-select-sm">
           <option value="all">Todos los miembros</option>
           <option value="unassigned">Sin asignar</option>
           <option v-for="m in memberFilterOptions" :key="String(m.id)" :value="m.id">
@@ -625,16 +625,16 @@ async function saveEdit(id: number) {
           </option>
         </select>
       </div>
-      <div class="card-header-right">
-        <div class="header-total-inline">
+      <div class="nw-list-header-right">
+        <div class="nw-list-total-inline">
           <span v-if="headerBaseLabel()">{{ headerBaseLabel() }}</span>
           <span v-else>{{ formatTotalsLine(headerTotals) }}</span>
         </div>
         <button
           v-if="onAdd"
-          class="btn btn-primary btn-sm add-icon-only"
+          class="btn btn-primary btn-sm nw-list-add-icon-only"
           type="button"
-          aria-label="Añadir"
+          aria-label="Anadir"
           @click="onAdd"
         >
           <span class="btn-icon">+</span>
@@ -642,20 +642,20 @@ async function saveEdit(id: number) {
       </div>
     </div>
 
-    <div class="card-header-totals">
-      <div class="header-total-details">
+    <div class="nw-list-header-totals">
+      <div class="nw-list-total-details">
         {{ formatTotalsLine(headerTotals) }}
       </div>
     </div>
 
-    <div v-if="!items.length" class="subtle">No hay elementos todavía.</div>
+    <div v-if="!items.length" class="subtle">No hay elementos todavia.</div>
 
     <div v-else-if="!filteredItems.length" class="subtle">No hay elementos con este filtro.</div>
     <div v-else class="grid gap-4">
       <section
         v-for="g in grouped"
         :key="g.category"
-        class="cat-block"
+        class="nw-cat-block"
         :class="categoryClass(g.category)"
       >
         <ItemCategoryHeader
@@ -676,7 +676,7 @@ async function saveEdit(id: number) {
           <div
             v-for="(sg, sgIndex) in g.subgroups"
             :key="subgroupKey(g, sg, sgIndex)"
-            :class="g.hasSubgroups ? 'subcat-block' : ''"
+            :class="g.hasSubgroups ? 'nw-subcat-block' : ''"
           >
             <ItemSubgroupHeader
               v-if="g.hasSubgroups"
@@ -692,7 +692,7 @@ async function saveEdit(id: number) {
               "
             />
 
-            <ul class="list list-plain subcat-items">
+            <ul class="list list-plain nw-subcat-items">
               <li v-for="it in sg.items" :key="it.id">
                 <ItemDisplayRow
                   v-if="editingId !== it.id"
@@ -728,138 +728,6 @@ async function saveEdit(id: number) {
     </div>
   </div>
 </template>
-
-<style scoped>
-.card-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-}
-.card-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-.card-header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.card-header-totals {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 4px;
-}
-.header-total-inline {
-  text-align: right;
-  font-weight: 600;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.header-total-details {
-  text-align: right;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 12px;
-  font-weight: 500;
-  white-space: normal;
-  word-break: break-word;
-}
-.select-sm {
-  padding: 6px 8px;
-  border-radius: 10px;
-  font-size: 12px;
-  min-width: 170px;
-  width: auto;
-}
-
-.add-icon-only {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-icon-only .btn-icon {
-  margin-right: 0;
-  width: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  font-size: 16px;
-}
-
-.cat-block {
-  position: relative;
-  padding-left: 10px;
-}
-.cat-block::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 999px;
-  background: var(--cat-accent, rgba(255, 255, 255, 0.2));
-}
-
-/* Activos: familia frío/verde */
-.asset-cat-cash {
-  --cat-accent: rgba(92, 192, 255, 0.9);
-  --cat-accent-text: rgba(180, 230, 255, 0.95);
-}
-.asset-cat-investments {
-  --cat-accent: rgba(74, 209, 179, 0.9);
-  --cat-accent-text: rgba(168, 241, 224, 0.95);
-}
-.asset-cat-real_estate {
-  --cat-accent: rgba(111, 211, 122, 0.9);
-  --cat-accent-text: rgba(190, 244, 200, 0.95);
-}
-.asset-cat-furnishings {
-  --cat-accent: rgba(138, 203, 136, 0.85);
-  --cat-accent-text: rgba(200, 238, 200, 0.95);
-}
-.asset-cat-other {
-  --cat-accent: rgba(122, 161, 194, 0.85);
-  --cat-accent-text: rgba(198, 216, 232, 0.95);
-}
-
-/* Pasivos: rojo estable para diferenciar */
-.liab-cat-mortgage {
-  --cat-accent: rgba(255, 99, 132, 0.85);
-  --cat-accent-text: rgba(255, 200, 210, 0.95);
-}
-.liab-cat-personal_loan {
-  --cat-accent: rgba(255, 120, 150, 0.85);
-  --cat-accent-text: rgba(255, 210, 220, 0.95);
-}
-.liab-cat-credit_card {
-  --cat-accent: rgba(255, 140, 110, 0.85);
-  --cat-accent-text: rgba(255, 215, 200, 0.95);
-}
-.liab-cat-other {
-  --cat-accent: rgba(255, 130, 130, 0.8);
-  --cat-accent-text: rgba(255, 210, 210, 0.95);
-}
-
-.subcat-block {
-  --item-actions-width: 72px;
-}
-
-.subcat-items > li + li {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 6px;
-  margin-top: 4px;
-}
-</style>
-
 
 
 

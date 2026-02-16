@@ -1,4 +1,4 @@
-<script setup lang="ts">
+Ôªø<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
 import { usePeopleMembers } from '@/domains/people/composables';
@@ -33,17 +33,17 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div v-if="prettyError" class="alert member-alert">
+    <div v-if="prettyError" class="alert ui-people-alert">
       {{ prettyError }}
     </div>
     <div v-if="successMessage" class="ui-alert-success">
       {{ successMessage }}
     </div>
     <!-- Lista -->
-    <section class="card member-section">
+    <section class="card">
       <div class="card-header">
         <h2 class="card-header-title">Miembros</h2>
-        <div class="member-header-actions">
+        <div class="ui-people-header-actions">
           <button class="btn" type="button" :disabled="store.loading" @click="refreshMembers()">
             Refrescar
           </button>
@@ -58,42 +58,42 @@ onMounted(async () => {
         </div>
       </div>
 
-      <table class="member-table">
+      <table class="ui-data-table">
         <thead>
           <tr>
-            <th class="member-th">Nombre</th>
-            <th class="member-th">Rol</th>
-            <th class="member-th member-th-right">Estado</th>
-            <th class="member-th member-th-right">Acciones</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th class="text-right">Estado</th>
+            <th class="ui-data-table-actions">Acciones</th>
           </tr>
         </thead>
 
         <tbody>
           <tr v-for="m in membersSorted" :key="m.id">
-            <td class="member-td">
+            <td>
               {{ m.name }}
             </td>
 
-            <td class="member-td">
+            <td>
               <span class="subtle">
-                {{ m.role === 'adult' ? 'Adulto' : 'NiÒo' }}
+                {{ m.role === 'adult' ? 'Adulto' : 'Ni√±o' }}
               </span>
             </td>
 
-            <td class="member-td member-td-right">
+            <td class="text-right">
               <button
                 class="btn"
                 type="button"
                 :disabled="store.loading || rowBusy[m.id]"
-                :class="{ 'member-status-inactive': !m.is_active }"
+                :class="{ 'ui-people-status-inactive': !m.is_active }"
                 @click="toggleActive(m.id, !m.is_active)"
               >
                 {{ m.is_active ? 'Activo' : 'Inactivo' }}
               </button>
             </td>
 
-            <td class="member-td member-td-right">
-              <div class="member-actions">
+            <td class="ui-data-table-actions">
+              <div class="ui-people-row-actions">
                 <button
                   class="icon-btn"
                   type="button"
@@ -119,7 +119,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!membersSorted.length">
-            <td colspan="4" class="ui-table-empty">No hay miembros todavÌa.</td>
+            <td colspan="4" class="ui-table-empty">No hay miembros todav√≠a.</td>
           </tr>
         </tbody>
       </table>
@@ -129,29 +129,29 @@ onMounted(async () => {
 
     <!-- Modal crear -->
     <BaseModal :open="createOpen" title="Nuevo miembro" @close="closeCreate">
-      <div class="member-edit-grid">
-        <div class="subtle member-card-subtitle">
-          Crea miembros de la familia. Al crear un adulto, se generar· autom·ticamente su
+      <div class="form-grid">
+        <div class="subtle ui-people-card-subtitle">
+          Crea miembros de la familia. Al crear un adulto, se generar√° autom√°ticamente su
           titularidad individual.
         </div>
 
         <div>
-          <div class="subtle member-field-label">Nombre</div>
-          <input v-model="form.name" placeholder="Nombre (ej. Pablo)" />
+          <div class="subtle ui-people-field-label">Nombre</div>
+          <input v-model="form.name" placeholder="Nombre (ej. Pablo)" class="input" />
         </div>
 
         <div>
-          <div class="subtle member-field-label">Rol</div>
-          <select v-model="form.role">
+          <div class="subtle ui-people-field-label">Rol</div>
+          <select v-model="form.role" class="select">
             <option value="adult">Adulto</option>
-            <option value="child">NiÒo</option>
+            <option value="child">Ni√±o</option>
           </select>
         </div>
 
-        <div class="member-edit-actions">
-          <button class="btn" type="button" @click="closeCreate">Cancelar</button>
+        <div class="ui-form-actions">
+          <button class="btn ui-form-action-btn" type="button" @click="closeCreate">Cancelar</button>
           <button
-            class="btn btn-primary"
+            class="btn btn-primary ui-form-action-btn"
             type="button"
             :disabled="saving || store.loading"
             @click="submit"
@@ -164,24 +164,24 @@ onMounted(async () => {
 
     <!-- Modal editar -->
     <BaseModal :open="editOpen" title="Editar miembro" @close="closeEdit">
-      <div class="member-edit-grid">
+      <div class="form-grid">
         <div>
-          <div class="subtle member-field-label">Nombre</div>
-          <input v-model="editForm.name" />
+          <div class="subtle ui-people-field-label">Nombre</div>
+          <input v-model="editForm.name" class="input" />
         </div>
 
         <div>
-          <div class="subtle member-field-label">Rol</div>
-          <select v-model="editForm.role">
+          <div class="subtle ui-people-field-label">Rol</div>
+          <select v-model="editForm.role" class="select">
             <option value="adult">Adulto</option>
-            <option value="child">NiÒo</option>
+            <option value="child">Ni√±o</option>
           </select>
         </div>
 
-        <div class="member-edit-actions">
-          <button class="btn" type="button" @click="closeEdit">Cancelar</button>
+        <div class="ui-form-actions">
+          <button class="btn ui-form-action-btn" type="button" @click="closeEdit">Cancelar</button>
           <button
-            class="btn"
+            class="btn ui-form-action-btn"
             type="button"
             :disabled="store.loading || (editForm.id != null && rowBusy[editForm.id])"
             @click="saveEdit"
@@ -193,70 +193,3 @@ onMounted(async () => {
     </BaseModal>
   </div>
 </template>
-
-<style scoped>
-.member-alert {
-  margin-bottom: 12px;
-}
-
-.member-card-subtitle {
-  margin-bottom: 10px;
-}
-
-.member-header-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.member-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.member-th {
-  text-align: left;
-  padding: 8px 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.member-th-right {
-  text-align: right;
-}
-
-.member-td {
-  padding: 8px 6px;
-}
-
-.member-td-right {
-  text-align: right;
-}
-
-.member-actions {
-  display: inline-flex;
-  gap: 10px;
-}
-
-.member-status-inactive {
-  opacity: 0.7;
-}
-
-.member-edit-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.member-field-label {
-  margin-bottom: 6px;
-}
-
-.member-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-</style>
-
-
-
-

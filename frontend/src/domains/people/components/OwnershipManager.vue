@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
 import { usePeopleOwnerships } from '@/domains/people/composables';
@@ -31,18 +31,18 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div v-if="store.error" class="alert ownership-alert">
+    <div v-if="store.error" class="alert ui-people-alert">
       {{ store.error }}
     </div>
     <div v-if="successMessage" class="ui-alert-success">
       {{ successMessage }}
     </div>
 
-    <section class="section card ownership-section">
+    <section class="section card">
       <div class="card-header">
         <h2 class="card-header-title">Titularidades</h2>
 
-        <div class="ownership-actions">
+        <div class="ui-people-header-actions">
           <button class="btn" type="button" :disabled="store.loading" @click="refreshOwnerships()">
             Refrescar
           </button>
@@ -52,22 +52,22 @@ onMounted(async () => {
         </div>
       </div>
 
-      <table class="ownership-table">
+      <table class="ui-data-table">
         <thead>
           <tr>
-            <th class="ownership-th">Titularidad</th>
-            <th class="ownership-th ownership-th-right">Acciones</th>
+            <th>Titularidad</th>
+            <th class="ui-data-table-actions">Acciones</th>
           </tr>
         </thead>
 
         <tbody>
           <tr v-for="o in ownershipsSorted" :key="o.id">
-            <td class="ownership-td">
+            <td>
               <OwnershipLabel :kind="o.kind" :member="o.member" :splits="o.splits" />
             </td>
 
-            <td class="ownership-td ownership-td-right">
-              <div class="ownership-row-actions">
+            <td class="ui-data-table-actions">
+              <div class="ui-people-row-actions">
                 <button
                   v-if="o.kind === 'shared'"
                   class="icon-btn"
@@ -100,7 +100,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="ui-table-empty">No hay titularidades todav�a.</td>
+            <td colspan="2" class="ui-table-empty">No hay titularidades todavía.</td>
           </tr>
         </tbody>
       </table>
@@ -113,31 +113,31 @@ onMounted(async () => {
       :title="editId != null ? 'Editar titularidad compartida' : 'Nueva titularidad compartida'"
       @close="resetModal"
     >
-      <div class="ownership-modal-grid">
+      <div class="form-grid">
         <div class="subtle">Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).</div>
 
-        <div class="card ownership-splits-card">
-          <div class="ownership-member-list">
+        <div class="card ui-people-splits-card">
+          <div class="ui-people-member-list">
             <button
               v-for="m in adults"
               :key="m.id"
               class="btn"
               type="button"
-              :class="{ 'ownership-member-inactive': !form.memberIds.includes(m.id) }"
+              :class="{ 'ui-people-member-inactive': !form.memberIds.includes(m.id) }"
               @click="toggleMember(m.id)"
             >
               {{ m.name }}
             </button>
           </div>
 
-          <div v-if="form.memberIds.length" class="ownership-splits">
-            <div class="ownership-splits-header">
+          <div v-if="form.memberIds.length" class="ui-people-splits">
+            <div class="ui-people-splits-header">
               <div class="subtle">Porcentajes</div>
               <button class="btn" type="button" @click="setEqualSplit">Reparto igual</button>
             </div>
 
-            <div v-for="id in form.memberIds" :key="id" class="ownership-split-row">
-              <div class="ownership-split-name">
+            <div v-for="id in form.memberIds" :key="id" class="ui-people-split-row">
+              <div class="ui-people-split-name">
                 {{ adults.find((a) => a.id === id)?.name ?? 'ID ' + id }}
               </div>
 
@@ -145,16 +145,21 @@ onMounted(async () => {
                 v-model="form.percents[id]"
                 inputmode="decimal"
                 placeholder="50.00"
-                class="ownership-percent-input"
+                class="input ui-people-percent-input"
               />
               <span class="subtle">%</span>
             </div>
           </div>
         </div>
 
-        <div class="ownership-modal-actions">
-          <button class="btn" type="button" @click="resetModal">Cancelar</button>
-          <button class="btn" type="button" :disabled="!canCreate || store.loading" @click="submit">
+        <div class="ui-form-actions">
+          <button class="btn ui-form-action-btn" type="button" @click="resetModal">Cancelar</button>
+          <button
+            class="btn ui-form-action-btn"
+            type="button"
+            :disabled="!canCreate || store.loading"
+            @click="submit"
+          >
             {{ editId != null ? 'Guardar' : 'Crear' }}
           </button>
         </div>
@@ -162,98 +167,3 @@ onMounted(async () => {
     </BaseModal>
   </div>
 </template>
-
-<style scoped>
-.ownership-alert {
-  margin-bottom: 12px;
-}
-
-.ownership-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.ownership-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.ownership-th {
-  text-align: left;
-  padding: 8px 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ownership-th-right {
-  text-align: right;
-}
-
-.ownership-td {
-  padding: 8px 6px;
-}
-
-.ownership-td-right {
-  text-align: right;
-}
-
-.ownership-row-actions {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.ownership-modal-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.ownership-splits-card {
-  padding: 12px;
-}
-
-.ownership-member-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.ownership-member-inactive {
-  opacity: 0.65;
-}
-
-.ownership-splits {
-  margin-top: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-.ownership-splits-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.ownership-split-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.ownership-split-name {
-  min-width: 160px;
-}
-
-.ownership-percent-input {
-  max-width: 140px;
-}
-
-.ownership-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-</style>
-
