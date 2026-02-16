@@ -122,7 +122,7 @@ export function usePeopleMembers() {
   }
 
   async function removeMember(member: FamilyMember) {
-    const ok = window.confirm(`¿Eliminar a "${member.name}"?\n\nSolo se podrá si no está en uso.`);
+    const ok = window.confirm(`Â¿Eliminar a "${member.name}"?\n\nSolo se podrÃ¡ si no estÃ¡ en uso.`);
     if (!ok) return;
     await withRowBusy(member.id, async () => {
       await store.deleteMember(member.id);
@@ -277,7 +277,7 @@ export function usePeopleOwnerships() {
   }
 
   async function removeOwnership(id: number) {
-    const ok = window.confirm('¿Eliminar esta titularidad compartida? (Solo si no está en uso)');
+    const ok = window.confirm('Â¿Eliminar esta titularidad compartida? (Solo si no estÃ¡ en uso)');
     if (!ok) return;
     successMessage.value = null;
     await store.deleteOwnership(id);

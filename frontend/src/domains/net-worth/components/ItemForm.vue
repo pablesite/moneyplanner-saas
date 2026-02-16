@@ -40,10 +40,10 @@ const currencies = [
 
 const ownershipLabel = (o: Ownership) => {
   if (o.kind === 'individual') {
-    return o.member ? `Individual 路 ${o.member.name}` : 'Individual';
+    return o.member ? `Individual 脗路 ${o.member.name}` : 'Individual';
   }
   const parts = (o.splits || []).map((s) => `${s.member.name} ${s.percent}%`);
-  return `Compartido 路 ${parts.join(' 路 ') || 'sin splits'}`;
+  return `Compartido 脗路 ${parts.join(' 脗路 ') || 'sin splits'}`;
 };
 
 const ownershipOptions = computed(() => {
@@ -84,7 +84,7 @@ const isEdit = computed(() => props.mode === 'edit');
 const financedAssetOptions = computed(() => {
   const list = Array.isArray(props.assets) ? props.assets : [];
   return [
-    { value: null, label: 'No financia ning鷑 activo' },
+    { value: null, label: 'No financia ning煤n activo' },
     ...list
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -239,7 +239,7 @@ watch(
         v-model="form.category"
         :class="['select', { 'ui-select-placeholder': !form.category }]"
       >
-        <option value="" disabled>Selecciona categor韆</option>
+        <option value="" disabled>Selecciona categor铆a</option>
         <option v-for="c in categories" :key="c.value" :value="c.value">
           {{ c.label }}
         </option>
@@ -250,7 +250,7 @@ watch(
         v-model="form.subcategory"
         :class="['select', { 'ui-select-placeholder': !form.subcategory }]"
       >
-        <option value="" disabled>Selecciona subcategor韆</option>
+        <option value="" disabled>Selecciona subcategor铆a</option>
         <option v-for="s in subcategoriesForCategory" :key="s.value" :value="s.value">
           {{ s.label }}
         </option>
