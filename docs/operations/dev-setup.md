@@ -143,6 +143,8 @@ docker compose exec saas_backend python manage.py test memberships
 docker compose exec saas_frontend npx playwright install chromium
 docker compose exec saas_frontend npm run test:e2e -- --list
 docker compose exec saas_frontend npm run test:e2e -- --project=chromium
+# opcional: flujo real (sin mocks) de login/patrimonio en SaaS
+docker compose exec saas_frontend sh -lc "E2E_REAL_API=1 npm run test:e2e -- e2e/login-networth-real.spec.ts --project=chromium"
 ```
 4. Frontend Core E2E (Playwright, en Docker):
 ```bash

@@ -165,6 +165,7 @@ Estado: en progreso.
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
   - Avance: base E2E con Playwright añadida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegación a `ownership` (SaaS) mediante mocks de API.
   - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecución validada en contenedores (`npm run test:e2e -- --project=chromium`).
+  - Avance: spec real de login/patrimonio en SaaS preparada en `frontend/e2e/login-networth-real.spec.ts`, habilitable con `E2E_REAL_API=1` (por defecto se mantiene la suite mockeada estable).
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
