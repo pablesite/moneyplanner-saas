@@ -115,6 +115,7 @@ Estado: en progreso.
   - Avance: `LoginView.vue` en `frontend` y `core/frontend` elimina `catch (e: any)` y se normalizan textos mojibake visibles en dominio `people` (SaaS).
   - Avance: `NetWorthView.vue` migra layout visual repetido a utilidades Tailwind y elimina CSS scoped duplicado entre `core/frontend` y `frontend`.
   - Avance: `BaseModal.vue` en `domains/ui/components` se homogeneiza con una base visual unica utilitaria (overlay/card/header/body) en `core/frontend` y `frontend`.
+  - Avance: `ItemForm.vue` y `ItemList.vue` adoptan clases base compartidas (`@layer components` en `styles/tailwind.css`) para ayudas de formulario, placeholders y acciones, reduciendo estilos inline/scoped duplicados.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.

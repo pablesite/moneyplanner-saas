@@ -35,4 +35,5 @@ Variables clave:
 - Base de espaciado/radio/focus/error aplicada en `styles/app.css`.
 - Tailwind integrado en `core/frontend` y `frontend` con mapeo de tokens desde CSS variables.
 - `NetWorthView` y `BaseModal` ya migrados a layout utilitario Tailwind en `core/frontend` y `frontend`.
+- Capa `@layer components` activa en `src/styles/tailwind.css` para primitivas de formularios (`ui-form-help`, `ui-select-placeholder`, `ui-form-actions`).
 - Siguiente paso: homogeneizar componentes base (`button`, `form`, `table`, `modal`) migrando estilos repetidos a utilidades y componentes comunes.
