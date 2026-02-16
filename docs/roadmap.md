@@ -48,11 +48,18 @@ Referencia:
 - `docs/roadmap-02-release.md`
 
 ### Hito 05
+Diseñar identidad centralizada: `core` como IdP para usuario único real.
+
+Objetivo:
+1. Definir modelo de autenticación unificado `core` + `saas`.
+2. Planificar migración gradual sin romper flujo actual.
+
+### Hito 06
 Mejorar módulo Patrimonio (especialmente frontend):
 1. Añadir visualizaciones/gráficos con más información útil.
 2. Mejorar UX de análisis de evolución y composición.
 
-### Hito 06
+### Hito 07
 Poner en producción la primera versión para demo y validación con usuarios.
 
 Entregables sugeridos:
@@ -60,13 +67,13 @@ Entregables sugeridos:
 2. Checklist de despliegue y rollback validado.
 3. Demo funcional guiada.
 
-### Hito 07
+### Hito 08
 Versión móvil.
 
 Objetivo:
 - Definir e implementar estrategia mobile (responsive avanzado, PWA o app nativa/híbrida).
 
-### Hito 08
+### Hito 09
 Landing y sistema de pagos para SaaS.
 
 Objetivo:
@@ -74,7 +81,7 @@ Objetivo:
 2. Flujo de alta/checkout y activación de plan.
 3. Integración de facturación/pagos.
 
-### Hito 09
+### Hito 10
 Construcción del resto de módulos funcionales.
 
 Módulos pendientes (después de Patrimonio):
@@ -86,7 +93,7 @@ Módulos pendientes (después de Patrimonio):
 Referencia funcional:
 - `docs/product-architecture.md`
 
-### Hito 10 (continuo)
+### Hito 11 (continuo)
 Escalar calidad y producto de forma iterativa.
 
 Líneas continuas:
@@ -97,12 +104,13 @@ Líneas continuas:
 
 ## Orden recomendado de ejecución
 1. Hito 04 (refactor + calidad automática)
-2. Hito 05 (mejora de patrimonio frontend)
-3. Hito 06 (producción v1 para enseñar)
-4. Hito 08 (landing + pagos)
-5. Hito 07 (móvil)
-6. Hito 09 (resto de módulos)
-7. Hito 10 (iteración continua)
+2. Hito 05 (diseño IdP centralizado en core)
+3. Hito 06 (mejora de patrimonio frontend)
+4. Hito 07 (producción v1 para enseñar)
+5. Hito 09 (landing + pagos)
+6. Hito 08 (móvil)
+7. Hito 10 (resto de módulos)
+8. Hito 11 (iteración continua)
 
 ## Criterio de actualización
 Actualizar este documento cuando:
