@@ -125,6 +125,7 @@ Estado: en progreso.
   - Avance: `ItemDisplayRow.vue` y `NetWorthDonut.vue` eliminan CSS scoped duplicado y adoptan clases base compartidas (`nw-*`) en `styles/tailwind.css` para `core/frontend` y `frontend`; se normaliza microcopy de submeta de pasivos (`Financia:`).
   - Avance: `AuxDataView.vue` en `core/frontend` y `frontend` elimina CSS scoped de layout/tabla y reutiliza clases base de UI (`ui-page-*`, `ui-data-*`) para reducir duplicacion.
   - Avance: `domains/aux-data/composables.ts` (`core/frontend` y `frontend`) y `domains/people/composables.ts` (`frontend`) agregan feedback de exito transaccional para operaciones CRUD, con render uniforme en vistas/componentes.
+  - Avance: pasada de microcopy/encoding aplicada en `core/frontend` y `frontend` para textos UI (acentos, signos de apertura y etiquetas de formularios/estados), incluyendo `AuxDataView`, `NetWorthView`, `ItemForm`, `ItemList`, `NetWorthDonut` y dominio `people`.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
 Estado: en progreso.

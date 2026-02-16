@@ -100,7 +100,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="ui-table-empty">No hay titularidades todavia.</td>
+            <td colspan="2" class="ui-table-empty">No hay titularidades todavía.</td>
           </tr>
         </tbody>
       </table>
@@ -256,3 +256,4 @@ onMounted(async () => {
   gap: 10px;
 }
 </style>
+

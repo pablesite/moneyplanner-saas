@@ -84,7 +84,7 @@ const isEdit = computed(() => props.mode === 'edit');
 const financedAssetOptions = computed(() => {
   const list = Array.isArray(props.assets) ? props.assets : [];
   return [
-    { value: null, label: 'No financia ningun activo' },
+    { value: null, label: 'No financia ningún activo' },
     ...list
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -239,7 +239,7 @@ watch(
         v-model="form.category"
         :class="['select', { 'ui-select-placeholder': !form.category }]"
       >
-        <option value="" disabled>Selecciona categoria</option>
+        <option value="" disabled>Selecciona categoría</option>
         <option v-for="c in categories" :key="c.value" :value="c.value">
           {{ c.label }}
         </option>
@@ -250,7 +250,7 @@ watch(
         v-model="form.subcategory"
         :class="['select', { 'ui-select-placeholder': !form.subcategory }]"
       >
-        <option value="" disabled>Selecciona subcategoria</option>
+        <option value="" disabled>Selecciona subcategoría</option>
         <option v-for="s in subcategoriesForCategory" :key="s.value" :value="s.value">
           {{ s.label }}
         </option>
@@ -310,3 +310,5 @@ watch(
     </div>
   </div>
 </template>
+
+

@@ -44,4 +44,5 @@ Variables clave:
 - Feedback de accion y estado vacio aplicado en:
   - `AuxDataView` (`core/frontend` y `frontend`) con mensajes de exito post CRUD y filas vacias por tabla.
   - dominio `people` (`frontend`) con mensajes de exito en `FamilyMemberManager` y `OwnershipManager`.
+- Microcopy UI alineado en español en vistas/componentes principales (`core/frontend` y `frontend`) para evitar drift de encoding (acentos y signos de apertura).
 - Siguiente paso: homogeneizar componentes base (`button`, `form`, `table`, `modal`) migrando estilos repetidos a utilidades y componentes comunes.

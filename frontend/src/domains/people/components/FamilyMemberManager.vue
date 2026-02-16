@@ -76,7 +76,7 @@ onMounted(async () => {
 
             <td class="member-td">
               <span class="subtle">
-                {{ m.role === 'adult' ? 'Adulto' : 'Nino' }}
+                {{ m.role === 'adult' ? 'Adulto' : 'Niño' }}
               </span>
             </td>
 
@@ -119,7 +119,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="!membersSorted.length">
-            <td colspan="4" class="ui-table-empty">No hay miembros todavia.</td>
+            <td colspan="4" class="ui-table-empty">No hay miembros todavía.</td>
           </tr>
         </tbody>
       </table>
@@ -131,7 +131,7 @@ onMounted(async () => {
     <BaseModal :open="createOpen" title="Nuevo miembro" @close="closeCreate">
       <div class="member-edit-grid">
         <div class="subtle member-card-subtitle">
-          Crea miembros de la familia. Al crear un adulto, se generara automaticamente su
+          Crea miembros de la familia. Al crear un adulto, se generará automáticamente su
           titularidad individual.
         </div>
 
@@ -144,7 +144,7 @@ onMounted(async () => {
           <div class="subtle member-field-label">Rol</div>
           <select v-model="form.role">
             <option value="adult">Adulto</option>
-            <option value="child">Nino</option>
+            <option value="child">Niño</option>
           </select>
         </div>
 
@@ -174,7 +174,7 @@ onMounted(async () => {
           <div class="subtle member-field-label">Rol</div>
           <select v-model="editForm.role">
             <option value="adult">Adulto</option>
-            <option value="child">Nino</option>
+            <option value="child">Niño</option>
           </select>
         </div>
 
@@ -256,5 +256,7 @@ onMounted(async () => {
   gap: 10px;
 }
 </style>
+
+
 
 
