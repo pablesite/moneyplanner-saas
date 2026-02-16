@@ -3,8 +3,7 @@ import NetWorthView from './views/NetWorthView.vue';
 import LoginView from './views/LoginView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AuxDataView from './views/AuxDataView.vue';
-import { coreApi } from '@/lib/api';
-import { clearAuthTokens, getAccessToken } from '@/lib/authSession';
+import { registerAuthGuard } from '@/domains/auth/guard';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -16,50 +15,4 @@ export const router = createRouter({
   ],
 });
 
-let authChecked = false;
-let authCheckPromise: Promise<boolean> | null = null;
-
-async function ensureAuthValid(): Promise<boolean> {
-  const token = getAccessToken();
-  if (!token) return false;
-  if (authChecked) return true;
-
-  if (!authCheckPromise) {
-    authCheckPromise = coreApi
-      .get('/api/auth/settings/')
-      .then(() => {
-        authChecked = true;
-        return true;
-      })
-      .catch(() => {
-        clearAuthTokens();
-        authChecked = false;
-        return false;
-      })
-      .finally(() => {
-        authCheckPromise = null;
-      });
-  }
-
-  return authCheckPromise ?? false;
-}
-
-router.beforeEach(async (to) => {
-  const token = getAccessToken();
-
-  if (!token && to.path !== '/login') {
-    return { path: '/login' };
-  }
-
-  if (token) {
-    const ok = await ensureAuthValid();
-    if (!ok && to.path !== '/login') {
-      return { path: '/login' };
-    }
-    if (ok && to.path === '/login') {
-      return { path: '/' };
-    }
-  }
-
-  return true;
-});
+registerAuthGuard(router);
