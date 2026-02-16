@@ -34,6 +34,12 @@ Ejemplo:
 3. Validación funcional específica:
 - `<curl, endpoint, test manual, etc.>`
 
+4. Si hay cambios de frontend `core`/`saas`, seguir este flujo:
+- Implementar base en `core/frontend/src` y premium en `frontend/src` mediante extensiones.
+- Revisar drift: `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1`
+- Aplicar sync si corresponde: `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply`
+- Validar ambos frontends en Docker (`lint` + `typecheck`).
+
 ## Restricciones
 1. No borrar volúmenes DB.
 2. No usar `docker compose down -v` salvo autorización explícita.

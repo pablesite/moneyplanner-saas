@@ -85,7 +85,7 @@ Estado: en progreso.
   - Avance: `LoginView.vue` en `frontend` y `core/frontend` extrae submit/loading/error/redirect a `domains/auth/composables.ts`, reduciendo side effects directos en la vista.
   - Avance: guard de autenticacion del router movido a `domains/auth/guard.ts` en `frontend` y `core/frontend`, manteniendo `router.ts` como declaracion de rutas + registro de guard.
   - Avance: `AuxDataView.vue` en `frontend` y `core/frontend` delega auto-carga inicial a `useAuxDataPage()` en `domains/aux-data/composables.ts`, eliminando efectos de montaje directos en la vista.
-- [ ] Definir arquitectura sin duplicacion entre core y saas:
+- [x] Definir arquitectura sin duplicacion entre core y saas:
   - [x] Definir `core/frontend` como frontend maestro para capacidades base (OSS).
   - [x] Reemplazar la opcion de paquete compartido runtime por sincronizacion unidireccional `core -> saas`.
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.

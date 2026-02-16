@@ -89,6 +89,26 @@ docker compose ps
 docker compose logs --tail 100 saas_backend
 ```
 
+## Flujo de desarrollo frontend (core -> saas)
+Regla:
+- `core/frontend` define la base canónica.
+- `frontend` (SaaS) extiende mediante contratos (`domains/*/extensions.ts`) y capacidades.
+
+Pasos:
+1. Implementar primero en `core/frontend/src` cuando el cambio sea base.
+2. Revisar sincronización:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1
+```
+3. Aplicar sincronización si hay drift:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply
+```
+4. Validar `lint` y `typecheck` en ambos frontends dentro de Docker.
+
+Referencia de frontera/contrato:
+- `docs/core-saas-boundaries.md`
+
 ## Problemas frecuentes
 Para incidencias operativas y playbooks detallados (CORS, backend caído, auth DB, colisiones de puertos), usar:
 - `docs/runbook.md`

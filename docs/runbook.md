@@ -30,6 +30,33 @@ Guía rápida para diagnosticar y recuperar el entorno local de `moneyplanner`.
 - SaaS frontend: `http://localhost:5174`
 - SaaS backend: `http://localhost:8001`
 
+## Flujo Frontend Core/SaaS (estándar)
+Objetivo:
+- Mantener `core/frontend` como fuente canónica base y `frontend` como overlay premium sin forks de vistas.
+
+Reglas:
+1. Si el cambio es base/reutilizable, se implementa primero en `core/frontend/src`.
+2. Si el cambio es premium, se implementa en `frontend/src` usando contratos de extensión (`domains/*/extensions.ts`) en lugar de copiar vistas completas.
+3. Los archivos canónicos del frontend se mantienen en `scripts/frontend-sync-manifest.txt`.
+4. No editar directamente en SaaS los archivos canónicos del manifest.
+
+Checklist operativo:
+1. Implementar en `core/frontend/src` (o en SaaS si es premium puro).
+2. Revisar drift:
+- `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1`
+3. Si hay drift en archivos canónicos, aplicar sync:
+- `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply`
+4. Validar frontend en ambos stacks (Docker):
+- `cd core`
+- `docker compose exec frontend npm run lint`
+- `docker compose exec frontend npm run typecheck`
+- `cd ..`
+- `docker compose exec saas_frontend npm run lint`
+- `docker compose exec saas_frontend npm run typecheck`
+5. Commits en orden:
+- primero commit en `core`,
+- luego commit en repo raíz con actualización del submódulo + cambios SaaS/docs.
+
 ## Playbooks de incidencia
 
 ### 0) Checks fallan tras reiniciar contexto/sesión
