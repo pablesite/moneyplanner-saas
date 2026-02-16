@@ -81,6 +81,7 @@ Estado: en progreso.
   - Avance: login delega autenticacion en adapters `frontend/src/lib/authApi.ts` y `core/frontend/src/lib/authApi.ts`, usando `authSession` para persistencia de tokens.
   - Avance: dominio `people` extrae side effects de red a `frontend/src/domains/people/api.ts` y normalizacion de errores a `frontend/src/domains/people/errors.ts`; `frontend/src/domains/people/store.ts` queda como orquestador de estado.
   - Avance: side effects UI de `people` extraidos a `frontend/src/domains/people/composables.ts`; `FamilyMemberManager.vue` y `OwnershipManager.vue` quedan mas declarativos.
+  - Avance: `NetWorthView.vue` en `frontend` y `core/frontend` extrae orquestacion de estado/efectos (watchers, carga inicial, modal flows y derivados) a `domains/net-worth/composables.ts`, dejando la vista enfocada en composicion de UI.
 - [ ] Definir arquitectura sin duplicacion entre core y saas:
   - [ ] extraer paquete compartido `frontend-core` (componentes, stores, tipos y composables base).
   - Avance: por requisito de independencia total de `core`, se establece sincronizacion unidireccional `core -> saas` (sin paquete compartido runtime) para frontend base.
