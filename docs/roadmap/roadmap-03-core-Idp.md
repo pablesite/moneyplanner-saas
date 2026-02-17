@@ -117,6 +117,8 @@ Checklist:
 - [x] Implementar endpoint de vinculo y validaciones anti replay.
 - Avance: `POST/GET/DELETE /api/auth/core-link/` implementado con feature flag `ACCOUNT_LINKING_ENABLED`.
 - [ ] Registrar auditoria de link/unlink.
+- [x] Registrar auditoria de link/unlink.
+- Avance: eventos `core_account_link`/`core_account_unlink` auditados en logger estructurado `auth.audit`.
 - [x] Soportar unlink sin afectar login de ninguno de los dos productos.
 - Avance: desvinculacion elimina solo el enlace en SaaS, sin impactar autenticacion local.
 
@@ -174,7 +176,8 @@ Checklist:
 - Avance: throttle por scope aplicado en `saas` y `core` para endpoints de auth y APIs premium sensibles.
 - [x] Auditoria de eventos sensibles (login fail, link fail, unlink).
 - Avance: logger estructurado `auth.audit` en `saas` (login fail, link fail, unlink) y en login de `core`.
-- [ ] Dashboards con metricas separadas de `core` y `saas`.
+- [x] Dashboards con metricas separadas de `core` y `saas`.
+- Avance: endpoints operativos `/api/auth/ops/metrics/` implementados en `core` y `saas` para consumo de dashboards.
 - [x] Actualizar runbook de soporte y troubleshooting.
 - Avance: `docs/operations/runbook.md` incluye playbook de `429` y chequeo operativo de `auth.audit`.
 

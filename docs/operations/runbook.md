@@ -194,6 +194,18 @@ Revisión rápida:
 2. `cd core`
 3. `docker compose logs --tail 200 backend | findstr auth.audit`
 
+### 7) Dashboard de métricas auth (core vs saas)
+Endpoints:
+1. Core: `GET http://localhost:8000/api/auth/ops/metrics/`
+2. SaaS: `GET http://localhost:8001/api/auth/ops/metrics/`
+
+Uso operativo rápido (requiere token):
+1. Obtener token:
+- `POST /api/auth/token/`
+2. Consultar métricas:
+- `curl -H "Authorization: Bearer <access>" http://localhost:8000/api/auth/ops/metrics/`
+- `curl -H "Authorization: Bearer <access>" http://localhost:8001/api/auth/ops/metrics/`
+
 ## Apagado
 1. Detener `saas`:
 - `cd ..`

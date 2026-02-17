@@ -106,6 +106,7 @@ REST_FRAMEWORK = {
         "auth_me": os.getenv("THROTTLE_AUTH_ME", "120/min"),
         "auth_core_link": os.getenv("THROTTLE_AUTH_CORE_LINK", "20/min"),
         "auth_subscription": os.getenv("THROTTLE_AUTH_SUBSCRIPTION", "60/min"),
+        "auth_ops_metrics": os.getenv("THROTTLE_AUTH_OPS_METRICS", "60/min"),
         "premium_api": os.getenv("THROTTLE_PREMIUM_API", "240/min"),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

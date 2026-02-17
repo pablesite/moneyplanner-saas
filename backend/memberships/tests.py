@@ -461,6 +461,19 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         self.assertEqual(response.data["status"], SaasSubscription.Status.TRIAL)
         self.assertTrue(response.data["premium_enabled"])
 
+    def test_auth_ops_metrics_requires_auth(self):
+        response = self.client.get("/api/auth/ops/metrics/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_auth_ops_metrics_returns_saas_snapshot(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/auth/ops/metrics/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["service"], "saas")
+        self.assertEqual(response.data["auth_mode"], "saas_local")
+        self.assertIn("subscriptions", response.data)
+        self.assertIn("core_links_total", response.data)
+
     @override_settings(ACCOUNT_LINKING_ENABLED=True)
     def test_core_link_create_and_delete_when_enabled(self):
         self.client.force_authenticate(user=self.user)

@@ -149,6 +149,18 @@ Prefijo: `/api/`
   "standalone": true
 }
 ```
+6. `GET /api/auth/ops/metrics/`
+- Requiere autenticación.
+- Output operativo para dashboard de `core`:
+```json
+{
+  "service": "core",
+  "users_total": 1,
+  "users_active": 1,
+  "jwt_outstanding_tokens": 3,
+  "auth_mode": "core_local"
+}
+```
 
 ### SaaS API (`/api/auth/`)
 3. `POST /api/auth/register/`
@@ -176,6 +188,25 @@ Prefijo: `/api/`
 - Requiere `ACCOUNT_LINKING_ENABLED=true`.
 - `POST` crea o actualiza enlace opcional con cuenta `core`.
 - `DELETE` elimina el enlace sin afectar login local de `saas`.
+8. `GET /api/auth/ops/metrics/`
+- Requiere autenticación.
+- Output operativo para dashboard de `saas`:
+```json
+{
+  "service": "saas",
+  "users_total": 2,
+  "users_active": 2,
+  "jwt_outstanding_tokens": 4,
+  "subscriptions": {
+    "trial": 1,
+    "active": 1,
+    "past_due": 0,
+    "canceled": 0
+  },
+  "core_links_total": 1,
+  "auth_mode": "saas_local"
+}
+```
 
 ### Regla De Acceso Premium (SaaS)
 - Endpoints de `memberships` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links`) solo permiten acceso cuando la suscripcion esta en `trial` o `active`.

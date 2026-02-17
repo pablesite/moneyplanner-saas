@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.apps import apps
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +10,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from memberships.models import SaasCoreAccountLink
+from memberships.models import SaasCoreAccountLink, SaasSubscription
 from memberships.subscription_services import get_or_create_subscription
 
 from .auth_serializers import (
@@ -182,3 +184,31 @@ class SaasSubscriptionAPIView(APIView):
     def get(self, request):
         subscription = get_or_create_subscription(user=request.user)
         return Response(SaasSubscriptionSerializer(subscription).data)
+
+
+class SaasAuthOpsMetricsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_ops_metrics"
+
+    def get(self, request):
+        user_model = get_user_model()
+        outstanding_tokens_count = 0
+        if apps.is_installed("rest_framework_simplejwt.token_blacklist"):
+            outstanding_model = apps.get_model("token_blacklist", "OutstandingToken")
+            if outstanding_model is not None:
+                outstanding_tokens_count = outstanding_model.objects.count()
+
+        payload = {
+            "service": "saas",
+            "users_total": user_model.objects.count(),
+            "users_active": user_model.objects.filter(is_active=True).count(),
+            "jwt_outstanding_tokens": outstanding_tokens_count,
+            "subscriptions": {
+                status: SaasSubscription.objects.filter(status=status).count()
+                for status, _label in SaasSubscription.Status.choices
+            },
+            "core_links_total": SaasCoreAccountLink.objects.count(),
+            "auth_mode": "saas_local",
+        }
+        return Response(payload)
