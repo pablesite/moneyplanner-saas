@@ -105,6 +105,7 @@ REST_FRAMEWORK = {
         "auth_register": os.getenv("THROTTLE_AUTH_REGISTER", "10/min"),
         "auth_me": os.getenv("THROTTLE_AUTH_ME", "120/min"),
         "auth_core_link": os.getenv("THROTTLE_AUTH_CORE_LINK", "20/min"),
+        "auth_core_link_token": os.getenv("THROTTLE_AUTH_CORE_LINK_TOKEN", "20/min"),
         "auth_subscription": os.getenv("THROTTLE_AUTH_SUBSCRIPTION", "60/min"),
         "auth_ops_metrics": os.getenv("THROTTLE_AUTH_OPS_METRICS", "60/min"),
         "premium_api": os.getenv("THROTTLE_PREMIUM_API", "240/min"),
@@ -127,3 +128,5 @@ SIMPLE_JWT = {
 # Roadmap 03 flags: auth autonomy + optional account linking.
 AUTH_MODE_SAAS_LOCAL = env_bool("AUTH_MODE_SAAS_LOCAL", "1")
 ACCOUNT_LINKING_ENABLED = env_bool("ACCOUNT_LINKING_ENABLED", "0")
+CORE_LINKING_SHARED_SECRET = os.getenv("CORE_LINKING_SHARED_SECRET", "").strip()
+CORE_LINKING_TOKEN_MAX_AGE_SECONDS = int(os.getenv("CORE_LINKING_TOKEN_MAX_AGE_SECONDS", "300"))

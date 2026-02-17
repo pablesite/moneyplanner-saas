@@ -3,6 +3,7 @@ from django.urls import path
 from .auth_views import (
     SaasAuthModeAPIView,
     SaasAuthOpsMetricsAPIView,
+    SaasCoreAccountLinkFromTokenAPIView,
     SaasCoreAccountLinkAPIView,
     SaasMeAPIView,
     SaasRegisterAPIView,
@@ -20,4 +21,9 @@ urlpatterns = [
     path("ops/metrics/", SaasAuthOpsMetricsAPIView.as_view(), name="saas_auth_ops_metrics"),
     path("mode/", SaasAuthModeAPIView.as_view(), name="saas_auth_mode"),
     path("core-link/", SaasCoreAccountLinkAPIView.as_view(), name="saas_core_account_link"),
+    path(
+        "core-link/from-token/",
+        SaasCoreAccountLinkFromTokenAPIView.as_view(),
+        name="saas_core_account_link_from_token",
+    ),
 ]

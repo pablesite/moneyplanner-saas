@@ -107,7 +107,7 @@ Checklist:
 - Avance: tests API de auth roadmap-03 agregados en `backend/memberships/tests.py`.
 
 ### Fase 3: Account Linking Opcional Core <-> SaaS
-Estado: En progreso.
+Estado: Completado.
 
 Objetivo:
 Permitir continuidad opcional entre productos sin acoplar autenticacion.
@@ -118,7 +118,8 @@ Entregables:
 - Reglas de revocacion/desvinculacion seguras.
 
 Checklist:
-- [ ] Disenar token temporal de vinculacion (one-time, expiracion corta).
+- [x] Disenar token temporal de vinculacion (one-time, expiracion corta).
+- Avance: `core` emite token temporal en `GET /api/auth/link-token/` y `saas` lo consume en `POST /api/auth/core-link/from-token/` con expiracion configurable.
 - [x] Implementar endpoint de vinculo y validaciones anti replay.
 - Avance: `POST/GET/DELETE /api/auth/core-link/` implementado con feature flag `ACCOUNT_LINKING_ENABLED`.
 - [x] Registrar auditoria de link/unlink.

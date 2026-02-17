@@ -23,6 +23,10 @@ class CoreAccountLinkWriteSerializer(serializers.Serializer):
     core_email = serializers.EmailField(required=False, allow_blank=True, default="")
 
 
+class CoreAccountLinkFromTokenSerializer(serializers.Serializer):
+    link_token = serializers.CharField()
+
+
 class SaasCurrentUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()

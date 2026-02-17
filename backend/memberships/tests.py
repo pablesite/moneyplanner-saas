@@ -1,6 +1,8 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 from django.contrib.auth import get_user_model
+from django.core import signing
 from django.test import TestCase
 from django.test.utils import override_settings
 from rest_framework import status
@@ -497,6 +499,68 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         delete_res = self.client.delete("/api/auth/core-link/")
         self.assertEqual(delete_res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(SaasCoreAccountLink.objects.filter(user=self.user).exists())
+
+    @override_settings(
+        ACCOUNT_LINKING_ENABLED=True,
+        CORE_LINKING_SHARED_SECRET="test-shared-secret",
+        CORE_LINKING_TOKEN_MAX_AGE_SECONDS=300,
+    )
+    def test_core_link_from_token_creates_link(self):
+        self.client.force_authenticate(user=self.user)
+        token = signing.dumps(
+            {
+                "jti": str(uuid4()),
+                "core_user_ref": "core_user:42",
+                "core_username": "core_admin",
+                "core_email": "core@example.com",
+            },
+            key="test-shared-secret",
+            salt="core-link-token",
+        )
+
+        response = self.client.post(
+            "/api/auth/core-link/from-token/",
+            {"link_token": token},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["core_user_ref"], "core_user:42")
+        self.assertTrue(SaasCoreAccountLink.objects.filter(user=self.user).exists())
+
+    @override_settings(
+        ACCOUNT_LINKING_ENABLED=True,
+        CORE_LINKING_SHARED_SECRET="test-shared-secret",
+        CORE_LINKING_TOKEN_MAX_AGE_SECONDS=300,
+    )
+    def test_core_link_from_token_rejects_replay(self):
+        self.client.force_authenticate(user=self.user)
+        jti = str(uuid4())
+        token = signing.dumps(
+            {
+                "jti": jti,
+                "core_user_ref": "core_user:99",
+                "core_username": "core_user",
+                "core_email": "core99@example.com",
+            },
+            key="test-shared-secret",
+            salt="core-link-token",
+        )
+
+        first = self.client.post(
+            "/api/auth/core-link/from-token/",
+            {"link_token": token},
+            format="json",
+        )
+        second = self.client.post(
+            "/api/auth/core-link/from-token/",
+            {"link_token": token},
+            format="json",
+        )
+
+        self.assertEqual(first.status_code, status.HTTP_200_OK)
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+        details = second.data.get("error", {}).get("details", second.data)
+        self.assertIn("link_token", details)
 
 
 class SaasPremiumAccessPolicyTests(APITestCase):

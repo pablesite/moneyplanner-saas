@@ -14,13 +14,19 @@ from memberships.models import SaasCoreAccountLink, SaasSubscription
 from memberships.subscription_services import get_or_create_subscription
 
 from .auth_serializers import (
+    CoreAccountLinkFromTokenSerializer,
     CoreAccountLinkSerializer,
     CoreAccountLinkWriteSerializer,
     SaasCurrentUserSerializer,
     SaasRegisterSerializer,
     SaasSubscriptionSerializer,
 )
-from .auth_services import create_saas_user, unlink_core_account, upsert_core_account_link
+from .auth_services import (
+    create_saas_user,
+    link_core_account_from_token,
+    unlink_core_account,
+    upsert_core_account_link,
+)
 from .auth_audit import log_auth_event
 
 
@@ -174,6 +180,70 @@ class SaasCoreAccountLinkAPIView(APIView):
             had_link=had_link,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SaasCoreAccountLinkFromTokenAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_core_link_token"
+
+    def _assert_enabled(self):
+        if not getattr(settings, "ACCOUNT_LINKING_ENABLED", False):
+            return Response(
+                {
+                    "error": {
+                        "code": "feature_disabled",
+                        "message": "El account linking esta deshabilitado.",
+                        "details": {"account_linking_enabled": False},
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not getattr(settings, "CORE_LINKING_SHARED_SECRET", ""):
+            return Response(
+                {
+                    "error": {
+                        "code": "feature_disabled",
+                        "message": "Core linking token deshabilitado por configuracion.",
+                        "details": {"core_linking_shared_secret": False},
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
+    def post(self, request):
+        disabled = self._assert_enabled()
+        if disabled is not None:
+            return disabled
+
+        serializer = CoreAccountLinkFromTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            link = link_core_account_from_token(
+                user=request.user,
+                link_token=serializer.validated_data["link_token"],
+                shared_secret=getattr(settings, "CORE_LINKING_SHARED_SECRET", ""),
+                token_max_age_seconds=int(
+                    getattr(settings, "CORE_LINKING_TOKEN_MAX_AGE_SECONDS", 300)
+                ),
+            )
+        except Exception:
+            log_auth_event(
+                event="core_account_link_from_token",
+                outcome="failed",
+                user_id=request.user.id,
+            )
+            raise
+
+        log_auth_event(
+            event="core_account_link_from_token",
+            outcome="success",
+            user_id=request.user.id,
+            core_user_ref=link.core_user_ref,
+        )
+        return Response(CoreAccountLinkSerializer(link).data, status=status.HTTP_200_OK)
 
 
 class SaasSubscriptionAPIView(APIView):

@@ -161,6 +161,16 @@ Prefijo: `/api/`
   "auth_mode": "core_local"
 }
 ```
+7. `GET /api/auth/link-token/`
+- Requiere autenticación y `CORE_LINKING_SHARED_SECRET` configurado.
+- Output:
+```json
+{
+  "link_token": "<signed_token>",
+  "expires_in_seconds": 300,
+  "core_user_ref": "core_user:1"
+}
+```
 
 ### SaaS API (`/api/auth/`)
 3. `POST /api/auth/register/`
@@ -188,7 +198,16 @@ Prefijo: `/api/`
 - Requiere `ACCOUNT_LINKING_ENABLED=true`.
 - `POST` crea o actualiza enlace opcional con cuenta `core`.
 - `DELETE` elimina el enlace sin afectar login local de `saas`.
-8. `GET /api/auth/ops/metrics/`
+8. `POST /api/auth/core-link/from-token/`
+- Requiere `ACCOUNT_LINKING_ENABLED=true` y `CORE_LINKING_SHARED_SECRET`.
+- Input:
+```json
+{ "link_token": "<signed_token>" }
+```
+- Reglas:
+  - token temporal con expiración.
+  - uso one-time (anti-replay por `jti`).
+9. `GET /api/auth/ops/metrics/`
 - Requiere autenticación.
 - Output operativo para dashboard de `saas`:
 ```json

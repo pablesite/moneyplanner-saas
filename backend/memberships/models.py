@@ -164,3 +164,16 @@ class SaasSubscription(models.Model):
 
     def is_premium_enabled(self) -> bool:
         return self.status in {self.Status.TRIAL, self.Status.ACTIVE}
+
+
+class SaasConsumedCoreLinkToken(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="consumed_core_link_tokens",
+    )
+    jti = models.CharField(max_length=64, unique=True)
+    consumed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "consumed_at"])]
