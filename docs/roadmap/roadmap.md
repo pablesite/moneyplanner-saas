@@ -22,6 +22,7 @@ Resultado:
 
 Referencias:
 - `docs/roadmap/roadmap-hito-02-core-saas.md`
+- `docs/roadmap/release-summary-hito-02-core-saas.md`
 - `docs/architecture/architecture.md`
 
 ### Hito 03 (completado)
@@ -57,7 +58,7 @@ Objetivo:
 
 Referencia:
 - `docs/roadmap/roadmap-hito-05-identidad-separada.md`
-- `docs/operations/release-summary-2-roadmap03-identity.md`
+- `docs/roadmap/release-summary-hito-05-identidad-separada.md`
 
 ### Hito 06
 Mejorar modulo Patrimonio (especialmente frontend):
@@ -122,4 +123,5 @@ Actualizar este documento cuando:
 1. Se completa un hito.
 2. Cambia prioridad de negocio.
 3. Aparece un nuevo bloque estrategico relevante.
+
 

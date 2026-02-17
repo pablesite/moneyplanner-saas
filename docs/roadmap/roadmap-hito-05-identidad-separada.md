@@ -209,7 +209,7 @@ Checklist:
 - [x] Confirmar que premium en `saas` funciona sin dependencia de auth `core`.
 - Avance: validado con flujo completo `saas` y verificacion cruzada (`token core` sobre endpoint saas => `401`).
 - [x] Publicar resumen final del Hito 05.
-- Avance: publicado en `docs/operations/release-summary-2-roadmap03-identity.md`.
+- Avance: publicado en `docs/roadmap/release-summary-hito-05-identidad-separada.md`.
 
 ## Validacion Recomendada (Dentro De Contenedores)
 Backend Core (`core/backend`):
@@ -253,4 +253,5 @@ Frontend SaaS (`frontend`):
 6. Fase 5 (frontend y UX)
 7. Fase 6 (seguridad y observabilidad)
 8. Fase 7 (cierre del hito)
+
 
