@@ -36,6 +36,24 @@ Guía rápida para operar, diagnosticar y recuperar el entorno local de `moneypl
 - SaaS frontend: `http://localhost:5174`
 - SaaS backend: `http://localhost:8001`
 
+## Primer Usuario Core (Standalone)
+Objetivo:
+- Confirmar que `core` funciona sin depender de `saas`.
+
+Pasos:
+1. Crear usuario en `core`:
+- `cd core`
+- `docker compose exec backend python manage.py shell -c "from django.contrib.auth import get_user_model; U=get_user_model(); U.objects.filter(username='admin').exists() or U.objects.create_user('admin', password='admin12345')"`
+2. Obtener token:
+- `curl -i -X POST "http://localhost:8000/api/auth/token/" -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"admin12345\"}"`
+3. Validar endpoint protegido:
+- `curl -i "http://localhost:8000/api/auth/settings/" -H "Authorization: Bearer <access_token>"`
+
+Resultado esperado:
+1. `POST /api/auth/token/` devuelve `200`.
+2. `GET /api/auth/settings/` devuelve `200`.
+3. `core` queda operativo standalone.
+
 ## Flujo Frontend Core/SaaS (estándar)
 Objetivo:
 - Mantener `core/frontend` como fuente canónica base y `frontend` como overlay premium sin forks de vistas.

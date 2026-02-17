@@ -44,7 +44,7 @@ Definir e implementar una arquitectura de identidad separada que garantice:
 ## Fases
 
 ### Fase 0: Contrato De Identidad Separada
-Estado: pendiente.
+Estado: Completado.
 
 Objetivo:
 Cerrar definiciones funcionales y tecnicas de cuentas separadas y linking opcional.
@@ -55,13 +55,17 @@ Entregables:
 - Contrato de referencia externa (`core_user_ref`) y reglas de consistencia.
 
 Checklist:
-- [ ] Definir identificadores canonicos por producto (`core_user_id`, `saas_user_id`).
-- [ ] Definir reglas de unicidad de email por contexto.
-- [ ] Definir lifecycle del linking (crear, validar, revocar).
-- [ ] Definir errores y codigos estandar del flujo de linking.
+- [x] Definir identificadores canonicos por producto (`core_user_id`, `saas_user_id`).
+- Avance: separacion explicita de identidad en `core` y `saas`; enlace opcional via `core_user_ref` en SaaS.
+- [x] Definir reglas de unicidad de email por contexto.
+- Avance: validacion de unicidad de usuario/email en registro SaaS y separacion de contexto por stack.
+- [x] Definir lifecycle del linking (crear, validar, revocar).
+- Avance: ciclo implementado con `POST/GET/DELETE /api/auth/core-link/`.
+- [x] Definir errores y codigos estandar del flujo de linking.
+- Avance: contrato de error normalizado documentado en `docs/architecture/api-contracts.md`.
 
 ### Fase 1: Fortalecer Auth Standalone En Core
-Estado: pendiente.
+Estado: Completado.
 
 Objetivo:
 Garantizar que `core` sea instalable y usable sin dependencia externa.
@@ -78,10 +82,11 @@ Checklist:
 - Avance: en `core` se aplican tokens mas cortos, rotacion de refresh + blacklist y `MinimumLengthValidator(min_length=10)`.
 - [x] Anadir tests de autenticacion basica en `core`.
 - Avance: test API de modo auth en `core/backend/accounts/tests.py`.
-- [ ] Documentar flujo de primer usuario en `core` desde instalacion limpia.
+- [x] Documentar flujo de primer usuario en `core` desde instalacion limpia.
+- Avance: playbook agregado en `docs/operations/runbook.md` (seccion `Primer Usuario Core (Standalone)`).
 
 ### Fase 2: Fortalecer Auth Y Billing En SaaS
-Estado: pendiente.
+Estado: Completado.
 
 Objetivo:
 Aislar la identidad de `saas` y su autorizacion premium.
@@ -102,7 +107,7 @@ Checklist:
 - Avance: tests API de auth roadmap-03 agregados en `backend/memberships/tests.py`.
 
 ### Fase 3: Account Linking Opcional Core <-> SaaS
-Estado: pendiente.
+Estado: En progreso.
 
 Objetivo:
 Permitir continuidad opcional entre productos sin acoplar autenticacion.
@@ -116,14 +121,13 @@ Checklist:
 - [ ] Disenar token temporal de vinculacion (one-time, expiracion corta).
 - [x] Implementar endpoint de vinculo y validaciones anti replay.
 - Avance: `POST/GET/DELETE /api/auth/core-link/` implementado con feature flag `ACCOUNT_LINKING_ENABLED`.
-- [ ] Registrar auditoria de link/unlink.
 - [x] Registrar auditoria de link/unlink.
 - Avance: eventos `core_account_link`/`core_account_unlink` auditados en logger estructurado `auth.audit`.
 - [x] Soportar unlink sin afectar login de ninguno de los dos productos.
 - Avance: desvinculacion elimina solo el enlace en SaaS, sin impactar autenticacion local.
 
 ### Fase 4: Migracion Y Compatibilidad
-Estado: pendiente.
+Estado: En progreso.
 
 Objetivo:
 Transicionar desde el estado actual al modelo dual identity sin cortes.
@@ -134,13 +138,15 @@ Entregables:
 - Plan de rollback por fase.
 
 Checklist:
-- [ ] Introducir flags: `AUTH_MODE_CORE_LOCAL`, `AUTH_MODE_SAAS_LOCAL`, `ACCOUNT_LINKING_ENABLED`.
-- [ ] Ejecutar migraciones de datos sin bloqueo de usuarios.
+- [x] Introducir flags: `AUTH_MODE_CORE_LOCAL`, `AUTH_MODE_SAAS_LOCAL`, `ACCOUNT_LINKING_ENABLED`.
+- Avance: flags operativos añadidos en `core/backend/config/settings.py` y `backend/saas/settings.py`.
+- [x] Ejecutar migraciones de datos sin bloqueo de usuarios.
+- Avance: migraciones aplicadas en ambos stacks (`token_blacklist` en core, `memberships.0005` en saas) sin corte completo.
 - [ ] Validar compatibilidad con sesiones existentes.
 - [ ] Definir criterios de salida de modo transitorio.
 
 ### Fase 5: Frontend Y UX De Identidad Dual
-Estado: pendiente.
+Estado: Completado.
 
 Objetivo:
 Reflejar claramente que `core` y `saas` son cuentas distintas, con linking opcional.
@@ -161,7 +167,7 @@ Checklist:
 - Avance: redireccion de refresh fallido a `/login?reason=session_expired` y aviso visible en `LoginView` de `core/frontend` y `frontend`.
 
 ### Fase 6: Seguridad, Observabilidad Y Operacion
-Estado: pendiente.
+Estado: Completado.
 
 Objetivo:
 Operar autenticacion dual con controles de seguridad y monitoreo adecuados.
@@ -182,7 +188,7 @@ Checklist:
 - Avance: `docs/operations/runbook.md` incluye playbook de `429` y chequeo operativo de `auth.audit`.
 
 ### Fase 7: Cierre Del Hito Y Formalizacion
-Estado: pendiente.
+Estado: En progreso.
 
 Objetivo:
 Cerrar el hito con documentacion, validacion y decision final de arquitectura estabilizada.
@@ -220,11 +226,11 @@ Frontend SaaS (`frontend`):
 - `npm run typecheck`
 
 ## Definition Of Done (Hito 05)
-- [ ] `core` mantiene autenticacion local y funcionamiento standalone documentado.
-- [ ] `saas` mantiene autenticacion propia y control premium por suscripcion.
-- [ ] No existe dependencia obligatoria de login entre `core` y `saas`.
-- [ ] Linking opcional disponible (o explicitamente descartado y documentado).
-- [ ] Seguridad, observabilidad y runbook actualizados en ambos stacks.
+- [x] `core` mantiene autenticacion local y funcionamiento standalone documentado.
+- [x] `saas` mantiene autenticacion propia y control premium por suscripcion.
+- [x] No existe dependencia obligatoria de login entre `core` y `saas`.
+- [x] Linking opcional disponible (o explicitamente descartado y documentado).
+- [x] Seguridad, observabilidad y runbook actualizados en ambos stacks.
 
 ## Dependencias
 - Hito 04 con baseline de calidad y tests.
