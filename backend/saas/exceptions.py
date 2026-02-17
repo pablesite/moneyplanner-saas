@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """
 Mirror of canonical API error contract handler from
 `core/backend/config/exceptions.py`.
 
 Keep this file synchronized intentionally (no cross-repo imports).
 """
+
+from __future__ import annotations
 
 from rest_framework import status
 from rest_framework.exceptions import ErrorDetail, ValidationError
@@ -23,6 +23,10 @@ def _normalize_error_details(detail):
 
 
 def _infer_error_code(status_code: int, exc) -> str:
+    if status_code == status.HTTP_403_FORBIDDEN:
+        explicit_code = getattr(exc, "default_code", None)
+        if explicit_code in {"permission_denied", "subscription_blocked"}:
+            return explicit_code
     if isinstance(exc, ValidationError):
         return "validation_error"
     if status_code == status.HTTP_401_UNAUTHORIZED:

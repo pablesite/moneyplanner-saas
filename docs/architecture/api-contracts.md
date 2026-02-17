@@ -188,7 +188,7 @@ Prefijo: `/api/`
 
 4. `GET /api/auth/me/`
 - Output: usuario autenticado y `account_link` (si existe).
- - Incluye: `subscription_status` y `premium_enabled`.
+ - Incluye: `role`, `subscription_status` y `premium_enabled`.
 
 5. `GET /api/auth/subscription/`
 - Output: estado de suscripcion del usuario (`trial|active|past_due|canceled`) y bandera `premium_enabled`.
@@ -225,7 +225,7 @@ Prefijo: `/api/`
   - token temporal con expiración.
   - uso one-time (anti-replay por `jti`).
 9. `GET /api/auth/ops/metrics/`
-- Requiere autenticación.
+- Requiere autenticación con rol `saas_admin`.
 - Output operativo para dashboard de `saas`:
 ```json
 {
@@ -275,8 +275,8 @@ Prefijo: `/api/`
 3. `401 unauthorized`:
 - token ausente, invalido o expirado.
 
-### Endpoints administrativos previstos (borrador v1)
-Prefijo sugerido: `/api/admin/users/`
+### Endpoints administrativos RBAC v1
+Prefijo: `/api/admin/users/`
 
 1. `GET /api/admin/users/`
 - lista usuarios SaaS y su rol.

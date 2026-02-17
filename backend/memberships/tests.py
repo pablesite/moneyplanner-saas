@@ -473,6 +473,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
 
     def test_auth_ops_metrics_returns_saas_snapshot(self):
         self.client.force_authenticate(user=self.user)
+        assign_role(user=self.user, role=SaasAccessProfile.Role.ADMIN)
         response = self.client.get("/api/auth/ops/metrics/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["service"], "saas")
@@ -634,6 +635,7 @@ class SaasPremiumAccessPolicyTests(APITestCase):
         )
         response = self.client.get("/api/family-members/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error"]["code"], "subscription_blocked")
         sub.refresh_from_db()
         self.assertEqual(sub.status, SaasSubscription.Status.CANCELED)
 
@@ -641,6 +643,7 @@ class SaasPremiumAccessPolicyTests(APITestCase):
         SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.PAST_DUE)
         response = self.client.get("/api/family-members/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error"]["code"], "subscription_blocked")
 
     def test_memberships_access_allowed_for_active(self):
         SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.ACTIVE)
@@ -699,6 +702,113 @@ class SaasAuthAuditAndThrottleTests(APITestCase):
 
     def test_login_endpoint_declares_auth_login_throttle_scope(self):
         self.assertEqual(SaasTokenObtainPairView.throttle_scope, "auth_login")
+
+
+class SaasAdminUsersApiTests(APITestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser(
+            username="rbac_admin",
+            email="rbac_admin@example.com",
+            password="pass1234",
+        )
+        self.member = get_user_model().objects.create_user(
+            username="rbac_member_user",
+            email="rbac_member_user@example.com",
+            password="pass1234",
+        )
+        get_or_create_access_profile(user=self.admin)
+        get_or_create_access_profile(user=self.member)
+
+    def test_admin_users_list_requires_admin_role(self):
+        self.client.force_authenticate(user=self.member)
+        response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error"]["code"], "permission_denied")
+
+    def test_admin_users_list_returns_roles(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_username = {item["username"]: item for item in response.data}
+        self.assertEqual(by_username["rbac_admin"]["role"], SaasAccessProfile.Role.ADMIN)
+        self.assertEqual(by_username["rbac_member_user"]["role"], SaasAccessProfile.Role.MEMBER)
+
+    def test_admin_can_create_user_with_initial_role(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            "/api/admin/users/",
+            {
+                "username": "new_from_admin",
+                "password": "pass12345",
+                "email": "new_from_admin@example.com",
+                "role": SaasAccessProfile.Role.ADMIN,
+                "is_active": True,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created = get_user_model().objects.get(username="new_from_admin")
+        profile = get_or_create_access_profile(user=created)
+        self.assertEqual(profile.role, SaasAccessProfile.Role.ADMIN)
+
+    def test_admin_role_change_emits_audit_log(self):
+        self.client.force_authenticate(user=self.admin)
+        with self.assertLogs("auth.audit", level="INFO") as logs:
+            response = self.client.patch(
+                f"/api/admin/users/{self.member.id}/role/",
+                {"role": SaasAccessProfile.Role.ADMIN},
+                format="json",
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(any('"event": "saas_admin_role_change"' in line for line in logs.output))
+
+    def test_admin_role_change_blocks_last_admin_downgrade(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f"/api/admin/users/{self.admin.id}/role/",
+            {"role": SaasAccessProfile.Role.MEMBER},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+
+    def test_admin_status_change_blocks_last_admin_deactivation(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f"/api/admin/users/{self.admin.id}/status/",
+            {"is_active": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+
+    def test_auth_ops_metrics_requires_admin_role(self):
+        self.client.force_authenticate(user=self.member)
+        denied = self.client.get("/api/auth/ops/metrics/")
+        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(denied.data["error"]["code"], "permission_denied")
+
+        self.client.force_authenticate(user=self.admin)
+        allowed = self.client.get("/api/auth/ops/metrics/")
+        self.assertEqual(allowed.status_code, status.HTTP_200_OK)
+
+
+class SaasPremiumRbacPolicyTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="rbac_policy_user",
+            password="pass1234",
+            email="rbac_policy_user@example.com",
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_memberships_access_blocked_for_invalid_role(self):
+        profile = get_or_create_access_profile(user=self.user)
+        SaasAccessProfile.objects.filter(id=profile.id).update(role="legacy_role")
+
+        response = self.client.get("/api/family-members/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error"]["code"], "permission_denied")
 
 
 class SaasRbacServicesTests(TestCase):

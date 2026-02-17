@@ -11,6 +11,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from memberships.models import SaasCoreAccountLink, SaasSubscription
+from memberships.permissions import IsSaasAdmin
+from memberships.rbac_services import get_or_create_access_profile
 from memberships.subscription_services import get_or_create_subscription
 
 from .auth_serializers import (
@@ -110,10 +112,12 @@ class SaasMeAPIView(APIView):
     def get(self, request):
         link = SaasCoreAccountLink.objects.filter(user=request.user).first()
         subscription = get_or_create_subscription(user=request.user)
+        access_profile = get_or_create_access_profile(user=request.user)
         payload = {
             "id": request.user.id,
             "username": request.user.username,
             "email": request.user.email or "",
+            "role": access_profile.role,
             "subscription_status": subscription.status,
             "premium_enabled": subscription.is_premium_enabled(),
             "account_link": CoreAccountLinkSerializer(link).data if link else None,
@@ -268,7 +272,7 @@ class SaasSubscriptionAPIView(APIView):
 
 
 class SaasAuthOpsMetricsAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsSaasAdmin]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth_ops_metrics"
 

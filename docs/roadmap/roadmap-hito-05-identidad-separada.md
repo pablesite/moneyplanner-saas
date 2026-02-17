@@ -311,7 +311,7 @@ Checklist:
 - Avance: migracion `memberships.0007_saasaccessprofile` crea perfiles y backfill (`staff/superuser -> saas_admin`, resto -> `saas_member`).
 
 #### Fase 5B.2: Endpoints De Administracion SaaS
-Estado: Pendiente.
+Estado: Completado.
 
 Entregables:
 - API de administracion de usuarios/roles/permisos.
@@ -319,10 +319,14 @@ Entregables:
 - Contrato de errores de autorizacion uniforme (`403` con codigo estable).
 
 Checklist:
-- [ ] Exponer endpoints CRUD de usuarios SaaS para admins.
-- [ ] Exponer endpoint de cambio de rol/permisos con auditoria.
-- [ ] Aplicar permisos por accion en vistas premium y operativas.
-- [ ] Versionar y documentar contratos en `docs/architecture/api-contracts.md`.
+- [x] Exponer endpoints CRUD de usuarios SaaS para admins.
+- Avance: endpoints `GET/POST /api/admin/users/` y `PATCH /api/admin/users/{id}/status/` implementados en SaaS.
+- [x] Exponer endpoint de cambio de rol/permisos con auditoria.
+- Avance: endpoint `PATCH /api/admin/users/{id}/role/` implementado con auditoria estructurada (`saas_admin_role_change`).
+- [x] Aplicar permisos por accion en vistas premium y operativas.
+- Avance: endpoints premium validan rol SaaS + suscripcion (`permission_denied`/`subscription_blocked`) y `/api/auth/ops/metrics/` queda restringido a `saas_admin`.
+- [x] Versionar y documentar contratos en `docs/architecture/api-contracts.md`.
+- Avance: contrato RBAC actualizado con rutas administrativas y codigos de error estables.
 
 #### Fase 5B.3: Frontend De Administracion Y UX De Permisos
 Estado: Pendiente.
