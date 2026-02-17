@@ -60,6 +60,17 @@ Referencia:
 - `docs/roadmap/roadmap-hito-05-identidad-separada.md`
 - `docs/roadmap/release-summary-hito-05-identidad-separada.md`
 
+### Hito 05B (en progreso)
+Implementar autorizacion SaaS multirol (RBAC) para distinguir administradores de usuarios finales.
+
+Objetivo:
+1. Definir roles SaaS (`saas_admin`, `saas_member`) y su matriz de permisos.
+2. Habilitar gestion de usuarios/permisos en SaaS sin romper identidad separada con `core`.
+3. Aplicar controles de seguridad, auditoria y pruebas automatizadas de autorizacion.
+
+Referencia:
+- `docs/roadmap/roadmap-hito-05-identidad-separada.md` (seccion `Hito 5B: Autorizacion SaaS Multirol`)
+
 ### Hito 06
 Mejorar modulo Patrimonio (especialmente frontend):
 1. Anadir visualizaciones/graficos con mas informacion util.
@@ -111,12 +122,13 @@ Lineas continuas:
 ## Orden recomendado de ejecucion
 1. Hito 04 (refactor + calidad automatica)
 2. Hito 05 (identidad separada `core`/`saas` + linking opcional)
-3. Hito 06 (mejora de patrimonio frontend)
-4. Hito 07 (produccion v1 para ensenar)
-5. Hito 09 (landing + pagos)
-6. Hito 08 (movil)
-7. Hito 10 (resto de modulos)
-8. Hito 11 (iteracion continua)
+3. Hito 05B (RBAC SaaS multirol)
+4. Hito 06 (mejora de patrimonio frontend)
+5. Hito 07 (produccion v1 para ensenar)
+6. Hito 09 (landing + pagos)
+7. Hito 08 (movil)
+8. Hito 10 (resto de modulos)
+9. Hito 11 (iteracion continua)
 
 ## Criterio de actualizacion
 Actualizar este documento cuando:

@@ -247,3 +247,46 @@ Prefijo: `/api/`
 ### Regla De Acceso Premium (SaaS)
 - Endpoints de `memberships` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links`) solo permiten acceso cuando la suscripcion esta en `trial` o `active`.
 - Estados `past_due` y `canceled` devuelven `403 forbidden`.
+
+## Actualizacion Hito 05B (RBAC SaaS)
+
+### Roles y claims (contrato objetivo)
+1. Roles soportados:
+- `saas_admin`
+- `saas_member`
+2. Claim recomendado en token o contexto de sesion:
+- `role`: uno de los valores anteriores.
+3. Politica por defecto:
+- nuevos usuarios => `saas_member`.
+
+### Reglas de autorizacion
+1. Endpoints de administracion de usuarios/permisos:
+- requieren `saas_admin`.
+2. Endpoints funcionales premium:
+- requieren rol valido (`saas_admin` o `saas_member`) y suscripcion con premium habilitado.
+3. Endpoints operativos de auth (`/api/auth/ops/metrics/`):
+- restringidos a `saas_admin` en la version inicial.
+
+### Codigos de error RBAC (contrato)
+1. `403 permission_denied`:
+- usuario autenticado sin rol/capacidad para la accion.
+2. `403 subscription_blocked`:
+- usuario con rol valido pero suscripcion sin acceso premium.
+3. `401 unauthorized`:
+- token ausente, invalido o expirado.
+
+### Endpoints administrativos previstos (borrador v1)
+Prefijo sugerido: `/api/admin/users/`
+
+1. `GET /api/admin/users/`
+- lista usuarios SaaS y su rol.
+- permiso: `saas_admin`.
+2. `POST /api/admin/users/`
+- alta de usuario SaaS con rol inicial.
+- permiso: `saas_admin`.
+3. `PATCH /api/admin/users/{id}/role/`
+- cambio de rol entre `saas_admin` y `saas_member`.
+- permiso: `saas_admin`.
+4. `PATCH /api/admin/users/{id}/status/`
+- activar/desactivar usuario.
+- permiso: `saas_admin`.

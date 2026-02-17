@@ -20,6 +20,44 @@ Definir la arquitectura funcional por mÃ³dulos de negocio, separada de la arqu
 4. Contratos explÃ­citos: APIs y eventos versionados entre mÃ³dulos.
 5. EvoluciÃ³n incremental: completar mÃ³dulos por etapas con trazabilidad.
 
+## Modelo RBAC SaaS (Hito 5B)
+Objetivo:
+1. Separar la identidad (`quien eres`) de la autorizacion (`que puedes hacer`) dentro de SaaS.
+2. Mantener independencia de identidad entre `core` y `saas`.
+
+Roles canonicos SaaS:
+1. `saas_admin`:
+- Control operativo del SaaS.
+- Gestion de usuarios y permisos.
+- Acceso a endpoints operativos y administrativos.
+2. `saas_member`:
+- Uso funcional del producto segun suscripcion y permisos base.
+- Sin capacidades administrativas de gestion de usuarios.
+
+Politica por defecto:
+1. Todo usuario nuevo entra como `saas_member` (least privilege).
+2. Elevacion a `saas_admin` solo por accion administrativa explicita.
+
+Precedencia de reglas:
+1. Autenticacion valida (JWT SaaS) es requisito previo.
+2. Rol RBAC define si la accion es administrativa o de uso funcional.
+3. Suscripcion define acceso a features premium (`trial|active` permitido).
+4. Linking con `core` no otorga permisos administrativos en SaaS.
+
+Matriz minima de capacidades (v1):
+1. Gestion de usuarios SaaS:
+- `saas_admin`: permitido.
+- `saas_member`: denegado.
+2. Cambio de rol/permisos:
+- `saas_admin`: permitido.
+- `saas_member`: denegado.
+3. Endpoints premium de titularidad (`family-members`, `ownerships`, `ownership-links`):
+- `saas_admin`: permitido si suscripcion habilita premium.
+- `saas_member`: permitido si suscripcion habilita premium.
+4. Metricas operativas de auth:
+- `saas_admin`: permitido.
+- `saas_member`: denegado por defecto (ajustable por politica futura).
+
 ## MÃ³dulo transversal
 ### Plataforma Core
 PropÃ³sito: fundamentos compartidos para todos los mÃ³dulos.

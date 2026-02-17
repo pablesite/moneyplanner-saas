@@ -254,4 +254,117 @@ Frontend SaaS (`frontend`):
 7. Fase 6 (seguridad y observabilidad)
 8. Fase 7 (cierre del hito)
 
+## Hito 5B: Autorizacion SaaS Multirol
+Estado: En progreso.
 
+### Objetivo
+Extender el modelo de identidad separada con autorizacion interna de SaaS para distinguir:
+- `saas_admin`: control total operativo de la plataforma SaaS, incluyendo gestion de usuarios/permisos dentro del SaaS.
+- `saas_member`: acceso funcional al producto segun plan/permisos asignados.
+
+### Alcance
+- Definir RBAC en SaaS sin romper la separacion de identidad `core`/`saas`.
+- Mantener la suscripcion (`trial|active|past_due|canceled`) como capa comercial, separada del rol.
+- Incorporar administracion de usuarios y permisos en API + frontend SaaS.
+
+### No Objetivos
+- No unificar autenticacion de `core` y `saas`.
+- No mover autorizacion premium a `core`.
+- No introducir dependencias obligatorias de SSO.
+
+### Fases
+
+#### Fase 5B.0: Modelo De Roles Y Matriz De Permisos
+Estado: Completado.
+
+Entregables:
+- Definicion canonica de roles SaaS y capacidades.
+- Matriz accion->permiso (backend + frontend).
+- Reglas de precedencia entre rol, estado de suscripcion y linking.
+
+Checklist:
+- [x] Definir roles iniciales: `saas_admin`, `saas_member`.
+- Avance: modelo canonico de dos roles documentado en arquitectura funcional.
+- [x] Definir permisos minimos por dominio (auth, miembros, ownership, ops, billing).
+- Avance: matriz minima v1 publicada con separacion entre gestion administrativa y uso funcional.
+- [x] Definir politica por defecto para nuevos usuarios (least privilege).
+- Avance: politica de alta inicial definida como `saas_member` por defecto.
+- [x] Documentar matriz en `docs/architecture/product-architecture.md` y `docs/architecture/api-contracts.md`.
+- Avance: contrato RBAC añadido con reglas, codigos de error y borrador de endpoints administrativos.
+
+#### Fase 5B.1: Dominio De Autorizacion En Backend SaaS
+Estado: Pendiente.
+
+Entregables:
+- Modelo persistente de rol/permisos por usuario SaaS.
+- Servicios transaccionales para asignacion/revocacion.
+- Migraciones y seed idempotente con usuario admin inicial.
+
+Checklist:
+- [ ] Crear modelo(s) de rol/permisos (o integracion formal con `groups/permissions` de Django).
+- [ ] Implementar servicios de negocio para alta/baja/cambio de rol.
+- [ ] Asegurar constraints de integridad (al menos un `saas_admin` activo).
+- [ ] Agregar migraciones + plan de backfill para usuarios existentes.
+
+#### Fase 5B.2: Endpoints De Administracion SaaS
+Estado: Pendiente.
+
+Entregables:
+- API de administracion de usuarios/roles/permisos.
+- Endpoints protegidos por permisos finos (no solo `IsAuthenticated`).
+- Contrato de errores de autorizacion uniforme (`403` con codigo estable).
+
+Checklist:
+- [ ] Exponer endpoints CRUD de usuarios SaaS para admins.
+- [ ] Exponer endpoint de cambio de rol/permisos con auditoria.
+- [ ] Aplicar permisos por accion en vistas premium y operativas.
+- [ ] Versionar y documentar contratos en `docs/architecture/api-contracts.md`.
+
+#### Fase 5B.3: Frontend De Administracion Y UX De Permisos
+Estado: Pendiente.
+
+Entregables:
+- Vista de administracion de usuarios en `frontend`.
+- Guardas de ruta y UI condicional por rol/capacidad.
+- Mensajeria clara para denegaciones por rol vs por suscripcion.
+
+Checklist:
+- [ ] Implementar pantalla de usuarios SaaS (listar, crear, editar rol, desactivar).
+- [ ] Adaptar navegacion por capacidades visibles para cada rol.
+- [ ] Diferenciar errores de negocio: `subscription_blocked` vs `permission_denied`.
+- [ ] Añadir tests de componentes/composables para escenarios RBAC.
+
+#### Fase 5B.4: Seguridad, Auditoria Y Operacion
+Estado: Pendiente.
+
+Entregables:
+- Auditoria estructurada de eventos administrativos.
+- Hardening para acciones sensibles (rate-limit, confirmacion explicita).
+- Runbook de soporte para incidencias RBAC.
+
+Checklist:
+- [ ] Auditar eventos: alta usuario, cambio rol, bloqueo/desbloqueo, borrado.
+- [ ] Aplicar throttling dedicado para endpoints de administracion.
+- [ ] Incluir consultas operativas RBAC en `/api/auth/ops/metrics/` o endpoint complementario.
+- [ ] Actualizar `docs/operations/runbook.md` con troubleshooting RBAC.
+
+#### Fase 5B.5: Validacion, Cierre Y Release Summary
+Estado: Pendiente.
+
+Entregables:
+- Suite de tests RBAC completa.
+- Evidencias de validacion en contenedores.
+- Resumen de release del Hito 5B.
+
+Checklist:
+- [ ] Tests backend: permitido/denegado por rol y por estado de suscripcion.
+- [ ] Tests frontend: guardas de ruta y visibilidad de acciones por rol.
+- [ ] Ejecutar calidad completa (`ruff`, `mypy`, `lint`, `typecheck`) en contenedores.
+- [ ] Publicar `docs/roadmap/release-summary-hito-05b-rbac-saas.md`.
+
+### Definition Of Done (Hito 5B)
+- [ ] Existe RBAC SaaS documentado y aplicado en backend/frontend.
+- [ ] Las acciones administrativas quedan restringidas a `saas_admin`.
+- [ ] Se mantiene la separacion entre autenticacion (`quien eres`) y autorizacion (`que puedes hacer`).
+- [ ] Se preserva la separacion de identidad `core`/`saas` sin regresiones.
+- [ ] Hay auditoria, runbook y pruebas automatizadas de permisos.
