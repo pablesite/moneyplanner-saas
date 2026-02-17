@@ -170,10 +170,13 @@ Entregables:
 - Alertas de incidentes de autenticacion y abuso.
 
 Checklist:
-- [ ] Rate limiting en login/registro/recovery/linking.
-- [ ] Auditoria de eventos sensibles (login fail, link fail, unlink).
+- [x] Rate limiting en login/registro/recovery/linking.
+- Avance: throttle por scope aplicado en `saas` y `core` para endpoints de auth y APIs premium sensibles.
+- [x] Auditoria de eventos sensibles (login fail, link fail, unlink).
+- Avance: logger estructurado `auth.audit` en `saas` (login fail, link fail, unlink) y en login de `core`.
 - [ ] Dashboards con metricas separadas de `core` y `saas`.
-- [ ] Actualizar runbook de soporte y troubleshooting.
+- [x] Actualizar runbook de soporte y troubleshooting.
+- Avance: `docs/operations/runbook.md` incluye playbook de `429` y chequeo operativo de `auth.audit`.
 
 ### Fase 7: Cierre Del Hito Y Formalizacion
 Estado: pendiente.

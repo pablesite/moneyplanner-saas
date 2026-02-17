@@ -31,6 +31,7 @@ class UserScopedQuerySetMixin:
 class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
     serializer_class = FamilyMemberSerializer
     permission_classes = [IsAuthenticated, HasPremiumAccess]
+    throttle_scope = "premium_api"
     queryset = FamilyMember.objects.all()
 
     def perform_create(self, serializer):
@@ -48,6 +49,7 @@ class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
 class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, HasPremiumAccess]
+    throttle_scope = "premium_api"
     queryset = Ownership.objects.all()
 
     def get_queryset(self):
@@ -76,6 +78,7 @@ class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
 class OwnershipLinkViewSet(UserScopedQuerySetMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, HasPremiumAccess]
+    throttle_scope = "premium_api"
     queryset = OwnershipLink.objects.all()
 
     def list(self, request):

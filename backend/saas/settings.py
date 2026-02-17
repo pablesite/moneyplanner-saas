@@ -98,6 +98,16 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
+    "DEFAULT_THROTTLE_RATES": {
+        "auth_login": os.getenv("THROTTLE_AUTH_LOGIN", "20/min"),
+        "auth_refresh": os.getenv("THROTTLE_AUTH_REFRESH", "60/min"),
+        "auth_register": os.getenv("THROTTLE_AUTH_REGISTER", "10/min"),
+        "auth_me": os.getenv("THROTTLE_AUTH_ME", "120/min"),
+        "auth_core_link": os.getenv("THROTTLE_AUTH_CORE_LINK", "20/min"),
+        "auth_subscription": os.getenv("THROTTLE_AUTH_SUBSCRIPTION", "60/min"),
+        "premium_api": os.getenv("THROTTLE_PREMIUM_API", "240/min"),
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "saas.exceptions.custom_exception_handler",
 }

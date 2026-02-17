@@ -6,6 +6,7 @@ from django.test.utils import override_settings
 from rest_framework import status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
+from saas.auth_views import SaasTokenObtainPairView
 
 from .models import (
     FamilyMember,
@@ -516,3 +517,56 @@ class SaasPremiumAccessPolicyTests(APITestCase):
         SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.ACTIVE)
         response = self.client.get("/api/family-members/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class SaasAuthAuditAndThrottleTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="audit_user",
+            password="pass1234",
+            email="audit@example.com",
+        )
+
+    def test_login_failure_emits_audit_log(self):
+        with self.assertLogs("auth.audit", level="INFO") as logs:
+            response = self.client.post(
+                "/api/auth/token/",
+                {"username": self.user.username, "password": "invalid-pass"},
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(any('"event": "login"' in line for line in logs.output))
+        self.assertTrue(any('"outcome": "failed"' in line for line in logs.output))
+
+    @override_settings(ACCOUNT_LINKING_ENABLED=True)
+    def test_link_failure_emits_audit_log(self):
+        other = get_user_model().objects.create_user(username="other_u", password="pass1234")
+        SaasCoreAccountLink.objects.create(user=other, core_user_ref="core-taken")
+        self.client.force_authenticate(user=self.user)
+
+        with self.assertLogs("auth.audit", level="INFO") as logs:
+            response = self.client.post(
+                "/api/auth/core-link/",
+                {"core_user_ref": "core-taken"},
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(any('"event": "core_account_link"' in line for line in logs.output))
+        self.assertTrue(any('"outcome": "failed"' in line for line in logs.output))
+
+    @override_settings(ACCOUNT_LINKING_ENABLED=True)
+    def test_unlink_emits_audit_log(self):
+        self.client.force_authenticate(user=self.user)
+        SaasCoreAccountLink.objects.create(user=self.user, core_user_ref="core-111")
+
+        with self.assertLogs("auth.audit", level="INFO") as logs:
+            response = self.client.delete("/api/auth/core-link/")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(any('"event": "core_account_unlink"' in line for line in logs.output))
+        self.assertTrue(any('"outcome": "success"' in line for line in logs.output))
+
+    def test_login_endpoint_declares_auth_login_throttle_scope(self):
+        self.assertEqual(SaasTokenObtainPairView.throttle_scope, "auth_login")

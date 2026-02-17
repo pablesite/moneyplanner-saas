@@ -159,6 +159,41 @@ Diagnóstico/acción:
 - `docker compose logs --tail 100 frontend`
 3. Hard refresh del navegador (`Ctrl+F5`).
 
+### 5) Bloqueos de autenticación por rate limit (`429`)
+Síntoma:
+- Login/register/refresh/core-link devuelven `429 Too Many Requests`.
+
+Diagnóstico:
+1. Revisar logs backend:
+- `docker compose logs --tail 200 saas_backend`
+- `cd core`
+- `docker compose logs --tail 200 backend`
+2. Verificar scopes de throttle configurados:
+- `THROTTLE_AUTH_LOGIN`
+- `THROTTLE_AUTH_REFRESH`
+- `THROTTLE_AUTH_REGISTER`
+- `THROTTLE_AUTH_CORE_LINK`
+- `THROTTLE_PREMIUM_API`
+
+Acción:
+1. Ajustar temporalmente límites en `.env` para entorno local.
+2. Recrear backend afectado:
+- `docker compose up -d --force-recreate saas_backend`
+- `cd core`
+- `docker compose up -d --force-recreate backend`
+3. Confirmar que desaparece el `429` en el flujo objetivo.
+
+### 6) Auditoría de eventos auth/linking
+Eventos auditados (logger `auth.audit`):
+1. `login` (`success|failed`)
+2. `core_account_link` (`success|failed`)
+3. `core_account_unlink` (`success`)
+
+Revisión rápida:
+1. `docker compose logs --tail 200 saas_backend | findstr auth.audit`
+2. `cd core`
+3. `docker compose logs --tail 200 backend | findstr auth.audit`
+
 ## Apagado
 1. Detener `saas`:
 - `cd ..`

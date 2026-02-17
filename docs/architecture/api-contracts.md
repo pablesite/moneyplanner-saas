@@ -6,7 +6,10 @@ Consolidar el contrato actual de endpoints backend para reducir ambigüedad entr
 ## Convenciones Comunes
 1. Autenticación:
 - Endpoints protegidos requieren `Authorization: Bearer <token>`.
-2. Formato de error normalizado:
+2. Rate limiting:
+- Endpoints de autenticación y linking aplican throttle por scope.
+- Si se excede el límite: `429 Too Many Requests`.
+3. Formato de error normalizado:
 ```json
 {
   "error": {
@@ -18,7 +21,7 @@ Consolidar el contrato actual de endpoints backend para reducir ambigüedad entr
   }
 }
 ```
-3. Códigos `error.code` más frecuentes:
+4. Códigos `error.code` más frecuentes:
 - `validation_error`, `unauthorized`, `forbidden`, `not_found`, `server_error`, `api_error`.
 
 ## Core API

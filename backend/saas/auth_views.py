@@ -4,6 +4,7 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -18,18 +19,44 @@ from .auth_serializers import (
     SaasSubscriptionSerializer,
 )
 from .auth_services import create_saas_user, unlink_core_account, upsert_core_account_link
+from .auth_audit import log_auth_event
 
 
 class SaasTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_login"
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username", "")
+        try:
+            response = super().post(request, *args, **kwargs)
+        except Exception:
+            log_auth_event(event="login", outcome="failed", username=username, status_code=401)
+            raise
+
+        if response.status_code < 400:
+            log_auth_event(event="login", outcome="success", username=username)
+        else:
+            log_auth_event(
+                event="login",
+                outcome="failed",
+                username=username,
+                status_code=response.status_code,
+            )
+        return response
 
 
 class SaasTokenRefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_refresh"
 
 
 class SaasRegisterAPIView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_register"
 
     def post(self, request):
         serializer = SaasRegisterSerializer(data=request.data)
@@ -58,6 +85,8 @@ class SaasAuthModeAPIView(APIView):
 
 class SaasMeAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_me"
 
     def get(self, request):
         link = SaasCoreAccountLink.objects.filter(user=request.user).first()
@@ -76,6 +105,8 @@ class SaasMeAPIView(APIView):
 
 class SaasCoreAccountLinkAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_core_link"
 
     def _assert_enabled(self):
         if not getattr(settings, "ACCOUNT_LINKING_ENABLED", False):
@@ -108,7 +139,23 @@ class SaasCoreAccountLinkAPIView(APIView):
 
         serializer = CoreAccountLinkWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        link = upsert_core_account_link(user=request.user, **serializer.validated_data)
+        try:
+            link = upsert_core_account_link(user=request.user, **serializer.validated_data)
+        except Exception:
+            log_auth_event(
+                event="core_account_link",
+                outcome="failed",
+                user_id=request.user.id,
+                core_user_ref=serializer.validated_data.get("core_user_ref"),
+            )
+            raise
+
+        log_auth_event(
+            event="core_account_link",
+            outcome="success",
+            user_id=request.user.id,
+            core_user_ref=link.core_user_ref,
+        )
         return Response(CoreAccountLinkSerializer(link).data, status=status.HTTP_200_OK)
 
     def delete(self, request):
@@ -116,12 +163,21 @@ class SaasCoreAccountLinkAPIView(APIView):
         if disabled is not None:
             return disabled
 
+        had_link = SaasCoreAccountLink.objects.filter(user=request.user).exists()
         unlink_core_account(user=request.user)
+        log_auth_event(
+            event="core_account_unlink",
+            outcome="success",
+            user_id=request.user.id,
+            had_link=had_link,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SaasSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_subscription"
 
     def get(self, request):
         subscription = get_or_create_subscription(user=request.user)
