@@ -28,6 +28,11 @@ Consolidar el contrato actual de endpoints backend para reducir ambigüedad entr
 ## Core API
 Base local habitual: `http://localhost:8000`.
 
+Regla de autenticacion (actualizacion Hito 05B):
+- `core` acepta JWT emitidos por `core` (issuer `moneyplanner-core`) y JWT emitidos por `saas` (issuer `moneyplanner-saas`) cuando `AUTH_ACCEPT_SAAS_TOKENS=1`.
+- Para JWT de `saas`, `core` resuelve identidad local mediante mapeo `ExternalIdentity(provider=saas, external_user_id=user_id)` y autoprovisiona usuario local si no existe.
+- No se reutiliza `user_id` de SaaS como PK de usuario en `core`.
+
 ### Auth y settings
 Prefijo: `/api/auth/`
 

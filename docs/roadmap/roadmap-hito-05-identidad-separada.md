@@ -254,23 +254,26 @@ Frontend SaaS (`frontend`):
 7. Fase 6 (seguridad y observabilidad)
 8. Fase 7 (cierre del hito)
 
-## Hito 5B: Autorizacion SaaS Multirol
+## Hito 5B: Autorizacion SaaS Multirol + Acceso Cross-Stack
 Estado: En progreso.
 
 ### Objetivo
 Extender el modelo de identidad separada con autorizacion interna de SaaS para distinguir:
 - `saas_admin`: control total operativo de la plataforma SaaS, incluyendo gestion de usuarios/permisos dentro del SaaS.
 - `saas_member`: acceso funcional al producto segun plan/permisos asignados.
+- Habilitar que usuarios autenticados en SaaS puedan consumir funcionalidades de `core` sin login duplicado, manteniendo almacenamiento de identidad separado.
 
 ### Alcance
 - Definir RBAC en SaaS sin romper la separacion de identidad `core`/`saas`.
 - Mantener la suscripcion (`trial|active|past_due|canceled`) como capa comercial, separada del rol.
 - Incorporar administracion de usuarios y permisos en API + frontend SaaS.
+- Permitir autenticacion delegada de tokens SaaS sobre API de `core` con mapeo seguro a usuarios locales de `core`.
 
 ### No Objetivos
 - No unificar autenticacion de `core` y `saas`.
 - No mover autorizacion premium a `core`.
-- No introducir dependencias obligatorias de SSO.
+- No introducir dependencias obligatorias de SSO centralizado.
+- No acoplar tablas de usuarios por FK cruzadas entre bases `core` y `saas`.
 
 ### Fases
 
@@ -346,6 +349,24 @@ Checklist:
 - [x] Añadir tests de componentes/composables para escenarios RBAC.
 - Avance: tests unitarios de `AdminUsersView` y ajustes en tests de `AccountView`.
 
+#### Fase 5B.3B: Interoperabilidad Auth SaaS -> Core
+Estado: Completado.
+
+Entregables:
+- Validacion de JWT emitidos por SaaS en API `core`.
+- Mapeo seguro de identidad externa SaaS a usuario local `core`.
+- Sin escalacion de privilegios por colision de `user_id` entre stacks.
+
+Checklist:
+- [x] Aceptar issuer/audience de SaaS en autenticacion de `core`.
+- Avance: `core` incorpora autenticador multi-issuer con flags `AUTH_ACCEPT_SAAS_TOKENS` + parametros `SAAS_JWT_*`.
+- [x] Evitar reutilizar `user_id` directo de SaaS como PK de usuario `core`.
+- Avance: `core` crea `accounts.ExternalIdentity` (provider + external_user_id) y resuelve usuario local por mapeo.
+- [x] Autoprovisionar usuario local de `core` al primer acceso con token SaaS.
+- Avance: se crea usuario `saas_user_<external_id>` y `UserSettings` local en `core`.
+- [x] Cubrir con tests de no-escalacion y acceso real.
+- Avance: tests API en `core/backend/accounts/tests.py` para acceso con token SaaS y colision de ids.
+
 #### Fase 5B.4: Seguridad, Auditoria Y Operacion
 Estado: Pendiente.
 
@@ -379,4 +400,5 @@ Checklist:
 - [ ] Las acciones administrativas quedan restringidas a `saas_admin`.
 - [ ] Se mantiene la separacion entre autenticacion (`quien eres`) y autorizacion (`que puedes hacer`).
 - [ ] Se preserva la separacion de identidad `core`/`saas` sin regresiones.
+- [ ] Usuarios SaaS pueden operar endpoints de `core` via autenticacion delegada, sin login duplicado.
 - [ ] Hay auditoria, runbook y pruebas automatizadas de permisos.
