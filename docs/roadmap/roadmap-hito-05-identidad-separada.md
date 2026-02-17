@@ -388,7 +388,7 @@ Checklist:
 - Avance: nueva seccion operativa `Troubleshooting RBAC SaaS (Hito 05B)` en runbook.
 
 #### Fase 5B.5: Validacion, Cierre Y Release Summary
-Estado: Pendiente.
+Estado: Completado.
 
 Entregables:
 - Suite de tests RBAC completa.
@@ -396,15 +396,19 @@ Entregables:
 - Resumen de release del Hito 5B.
 
 Checklist:
-- [ ] Tests backend: permitido/denegado por rol y por estado de suscripcion.
-- [ ] Tests frontend: guardas de ruta y visibilidad de acciones por rol.
-- [ ] Ejecutar calidad completa (`ruff`, `mypy`, `lint`, `typecheck`) en contenedores.
-- [ ] Publicar `docs/roadmap/release-summary-hito-05b-rbac-saas.md`.
+- [x] Tests backend: permitido/denegado por rol y por estado de suscripcion.
+- Avance: suite `backend/memberships/tests.py` cubre acceso admin, denegaciones por rol, denegaciones por suscripcion, auditoria de acciones admin y onboarding `saas_member` con miembro primario.
+- [x] Tests frontend: guardas de ruta y visibilidad de acciones por rol.
+- Avance: tests frontend de RBAC para `AccountView`, `AdminUsersView` y guard de rutas (`frontend/src/domains/auth/__tests__/guard.spec.ts`).
+- [x] Ejecutar calidad completa (`ruff`, `mypy`, `lint`, `typecheck`) en contenedores.
+- Avance: matriz completa ejecutada en `core` y `saas`; se registran deudas de baseline fuera del alcance del hito (lint/format en archivos legacy de frontend y formateo historico en backend).
+- [x] Publicar `docs/roadmap/release-summary-hito-05b-rbac-saas.md`.
+- Avance: release summary 5B publicado con alcance, validaciones y riesgos residuales.
 
 ### Definition Of Done (Hito 5B)
-- [ ] Existe RBAC SaaS documentado y aplicado en backend/frontend.
-- [ ] Las acciones administrativas quedan restringidas a `saas_admin`.
-- [ ] Se mantiene la separacion entre autenticacion (`quien eres`) y autorizacion (`que puedes hacer`).
-- [ ] Se preserva la separacion de identidad `core`/`saas` sin regresiones.
-- [ ] Usuarios SaaS pueden operar endpoints de `core` via autenticacion delegada, sin login duplicado.
-- [ ] Hay auditoria, runbook y pruebas automatizadas de permisos.
+- [x] Existe RBAC SaaS documentado y aplicado en backend/frontend.
+- [x] Las acciones administrativas quedan restringidas a `saas_admin`.
+- [x] Se mantiene la separacion entre autenticacion (`quien eres`) y autorizacion (`que puedes hacer`).
+- [x] Se preserva la separacion de identidad `core`/`saas` sin regresiones.
+- [x] Usuarios SaaS pueden operar endpoints de `core` via autenticacion delegada, sin login duplicado.
+- [x] Hay auditoria, runbook y pruebas automatizadas de permisos.
