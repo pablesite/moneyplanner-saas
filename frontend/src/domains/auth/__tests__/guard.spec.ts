@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Router } from 'vue-router';
 
 type GuardFn = (to: { path: string; meta: Record<string, unknown> }) => Promise<unknown>;
 
@@ -7,7 +8,7 @@ let mockGetSaasMe: ReturnType<typeof vi.fn>;
 let mockGetAccessToken: ReturnType<typeof vi.fn>;
 let mockClearAuthTokens: ReturnType<typeof vi.fn>;
 
-async function setupGuard() {
+async function setupGuard(): Promise<GuardFn> {
   vi.resetModules();
 
   mockValidateSession = vi.fn();
@@ -36,7 +37,7 @@ async function setupGuard() {
       guard = fn;
     },
   };
-  registerAuthGuard(router as never);
+  registerAuthGuard(router as unknown as Router);
 
   if (!guard) throw new Error('Guard not registered');
   return guard;

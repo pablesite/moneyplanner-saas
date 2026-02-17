@@ -19,7 +19,9 @@ class CoreAccountLinkSerializer(serializers.ModelSerializer):
 
 class CoreAccountLinkWriteSerializer(serializers.Serializer):
     core_user_ref = serializers.CharField(max_length=128)
-    core_username = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
+    core_username = serializers.CharField(
+        max_length=150, required=False, allow_blank=True, default=""
+    )
     core_email = serializers.EmailField(required=False, allow_blank=True, default="")
 
 

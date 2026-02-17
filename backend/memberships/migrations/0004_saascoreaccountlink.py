@@ -38,7 +38,11 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "indexes": [models.Index(fields=["user", "is_active"], name="memberships_user_id_0ded26_idx")],
+                "indexes": [
+                    models.Index(
+                        fields=["user", "is_active"], name="memberships_user_id_0ded26_idx"
+                    )
+                ],
             },
         ),
     ]
