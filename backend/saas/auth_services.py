@@ -5,6 +5,7 @@ from django.core import signing
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from memberships.models import SaasConsumedCoreLinkToken, SaasCoreAccountLink
+from memberships.rbac_services import get_or_create_access_profile
 from memberships.subscription_services import get_or_create_subscription
 
 
@@ -16,6 +17,7 @@ def create_saas_user(*, username: str, password: str, email: str) -> object:
         raise DRFValidationError({"email": "Este email ya esta en uso."})
     user = user_model.objects.create_user(username=username, password=password, email=email)
     get_or_create_subscription(user=user)
+    get_or_create_access_profile(user=user)
     return user
 
 
@@ -27,9 +29,7 @@ def upsert_core_account_link(
     core_email: str = "",
 ) -> SaasCoreAccountLink:
     existing = (
-        SaasCoreAccountLink.objects.filter(core_user_ref=core_user_ref)
-        .exclude(user=user)
-        .exists()
+        SaasCoreAccountLink.objects.filter(core_user_ref=core_user_ref).exclude(user=user).exists()
     )
     if existing:
         raise DRFValidationError({"core_user_ref": "Este usuario core ya esta vinculado."})
@@ -67,7 +67,9 @@ def link_core_account_from_token(
     except signing.SignatureExpired as err:
         raise DRFValidationError({"link_token": "Token de vinculacion expirado."}) from err
     except signing.BadSignature as err:
-        raise DRFValidationError({"link_token": "Token de vinculacion invalido o expirado."}) from err
+        raise DRFValidationError(
+            {"link_token": "Token de vinculacion invalido o expirado."}
+        ) from err
 
     jti = str(payload.get("jti", "")).strip()
     core_user_ref = str(payload.get("core_user_ref", "")).strip()

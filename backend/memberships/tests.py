@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.core import signing
+from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
 from rest_framework import status
@@ -15,9 +16,11 @@ from .models import (
     Ownership,
     OwnershipLink,
     OwnershipSplit,
+    SaasAccessProfile,
     SaasCoreAccountLink,
     SaasSubscription,
 )
+from .rbac_services import assign_role, get_or_create_access_profile
 from .services import sync_ownership_link, validate_ownership_payload
 
 
@@ -696,3 +699,53 @@ class SaasAuthAuditAndThrottleTests(APITestCase):
 
     def test_login_endpoint_declares_auth_login_throttle_scope(self):
         self.assertEqual(SaasTokenObtainPairView.throttle_scope, "auth_login")
+
+
+class SaasRbacServicesTests(TestCase):
+    def test_get_or_create_access_profile_defaults_member(self):
+        user = get_user_model().objects.create_user(username="rbac_member", password="pass1234")
+        profile = get_or_create_access_profile(user=user)
+        self.assertEqual(profile.role, SaasAccessProfile.Role.MEMBER)
+
+    def test_get_or_create_access_profile_defaults_admin_for_superuser(self):
+        user = get_user_model().objects.create_superuser(
+            username="rbac_super",
+            email="rbac_super@example.com",
+            password="pass1234",
+        )
+        profile = get_or_create_access_profile(user=user)
+        self.assertEqual(profile.role, SaasAccessProfile.Role.ADMIN)
+
+    def test_assign_role_blocks_downgrade_of_last_active_admin(self):
+        admin = get_user_model().objects.create_superuser(
+            username="only_admin",
+            email="only_admin@example.com",
+            password="pass1234",
+        )
+        get_or_create_access_profile(user=admin)
+
+        with self.assertRaises(DRFValidationError):
+            assign_role(user=admin, role=SaasAccessProfile.Role.MEMBER)
+
+    def test_assign_role_allows_downgrade_when_other_admin_exists(self):
+        first = get_user_model().objects.create_superuser(
+            username="first_admin",
+            email="first_admin@example.com",
+            password="pass1234",
+        )
+        second = get_user_model().objects.create_superuser(
+            username="second_admin",
+            email="second_admin@example.com",
+            password="pass1234",
+        )
+        get_or_create_access_profile(user=first)
+        get_or_create_access_profile(user=second)
+
+        updated = assign_role(user=first, role=SaasAccessProfile.Role.MEMBER)
+        self.assertEqual(updated.role, SaasAccessProfile.Role.MEMBER)
+
+    def test_seed_ensures_admin_has_admin_role(self):
+        call_command("seed")
+        admin = get_user_model().objects.get(username="admin")
+        profile = get_or_create_access_profile(user=admin)
+        self.assertEqual(profile.role, SaasAccessProfile.Role.ADMIN)

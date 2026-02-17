@@ -177,3 +177,24 @@ class SaasConsumedCoreLinkToken(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=["user", "consumed_at"])]
+
+
+class SaasAccessProfile(models.Model):
+    class Role(models.TextChoices):
+        ADMIN = "saas_admin", "SaaS Admin"
+        MEMBER = "saas_member", "SaaS Member"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saas_access_profile",
+    )
+    role = models.CharField(max_length=16, choices=Role.choices, default=Role.MEMBER)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["role"])]
+
+    def is_admin(self) -> bool:
+        return self.role == self.Role.ADMIN

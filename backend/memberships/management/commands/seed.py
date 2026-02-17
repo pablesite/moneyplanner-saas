@@ -3,6 +3,9 @@ import os
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
+from memberships.models import SaasAccessProfile
+from memberships.rbac_services import assign_role, get_or_create_access_profile
+
 
 def env_flag(name: str, default: str = "0") -> bool:
     return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
@@ -55,6 +58,9 @@ class Command(BaseCommand):
 
         if changed:
             user.save()
+
+        get_or_create_access_profile(user=user)
+        assign_role(user=user, role=SaasAccessProfile.Role.ADMIN)
 
         if created:
             self.stdout.write(f"Admin user created: {username}")

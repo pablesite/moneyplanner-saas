@@ -293,7 +293,7 @@ Checklist:
 - Avance: contrato RBAC añadido con reglas, codigos de error y borrador de endpoints administrativos.
 
 #### Fase 5B.1: Dominio De Autorizacion En Backend SaaS
-Estado: Pendiente.
+Estado: Completado.
 
 Entregables:
 - Modelo persistente de rol/permisos por usuario SaaS.
@@ -301,10 +301,14 @@ Entregables:
 - Migraciones y seed idempotente con usuario admin inicial.
 
 Checklist:
-- [ ] Crear modelo(s) de rol/permisos (o integracion formal con `groups/permissions` de Django).
-- [ ] Implementar servicios de negocio para alta/baja/cambio de rol.
-- [ ] Asegurar constraints de integridad (al menos un `saas_admin` activo).
-- [ ] Agregar migraciones + plan de backfill para usuarios existentes.
+- [x] Crear modelo(s) de rol/permisos (o integracion formal con `groups/permissions` de Django).
+- Avance: nuevo modelo `SaasAccessProfile` (`OneToOne` con usuario SaaS) con roles `saas_admin|saas_member`.
+- [x] Implementar servicios de negocio para alta/baja/cambio de rol.
+- Avance: servicios RBAC añadidos (`get_or_create_access_profile`, `assign_role`, `has_admin_role`).
+- [x] Asegurar constraints de integridad (al menos un `saas_admin` activo).
+- Avance: guardia de dominio activa para impedir degradar al ultimo `saas_admin` activo.
+- [x] Agregar migraciones + plan de backfill para usuarios existentes.
+- Avance: migracion `memberships.0007_saasaccessprofile` crea perfiles y backfill (`staff/superuser -> saas_admin`, resto -> `saas_member`).
 
 #### Fase 5B.2: Endpoints De Administracion SaaS
 Estado: Pendiente.
