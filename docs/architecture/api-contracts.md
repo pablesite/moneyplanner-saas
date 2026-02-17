@@ -133,3 +133,39 @@ Prefijo: `/api/`
 - `core/backend/net_worth`
 - `backend/memberships`
 3. No se introdujeron cambios rompientes de rutas en endpoints ya publicados.
+
+## Actualizacion Hito 05 (Identidad Separada)
+
+### Core API (`/api/auth/`)
+5. `GET /api/auth/mode/`
+- Output:
+```json
+{
+  "auth_mode": "core_local",
+  "auth_mode_enabled": true,
+  "standalone": true
+}
+```
+
+### SaaS API (`/api/auth/`)
+3. `POST /api/auth/register/`
+- Input: `username`, `password`, `email` (opcional).
+- Output: usuario creado (`id`, `username`, `email`).
+
+4. `GET /api/auth/me/`
+- Output: usuario autenticado y `account_link` (si existe).
+
+5. `GET /api/auth/mode/`
+- Output:
+```json
+{
+  "auth_mode": "saas_local",
+  "auth_mode_enabled": true,
+  "account_linking_enabled": false
+}
+```
+
+6. `GET/POST/DELETE /api/auth/core-link/`
+- Requiere `ACCOUNT_LINKING_ENABLED=true`.
+- `POST` crea o actualiza enlace opcional con cuenta `core`.
+- `DELETE` elimina el enlace sin afectar login local de `saas`.

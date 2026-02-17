@@ -112,3 +112,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+# Roadmap 03 flags: auth autonomy + optional account linking.
+AUTH_MODE_SAAS_LOCAL = env_bool("AUTH_MODE_SAAS_LOCAL", "1")
+ACCOUNT_LINKING_ENABLED = env_bool("ACCOUNT_LINKING_ENABLED", "0")

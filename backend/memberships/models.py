@@ -123,4 +123,21 @@ class OwnershipLink(models.Model):
         )
 
 
-# Create your models here.
+class SaasCoreAccountLink(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="core_account_link",
+    )
+    core_user_ref = models.CharField(max_length=128, unique=True)
+    core_username = models.CharField(max_length=150, blank=True, default="")
+    core_email = models.EmailField(blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    linked_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "is_active"])]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} -> core:{self.core_user_ref}"

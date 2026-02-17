@@ -1,21 +1,21 @@
 # Roadmap Global Del Producto
 
 ## Objetivo
-Mantener una visión de alto nivel de los hitos del producto, desde lo ya completado hasta lo que sigue.
+Mantener una vision de alto nivel de los hitos del producto, desde lo ya completado hasta lo que sigue.
 
 ## Estado global
-- Proyecto en transición de fase de base técnica hacia fase de crecimiento de producto y salida a producción.
+- Proyecto en transicion de fase de base tecnica hacia fase de crecimiento de producto y salida a produccion.
 
-## Línea temporal de hitos
+## Linea temporal de hitos
 
 ### Hito 01 (completado)
-Lanzar el primer repositorio y construir el módulo de Patrimonio base.
+Lanzar el primer repositorio y construir el modulo de Patrimonio base.
 
 Resultado:
-- Primera versión funcional de patrimonio (activos, pasivos, resumen, snapshots).
+- Primera version funcional de patrimonio (activos, pasivos, resumen, snapshots).
 
 ### Hito 02 (completado)
-Separar en dos repositorios/líneas: `core` (OSS) y `saas` (privado premium).
+Separar en dos repositorios/lineas: `core` (OSS) y `saas` (privado premium).
 
 Resultado:
 - Frontera `core`/`saas` definida y aplicada en dominio de titularidad premium.
@@ -28,7 +28,7 @@ Referencias:
 Mejorar el flujo de trabajo del proyecto con Codex.
 
 Resultado:
-- Documentación base de operación y colaboración.
+- Documentacion base de operacion y colaboracion.
 - Plantillas y scripts para acelerar sesiones.
 
 Referencias:
@@ -39,28 +39,32 @@ Referencias:
 - `docs/standards/glossary.md`
 - `scripts/dev.ps1`
 
-## Próximos hitos (alto nivel)
+## Proximos hitos (alto nivel)
 
 ### Hito 04 (siguiente)
-Ejecutar Roadmap 02: refactorización y añadir tests + linters.
+Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 
 Referencia:
 - `docs/roadmap/roadmap-02-release.md`
 
 ### Hito 05
-Diseñar identidad centralizada: `core` como IdP para usuario único real.
+Disenar identidad separada para `core` OSS y `saas` premium.
 
 Objetivo:
-1. Definir modelo de autenticación unificado `core` + `saas`.
-2. Planificar migración gradual sin romper flujo actual.
+1. Mantener `core` 100% usable de forma standalone desde GitHub.
+2. Mantener auth propia en `saas` para usuarios de suscripcion premium.
+3. Definir vinculacion opcional de cuentas `core` <-> `saas` sin dependencia obligatoria.
+
+Referencia:
+- `docs/roadmap/roadmap-03-core-Idp.md`
 
 ### Hito 06
-Mejorar módulo Patrimonio (especialmente frontend):
-1. Añadir visualizaciones/gráficos con más información útil.
-2. Mejorar UX de análisis de evolución y composición.
+Mejorar modulo Patrimonio (especialmente frontend):
+1. Anadir visualizaciones/graficos con mas informacion util.
+2. Mejorar UX de analisis de evolucion y composicion.
 
 ### Hito 07
-Poner en producción la primera versión para demo y validación con usuarios.
+Poner en produccion la primera version para demo y validacion con usuarios.
 
 Entregables sugeridos:
 1. Entorno productivo estable.
@@ -68,26 +72,26 @@ Entregables sugeridos:
 3. Demo funcional guiada.
 
 ### Hito 08
-Versión móvil.
+Version movil.
 
 Objetivo:
-- Definir e implementar estrategia mobile (responsive avanzado, PWA o app nativa/híbrida).
+- Definir e implementar estrategia mobile (responsive avanzado, PWA o app nativa/hibrida).
 
 ### Hito 09
 Landing y sistema de pagos para SaaS.
 
 Objetivo:
 1. Landing comercial clara (valor, pricing, CTA).
-2. Flujo de alta/checkout y activación de plan.
-3. Integración de facturación/pagos.
+2. Flujo de alta/checkout y activacion de plan.
+3. Integracion de facturacion/pagos.
 
 ### Hito 10
-Construcción del resto de módulos funcionales.
+Construccion del resto de modulos funcionales.
 
-Módulos pendientes (después de Patrimonio):
+Modulos pendientes (despues de Patrimonio):
 1. Presupuesto
 2. Contabilidad
-3. Cartera de Inversión
+3. Cartera de Inversion
 4. Simulador
 
 Referencia funcional:
@@ -96,25 +100,24 @@ Referencia funcional:
 ### Hito 11 (continuo)
 Escalar calidad y producto de forma iterativa.
 
-Líneas continuas:
-1. Observabilidad y métricas de uso.
+Lineas continuas:
+1. Observabilidad y metricas de uso.
 2. Mejora de rendimiento.
 3. Seguridad y hardening.
 4. Mejora UX/UI basada en feedback real.
 
-## Orden recomendado de ejecución
-1. Hito 04 (refactor + calidad automática)
-2. Hito 05 (diseño IdP centralizado en core)
+## Orden recomendado de ejecucion
+1. Hito 04 (refactor + calidad automatica)
+2. Hito 05 (identidad separada `core`/`saas` + linking opcional)
 3. Hito 06 (mejora de patrimonio frontend)
-4. Hito 07 (producción v1 para enseñar)
+4. Hito 07 (produccion v1 para ensenar)
 5. Hito 09 (landing + pagos)
-6. Hito 08 (móvil)
-7. Hito 10 (resto de módulos)
-8. Hito 11 (iteración continua)
+6. Hito 08 (movil)
+7. Hito 10 (resto de modulos)
+8. Hito 11 (iteracion continua)
 
-## Criterio de actualización
+## Criterio de actualizacion
 Actualizar este documento cuando:
 1. Se completa un hito.
 2. Cambia prioridad de negocio.
-3. Aparece un nuevo bloque estratégico relevante.
-
+3. Aparece un nuevo bloque estrategico relevante.

@@ -2,11 +2,12 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.test.utils import override_settings
 from rest_framework import status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
 
-from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit
+from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit, SaasCoreAccountLink
 from .services import sync_ownership_link, validate_ownership_payload
 
 
@@ -398,3 +399,71 @@ class OwnershipServicesUnitTests(TestCase):
                 target_id=77,
             ).exists()
         )
+
+
+class SaasAuthRoadmap03ApiTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="saas_user",
+            password="pass1234",
+            email="saas@example.com",
+        )
+
+    def test_register_creates_user(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "new_user",
+                "password": "pass12345",
+                "email": "new_user@example.com",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(get_user_model().objects.filter(username="new_user").exists())
+
+    def test_auth_mode_endpoint_reports_saas_local_mode(self):
+        response = self.client.get("/api/auth/mode/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["auth_mode"], "saas_local")
+        self.assertIn("account_linking_enabled", response.data)
+
+    def test_me_returns_current_user_payload(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/auth/me/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["username"], self.user.username)
+        self.assertIsNone(response.data["account_link"])
+
+    def test_core_link_endpoint_returns_400_when_disabled(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/auth/core-link/",
+            {"core_user_ref": "core-123"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @override_settings(ACCOUNT_LINKING_ENABLED=True)
+    def test_core_link_create_and_delete_when_enabled(self):
+        self.client.force_authenticate(user=self.user)
+
+        create_res = self.client.post(
+            "/api/auth/core-link/",
+            {
+                "core_user_ref": "core-123",
+                "core_username": "core_user",
+                "core_email": "core@example.com",
+            },
+            format="json",
+        )
+        self.assertEqual(create_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(SaasCoreAccountLink.objects.filter(user=self.user).exists())
+
+        me_res = self.client.get("/api/auth/me/")
+        self.assertEqual(me_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(me_res.data["account_link"]["core_user_ref"], "core-123")
+
+        delete_res = self.client.delete("/api/auth/core-link/")
+        self.assertEqual(delete_res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(SaasCoreAccountLink.objects.filter(user=self.user).exists())
