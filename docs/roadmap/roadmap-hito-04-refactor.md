@@ -1,4 +1,4 @@
-﻿# Roadmap Hito 04 Release (Refactor Core/SaaS)
+# Roadmap Hito 04 Refactor (Core/SaaS)
 
 ## Objetivo
 Realizar un refactor completo de `core` y `saas`, incluyendo la creacion de un nuevo repo publico para `core`, elevando calidad tecnica, mantenibilidad y consistencia visual.
@@ -156,15 +156,15 @@ Estado: en progreso.
   - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
 - [ ] Frontend:
   - [ ] tests unitarios de componentes y stores.
-  - Avance: suite inicial Vitest + Vue Test Utils aÃ±adida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
-  - Avance: tests unitarios aÃ±adidos para `AuxDataView` en `core/frontend` y `frontend` (`src/views/__tests__/AuxDataView.spec.ts`) cubriendo estados empty/loading/error/success y navegaciÃ³n base.
-  - Avance: tests unitarios aÃ±adidos en SaaS para `FamilyMemberManager` y `OwnershipManager` (`frontend/src/domains/people/components/__tests__/*.spec.ts`) cubriendo estados empty/success y acciones principales de cabecera.
+  - Avance: suite inicial Vitest + Vue Test Utils añadida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
+  - Avance: tests unitarios añadidos para `AuxDataView` en `core/frontend` y `frontend` (`src/views/__tests__/AuxDataView.spec.ts`) cubriendo estados empty/loading/error/success y navegación base.
+  - Avance: tests unitarios añadidos en SaaS para `FamilyMemberManager` y `OwnershipManager` (`frontend/src/domains/people/components/__tests__/*.spec.ts`) cubriendo estados empty/success y acciones principales de cabecera.
   - [ ] tests de integracion de vistas principales.
-  - Avance: tests de integracion iniciales para `NetWorthView` aÃ±adidos en `frontend/src/views/__tests__/NetWorthView.spec.ts` y `core/frontend/src/views/__tests__/NetWorthView.spec.ts` (wiring de acciones principales, toggle de desglose y render estructural).
-  - Avance: tests de integracion para `LoginView` aÃ±adidos en `frontend/src/views/__tests__/LoginView.spec.ts` y `core/frontend/src/views/__tests__/LoginView.spec.ts` (render de formulario, estados loading/error y submit del flujo de login).
+  - Avance: tests de integracion iniciales para `NetWorthView` añadidos en `frontend/src/views/__tests__/NetWorthView.spec.ts` y `core/frontend/src/views/__tests__/NetWorthView.spec.ts` (wiring de acciones principales, toggle de desglose y render estructural).
+  - Avance: tests de integracion para `LoginView` añadidos en `frontend/src/views/__tests__/LoginView.spec.ts` y `core/frontend/src/views/__tests__/LoginView.spec.ts` (render de formulario, estados loading/error y submit del flujo de login).
   - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
-  - Avance: base E2E con Playwright aÃ±adida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegaciÃ³n a `ownership` (SaaS) mediante mocks de API.
-  - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecuciÃ³n validada en contenedores (`npm run test:e2e -- --project=chromium`).
+  - Avance: base E2E con Playwright añadida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegación a `ownership` (SaaS) mediante mocks de API.
+  - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecución validada en contenedores (`npm run test:e2e -- --project=chromium`).
   - Avance: spec real de login/patrimonio en SaaS preparada en `frontend/e2e/login-networth-real.spec.ts`, habilitable con `E2E_REAL_API=1` (por defecto se mantiene la suite mockeada estable).
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
@@ -203,5 +203,6 @@ Estado: pendiente.
 4. Fase 2 (frontend/UI)
 5. Fase 4 (testing profundo)
 6. Fase 5 (documentacion + release)
+
 
 

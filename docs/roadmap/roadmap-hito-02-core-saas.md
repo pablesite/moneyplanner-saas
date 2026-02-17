@@ -61,11 +61,10 @@ Notas:
 - El frontend mantiene fronteras explicitas y no ambiguas entre endpoints base y premium.
 
 ## Siguiente Release
-- Roadmap de la siguiente release (refactor completo): `docs/roadmap/roadmap-hito-04-release.md`.
+- Roadmap de la siguiente release (refactor completo): `docs/roadmap/roadmap-hito-04-refactor.md`.
 
 ## Release Summary
 - Cierre del hito: `docs/roadmap/release-summary-hito-02-core-saas.md`.
-
 
 
 

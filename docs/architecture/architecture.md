@@ -59,11 +59,10 @@
   - metricas separadas (`/api/auth/ops/metrics/` en ambos stacks).
 
 ## Relacionado
-- Roadmap actual de refactor y trabajo pendiente: `docs/roadmap/roadmap-hito-04-release.md`.
+- Roadmap actual de refactor y trabajo pendiente: `docs/roadmap/roadmap-hito-04-refactor.md`.
 - Roadmap historico (V1, completado): `docs/roadmap/roadmap-hito-02-core-saas.md`.
 - Roadmap identidad separada (Hito 05): `docs/roadmap/roadmap-hito-05-identidad-separada.md`.
 - Contratos API vigentes (core + saas): `docs/architecture/api-contracts.md`.
 
 ## Arquitectura funcional relacionada
 - Arquitectura de modulos y dependencias funcionales: `docs/architecture/product-architecture.md`.
-

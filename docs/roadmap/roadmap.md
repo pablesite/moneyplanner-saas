@@ -46,7 +46,7 @@ Referencias:
 Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 
 Referencia:
-- `docs/roadmap/roadmap-hito-04-release.md`
+- `docs/roadmap/roadmap-hito-04-refactor.md`
 
 ### Hito 05 (completado)
 Disenar identidad separada para `core` OSS y `saas` premium.
@@ -135,5 +135,4 @@ Actualizar este documento cuando:
 1. Se completa un hito.
 2. Cambia prioridad de negocio.
 3. Aparece un nuevo bloque estrategico relevante.
-
 

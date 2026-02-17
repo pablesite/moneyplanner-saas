@@ -11,7 +11,7 @@ Definir la arquitectura funcional por mÃ³dulos de negocio, separada de la arqu
 ## RelaciÃ³n con otros documentos
 1. LÃ­mites de plataforma (`core` OSS vs `saas` privado): `docs/architecture/architecture.md`.
 2. Hoja de ruta inicial ya ejecutada (V1): `docs/roadmap/roadmap-hito-02-core-saas.md`.
-3. PrÃ³xima release/refactor (V2): `docs/roadmap/roadmap-hito-04-release.md`.
+3. PrÃ³xima release/refactor (V2): `docs/roadmap/roadmap-hito-04-refactor.md`.
 
 ## Principios de arquitectura
 1. Core-first: cada mÃ³dulo debe aportar valor end-to-end en `core`.
@@ -225,7 +225,6 @@ Usar esta plantilla cuando se refine un mÃ³dulo en detalle:
 1. Completar Presupuesto con el formato de plantilla completo.
 2. Completar Contabilidad con el formato de plantilla completo.
 3. Definir catÃ¡logo de eventos de dominio cross-mÃ³dulo (aunque inicialmente se implementen por API sÃ­ncrona).
-
 
 
 
