@@ -154,8 +154,12 @@ Prefijo: `/api/`
 
 4. `GET /api/auth/me/`
 - Output: usuario autenticado y `account_link` (si existe).
+ - Incluye: `subscription_status` y `premium_enabled`.
 
-5. `GET /api/auth/mode/`
+5. `GET /api/auth/subscription/`
+- Output: estado de suscripcion del usuario (`trial|active|past_due|canceled`) y bandera `premium_enabled`.
+
+6. `GET /api/auth/mode/`
 - Output:
 ```json
 {
@@ -165,7 +169,11 @@ Prefijo: `/api/`
 }
 ```
 
-6. `GET/POST/DELETE /api/auth/core-link/`
+7. `GET/POST/DELETE /api/auth/core-link/`
 - Requiere `ACCOUNT_LINKING_ENABLED=true`.
 - `POST` crea o actualiza enlace opcional con cuenta `core`.
 - `DELETE` elimina el enlace sin afectar login local de `saas`.
+
+### Regla De Acceso Premium (SaaS)
+- Endpoints de `memberships` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links`) solo permiten acceso cuando la suscripcion esta en `trial` o `active`.
+- Estados `past_due` y `canceled` devuelven `403 forbidden`.

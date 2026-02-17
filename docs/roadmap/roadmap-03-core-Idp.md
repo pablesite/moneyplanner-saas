@@ -74,7 +74,8 @@ Entregables:
 Checklist:
 - [x] Revisar endpoints auth existentes de `core` para modo standalone.
 - Avance: endpoint `GET /api/auth/mode/` agregado para declarar modo `core_local`.
-- [ ] Endurecer politicas de sesion y password.
+- [x] Endurecer politicas de sesion y password.
+- Avance: en `core` se aplican tokens mas cortos, rotacion de refresh + blacklist y `MinimumLengthValidator(min_length=10)`.
 - [x] Anadir tests de autenticacion basica en `core`.
 - Avance: test API de modo auth en `core/backend/accounts/tests.py`.
 - [ ] Documentar flujo de primer usuario en `core` desde instalacion limpia.
@@ -93,8 +94,10 @@ Entregables:
 Checklist:
 - [x] Separar claramente auth de `saas` de cualquier dependencia de `core`.
 - Avance: nuevo bloque auth local en `saas` (`/api/auth/register`, `/api/auth/me`, `/api/auth/mode`).
-- [ ] Definir estados de cuenta (trial, active, past_due, canceled).
-- [ ] Bloquear/permitir funcionalidades premium por estado de suscripcion.
+- [x] Definir estados de cuenta (trial, active, past_due, canceled).
+- Avance: modelo `SaasSubscription` incorporado en `memberships`.
+- [x] Bloquear/permitir funcionalidades premium por estado de suscripcion.
+- Avance: `memberships` ahora exige suscripcion `trial|active`; `past_due|canceled` devuelve `403`.
 - [x] Anadir tests API para control de acceso premium.
 - Avance: tests API de auth roadmap-03 agregados en `backend/memberships/tests.py`.
 

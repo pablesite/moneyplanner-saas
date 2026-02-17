@@ -141,3 +141,26 @@ class SaasCoreAccountLink(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user_id} -> core:{self.core_user_ref}"
+
+
+class SaasSubscription(models.Model):
+    class Status(models.TextChoices):
+        TRIAL = "trial", "Trial"
+        ACTIVE = "active", "Active"
+        PAST_DUE = "past_due", "Past Due"
+        CANCELED = "canceled", "Canceled"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saas_subscription",
+    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.TRIAL)
+    started_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["status"])]
+
+    def is_premium_enabled(self) -> bool:
+        return self.status in {self.Status.TRIAL, self.Status.ACTIVE}

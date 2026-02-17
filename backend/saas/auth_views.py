@@ -8,12 +8,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from memberships.models import SaasCoreAccountLink
+from memberships.subscription_services import get_or_create_subscription
 
 from .auth_serializers import (
     CoreAccountLinkSerializer,
     CoreAccountLinkWriteSerializer,
     SaasCurrentUserSerializer,
     SaasRegisterSerializer,
+    SaasSubscriptionSerializer,
 )
 from .auth_services import create_saas_user, unlink_core_account, upsert_core_account_link
 
@@ -59,10 +61,13 @@ class SaasMeAPIView(APIView):
 
     def get(self, request):
         link = SaasCoreAccountLink.objects.filter(user=request.user).first()
+        subscription = get_or_create_subscription(user=request.user)
         payload = {
             "id": request.user.id,
             "username": request.user.username,
             "email": request.user.email or "",
+            "subscription_status": subscription.status,
+            "premium_enabled": subscription.is_premium_enabled(),
             "account_link": CoreAccountLinkSerializer(link).data if link else None,
         }
         serializer = SaasCurrentUserSerializer(payload)
@@ -113,3 +118,11 @@ class SaasCoreAccountLinkAPIView(APIView):
 
         unlink_core_account(user=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SaasSubscriptionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        subscription = get_or_create_subscription(user=request.user)
+        return Response(SaasSubscriptionSerializer(subscription).data)

@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from memberships.models import SaasCoreAccountLink
+from memberships.subscription_services import get_or_create_subscription
 
 
 def create_saas_user(*, username: str, password: str, email: str) -> object:
@@ -12,7 +13,9 @@ def create_saas_user(*, username: str, password: str, email: str) -> object:
         raise DRFValidationError({"username": "Este username ya existe."})
     if email and user_model.objects.filter(email=email).exists():
         raise DRFValidationError({"email": "Este email ya esta en uso."})
-    return user_model.objects.create_user(username=username, password=password, email=email)
+    user = user_model.objects.create_user(username=username, password=password, email=email)
+    get_or_create_subscription(user=user)
+    return user
 
 
 def upsert_core_account_link(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from memberships.models import SaasCoreAccountLink
+from memberships.models import SaasCoreAccountLink, SaasSubscription
 
 
 class SaasRegisterSerializer(serializers.Serializer):
@@ -27,4 +27,17 @@ class SaasCurrentUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()
     email = serializers.EmailField(allow_blank=True)
+    subscription_status = serializers.ChoiceField(choices=SaasSubscription.Status.choices)
+    premium_enabled = serializers.BooleanField()
     account_link = CoreAccountLinkSerializer(allow_null=True)
+
+
+class SaasSubscriptionSerializer(serializers.ModelSerializer):
+    premium_enabled = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SaasSubscription
+        fields = ["status", "started_at", "updated_at", "premium_enabled"]
+
+    def get_premium_enabled(self, obj: SaasSubscription) -> bool:
+        return obj.is_premium_enabled()

@@ -7,7 +7,14 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
 
-from .models import FamilyMember, Ownership, OwnershipLink, OwnershipSplit, SaasCoreAccountLink
+from .models import (
+    FamilyMember,
+    Ownership,
+    OwnershipLink,
+    OwnershipSplit,
+    SaasCoreAccountLink,
+    SaasSubscription,
+)
 from .services import sync_ownership_link, validate_ownership_payload
 
 
@@ -433,6 +440,8 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         response = self.client.get("/api/auth/me/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["username"], self.user.username)
+        self.assertEqual(response.data["subscription_status"], SaasSubscription.Status.TRIAL)
+        self.assertTrue(response.data["premium_enabled"])
         self.assertIsNone(response.data["account_link"])
 
     def test_core_link_endpoint_returns_400_when_disabled(self):
@@ -443,6 +452,13 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_subscription_endpoint_returns_default_trial(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/auth/subscription/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], SaasSubscription.Status.TRIAL)
+        self.assertTrue(response.data["premium_enabled"])
 
     @override_settings(ACCOUNT_LINKING_ENABLED=True)
     def test_core_link_create_and_delete_when_enabled(self):
@@ -467,3 +483,36 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         delete_res = self.client.delete("/api/auth/core-link/")
         self.assertEqual(delete_res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(SaasCoreAccountLink.objects.filter(user=self.user).exists())
+
+
+class SaasPremiumAccessPolicyTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="policy_user",
+            password="pass1234",
+            email="policy@example.com",
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_memberships_access_allowed_for_trial(self):
+        response = self.client.get("/api/family-members/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_memberships_access_blocked_for_canceled(self):
+        sub = SaasSubscription.objects.create(
+            user=self.user, status=SaasSubscription.Status.CANCELED
+        )
+        response = self.client.get("/api/family-members/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, SaasSubscription.Status.CANCELED)
+
+    def test_memberships_access_blocked_for_past_due(self):
+        SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.PAST_DUE)
+        response = self.client.get("/api/family-members/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_memberships_access_allowed_for_active(self):
+        SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.ACTIVE)
+        response = self.client.get("/api/family-members/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
