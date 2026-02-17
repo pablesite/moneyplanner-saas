@@ -79,6 +79,7 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
 
       <div class="flex flex-wrap items-center gap-2.5">
         <component :is="HeaderActions" v-if="HeaderActions" />
+        <button class="btn" type="button" @click="$router.push('/account')">Cuenta SaaS</button>
         <button class="btn" type="button" @click="$router.push('/data')">Datos auxiliares</button>
 
         <SettingsPopover

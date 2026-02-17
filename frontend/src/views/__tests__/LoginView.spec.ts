@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { reactive, ref } from 'vue';
+import { ref } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import LoginView from '../LoginView.vue';

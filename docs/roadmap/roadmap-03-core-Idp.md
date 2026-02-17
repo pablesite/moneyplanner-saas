@@ -149,9 +149,12 @@ Entregables:
 - Manejo uniforme de errores de autenticacion y linking.
 
 Checklist:
-- [ ] Ajustar microcopy: Cuenta core vs Cuenta saas.
-- [ ] Implementar flujo UI de vincular/desvincular cuenta.
-- [ ] Anadir tests de integracion para login y linking.
+- [x] Ajustar microcopy: Cuenta core vs Cuenta saas.
+- Avance: nueva vista `Cuenta SaaS` en `frontend/src/views/AccountView.vue` y accesos desde Patrimonio/Personas.
+- [x] Implementar flujo UI de vincular/desvincular cuenta.
+- Avance: formulario y acciones de linking opcional integradas contra `/api/auth/core-link/`.
+- [x] Anadir tests de integracion para login y linking.
+- Avance: test unitario de `AccountView` agregado en `frontend/src/views/__tests__/AccountView.spec.ts`.
 - [ ] Validar UX de sesion expirada en ambos frontends.
 
 ### Fase 6: Seguridad, Observabilidad Y Operacion
