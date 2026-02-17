@@ -190,6 +190,7 @@ Prefijo: `/api/`
 3. `POST /api/auth/register/`
 - Input: `username`, `password`, `email` (opcional).
 - Output: usuario creado (`id`, `username`, `email`).
+- Side effect RBAC: si el usuario queda con rol `saas_member`, se crea automaticamente un `FamilyMember` inicial (`adult`) con titularidad individual.
 
 4. `GET /api/auth/me/`
 - Output: usuario autenticado y `account_link` (si existe).
@@ -289,6 +290,7 @@ Prefijo: `/api/admin/users/`
 2. `POST /api/admin/users/`
 - alta de usuario SaaS con rol inicial.
 - permiso: `saas_admin`.
+- Side effect RBAC: si `role=saas_member`, se crea automaticamente el miembro inicial de familia (`adult`).
 3. `PATCH /api/admin/users/{id}/role/`
 - cambio de rol entre `saas_admin` y `saas_member`.
 - permiso: `saas_admin`.

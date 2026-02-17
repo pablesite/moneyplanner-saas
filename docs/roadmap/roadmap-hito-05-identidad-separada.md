@@ -308,6 +308,8 @@ Checklist:
 - Avance: nuevo modelo `SaasAccessProfile` (`OneToOne` con usuario SaaS) con roles `saas_admin|saas_member`.
 - [x] Implementar servicios de negocio para alta/baja/cambio de rol.
 - Avance: servicios RBAC añadidos (`get_or_create_access_profile`, `assign_role`, `has_admin_role`).
+- [x] Definir onboarding base para nuevos `saas_member`.
+- Avance: creacion automatica de miembro primario de familia (`adult`) con titularidad individual al alta de usuario `saas_member`.
 - [x] Asegurar constraints de integridad (al menos un `saas_admin` activo).
 - Avance: guardia de dominio activa para impedir degradar al ultimo `saas_admin` activo.
 - [x] Agregar migraciones + plan de backfill para usuarios existentes.

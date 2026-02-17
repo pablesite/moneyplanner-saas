@@ -23,6 +23,48 @@ def create_member_with_default_ownership(*, user, validated_data: dict) -> Famil
     return member
 
 
+def _build_unique_member_name(*, user, base_name: str) -> str:
+    name = (base_name or "Titular").strip()[:80]
+    if not FamilyMember.objects.filter(user=user, name=name).exists():
+        return name
+
+    suffix = 2
+    while True:
+        candidate = f"{name[:74]} ({suffix})"
+        if not FamilyMember.objects.filter(user=user, name=candidate).exists():
+            return candidate
+        suffix += 1
+
+
+def _default_member_name_for_user(*, user) -> str:
+    full_name = f"{getattr(user, 'first_name', '')} {getattr(user, 'last_name', '')}".strip()
+    if full_name:
+        return full_name
+    if getattr(user, "username", ""):
+        return str(user.username)
+    if getattr(user, "email", ""):
+        return str(user.email).split("@")[0]
+    return "Titular"
+
+
+@transaction.atomic
+def ensure_primary_family_member_for_user(*, user) -> FamilyMember:
+    existing = FamilyMember.objects.filter(user=user).order_by("id").first()
+    if existing is not None:
+        ensure_individual_ownership_for_member(user=user, member=existing)
+        return existing
+
+    name = _build_unique_member_name(user=user, base_name=_default_member_name_for_user(user=user))
+    return create_member_with_default_ownership(
+        user=user,
+        validated_data={
+            "name": name,
+            "role": FamilyMember.Role.ADULT,
+            "is_active": True,
+        },
+    )
+
+
 @transaction.atomic
 def delete_member_and_individual_ownership(*, member: FamilyMember) -> None:
     assert_member_can_be_deleted(member)

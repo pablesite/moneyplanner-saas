@@ -433,7 +433,17 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(get_user_model().objects.filter(username="new_user").exists())
+        created_user = get_user_model().objects.get(username="new_user")
+        self.assertTrue(created_user is not None)
+        member = FamilyMember.objects.get(user=created_user)
+        self.assertEqual(member.role, FamilyMember.Role.ADULT)
+        self.assertTrue(
+            Ownership.objects.filter(
+                user=created_user,
+                kind=Ownership.Kind.INDIVIDUAL,
+                member=member,
+            ).exists()
+        )
 
     def test_auth_mode_endpoint_reports_saas_local_mode(self):
         response = self.client.get("/api/auth/mode/")
@@ -750,6 +760,32 @@ class SaasAdminUsersApiTests(APITestCase):
         created = get_user_model().objects.get(username="new_from_admin")
         profile = get_or_create_access_profile(user=created)
         self.assertEqual(profile.role, SaasAccessProfile.Role.ADMIN)
+        self.assertFalse(FamilyMember.objects.filter(user=created).exists())
+
+    def test_admin_create_member_user_creates_primary_family_member(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            "/api/admin/users/",
+            {
+                "username": "new_member_user",
+                "password": "pass12345",
+                "email": "new_member_user@example.com",
+                "role": SaasAccessProfile.Role.MEMBER,
+                "is_active": True,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created = get_user_model().objects.get(username="new_member_user")
+        member = FamilyMember.objects.get(user=created)
+        self.assertEqual(member.role, FamilyMember.Role.ADULT)
+        self.assertTrue(
+            Ownership.objects.filter(
+                user=created,
+                kind=Ownership.Kind.INDIVIDUAL,
+                member=member,
+            ).exists()
+        )
 
     def test_admin_role_change_emits_audit_log(self):
         self.client.force_authenticate(user=self.admin)

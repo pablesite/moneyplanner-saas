@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from memberships.models import SaasConsumedCoreLinkToken, SaasCoreAccountLink
 from memberships.rbac_services import get_or_create_access_profile
+from memberships.services import ensure_primary_family_member_for_user
 from memberships.subscription_services import get_or_create_subscription
 
 
@@ -17,7 +18,9 @@ def create_saas_user(*, username: str, password: str, email: str) -> object:
         raise DRFValidationError({"email": "Este email ya esta en uso."})
     user = user_model.objects.create_user(username=username, password=password, email=email)
     get_or_create_subscription(user=user)
-    get_or_create_access_profile(user=user)
+    profile = get_or_create_access_profile(user=user)
+    if profile.role == "saas_member":
+        ensure_primary_family_member_for_user(user=user)
     return user
 
 
