@@ -228,6 +228,32 @@ Chequeo de salida de modo transitorio:
 1. `GET /api/auth/mode/` en ambos stacks debe devolver `exit_ready: true`.
 2. Si `exit_ready` es `false`, revisar `exit_criteria` para localizar el bloqueo.
 
+### 8) Troubleshooting RBAC SaaS (Hito 05B)
+Síntoma:
+- `403 permission_denied` en endpoints admin/premium.
+- `403 subscription_blocked` en endpoints premium.
+- Cambios de rol/estado o borrado de usuarios no aplican.
+
+Diagnóstico:
+1. Confirmar rol actual del usuario:
+- `GET http://localhost:8001/api/auth/me/` (campo `role`).
+2. Confirmar estado de suscripcion:
+- `GET http://localhost:8001/api/auth/subscription/` (campo `status`).
+3. Confirmar métricas RBAC operativas:
+- `GET http://localhost:8001/api/auth/ops/metrics/` (bloque `rbac`).
+4. Revisar auditoría admin:
+- `docker compose logs --tail 200 saas_backend | findstr saas_admin_`
+
+Acciones rápidas:
+1. Si `permission_denied`:
+- Verificar que el usuario sea `saas_admin` para endpoints `/api/admin/users/*`.
+2. Si `subscription_blocked`:
+- Verificar suscripción en `trial|active`.
+3. Si falla degradar/desactivar/borrar admin:
+- Validar que no sea el último `saas_admin` activo (regla de dominio).
+4. Si hay abuso o picos:
+- Ajustar `THROTTLE_SAAS_ADMIN_API` y recrear backend SaaS.
+
 ## Apagado
 1. Detener `saas`:
 - `cd ..`

@@ -782,6 +782,20 @@ class SaasAdminUsersApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error"]["code"], "validation_error")
 
+    def test_admin_delete_user_emits_audit_log(self):
+        self.client.force_authenticate(user=self.admin)
+        with self.assertLogs("auth.audit", level="INFO") as logs:
+            response = self.client.delete(f"/api/admin/users/{self.member.id}/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(get_user_model().objects.filter(id=self.member.id).exists())
+        self.assertTrue(any('"event": "saas_admin_user_delete"' in line for line in logs.output))
+
+    def test_admin_delete_blocks_last_active_admin(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.delete(f"/api/admin/users/{self.admin.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+
     def test_auth_ops_metrics_requires_admin_role(self):
         self.client.force_authenticate(user=self.member)
         denied = self.client.get("/api/auth/ops/metrics/")
@@ -791,6 +805,8 @@ class SaasAdminUsersApiTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
         allowed = self.client.get("/api/auth/ops/metrics/")
         self.assertEqual(allowed.status_code, status.HTTP_200_OK)
+        self.assertIn("rbac", allowed.data)
+        self.assertIn("roles", allowed.data["rbac"])
 
 
 class SaasPremiumRbacPolicyTests(APITestCase):

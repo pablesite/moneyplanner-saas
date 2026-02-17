@@ -10,7 +10,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from memberships.models import SaasCoreAccountLink, SaasSubscription
+from memberships.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
 from memberships.permissions import IsSaasAdmin
 from memberships.rbac_services import get_or_create_access_profile
 from memberships.subscription_services import get_or_create_subscription
@@ -294,6 +294,26 @@ class SaasAuthOpsMetricsAPIView(APIView):
                 for status, _label in SaasSubscription.Status.choices
             },
             "core_links_total": SaasCoreAccountLink.objects.count(),
+            "rbac": {
+                "roles": {
+                    "saas_admin": SaasAccessProfile.objects.filter(
+                        role=SaasAccessProfile.Role.ADMIN
+                    ).count(),
+                    "saas_member": SaasAccessProfile.objects.filter(
+                        role=SaasAccessProfile.Role.MEMBER
+                    ).count(),
+                },
+                "active_users_by_role": {
+                    "saas_admin": SaasAccessProfile.objects.filter(
+                        role=SaasAccessProfile.Role.ADMIN,
+                        user__is_active=True,
+                    ).count(),
+                    "saas_member": SaasAccessProfile.objects.filter(
+                        role=SaasAccessProfile.Role.MEMBER,
+                        user__is_active=True,
+                    ).count(),
+                },
+            },
             "auth_mode": "saas_local",
         }
         return Response(payload)

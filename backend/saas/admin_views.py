@@ -127,3 +127,33 @@ class SaasAdminUserStatusAPIView(APIView):
             is_active_after=user.is_active,
         )
         return Response(out.data, status=status.HTTP_200_OK)
+
+
+class SaasAdminUserDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSaasAdmin]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "saas_admin_api"
+
+    @transaction.atomic
+    def delete(self, request, user_id: int):
+        user = get_object_or_404(get_user_model(), id=user_id)
+        profile = get_or_create_access_profile(user=user)
+
+        if profile.role == SaasAccessProfile.Role.ADMIN and user.is_active:
+            ensure_user_can_lose_admin_role(user=user)
+
+        target_username = user.username
+        target_role = profile.role
+        target_is_active = user.is_active
+        user.delete()
+
+        log_auth_event(
+            event="saas_admin_user_delete",
+            outcome="success",
+            user_id=request.user.id,
+            target_user_id=user_id,
+            target_username=target_username,
+            target_role=target_role,
+            target_is_active=target_is_active,
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)

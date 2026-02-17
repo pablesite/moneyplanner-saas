@@ -368,7 +368,7 @@ Checklist:
 - Avance: tests API en `core/backend/accounts/tests.py` para acceso con token SaaS y colision de ids.
 
 #### Fase 5B.4: Seguridad, Auditoria Y Operacion
-Estado: Pendiente.
+Estado: Completado.
 
 Entregables:
 - Auditoria estructurada de eventos administrativos.
@@ -376,10 +376,14 @@ Entregables:
 - Runbook de soporte para incidencias RBAC.
 
 Checklist:
-- [ ] Auditar eventos: alta usuario, cambio rol, bloqueo/desbloqueo, borrado.
-- [ ] Aplicar throttling dedicado para endpoints de administracion.
-- [ ] Incluir consultas operativas RBAC en `/api/auth/ops/metrics/` o endpoint complementario.
-- [ ] Actualizar `docs/operations/runbook.md` con troubleshooting RBAC.
+- [x] Auditar eventos: alta usuario, cambio rol, bloqueo/desbloqueo, borrado.
+- Avance: auditoria estructurada de eventos admin (`saas_admin_user_create`, `saas_admin_role_change`, `saas_admin_status_change`, `saas_admin_user_delete`).
+- [x] Aplicar throttling dedicado para endpoints de administracion.
+- Avance: throttle scope `saas_admin_api` aplicado a `/api/admin/users/*`.
+- [x] Incluir consultas operativas RBAC en `/api/auth/ops/metrics/` o endpoint complementario.
+- Avance: `/api/auth/ops/metrics/` incorpora snapshot RBAC (`roles` y `active_users_by_role`).
+- [x] Actualizar `docs/operations/runbook.md` con troubleshooting RBAC.
+- Avance: nueva seccion operativa `Troubleshooting RBAC SaaS (Hito 05B)` en runbook.
 
 #### Fase 5B.5: Validacion, Cierre Y Release Summary
 Estado: Pendiente.

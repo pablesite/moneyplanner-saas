@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .admin_views import (
+    SaasAdminUserDeleteAPIView,
     SaasAdminUserListCreateAPIView,
     SaasAdminUserRoleAPIView,
     SaasAdminUserStatusAPIView,
@@ -17,5 +18,10 @@ urlpatterns = [
         "users/<int:user_id>/status/",
         SaasAdminUserStatusAPIView.as_view(),
         name="saas_admin_user_status",
+    ),
+    path(
+        "users/<int:user_id>/",
+        SaasAdminUserDeleteAPIView.as_view(),
+        name="saas_admin_user_delete",
     ),
 ]

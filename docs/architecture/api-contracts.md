@@ -295,3 +295,14 @@ Prefijo: `/api/admin/users/`
 4. `PATCH /api/admin/users/{id}/status/`
 - activar/desactivar usuario.
 - permiso: `saas_admin`.
+5. `DELETE /api/admin/users/{id}/`
+- borrado administrativo de usuario SaaS.
+- permiso: `saas_admin`.
+- regla de seguridad: no permite eliminar al último `saas_admin` activo.
+
+### Operacion RBAC
+`GET /api/auth/ops/metrics/` (SaaS) incluye bloque `rbac`:
+- `roles.saas_admin`
+- `roles.saas_member`
+- `active_users_by_role.saas_admin`
+- `active_users_by_role.saas_member`
