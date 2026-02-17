@@ -47,7 +47,7 @@ Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 Referencia:
 - `docs/roadmap/roadmap-02-release.md`
 
-### Hito 05
+### Hito 05 (completado)
 Disenar identidad separada para `core` OSS y `saas` premium.
 
 Objetivo:
@@ -57,6 +57,7 @@ Objetivo:
 
 Referencia:
 - `docs/roadmap/roadmap-03-core-Idp.md`
+- `docs/operations/release-summary-2-roadmap03-identity.md`
 
 ### Hito 06
 Mejorar modulo Patrimonio (especialmente frontend):

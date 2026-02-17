@@ -6,6 +6,7 @@ Consolidar el contrato actual de endpoints backend para reducir ambigüedad entr
 ## Convenciones Comunes
 1. Autenticación:
 - Endpoints protegidos requieren `Authorization: Bearer <token>`.
+ - Tokens de `core` y `saas` no son intercambiables (issuer/audience distintos por stack).
 2. Rate limiting:
 - Endpoints de autenticación y linking aplican throttle por scope.
 - Si se excede el límite: `429 Too Many Requests`.

@@ -191,7 +191,7 @@ Checklist:
 - Avance: `docs/operations/runbook.md` incluye playbook de `429` y chequeo operativo de `auth.audit`.
 
 ### Fase 7: Cierre Del Hito Y Formalizacion
-Estado: En progreso.
+Estado: Completado.
 
 Objetivo:
 Cerrar el hito con documentacion, validacion y decision final de arquitectura estabilizada.
@@ -202,10 +202,14 @@ Entregables:
 - Backlog de mejoras post-hito.
 
 Checklist:
-- [ ] Ejecutar smoke tests completos en `core` y `saas`.
-- [ ] Confirmar que `core` funciona standalone de punta a punta.
-- [ ] Confirmar que premium en `saas` funciona sin dependencia de auth `core`.
-- [ ] Publicar resumen final del Hito 05.
+- [x] Ejecutar smoke tests completos en `core` y `saas`.
+- Avance: smoke tests API ejecutados en ambos stacks (token, refresh, endpoints protegidos, mode y metrics).
+- [x] Confirmar que `core` funciona standalone de punta a punta.
+- Avance: validado con flujo completo `core` (`token -> settings -> refresh -> ops/metrics`).
+- [x] Confirmar que premium en `saas` funciona sin dependencia de auth `core`.
+- Avance: validado con flujo completo `saas` y verificacion cruzada (`token core` sobre endpoint saas => `401`).
+- [x] Publicar resumen final del Hito 05.
+- Avance: publicado en `docs/operations/release-summary-2-roadmap03-identity.md`.
 
 ## Validacion Recomendada (Dentro De Contenedores)
 Backend Core (`core/backend`):

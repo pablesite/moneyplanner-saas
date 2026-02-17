@@ -123,6 +123,8 @@ SPECTACULAR_SETTINGS = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ISSUER": os.getenv("JWT_ISSUER", "moneyplanner-saas"),
+    "AUDIENCE": os.getenv("JWT_AUDIENCE", "moneyplanner-saas-api"),
 }
 
 # Roadmap 03 flags: auth autonomy + optional account linking.
