@@ -4,6 +4,7 @@ import LoginView from './views/LoginView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AuxDataView from './views/AuxDataView.vue';
 import AccountView from './views/AccountView.vue';
+import AdminUsersView from './views/AdminUsersView.vue';
 import { registerAuthGuard } from '@/domains/auth';
 import { capabilities } from '@/domains/capabilities';
 
@@ -12,6 +13,12 @@ const routes: RouteRecordRaw[] = [
   { path: '/', name: 'networth', component: NetWorthView },
   { path: '/data', name: 'aux-data', component: AuxDataView },
   { path: '/account', name: 'account', component: AccountView },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: AdminUsersView,
+    meta: { requiresSaasAdmin: true },
+  },
 ];
 
 if (capabilities.people) {

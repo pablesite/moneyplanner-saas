@@ -329,7 +329,7 @@ Checklist:
 - Avance: contrato RBAC actualizado con rutas administrativas y codigos de error estables.
 
 #### Fase 5B.3: Frontend De Administracion Y UX De Permisos
-Estado: Pendiente.
+Estado: Completado.
 
 Entregables:
 - Vista de administracion de usuarios en `frontend`.
@@ -337,10 +337,14 @@ Entregables:
 - Mensajeria clara para denegaciones por rol vs por suscripcion.
 
 Checklist:
-- [ ] Implementar pantalla de usuarios SaaS (listar, crear, editar rol, desactivar).
-- [ ] Adaptar navegacion por capacidades visibles para cada rol.
-- [ ] Diferenciar errores de negocio: `subscription_blocked` vs `permission_denied`.
-- [ ] Añadir tests de componentes/composables para escenarios RBAC.
+- [x] Implementar pantalla de usuarios SaaS (listar, crear, editar rol, desactivar).
+- Avance: nueva vista `frontend/src/views/AdminUsersView.vue` conectada a `/api/admin/users/` para listar, crear, cambiar rol y activar/desactivar.
+- [x] Adaptar navegacion por capacidades visibles para cada rol.
+- Avance: ruta `/admin/users` protegida por guarda `requiresSaasAdmin`; acceso visible desde `Cuenta SaaS` solo para rol `saas_admin`.
+- [x] Diferenciar errores de negocio: `subscription_blocked` vs `permission_denied`.
+- Avance: mapeo de codigos en frontend (`frontend/src/lib/errors.ts`) con mensajes diferenciados para suscripcion y permisos.
+- [x] Añadir tests de componentes/composables para escenarios RBAC.
+- Avance: tests unitarios de `AdminUsersView` y ajustes en tests de `AccountView`.
 
 #### Fase 5B.4: Seguridad, Auditoria Y Operacion
 Estado: Pendiente.

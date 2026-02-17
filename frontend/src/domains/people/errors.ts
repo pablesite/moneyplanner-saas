@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { toApiErrorMessage } from '@/lib/errors';
 
 export function toPeopleErrorMessage(err: unknown): string {
   if (!axios.isAxiosError(err)) return String(err);
+  const mapped = toApiErrorMessage(err);
+  if (mapped && mapped !== 'Error') return mapped;
 
   const data: unknown = err.response?.data;
   if (!data) return err.message;

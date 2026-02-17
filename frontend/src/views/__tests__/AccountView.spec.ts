@@ -10,6 +10,10 @@ vi.mock('@/domains/auth', () => ({
   useSaasAccountPage: () => mockUseSaasAccountPage(),
 }));
 
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: {} }),
+}));
+
 function makeState(overrides: Record<string, unknown> = {}) {
   return {
     loading: ref(false),
@@ -18,6 +22,7 @@ function makeState(overrides: Record<string, unknown> = {}) {
     success: ref<string | null>(null),
     username: ref('saas_user'),
     email: ref('saas@example.com'),
+    role: ref<'saas_admin' | 'saas_member'>('saas_member'),
     subscriptionStatus: ref('trial'),
     premiumEnabled: ref(true),
     accountLinkingEnabled: ref(true),

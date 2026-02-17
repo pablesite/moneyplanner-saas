@@ -174,7 +174,9 @@ describe('NetWorthView', () => {
     await wrapper.get('button[aria-label="Refrescar"]').trigger('click');
     await wrapper.get('button[aria-label="Guardar snapshot"]').trigger('click');
     await wrapper.get('button[aria-label="Eliminar snapshot"]').trigger('click');
-    await wrapper.get('button.btn').trigger('click');
+    const dataButton = wrapper.findAll('button').find((button) => button.text().includes('Datos'));
+    expect(dataButton).toBeTruthy();
+    await dataButton!.trigger('click');
 
     expect(state.store.refreshAll).toHaveBeenCalled();
     expect(state.store.createTodaySnapshot).toHaveBeenCalled();

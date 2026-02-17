@@ -2,6 +2,14 @@ import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { authApi } from '@/domains/auth/api';
 import {
+  createSaasAdminUser,
+  listSaasAdminUsers,
+  patchSaasAdminUserRole,
+  patchSaasAdminUserStatus,
+  type SaasAdminUser,
+  type SaasRole,
+} from '@/domains/auth/adminApi';
+import {
   deleteCoreLink,
   getAuthMode,
   getSaasMe,
@@ -61,6 +69,7 @@ export function useSaasAccountPage() {
 
   const username = ref('');
   const email = ref('');
+  const role = ref<'saas_admin' | 'saas_member'>('saas_member');
   const subscriptionStatus = ref('');
   const premiumEnabled = ref(false);
   const accountLinkingEnabled = ref(false);
@@ -88,6 +97,7 @@ export function useSaasAccountPage() {
 
       username.value = meRes.data.username;
       email.value = meRes.data.email;
+      role.value = meRes.data.role;
       subscriptionStatus.value = meRes.data.subscription_status || subRes.data.status;
       premiumEnabled.value = !!meRes.data.premium_enabled;
 
@@ -156,6 +166,7 @@ export function useSaasAccountPage() {
     success,
     username,
     email,
+    role,
     subscriptionStatus,
     premiumEnabled,
     accountLinkingEnabled,
@@ -167,6 +178,115 @@ export function useSaasAccountPage() {
     coreEmail,
     saveCoreLink,
     removeCoreLink,
+    goBack,
+    reload: load,
+  };
+}
+
+export function useSaasAdminUsersPage() {
+  const router = useRouter();
+
+  const loading = ref(true);
+  const saving = ref(false);
+  const error = ref<string | null>(null);
+  const success = ref<string | null>(null);
+  const users = ref<SaasAdminUser[]>([]);
+
+  const createUsername = ref('');
+  const createPassword = ref('');
+  const createEmail = ref('');
+  const createRole = ref<SaasRole>('saas_member');
+  const createIsActive = ref(true);
+
+  async function load() {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await listSaasAdminUsers();
+      users.value = response.data;
+    } catch (e: unknown) {
+      error.value = toApiErrorMessage(e);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function createUser() {
+    saving.value = true;
+    error.value = null;
+    success.value = null;
+    try {
+      await createSaasAdminUser({
+        username: createUsername.value,
+        password: createPassword.value,
+        email: createEmail.value,
+        role: createRole.value,
+        is_active: createIsActive.value,
+      });
+      success.value = 'Usuario creado correctamente.';
+      createUsername.value = '';
+      createPassword.value = '';
+      createEmail.value = '';
+      createRole.value = 'saas_member';
+      createIsActive.value = true;
+      await load();
+    } catch (e: unknown) {
+      error.value = toApiErrorMessage(e);
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function updateRole(userId: number, role: SaasRole) {
+    saving.value = true;
+    error.value = null;
+    success.value = null;
+    try {
+      await patchSaasAdminUserRole(userId, role);
+      success.value = 'Rol actualizado.';
+      await load();
+    } catch (e: unknown) {
+      error.value = toApiErrorMessage(e);
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function toggleStatus(user: SaasAdminUser) {
+    saving.value = true;
+    error.value = null;
+    success.value = null;
+    try {
+      await patchSaasAdminUserStatus(user.id, !user.is_active);
+      success.value = user.is_active ? 'Usuario desactivado.' : 'Usuario activado.';
+      await load();
+    } catch (e: unknown) {
+      error.value = toApiErrorMessage(e);
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  function goBack() {
+    router.push('/account');
+  }
+
+  load();
+
+  return {
+    loading,
+    saving,
+    error,
+    success,
+    users,
+    createUsername,
+    createPassword,
+    createEmail,
+    createRole,
+    createIsActive,
+    createUser,
+    updateRole,
+    toggleStatus,
     goBack,
     reload: load,
   };

@@ -18,6 +18,7 @@ export type SaasMeResponse = {
   id: number;
   username: string;
   email: string;
+  role: 'saas_admin' | 'saas_member';
   subscription_status: 'trial' | 'active' | 'past_due' | 'canceled';
   premium_enabled: boolean;
   account_link: CoreAccountLinkResponse | null;

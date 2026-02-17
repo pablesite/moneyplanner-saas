@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useSaasAccountPage } from '@/domains/auth';
+
+const route = useRoute();
 
 const {
   loading,
@@ -8,6 +12,7 @@ const {
   success,
   username,
   email,
+  role,
   subscriptionStatus,
   premiumEnabled,
   accountLinkingEnabled,
@@ -22,6 +27,12 @@ const {
   goBack,
   reload,
 } = useSaasAccountPage();
+
+const permissionNotice = computed(() =>
+  route.query.reason === 'permission_denied'
+    ? 'No tienes permisos de administracion para acceder a esa seccion.'
+    : null,
+);
 </script>
 
 <template>
@@ -38,6 +49,10 @@ const {
       {{ error }}
     </div>
 
+    <div v-if="permissionNotice" class="alert mt-3">
+      {{ permissionNotice }}
+    </div>
+
     <div v-if="success" class="ui-alert-success mt-3">
       {{ success }}
     </div>
@@ -49,16 +64,26 @@ const {
         <h2 class="mt-0 text-base">Identidad SaaS</h2>
         <p class="subtle">Usuario: {{ username }} | Email: {{ email || 'sin email' }}</p>
         <p class="subtle">
+          Rol: <strong>{{ role }}</strong>
+        </p>
+        <p class="subtle">
           Suscripcion: <strong>{{ subscriptionStatus }}</strong>
           <span v-if="premiumEnabled"> (premium habilitado)</span>
           <span v-else> (premium bloqueado)</span>
         </p>
+        <div v-if="role === 'saas_admin'" class="mt-2.5">
+          <button class="btn btn-sm" type="button" @click="$router.push('/admin/users')">
+            Administrar usuarios SaaS
+          </button>
+        </div>
       </section>
 
       <section class="card">
         <div class="mb-2.5 flex items-center justify-between gap-2.5">
           <h2 class="m-0 text-base">Vinculo opcional con core</h2>
-          <button class="btn btn-sm" type="button" :disabled="saving" @click="reload">Recargar</button>
+          <button class="btn btn-sm" type="button" :disabled="saving" @click="reload">
+            Recargar
+          </button>
         </div>
 
         <div v-if="!accountLinkingEnabled" class="subtle">
