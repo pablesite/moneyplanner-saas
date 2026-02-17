@@ -1,4 +1,4 @@
-# Documentacion Del Proyecto
+﻿# Documentacion Del Proyecto
 
 ## Objetivo
 Centralizar la documentacion en una estructura simple, evitando duplicacion y facilitando encontrar la fuente canonica de cada tema.
@@ -17,7 +17,7 @@ Centralizar la documentacion en una estructura simple, evitando duplicacion y fa
 4. Arranque, diagnostico y troubleshooting: `docs/operations/runbook.md`
 5. Setup local y comandos de calidad: `docs/operations/dev-setup.md`
 6. Roadmap de producto: `docs/roadmap/roadmap.md`
-7. Roadmap de release actual: `docs/roadmap/roadmap-02-release.md`
+7. Roadmap de release actual: `docs/roadmap/roadmap-hito-04-release.md`
 8. Convenciones de calidad: `docs/standards/code-quality-conventions.md`
 
 ## Criterio De Mantenimiento
@@ -25,3 +25,4 @@ Centralizar la documentacion en una estructura simple, evitando duplicacion y fa
 2. Si una regla afecta setup o calidad, actualizar `docs/operations/dev-setup.md`.
 3. Si una regla afecta limites/contratos `core`-`saas`, actualizar `docs/architecture/`.
 4. Si una decision cambia planificacion, actualizar `docs/roadmap/`.
+

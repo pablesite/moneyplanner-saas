@@ -1,4 +1,4 @@
-# Checklist De Rollout Core/SaaS
+﻿# Checklist De Rollout Core/SaaS
 
 ## Objetivo
 Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romper compatibilidad.
@@ -49,9 +49,10 @@ Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romp
   - [ ] Repetir `check` + tests criticos.
 
 ## 7. Cierre
-- [ ] Actualizar `docs/roadmap/roadmap-01-core-saas.md` con estado real.
+- [ ] Actualizar `docs/roadmap/roadmap-hito-02-core-saas.md` con estado real.
 - [ ] Registrar incidencias y decisiones en PR/commit.
 - [ ] Etiquetar release si el cambio queda estable.
+
 
 
 

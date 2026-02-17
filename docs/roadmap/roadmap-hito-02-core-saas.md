@@ -1,4 +1,4 @@
-# Roadmap 01 Core/SaaS
+﻿# Roadmap Hito 02 Core/SaaS
 
 ## Alcance
 Backlog de ejecucion para alcanzar la arquitectura objetivo definida en `docs/architecture/architecture.md`.
@@ -61,7 +61,9 @@ Notas:
 - El frontend mantiene fronteras explicitas y no ambiguas entre endpoints base y premium.
 
 ## Siguiente Release
-- Roadmap de la siguiente release (refactor completo): `docs/roadmap/roadmap-02-release.md`.
+- Roadmap de la siguiente release (refactor completo): `docs/roadmap/roadmap-hito-04-release.md`.
+
+
 
 
 

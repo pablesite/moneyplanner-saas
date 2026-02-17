@@ -1,4 +1,4 @@
-﻿# Roadmap 03 Identidad Core OSS + SaaS Premium
+﻿# Roadmap Hito 05 Identidad Core OSS + SaaS Premium
 
 ## Objetivo
 Definir e implementar una arquitectura de identidad separada que garantice:
@@ -253,3 +253,4 @@ Frontend SaaS (`frontend`):
 6. Fase 5 (frontend y UX)
 7. Fase 6 (seguridad y observabilidad)
 8. Fase 7 (cierre del hito)
+

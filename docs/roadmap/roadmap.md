@@ -1,4 +1,4 @@
-# Roadmap Global Del Producto
+﻿# Roadmap Global Del Producto
 
 ## Objetivo
 Mantener una vision de alto nivel de los hitos del producto, desde lo ya completado hasta lo que sigue.
@@ -21,7 +21,7 @@ Resultado:
 - Frontera `core`/`saas` definida y aplicada en dominio de titularidad premium.
 
 Referencias:
-- `docs/roadmap/roadmap-01-core-saas.md`
+- `docs/roadmap/roadmap-hito-02-core-saas.md`
 - `docs/architecture/architecture.md`
 
 ### Hito 03 (completado)
@@ -41,11 +41,11 @@ Referencias:
 
 ## Proximos hitos (alto nivel)
 
-### Hito 04 (siguiente)
+### Hito 04 (en progreso)
 Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 
 Referencia:
-- `docs/roadmap/roadmap-02-release.md`
+- `docs/roadmap/roadmap-hito-04-release.md`
 
 ### Hito 05 (completado)
 Disenar identidad separada para `core` OSS y `saas` premium.
@@ -56,7 +56,7 @@ Objetivo:
 3. Definir vinculacion opcional de cuentas `core` <-> `saas` sin dependencia obligatoria.
 
 Referencia:
-- `docs/roadmap/roadmap-03-core-Idp.md`
+- `docs/roadmap/roadmap-hito-05-identidad-separada.md`
 - `docs/operations/release-summary-2-roadmap03-identity.md`
 
 ### Hito 06
@@ -122,3 +122,4 @@ Actualizar este documento cuando:
 1. Se completa un hito.
 2. Cambia prioridad de negocio.
 3. Aparece un nuevo bloque estrategico relevante.
+
