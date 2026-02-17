@@ -155,7 +155,8 @@ Checklist:
 - Avance: formulario y acciones de linking opcional integradas contra `/api/auth/core-link/`.
 - [x] Anadir tests de integracion para login y linking.
 - Avance: test unitario de `AccountView` agregado en `frontend/src/views/__tests__/AccountView.spec.ts`.
-- [ ] Validar UX de sesion expirada en ambos frontends.
+- [x] Validar UX de sesion expirada en ambos frontends.
+- Avance: redireccion de refresh fallido a `/login?reason=session_expired` y aviso visible en `LoginView` de `core/frontend` y `frontend`.
 
 ### Fase 6: Seguridad, Observabilidad Y Operacion
 Estado: pendiente.
