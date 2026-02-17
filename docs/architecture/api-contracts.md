@@ -146,7 +146,15 @@ Prefijo: `/api/`
 {
   "auth_mode": "core_local",
   "auth_mode_enabled": true,
-  "standalone": true
+  "standalone": true,
+  "transition_mode": "stable",
+  "session_compat_enabled": true,
+  "exit_criteria": {
+    "transition_mode_stable": true,
+    "session_compat_enabled": true,
+    "core_local_auth_enabled": true
+  },
+  "exit_ready": true
 }
 ```
 6. `GET /api/auth/ops/metrics/`
@@ -190,7 +198,15 @@ Prefijo: `/api/`
 {
   "auth_mode": "saas_local",
   "auth_mode_enabled": true,
-  "account_linking_enabled": false
+  "account_linking_enabled": false,
+  "transition_mode": "stable",
+  "session_compat_enabled": true,
+  "exit_criteria": {
+    "transition_mode_stable": true,
+    "session_compat_enabled": true,
+    "saas_local_auth_enabled": true
+  },
+  "exit_ready": true
 }
 ```
 

@@ -224,6 +224,10 @@ Uso operativo rápido (requiere token):
 - `curl -H "Authorization: Bearer <access>" http://localhost:8000/api/auth/ops/metrics/`
 - `curl -H "Authorization: Bearer <access>" http://localhost:8001/api/auth/ops/metrics/`
 
+Chequeo de salida de modo transitorio:
+1. `GET /api/auth/mode/` en ambos stacks debe devolver `exit_ready: true`.
+2. Si `exit_ready` es `false`, revisar `exit_criteria` para localizar el bloqueo.
+
 ## Apagado
 1. Detener `saas`:
 - `cd ..`

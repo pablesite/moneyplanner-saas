@@ -128,7 +128,7 @@ Checklist:
 - Avance: desvinculacion elimina solo el enlace en SaaS, sin impactar autenticacion local.
 
 ### Fase 4: Migracion Y Compatibilidad
-Estado: En progreso.
+Estado: Completado.
 
 Objetivo:
 Transicionar desde el estado actual al modelo dual identity sin cortes.
@@ -143,8 +143,10 @@ Checklist:
 - Avance: flags operativos añadidos en `core/backend/config/settings.py` y `backend/saas/settings.py`.
 - [x] Ejecutar migraciones de datos sin bloqueo de usuarios.
 - Avance: migraciones aplicadas en ambos stacks (`token_blacklist` en core, `memberships.0005` en saas) sin corte completo.
-- [ ] Validar compatibilidad con sesiones existentes.
-- [ ] Definir criterios de salida de modo transitorio.
+- [x] Validar compatibilidad con sesiones existentes.
+- Avance: tests de sesion (`token -> endpoint protegido -> refresh`) en `core` y `saas`, incluyendo caso SaaS tras linking por token temporal.
+- [x] Definir criterios de salida de modo transitorio.
+- Avance: `GET /api/auth/mode/` en `core` y `saas` expone `transition_mode`, `exit_criteria` y `exit_ready`.
 
 ### Fase 5: Frontend Y UX De Identidad Dual
 Estado: Completado.

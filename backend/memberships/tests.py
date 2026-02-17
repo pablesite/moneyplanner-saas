@@ -437,6 +437,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["auth_mode"], "saas_local")
         self.assertIn("account_linking_enabled", response.data)
+        self.assertIn("exit_ready", response.data)
 
     def test_me_returns_current_user_payload(self):
         self.client.force_authenticate(user=self.user)
@@ -561,6 +562,54 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
         details = second.data.get("error", {}).get("details", second.data)
         self.assertIn("link_token", details)
+
+    @override_settings(
+        ACCOUNT_LINKING_ENABLED=True,
+        CORE_LINKING_SHARED_SECRET="test-shared-secret",
+        CORE_LINKING_TOKEN_MAX_AGE_SECONDS=300,
+    )
+    def test_session_compatibility_after_linking_from_token(self):
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+        access = token_res.data["access"]
+        refresh = token_res.data["refresh"]
+
+        me_before = self.client.get("/api/auth/me/", HTTP_AUTHORIZATION=f"Bearer {access}")
+        self.assertEqual(me_before.status_code, status.HTTP_200_OK)
+
+        token = signing.dumps(
+            {
+                "jti": str(uuid4()),
+                "core_user_ref": "core_user:session",
+                "core_username": "core_session_user",
+                "core_email": "core-session@example.com",
+            },
+            key="test-shared-secret",
+            salt="core-link-token",
+        )
+        link_res = self.client.post(
+            "/api/auth/core-link/from-token/",
+            {"link_token": token},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {access}",
+        )
+        self.assertEqual(link_res.status_code, status.HTTP_200_OK)
+
+        me_after = self.client.get("/api/auth/me/", HTTP_AUTHORIZATION=f"Bearer {access}")
+        self.assertEqual(me_after.status_code, status.HTTP_200_OK)
+        self.assertEqual(me_after.data["account_link"]["core_user_ref"], "core_user:session")
+
+        refresh_res = self.client.post(
+            "/api/auth/refresh/",
+            {"refresh": refresh},
+            format="json",
+        )
+        self.assertEqual(refresh_res.status_code, status.HTTP_200_OK)
+        self.assertIn("access", refresh_res.data)
 
 
 class SaasPremiumAccessPolicyTests(APITestCase):
