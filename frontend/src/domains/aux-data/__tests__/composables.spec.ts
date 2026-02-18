@@ -29,7 +29,10 @@ vi.mock('@/lib/errors', () => ({
 describe('useAuxData (saas)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
   });
 
   it('creates FX and inflation records and sets success messages', async () => {

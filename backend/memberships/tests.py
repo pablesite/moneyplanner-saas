@@ -666,7 +666,9 @@ class OwnershipServicesUnitTests(TestCase):
         FamilyMember.objects.create(
             user=self.user, name="Titular (2)", role=FamilyMember.Role.ADULT, is_active=True
         )
-        self.assertEqual(_build_unique_member_name(user=self.user, base_name="Titular"), "Titular (3)")
+        self.assertEqual(
+            _build_unique_member_name(user=self.user, base_name="Titular"), "Titular (3)"
+        )
 
     def test_save_ownership_create_individual_skips_shared_splits(self):
         created = save_ownership(

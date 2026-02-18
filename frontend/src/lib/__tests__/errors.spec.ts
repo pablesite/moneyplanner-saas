@@ -20,7 +20,7 @@ describe('api error helpers', () => {
   it('falls back to envelope message, string payload, error message and default', () => {
     const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
     expect(
-      toApiErrorMessage({ response: { data: { error: { message: 'boom' } } }, message: 'x' })
+      toApiErrorMessage({ response: { data: { error: { message: 'boom' } } }, message: 'x' }),
     ).toBe('boom');
     expect(toApiErrorMessage({ response: { data: 'plain' }, message: 'x' })).toBe('plain');
     expect(toApiErrorMessage({ response: { data: {} }, message: 'fallback' })).toBe('fallback');

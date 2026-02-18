@@ -44,8 +44,19 @@ Definir un procedimiento seguro para recuperar consistencia cuando existen datos
   - Verificar bloqueo de borrado de titularidad en uso.
 - Confirmar ausencia de enlaces huerfanos con auditoria SQL.
 
+## Recuperacion De Calidad (CI/Local)
+- Si fallan checks de formato/lint tras correr tests, limpiar artefactos temporales antes de reintentar:
+  - `frontend/test-results/`
+  - `frontend/coverage/`
+  - `backend/.coverage`
+- Reejecutar matriz minima en Docker:
+  - Backend: `ruff check`, `ruff format --check`, `mypy`, `manage.py test`
+  - Frontend: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run test:unit`
+- Si el error persiste, recrear servicio afectado y repetir diagnostico estandar:
+  - `docker compose ps`
+  - `docker compose logs --tail 200 <servicio>`
+
 ## Prevencion
 - Mantener este plan junto al checklist de rollout (`docs/operations/release-checklist.md`).
 - Ejecutar validaciones de API dual en cada upgrade de submodulo `core`.
 - No desplegar cambios de contrato sin migracion y notas de compatibilidad.
-

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useLoginForm, useSaasAccountPage, useSaasAdminUsersPage } from '@/domains/auth/composables';
+import {
+  useLoginForm,
+  useSaasAccountPage,
+  useSaasAdminUsersPage,
+} from '@/domains/auth/composables';
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
@@ -86,7 +90,11 @@ describe('auth composables (saas)', () => {
         role: 'saas_admin',
         subscription_status: 'active',
         premium_enabled: true,
-        account_link: { core_user_ref: 'core:1', core_username: 'cuser', core_email: 'c@mail.test' },
+        account_link: {
+          core_user_ref: 'core:1',
+          core_username: 'cuser',
+          core_email: 'c@mail.test',
+        },
       },
     });
     mocks.getSaasSubscription.mockResolvedValue({ data: { status: 'active' } });
@@ -107,7 +115,9 @@ describe('auth composables (saas)', () => {
   });
 
   it('loads and mutates admin users', async () => {
-    mocks.listSaasAdminUsers.mockResolvedValue({ data: [{ id: 1, username: 'a', is_active: true }] });
+    mocks.listSaasAdminUsers.mockResolvedValue({
+      data: [{ id: 1, username: 'a', is_active: true }],
+    });
     mocks.createSaasAdminUser.mockResolvedValue({});
     mocks.patchSaasAdminUserRole.mockResolvedValue({});
     mocks.patchSaasAdminUserStatus.mockResolvedValue({});
@@ -125,7 +135,13 @@ describe('auth composables (saas)', () => {
     await page.updateRole(1, 'saas_admin');
     expect(mocks.patchSaasAdminUserRole).toHaveBeenCalledWith(1, 'saas_admin');
 
-    await page.toggleStatus({ id: 1, username: 'a', email: 'a@mail.test', role: 'saas_member', is_active: true });
+    await page.toggleStatus({
+      id: 1,
+      username: 'a',
+      email: 'a@mail.test',
+      role: 'saas_member',
+      is_active: true,
+    });
     expect(mocks.patchSaasAdminUserStatus).toHaveBeenCalledWith(1, false);
   });
 

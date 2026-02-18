@@ -158,19 +158,20 @@ Estado: en progreso.
   - Avance: CI ejecuta tests backend en `saas` (`python manage.py test memberships`) y en `core` (`python manage.py test accounts net_worth core`) dentro de `quality-saas.yml` y `quality-core.yml`.
   - Avance: cobertura backend integrada en CI con `coverage` y umbral inicial (`saas` fail-under=80, `core` fail-under=50) para evitar regresiones mientras se amplian suites.
 - [ ] Frontend:
-  - [ ] tests unitarios de componentes y stores.
+  - [x] tests unitarios de componentes y stores.
   - Avance: suite inicial Vitest + Vue Test Utils añadida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
   - Avance: tests unitarios añadidos para `AuxDataView` en `core/frontend` y `frontend` (`src/views/__tests__/AuxDataView.spec.ts`) cubriendo estados empty/loading/error/success y navegación base.
   - Avance: tests unitarios añadidos en SaaS para `FamilyMemberManager` y `OwnershipManager` (`frontend/src/domains/people/components/__tests__/*.spec.ts`) cubriendo estados empty/success y acciones principales de cabecera.
-  - [ ] tests de integracion de vistas principales.
+  - [x] tests de integracion de vistas principales.
   - Avance: tests de integracion iniciales para `NetWorthView` añadidos en `frontend/src/views/__tests__/NetWorthView.spec.ts` y `core/frontend/src/views/__tests__/NetWorthView.spec.ts` (wiring de acciones principales, toggle de desglose y render estructural).
   - Avance: tests de integracion para `LoginView` añadidos en `frontend/src/views/__tests__/LoginView.spec.ts` y `core/frontend/src/views/__tests__/LoginView.spec.ts` (render de formulario, estados loading/error y submit del flujo de login).
-  - [ ] tests E2E de flujos clave (login, patrimonio, ownership).
+  - [x] tests E2E de flujos clave (login, patrimonio, ownership).
   - Avance: base E2E con Playwright añadida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegación a `ownership` (SaaS) mediante mocks de API.
   - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecución validada en contenedores (`npm run test:e2e -- --project=chromium`).
   - Avance: spec real de login/patrimonio en SaaS preparada en `frontend/e2e/login-networth-real.spec.ts`, habilitable con `E2E_REAL_API=1` (por defecto se mantiene la suite mockeada estable).
   - Avance: CI ejecuta tests unitarios frontend en `saas` y `core` con `npm run test:unit` en `quality-saas.yml` y `quality-core.yml`.
   - Avance: cobertura frontend integrada en CI con Vitest (`npm run test:coverage`) y umbrales iniciales globales (statements/lines 15, branches 40, functions 30) para baseline de endurecimiento.
+  - Avance (validacion en contenedor, 2026-02-18): `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run test:unit`, `npm run test:coverage` y `npm run test:e2e -- --project=chromium` ejecutados en `frontend` y `core/frontend`.
 - [ ] Objetivo minimo de cobertura:
   - [x] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
@@ -184,21 +185,22 @@ Estado: en progreso.
   - Avance: suites unitarias de adapters API anadidas para `domains/aux-data/api.ts` (`frontend`+`core/frontend`) y `domains/people/api.ts` (`frontend`), cubriendo contratos de endpoints/payloads y fallback `core` no soportado.
 
 ### Fase 5: Documentacion Y Release
-Estado: pendiente.
+Estado: completada.
 
-- [ ] Actualizar `docs/architecture/architecture.md` con arquitectura refactorizada.
-- [ ] Actualizar checklists de rollout y recovery.
-- [ ] Publicar `release-summary-v2.md` con cambios y breaking changes.
-- [ ] Ejecutar smoke test final y criterios de salida.
+- [x] Actualizar `docs/architecture/architecture.md` con arquitectura refactorizada.
+- [x] Actualizar checklists de rollout y recovery.
+- [x] Publicar `release-summary-v2.md` con cambios y breaking changes.
+- [x] Ejecutar smoke test final y criterios de salida.
+  - Avance (2026-02-18): smoke tecnico ejecutado con `200` en `http://localhost:5173`, `http://localhost:5174`, `http://localhost:8000/api/schema/` y `http://localhost:8001/api/schema/`.
 
 ## Definition Of Done (Release V2)
 - [ ] Nuevo `core` publico operativo como producto base y con repo limpio.
 - [ ] `saas` privado consume el nuevo `core` sin debt legacy.
-- [ ] Linters y type checks bloquean merges en CI.
+- [x] Linters y type checks bloquean merges en CI.
 - [ ] Cobertura minima de tests cumplida y reportada.
-- [ ] UI consistente con sistema CSS profesional documentado.
-- [ ] Evolucion de frontend `core` y `saas` sin duplicacion estructural de codigo.
-- [ ] Codigo simplificado y comentado donde aporte contexto real.
+- [x] UI consistente con sistema CSS profesional documentado.
+- [x] Evolucion de frontend `core` y `saas` sin duplicacion estructural de codigo.
+- [x] Codigo simplificado y comentado donde aporte contexto real.
 
 ## Riesgos Y Mitigacion
 - Riesgo: ruptura por cambio de repo/submodulo `core`.

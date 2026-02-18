@@ -48,12 +48,15 @@ Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 Avance actual:
 - Calidad automatizada activa en CI para `core` y `saas` (lint + formato + typecheck).
 - Tests backend y frontend unitarios integrados en pipelines de calidad para ambos stacks.
+- Tests E2E base con Playwright operativos en ambos frontends (core y saas).
 - Cobertura backend/frontend integrada en pipelines de calidad con umbrales iniciales de baseline.
-- Baseline actualizado de cobertura backend: `saas` 93% y `core` 86%.
-- Baseline actualizado de cobertura frontend: `saas` 56.87% y `core` 40.12%.
+- Baseline validado de cobertura backend (corte 2026-02-18): `saas` 93% y `core` 86%.
+- Baseline validado de cobertura frontend (corte 2026-02-18): `saas` 56.87% y `core` 40.12%.
+- Pendiente real para cierre de hito: Fase 0 (nuevo repo `core` limpio) y cobertura frontend >= 75%.
 
 Referencia:
 - `docs/roadmap/roadmap-hito-04-refactor.md`
+- `docs/roadmap/release-summary-v2.md`
 
 ### Hito 05 (completado)
 Disenar identidad separada para `core` OSS y `saas` premium.

@@ -109,7 +109,13 @@ describe('people store (saas)', () => {
     mocks.peopleApi.deleteOwnership.mockResolvedValue({});
     const store = usePeopleStore();
     store.ownerships = [
-      { id: 1, kind: 'individual', member: { id: 1, name: 'Ana', role: 'adult' }, splits: [], is_in_use: false },
+      {
+        id: 1,
+        kind: 'individual',
+        member: { id: 1, name: 'Ana', role: 'adult' },
+        splits: [],
+        is_in_use: false,
+      },
       { id: 5, kind: 'shared', member: null, splits: [], is_in_use: false },
     ];
 

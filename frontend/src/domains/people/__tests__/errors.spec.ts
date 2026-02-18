@@ -11,7 +11,10 @@ describe('people error mapper', () => {
 
   it('prefers mapped API message when available', () => {
     const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
-    const err = { response: { data: { error: { code: 'permission_denied' } } }, message: 'fallback' };
+    const err = {
+      response: { data: { error: { code: 'permission_denied' } } },
+      message: 'fallback',
+    };
     expect(toPeopleErrorMessage(err)).toContain('permisos');
     spy.mockRestore();
   });
@@ -19,12 +22,14 @@ describe('people error mapper', () => {
   it('uses detail/first field or axios message as fallback', () => {
     const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
     expect(toPeopleErrorMessage({ response: { data: { detail: 'detail-msg' } } })).toBe(
-      'detail-msg'
+      'detail-msg',
     );
-    expect(
-      toPeopleErrorMessage({ response: { data: { field: ['first-error'] } } })
-    ).toBe('first-error');
-    expect(toPeopleErrorMessage({ response: { data: null }, message: 'axios-msg' })).toBe('axios-msg');
+    expect(toPeopleErrorMessage({ response: { data: { field: ['first-error'] } } })).toBe(
+      'first-error',
+    );
+    expect(toPeopleErrorMessage({ response: { data: null }, message: 'axios-msg' })).toBe(
+      'axios-msg',
+    );
     spy.mockRestore();
   });
 });

@@ -27,10 +27,30 @@ Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romp
   - [ ] `docker compose exec saas_backend python manage.py check`
 
 ## 4. Verificacion Automatizada
-- [ ] Backend memberships:
+- [ ] Backend SaaS:
+  - [ ] `docker compose exec saas_backend ruff check .`
+  - [ ] `docker compose exec saas_backend ruff format --check .`
+  - [ ] `docker compose exec saas_backend mypy .`
   - [ ] `docker compose exec saas_backend python manage.py test memberships`
-- [ ] Frontend:
-  - [ ] `npm.cmd run build` en `frontend/`
+- [ ] Backend Core:
+  - [ ] `cd core`
+  - [ ] `docker compose exec backend ruff check .`
+  - [ ] `docker compose exec backend ruff format --check .`
+  - [ ] `docker compose exec backend mypy .`
+  - [ ] `docker compose exec backend python manage.py test accounts net_worth core`
+- [ ] Frontend SaaS:
+  - [ ] `docker compose exec saas_frontend npm run lint`
+  - [ ] `docker compose exec saas_frontend npm run format:check`
+  - [ ] `docker compose exec saas_frontend npm run typecheck`
+  - [ ] `docker compose exec saas_frontend npm run test:unit`
+  - [ ] `docker compose exec saas_frontend npm run test:e2e -- --project=chromium`
+- [ ] Frontend Core:
+  - [ ] `cd core`
+  - [ ] `docker compose exec frontend npm run lint`
+  - [ ] `docker compose exec frontend npm run format:check`
+  - [ ] `docker compose exec frontend npm run typecheck`
+  - [ ] `docker compose exec frontend npm run test:unit`
+  - [ ] `docker compose exec frontend npm run test:e2e -- --project=chromium`
 
 ## 5. Smoke Test Manual (API Dual)
 - [ ] Login en frontend SaaS.
@@ -49,10 +69,10 @@ Checklist operativo para upgrades del submodulo `core` dentro de `saas` sin romp
   - [ ] Repetir `check` + tests criticos.
 
 ## 7. Cierre
-- [ ] Actualizar `docs/roadmap/roadmap-hito-02-core-saas.md` con estado real.
+- [ ] Actualizar `docs/roadmap/roadmap-hito-04-refactor.md` con estado real.
+- [ ] Publicar `docs/roadmap/release-summary-v2.md`.
 - [ ] Registrar incidencias y decisiones en PR/commit.
 - [ ] Etiquetar release si el cambio queda estable.
-
 
 
 

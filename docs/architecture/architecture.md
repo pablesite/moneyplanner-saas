@@ -46,6 +46,26 @@
 - Actualizar `core` en `saas` mediante bumps controlados (update de submodulo + checks de compatibilidad).
 - Evitar cambios rompientes entre repos sin notas de migracion.
 
+## Estado Arquitectonico Hito 04 (Refactor)
+- Backend refactorizado al flujo `views -> serializers -> services` en dominios base y premium.
+- Contratos de API estabilizados y documentados en `docs/architecture/api-contracts.md`.
+- Frontend base definido en `core/frontend` con sincronizacion unidireccional `core -> saas`.
+- Extensiones premium implementadas via contratos de dominio (slots/hooks/capabilities) para evitar forks de vistas.
+- Adaptadores API tipados por dominio (`coreApi` base, `saasApi` premium) en `core/frontend/src/domains/*` y `frontend/src/domains/*`.
+- Sistema visual consolidado con `Tailwind CSS` + tokens canonicos (`src/styles/app.css` + `src/styles/tailwind.css`).
+
+## Estado De Calidad (Corte 2026-02-18)
+- Validaciones ejecutadas en Docker para ambos stacks:
+  - backend: `ruff check`, `ruff format --check`, `mypy`, `manage.py test`
+  - frontend: `eslint`, `prettier --check`, `vue-tsc`, `vitest`, `playwright`
+- Cobertura backend vigente:
+  - `saas`: 93%
+  - `core`: 86%
+- Cobertura frontend vigente:
+  - `saas`: 56.87%
+  - `core`: 40.12%
+- Gap principal abierto en calidad: subir cobertura frontend a `>= 75%`.
+
 ## Estado Final Hito 05 (Identidad Separada)
 - `core` y `saas` operan con autenticacion local independiente.
 - No existe dependencia obligatoria de login entre stacks.

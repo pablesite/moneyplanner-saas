@@ -38,7 +38,10 @@ function makeOwnership(overrides: Partial<OwnershipRead> = {}): OwnershipRead {
 describe('people composables (saas)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
   });
 
   it('handles member flows and success messages', async () => {

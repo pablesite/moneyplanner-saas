@@ -18,7 +18,8 @@ Centralizar la documentacion en una estructura simple, evitando duplicacion y fa
 5. Setup local y comandos de calidad: `docs/operations/dev-setup.md`
 6. Roadmap de producto: `docs/roadmap/roadmap.md`
 7. Roadmap de release actual: `docs/roadmap/roadmap-hito-04-refactor.md`
-8. Convenciones de calidad: `docs/standards/code-quality-conventions.md`
+8. Resumen de release V2: `docs/roadmap/release-summary-v2.md`
+9. Convenciones de calidad: `docs/standards/code-quality-conventions.md`
 
 ## Criterio De Mantenimiento
 1. Si una regla operativa afecta ejecucion diaria, actualizar `docs/operations/runbook.md`.
