@@ -174,15 +174,16 @@ Estado: en progreso.
   - Avance (validacion en contenedor, 2026-02-18): `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run test:unit`, `npm run test:coverage` y `npm run test:e2e -- --project=chromium` ejecutados en `frontend` y `core/frontend`.
 - [ ] Objetivo minimo de cobertura:
   - [x] backend >= 85% lineas.
-  - [ ] frontend >= 75% lineas.
+  - [x] frontend >= 75% lineas.
   - [ ] 100% cobertura en modulos criticos (`memberships/services`, sincronizacion ownership-links).
-  - Avance baseline actual (medicion en contenedor): `saas backend` 93%, `core backend` 86%, `saas frontend` 56.87%, `core frontend` 40.12%.
+  - Avance baseline actual (medicion en contenedor): `saas backend` 93%, `core backend` 86%, `saas frontend` 88.29%, `core frontend` 84.73%.
   - Avance: cobertura de servicios criticos backend elevada (`memberships/services` 99% y `core/net_worth/services` cobertura completa) mediante suites unitarias en `backend/memberships/tests.py` y `core/backend/net_worth/tests.py`.
   - Avance: suites unitarias frontend ampliadas para utilidades transversales (`format`, `errors`, `auth/session`, `people/errors`) en `frontend/src/**/__tests__` y `core/frontend/src/**/__tests__`.
   - Avance: suites unitarias frontend ampliadas para composables criticos de orquestacion (`domains/net-worth/composables.ts` en `frontend`+`core/frontend` y `domains/people/composables.ts` en `frontend`).
   - Avance: suites unitarias frontend ampliadas para stores criticos (`frontend/src/domains/people/store.ts` y `core/frontend/src/domains/net-worth/store.ts`) cubriendo ramas CRUD, errores y wrappers de archivado.
   - Avance: suite de `frontend/src/domains/net-worth/store.ts` ampliada para ramas premium (`syncOwnershipLink` en create/update asset/liability), snapshots, settings y manejo de errores, elevando cobertura del modulo a 96.62%.
   - Avance: suites unitarias de adapters API anadidas para `domains/aux-data/api.ts` (`frontend`+`core/frontend`) y `domains/people/api.ts` (`frontend`), cubriendo contratos de endpoints/payloads y fallback `core` no soportado.
+  - Avance: suites nuevas en frontend para adapters de auth/net-worth, router y componentes base de net-worth (`ItemForm`/`ItemList`) en `frontend` y `core/frontend`, elevando la cobertura global por encima de 75%.
 
 ### Fase 5: Documentacion Y Release
 Estado: completada.

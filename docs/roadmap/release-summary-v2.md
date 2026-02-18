@@ -39,8 +39,8 @@
   - `saas`: 93%
   - `core`: 86%
 - Frontend:
-  - `saas`: 56.87%
-  - `core`: 40.12%
+  - `saas`: 88.29%
+  - `core`: 84.73%
 
 ## Smoke Tecnico Final
 - `GET http://localhost:5173` -> `200`
@@ -57,5 +57,4 @@
 
 ## Pendientes Para Cierre Completo Del Hito 04
 - Fase 0: nuevo repo `core` limpio + repunte de submodulo.
-- Cobertura frontend >= 75%.
 - Modulos criticos backend al 100% (actual `memberships/services`: 99%).

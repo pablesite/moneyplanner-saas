@@ -51,8 +51,8 @@ Avance actual:
 - Tests E2E base con Playwright operativos en ambos frontends (core y saas).
 - Cobertura backend/frontend integrada en pipelines de calidad con umbrales iniciales de baseline.
 - Baseline validado de cobertura backend (corte 2026-02-18): `saas` 93% y `core` 86%.
-- Baseline validado de cobertura frontend (corte 2026-02-18): `saas` 56.87% y `core` 40.12%.
-- Pendiente real para cierre de hito: Fase 0 (nuevo repo `core` limpio) y cobertura frontend >= 75%.
+- Baseline validado de cobertura frontend (corte 2026-02-18, post hardening): `saas` 88.29% y `core` 84.73%.
+- Pendiente real para cierre de hito: Fase 0 (nuevo repo `core` limpio) y modulo critico backend al 100% (`memberships/services`).
 
 Referencia:
 - `docs/roadmap/roadmap-hito-04-refactor.md`
