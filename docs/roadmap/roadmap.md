@@ -38,6 +38,11 @@ SaaS multi-role authorization (RBAC).
 ### Milestone 06
 Net-worth module UX and analytics improvements.
 
+Current iteration:
+1. New global app shell in SaaS frontend with default-collapsed sidebar.
+2. New `Inicio` view with guided phase progression (coach-style framing).
+3. Phase context moved to `Inicio` while keeping module navigation stable.
+
 ### Milestone 07
 First production demo release.
 
