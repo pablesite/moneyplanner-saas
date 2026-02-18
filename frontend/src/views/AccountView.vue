@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useSaasAccountPage } from '@/domains/auth';
+import { clearAuthTokens } from '@/domains/auth/session';
 
 const route = useRoute();
+const router = useRouter();
 
 const {
   loading,
@@ -33,6 +35,11 @@ const permissionNotice = computed(() =>
     ? 'No tienes permisos de administracion para acceder a esa seccion.'
     : null,
 );
+
+function logout() {
+  clearAuthTokens();
+  router.push('/login');
+}
 </script>
 
 <template>
@@ -42,6 +49,7 @@ const permissionNotice = computed(() =>
 
       <div class="ui-page-actions">
         <button class="btn" type="button" @click="goBack">Volver a Patrimonio</button>
+        <button class="btn" type="button" @click="logout">Cerrar sesion</button>
       </div>
     </div>
 

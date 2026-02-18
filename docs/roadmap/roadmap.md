@@ -42,6 +42,7 @@ Current iteration:
 1. New global app shell in SaaS frontend with default-collapsed sidebar.
 2. New `Inicio` view with guided phase progression (coach-style framing).
 3. Phase context moved to `Inicio` while keeping module navigation stable.
+4. Navigation shell refined: menu now works as an overlay drawer and account context is shown in header.
 
 ### Milestone 07
 First production demo release.
