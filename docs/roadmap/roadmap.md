@@ -32,7 +32,7 @@ Reference:
 ### Milestone 05 (Completed)
 Separated identity strategy for `core` and `saas`.
 
-### Milestone 05B (In Progress)
+### Milestone 05B (Completed)
 SaaS multi-role authorization (RBAC).
 
 ### Milestone 06
