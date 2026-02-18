@@ -34,8 +34,10 @@ jobs:
       - name: Mypy
         run: mypy .
 
-      - name: Django tests (memberships)
-        run: python manage.py test memberships
+      - name: Django coverage (memberships)
+        run: |
+          coverage run --rcfile=.coveragerc manage.py test memberships
+          coverage report --fail-under=80
         env:
           DB_HOST: localhost
           DB_PORT: "5432"
@@ -85,5 +87,5 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Unit tests
-        run: npm run test:unit
+      - name: Unit tests coverage
+        run: npm run test:coverage

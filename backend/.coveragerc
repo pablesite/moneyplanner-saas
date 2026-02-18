@@ -1,0 +1,12 @@
+[run]
+branch = True
+source =
+    memberships
+
+[report]
+skip_covered = True
+show_missing = True
+omit =
+    */migrations/*
+    */tests.py
+    */tests/*
