@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { capabilities } from '@/domains/capabilities';
 import { getSaasMe } from '@/domains/auth/accountApi';
+import { capabilities } from '@/domains/capabilities';
 import { getAccessToken } from '@/domains/auth/session';
 
 type NavItem = {
@@ -16,6 +16,7 @@ const route = useRoute();
 const sidebarOpen = ref(false);
 const accountLabel = ref('Mi cuenta');
 const accountRole = ref('');
+const accountPlan = ref('');
 
 const hasToken = computed(() => !!getAccessToken());
 const isLoginRoute = computed(() => route.name === 'login');
@@ -46,6 +47,18 @@ const pageTitle = computed(() => {
   return 'Moneyplanner';
 });
 
+const accountInitials = computed(() => {
+  const text = accountLabel.value.trim();
+  if (!text || text === 'Mi cuenta') return 'MC';
+  const words = text.split(/\s+/).filter(Boolean);
+  const first = words[0] ?? '';
+  const second = words[1] ?? '';
+  if (!second) {
+    return first.slice(0, 2).toUpperCase();
+  }
+  return `${first[0] ?? ''}${second[0] ?? ''}`.toUpperCase();
+});
+
 function toggleSidebar(): void {
   sidebarOpen.value = !sidebarOpen.value;
 }
@@ -53,6 +66,16 @@ function toggleSidebar(): void {
 function closeSidebar(): void {
   sidebarOpen.value = false;
 }
+
+function handleGlobalKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && sidebarOpen.value) {
+    closeSidebar();
+  }
+}
+
+watch(sidebarOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : '';
+});
 
 watch(
   () => route.fullPath,
@@ -67,19 +90,30 @@ watch(
     if (!tokenPresent) {
       accountLabel.value = 'Mi cuenta';
       accountRole.value = '';
+      accountPlan.value = '';
       return;
     }
     try {
       const res = await getSaasMe();
       accountLabel.value = res.data.username;
       accountRole.value = res.data.role === 'saas_admin' ? 'Admin' : 'Member';
+      accountPlan.value = res.data.subscription_status
+        ? `Plan ${res.data.subscription_status}`
+        : '';
     } catch {
       accountLabel.value = 'Mi cuenta';
       accountRole.value = '';
+      accountPlan.value = '';
     }
   },
   { immediate: true },
 );
+
+window.addEventListener('keydown', handleGlobalKeydown);
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown);
+  document.body.style.overflow = '';
+});
 </script>
 
 <template>
@@ -96,7 +130,7 @@ watch(
           aria-label="Cerrar menu"
           @click="closeSidebar"
         >
-          <span aria-hidden="true">✕</span>
+          <span aria-hidden="true">X</span>
         </button>
       </div>
 
@@ -128,8 +162,15 @@ watch(
         </button>
         <div class="ui-shell-header-title">{{ pageTitle }}</div>
         <RouterLink v-if="hasToken" class="ui-shell-account-link" to="/account">
-          <span class="ui-shell-account-name">{{ accountLabel }}</span>
-          <span v-if="accountRole" class="ui-shell-account-role">{{ accountRole }}</span>
+          <span class="ui-shell-account-avatar">{{ accountInitials }}</span>
+          <span class="ui-shell-account-info">
+            <span class="ui-shell-account-name">{{ accountLabel }}</span>
+            <span class="ui-shell-account-meta">
+              <span v-if="accountRole">{{ accountRole }}</span>
+              <span v-if="accountRole && accountPlan"> | </span>
+              <span v-if="accountPlan">{{ accountPlan }}</span>
+            </span>
+          </span>
         </RouterLink>
       </header>
 
@@ -165,7 +206,8 @@ watch(
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
   padding: 20px 14px;
   transform: translateX(-102%);
-  transition: transform 0.2s ease;
+  transition: transform 0.22s ease-out;
+  box-shadow: 10px 0 28px rgba(0, 0, 0, 0.4);
 }
 
 .ui-shell-sidebar-open {
@@ -191,11 +233,16 @@ watch(
   padding: 10px 12px;
   color: var(--text);
   text-decoration: none;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .ui-shell-link:hover {
   border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(2px);
 }
 
 .ui-shell-link-active {
@@ -239,11 +286,33 @@ watch(
 }
 
 .ui-shell-account-link {
-  display: grid;
-  justify-items: end;
-  gap: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   text-decoration: none;
   color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 4px 10px 4px 4px;
+}
+
+.ui-shell-account-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(45, 212, 191, 0.2);
+  border: 1px solid rgba(45, 212, 191, 0.55);
+}
+
+.ui-shell-account-info {
+  display: grid;
+  justify-items: start;
+  line-height: 1.1;
 }
 
 .ui-shell-account-name {
@@ -251,7 +320,7 @@ watch(
   font-weight: 600;
 }
 
-.ui-shell-account-role {
+.ui-shell-account-meta {
   font-size: 11px;
   color: var(--muted);
 }
@@ -264,6 +333,14 @@ watch(
   .ui-shell-header {
     grid-template-columns: auto minmax(0, 1fr) auto;
     padding: 12px;
+  }
+
+  .ui-shell-account-link {
+    padding-right: 8px;
+  }
+
+  .ui-shell-account-meta {
+    display: none;
   }
 }
 </style>
