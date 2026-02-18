@@ -1,88 +1,31 @@
-﻿# Contrato de Arquitectura Core/SaaS
+# Core/SaaS Architecture Contract
 
-## Objetivo
-- `core` es OSS publico y debe poder usarse por si solo.
-- `saas` es privado y agrega capacidades premium sin forzar conceptos premium dentro de `core`.
+## Objective
+Define platform boundaries and responsibilities between `core` and `saas`.
 
-## Responsabilidades delimitadas
+## Responsibilities
+### Core (public OSS)
+1. Base net-worth domain (assets, liabilities, snapshots, summaries).
+2. Standalone authentication and settings.
+3. Stable base API contracts.
 
-### Core (publico)
-- Dominio base de patrimonio: activos, pasivos, snapshots, resumen.
-- Autenticacion basica necesaria para uso standalone.
-- Soporte de moneda e inflacion para flujos base de patrimonio.
-- Contrato de API estable para usuarios base.
+### SaaS (private)
+1. Premium ownership and membership domain.
+2. Premium validation, access control, and advanced flows.
+3. Premium UX and feature gating.
 
-### SaaS (privado)
-- Modelo premium de titularidad (ownership): miembros familiares, ownerships, splits y restricciones de uso.
-- Validaciones avanzadas y flujos premium.
-- UI/UX premium y feature gating.
+## Operational Strategy
+1. Version `core` independently.
+2. Consume `core` in `saas` through controlled submodule updates.
+3. Avoid breaking changes without migration notes.
 
-## No objetivos
-- `core` no debe contener entidades de dominio exclusivas premium.
-- `saas` no debe duplicar logica de negocio de `core` salvo que sea explicitamente inevitable.
+## Milestone 04 Status (as of 2026-02-18)
+1. Backend architecture aligned to `views -> serializers -> services`.
+2. Frontend base architecture aligned and synchronized from `core`.
+3. Quality checks active in CI for both stacks.
+4. Coverage targets achieved for backend and frontend.
 
-## Estrategia del modelo de datos
-
-### Estado objetivo
-- Los modelos de `core` no incluyen entidades de titularidad (ownership).
-- `saas` es dueno de las entidades de titularidad (ownership) y las enlaza con entidades base.
-
-### Enlace recomendado
-- En `saas`, mantener tablas de enlace premium que referencien IDs de entidades base:
-  - `asset_id -> activo de core`
-  - `liability_id -> pasivo de core`
-  - `ownership_id -> ownership de saas`
-- Forzar invariantes premium en servicios/APIs de `saas` (por ejemplo, "titularidad (ownership) en uso").
-
-## Estrategia de contrato de API
-- Mantener endpoints base de patrimonio en `core`.
-- Exponer endpoints premium desde `saas`.
-- El frontend usa clientes explicitos:
-  - `coreApi` para dominio base.
-  - `api` (saas) para dominio premium.
-
-## Estrategia operativa
-- Versionar `core` de forma independiente.
-- Actualizar `core` en `saas` mediante bumps controlados (update de submodulo + checks de compatibilidad).
-- Evitar cambios rompientes entre repos sin notas de migracion.
-
-## Estado Arquitectonico Hito 04 (Refactor)
-- Backend refactorizado al flujo `views -> serializers -> services` en dominios base y premium.
-- Contratos de API estabilizados y documentados en `docs/architecture/api-contracts.md`.
-- Frontend base definido en `core/frontend` con sincronizacion unidireccional `core -> saas`.
-- Extensiones premium implementadas via contratos de dominio (slots/hooks/capabilities) para evitar forks de vistas.
-- Adaptadores API tipados por dominio (`coreApi` base, `saasApi` premium) en `core/frontend/src/domains/*` y `frontend/src/domains/*`.
-- Sistema visual consolidado con `Tailwind CSS` + tokens canonicos (`src/styles/app.css` + `src/styles/tailwind.css`).
-
-## Estado De Calidad (Corte 2026-02-18)
-- Validaciones ejecutadas en Docker para ambos stacks:
-  - backend: `ruff check`, `ruff format --check`, `mypy`, `manage.py test`
-  - frontend: `eslint`, `prettier --check`, `vue-tsc`, `vitest`, `playwright`
-- Cobertura backend vigente:
-  - `saas`: 93%
-  - `core`: 86%
-- Cobertura frontend vigente:
-  - `saas`: 56.87%
-  - `core`: 40.12%
-- Gap principal abierto en calidad: subir cobertura frontend a `>= 75%`.
-
-## Estado Final Hito 05 (Identidad Separada)
-- `core` y `saas` operan con autenticacion local independiente.
-- No existe dependencia obligatoria de login entre stacks.
-- Los JWT de `core` y `saas` usan `ISSUER`/`AUDIENCE` distintos para evitar aceptacion cruzada.
-- El linking de cuentas es opcional y soporta:
-  - modo directo (`/api/auth/core-link/`),
-  - modo token temporal one-time (`/api/auth/link-token/` + `/api/auth/core-link/from-token/`).
-- Operacion de auth reforzada con:
-  - throttling por scope,
-  - auditoria `auth.audit`,
-  - metricas separadas (`/api/auth/ops/metrics/` en ambos stacks).
-
-## Relacionado
-- Roadmap actual de refactor y trabajo pendiente: `docs/roadmap/roadmap-hito-04-refactor.md`.
-- Roadmap historico (V1, completado): `docs/roadmap/roadmap-hito-02-core-saas.md`.
-- Roadmap identidad separada (Hito 05): `docs/roadmap/roadmap-hito-05-identidad-separada.md`.
-- Contratos API vigentes (core + saas): `docs/architecture/api-contracts.md`.
-
-## Arquitectura funcional relacionada
-- Arquitectura de modulos y dependencias funcionales: `docs/architecture/product-architecture.md`.
+## Related Docs
+1. `docs/architecture/api-contracts.md`
+2. `docs/architecture/product-architecture.md`
+3. `docs/roadmap/roadmap-hito-04-refactor.md`

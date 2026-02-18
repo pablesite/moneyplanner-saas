@@ -1,51 +1,47 @@
-﻿# Release Summary Core/SaaS V1
+# Release Summary Core/SaaS V1
 
-## Fecha
+## Date
 2026-02-13
 
-## Alcance Del Hito
-- Separacion de responsabilidades `core` (base) y `saas` (premium) completada.
-- Eliminacion de dominio premium en `core`.
-- Extension premium en `saas` con enlaces reales de titularidad sobre entidades base.
-- Hardening documental y de tests completado.
+## Milestone Scope
+- Separation of responsibilities between `core` (base) and `saas` (premium) completed.
+- Premium domain removed from `core`.
+- Premium extension in `saas` delivered with real ownership links over base entities.
+- Documentation and test hardening completed.
 
-## Cambios Relevantes
+## Relevant Changes
 - `core`:
-  - Eliminados modelos/endpoints de `members/ownership`.
-  - Conservados flujos base de patrimonio (activos, pasivos, snapshots, resumen).
+  - Removed `members/ownership` models and endpoints.
+  - Kept base net-worth flows (assets, liabilities, snapshots, summary).
 - `saas`:
-  - Capa de servicios para reglas de `ownership`.
-  - Nuevo modelo `OwnershipLink` para enlazar ownership premium con `asset/liability` base.
-  - Endpoints SaaS:
+  - Service layer for `ownership` rules.
+  - New `OwnershipLink` model to link premium ownership to base `asset/liability` entities.
+  - SaaS endpoints:
     - `GET /api/ownership-links/`
     - `POST /api/ownership-links/sync/`
-  - `is_in_use` calculado con enlaces reales.
-- frontend SaaS:
-  - Store de patrimonio sincroniza links de ownership via API SaaS.
-  - Eliminadas llamadas legacy no existentes en `core`.
-  - Vista de patrimonio alineada con modelo base + extension premium.
+  - `is_in_use` computed with real links.
+- SaaS frontend:
+  - Net-worth store syncs ownership links through SaaS API.
+  - Removed legacy calls that no longer exist in `core`.
+  - Net-worth view aligned with base model + premium extension.
 
-## Verificacion Ejecutada
+## Executed Validation
 - `docker compose exec saas_backend python manage.py migrate`
 - `docker compose exec saas_backend python manage.py check`
 - `docker compose exec saas_backend python manage.py test memberships`
-- `npm.cmd run build` en `frontend/`
+- `npm.cmd run build` in `frontend/`
 
-## Evidencia De Cierre
-- Fase 1: completada.
-- Fase 2: completada.
-- Fase 3: completada.
-- Fase 4: completada.
-- Referencia: `docs/roadmap/roadmap-hito-02-core-saas.md`.
+## Closure Evidence
+- Phase 1: completed.
+- Phase 2: completed.
+- Phase 3: completed.
+- Phase 4: completed.
+- Reference: `docs/roadmap/roadmap-hito-02-core-saas.md`.
 
-## Operacion
-- Checklist de rollout: `docs/operations/release-checklist.md`.
-- Plan de recuperacion dataset mixto/legacy: `docs/operations/recovery-plan.md`.
+## Operations
+- Rollout checklist: `docs/operations/release-checklist.md`.
+- Mixed/legacy dataset recovery plan: `docs/operations/recovery-plan.md`.
 
-## Riesgos Residuales
-- Falta ampliar tests de integracion fuera del dominio `memberships` si se incorporan mas dominios premium.
-- Cualquier cambio de contrato futuro en `core` requiere revalidacion con checklist de rollout.
-
-
-
-
+## Residual Risks
+- Integration tests beyond `memberships` still need to be expanded as more premium domains are added.
+- Any future `core` contract change requires revalidation with the rollout checklist.

@@ -1,14 +1,14 @@
-# Release Summary V2 (Hito 04 Refactor)
+# Release Summary V2 (Milestone 04 Refactor)
 
-## Fecha
+## Date
 2026-02-18
 
-## Alcance De Esta Actualizacion
-- Consolidacion de estado real del Hito 04 con validacion ejecutada en Docker.
-- Cierre de deuda de formato que rompia checks de calidad en tests backend/frontend.
-- Actualizacion de documentacion de arquitectura, rollout/recovery y roadmap.
+## Update Scope
+- Consolidated actual Milestone 04 status with Docker-based validation.
+- Closed formatting debt that was breaking backend/frontend quality checks.
+- Updated architecture, rollout/recovery, and roadmap documentation.
 
-## Verificacion Tecnica Ejecutada
+## Technical Validation Executed
 - Backend SaaS:
   - `docker compose exec saas_backend ruff check .`
   - `docker compose exec saas_backend ruff format --check .`
@@ -34,7 +34,7 @@
   - `docker compose exec frontend npm run test:coverage`
   - `docker compose exec frontend npm run test:e2e -- --project=chromium`
 
-## Resultados De Cobertura (Corte 2026-02-18)
+## Coverage Results (Snapshot 2026-02-18)
 - Backend:
   - `saas`: 93%
   - `core`: 86%
@@ -42,18 +42,18 @@
   - `saas`: 88.29%
   - `core`: 84.73%
 
-## Smoke Tecnico Final
+## Final Technical Smoke
 - `GET http://localhost:5173` -> `200`
 - `GET http://localhost:5174` -> `200`
 - `GET http://localhost:8000/api/schema/` -> `200`
 - `GET http://localhost:8001/api/schema/` -> `200`
 
-## Cambios De Documentacion Aplicados
+## Documentation Changes Applied
 - `docs/architecture/architecture.md`
 - `docs/operations/release-checklist.md`
 - `docs/operations/recovery-plan.md`
 - `docs/roadmap/roadmap-hito-04-refactor.md`
 - `docs/roadmap/roadmap.md`
 
-## Pendientes Para Cierre Completo Del Hito 04
-- Sin pendientes tecnicos abiertos para Hito 04.
+## Remaining Items For Milestone 04 Closure
+- No open technical items remain for Milestone 04.

@@ -1,58 +1,58 @@
-# Release Summary Hito 05 (Roadmap 03)
+# Release Summary Milestone 05 (Roadmap 03)
 
-## Fecha
+## Date
 2026-02-17
 
-## Alcance Del Hito
-- Arquitectura de identidad separada completada:
-  - `core` standalone con auth local.
-  - `saas` con auth local propia + suscripcion premium.
-- Linking opcional implementado en dos modos:
-  - directo (`/api/auth/core-link/`)
-  - token temporal one-time (`/api/auth/core-link/from-token/`).
-- Endurecimiento de seguridad y operacion:
-  - throttling por scope,
-  - auditoria `auth.audit`,
-  - metricas operativas separadas (`/api/auth/ops/metrics/`).
+## Milestone Scope
+- Separated identity architecture completed:
+  - `core` standalone with local authentication.
+  - `saas` with its own local authentication plus premium subscription.
+- Optional linking implemented in two modes:
+  - Direct (`/api/auth/core-link/`).
+  - One-time temporary token (`/api/auth/core-link/from-token/`).
+- Security and operations hardening:
+  - Scope-based throttling.
+  - `auth.audit` event logging.
+  - Split operational metrics (`/api/auth/ops/metrics/`).
 
-## Cambios Relevantes
+## Relevant Changes
 - Core:
-  - `GET /api/auth/mode/` con `exit_criteria` y `exit_ready`.
-  - `GET /api/auth/link-token/` para token temporal de linking.
+  - `GET /api/auth/mode/` with `exit_criteria` and `exit_ready`.
+  - `GET /api/auth/link-token/` for temporary link token.
   - `GET /api/auth/ops/metrics/`.
-  - Rotacion de refresh + blacklist + politica de password reforzada.
-  - JWT con `ISSUER`/`AUDIENCE` propios de core.
+  - Refresh rotation + blacklist + stronger password policy.
+  - JWT with core-specific `ISSUER`/`AUDIENCE`.
 - SaaS:
   - `POST /api/auth/register/`, `GET /api/auth/me/`, `GET /api/auth/subscription/`.
-  - Premium gating por estado de suscripcion (`trial|active` permitido).
+  - Premium gating by subscription status (`trial|active` allowed).
   - `POST/GET/DELETE /api/auth/core-link/`.
-  - `POST /api/auth/core-link/from-token/` (one-time, anti-replay por `jti`).
+  - `POST /api/auth/core-link/from-token/` (one-time, anti-replay via `jti`).
   - `GET /api/auth/ops/metrics/`.
-  - JWT con `ISSUER`/`AUDIENCE` propios de saas.
+  - JWT with SaaS-specific `ISSUER`/`AUDIENCE`.
 
-## Smoke Tests Ejecutados (Fase 7)
+## Executed Smoke Tests (Phase 7)
 Core:
-1. Crear usuario smoke local en core.
+1. Create local smoke user in core.
 2. `POST /api/auth/token/` -> `200`.
-3. `GET /api/auth/settings/` con bearer -> `200`.
+3. `GET /api/auth/settings/` with bearer -> `200`.
 4. `POST /api/auth/refresh/` -> `200`.
 5. `GET /api/auth/mode/` -> `exit_ready=true`.
 6. `GET /api/auth/ops/metrics/` -> `service=core`.
 
 SaaS:
-1. `POST /api/auth/register/` usuario smoke -> `201`.
+1. `POST /api/auth/register/` smoke user -> `201`.
 2. `POST /api/auth/token/` -> `200`.
 3. `GET /api/auth/me/` -> `200`.
 4. `GET /api/auth/subscription/` -> `trial`, `premium_enabled=true`.
-5. `GET /api/family-members/` con bearer saas -> `200`.
+5. `GET /api/family-members/` with SaaS bearer -> `200`.
 6. `POST /api/auth/refresh/` -> `200`.
 7. `GET /api/auth/mode/` -> `exit_ready=true`.
 8. `GET /api/auth/ops/metrics/` -> `service=saas`.
 
-Separacion de identidad (validacion cruzada):
-1. Token emitido por `core` contra endpoint protegido de `saas` -> `401`.
+Identity separation (cross-validation):
+1. Token issued by `core` against protected SaaS endpoint -> `401`.
 
-## Verificacion De Calidad Ejecutada
+## Executed Quality Validation
 - `docker compose -f core/docker-compose.yml exec backend python manage.py test accounts`
 - `docker compose exec saas_backend python manage.py test memberships`
 - `docker compose -f core/docker-compose.yml exec backend ruff check accounts config/settings.py`
@@ -60,10 +60,10 @@ Separacion de identidad (validacion cruzada):
 - `docker compose -f core/docker-compose.yml exec backend mypy accounts`
 - `docker compose exec saas_backend mypy memberships saas`
 
-## Estado De Cierre
-- Fase 7: completada.
-- Hito 05: validado funcionalmente para identidad separada `core`/`saas`.
+## Closure Status
+- Phase 7: completed.
+- Milestone 05: functionally validated for separated `core`/`saas` identity.
 
-## Riesgos Residuales
-- En local se mantiene `DJANGO_SECRET_KEY` corta por defecto (warning de seguridad); recomendado definir secret robusta en `.env`.
-- Pendiente futuro (fuera de Hito 05): automatizar dashboards visuales con origen en `/api/auth/ops/metrics/`.
+## Residual Risks
+- Local setup still uses short default `DJANGO_SECRET_KEY` (security warning); define a strong secret in `.env`.
+- Future work (out of Milestone 05 scope): automate visual dashboards sourced from `/api/auth/ops/metrics/`.

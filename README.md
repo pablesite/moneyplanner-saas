@@ -1,15 +1,18 @@
 # moneyplanner-saas
 
-Repositorio privado para la version SaaS.
+Private repository for the SaaS product.
 
-## Estructura
-- `core/`: submodulo con el producto OSS.
-- `backend/`: backend Django del SaaS.
-- `frontend/`: frontend Vue del SaaS.
+## Version
+- Current SaaS version is defined in `VERSION`.
+- Public releases are tagged as `vX.Y.Z` in Git.
 
-## Primeros pasos
+## Structure
+- `core/`: submodule with the OSS base product.
+- `backend/`: SaaS Django backend.
+- `frontend/`: SaaS Vue frontend.
 
-1. Clona el repo y actualiza submodulos:
+## First Steps
+1. Clone the repository and initialize submodules:
 
 ```bash
 git clone <REPO_URL>
@@ -17,47 +20,46 @@ cd moneyplanner
 git submodule update --init --recursive
 ```
 
-2. Arranca el core desde el submodulo:
+2. Start core services from the submodule:
 
 ```bash
 cd core
 docker compose up --build -d
 ```
 
-3. Arranca el SaaS (backend + DB + frontend):
+3. Start SaaS services (backend + DB + frontend):
 
 ```bash
 cd ..
 docker compose up --build -d
 ```
 
-- API SaaS: `http://localhost:8001`
-- Docs: `http://localhost:8001/api/docs/`
-- Frontend SaaS: `http://localhost:5174`
-- Postgres SaaS: `localhost:5433`
+- SaaS API: `http://localhost:8001`
+- API docs: `http://localhost:8001/api/docs/`
+- SaaS frontend: `http://localhost:5174`
+- SaaS Postgres: `localhost:5433`
 
-## Notas
-- El core vive en `core/` como submodulo.
-- Cualquier codigo SaaS privado debe vivir fuera de `core/`.
+## Notes
+- Core lives in `core/` as a submodule.
+- SaaS-only private code must stay outside `core/`.
 
-## Sync frontend core -> saas
-- Fuente canonica del frontend base: `core/frontend/src`.
-- Archivos sincronizables declarados en: `scripts/frontend-sync-manifest.txt`.
-- Verificar drift:
+## Frontend Sync core -> saas
+- Canonical source for base frontend: `core/frontend/src`.
+- Sync manifest: `scripts/frontend-sync-manifest.txt`.
+- Check drift:
 
 ```bash
 powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1
 ```
 
-- Aplicar sincronizacion:
+- Apply sync:
 
 ```bash
 powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply
 ```
 
-## Arquitectura
-- Roadmap global de producto: `docs/roadmap/roadmap.md`.
-- Contrato de limites `core` (OSS) vs `saas` (premium): `docs/architecture/architecture.md`.
-- Roadmap actual de refactor (V2): `docs/roadmap/roadmap-02-release.md`.
-- Roadmap historico inicial (V1, completado): `docs/roadmap/roadmap-01-core-saas.md`.
-
+## Architecture
+- Global product roadmap: `docs/roadmap/roadmap.md`.
+- Platform boundaries contract: `docs/architecture/architecture.md`.
+- Current refactor roadmap (Milestone 04): `docs/roadmap/roadmap-hito-04-refactor.md`.
+- Core/SaaS split roadmap (Milestone 02): `docs/roadmap/roadmap-hito-02-core-saas.md`.

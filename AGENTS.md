@@ -1,78 +1,81 @@
 ﻿# AGENTS.md
 
-## Objetivo
-Este repositorio contiene dos stacks que se trabajan en paralelo:
-1. `core/` (base OSS)
-2. `saas` (raíz: `backend/` + `frontend/`, con funcionalidades extra)
+## Objective
+This repository contains two stacks that are developed in parallel:
+1. `core/` (OSS base)
+2. `saas` (root stack: `backend/` + `frontend/`, with extra features)
 
-## Arranque estándar
-Para levantar el proyecto entero, seguir este orden:
+## Standard Startup
+To boot the full project, follow this order:
 1. `cd core`
 2. `docker compose up --build -d`
 3. `cd ..`
 4. `docker compose up --build -d`
 
-## Diagnóstico estándar
-Comandos base de diagnóstico:
+## Standard Diagnostics
+Base diagnostic commands:
 1. `docker compose ps`
-2. `docker compose logs --tail 100 <servicio>`
+2. `docker compose logs --tail 100 <service>`
 
-Comandos adicionales permitidos si ayudan a encontrar causa raíz:
+Additional allowed commands when useful for root-cause analysis:
 1. `docker compose ps -a`
-2. `docker compose logs --tail 200 <servicio>`
-3. verificaciones HTTP puntuales (por ejemplo, preflight CORS con `curl`)
+2. `docker compose logs --tail 200 <service>`
+3. Targeted HTTP checks (for example CORS preflight with `curl`)
 
-## Restricciones operativas
-1. No borrar volúmenes de base de datos.
-2. No ejecutar comandos destructivos tipo `docker compose down -v` salvo pedido explícito.
-3. Se puede modificar `core/` y `saas` (se evolucionan ambos en paralelo).
-4. Los chequeos de calidad (lint/format/typecheck/tests) se ejecutan siempre dentro de contenedores Docker (`docker compose exec ...`), no en host.
-5. En PowerShell, no encadenar comandos con `&&`; usar secuencia compatible (`;` y control de `$LASTEXITCODE` cuando aplique).
+## Operational Constraints
+1. Do not delete database volumes.
+2. Do not run destructive commands like `docker compose down -v` unless explicitly requested.
+3. Changes can be made in both `core/` and `saas`.
+4. Quality checks (lint/format/typecheck/tests) must run inside Docker containers (`docker compose exec ...`), not on host.
+5. In PowerShell, do not chain commands with `&&`; use compatible sequencing (`;` and `$LASTEXITCODE` checks when needed).
 
-## Flujo de trabajo acordado
-1. Diagnóstico primero.
-2. Explicar qué se pretende hacer, preguntar para decidir la mejor opción.
-3. Acordada la opción: aplicar cambios.
-4. Validar resultado.
-5. Refactorizar siguiendo el estilo existente y revalidar.
-6. Reportar estado final.
-7. Al terminar, actualizar la documentación en `docs/` donde sea necesario.
-8. Tras validar y actualizar documentación, terminar con un commit, siguiendo la guía: https://www.conventionalcommits.org/en/v1.0.0/.
+## Agreed Workflow
+1. Diagnose first.
+2. Explain intended action and ask when a decision is needed.
+3. Apply the agreed change.
+4. Validate outcome.
+5. Refactor following existing style and validate again.
+6. Report final status.
+7. Update `docs/` as needed.
+8. Update version according to SemVer impact:
+   - `MAJOR`: breaking change
+   - `MINOR`: backward-compatible feature
+   - `PATCH`: backward-compatible fix/docs/test/internal change
+9. After validation, docs update, and version update, finish with a commit following https://www.conventionalcommits.org/en/v1.0.0/.
 
+## Validation (Current State)
+Official quality commands exist in both repos (`core` and `saas`) and are validated in CI.
 
-## Validación (estado actual)
-Hay comandos oficiales de calidad en ambos repos (`core` y `saas`) y validación en CI.
-
-Comandos de calidad:
-1. Backend SaaS (`backend/`):
+Quality commands:
+1. SaaS Backend (`backend/`):
    - `ruff check .`
    - `ruff format --check .`
    - `mypy .`
-2. Backend Core (`core/backend/`):
+2. Core Backend (`core/backend/`):
    - `ruff check .`
    - `ruff format --check .`
    - `mypy .`
-3. Frontend SaaS (`frontend/`):
+3. SaaS Frontend (`frontend/`):
    - `npm run lint`
    - `npm run format:check`
    - `npm run typecheck`
-4. Frontend Core (`core/frontend/`):
+4. Core Frontend (`core/frontend/`):
    - `npm run lint`
    - `npm run format:check`
    - `npm run typecheck`
 
-Tests disponibles actualmente:
-1. Backend SaaS: `python manage.py test memberships` (suite en `backend/memberships/tests.py`).
-2. Backend Core: hay archivos `tests.py` base, pero cobertura funcional todavía parcial.
+Current tests:
+1. SaaS backend: `python manage.py test memberships` (suite in `backend/memberships/tests.py`).
+2. Core backend: base `tests.py` files exist, functional coverage is still evolving by domain.
 
-Referencia de CI:
+CI reference:
 1. SaaS: `.github/workflows/quality-saas.yml`
 2. Core: `core/.github/workflows/quality-core.yml`
 
-## Documentación recomendada
-1. Índice de documentación (punto de entrada): `docs/README.md`
-2. Operación y troubleshooting: `docs/operations/runbook.md`
-3. Configuración de desarrollo: `docs/operations/dev-setup.md`
-4. Arquitectura de plataforma: `docs/architecture/architecture.md`
-5. Arquitectura funcional del producto: `docs/architecture/product-architecture.md`
-6. Roadmap actual de release: `docs/roadmap/roadmap-02-release.md`
+## Recommended Documentation
+1. Documentation index (entry point): `docs/README.md`
+2. Operations and troubleshooting: `docs/operations/runbook.md`
+3. Development setup: `docs/operations/dev-setup.md`
+4. Platform architecture: `docs/architecture/architecture.md`
+5. Product functional architecture: `docs/architecture/product-architecture.md`
+6. Current release roadmap: `docs/roadmap/roadmap-hito-04-refactor.md`

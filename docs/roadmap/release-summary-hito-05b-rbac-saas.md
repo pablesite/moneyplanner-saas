@@ -1,76 +1,76 @@
-# Release Summary Hito 05B (RBAC SaaS + Acceso Cross-Stack)
+# Release Summary Milestone 05B (SaaS RBAC + Cross-Stack Access)
 
-## Fecha
+## Date
 2026-02-17
 
-## Alcance Del Hito
-- RBAC SaaS multirol implementado (`saas_admin`, `saas_member`) en backend y frontend.
-- Endpoints administrativos SaaS operativos con permisos finos y auditoria.
-- UX SaaS adaptada por rol (ruta admin protegida y visibilidad condicional).
-- Interoperabilidad SaaS -> Core habilitada:
-  - usuarios SaaS pueden consumir API de Core con JWT SaaS valido,
-  - mapeo seguro de identidad externa sin colision de `user_id`.
-- Onboarding funcional:
-  - nuevos `saas_member` crean automaticamente su miembro primario de familia (`adult`) con titularidad individual.
+## Milestone Scope
+- Multi-role SaaS RBAC implemented (`saas_admin`, `saas_member`) in backend and frontend.
+- SaaS admin endpoints operational with fine-grained permissions and audit events.
+- SaaS UX adapted by role (protected admin route and conditional visibility).
+- SaaS -> Core interoperability enabled:
+  - SaaS users can consume Core API with valid SaaS JWT.
+  - Secure external identity mapping avoids `user_id` collisions.
+- Functional onboarding:
+  - New `saas_member` users automatically create their primary family member (`adult`) with individual ownership.
 
-## Entregables Cerrados Por Fase
-1. Fase 5B.0:
-- Matriz de roles/capacidades y contrato RBAC documentado.
+## Closed Deliverables By Phase
+1. Phase 5B.0:
+- Role/capability matrix and RBAC contract documented.
 
-2. Fase 5B.1:
-- Modelo `SaasAccessProfile` + servicios RBAC (`assign_role`, guardias de ultimo admin).
+2. Phase 5B.1:
+- `SaasAccessProfile` model plus RBAC services (`assign_role`, last-admin guards).
 
-3. Fase 5B.2:
-- API admin SaaS:
+3. Phase 5B.2:
+- SaaS admin API:
   - `GET/POST /api/admin/users/`
   - `PATCH /api/admin/users/{id}/role/`
   - `PATCH /api/admin/users/{id}/status/`
   - `DELETE /api/admin/users/{id}/`
-- Errores estables: `permission_denied`, `subscription_blocked`.
+- Stable errors: `permission_denied`, `subscription_blocked`.
 
-4. Fase 5B.3:
+4. Phase 5B.3:
 - `frontend`:
-  - vista `AdminUsersView`,
-  - guarda `requiresSaasAdmin`,
-  - UX condicional por rol desde `Cuenta SaaS`.
+  - `AdminUsersView` view.
+  - `requiresSaasAdmin` guard.
+  - Conditional role-based UX from `SaaS Account`.
 
-5. Fase 5B.3B:
-- `core` acepta JWT SaaS cuando `AUTH_ACCEPT_SAAS_TOKENS=1`.
-- Modelo `ExternalIdentity` para mapear `provider + external_user_id -> user core`.
-- Autoprovision de usuario local core al primer acceso SaaS.
+5. Phase 5B.3B:
+- `core` accepts SaaS JWT when `AUTH_ACCEPT_SAAS_TOKENS=1`.
+- `ExternalIdentity` model maps `provider + external_user_id -> core user`.
+- Core local user auto-provisioning on first SaaS access.
 
-6. Fase 5B.4:
-- Auditoria admin estructurada:
+6. Phase 5B.4:
+- Structured admin auditing:
   - `saas_admin_user_create`
   - `saas_admin_role_change`
   - `saas_admin_status_change`
   - `saas_admin_user_delete`
-- Snapshot RBAC en `/api/auth/ops/metrics/`.
-- Runbook actualizado con troubleshooting RBAC.
+- RBAC snapshot in `/api/auth/ops/metrics/`.
+- Runbook updated with RBAC troubleshooting.
 
-7. Fase 5B.5:
-- Tests backend/frontend reforzados.
-- Matriz de calidad ejecutada en contenedores.
+7. Phase 5B.5:
+- Backend/frontend tests reinforced.
+- Quality matrix executed in containers.
 
-## Evidencia De Validacion Ejecutada
+## Validation Evidence
 - Backend SaaS:
   - `docker compose exec saas_backend python manage.py test memberships`
   - `docker compose exec saas_backend ruff check .`
   - `docker compose exec saas_backend mypy .`
 - Frontend SaaS:
-  - tests RBAC focalizados (`guard`, `AccountView`, `AdminUsersView`) en contenedor.
+  - Focused RBAC tests (`guard`, `AccountView`, `AdminUsersView`) in container.
   - `docker compose exec saas_frontend npm run typecheck`
 - Backend Core:
-  - `docker compose exec backend python manage.py test accounts` (en `core/`)
-  - smoke real: token SaaS contra `GET /api/auth/settings/` de Core -> `200`.
+  - `docker compose exec backend python manage.py test accounts` (in `core/`).
+  - Real smoke: SaaS token against Core `GET /api/auth/settings/` -> `200`.
 
-## Riesgos Residuales / Deuda Tecnica
-- Existen fallos de calidad de baseline fuera del alcance funcional de 5B:
-  - `lint` en frontends por reglas de complejidad en specs e2e legacy.
-  - `format --check` en backend por archivos historicos ya existentes.
-- Recomendacion:
-  - abrir tarea de hardening de calidad para normalizar esos archivos y dejar `lint/format` completamente verdes en CI local.
+## Residual Risks / Technical Debt
+- Baseline quality failures still exist outside 5B functional scope:
+  - Frontend `lint` issues from complexity rules in legacy e2e specs.
+  - Backend `format --check` issues in pre-existing historical files.
+- Recommendation:
+  - Create a quality-hardening task to normalize those files and leave local CI `lint/format` fully green.
 
-## Estado Final
-- Hito 05B: completado funcionalmente.
-- DoD de 05B: satisfecho.
+## Final Status
+- Milestone 05B: functionally completed.
+- 05B DoD: satisfied.

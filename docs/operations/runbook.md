@@ -1,293 +1,57 @@
-﻿# Runbook Operativo
+﻿# Operations Runbook
 
-## Objetivo
-Guía rápida para operar, diagnosticar y recuperar el entorno local de `moneyplanner`.
+## Objective
+Operate, diagnose, and recover the local `moneyplanner` environment safely.
 
-## Alcance de este documento
-1. Arranque, verificación y diagnóstico diario.
-2. Playbooks de incidencia.
-3. Operaciones seguras.
-
-## Convenciones
-1. Stack `core`: carpeta `core/`.
-2. Stack `saas`: raíz del repo.
-3. Diagnóstico mínimo obligatorio:
-- `docker compose ps`
-- `docker compose logs --tail 100 <servicio>`
-4. Archivos de documentación/configuración: guardar siempre en `UTF-8` (ver `.editorconfig`).
-
-## Arranque estándar
-1. Levantar `core`:
-- `cd core`
-- `docker compose up --build -d`
-2. Levantar `saas`:
-- `cd ..`
-- `docker compose up --build -d`
-
-## Verificación rápida
-1. Estado de contenedores:
-- `cd core`
-- `docker compose ps`
-- `cd ..`
-- `docker compose ps`
-2. Endpoints esperados:
-- Core frontend: `http://localhost:5173`
-- Core backend: `http://localhost:8000`
-- SaaS frontend: `http://localhost:5174`
-- SaaS backend: `http://localhost:8001`
-
-## Primer Usuario Core (Standalone)
-Objetivo:
-- Confirmar que `core` funciona sin depender de `saas`.
-
-Pasos:
-1. Crear usuario en `core`:
-- `cd core`
-- `docker compose exec backend python manage.py shell -c "from django.contrib.auth import get_user_model; U=get_user_model(); U.objects.filter(username='admin').exists() or U.objects.create_user('admin', password='admin12345')"`
-2. Obtener token:
-- `curl -i -X POST "http://localhost:8000/api/auth/token/" -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"admin12345\"}"`
-3. Validar endpoint protegido:
-- `curl -i "http://localhost:8000/api/auth/settings/" -H "Authorization: Bearer <access_token>"`
-
-Resultado esperado:
-1. `POST /api/auth/token/` devuelve `200`.
-2. `GET /api/auth/settings/` devuelve `200`.
-3. `core` queda operativo standalone.
-
-## Flujo Frontend Core/SaaS (estándar)
-Objetivo:
-- Mantener `core/frontend` como fuente canónica base y `frontend` como overlay premium sin forks de vistas.
-
-Reglas:
-1. Si el cambio es base/reutilizable, se implementa primero en `core/frontend/src`.
-2. Si el cambio es premium, se implementa en `frontend/src` usando contratos de extensión (`domains/*/extensions.ts`) en lugar de copiar vistas completas.
-3. Los archivos canónicos del frontend se mantienen en `scripts/frontend-sync-manifest.txt`.
-4. No editar directamente en SaaS los archivos canónicos del manifest.
-
-Checklist operativo:
-1. Implementar en `core/frontend/src` (o en SaaS si es premium puro).
-2. Revisar drift:
-- `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1`
-3. Si hay drift en archivos canónicos, aplicar sync:
-- `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply`
-4. Validar frontend en ambos stacks (Docker):
-- `cd core`
-- `docker compose exec frontend npm run lint`
-- `docker compose exec frontend npm run typecheck`
-- `cd ..`
-- `docker compose exec saas_frontend npm run lint`
-- `docker compose exec saas_frontend npm run typecheck`
-5. Commits en orden:
-- primero commit en `core`,
-- luego commit en repo raíz con actualización del submódulo + cambios SaaS/docs.
-
-## Playbooks de incidencia
-
-### 0) Checks fallan tras reiniciar contexto/sesión
-Síntoma:
-- `eslint: not found`, `prettier: not found`, `No module named ruff` o `No module named mypy`.
-
-Causa común:
-- Contenedores desactualizados o dependencias no disponibles dentro del contenedor actual.
-
-Recuperación rápida:
-1. Rebuild completo en orden:
-- `cd core`
-- `docker compose up --build -d`
-- `cd ..`
-- `docker compose up --build -d`
-2. Reinstalar dependencias frontend en contenedores:
-- `docker compose exec saas_frontend npm install`
-- `cd core`
-- `docker compose exec frontend npm install`
-3. Reintentar matriz oficial de checks:
-- `docs/operations/dev-setup.md` (sección `Chequeos de calidad`).
-
-Nota PowerShell:
-- No usar `&&` para encadenar comandos.
-- Usar secuencia compatible: `cmd1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; cmd2`.
-
-### 1) `core_backend` en `Exited`
-Síntoma:
-- `core_backend` no aparece `Up` en `core/docker compose ps`.
-
-Diagnóstico:
-1. `cd core`
-2. `docker compose ps -a`
-3. `docker compose logs --tail 200 backend`
-
-Causa común:
-- Credenciales DB incorrectas en `core/backend/.env` (ejemplo: quedó `saas` en vez de `core`).
-
-Corrección esperada en `core/backend/.env`:
-- `DB_NAME=core`
-- `DB_USER=core`
-- `DB_PASSWORD=core`
-- `DB_HOST=db`
-- `DB_PORT=5432`
-
-Aplicar y recrear backend:
-- `docker compose up -d --force-recreate backend`
-
-### 2) Error CORS desde `http://localhost:5174` a `http://localhost:8000`
-Síntoma:
-- En navegador: preflight bloqueado, sin `Access-Control-Allow-Origin`.
-
-Diagnóstico:
-1. Revisar `core/backend/.env`:
-- `CORS_ALLOWED_ORIGINS`
-2. Ver logs:
-- `cd core`
-- `docker compose logs --tail 100 backend`
-
-Corrección típica:
-- `CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174`
-
-Reiniciar backend core:
-- `cd core`
-- `docker compose up -d --force-recreate backend`
-
-Verificación preflight (ejemplo):
+## Startup Order
+1. Start `core`:
 ```bash
-curl -i -X OPTIONS "http://localhost:8000/api/net-worth/liabilities/" \
-  -H "Origin: http://localhost:5174" \
-  -H "Access-Control-Request-Method: GET" \
-  -H "Access-Control-Request-Headers: content-type"
+cd core
+docker compose up --build -d
 ```
-Debe incluir:
-- `access-control-allow-origin: http://localhost:5174`
+2. Start `saas`:
+```bash
+cd ..
+docker compose up --build -d
+```
 
-### 3) Servicio `Up` pero endpoint no responde
-Diagnóstico:
+## Standard Diagnostics
 1. `docker compose ps`
-2. `docker compose logs --tail 200 <servicio>`
-3. Verificar puerto ocupado por otro proceso/stack.
+2. `docker compose logs --tail 100 <service>`
+3. Optional deeper checks:
+   - `docker compose ps -a`
+   - `docker compose logs --tail 200 <service>`
 
-Acción:
-1. Reintentar recreación del servicio:
-- `docker compose up -d --force-recreate <servicio>`
-2. Si persiste, revisar `.env` y colisiones de puertos.
+## Expected Local Endpoints
+1. Core frontend: `http://localhost:5173`
+2. Core backend: `http://localhost:8000`
+3. SaaS frontend: `http://localhost:5174`
+4. SaaS backend: `http://localhost:8001`
 
-### 4) Frontend no refleja cambios
-Diagnóstico/acción:
-1. Confirmar contenedor frontend `Up`.
-2. Revisar logs frontend:
-- `docker compose logs --tail 100 saas_frontend`
-- `cd core`
-- `docker compose logs --tail 100 frontend`
-3. Hard refresh del navegador (`Ctrl+F5`).
+## Common Issues
+1. Service exited:
+   - inspect `docker compose ps -a`
+   - inspect logs with `--tail 200`
+2. CORS failure:
+   - verify `CORS_ALLOWED_ORIGINS`
+   - recreate backend service
+3. Frontend not updating:
+   - inspect frontend logs
+   - hard refresh browser
+4. Auth throttling (`429`):
+   - inspect backend logs
+   - adjust throttle env vars for local
 
-### 5) Bloqueos de autenticación por rate limit (`429`)
-Síntoma:
-- Login/register/refresh/core-link devuelven `429 Too Many Requests`.
+## Safe Operations
+1. Allowed by default:
+   - `docker compose ps`
+   - `docker compose logs --tail N <service>`
+2. Avoid by default:
+   - `docker compose down -v`
+3. Never delete DB volumes unless explicitly authorized.
 
-Diagnóstico:
-1. Revisar logs backend:
-- `docker compose logs --tail 200 saas_backend`
-- `cd core`
-- `docker compose logs --tail 200 backend`
-2. Verificar scopes de throttle configurados:
-- `THROTTLE_AUTH_LOGIN`
-- `THROTTLE_AUTH_REFRESH`
-- `THROTTLE_AUTH_REGISTER`
-- `THROTTLE_AUTH_CORE_LINK`
-- `THROTTLE_PREMIUM_API`
-
-Acción:
-1. Ajustar temporalmente límites en `.env` para entorno local.
-2. Recrear backend afectado:
-- `docker compose up -d --force-recreate saas_backend`
-- `cd core`
-- `docker compose up -d --force-recreate backend`
-3. Confirmar que desaparece el `429` en el flujo objetivo.
-
-### 6) Auditoría de eventos auth/linking
-Eventos auditados (logger `auth.audit`):
-1. `login` (`success|failed`)
-2. `core_account_link` (`success|failed`)
-3. `core_account_unlink` (`success`)
-
-Revisión rápida:
-1. `docker compose logs --tail 200 saas_backend | findstr auth.audit`
-2. `cd core`
-3. `docker compose logs --tail 200 backend | findstr auth.audit`
-
-### 7) Dashboard de métricas auth (core vs saas)
-Endpoints:
-1. Core: `GET http://localhost:8000/api/auth/ops/metrics/`
-2. SaaS: `GET http://localhost:8001/api/auth/ops/metrics/`
-
-Uso operativo rápido (requiere token):
-1. Obtener token:
-- `POST /api/auth/token/`
-2. Consultar métricas:
-- `curl -H "Authorization: Bearer <access>" http://localhost:8000/api/auth/ops/metrics/`
-- `curl -H "Authorization: Bearer <access>" http://localhost:8001/api/auth/ops/metrics/`
-
-Chequeo de salida de modo transitorio:
-1. `GET /api/auth/mode/` en ambos stacks debe devolver `exit_ready: true`.
-2. Si `exit_ready` es `false`, revisar `exit_criteria` para localizar el bloqueo.
-
-### 8) Troubleshooting RBAC SaaS (Hito 05B)
-Síntoma:
-- `403 permission_denied` en endpoints admin/premium.
-- `403 subscription_blocked` en endpoints premium.
-- Cambios de rol/estado o borrado de usuarios no aplican.
-
-Diagnóstico:
-1. Confirmar rol actual del usuario:
-- `GET http://localhost:8001/api/auth/me/` (campo `role`).
-2. Confirmar estado de suscripcion:
-- `GET http://localhost:8001/api/auth/subscription/` (campo `status`).
-3. Confirmar métricas RBAC operativas:
-- `GET http://localhost:8001/api/auth/ops/metrics/` (bloque `rbac`).
-4. Revisar auditoría admin:
-- `docker compose logs --tail 200 saas_backend | findstr saas_admin_`
-
-Acciones rápidas:
-1. Si `permission_denied`:
-- Verificar que el usuario sea `saas_admin` para endpoints `/api/admin/users/*`.
-2. Si `subscription_blocked`:
-- Verificar suscripción en `trial|active`.
-3. Si falla degradar/desactivar/borrar admin:
-- Validar que no sea el último `saas_admin` activo (regla de dominio).
-4. Si hay abuso o picos:
-- Ajustar `THROTTLE_SAAS_ADMIN_API` y recrear backend SaaS.
-
-## Apagado
-1. Detener `saas`:
-- `cd ..`
-- `docker compose down`
-2. Detener `core`:
-- `cd core`
-- `docker compose down`
-
-## Operaciones seguras
-1. Permitido para diagnóstico:
-- `docker compose ps`
-- `docker compose ps -a`
-- `docker compose logs --tail N <servicio>`
-2. Evitar por defecto:
-- `docker compose down -v`
-3. Regla del proyecto:
-- No borrar volúmenes de base de datos sin autorización explícita.
-
-## Comandos útiles
-1. Ver estado completo `core`:
-- `cd core`
-- `docker compose ps`
-2. Ver estado completo `saas`:
-- `cd ..`
-- `docker compose ps`
-3. Logs backend core:
-- `cd core`
-- `docker compose logs --tail 200 backend`
-4. Logs backend saas:
-- `cd ..`
-- `docker compose logs --tail 200 saas_backend`
-
-## Referencias
-1. Setup y matriz de calidad: `docs/operations/dev-setup.md`
-2. Arquitectura de plataforma: `docs/architecture/architecture.md`
-3. Arquitectura funcional: `docs/architecture/product-architecture.md`
-4. Recovery plan de datos: `docs/operations/recovery-plan.md`
+## References
+1. `docs/operations/dev-setup.md`
+2. `docs/architecture/architecture.md`
+3. `docs/architecture/product-architecture.md`
+4. `docs/operations/recovery-plan.md`

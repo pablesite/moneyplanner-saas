@@ -1,29 +1,29 @@
-# Convenciones De Calidad De Codigo
+﻿# Code Quality Conventions
 
-## Objetivo
-Definir reglas minimas de legibilidad y control de complejidad para `core` y `saas`.
+## Objective
+Define quality standards enforced locally and in CI for both stacks.
 
-## Comentarios
-1. Escribir comentarios solo cuando aportan contexto no obvio.
-2. Priorizar comentarios de "por que" y evitar comentarios de "que" triviales.
-3. Mantener comentarios breves, actualizados y consistentes con el codigo.
-4. Usar espaciado estandar en comentarios de linea (`// comentario`, `# comentario`).
+## Baseline Rules
+1. Keep functions focused and avoid hidden side effects.
+2. Keep comments meaningful and contextual.
+3. Favor explicit types and domain models over `any`.
+4. Reduce duplication between `core` and `saas` with clear boundaries.
 
-## Complejidad Maxima Por Funcion
-1. Backend Python (`ruff` / `mccabe`):
-   - Maximo: `20`
-   - Configurado en `backend/pyproject.toml` y `core/backend/pyproject.toml`.
-2. Frontend TypeScript/Vue (`eslint`):
-   - Maximo: `20`
-   - Configurado en `frontend/.eslintrc.cjs` y `core/frontend/.eslintrc.cjs`.
+## Backend
+1. Lint and format with `ruff`.
+2. Type-check with `mypy`.
+3. Keep business rules in service layer.
+4. Keep HTTP error shape consistent.
 
-## Encoding De Archivos
-1. Todos los archivos de texto del repositorio se guardan en `UTF-8`.
-2. Si aparecen caracteres corruptos (`�`, `?` en tildes/eñes), convertir el archivo afectado a `UTF-8` antes de seguir editando.
-3. Regla automática de editor en raíz: `.editorconfig` (`charset = utf-8`).
+## Frontend
+1. Lint with `eslint`.
+2. Format with `prettier`.
+3. Type-check with `vue-tsc`.
+4. Keep domain-driven structure under `src/domains/*`.
 
-## Aplicacion
-1. CI valida estas reglas en:
-   - `.github/workflows/quality-saas.yml`
-   - `core/.github/workflows/quality-core.yml`
-2. Pre-commit mantiene validacion rapida local.
+## Required Checks
+Run checks in Docker for the affected stack(s) before merge.
+
+## CI References
+1. SaaS: `.github/workflows/quality-saas.yml`
+2. Core: `core/.github/workflows/quality-core.yml`

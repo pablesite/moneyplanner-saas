@@ -1,55 +1,22 @@
-# Frontend CSS Workflow (Tailwind + Tokens)
+﻿# Frontend CSS Workflow
 
-## Objetivo
-Definir un flujo unico para construir UI nueva sin drift entre `core/frontend` y `frontend` (SaaS).
+## Objective
+Keep CSS changes predictable and synchronized between `core` and `saas`.
 
-## Fuente canonica de estilos
-1. Tokens y estilos base:
-- `core/frontend/src/styles/app.css`
-- `frontend/src/styles/app.css`
-2. Primitivas compartidas (`@layer components`):
-- `core/frontend/src/styles/tailwind.css`
-- `frontend/src/styles/tailwind.css`
-3. Legacy neutralizado (no usar como fuente de estilos):
-- `core/frontend/src/style.css`
-- `frontend/src/style.css`
+## Canonical Source
+1. Base frontend styles live in `core/frontend/src`.
+2. SaaS extends behavior/UI through domain extension points.
 
-## Orden de decision para estilos nuevos
-1. Reusar primero una clase existente `ui-*` o `nw-*`.
-2. Si no existe, crear una nueva clase compartida en `src/styles/tailwind.css` dentro de `@layer components`.
-3. Solo si la regla es estrictamente local y no reutilizable, dejar estilo en el componente.
+## Rules
+1. Implement base reusable style changes in `core` first.
+2. Sync canonical frontend files to SaaS with the sync script.
+3. Avoid duplicated scoped styles when shared classes already exist.
 
-## Reglas obligatorias
-1. No agregar estilos inline (`style="..."`) para layout visual estable.
-2. Evitar `style scoped` para patrones base reutilizables (botones, formularios, tablas, modales, headers, charts).
-3. `@apply` solo con utilities de Tailwind o clases definidas en `@layer`:
-- Correcto: `@apply mt-6 text-sm text-white/75;`
-- Incorrecto: `@apply section ...;` si `section` no existe en Tailwind ni en `@layer`.
-4. Mantener naming consistente:
-- `ui-*` para primitivas transversales de UI.
-- `nw-*` para net-worth.
-- `ui-people-*` para dominio people.
-5. Si una clase nueva se agrega en `core/frontend`, replicarla en `frontend` dentro de la misma tarea.
+## Sync Commands
+1. Check drift:
+   - `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1`
+2. Apply sync:
+   - `powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Apply`
 
-## Flujo de trabajo recomendado (nuevo modulo o vista)
-1. Implementar base en `core/frontend` cuando sea funcionalidad OSS.
-2. Crear/ajustar primitivas en `core/frontend/src/styles/tailwind.css`.
-3. Sincronizar a SaaS (`frontend`) respetando contratos de extension.
-4. Validar en Docker:
-- `docker compose exec frontend npm run lint` (en `core/`)
-- `docker compose exec frontend npm run typecheck` (en `core/`)
-- `docker compose exec saas_frontend npm run lint` (raiz)
-- `docker compose exec saas_frontend npm run typecheck` (raiz)
-
-## Checklist rapido antes de cerrar un cambio UI
-1. No hay nuevos `style scoped` para patrones reutilizables.
-2. No hay `style="..."` para reglas visuales permanentes.
-3. Las clases nuevas estan en `tailwind.css` y con prefijo de dominio correcto.
-4. `core` y `saas` quedan alineados para ese cambio.
-5. `lint` y `typecheck` pasan en ambos frontends.
-
-## Referencias
-1. `docs/frontend/frontend-visual-guide.md`
-2. `docs/architecture/core-saas-boundaries.md`
-3. `docs/operations/dev-setup.md`
-
+## Validation
+After sync, run frontend checks in both stacks.
