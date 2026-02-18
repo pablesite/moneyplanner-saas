@@ -7,7 +7,7 @@ Keep documentation centralized, consistent, and easy to navigate.
 1. `docs/architecture/`: platform boundaries, technical architecture, and API contracts.
 2. `docs/operations/`: setup, runbook, recovery, and release checklists.
 3. `docs/roadmap/`: global roadmap, milestone plans, and release summaries.
-4. `docs/frontend/`: visual/UI system and frontend CSS workflow.
+4. `docs/frontend/`: visual/UI system, CSS workflow, and UX iteration playbook.
 5. `docs/standards/`: coding standards, glossary, and task templates.
 
 ## Canonical Documents
