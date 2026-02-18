@@ -48,6 +48,7 @@ Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 Avance actual:
 - Calidad automatizada activa en CI para `core` y `saas` (lint + formato + typecheck).
 - Tests backend y frontend unitarios integrados en pipelines de calidad para ambos stacks.
+- Cobertura backend/frontend integrada en pipelines de calidad con umbrales iniciales de baseline.
 
 Referencia:
 - `docs/roadmap/roadmap-hito-04-refactor.md`

@@ -155,6 +155,7 @@ Estado: en progreso.
   - [ ] tests de integracion API dual (`core` + `saas`) ampliados.
   - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
   - Avance: CI ejecuta tests backend en `saas` (`python manage.py test memberships`) y en `core` (`python manage.py test accounts net_worth core`) dentro de `quality-saas.yml` y `quality-core.yml`.
+  - Avance: cobertura backend integrada en CI con `coverage` y umbral inicial (`saas` fail-under=80, `core` fail-under=50) para evitar regresiones mientras se amplian suites.
 - [ ] Frontend:
   - [ ] tests unitarios de componentes y stores.
   - Avance: suite inicial Vitest + Vue Test Utils añadida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
@@ -168,10 +169,12 @@ Estado: en progreso.
   - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecución validada en contenedores (`npm run test:e2e -- --project=chromium`).
   - Avance: spec real de login/patrimonio en SaaS preparada en `frontend/e2e/login-networth-real.spec.ts`, habilitable con `E2E_REAL_API=1` (por defecto se mantiene la suite mockeada estable).
   - Avance: CI ejecuta tests unitarios frontend en `saas` y `core` con `npm run test:unit` en `quality-saas.yml` y `quality-core.yml`.
+  - Avance: cobertura frontend integrada en CI con Vitest (`npm run test:coverage`) y umbrales iniciales globales (statements/lines 15, branches 40, functions 30) para baseline de endurecimiento.
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
   - [ ] 100% cobertura en modulos criticos (`memberships/services`, sincronizacion ownership-links).
+  - Avance baseline actual (medicion en contenedor): `saas backend` 81%, `core backend` 53%, `saas frontend` 25.21%, `core frontend` 17.61%.
 
 ### Fase 5: Documentacion Y Release
 Estado: pendiente.
@@ -205,5 +208,4 @@ Estado: pendiente.
 4. Fase 2 (frontend/UI)
 5. Fase 4 (testing profundo)
 6. Fase 5 (documentacion + release)
-
 
