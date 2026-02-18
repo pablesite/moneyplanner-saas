@@ -175,11 +175,12 @@ Estado: en progreso.
   - [x] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
   - [ ] 100% cobertura en modulos criticos (`memberships/services`, sincronizacion ownership-links).
-  - Avance baseline actual (medicion en contenedor): `saas backend` 93%, `core backend` 86%, `saas frontend` 52.32%, `core frontend` 39.29%.
+  - Avance baseline actual (medicion en contenedor): `saas backend` 93%, `core backend` 86%, `saas frontend` 54.50%, `core frontend` 39.29%.
   - Avance: cobertura de servicios criticos backend elevada (`memberships/services` 99% y `core/net_worth/services` cobertura completa) mediante suites unitarias en `backend/memberships/tests.py` y `core/backend/net_worth/tests.py`.
   - Avance: suites unitarias frontend ampliadas para utilidades transversales (`format`, `errors`, `auth/session`, `people/errors`) en `frontend/src/**/__tests__` y `core/frontend/src/**/__tests__`.
   - Avance: suites unitarias frontend ampliadas para composables criticos de orquestacion (`domains/net-worth/composables.ts` en `frontend`+`core/frontend` y `domains/people/composables.ts` en `frontend`).
   - Avance: suites unitarias frontend ampliadas para stores criticos (`frontend/src/domains/people/store.ts` y `core/frontend/src/domains/net-worth/store.ts`) cubriendo ramas CRUD, errores y wrappers de archivado.
+  - Avance: suite de `frontend/src/domains/net-worth/store.ts` ampliada para ramas premium (`syncOwnershipLink` en create/update asset/liability), snapshots, settings y manejo de errores, elevando cobertura del modulo a 96.62%.
 
 ### Fase 5: Documentacion Y Release
 Estado: pendiente.
