@@ -1,4 +1,4 @@
-﻿# Global Product Roadmap
+# Global Product Roadmap
 
 ## Objective
 Track high-level product milestones from completed work to upcoming priorities.
@@ -26,7 +26,7 @@ Current validated baseline:
 4. Repo foundation completed (public `core`, release policy, submodule wiring).
 
 Reference:
-- `docs/roadmap/roadmap-hito-04-refactor.md`
+- `docs/roadmap/roadmap-milestone-04-refactor.md`
 - `docs/roadmap/release-summary-v2.md`
 
 ### Milestone 05 (Completed)
@@ -56,3 +56,4 @@ Remaining functional modules:
 
 ### Milestone 11 (Continuous)
 Iterative scaling: observability, performance, security, UX.
+

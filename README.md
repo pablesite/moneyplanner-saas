@@ -61,5 +61,6 @@ powershell -ExecutionPolicy Bypass -File scripts/sync_frontend_from_core.ps1 -Ap
 ## Architecture
 - Global product roadmap: `docs/roadmap/roadmap.md`.
 - Platform boundaries contract: `docs/architecture/architecture.md`.
-- Current refactor roadmap (Milestone 04): `docs/roadmap/roadmap-hito-04-refactor.md`.
-- Core/SaaS split roadmap (Milestone 02): `docs/roadmap/roadmap-hito-02-core-saas.md`.
+- Current refactor roadmap (Milestone 04): `docs/roadmap/roadmap-milestone-04-refactor.md`.
+- Core/SaaS split roadmap (Milestone 02): `docs/roadmap/roadmap-milestone-02-core-saas.md`.
+

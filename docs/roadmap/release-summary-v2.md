@@ -52,8 +52,9 @@
 - `docs/architecture/architecture.md`
 - `docs/operations/release-checklist.md`
 - `docs/operations/recovery-plan.md`
-- `docs/roadmap/roadmap-hito-04-refactor.md`
+- `docs/roadmap/roadmap-milestone-04-refactor.md`
 - `docs/roadmap/roadmap.md`
 
 ## Remaining Items For Milestone 04 Closure
 - No open technical items remain for Milestone 04.
+

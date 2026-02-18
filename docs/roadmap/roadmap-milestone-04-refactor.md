@@ -32,3 +32,4 @@ Complete a broad refactor across `core` and `saas` with strong quality gates, co
 - [x] UI consistency documented and applied.
 - [x] Frontend evolution without structural duplication.
 - [x] Code simplified with contextual comments where needed.
+

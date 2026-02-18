@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Objective
 This repository contains two stacks that are developed in parallel:
@@ -78,4 +78,5 @@ CI reference:
 3. Development setup: `docs/operations/dev-setup.md`
 4. Platform architecture: `docs/architecture/architecture.md`
 5. Product functional architecture: `docs/architecture/product-architecture.md`
-6. Current release roadmap: `docs/roadmap/roadmap-hito-04-refactor.md`
+6. Current release roadmap: `docs/roadmap/roadmap-milestone-04-refactor.md`
+

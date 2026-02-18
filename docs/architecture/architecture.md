@@ -28,4 +28,5 @@ Define platform boundaries and responsibilities between `core` and `saas`.
 ## Related Docs
 1. `docs/architecture/api-contracts.md`
 2. `docs/architecture/product-architecture.md`
-3. `docs/roadmap/roadmap-hito-04-refactor.md`
+3. `docs/roadmap/roadmap-milestone-04-refactor.md`
+

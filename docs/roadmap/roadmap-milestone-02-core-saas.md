@@ -11,3 +11,4 @@ Separate OSS base capabilities from premium/private capabilities.
 
 ## Outcome
 Clear dual-track model enabling open-source evolution and private premium extension.
+

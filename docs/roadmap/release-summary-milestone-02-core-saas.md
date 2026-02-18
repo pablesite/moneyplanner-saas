@@ -36,7 +36,7 @@
 - Phase 2: completed.
 - Phase 3: completed.
 - Phase 4: completed.
-- Reference: `docs/roadmap/roadmap-hito-02-core-saas.md`.
+- Reference: `docs/roadmap/roadmap-milestone-02-core-saas.md`.
 
 ## Operations
 - Rollout checklist: `docs/operations/release-checklist.md`.
@@ -45,3 +45,4 @@
 ## Residual Risks
 - Integration tests beyond `memberships` still need to be expanded as more premium domains are added.
 - Any future `core` contract change requires revalidation with the rollout checklist.
+

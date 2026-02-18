@@ -67,3 +67,4 @@ Identity separation (cross-validation):
 ## Residual Risks
 - Local setup still uses short default `DJANGO_SECRET_KEY` (security warning); define a strong secret in `.env`.
 - Future work (out of Milestone 05 scope): automate visual dashboards sourced from `/api/auth/ops/metrics/`.
+
