@@ -44,6 +44,7 @@ Current iteration:
 3. Phase context moved to `Inicio` while keeping module navigation stable.
 4. Navigation shell refined: menu now works as an overlay drawer and account context is shown in header.
 5. Header account block upgraded (avatar + role/plan) and drawer interaction improved (ESC close + body scroll lock).
+6. Drawer visual hierarchy polished (brand block, section heading, iconized nav items, stronger active state).
 
 ### Milestone 07
 First production demo release.

@@ -7,6 +7,7 @@ import { getAccessToken } from '@/domains/auth/session';
 
 type NavItem = {
   id: string;
+  icon: string;
   label: string;
   hint: string;
   to: string;
@@ -22,15 +23,16 @@ const hasToken = computed(() => !!getAccessToken());
 const isLoginRoute = computed(() => route.name === 'login');
 const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [
-    { id: 'home', label: 'Inicio', hint: 'Plan guiado', to: '/inicio' },
-    { id: 'net-worth', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
-    { id: 'account', label: 'Cuenta', hint: 'Perfil y seguridad', to: '/account' },
-    { id: 'settings', label: 'Settings', hint: 'Preferencias y datos', to: '/data' },
+    { id: 'home', icon: 'IN', label: 'Inicio', hint: 'Plan guiado', to: '/inicio' },
+    { id: 'net-worth', icon: 'PT', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
+    { id: 'account', icon: 'CU', label: 'Cuenta', hint: 'Perfil y seguridad', to: '/account' },
+    { id: 'settings', icon: 'ST', label: 'Settings', hint: 'Preferencias y datos', to: '/data' },
   ];
 
   if (capabilities.people) {
     baseItems.splice(2, 0, {
       id: 'people',
+      icon: 'PP',
       label: 'Personas',
       hint: 'Familia y titulares',
       to: '/people',
@@ -124,6 +126,13 @@ onBeforeUnmount(() => {
 
     <aside class="ui-shell-sidebar" :class="{ 'ui-shell-sidebar-open': sidebarOpen }">
       <div class="ui-shell-sidebar-top">
+        <div class="ui-shell-brand">
+          <div class="ui-shell-brand-mark">MP</div>
+          <div class="ui-shell-brand-text">
+            <strong>Moneyplanner</strong>
+            <span>Coach financiero</span>
+          </div>
+        </div>
         <button
           class="icon-btn ui-shell-icon-btn"
           type="button"
@@ -135,6 +144,7 @@ onBeforeUnmount(() => {
       </div>
 
       <nav class="ui-shell-nav" aria-label="Navegacion principal">
+        <div class="ui-shell-nav-section">Navegacion</div>
         <RouterLink
           v-for="item in navItems"
           :key="item.id"
@@ -144,8 +154,11 @@ onBeforeUnmount(() => {
           active-class="ui-shell-link-active"
           @click="closeSidebar"
         >
-          <span class="ui-shell-link-label">{{ item.label }}</span>
-          <span class="ui-shell-link-hint">{{ item.hint }}</span>
+          <span class="ui-shell-link-icon" aria-hidden="true">{{ item.icon }}</span>
+          <span class="ui-shell-link-copy">
+            <span class="ui-shell-link-label">{{ item.label }}</span>
+            <span class="ui-shell-link-hint">{{ item.hint }}</span>
+          </span>
         </RouterLink>
       </nav>
     </aside>
@@ -215,22 +228,67 @@ onBeforeUnmount(() => {
 }
 
 .ui-shell-sidebar-top {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ui-shell-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-shell-brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ui-shell-brand-text {
+  display: grid;
+  line-height: 1.1;
+}
+
+.ui-shell-brand-text strong {
+  font-size: 13px;
+}
+
+.ui-shell-brand-text span {
+  font-size: 11px;
+  color: var(--muted);
 }
 
 .ui-shell-nav {
   display: grid;
-  gap: 8px;
+  gap: 9px;
+}
+
+.ui-shell-nav-section {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 2px 2px 4px;
 }
 
 .ui-shell-link {
   display: grid;
-  gap: 4px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 10px 10px;
   color: var(--text);
   text-decoration: none;
   transition:
@@ -248,6 +306,25 @@ onBeforeUnmount(() => {
 .ui-shell-link-active {
   border-color: rgba(45, 212, 191, 0.7);
   background: rgba(45, 212, 191, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.16);
+}
+
+.ui-shell-link-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ui-shell-link-copy {
+  display: grid;
+  line-height: 1.1;
 }
 
 .ui-shell-link-label {
