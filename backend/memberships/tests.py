@@ -24,13 +24,19 @@ from .rbac_services import assign_role, get_or_create_access_profile
 from .services import (
     _build_unique_member_name,
     _default_member_name_for_user,
+    assert_member_can_be_deleted,
     assert_member_belongs_to_user,
+    assert_ownership_can_be_deleted,
+    assert_ownership_can_be_updated,
+    create_ownership,
     ensure_primary_family_member_for_user,
+    delete_ownership,
     get_ownership_for_user,
     member_is_in_use,
     resolve_ownership_for_sync,
     save_ownership,
     sync_ownership_link,
+    update_ownership,
     validate_ownership_payload,
     validate_ownership_write_payload,
     validate_split_percent,
@@ -634,6 +640,117 @@ class OwnershipServicesUnitTests(TestCase):
                 user=named_user, kind=Ownership.Kind.INDIVIDUAL, member=created_member
             ).exists()
         )
+
+        # Existing path should return the same member and ensure individual ownership.
+        existing = ensure_primary_family_member_for_user(user=named_user)
+        self.assertEqual(existing.id, created_member.id)
+
+    def test_default_member_name_falls_back_to_titular(self):
+        fallback_user = get_user_model().objects.create_user(
+            username="tmp_no_data",
+            password="pass1234",
+            email="tmp@example.com",
+        )
+        fallback_user.username = ""
+        fallback_user.email = ""
+        fallback_user.first_name = ""
+        fallback_user.last_name = ""
+        fallback_user.save(update_fields=["username", "email", "first_name", "last_name"])
+
+        self.assertEqual(_default_member_name_for_user(user=fallback_user), "Titular")
+
+    def test_build_unique_member_name_increments_suffix_until_available(self):
+        FamilyMember.objects.create(
+            user=self.user, name="Titular", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        FamilyMember.objects.create(
+            user=self.user, name="Titular (2)", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        self.assertEqual(_build_unique_member_name(user=self.user, base_name="Titular"), "Titular (3)")
+
+    def test_save_ownership_create_individual_skips_shared_splits(self):
+        created = save_ownership(
+            user=self.user,
+            instance=None,
+            validated_data={
+                "kind": Ownership.Kind.INDIVIDUAL,
+                "member": self.adult,
+            },
+        )
+        self.assertEqual(created.kind, Ownership.Kind.INDIVIDUAL)
+        self.assertEqual(created.splits.count(), 0)
+
+    def test_save_ownership_update_without_splits_keeps_existing(self):
+        shared = Ownership.objects.create(user=self.user, kind=Ownership.Kind.SHARED, member=None)
+        OwnershipSplit.objects.create(ownership=shared, member=self.adult, percent="100.00")
+
+        updated = save_ownership(
+            user=self.user,
+            instance=shared,
+            validated_data={"kind": Ownership.Kind.SHARED},
+        )
+        self.assertEqual(updated.splits.count(), 1)
+
+    def test_save_ownership_update_individual_with_splits_ignores_bulk_create(self):
+        individual = Ownership.objects.create(
+            user=self.user, kind=Ownership.Kind.INDIVIDUAL, member=self.adult
+        )
+        save_ownership(
+            user=self.user,
+            instance=individual,
+            validated_data={
+                "kind": Ownership.Kind.INDIVIDUAL,
+                "splits": [{"member_id": self.adult.id, "percent": "100.00"}],
+            },
+        )
+        self.assertEqual(individual.splits.count(), 0)
+
+    def test_create_update_delete_ownership_wrappers(self):
+        other_adult = FamilyMember.objects.create(
+            user=self.user, name="Wrapper adult", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        created = create_ownership(
+            user=self.user,
+            validated_data={
+                "kind": Ownership.Kind.SHARED,
+                "member": None,
+                "splits": [
+                    {"member_id": self.adult.id, "percent": "60.00"},
+                    {"member_id": other_adult.id, "percent": "40.00"},
+                ],
+            },
+        )
+        self.assertEqual(created.kind, Ownership.Kind.SHARED)
+
+        updated = update_ownership(
+            ownership=created,
+            user=self.user,
+            validated_data={
+                "kind": Ownership.Kind.SHARED,
+                "splits": [{"member_id": self.adult.id, "percent": "100.00"}],
+            },
+        )
+        self.assertEqual(updated.splits.count(), 1)
+
+        delete_ownership(ownership=updated)
+        self.assertFalse(Ownership.objects.filter(id=updated.id).exists())
+
+    def test_member_and_ownership_guards_allow_non_used_shared(self):
+        member = FamilyMember.objects.create(
+            user=self.user, name="Not used member", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        shared = Ownership.objects.create(user=self.user, kind=Ownership.Kind.SHARED, member=None)
+        OwnershipSplit.objects.create(ownership=shared, member=member, percent="100.00")
+
+        # member has ownership candidate ids but no links
+        self.assertFalse(member_is_in_use(member))
+        # deleting member blocked because appears in shared split
+        with self.assertRaises(DRFValidationError):
+            assert_member_can_be_deleted(member)
+
+        # shared ownership not in use should be editable/deletable
+        assert_ownership_can_be_updated(shared)
+        assert_ownership_can_be_deleted(shared)
 
 
 class SaasAuthRoadmap03ApiTests(APITestCase):
