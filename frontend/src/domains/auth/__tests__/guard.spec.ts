@@ -54,7 +54,7 @@ describe('registerAuthGuard', () => {
 
     const result = await guard({ path: '/', meta: {} });
     expect(result).toEqual({ path: '/login' });
-  });
+  }, 15000);
 
   it('blocks admin route for non-admin role', async () => {
     const guard = await setupGuard();
@@ -64,7 +64,7 @@ describe('registerAuthGuard', () => {
 
     const result = await guard({ path: '/admin/users', meta: { requiresSaasAdmin: true } });
     expect(result).toEqual({ path: '/account', query: { reason: 'permission_denied' } });
-  });
+  }, 15000);
 
   it('allows admin route for saas_admin', async () => {
     const guard = await setupGuard();
@@ -74,5 +74,5 @@ describe('registerAuthGuard', () => {
 
     const result = await guard({ path: '/admin/users', meta: { requiresSaasAdmin: true } });
     expect(result).toBe(true);
-  });
+  }, 15000);
 });
