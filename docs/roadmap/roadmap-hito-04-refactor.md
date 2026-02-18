@@ -133,7 +133,7 @@ Estado: completada.
   - Avance: `src/style.css` (core/SaaS) queda neutralizado para evitar conflicto con estilos legacy de Vite; fuente canonica de estilos queda en `src/styles/app.css` + `src/styles/tailwind.css`.
 
 ### Fase 3: Calidad De Codigo (Linters + Reglas)
-Estado: en progreso.
+Estado: completada.
 
 - [x] Backend:
   - [x] `ruff` (lint + formato)
@@ -154,6 +154,7 @@ Estado: en progreso.
   - [ ] tests API por endpoint critico.
   - [ ] tests de integracion API dual (`core` + `saas`) ampliados.
   - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
+  - Avance: CI ejecuta tests backend en `saas` (`python manage.py test memberships`) y en `core` (`python manage.py test accounts net_worth core`) dentro de `quality-saas.yml` y `quality-core.yml`.
 - [ ] Frontend:
   - [ ] tests unitarios de componentes y stores.
   - Avance: suite inicial Vitest + Vue Test Utils añadida en `core/frontend` y `frontend` para componentes `ItemCategoryHeader`, `ItemSubgroupHeader` y `ItemDisplayRow`.
@@ -166,6 +167,7 @@ Estado: en progreso.
   - Avance: base E2E con Playwright añadida en `frontend` y `core/frontend` (`playwright.config.ts` + `e2e/*.spec.ts`) para flujos `login -> patrimonio` y navegación a `ownership` (SaaS) mediante mocks de API.
   - Avance: runtime Playwright habilitado en Dockerfiles de `frontend` y `core/frontend` (base `node:20-bookworm-slim` + `npx playwright install --with-deps chromium`), con ejecución validada en contenedores (`npm run test:e2e -- --project=chromium`).
   - Avance: spec real de login/patrimonio en SaaS preparada en `frontend/e2e/login-networth-real.spec.ts`, habilitable con `E2E_REAL_API=1` (por defecto se mantiene la suite mockeada estable).
+  - Avance: CI ejecuta tests unitarios frontend en `saas` y `core` con `npm run test:unit` en `quality-saas.yml` y `quality-core.yml`.
 - [ ] Objetivo minimo de cobertura:
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
@@ -203,6 +205,5 @@ Estado: pendiente.
 4. Fase 2 (frontend/UI)
 5. Fase 4 (testing profundo)
 6. Fase 5 (documentacion + release)
-
 
 
