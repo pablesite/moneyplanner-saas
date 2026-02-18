@@ -56,4 +56,4 @@
 - `docs/roadmap/roadmap.md`
 
 ## Pendientes Para Cierre Completo Del Hito 04
-- Fase 0: nuevo repo `core` limpio + repunte de submodulo.
+- Sin pendientes tecnicos abiertos para Hito 04.

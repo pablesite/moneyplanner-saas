@@ -42,7 +42,7 @@ Referencias:
 
 ## Proximos hitos (alto nivel)
 
-### Hito 04 (en progreso)
+### Hito 04 (completado)
 Ejecutar Roadmap 02: refactorizacion y anadir tests + linters.
 
 Avance actual:
@@ -52,7 +52,7 @@ Avance actual:
 - Cobertura backend/frontend integrada en pipelines de calidad con umbrales iniciales de baseline.
 - Baseline validado de cobertura backend (corte 2026-02-18): `saas` 93% y `core` 86%.
 - Baseline validado de cobertura frontend (corte 2026-02-18, post hardening): `saas` 88.29% y `core` 84.73%.
-- Pendiente real para cierre de hito: Fase 0 (nuevo repo `core` limpio).
+- Fase 0 completada: `core` publico operativo, politica de releases definida y submodulo `saas` apuntando al repo publico.
 
 Referencia:
 - `docs/roadmap/roadmap-hito-04-refactor.md`

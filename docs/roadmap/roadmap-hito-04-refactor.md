@@ -19,13 +19,18 @@ Realizar un refactor completo de `core` y `saas`, incluyendo la creacion de un n
 ## Fases
 
 ### Fase 0: Fundacion De Repos
-Estado: pendiente.
+Estado: completada.
 
-- [ ] Crear nuevo repo `core` limpio (sin historial legacy de ownership).
-- [ ] Migrar codigo base actual de `core` al repo nuevo.
-- [ ] Configurar versionado y politica de releases para `core`.
-- [ ] Reapuntar submodulo en `saas` al nuevo repo `core`.
-- [ ] Definir estrategia de deprecacion del repo `core` anterior (privado/archivo).
+- [x] Crear nuevo repo `core` limpio (sin historial legacy de ownership).
+- [x] Migrar codigo base actual de `core` al repo nuevo.
+- [x] Configurar versionado y politica de releases para `core`.
+- [x] Reapuntar submodulo en `saas` al nuevo repo `core`.
+- [x] Definir estrategia de deprecacion del repo `core` anterior (privado/archivo).
+  - Avance: `core` publico operativo en `https://github.com/pablesite/moneyplanner-core` con historial independiente.
+  - Avance: submodulo `core` en `saas` apuntando al repo publico (`.gitmodules`).
+  - Avance: politica de releases/versionado documentada en `core/RELEASING.md`.
+  - Avance: onboarding de contribucion OSS documentado en `core/CONTRIBUTING.md`.
+  - Avance: estrategia de deprecacion definida: repo legacy previo queda en modo archivo/read-only y el flujo activo queda en `moneyplanner-core`.
 
 ### Fase 1: Refactor Arquitectonico Backend
 Estado: completada.
@@ -195,8 +200,8 @@ Estado: completada.
   - Avance (2026-02-18): smoke tecnico ejecutado con `200` en `http://localhost:5173`, `http://localhost:5174`, `http://localhost:8000/api/schema/` y `http://localhost:8001/api/schema/`.
 
 ## Definition Of Done (Release V2)
-- [ ] Nuevo `core` publico operativo como producto base y con repo limpio.
-- [ ] `saas` privado consume el nuevo `core` sin debt legacy.
+- [x] Nuevo `core` publico operativo como producto base y con repo limpio.
+- [x] `saas` privado consume el nuevo `core` sin debt legacy.
 - [x] Linters y type checks bloquean merges en CI.
 - [x] Cobertura minima de tests cumplida y reportada.
 - [x] UI consistente con sistema CSS profesional documentado.
