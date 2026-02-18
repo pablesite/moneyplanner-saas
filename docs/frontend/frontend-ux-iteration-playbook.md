@@ -1,49 +1,57 @@
 # Frontend UX Iteration Playbook
 
 ## Objective
-Provide a repeatable way to start frontend UX work from zero context and iterate quickly on a real mockup.
+Define a generic collaboration method to build and evolve the frontend interface with Codex from zero context.
 
 ## Scope
-Use this workflow when refining global layout, navigation, and UX behavior in `frontend/` (SaaS), then propagate reusable patterns to `core/` when applicable.
+Use this playbook for UI/UX work in `frontend/` (SaaS) and reuse the same approach for `core/` when patterns become stable.
 
-## Working Model (From Zero Context)
-1. Rebuild context first:
-   - Read `AGENTS.md`.
-   - Read `docs/frontend/frontend-visual-guide.md`.
-   - Inspect current shell and routes:
-     - `frontend/src/App.vue`
-     - `frontend/src/router.ts`
-2. Define UX decisions before code:
-   - Navigation model (drawer/sidebar/topbar).
-   - Header content policy (what lives in header vs inside screens).
-   - Progression policy (guided vs locked by phase).
-3. Ship one real mockup slice:
-   - Implement directly in app shell/views (not isolated static mockups).
-   - Prioritize one vertical slice (example: global shell + Inicio).
-4. Iterate in short rounds:
-   - Round A: structure and information hierarchy.
-   - Round B: interaction behavior (open/close, keyboard, focus, mobile).
-   - Round C: visual polish (spacing, active states, copy).
+## Collaboration Model (Codex + Product Owner)
+1. Product owner defines intent:
+   - What UX problem is being solved.
+   - Which screen or flow is in scope.
+   - What level of user should benefit first (basic/intermediate/advanced).
+2. Codex proposes options:
+   - 2-3 structural alternatives.
+   - Tradeoffs for each option.
+   - Recommended direction.
+3. Product owner selects direction.
+4. Codex implements a real in-app mockup (not static-only design).
+5. Product owner gives focused feedback.
+6. Repeat in short cycles until the behavior and visual hierarchy are clear.
 
-## UX Rules Used in Milestone 06
-1. Keep account identity visible in header.
-2. Keep logout inside account screen, not global header.
-3. Use overlay drawer behavior for navigation:
-   - Closed means hidden (no mini-collapsed leftover).
-   - Close on route change, backdrop click, and `Esc`.
-4. Keep progression context in `Inicio`, not in every header.
+## Zero-Context Start Checklist
+1. Read `AGENTS.md`.
+2. Read `docs/frontend/frontend-visual-guide.md`.
+3. Inspect current app shell and routing:
+   - `frontend/src/App.vue`
+   - `frontend/src/router.ts`
+4. Confirm current milestone and UX goal in:
+   - `docs/roadmap/roadmap.md`
+
+## Iteration Framework
+Work in micro-rounds, each round with one clear outcome:
+1. Round A: information architecture.
+   - Sections, labels, and navigation order.
+2. Round B: interaction model.
+   - Open/close behavior, keyboard, focus, responsive behavior.
+3. Round C: visual hierarchy.
+   - Typography scale, spacing rhythm, active/hover/disabled states.
+4. Round D: production hardening.
+   - Accessibility, copy clarity, edge states (loading/empty/error/success).
+
+## Design Principles (Generic)
+1. Prioritize clarity of navigation over visual density.
+2. Keep one primary user action per screen context.
+3. Make progression visible, but avoid locking users without context.
+4. Keep global layout patterns consistent and local decisions screen-specific.
+5. Optimize first for comprehension, then for polish.
 
 ## Implementation Checklist
-1. Shell:
-   - Update `frontend/src/App.vue`.
-   - Confirm mobile/desktop behavior.
-2. Routing:
-   - Add/update routes in `frontend/src/router.ts`.
-3. Screen ownership:
-   - Keep account actions in `frontend/src/views/AccountView.vue`.
-4. Visual hierarchy:
-   - Ensure primary nav labels + secondary hints are readable.
-   - Ensure active/hover states are unambiguous.
+1. Apply structural changes in shell/routes first.
+2. Keep screen responsibilities explicit (no duplicated control logic).
+3. Ensure desktop and mobile behavior are both intentional.
+4. Use small, reviewable commits per iteration.
 
 ## Validation (Docker Only)
 Run from repo root:
@@ -54,10 +62,9 @@ docker compose exec saas_frontend npm run typecheck
 ```
 
 ## Delivery Checklist
-1. Update related docs under `docs/frontend/` and `docs/roadmap/roadmap.md` when milestone progress changes.
+1. Update related docs under `docs/frontend/` and `docs/roadmap/roadmap.md` when scope or direction changes.
 2. Bump root `VERSION` by SemVer impact:
    - `PATCH`: UX/docs/internal adjustments without new public feature.
    - `MINOR`: new UX feature or new user-visible module capability.
    - `MAJOR`: breaking UX/API contract.
 3. Create a Conventional Commit after validation.
-
