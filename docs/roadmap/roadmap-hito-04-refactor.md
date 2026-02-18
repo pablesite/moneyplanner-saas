@@ -172,10 +172,10 @@ Estado: en progreso.
   - Avance: CI ejecuta tests unitarios frontend en `saas` y `core` con `npm run test:unit` en `quality-saas.yml` y `quality-core.yml`.
   - Avance: cobertura frontend integrada en CI con Vitest (`npm run test:coverage`) y umbrales iniciales globales (statements/lines 15, branches 40, functions 30) para baseline de endurecimiento.
 - [ ] Objetivo minimo de cobertura:
-  - [ ] backend >= 85% lineas.
+  - [x] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
   - [ ] 100% cobertura en modulos criticos (`memberships/services`, sincronizacion ownership-links).
-  - Avance baseline actual (medicion en contenedor): `saas backend` 93%, `core backend` 76%, `saas frontend` 25.21%, `core frontend` 17.61%.
+  - Avance baseline actual (medicion en contenedor): `saas backend` 93%, `core backend` 86%, `saas frontend` 25.21%, `core frontend` 17.61%.
   - Avance: cobertura de servicios criticos backend elevada (`memberships/services` 99% y `core/net_worth/services` cobertura completa) mediante suites unitarias en `backend/memberships/tests.py` y `core/backend/net_worth/tests.py`.
 
 ### Fase 5: Documentacion Y Release
