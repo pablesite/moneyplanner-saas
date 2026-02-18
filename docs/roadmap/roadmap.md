@@ -50,7 +50,7 @@ Avance actual:
 - Tests backend y frontend unitarios integrados en pipelines de calidad para ambos stacks.
 - Cobertura backend/frontend integrada en pipelines de calidad con umbrales iniciales de baseline.
 - Baseline actualizado de cobertura backend: `saas` 93% y `core` 86%.
-- Baseline actualizado de cobertura frontend: `saas` 54.50% y `core` 39.29%.
+- Baseline actualizado de cobertura frontend: `saas` 56.87% y `core` 40.12%.
 
 Referencia:
 - `docs/roadmap/roadmap-hito-04-refactor.md`
