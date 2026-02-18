@@ -175,8 +175,8 @@ Estado: en progreso.
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
   - [ ] 100% cobertura en modulos criticos (`memberships/services`, sincronizacion ownership-links).
-  - Avance baseline actual (medicion en contenedor): `saas backend` 85%, `core backend` 67%, `saas frontend` 25.21%, `core frontend` 17.61%.
-  - Avance: `core/backend/core/tests.py` y `core/backend/net_worth/tests.py` incorporan suite de servicios (FX/inflacion + validaciones/serializacion de patrimonio).
+  - Avance baseline actual (medicion en contenedor): `saas backend` 90%, `core backend` 75%, `saas frontend` 25.21%, `core frontend` 17.61%.
+  - Avance: cobertura de servicios criticos backend elevada (`memberships/services` 91%, `core/net_worth/services` 94%) mediante suites unitarias en `backend/memberships/tests.py` y `core/backend/net_worth/tests.py`.
 
 ### Fase 5: Documentacion Y Release
 Estado: pendiente.

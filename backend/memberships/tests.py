@@ -22,6 +22,10 @@ from .models import (
 )
 from .rbac_services import assign_role, get_or_create_access_profile
 from .services import (
+    _build_unique_member_name,
+    _default_member_name_for_user,
+    assert_member_belongs_to_user,
+    ensure_primary_family_member_for_user,
     get_ownership_for_user,
     member_is_in_use,
     resolve_ownership_for_sync,
@@ -515,6 +519,121 @@ class OwnershipServicesUnitTests(TestCase):
         )
         Ownership.objects.create(user=self.user, kind=Ownership.Kind.INDIVIDUAL, member=member)
         self.assertFalse(member_is_in_use(member))
+
+    def test_assert_member_belongs_to_user_rejects_foreign_member(self):
+        other = get_user_model().objects.create_user(username="u_foreign", password="pass1234")
+        foreign_member = FamilyMember.objects.create(
+            user=other, name="Foreign", role=FamilyMember.Role.ADULT, is_active=True
+        )
+
+        with self.assertRaises(DRFValidationError):
+            assert_member_belongs_to_user(user=self.user, member=foreign_member)
+
+    def test_validate_ownership_payload_rejects_invalid_kind_and_missing_member(self):
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind="invalid_kind",
+                member=None,
+                splits=[],
+            )
+
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.INDIVIDUAL,
+                member=None,
+                splits=[],
+            )
+
+    def test_validate_ownership_payload_rejects_individual_with_splits(self):
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.INDIVIDUAL,
+                member=self.adult,
+                splits=[{"member_id": self.adult.id, "percent": "100.00"}],
+            )
+
+    def test_validate_ownership_payload_rejects_shared_with_member_or_missing_splits(self):
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=self.adult,
+                splits=[{"member_id": self.adult.id, "percent": "100.00"}],
+            )
+
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=None,
+                splits=[],
+            )
+
+    def test_validate_ownership_payload_rejects_unknown_or_foreign_member(self):
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=None,
+                splits=[{"member_id": 999999, "percent": "100.00"}],
+            )
+
+        other = get_user_model().objects.create_user(username="u_other2", password="pass1234")
+        other_adult = FamilyMember.objects.create(
+            user=other,
+            name="Other Adult",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        with self.assertRaises(DRFValidationError):
+            validate_ownership_payload(
+                user=self.user,
+                kind=Ownership.Kind.SHARED,
+                member=None,
+                splits=[
+                    {"member_id": self.adult.id, "percent": "50.00"},
+                    {"member_id": other_adult.id, "percent": "50.00"},
+                ],
+            )
+
+    def test_default_name_helpers_and_primary_member_creation(self):
+        named_user = get_user_model().objects.create_user(
+            username="named_user",
+            password="pass1234",
+            first_name="Ana",
+            last_name="Lopez",
+        )
+        self.assertEqual(_default_member_name_for_user(user=named_user), "Ana Lopez")
+
+        user_email_only = get_user_model().objects.create_user(
+            username="tmp_email_user",
+            password="pass1234",
+            email="mail_user@example.com",
+        )
+        user_email_only.username = ""
+        user_email_only.save(update_fields=["username"])
+        self.assertEqual(_default_member_name_for_user(user=user_email_only), "mail_user")
+
+        base = "Titular"
+        FamilyMember.objects.create(
+            user=self.user,
+            name=base,
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        unique = _build_unique_member_name(user=self.user, base_name=base)
+        self.assertEqual(unique, "Titular (2)")
+
+        created_member = ensure_primary_family_member_for_user(user=named_user)
+        self.assertEqual(created_member.role, FamilyMember.Role.ADULT)
+        self.assertTrue(
+            Ownership.objects.filter(
+                user=named_user, kind=Ownership.Kind.INDIVIDUAL, member=created_member
+            ).exists()
+        )
 
 
 class SaasAuthRoadmap03ApiTests(APITestCase):
