@@ -1,0 +1,36 @@
+import axios from 'axios';
+import { describe, expect, it, vi } from 'vitest';
+import { getApiErrorCode, toApiErrorMessage } from '@/lib/errors';
+
+describe('api error helpers', () => {
+  it('extracts API code from axios envelope', () => {
+    const err = { response: { data: { error: { code: 'permission_denied' } } } };
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(getApiErrorCode(err)).toBe('permission_denied');
+    spy.mockRestore();
+  });
+
+  it('maps known API codes to human messages', () => {
+    const err = { response: { data: { error: { code: 'subscription_blocked' } } } };
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(toApiErrorMessage(err)).toContain('suscripcion');
+    spy.mockRestore();
+  });
+
+  it('falls back to envelope message, string payload, error message and default', () => {
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(
+      toApiErrorMessage({ response: { data: { error: { message: 'boom' } } }, message: 'x' })
+    ).toBe('boom');
+    expect(toApiErrorMessage({ response: { data: 'plain' }, message: 'x' })).toBe('plain');
+    expect(toApiErrorMessage({ response: { data: {} }, message: 'fallback' })).toBe('fallback');
+    expect(toApiErrorMessage({ response: { data: {} } })).toBe('Error');
+    spy.mockRestore();
+  });
+
+  it('returns null code for non axios errors', () => {
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(false);
+    expect(getApiErrorCode(new Error('x'))).toBeNull();
+    spy.mockRestore();
+  });
+});
