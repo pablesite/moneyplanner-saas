@@ -21,7 +21,16 @@ from .models import (
     SaasSubscription,
 )
 from .rbac_services import assign_role, get_or_create_access_profile
-from .services import sync_ownership_link, validate_ownership_payload
+from .services import (
+    get_ownership_for_user,
+    member_is_in_use,
+    resolve_ownership_for_sync,
+    save_ownership,
+    sync_ownership_link,
+    validate_ownership_payload,
+    validate_ownership_write_payload,
+    validate_split_percent,
+)
 
 
 class OwnershipUsageConstraintsTests(APITestCase):
@@ -412,6 +421,100 @@ class OwnershipServicesUnitTests(TestCase):
                 target_id=77,
             ).exists()
         )
+
+    def test_validate_split_percent_rejects_out_of_range(self):
+        with self.assertRaises(DRFValidationError):
+            validate_split_percent(percent=0)
+        with self.assertRaises(DRFValidationError):
+            validate_split_percent(percent=101)
+
+    def test_validate_ownership_write_payload_uses_existing_splits(self):
+        shared = Ownership.objects.create(user=self.user, kind=Ownership.Kind.SHARED, member=None)
+        OwnershipSplit.objects.create(ownership=shared, member=self.adult, percent="70.00")
+        extra_adult = FamilyMember.objects.create(
+            user=self.user,
+            name="Adult 2",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        OwnershipSplit.objects.create(ownership=shared, member=extra_adult, percent="30.00")
+
+        validate_ownership_write_payload(
+            user=self.user,
+            instance=shared,
+            attrs={},
+        )
+
+    def test_save_ownership_create_shared_persists_splits(self):
+        second_adult = FamilyMember.objects.create(
+            user=self.user,
+            name="Adult 3",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        ownership = save_ownership(
+            user=self.user,
+            instance=None,
+            validated_data={
+                "kind": Ownership.Kind.SHARED,
+                "member": None,
+                "splits": [
+                    {"member_id": self.adult.id, "percent": "60.00"},
+                    {"member_id": second_adult.id, "percent": "40.00"},
+                ],
+            },
+        )
+
+        self.assertEqual(ownership.kind, Ownership.Kind.SHARED)
+        self.assertEqual(ownership.splits.count(), 2)
+
+    def test_save_ownership_update_shared_replaces_splits(self):
+        second_adult = FamilyMember.objects.create(
+            user=self.user,
+            name="Adult 4",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        shared = Ownership.objects.create(user=self.user, kind=Ownership.Kind.SHARED, member=None)
+        OwnershipSplit.objects.create(ownership=shared, member=self.adult, percent="50.00")
+        OwnershipSplit.objects.create(ownership=shared, member=second_adult, percent="50.00")
+
+        updated = save_ownership(
+            user=self.user,
+            instance=shared,
+            validated_data={
+                "kind": Ownership.Kind.SHARED,
+                "splits": [{"member_id": self.adult.id, "percent": "100.00"}],
+            },
+        )
+
+        self.assertEqual(updated.splits.count(), 1)
+        self.assertEqual(updated.splits.first().member_id, self.adult.id)
+
+    def test_get_ownership_for_user_rejects_foreign_or_missing(self):
+        other = get_user_model().objects.create_user(username="u_other", password="pass1234")
+        member_other = FamilyMember.objects.create(
+            user=other, name="Other", role=FamilyMember.Role.ADULT, is_active=True
+        )
+        own_other = Ownership.objects.create(
+            user=other, kind=Ownership.Kind.INDIVIDUAL, member=member_other
+        )
+
+        with self.assertRaises(DRFValidationError):
+            get_ownership_for_user(user=self.user, ownership_id=own_other.id)
+
+    def test_resolve_ownership_for_sync_none(self):
+        self.assertIsNone(resolve_ownership_for_sync(user=self.user, ownership_id=None))
+
+    def test_member_is_in_use_false_when_no_links(self):
+        member = FamilyMember.objects.create(
+            user=self.user,
+            name="Free member",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        Ownership.objects.create(user=self.user, kind=Ownership.Kind.INDIVIDUAL, member=member)
+        self.assertFalse(member_is_in_use(member))
 
 
 class SaasAuthRoadmap03ApiTests(APITestCase):

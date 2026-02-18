@@ -151,6 +151,7 @@ Estado: en progreso.
 - [ ] Backend:
   - [ ] tests unitarios por servicio.
   - Avance: tests unitarios de servicios anadidos en `backend/memberships/tests.py` para validaciones de `validate_ownership_payload` y flujo de `sync_ownership_link` (create/update/remove).
+  - Avance: tests unitarios de servicios ampliados en `backend/memberships/tests.py` para ramas de `save_ownership`, `validate_ownership_write_payload`, `validate_split_percent`, `get_ownership_for_user` y `member_is_in_use`.
   - [ ] tests API por endpoint critico.
   - [ ] tests de integracion API dual (`core` + `saas`) ampliados.
   - Avance: existe suite API en `backend/memberships/tests.py` y comando `python manage.py test memberships`.
@@ -174,7 +175,8 @@ Estado: en progreso.
   - [ ] backend >= 85% lineas.
   - [ ] frontend >= 75% lineas.
   - [ ] 100% cobertura en modulos criticos (`memberships/services`, sincronizacion ownership-links).
-  - Avance baseline actual (medicion en contenedor): `saas backend` 81%, `core backend` 53%, `saas frontend` 25.21%, `core frontend` 17.61%.
+  - Avance baseline actual (medicion en contenedor): `saas backend` 85%, `core backend` 67%, `saas frontend` 25.21%, `core frontend` 17.61%.
+  - Avance: `core/backend/core/tests.py` y `core/backend/net_worth/tests.py` incorporan suite de servicios (FX/inflacion + validaciones/serializacion de patrimonio).
 
 ### Fase 5: Documentacion Y Release
 Estado: pendiente.
@@ -208,4 +210,3 @@ Estado: pendiente.
 4. Fase 2 (frontend/UI)
 5. Fase 4 (testing profundo)
 6. Fase 5 (documentacion + release)
-
