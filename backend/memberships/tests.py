@@ -526,6 +526,15 @@ class OwnershipServicesUnitTests(TestCase):
         Ownership.objects.create(user=self.user, kind=Ownership.Kind.INDIVIDUAL, member=member)
         self.assertFalse(member_is_in_use(member))
 
+    def test_member_is_in_use_false_when_member_has_no_ownerships(self):
+        member = FamilyMember.objects.create(
+            user=self.user,
+            name="No ownership member",
+            role=FamilyMember.Role.ADULT,
+            is_active=True,
+        )
+        self.assertFalse(member_is_in_use(member))
+
     def test_assert_member_belongs_to_user_rejects_foreign_member(self):
         other = get_user_model().objects.create_user(username="u_foreign", password="pass1234")
         foreign_member = FamilyMember.objects.create(

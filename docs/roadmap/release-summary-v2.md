@@ -57,4 +57,3 @@
 
 ## Pendientes Para Cierre Completo Del Hito 04
 - Fase 0: nuevo repo `core` limpio + repunte de submodulo.
-- Modulos criticos backend al 100% (actual `memberships/services`: 99%).
