@@ -35,33 +35,17 @@ Separated identity strategy for `core` and `saas`.
 ### Milestone 05B (Completed)
 SaaS multi-role authorization (RBAC).
 
-### Milestone 06
+### Milestone 06 (Completed)
 Net-worth module UX and analytics improvements.
 
-Current iteration:
-1. New global app shell in SaaS frontend with default-collapsed sidebar.
-2. New `Inicio` view with guided phase progression (coach-style framing).
-3. Phase context moved to `Inicio` while keeping module navigation stable.
-4. Navigation shell refined: menu now works as an overlay drawer and account context is shown in header.
-5. Header account block upgraded (avatar + role/plan) and drawer interaction improved (ESC close + body scroll lock).
-6. Drawer visual hierarchy polished (brand block, section heading, iconized nav items, stronger active state).
-7. Drawer readability fixed on mobile: stronger backdrop dimming and near-opaque sidebar surface to avoid background bleed-through.
-8. Settings reorganized into a single-page accordion with collapsible sections for family members, IPC data, and conversion rates.
-9. Settings layout simplified by removing the extra title header block and the redundant back button.
-10. Settings context restored with a plain page title (`Settings`) without reintroducing the boxed header layout.
-11. Settings family section now includes `Miembros` and `Titularidades` tabs; direct `Personas` shortcut was removed from Patrimonio.
-12. Patrimonio header cleaned up by removing direct shortcuts to `Cuenta SaaS` and `Datos auxiliares`.
-13. Patrimonio top area simplified by removing the boxed panel wrapper while preserving title and action buttons.
-14. Patrimonio header now uses a plain inline layout (like Settings), removing residual `ui-page-header` panel styling.
-15. Settings popover restyled with navigation-aligned turquoise accents (border, gradient surface, focus states, labels).
-16. Settings access moved from sidebar to the user account menu (top-right), exposing `Perfil` and `Settings` entries.
-17. Inicio redesigned: phase roadmap is now horizontal with 5 phases and per-phase 0-100 donut progress; quick navigation buttons were removed and next action moved below.
-18. Account UX streamlined: removed back button from Perfil and moved logout action to account dropdown (`Perfil`, `Settings`, `Cerrar sesion`).
-19. Perfil simplified by hiding legacy `Vinculo opcional con core` controls from the SaaS account view.
-20. Perfil visual redesign: plain page title (without boxed header), renamed from `Cuenta SaaS` to `Perfil`, and identity data reorganized into cleaner readable cards.
-21. Perfil received an alternative visual pass with cleaner row-based identity layout and improved emphasis on plan status.
-22. Titularidades view simplified by hiding individual ownership rows and focusing only on shared ownerships.
-23. Header brand/title now routes directly to `Inicio` (`/inicio`) to provide a consistent quick return to the financial guide.
+Summary:
+1. App shell, navigation, account menu, and settings UX were reworked for clarity and consistency.
+2. `Inicio`, `Perfil`, and `Patrimonio` flows were streamlined with cleaner information hierarchy.
+3. Net-worth analytics UX was upgraded (score model, color levels, composition-focused visualization).
+
+Reference:
+- `docs/roadmap/roadmap-milestone-06-net-worth-ux-analytics.md`
+- `docs/roadmap/release-summary-milestone-06-net-worth-ux-analytics.md`
 
 ### Milestone 07
 First production demo release.
