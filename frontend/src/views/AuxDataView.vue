@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
-import { useRouter } from 'vue-router';
 import { useAuxDataPage } from '@/domains/aux-data';
 import { FamilyMemberManager } from '@/domains/people';
 
-const router = useRouter();
 const {
   loading,
   error,
@@ -36,14 +34,6 @@ function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
 
 <template>
   <div class="container ui-pro-page">
-    <div class="ui-page-header">
-      <h1 class="h1 ui-page-title">Settings</h1>
-
-      <div class="ui-page-actions">
-        <button class="btn" type="button" @click="router.push('/')">Volver a Patrimonio</button>
-      </div>
-    </div>
-
     <div v-if="error" class="alert mt-3">{{ error }}</div>
     <div v-if="successMessage" class="ui-alert-success">{{ successMessage }}</div>
 

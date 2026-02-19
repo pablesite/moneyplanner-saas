@@ -4,12 +4,6 @@ import { mount } from '@vue/test-utils';
 import { ref } from 'vue';
 import AuxDataView from '../AuxDataView.vue';
 
-const mockPush = vi.fn();
-
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: mockPush }),
-}));
-
 vi.mock('@/domains/people', () => ({
   FamilyMemberManager: {
     template: '<div data-testid="family-manager">Family manager mock</div>',
@@ -38,13 +32,12 @@ vi.mock('@/domains/aux-data', () => ({
 
 describe('AuxDataView (settings accordion)', () => {
   beforeEach(() => {
-    mockPush.mockReset();
+    vi.clearAllMocks();
   });
 
   it('renders the three settings sections', () => {
     const wrapper = mount(AuxDataView);
 
-    expect(wrapper.text()).toContain('Settings');
     expect(wrapper.text()).toContain('Miembros de la familia');
     expect(wrapper.text()).toContain('Datos IPC');
     expect(wrapper.text()).toContain('Tasas de conversion');
@@ -67,13 +60,5 @@ describe('AuxDataView (settings accordion)', () => {
 
     await toggles[2]!.trigger('click');
     expect(wrapper.text()).toContain('No hay FX rates todavia.');
-  });
-
-  it('keeps back navigation to patrimonio', async () => {
-    const wrapper = mount(AuxDataView);
-    const backButton = wrapper.find('.ui-page-actions button');
-
-    await backButton.trigger('click');
-    expect(mockPush).toHaveBeenCalledWith('/');
   });
 });
