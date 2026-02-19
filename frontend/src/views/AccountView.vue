@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useSaasAccountPage } from '@/domains/auth';
-import { clearAuthTokens } from '@/domains/auth/session';
 
 const route = useRoute();
-const router = useRouter();
 
 const {
   loading,
@@ -26,7 +24,6 @@ const {
   coreEmail,
   saveCoreLink,
   removeCoreLink,
-  goBack,
   reload,
 } = useSaasAccountPage();
 
@@ -36,21 +33,12 @@ const permissionNotice = computed(() =>
     : null,
 );
 
-function logout() {
-  clearAuthTokens();
-  router.push('/login');
-}
 </script>
 
 <template>
-  <div class="container">
+  <div class="container ui-pro-page">
     <div class="ui-page-header">
       <h1 class="h1 ui-page-title">Cuenta SaaS</h1>
-
-      <div class="ui-page-actions">
-        <button class="btn" type="button" @click="goBack">Volver a Patrimonio</button>
-        <button class="btn" type="button" @click="logout">Cerrar sesion</button>
-      </div>
     </div>
 
     <div v-if="error" class="alert mt-3">
@@ -68,9 +56,12 @@ function logout() {
     <div v-if="loading" class="ui-status-line mt-3">Cargando cuenta...</div>
 
     <div v-else class="grid gap-3.5">
-      <section class="card">
+      <section class="card ui-pro-panel">
         <h2 class="mt-0 text-base">Identidad SaaS</h2>
-        <p class="subtle">Usuario: {{ username }} | Email: {{ email || 'sin email' }}</p>
+        <div class="ui-pro-toolbar mb-2">
+          <span class="ui-pro-chip">Usuario: {{ username }}</span>
+          <span class="ui-pro-chip">Email: {{ email || 'sin email' }}</span>
+        </div>
         <p class="subtle">
           Rol: <strong>{{ role }}</strong>
         </p>
@@ -86,7 +77,7 @@ function logout() {
         </div>
       </section>
 
-      <section class="card">
+      <section class="card ui-pro-panel">
         <div class="mb-2.5 flex items-center justify-between gap-2.5">
           <h2 class="m-0 text-base">Vinculo opcional con core</h2>
           <button class="btn btn-sm" type="button" :disabled="saving" @click="reload">

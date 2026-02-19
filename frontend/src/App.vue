@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getSaasMe } from '@/domains/auth/accountApi';
-import { hasAccessToken } from '@/domains/auth/session';
+import { clearAuthTokens, hasAccessToken } from '@/domains/auth/session';
 
 type NavItem = {
   id: string;
@@ -13,6 +13,7 @@ type NavItem = {
 };
 
 const route = useRoute();
+const router = useRouter();
 const sidebarOpen = ref(false);
 const accountMenuOpen = ref(false);
 const accountMenuRef = ref<HTMLElement | null>(null);
@@ -64,6 +65,13 @@ function toggleAccountMenu(): void {
 
 function closeAccountMenu(): void {
   accountMenuOpen.value = false;
+}
+
+function logout(): void {
+  clearAuthTokens();
+  closeAccountMenu();
+  sidebarOpen.value = false;
+  router.push('/login');
 }
 
 function handleGlobalKeydown(event: KeyboardEvent): void {
@@ -204,12 +212,25 @@ onBeforeUnmount(() => {
           </button>
 
           <div v-if="accountMenuOpen" class="ui-shell-account-dropdown" role="menu">
-            <RouterLink class="ui-shell-account-item" to="/account" role="menuitem" @click="closeAccountMenu">
+            <RouterLink
+              class="ui-shell-account-item"
+              to="/account"
+              role="menuitem"
+              @click="closeAccountMenu"
+            >
               Perfil
             </RouterLink>
-            <RouterLink class="ui-shell-account-item" to="/data" role="menuitem" @click="closeAccountMenu">
+            <RouterLink
+              class="ui-shell-account-item"
+              to="/data"
+              role="menuitem"
+              @click="closeAccountMenu"
+            >
               Settings
             </RouterLink>
+            <button class="ui-shell-account-item ui-shell-account-item-btn" type="button" role="menuitem" @click="logout">
+              Cerrar sesion
+            </button>
           </div>
         </div>
       </header>
@@ -456,11 +477,19 @@ onBeforeUnmount(() => {
 
 .ui-shell-account-item {
   display: block;
+  width: 100%;
+  text-align: left;
   border-radius: 9px;
   padding: 9px 10px;
   color: var(--text);
   text-decoration: none;
   font-size: 13px;
+}
+
+.ui-shell-account-item-btn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .ui-shell-account-item:hover {
