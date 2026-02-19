@@ -53,6 +53,7 @@ Current iteration:
 12. Patrimonio header cleaned up by removing direct shortcuts to `Cuenta SaaS` and `Datos auxiliares`.
 13. Patrimonio top area simplified by removing the boxed panel wrapper while preserving title and action buttons.
 14. Patrimonio header now uses a plain inline layout (like Settings), removing residual `ui-page-header` panel styling.
+15. Settings popover restyled with navigation-aligned turquoise accents (border, gradient surface, focus states, labels).
 
 ### Milestone 07
 First production demo release.
