@@ -7,7 +7,6 @@ const route = useRoute();
 
 const {
   loading,
-  saving,
   error,
   success,
   username,
@@ -15,16 +14,6 @@ const {
   role,
   subscriptionStatus,
   premiumEnabled,
-  accountLinkingEnabled,
-  linkedCoreUserRef,
-  linkedCoreUsername,
-  linkedCoreEmail,
-  coreUserRef,
-  coreUsername,
-  coreEmail,
-  saveCoreLink,
-  removeCoreLink,
-  reload,
 } = useSaasAccountPage();
 
 const permissionNotice = computed(() =>
@@ -75,54 +64,6 @@ const permissionNotice = computed(() =>
             Administrar usuarios SaaS
           </button>
         </div>
-      </section>
-
-      <section class="card ui-pro-panel">
-        <div class="mb-2.5 flex items-center justify-between gap-2.5">
-          <h2 class="m-0 text-base">Vinculo opcional con core</h2>
-          <button class="btn btn-sm" type="button" :disabled="saving" @click="reload">
-            Recargar
-          </button>
-        </div>
-
-        <div v-if="!accountLinkingEnabled" class="subtle">
-          El account linking esta deshabilitado en este entorno.
-        </div>
-
-        <template v-else>
-          <div v-if="linkedCoreUserRef" class="ui-status-line mb-3">
-            Vinculado a core:
-            <strong>{{ linkedCoreUserRef }}</strong>
-            <span v-if="linkedCoreUsername"> ({{ linkedCoreUsername }})</span>
-            <span v-if="linkedCoreEmail"> - {{ linkedCoreEmail }}</span>
-          </div>
-
-          <form class="grid gap-2.5 md:max-w-xl" @submit.prevent="saveCoreLink">
-            <label class="grid gap-1.5">
-              <span class="subtle">core_user_ref</span>
-              <input v-model="coreUserRef" class="input" required />
-            </label>
-
-            <label class="grid gap-1.5">
-              <span class="subtle">core_username (opcional)</span>
-              <input v-model="coreUsername" class="input" />
-            </label>
-
-            <label class="grid gap-1.5">
-              <span class="subtle">core_email (opcional)</span>
-              <input v-model="coreEmail" class="input" type="email" />
-            </label>
-
-            <div class="ui-form-actions">
-              <button class="btn btn-primary" type="submit" :disabled="saving">
-                {{ saving ? 'Guardando...' : 'Guardar vinculo' }}
-              </button>
-              <button class="btn" type="button" :disabled="saving" @click="removeCoreLink">
-                Desvincular
-              </button>
-            </div>
-          </form>
-        </template>
       </section>
     </div>
   </div>

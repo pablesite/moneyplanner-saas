@@ -12,6 +12,7 @@ vi.mock('@/domains/auth', () => ({
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ query: {} }),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 function makeState(overrides: Record<string, unknown> = {}) {
@@ -52,7 +53,7 @@ describe('AccountView', () => {
     expect(wrapper.text()).toContain('Cuenta SaaS');
     expect(wrapper.text()).toContain('saas_user');
     expect(wrapper.text()).toContain('trial');
-    expect(wrapper.text()).toContain('core-123');
+    expect(wrapper.text()).not.toContain('Vinculo opcional con core');
   });
 
   it('renders loading state', () => {
@@ -61,12 +62,10 @@ describe('AccountView', () => {
     expect(wrapper.text()).toContain('Cargando cuenta...');
   });
 
-  it('submits link form through composable action', async () => {
-    const state = makeState();
-    mockUseSaasAccountPage.mockReturnValue(state);
+  it('does not render legacy core-link form', () => {
+    mockUseSaasAccountPage.mockReturnValue(makeState());
     const wrapper = mount(AccountView);
 
-    await wrapper.get('form').trigger('submit.prevent');
-    expect(state.saveCoreLink).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('form').exists()).toBe(false);
   });
 });

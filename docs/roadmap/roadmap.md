@@ -57,6 +57,7 @@ Current iteration:
 16. Settings access moved from sidebar to the user account menu (top-right), exposing `Perfil` and `Settings` entries.
 17. Inicio redesigned: phase roadmap is now horizontal with 5 phases and per-phase 0-100 donut progress; quick navigation buttons were removed and next action moved below.
 18. Account UX streamlined: removed back button from Perfil and moved logout action to account dropdown (`Perfil`, `Settings`, `Cerrar sesion`).
+19. Perfil simplified by hiding legacy `Vinculo opcional con core` controls from the SaaS account view.
 
 ### Milestone 07
 First production demo release.
