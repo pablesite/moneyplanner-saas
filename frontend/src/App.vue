@@ -2,8 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getSaasMe } from '@/domains/auth/accountApi';
-import { capabilities } from '@/domains/capabilities';
-import { getAccessToken } from '@/domains/auth/session';
+import { hasAccessToken } from '@/domains/auth/session';
 
 type NavItem = {
   id: string;
@@ -19,25 +18,20 @@ const accountLabel = ref('Mi cuenta');
 const accountRole = ref('');
 const accountPlan = ref('');
 
-const hasToken = computed(() => !!getAccessToken());
+const hasToken = hasAccessToken;
 const isLoginRoute = computed(() => route.name === 'login');
 const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [
-    { id: 'home', icon: 'IN', label: 'Inicio', hint: 'Plan guiado', to: '/inicio' },
+    { id: 'home', icon: 'GU', label: 'Guia', hint: 'Plan paso a paso', to: '/inicio' },
     { id: 'net-worth', icon: 'PT', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
-    { id: 'account', icon: 'CU', label: 'Cuenta', hint: 'Perfil y seguridad', to: '/account' },
-    { id: 'settings', icon: 'ST', label: 'Settings', hint: 'Preferencias y datos', to: '/data' },
+    {
+      id: 'settings',
+      icon: 'MD',
+      label: 'Settings',
+      hint: 'Modulos y configuracion',
+      to: '/data',
+    },
   ];
-
-  if (capabilities.people) {
-    baseItems.splice(2, 0, {
-      id: 'people',
-      icon: 'PP',
-      label: 'Personas',
-      hint: 'Familia y titulares',
-      to: '/people',
-    });
-  }
 
   return baseItems;
 });
@@ -203,8 +197,8 @@ onBeforeUnmount(() => {
 .ui-shell-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(1px);
+  background: rgba(3, 7, 16, 0.72);
+  backdrop-filter: blur(2px);
   z-index: 30;
 }
 
@@ -216,7 +210,10 @@ onBeforeUnmount(() => {
   height: 100vh;
   width: min(320px, calc(100vw - 24px));
   border-right: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+    rgba(8, 12, 22, 0.96);
+  backdrop-filter: blur(12px);
   padding: 20px 14px;
   transform: translateX(-102%);
   transition: transform 0.22s ease-out;

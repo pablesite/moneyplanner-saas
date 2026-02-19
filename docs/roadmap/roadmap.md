@@ -45,6 +45,7 @@ Current iteration:
 4. Navigation shell refined: menu now works as an overlay drawer and account context is shown in header.
 5. Header account block upgraded (avatar + role/plan) and drawer interaction improved (ESC close + body scroll lock).
 6. Drawer visual hierarchy polished (brand block, section heading, iconized nav items, stronger active state).
+7. Drawer readability fixed on mobile: stronger backdrop dimming and near-opaque sidebar surface to avoid background bleed-through.
 
 ### Milestone 07
 First production demo release.
@@ -64,4 +65,3 @@ Remaining functional modules:
 
 ### Milestone 11 (Continuous)
 Iterative scaling: observability, performance, security, UX.
-
