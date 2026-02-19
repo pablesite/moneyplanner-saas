@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useAuxDataPage } from '@/domains/aux-data';
-import { FamilyMemberManager } from '@/domains/people';
+import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
 
 const {
   loading,
@@ -26,6 +26,8 @@ const sections = reactive({
   ipc: false,
   fx: false,
 });
+type FamilyTab = 'members' | 'ownerships';
+const familyTab = ref<FamilyTab>('members');
 
 function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
   sections[section] = !sections[section];
@@ -52,7 +54,27 @@ function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
         </span>
       </button>
       <div v-if="sections.family" class="ui-settings-content">
-        <FamilyMemberManager />
+        <div class="ui-settings-family-tabs">
+          <button
+            class="btn opacity-60"
+            type="button"
+            :class="{ '!opacity-100': familyTab === 'members' }"
+            @click="familyTab = 'members'"
+          >
+            Miembros
+          </button>
+          <button
+            class="btn opacity-60"
+            type="button"
+            :class="{ '!opacity-100': familyTab === 'ownerships' }"
+            @click="familyTab = 'ownerships'"
+          >
+            Titularidades
+          </button>
+        </div>
+
+        <FamilyMemberManager v-if="familyTab === 'members'" />
+        <OwnershipManager v-else />
       </div>
     </section>
 
@@ -244,5 +266,11 @@ function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
 .ui-settings-content {
   border-top: 1px solid rgba(255, 255, 255, 0.09);
   padding: 12px 14px 14px;
+}
+
+.ui-settings-family-tabs {
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
 }
 </style>

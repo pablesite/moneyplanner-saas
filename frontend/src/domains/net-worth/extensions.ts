@@ -1,6 +1,5 @@
 import { computed, type Component, type ComputedRef } from 'vue';
 import { capabilities } from '@/domains/capabilities';
-import PremiumPeopleActionButton from '@/domains/net-worth/components/PremiumPeopleActionButton.vue';
 
 type ExtensionProps = Record<string, unknown>;
 
@@ -28,7 +27,7 @@ export function useNetWorthViewExtensions(store?: unknown): NetWorthViewExtensio
   });
 
   return {
-    HeaderActions: capabilities.people ? PremiumPeopleActionButton : null,
+    HeaderActions: null,
     itemFormProps: ownershipProps,
     itemListProps: ownershipProps,
   };

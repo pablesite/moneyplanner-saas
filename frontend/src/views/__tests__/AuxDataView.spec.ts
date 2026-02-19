@@ -8,6 +8,9 @@ vi.mock('@/domains/people', () => ({
   FamilyMemberManager: {
     template: '<div data-testid="family-manager">Family manager mock</div>',
   },
+  OwnershipManager: {
+    template: '<div data-testid="ownership-manager">Ownership manager mock</div>',
+  },
 }));
 
 vi.mock('@/domains/aux-data', () => ({
@@ -42,6 +45,7 @@ describe('AuxDataView (settings accordion)', () => {
     expect(wrapper.text()).toContain('Miembros de la familia');
     expect(wrapper.text()).toContain('Datos IPC');
     expect(wrapper.text()).toContain('Tasas de conversion');
+    expect(wrapper.text()).toContain('Titularidades');
   });
 
   it('toggles each section in the same view', async () => {
@@ -61,5 +65,18 @@ describe('AuxDataView (settings accordion)', () => {
 
     await toggles[2]!.trigger('click');
     expect(wrapper.text()).toContain('No hay FX rates todavia.');
+  });
+
+  it('switches between miembros and titularidades inside family section', async () => {
+    const wrapper = mount(AuxDataView);
+
+    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="ownership-manager"]').exists()).toBe(false);
+
+    const ownershipTab = wrapper.findAll('.ui-settings-family-tabs button')[1];
+    await ownershipTab!.trigger('click');
+
+    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="ownership-manager"]').exists()).toBe(true);
   });
 });
