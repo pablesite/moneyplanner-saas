@@ -46,35 +46,34 @@ const permissionNotice = computed(() =>
       <section class="card ui-pro-panel ui-profile-panel">
         <div class="ui-profile-head">
           <h2 class="ui-profile-head-title">Identidad</h2>
-          <span class="ui-profile-subtle">Cuenta local</span>
         </div>
 
-        <div class="ui-profile-grid">
-          <article class="ui-profile-field">
-            <span class="ui-profile-label">Usuario</span>
-            <strong class="ui-profile-value">{{ username }}</strong>
-          </article>
+        <div class="ui-profile-layout">
+          <div class="ui-profile-list">
+            <div class="ui-profile-row">
+              <span class="ui-profile-label">Usuario</span>
+              <strong class="ui-profile-value">{{ username }}</strong>
+            </div>
+            <div class="ui-profile-row">
+              <span class="ui-profile-label">Email</span>
+              <strong class="ui-profile-value">{{ email || 'sin email' }}</strong>
+            </div>
+            <div class="ui-profile-row">
+              <span class="ui-profile-label">Rol</span>
+              <strong class="ui-profile-value">{{ role }}</strong>
+            </div>
+            <div class="ui-profile-row">
+              <span class="ui-profile-label">Suscripcion</span>
+              <strong class="ui-profile-value">{{ subscriptionStatus }}</strong>
+            </div>
+          </div>
 
-          <article class="ui-profile-field">
-            <span class="ui-profile-label">Email</span>
-            <strong class="ui-profile-value">{{ email || 'sin email' }}</strong>
-          </article>
-
-          <article class="ui-profile-field">
-            <span class="ui-profile-label">Rol</span>
-            <strong class="ui-profile-value">{{ role }}</strong>
-          </article>
-
-          <article class="ui-profile-field">
-            <span class="ui-profile-label">Suscripcion</span>
-            <strong class="ui-profile-value">{{ subscriptionStatus }}</strong>
-          </article>
-        </div>
-
-        <div class="ui-profile-status">
-          <span class="badge" :class="premiumEnabled ? 'ui-profile-badge-on' : 'ui-profile-badge-off'">
-            {{ premiumEnabled ? 'Premium habilitado' : 'Premium bloqueado' }}
-          </span>
+          <aside class="ui-profile-aside">
+            <span class="ui-profile-aside-label">Estado del plan</span>
+            <span class="badge" :class="premiumEnabled ? 'ui-profile-badge-on' : 'ui-profile-badge-off'">
+              {{ premiumEnabled ? 'Premium habilitado' : 'Premium bloqueado' }}
+            </span>
+          </aside>
         </div>
 
         <div v-if="role === 'saas_admin'" class="mt-2.5">
@@ -93,54 +92,74 @@ const permissionNotice = computed(() =>
 }
 
 .ui-profile-panel {
-  padding: 16px;
+  padding: 18px;
 }
 
 .ui-profile-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .ui-profile-head-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 19px;
+  letter-spacing: 0.01em;
 }
 
-.ui-profile-subtle {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.ui-profile-grid {
+.ui-profile-layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
 }
 
-.ui-profile-field {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.ui-profile-list {
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  padding: 10px;
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.ui-profile-row {
   display: grid;
-  gap: 4px;
+  grid-template-columns: 130px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ui-profile-row:first-child {
+  border-top: 0;
 }
 
 .ui-profile-label {
   font-size: 12px;
-  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.64);
 }
 
 .ui-profile-value {
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.92);
   overflow-wrap: anywhere;
 }
 
-.ui-profile-status {
-  margin-top: 10px;
+.ui-profile-aside {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.ui-profile-aside-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 .ui-profile-badge-on {
@@ -156,8 +175,13 @@ const permissionNotice = computed(() =>
 }
 
 @media (max-width: 900px) {
-  .ui-profile-grid {
+  .ui-profile-layout {
     grid-template-columns: 1fr;
+  }
+
+  .ui-profile-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 </style>
