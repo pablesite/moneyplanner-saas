@@ -53,7 +53,7 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
 
 <template>
   <div class="container ui-pro-page relative">
-    <div class="ui-page-header ui-pro-panel">
+    <div class="ui-page-header">
       <div class="flex items-center gap-2.5">
         <h1 class="h1 m-0">Patrimonio</h1>
         <button
