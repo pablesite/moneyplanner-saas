@@ -191,7 +191,9 @@ onBeforeUnmount(() => {
         >
           <span aria-hidden="true">&#9776;</span>
         </button>
-        <div class="ui-shell-header-title">{{ pageTitle }}</div>
+        <RouterLink class="ui-shell-header-title-link" to="/inicio">
+          <div class="ui-shell-header-title">{{ pageTitle }}</div>
+        </RouterLink>
         <div v-if="hasToken" ref="accountMenuRef" class="ui-shell-account-menu">
           <button
             class="ui-shell-account-link"
@@ -411,6 +413,11 @@ onBeforeUnmount(() => {
 .ui-shell-header-title {
   font-size: 18px;
   font-weight: 600;
+}
+
+.ui-shell-header-title-link {
+  color: inherit;
+  text-decoration: none;
 }
 
 .ui-shell-account-link {
