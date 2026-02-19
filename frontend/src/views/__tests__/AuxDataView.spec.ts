@@ -1,76 +1,79 @@
 /** @vitest-environment jsdom */
-import { ref } from 'vue';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { ref } from 'vue';
 import AuxDataView from '../AuxDataView.vue';
 
 const mockPush = vi.fn();
-const mockUseAuxDataPage = vi.fn();
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-vi.mock('@/domains/aux-data', () => ({
-  useAuxDataPage: () => mockUseAuxDataPage(),
+vi.mock('@/domains/people', () => ({
+  FamilyMemberManager: {
+    template: '<div data-testid="family-manager">Family manager mock</div>',
+  },
 }));
 
-function makeState(overrides: Record<string, unknown> = {}) {
-  return {
+vi.mock('@/domains/aux-data', () => ({
+  useAuxDataPage: () => ({
     loading: ref(false),
-    error: ref<string | null>(null),
-    successMessage: ref<string | null>(null),
-    fxRates: ref([]),
+    error: ref(null),
+    successMessage: ref(null),
     inflation: ref([]),
+    ipcForm: ref({ region: 'ES', period: '', index: '' }),
+    createInflation: vi.fn(),
+    deleteInflation: vi.fn(),
+    formatInflationIndex: (value: string) => value,
+    fxRates: ref([]),
     fxForm: ref({ rate_date: '', pair: 'USD_EUR', rate: '' }),
     fxPairs: [{ value: 'USD_EUR', label: 'USD -> EUR' }],
     fxRatePlaceholder: ref('0.92'),
-    ipcForm: ref({ region: 'ES', period: '', index: '' }),
     createFxRate: vi.fn(),
     deleteFxRate: vi.fn(),
-    createInflation: vi.fn(),
-    deleteInflation: vi.fn(),
-    formatFxRate: vi.fn(() => '0.9200'),
-    formatInflationIndex: vi.fn(() => '118.0'),
-    ...overrides,
-  };
-}
+    formatFxRate: (value: string) => value,
+  }),
+}));
 
-describe('AuxDataView', () => {
+describe('AuxDataView (settings accordion)', () => {
   beforeEach(() => {
     mockPush.mockReset();
-    mockUseAuxDataPage.mockReset();
   });
 
-  it('renders empty states for FX and IPC tables', () => {
-    mockUseAuxDataPage.mockReturnValue(makeState());
+  it('renders the three settings sections', () => {
     const wrapper = mount(AuxDataView);
 
-    expect(wrapper.text()).toContain('No hay FX rates');
-    expect(wrapper.text()).toContain('No hay');
-    expect(wrapper.text()).toContain('IPC');
+    expect(wrapper.text()).toContain('Settings');
+    expect(wrapper.text()).toContain('Miembros de la familia');
+    expect(wrapper.text()).toContain('Datos IPC');
+    expect(wrapper.text()).toContain('Tasas de conversion');
   });
 
-  it('renders loading, error and success messages', () => {
-    mockUseAuxDataPage.mockReturnValue(
-      makeState({
-        loading: ref(true),
-        error: ref('Error de red'),
-        successMessage: ref('FX rate creado correctamente.'),
-      }),
-    );
+  it('toggles each section in the same view', async () => {
     const wrapper = mount(AuxDataView);
 
-    expect(wrapper.text()).toContain('Error de red');
-    expect(wrapper.text()).toContain('FX rate creado correctamente.');
-    expect(wrapper.text()).toContain('Cargando datos auxiliares...');
+    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(true);
+
+    const toggles = wrapper.findAll('.ui-settings-toggle');
+    await toggles[0]!.trigger('click');
+    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(false);
+
+    await toggles[1]!.trigger('click');
+    expect(wrapper.text()).toContain('No hay indices IPC todavia.');
+
+    await toggles[1]!.trigger('click');
+    expect(wrapper.text()).not.toContain('No hay indices IPC todavia.');
+
+    await toggles[2]!.trigger('click');
+    expect(wrapper.text()).toContain('No hay FX rates todavia.');
   });
 
-  it('navigates back to net-worth view', async () => {
-    mockUseAuxDataPage.mockReturnValue(makeState());
+  it('keeps back navigation to patrimonio', async () => {
     const wrapper = mount(AuxDataView);
+    const backButton = wrapper.find('.ui-page-actions button');
 
-    await wrapper.get('button.btn').trigger('click');
+    await backButton.trigger('click');
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 });

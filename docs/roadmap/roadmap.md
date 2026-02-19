@@ -46,6 +46,7 @@ Current iteration:
 5. Header account block upgraded (avatar + role/plan) and drawer interaction improved (ESC close + body scroll lock).
 6. Drawer visual hierarchy polished (brand block, section heading, iconized nav items, stronger active state).
 7. Drawer readability fixed on mobile: stronger backdrop dimming and near-opaque sidebar surface to avoid background bleed-through.
+8. Settings reorganized into a single-page accordion with collapsible sections for family members, IPC data, and conversion rates.
 
 ### Milestone 07
 First production demo release.
