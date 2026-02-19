@@ -50,6 +50,7 @@ Current iteration:
 9. Settings layout simplified by removing the extra title header block and the redundant back button.
 10. Settings context restored with a plain page title (`Settings`) without reintroducing the boxed header layout.
 11. Settings family section now includes `Miembros` and `Titularidades` tabs; direct `Personas` shortcut was removed from Patrimonio.
+12. Patrimonio header cleaned up by removing direct shortcuts to `Cuenta SaaS` and `Datos auxiliares`.
 
 ### Milestone 07
 First production demo release.

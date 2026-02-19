@@ -52,9 +52,9 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
 </script>
 
 <template>
-  <div class="container relative">
-    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div class="flex items-center gap-2">
+  <div class="container ui-pro-page relative">
+    <div class="ui-page-header ui-pro-panel">
+      <div class="flex items-center gap-2.5">
         <h1 class="h1 m-0">Patrimonio</h1>
         <button
           class="icon-btn disabled:cursor-not-allowed disabled:opacity-50"
@@ -77,10 +77,8 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
         </button>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
+      <div class="ui-pro-toolbar">
         <component :is="HeaderActions" v-if="HeaderActions" />
-        <button class="btn" type="button" @click="$router.push('/account')">Cuenta SaaS</button>
-        <button class="btn" type="button" @click="$router.push('/data')">Datos auxiliares</button>
 
         <SettingsPopover
           :loading="store.loading"
@@ -105,7 +103,7 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
       {{ prettyError() }}
     </div>
 
-    <div class="card my-4">
+    <div class="card ui-pro-panel">
       <NetWorthDonut
         :total-assets="summaryAssets"
         :total-liabilities="summaryLiabilities"
@@ -115,7 +113,7 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
         :unit="unitLabel()"
       />
 
-      <div class="mt-4 border-t border-white/10 pt-4">
+      <div class="ui-pro-divider mt-4">
         <div v-if="store.summary">
           <div class="mb-2.5 flex items-center justify-between gap-2.5">
             <h2 class="m-0 text-base">Desglose</h2>
@@ -177,14 +175,14 @@ const { HeaderActions, itemFormProps, itemListProps } = useNetWorthViewExtension
       />
     </div>
 
-    <div class="section card">
+    <div class="section card ui-pro-panel">
       <h2 class="mt-0 text-base">Snapshots</h2>
 
       <ul v-if="store.snapshots.length" class="m-0 grid list-none gap-2 pl-0">
         <li
           v-for="s in store.snapshots"
           :key="s.id"
-          class="flex items-center justify-between gap-3"
+          class="ui-nw-snapshot-row"
         >
           <div class="min-w-0">
             {{ s.snapshot_date }} - neto: {{ formatMoney(s.net_worth, 2) }} {{ s.base_currency }}
