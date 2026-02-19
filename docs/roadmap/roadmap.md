@@ -58,6 +58,7 @@ Current iteration:
 17. Inicio redesigned: phase roadmap is now horizontal with 5 phases and per-phase 0-100 donut progress; quick navigation buttons were removed and next action moved below.
 18. Account UX streamlined: removed back button from Perfil and moved logout action to account dropdown (`Perfil`, `Settings`, `Cerrar sesion`).
 19. Perfil simplified by hiding legacy `Vinculo opcional con core` controls from the SaaS account view.
+20. Perfil visual redesign: plain page title (without boxed header), renamed from `Cuenta SaaS` to `Perfil`, and identity data reorganized into cleaner readable cards.
 
 ### Milestone 07
 First production demo release.

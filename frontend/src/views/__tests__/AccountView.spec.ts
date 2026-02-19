@@ -46,11 +46,12 @@ describe('AccountView', () => {
     mockUseSaasAccountPage.mockReset();
   });
 
-  it('renders account identity and linking section', () => {
+  it('renders profile identity section', () => {
     mockUseSaasAccountPage.mockReturnValue(makeState());
     const wrapper = mount(AccountView);
 
-    expect(wrapper.text()).toContain('Cuenta SaaS');
+    expect(wrapper.text()).toContain('Perfil');
+    expect(wrapper.text()).toContain('Identidad');
     expect(wrapper.text()).toContain('saas_user');
     expect(wrapper.text()).toContain('trial');
     expect(wrapper.text()).not.toContain('Vinculo opcional con core');
