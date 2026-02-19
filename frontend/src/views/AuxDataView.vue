@@ -34,6 +34,8 @@ function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
 
 <template>
   <div class="container ui-pro-page">
+    <h1 class="h1 ui-settings-page-title">Settings</h1>
+
     <div v-if="error" class="alert mt-3">{{ error }}</div>
     <div v-if="successMessage" class="ui-alert-success">{{ successMessage }}</div>
 
@@ -197,6 +199,10 @@ function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
 </template>
 
 <style scoped>
+.ui-settings-page-title {
+  margin: 0 0 4px;
+}
+
 .ui-settings-accordion-item {
   padding: 0;
   overflow: hidden;

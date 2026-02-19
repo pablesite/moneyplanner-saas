@@ -38,6 +38,7 @@ describe('AuxDataView (settings accordion)', () => {
   it('renders the three settings sections', () => {
     const wrapper = mount(AuxDataView);
 
+    expect(wrapper.text()).toContain('Settings');
     expect(wrapper.text()).toContain('Miembros de la familia');
     expect(wrapper.text()).toContain('Datos IPC');
     expect(wrapper.text()).toContain('Tasas de conversion');

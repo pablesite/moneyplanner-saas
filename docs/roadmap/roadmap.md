@@ -48,6 +48,7 @@ Current iteration:
 7. Drawer readability fixed on mobile: stronger backdrop dimming and near-opaque sidebar surface to avoid background bleed-through.
 8. Settings reorganized into a single-page accordion with collapsible sections for family members, IPC data, and conversion rates.
 9. Settings layout simplified by removing the extra title header block and the redundant back button.
+10. Settings context restored with a plain page title (`Settings`) without reintroducing the boxed header layout.
 
 ### Milestone 07
 First production demo release.
