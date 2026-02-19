@@ -21,7 +21,7 @@ const accountLabel = ref('Mi cuenta');
 const accountRole = ref('');
 const accountPlan = ref('');
 
-const hasToken = hasAccessToken;
+const hasToken = computed(() => hasAccessToken());
 const isLoginRoute = computed(() => route.name === 'login');
 const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [
@@ -230,7 +230,12 @@ onBeforeUnmount(() => {
             >
               Settings
             </RouterLink>
-            <button class="ui-shell-account-item ui-shell-account-item-btn" type="button" role="menuitem" @click="logout">
+            <button
+              class="ui-shell-account-item ui-shell-account-item-btn"
+              type="button"
+              role="menuitem"
+              @click="logout"
+            >
               Cerrar sesion
             </button>
           </div>
