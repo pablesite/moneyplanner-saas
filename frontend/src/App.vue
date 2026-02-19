@@ -14,6 +14,8 @@ type NavItem = {
 
 const route = useRoute();
 const sidebarOpen = ref(false);
+const accountMenuOpen = ref(false);
+const accountMenuRef = ref<HTMLElement | null>(null);
 const accountLabel = ref('Mi cuenta');
 const accountRole = ref('');
 const accountPlan = ref('');
@@ -24,13 +26,6 @@ const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [
     { id: 'home', icon: 'GU', label: 'Guia', hint: 'Plan paso a paso', to: '/inicio' },
     { id: 'net-worth', icon: 'PT', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
-    {
-      id: 'settings',
-      icon: 'MD',
-      label: 'Settings',
-      hint: 'Modulos y configuracion',
-      to: '/data',
-    },
   ];
 
   return baseItems;
@@ -63,9 +58,27 @@ function closeSidebar(): void {
   sidebarOpen.value = false;
 }
 
+function toggleAccountMenu(): void {
+  accountMenuOpen.value = !accountMenuOpen.value;
+}
+
+function closeAccountMenu(): void {
+  accountMenuOpen.value = false;
+}
+
 function handleGlobalKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && sidebarOpen.value) {
-    closeSidebar();
+  if (event.key === 'Escape') {
+    if (sidebarOpen.value) closeSidebar();
+    if (accountMenuOpen.value) closeAccountMenu();
+  }
+}
+
+function handleGlobalClick(event: MouseEvent): void {
+  if (!accountMenuOpen.value) return;
+  const target = event.target as Node | null;
+  if (!target) return;
+  if (accountMenuRef.value && !accountMenuRef.value.contains(target)) {
+    closeAccountMenu();
   }
 }
 
@@ -77,6 +90,7 @@ watch(
   () => route.fullPath,
   () => {
     sidebarOpen.value = false;
+    accountMenuOpen.value = false;
   },
 );
 
@@ -106,8 +120,10 @@ watch(
 );
 
 window.addEventListener('keydown', handleGlobalKeydown);
+document.addEventListener('click', handleGlobalClick);
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown);
+  document.removeEventListener('click', handleGlobalClick);
   document.body.style.overflow = '';
 });
 </script>
@@ -168,17 +184,34 @@ onBeforeUnmount(() => {
           <span aria-hidden="true">&#9776;</span>
         </button>
         <div class="ui-shell-header-title">{{ pageTitle }}</div>
-        <RouterLink v-if="hasToken" class="ui-shell-account-link" to="/account">
-          <span class="ui-shell-account-avatar">{{ accountInitials }}</span>
-          <span class="ui-shell-account-info">
-            <span class="ui-shell-account-name">{{ accountLabel }}</span>
-            <span class="ui-shell-account-meta">
-              <span v-if="accountRole">{{ accountRole }}</span>
-              <span v-if="accountRole && accountPlan"> | </span>
-              <span v-if="accountPlan">{{ accountPlan }}</span>
+        <div v-if="hasToken" ref="accountMenuRef" class="ui-shell-account-menu">
+          <button
+            class="ui-shell-account-link"
+            type="button"
+            :aria-expanded="accountMenuOpen"
+            aria-haspopup="menu"
+            @click="toggleAccountMenu"
+          >
+            <span class="ui-shell-account-avatar">{{ accountInitials }}</span>
+            <span class="ui-shell-account-info">
+              <span class="ui-shell-account-name">{{ accountLabel }}</span>
+              <span class="ui-shell-account-meta">
+                <span v-if="accountRole">{{ accountRole }}</span>
+                <span v-if="accountRole && accountPlan"> | </span>
+                <span v-if="accountPlan">{{ accountPlan }}</span>
+              </span>
             </span>
-          </span>
-        </RouterLink>
+          </button>
+
+          <div v-if="accountMenuOpen" class="ui-shell-account-dropdown" role="menu">
+            <RouterLink class="ui-shell-account-item" to="/account" role="menuitem" @click="closeAccountMenu">
+              Perfil
+            </RouterLink>
+            <RouterLink class="ui-shell-account-item" to="/data" role="menuitem" @click="closeAccountMenu">
+              Settings
+            </RouterLink>
+          </div>
+        </div>
       </header>
 
       <main class="ui-shell-content">
@@ -363,7 +396,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
   color: var(--text);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
@@ -397,6 +431,40 @@ onBeforeUnmount(() => {
 .ui-shell-account-meta {
   font-size: 11px;
   color: var(--muted);
+}
+
+.ui-shell-account-menu {
+  position: relative;
+}
+
+.ui-shell-account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 170px;
+  border: 1px solid rgba(45, 212, 191, 0.45);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(45, 212, 191, 0.08), rgba(45, 212, 191, 0.02)),
+    rgba(8, 12, 22, 0.96);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(45, 212, 191, 0.14);
+  padding: 6px;
+  z-index: 30;
+}
+
+.ui-shell-account-item {
+  display: block;
+  border-radius: 9px;
+  padding: 9px 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.ui-shell-account-item:hover {
+  background: rgba(45, 212, 191, 0.12);
 }
 
 .ui-shell-content {
