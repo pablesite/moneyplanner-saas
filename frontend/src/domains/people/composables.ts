@@ -185,13 +185,8 @@ export function usePeopleOwnerships() {
   });
 
   const ownershipsSorted = computed(() => {
-    const arr = [...store.ownerships];
-    arr.sort((a, b) => {
-      if (a.kind !== b.kind) return a.kind === 'individual' ? -1 : 1;
-      const an = a.member?.name ?? '';
-      const bn = b.member?.name ?? '';
-      return an.localeCompare(bn);
-    });
+    const arr = [...store.ownerships].filter((ownership) => ownership.kind === 'shared');
+    arr.sort((a, b) => a.id - b.id);
     return arr;
   });
 

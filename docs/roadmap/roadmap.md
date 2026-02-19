@@ -60,6 +60,7 @@ Current iteration:
 19. Perfil simplified by hiding legacy `Vinculo opcional con core` controls from the SaaS account view.
 20. Perfil visual redesign: plain page title (without boxed header), renamed from `Cuenta SaaS` to `Perfil`, and identity data reorganized into cleaner readable cards.
 21. Perfil received an alternative visual pass with cleaner row-based identity layout and improved emphasis on plan status.
+22. Titularidades view simplified by hiding individual ownership rows and focusing only on shared ownerships.
 
 ### Milestone 07
 First production demo release.

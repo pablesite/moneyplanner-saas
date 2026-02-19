@@ -74,7 +74,6 @@ onMounted(async () => {
             <td class="ui-data-table-actions">
               <div class="ui-people-row-actions">
                 <button
-                  v-if="o.kind === 'shared'"
                   class="icon-btn"
                   type="button"
                   title="Editar"
@@ -86,7 +85,6 @@ onMounted(async () => {
                 </button>
 
                 <button
-                  v-if="o.kind === 'shared'"
                   class="icon-btn"
                   type="button"
                   title="Eliminar"
@@ -98,14 +96,12 @@ onMounted(async () => {
                 </button>
 
                 <span v-if="o.kind === 'shared' && o.is_in_use" class="subtle">En uso</span>
-
-                <span v-if="o.kind !== 'shared'" class="subtle">&mdash;</span>
               </div>
             </td>
           </tr>
 
           <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="ui-table-empty">No hay titularidades todavía.</td>
+            <td colspan="2" class="ui-table-empty">No hay titularidades compartidas todavía.</td>
           </tr>
         </tbody>
       </table>
