@@ -17,6 +17,7 @@ Complete a broad refactor across `core` and `saas` with strong quality gates, co
 3. CI quality gates active for both stacks.
 4. Frontend and backend coverage targets reached.
 5. Critical backend service coverage completed (`memberships/services` at 100%).
+6. Data Input annual income UI aligned with Net Worth style (category/subcategory grouping, owner badges, recurrent marker).
 
 ## Coverage Snapshot
 1. SaaS backend: 93%
