@@ -5,23 +5,14 @@ import { useSaasAccountPage } from '@/domains/auth';
 
 const route = useRoute();
 
-const {
-  loading,
-  error,
-  success,
-  username,
-  email,
-  role,
-  subscriptionStatus,
-  premiumEnabled,
-} = useSaasAccountPage();
+const { loading, error, success, username, email, role, subscriptionStatus, premiumEnabled } =
+  useSaasAccountPage();
 
 const permissionNotice = computed(() =>
   route.query.reason === 'permission_denied'
     ? 'No tienes permisos de administracion para acceder a esa seccion.'
     : null,
 );
-
 </script>
 
 <template>
@@ -70,7 +61,10 @@ const permissionNotice = computed(() =>
 
           <aside class="ui-profile-aside">
             <span class="ui-profile-aside-label">Estado del plan</span>
-            <span class="badge" :class="premiumEnabled ? 'ui-profile-badge-on' : 'ui-profile-badge-off'">
+            <span
+              class="badge"
+              :class="premiumEnabled ? 'ui-profile-badge-on' : 'ui-profile-badge-off'"
+            >
               {{ premiumEnabled ? 'Premium habilitado' : 'Premium bloqueado' }}
             </span>
           </aside>

@@ -11,7 +11,12 @@ const phases: Phase[] = [
   { id: 2, title: 'Flujo de caja positivo', focus: 'Superavit mensual estable', progress: 68 },
   { id: 3, title: 'Fondo de emergencia', focus: 'Colchon de seguridad', progress: 35 },
   { id: 4, title: 'Mejorar patrimonio', focus: 'Balancear activo y pasivo', progress: 18 },
-  { id: 5, title: 'Independencia financiera', focus: 'Ingresos cubren tu estilo de vida', progress: 6 },
+  {
+    id: 5,
+    title: 'Independencia financiera',
+    focus: 'Ingresos cubren tu estilo de vida',
+    progress: 6,
+  },
 ];
 
 const fallbackPhase: Phase = phases[phases.length - 1] ?? {
@@ -185,7 +190,10 @@ function phaseStateLabel(phase: Phase): string {
   width: 66px;
   height: 66px;
   border-radius: 999px;
-  background: conic-gradient(rgba(45, 212, 191, 0.9) var(--phase-progress), rgba(255, 255, 255, 0.16) 0);
+  background: conic-gradient(
+    rgba(45, 212, 191, 0.9) var(--phase-progress),
+    rgba(255, 255, 255, 0.16) 0
+  );
   display: inline-flex;
   align-items: center;
   justify-content: center;
