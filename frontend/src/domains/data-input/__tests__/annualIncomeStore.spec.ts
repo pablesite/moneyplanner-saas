@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   coreApi: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -50,8 +51,9 @@ describe('annual income store (saas)', () => {
     expect(store.totalAnnual.value).toBe(32460);
   });
 
-  it('creates and deletes entries via core api', async () => {
+  it('creates, updates and deletes entries via core api', async () => {
     mocks.coreApi.post.mockResolvedValue({ data: { id: 1 } });
+    mocks.coreApi.patch.mockResolvedValue({ data: { id: 1 } });
     mocks.coreApi.delete.mockResolvedValue({ data: {} });
     mocks.coreApi.get.mockResolvedValue({ data: [] });
 
@@ -79,6 +81,34 @@ describe('annual income store (saas)', () => {
         category: 'salary',
         subcategory: 'employee_salary',
         amount_annual: '32460.00',
+        fiscal_year: 2026,
+      }),
+    );
+
+    const updateResult = await store.updateEntry(
+      1,
+      {
+        name: 'CTN actualizado',
+        category: 'salary',
+        subcategory: 'employee_salary',
+        owner: 'Pablo',
+        incomeType: 'recurrent',
+        amountAnnual: '33000,00',
+        fiscalYear: 2026,
+        currency: 'EUR',
+        notes: 'update',
+      },
+      2026,
+    );
+
+    expect(updateResult.ok).toBe(true);
+    expect(mocks.coreApi.patch).toHaveBeenCalledWith(
+      '/api/budget/annual-income/1/',
+      expect.objectContaining({
+        name: 'CTN actualizado',
+        category: 'salary',
+        subcategory: 'employee_salary',
+        amount_annual: '33000.00',
         fiscal_year: 2026,
       }),
     );

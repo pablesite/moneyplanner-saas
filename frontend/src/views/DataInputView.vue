@@ -48,6 +48,7 @@ const {
   error: annualIncomeApiError,
   loadAll: loadAnnualIncome,
   addEntry: addIncomeEntry,
+  updateEntry: updateIncomeEntry,
   deleteEntry: deleteIncomeEntry,
 } = useAnnualIncomeStore('saas');
 const {
@@ -61,6 +62,7 @@ const {
 const annualIncomeError = ref<string | null>(null);
 const annualExpenseError = ref<string | null>(null);
 const showIncomeModal = ref(false);
+const editingIncomeId = ref<number | null>(null);
 const showExpenseModal = ref(false);
 const expandedIncomeCats = ref<Set<string>>(new Set());
 const expandedExpenseCats = ref<Set<string>>(new Set());
@@ -526,8 +528,23 @@ function resetExpenseForm(): void {
   annualExpenseForm.notes = '';
 }
 
-function openIncomeModal(): void {
+function openIncomeModal(entry?: AnnualIncomeEntry): void {
   annualIncomeError.value = null;
+  if (entry) {
+    editingIncomeId.value = entry.id;
+    annualIncomeForm.category = entry.category;
+    annualIncomeForm.subcategory = entry.subcategory;
+    annualIncomeForm.name = entry.name;
+    annualIncomeForm.owner = entry.owner || '';
+    annualIncomeForm.isRecurrent = entry.incomeType === 'recurrent';
+    annualIncomeForm.amountInputPeriod = 'annual';
+    annualIncomeForm.amountAnnual = String(entry.amountAnnual);
+    annualIncomeForm.currency = entry.currency;
+    annualIncomeForm.notes = entry.notes || '';
+  } else {
+    editingIncomeId.value = null;
+    resetIncomeForm();
+  }
   showIncomeModal.value = true;
 }
 function openExpenseModal(): void {
@@ -537,6 +554,8 @@ function openExpenseModal(): void {
 
 function closeIncomeModal(): void {
   showIncomeModal.value = false;
+  editingIncomeId.value = null;
+  resetIncomeForm();
 }
 function closeExpenseModal(): void {
   showExpenseModal.value = false;
@@ -544,6 +563,12 @@ function closeExpenseModal(): void {
 
 const incomeAmountInputPlaceholder = computed(() =>
   annualIncomeForm.amountInputPeriod === 'monthly' ? 'Importe mensual' : 'Importe anual',
+);
+const incomeModalTitle = computed(() =>
+  editingIncomeId.value === null ? 'Nuevo ingreso anual' : 'Editar ingreso anual',
+);
+const incomeSubmitLabel = computed(() =>
+  editingIncomeId.value === null ? 'Guardar ingreso' : 'Guardar cambios',
 );
 const expenseAmountInputPlaceholder = computed(() =>
   annualExpenseForm.amountInputPeriod === 'monthly' ? 'Importe mensual' : 'Importe anual',
@@ -570,20 +595,21 @@ async function submitAnnualIncome(): Promise<void> {
       : rawAmount
     : annualIncomeForm.amountAnnual;
 
-  const result = await addIncomeEntry(
-    {
-      name: annualIncomeForm.name,
-      category: annualIncomeForm.category,
-      subcategory: annualIncomeForm.subcategory,
-      owner: annualIncomeForm.owner,
-      incomeType: annualIncomeForm.isRecurrent ? 'recurrent' : 'one_off',
-      amountAnnual: String(normalizedAmount),
-      fiscalYear: fiscalYear.value,
-      currency: annualIncomeForm.currency,
-      notes: annualIncomeForm.notes,
-    },
-    fiscalYear.value,
-  );
+  const draft = {
+    name: annualIncomeForm.name,
+    category: annualIncomeForm.category,
+    subcategory: annualIncomeForm.subcategory,
+    owner: annualIncomeForm.owner,
+    incomeType: (annualIncomeForm.isRecurrent ? 'recurrent' : 'one_off') as 'recurrent' | 'one_off',
+    amountAnnual: String(normalizedAmount),
+    fiscalYear: fiscalYear.value,
+    currency: annualIncomeForm.currency,
+    notes: annualIncomeForm.notes,
+  };
+  const result =
+    editingIncomeId.value === null
+      ? await addIncomeEntry(draft, fiscalYear.value)
+      : await updateIncomeEntry(editingIncomeId.value, draft, fiscalYear.value);
   if (!result.ok) {
     annualIncomeError.value = result.error;
     return;
@@ -704,7 +730,7 @@ watch(
               type="button"
               aria-label="Anadir ingreso"
               :disabled="annualIncomeLoading"
-              @click="openIncomeModal"
+              @click="() => openIncomeModal()"
             >
               <span class="btn-icon">+</span>
             </button>
@@ -808,6 +834,14 @@ watch(
                         {{ formatMoneyAmount(entry.amountAnnual, entry.currency) }}
                       </div>
                       <div class="nw-item-actions">
+                        <button
+                          class="icon-btn"
+                          title="Editar"
+                          :disabled="annualIncomeLoading"
+                          @click="() => openIncomeModal(entry)"
+                        >
+                          &#9998;
+                        </button>
                         <button
                           class="icon-btn"
                           title="Eliminar"
@@ -1073,7 +1107,7 @@ watch(
       />
     </BaseModal>
 
-    <BaseModal :open="showIncomeModal" title="Nuevo ingreso anual" @close="closeIncomeModal">
+    <BaseModal :open="showIncomeModal" :title="incomeModalTitle" @close="closeIncomeModal">
       <div class="grid gap-2.5 md:grid-cols-2">
         <select v-model="annualIncomeForm.category" class="select ui-data-field">
           <option
@@ -1174,7 +1208,7 @@ watch(
             :disabled="annualIncomeLoading"
             @click="submitAnnualIncome"
           >
-            Guardar ingreso
+            {{ incomeSubmitLabel }}
           </button>
         </div>
       </div>
