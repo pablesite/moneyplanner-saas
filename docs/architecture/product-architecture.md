@@ -19,6 +19,10 @@ Describe product modules and their functional dependencies.
 2. Accounting
 3. Investment portfolio
 4. Simulator
+5. Data input module (annual income/expenses + assets + liabilities)
+
+Reference:
+- `docs/architecture/annual-income-taxonomy.md`
 
 ## Principles
 1. Keep modules cohesive.
