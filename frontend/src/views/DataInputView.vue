@@ -57,12 +57,14 @@ const {
   error: annualExpenseApiError,
   loadAll: loadAnnualExpense,
   addEntry: addExpenseEntry,
+  updateEntry: updateExpenseEntry,
   deleteEntry: deleteExpenseEntry,
 } = useAnnualExpenseStore('saas');
 const annualIncomeError = ref<string | null>(null);
 const annualExpenseError = ref<string | null>(null);
 const showIncomeModal = ref(false);
 const editingIncomeId = ref<number | null>(null);
+const editingExpenseId = ref<number | null>(null);
 const showExpenseModal = ref(false);
 const expandedIncomeCats = ref<Set<string>>(new Set());
 const expandedExpenseCats = ref<Set<string>>(new Set());
@@ -547,8 +549,23 @@ function openIncomeModal(entry?: AnnualIncomeEntry): void {
   }
   showIncomeModal.value = true;
 }
-function openExpenseModal(): void {
+function openExpenseModal(entry?: AnnualExpenseEntry): void {
   annualExpenseError.value = null;
+  if (entry) {
+    editingExpenseId.value = entry.id;
+    annualExpenseForm.category = entry.category;
+    annualExpenseForm.subcategory = entry.subcategory;
+    annualExpenseForm.name = entry.name;
+    annualExpenseForm.owner = entry.owner || '';
+    annualExpenseForm.isRecurrent = entry.expenseType === 'recurrent';
+    annualExpenseForm.amountInputPeriod = 'annual';
+    annualExpenseForm.amountAnnual = String(entry.amountAnnual);
+    annualExpenseForm.currency = entry.currency;
+    annualExpenseForm.notes = entry.notes || '';
+  } else {
+    editingExpenseId.value = null;
+    resetExpenseForm();
+  }
   showExpenseModal.value = true;
 }
 
@@ -559,6 +576,8 @@ function closeIncomeModal(): void {
 }
 function closeExpenseModal(): void {
   showExpenseModal.value = false;
+  editingExpenseId.value = null;
+  resetExpenseForm();
 }
 
 const incomeAmountInputPlaceholder = computed(() =>
@@ -572,6 +591,12 @@ const incomeSubmitLabel = computed(() =>
 );
 const expenseAmountInputPlaceholder = computed(() =>
   annualExpenseForm.amountInputPeriod === 'monthly' ? 'Importe mensual' : 'Importe anual',
+);
+const expenseModalTitle = computed(() =>
+  editingExpenseId.value === null ? 'Nuevo gasto anual' : 'Editar gasto anual',
+);
+const expenseSubmitLabel = computed(() =>
+  editingExpenseId.value === null ? 'Guardar gasto' : 'Guardar cambios',
 );
 
 watch(
@@ -631,20 +656,23 @@ async function submitAnnualExpense(): Promise<void> {
       : rawAmount
     : annualExpenseForm.amountAnnual;
 
-  const result = await addExpenseEntry(
-    {
-      name: annualExpenseForm.name,
-      category: annualExpenseForm.category,
-      subcategory: annualExpenseForm.subcategory,
-      owner: annualExpenseForm.owner,
-      expenseType: annualExpenseForm.isRecurrent ? 'recurrent' : 'one_off',
-      amountAnnual: String(normalizedAmount),
-      fiscalYear: fiscalYear.value,
-      currency: annualExpenseForm.currency,
-      notes: annualExpenseForm.notes,
-    },
-    fiscalYear.value,
-  );
+  const draft = {
+    name: annualExpenseForm.name,
+    category: annualExpenseForm.category,
+    subcategory: annualExpenseForm.subcategory,
+    owner: annualExpenseForm.owner,
+    expenseType: (annualExpenseForm.isRecurrent ? 'recurrent' : 'one_off') as
+      | 'recurrent'
+      | 'one_off',
+    amountAnnual: String(normalizedAmount),
+    fiscalYear: fiscalYear.value,
+    currency: annualExpenseForm.currency,
+    notes: annualExpenseForm.notes,
+  };
+  const result =
+    editingExpenseId.value === null
+      ? await addExpenseEntry(draft, fiscalYear.value)
+      : await updateExpenseEntry(editingExpenseId.value, draft, fiscalYear.value);
   if (!result.ok) {
     annualExpenseError.value = result.error;
     return;
@@ -885,7 +913,7 @@ watch(
               type="button"
               aria-label="Anadir gasto"
               :disabled="annualExpenseLoading"
-              @click="openExpenseModal"
+              @click="() => openExpenseModal()"
             >
               <span class="btn-icon">+</span>
             </button>
@@ -989,6 +1017,14 @@ watch(
                         {{ formatMoneyAmount(entry.amountAnnual, entry.currency) }}
                       </div>
                       <div class="nw-item-actions">
+                        <button
+                          class="icon-btn"
+                          title="Editar"
+                          :disabled="annualExpenseLoading"
+                          @click="() => openExpenseModal(entry)"
+                        >
+                          &#9998;
+                        </button>
                         <button
                           class="icon-btn"
                           title="Eliminar"
@@ -1214,7 +1250,7 @@ watch(
       </div>
     </BaseModal>
 
-    <BaseModal :open="showExpenseModal" title="Nuevo gasto anual" @close="closeExpenseModal">
+    <BaseModal :open="showExpenseModal" :title="expenseModalTitle" @close="closeExpenseModal">
       <div class="grid gap-2.5 md:grid-cols-2">
         <select v-model="annualExpenseForm.category" class="select ui-data-field">
           <option
@@ -1321,7 +1357,7 @@ watch(
             :disabled="annualExpenseLoading"
             @click="submitAnnualExpense"
           >
-            Guardar gasto
+            {{ expenseSubmitLabel }}
           </button>
         </div>
       </div>
