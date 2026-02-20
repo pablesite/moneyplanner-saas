@@ -27,10 +27,10 @@ const { itemFormProps, itemListProps } = useNetWorthViewExtensions(store);
 
 <template>
   <div class="container ui-pro-page">
-    <section class="card ui-pro-panel ui-data-input-intro">
+    <section class="card ui-pro-panel grid gap-2.5">
       <p class="ui-pro-kicker">Milestone 08</p>
       <h1 class="h1 m-0">Introduccion de datos</h1>
-      <p class="subtle ui-data-input-copy">
+      <p class="subtle m-0">
         Esta vista centraliza la carga de datos base: ingresos anuales, gastos anuales, activos y
         pasivos con interes.
       </p>
@@ -127,14 +127,3 @@ const { itemFormProps, itemListProps } = useNetWorthViewExtensions(store);
     </BaseModal>
   </div>
 </template>
-
-<style scoped>
-.ui-data-input-intro {
-  display: grid;
-  gap: 10px;
-}
-
-.ui-data-input-copy {
-  margin: 0;
-}
-</style>
