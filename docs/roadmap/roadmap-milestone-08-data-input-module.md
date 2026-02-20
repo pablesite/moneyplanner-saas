@@ -10,6 +10,14 @@ Build a unified data input module to register annual income, annual expenses, as
 4. Liabilities (`Pasivos`) input flow.
 5. Liability interest (`Interes de la deuda`) support in liabilities.
 
+## First Increment (Priority)
+1. Create a new `Introduccion de datos` view.
+2. Expose the new view in the sidebar as the second navigation option.
+3. Target sidebar order:
+   - `Guia`
+   - `Introduccion de datos`
+   - Dashboards (starting with `Patrimonio`, then the rest)
+
 ## Out Of Scope
 1. Debt diagnostic score logic (Milestone 09).
 2. Budget dashboard analytics (Milestone 10/11).
@@ -43,32 +51,40 @@ Build a unified data input module to register annual income, annual expenses, as
    - optional asset backing flag
 
 ## Implementation Phases
-### Phase A: Domain and API Foundation
+### Phase A: Navigation and New Entry View (First delivery)
+1. Add `Introduccion de datos` route/page.
+2. Update sidebar order to `Guia` -> `Introduccion de datos` -> dashboards.
+3. Keep existing dashboard links available after the new entry.
+
+### Phase B: Domain and API Foundation
 1. Define shared schemas/serializers and validation rules.
 2. Add backend endpoints for CRUD operations.
 3. Add tests for validation and happy-path CRUD.
 
-### Phase B: Frontend Input Flows
+### Phase C: Frontend Input Flows
 1. Build forms and listing views for all input domains.
 2. Add input masking/formatting for monetary and percentage values.
 3. Add empty/error/loading states and inline validation feedback.
 
-### Phase C: Integration and Read Models
+### Phase D: Integration and Read Models
 1. Expose aggregated read model used by dashboards.
 2. Ensure `Patrimonio` can consume updated liabilities + interest fields.
 3. Add backward-compatible migration/update strategy for existing records.
 
-### Phase D: Hardening and Release Readiness
+### Phase E: Hardening and Release Readiness
 1. Permission checks aligned with existing auth model.
 2. QA pass for key journeys and regression smoke tests.
 3. Documentation update and release notes.
 
 ## Acceptance Criteria
-1. Users can create and edit annual income and annual expenses without API validation errors for valid payloads.
-2. Users can create and edit assets and liabilities, including liability interest.
-3. Liability records expose interest data in API responses.
-4. Existing net-worth view remains functional after migration.
-5. Quality gates pass in Docker for affected stacks.
+1. Sidebar shows `Introduccion de datos` as second option, right after `Guia`.
+2. Dashboards remain reachable in sidebar after `Introduccion de datos`, with `Patrimonio` first.
+3. Users can open `Introduccion de datos` without navigation regressions.
+4. Users can create and edit annual income and annual expenses without API validation errors for valid payloads.
+5. Users can create and edit assets and liabilities, including liability interest.
+6. Liability records expose interest data in API responses.
+7. Existing net-worth view remains functional after migration.
+8. Quality gates pass in Docker for affected stacks.
 
 ## Validation Plan
 1. SaaS backend (`backend/`):

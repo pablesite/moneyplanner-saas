@@ -62,6 +62,7 @@ Data input module update:
 3. Assets (`Activos`)
 4. Liabilities (`Pasivos`)
 5. (New) Liability interest (`Interes de la deuda`)
+6. First delivery: new `Introduccion de datos` view as second sidebar option (`Guia` -> `Introduccion de datos` -> dashboards, starting with `Patrimonio`)
 
 Reference:
 - `docs/roadmap/roadmap-milestone-08-data-input-module.md`
