@@ -6,6 +6,8 @@ Document stable API behavior for both stacks.
 ## Core API (Base)
 1. Auth/token/settings endpoints.
 2. Net-worth assets/liabilities/snapshots endpoints.
+   - Assets and liabilities include `start_date`.
+   - Liabilities include fixed-rate `annual_interest_tae` for mortgage/personal loan/credit card.
 3. Summary and settings contracts.
 4. Annual income endpoints (`/api/budget/annual-income/` + `/api/budget/annual-income/totals/`).
 5. Annual expense endpoints (`/api/budget/annual-expense/` + `/api/budget/annual-expense/totals/`).

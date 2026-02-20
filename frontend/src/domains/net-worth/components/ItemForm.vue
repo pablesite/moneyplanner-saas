@@ -20,6 +20,8 @@ type Props = {
     category: string;
     subcategory?: string;
     amount: string;
+    annual_interest_tae?: string | null;
+    start_date: string;
     notes: string;
     currency: string;
     tracking_mode: string;
@@ -30,6 +32,10 @@ type Props = {
 };
 
 const props = defineProps<Props>();
+
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const currencies = [
   { value: 'EUR', label: 'EUR' },
@@ -71,6 +77,8 @@ const form = reactive({
   category: '',
   subcategory: '',
   amount: '',
+  annual_interest_tae: '',
+  start_date: todayIsoDate(),
   notes: '',
   currency: '',
   tracking_mode: 'manual',
@@ -93,6 +101,10 @@ const financedAssetOptions = computed(() => {
 });
 
 const showFinancedAsset = computed(() => !!props.showFinancedAsset);
+const showAnnualInterestInput = computed(
+  () =>
+    showFinancedAsset.value && ['mortgage', 'personal_loan', 'credit_card'].includes(form.category),
+);
 const subcategoriesForCategory = computed(() => {
   if (!props.subcategories || !form.category) return [];
   return props.subcategories.filter((s) => s.category === form.category);
@@ -173,10 +185,21 @@ const amountError = computed(() => {
   const { error } = sanitizeAmount(form.amount, maxDecimals.value);
   return error;
 });
+const annualInterestError = computed(() => {
+  if (!showAnnualInterestInput.value) return '';
+  const raw = String(form.annual_interest_tae ?? '')
+    .trim()
+    .replace(',', '.');
+  if (!raw) return 'La TAE es obligatoria para este pasivo';
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 'TAE invalida';
+  return '';
+});
 
 async function submit() {
-  if (!form.name || !form.category || !form.currency || !form.amount) return;
+  if (!form.name || !form.category || !form.currency || !form.amount || !form.start_date) return;
   if (props.subcategories && !form.subcategory) return;
+  if (annualInterestError.value) return;
 
   const { value: normalizedAmount, error } = sanitizeAmount(form.amount, maxDecimals.value);
   if (!normalizedAmount || error) return;
@@ -186,6 +209,10 @@ async function submit() {
     category: form.category,
     subcategory: form.subcategory || undefined,
     amount: normalizedAmount, // normalized dot-decimal string
+    start_date: form.start_date,
+    annual_interest_tae: showAnnualInterestInput.value
+      ? String(form.annual_interest_tae).trim().replace(',', '.')
+      : undefined,
     notes: form.notes,
     currency: form.currency,
     tracking_mode: form.tracking_mode,
@@ -203,6 +230,8 @@ async function submit() {
   form.category = '';
   form.subcategory = '';
   form.amount = '';
+  form.annual_interest_tae = '';
+  form.start_date = todayIsoDate();
   form.notes = '';
   form.currency = '';
   form.ownership_id = null;
@@ -217,6 +246,8 @@ watch(
     form.category = initial.category ?? '';
     form.subcategory = initial.subcategory ?? '';
     form.amount = initial.amount ?? '';
+    form.annual_interest_tae = initial.annual_interest_tae ?? '';
+    form.start_date = initial.start_date ?? todayIsoDate();
     form.notes = initial.notes ?? '';
     form.currency = initial.currency ?? '';
     form.tracking_mode = initial.tracking_mode ?? 'manual';
@@ -268,9 +299,22 @@ watch(
 
       <input v-model="form.amount" inputmode="decimal" placeholder="Importe" class="input" />
 
+      <input v-model="form.start_date" type="date" class="input" />
+
       <div v-if="amountError" class="ui-form-help ui-form-help-error">
         {{ amountError }}
       </div>
+      <div v-if="annualInterestError" class="ui-form-help ui-form-help-error">
+        {{ annualInterestError }}
+      </div>
+
+      <input
+        v-if="showAnnualInterestInput"
+        v-model="form.annual_interest_tae"
+        inputmode="decimal"
+        placeholder="TAE anual (%)"
+        class="input"
+      />
 
       <!-- Ownership -->
       <select
@@ -305,7 +349,7 @@ watch(
         </button>
         <button
           class="btn btn-primary ui-form-action-btn"
-          :disabled="!!amountError"
+          :disabled="!!amountError || !!annualInterestError"
           @click="submit"
         >
           {{ isEdit ? 'Guardar' : 'Crear' }}
