@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   coreApi: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -50,8 +51,9 @@ describe('annual expense store (saas)', () => {
     expect(store.totalAnnual.value).toBe(5500);
   });
 
-  it('creates and deletes entries via core api', async () => {
+  it('creates, updates and deletes entries via core api', async () => {
     mocks.coreApi.post.mockResolvedValue({ data: { id: 1 } });
+    mocks.coreApi.patch.mockResolvedValue({ data: { id: 1 } });
     mocks.coreApi.delete.mockResolvedValue({ data: {} });
     mocks.coreApi.get.mockResolvedValue({ data: [] });
 
@@ -78,8 +80,35 @@ describe('annual expense store (saas)', () => {
         name: 'Alimentacion',
         category: 'consumption_expenses',
         subcategory: 'living_expenses',
+        owner_name: 'Pablo',
         amount_annual: '5500.00',
         fiscal_year: 2026,
+      }),
+    );
+
+    const updateResult = await store.updateEntry(
+      1,
+      {
+        name: 'Alimentacion actualizada',
+        category: 'consumption_expenses',
+        subcategory: 'living_expenses',
+        owner: '  Pablo   Ruiz  ',
+        expenseType: 'recurrent',
+        amountAnnual: '1.234,56',
+        fiscalYear: 2026,
+        currency: 'EUR',
+        notes: 'update',
+      },
+      2026,
+    );
+
+    expect(updateResult.ok).toBe(true);
+    expect(mocks.coreApi.patch).toHaveBeenCalledWith(
+      '/api/budget/annual-expense/1/',
+      expect.objectContaining({
+        name: 'Alimentacion actualizada',
+        owner_name: 'Pablo Ruiz',
+        amount_annual: '1234.56',
       }),
     );
 

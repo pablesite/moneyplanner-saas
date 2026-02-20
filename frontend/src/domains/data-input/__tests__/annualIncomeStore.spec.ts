@@ -80,6 +80,7 @@ describe('annual income store (saas)', () => {
         name: 'CTN',
         category: 'salary',
         subcategory: 'employee_salary',
+        owner_name: 'Pablo',
         amount_annual: '32460.00',
         fiscal_year: 2026,
       }),
@@ -108,6 +109,7 @@ describe('annual income store (saas)', () => {
         name: 'CTN actualizado',
         category: 'salary',
         subcategory: 'employee_salary',
+        owner_name: 'Pablo',
         amount_annual: '33000.00',
         fiscal_year: 2026,
       }),
@@ -115,5 +117,26 @@ describe('annual income store (saas)', () => {
 
     await store.deleteEntry(10, 2026);
     expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/budget/annual-income/10/');
+  });
+
+  it('rejects invalid subcategory before calling api', async () => {
+    const store = useAnnualIncomeStore('saas');
+    const result = await store.addEntry(
+      {
+        name: 'Linea invalida',
+        category: 'salary',
+        subcategory: 'inheritance',
+        owner: 'Pablo',
+        incomeType: 'one_off',
+        amountAnnual: '1000',
+        fiscalYear: 2026,
+        currency: 'EUR',
+        notes: '',
+      },
+      2026,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(mocks.coreApi.post).not.toHaveBeenCalled();
   });
 });

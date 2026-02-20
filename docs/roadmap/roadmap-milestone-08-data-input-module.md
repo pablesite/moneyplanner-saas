@@ -133,3 +133,4 @@ Build a unified data input module to register annual income, annual expenses, as
 7. UI headers were refined in Guia/Introduccion/Patrimonio, including fixed app title branding and relocation of patrimonio KPI summary into the top panel.
 8. Annual expense taxonomy and API were implemented in Core (`/api/budget/annual-expense/` + `/api/budget/annual-expense/totals/`) and connected in Core/SaaS frontends with grouped UI, owner filter in SaaS, and fiscal-year support.
 9. Net-worth assets/liabilities now include `start_date`, and liabilities support fixed `annual_interest_tae` for mortgage/personal loan/credit-card categories in Core API and both frontends.
+10. Annual income/expense stores were refactored to share amount/owner normalization helpers, annual expense update parity was added in Core/SaaS stores, and test coverage was expanded in Core backend (`budget` + `net_worth`) and both frontends (`data-input` store/unit tests).

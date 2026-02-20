@@ -5,6 +5,7 @@ import {
   expenseSubcategories,
   type ExpenseCategoryKey,
 } from '@/domains/data-input/expenseTaxonomy';
+import { normalizeOwnerName, parseAnnualAmount } from '@/domains/data-input/annualEntryUtils';
 
 export type AnnualExpenseType = 'recurrent' | 'one_off';
 
@@ -54,37 +55,6 @@ type TotalsResponse = {
   total_annual: string;
   currency_hint: string;
 };
-
-function parseAmount(raw: string): number {
-  let normalized = String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '');
-
-  const hasComma = normalized.includes(',');
-  const hasDot = normalized.includes('.');
-  if (hasComma && hasDot) {
-    const lastComma = normalized.lastIndexOf(',');
-    const lastDot = normalized.lastIndexOf('.');
-    if (lastComma > lastDot) {
-      normalized = normalized.replace(/\./g, '').replace(',', '.');
-    } else {
-      normalized = normalized.replace(/,/g, '');
-    }
-  } else if (hasComma) {
-    normalized = normalized.replace(',', '.');
-  }
-
-  const value = Number(normalized);
-  if (!Number.isFinite(value) || value <= 0) return 0;
-  return value;
-}
-
-function normalizeOwnerName(raw: string): string {
-  return String(raw ?? '')
-    .trim()
-    .replace(/\s+/g, ' ')
-    .slice(0, 120);
-}
 
 function mapApiItem(item: AnnualExpenseApiItem): AnnualExpenseEntry {
   return {
@@ -140,7 +110,7 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
       return { ok: false, error: 'La subcategoria no corresponde con la categoria elegida.' };
     }
 
-    const amount = parseAmount(draft.amountAnnual);
+    const amount = parseAnnualAmount(draft.amountAnnual);
     if (amount <= 0) return { ok: false, error: 'El importe anual debe ser mayor que cero.' };
 
     loading.value = true;
@@ -157,6 +127,49 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
         currency: (draft.currency || 'EUR').toUpperCase(),
         notes: draft.notes.trim(),
         is_active: true,
+      });
+      await loadAll(year ?? draft.fiscalYear);
+      return { ok: true };
+    } catch (e: unknown) {
+      const message = toApiErrorMessage(e);
+      error.value = message;
+      return { ok: false, error: message };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function updateEntry(
+    id: number,
+    draft: AnnualExpenseDraft,
+    year?: number,
+  ): Promise<AddResult> {
+    const name = draft.name.trim();
+    if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
+
+    const validSubcategory = expenseSubcategories.some(
+      (row) => row.category === draft.category && row.value === draft.subcategory,
+    );
+    if (!validSubcategory) {
+      return { ok: false, error: 'La subcategoria no corresponde con la categoria elegida.' };
+    }
+
+    const amount = parseAnnualAmount(draft.amountAnnual);
+    if (amount <= 0) return { ok: false, error: 'El importe anual debe ser mayor que cero.' };
+
+    loading.value = true;
+    error.value = null;
+    try {
+      await coreApi.patch(`/api/budget/annual-expense/${id}/`, {
+        name,
+        category: draft.category,
+        subcategory: draft.subcategory,
+        owner_name: normalizeOwnerName(draft.owner),
+        expense_type: draft.expenseType,
+        amount_annual: amount.toFixed(2),
+        fiscal_year: draft.fiscalYear,
+        currency: (draft.currency || 'EUR').toUpperCase(),
+        notes: draft.notes.trim(),
       });
       await loadAll(year ?? draft.fiscalYear);
       return { ok: true };
@@ -189,6 +202,7 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
     error,
     loadAll,
     addEntry,
+    updateEntry,
     deleteEntry,
   };
 }
