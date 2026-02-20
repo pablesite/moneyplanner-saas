@@ -29,7 +29,7 @@ function onRoleSelect(userId: number, event: Event) {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container ui-pro-page">
     <div class="ui-page-header">
       <h1 class="h1 ui-page-title">Administracion SaaS</h1>
 
@@ -50,7 +50,7 @@ function onRoleSelect(userId: number, event: Event) {
     <div v-if="loading" class="ui-status-line mt-3">Cargando usuarios...</div>
 
     <div v-else class="grid gap-3.5">
-      <section class="card">
+      <section class="card ui-pro-panel">
         <h2 class="mt-0 text-base">Alta de usuario SaaS</h2>
 
         <form class="grid gap-2.5 md:max-w-xl" @submit.prevent="createUser">
@@ -90,27 +90,27 @@ function onRoleSelect(userId: number, event: Event) {
         </form>
       </section>
 
-      <section class="card">
+      <section class="card ui-pro-panel">
         <h2 class="mt-0 text-base">Usuarios SaaS</h2>
 
         <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
+          <table class="ui-data-table">
             <thead>
               <tr class="text-left">
-                <th class="px-2 py-2">ID</th>
-                <th class="px-2 py-2">Username</th>
-                <th class="px-2 py-2">Email</th>
-                <th class="px-2 py-2">Rol</th>
-                <th class="px-2 py-2">Estado</th>
-                <th class="px-2 py-2">Acciones</th>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.id" class="border-t border-white/10">
-                <td class="px-2 py-2">{{ user.id }}</td>
-                <td class="px-2 py-2">{{ user.username }}</td>
-                <td class="px-2 py-2">{{ user.email || 'sin email' }}</td>
-                <td class="px-2 py-2">
+              <tr v-for="user in users" :key="user.id">
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email || 'sin email' }}</td>
+                <td>
                   <select
                     class="select"
                     :value="user.role"
@@ -121,11 +121,11 @@ function onRoleSelect(userId: number, event: Event) {
                     <option value="saas_admin">saas_admin</option>
                   </select>
                 </td>
-                <td class="px-2 py-2">
+                <td>
                   <span v-if="user.is_active">activo</span>
                   <span v-else>inactivo</span>
                 </td>
-                <td class="px-2 py-2">
+                <td class="ui-data-table-actions">
                   <button
                     class="btn btn-sm"
                     type="button"

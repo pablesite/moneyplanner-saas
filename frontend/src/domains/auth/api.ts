@@ -22,7 +22,7 @@ export const coreAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get('/api/family-members/');
+    return api.get('/api/auth/me/');
   },
 };
 
@@ -31,7 +31,7 @@ export const premiumAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get('/api/family-members/');
+    return api.get('/api/auth/me/');
   },
 };
 

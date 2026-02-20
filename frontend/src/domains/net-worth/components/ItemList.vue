@@ -608,7 +608,7 @@ async function saveEdit(id: number) {
 </script>
 
 <template>
-  <div class="card">
+  <div class="card ui-pro-panel ui-nw-list-panel">
     <div class="nw-list-header">
       <div class="nw-list-header-left">
         <h2 class="card-header-title mt-0">{{ title }}</h2>

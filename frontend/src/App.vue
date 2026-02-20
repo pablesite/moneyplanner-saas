@@ -21,7 +21,7 @@ const accountLabel = ref('Mi cuenta');
 const accountRole = ref('');
 const accountPlan = ref('');
 
-const hasToken = computed(() => hasAccessToken());
+const hasToken = computed(() => hasAccessToken.value);
 const isLoginRoute = computed(() => route.name === 'login');
 const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [

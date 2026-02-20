@@ -4,6 +4,8 @@ import LoginView from './views/LoginView.vue';
 import HomeView from './views/HomeView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AuxDataView from './views/AuxDataView.vue';
+import SettingsFxView from './views/SettingsFxView.vue';
+import SettingsIpcView from './views/SettingsIpcView.vue';
 import AccountView from './views/AccountView.vue';
 import AdminUsersView from './views/AdminUsersView.vue';
 import { registerAuthGuard } from '@/domains/auth';
@@ -14,6 +16,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/inicio', name: 'home', component: HomeView },
   { path: '/', name: 'networth', component: NetWorthView },
   { path: '/data', name: 'aux-data', component: AuxDataView },
+  { path: '/data/fx', name: 'settings-fx', component: SettingsFxView },
+  { path: '/data/ipc', name: 'settings-ipc', component: SettingsIpcView },
   { path: '/account', name: 'account', component: AccountView },
   {
     path: '/admin/users',

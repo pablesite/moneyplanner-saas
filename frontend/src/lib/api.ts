@@ -76,9 +76,11 @@ function attachResponseInterceptor(client: typeof api) {
     async (error) => {
       const status = error.response?.status;
       const original = error.config || {};
-      const isRefreshCall = original.url?.includes('/api/auth/refresh/');
+      const requestUrl = String(original.url ?? '');
+      const isRefreshCall = requestUrl.includes('/api/auth/refresh/');
+      const isTokenCall = requestUrl.includes('/api/auth/token/');
 
-      if (status !== 401 || isRefreshCall || original._retry) {
+      if (status !== 401 || isRefreshCall || isTokenCall || original._retry) {
         return Promise.reject(error);
       }
 

@@ -9,7 +9,7 @@ const tab = ref<Tab>('members');
 </script>
 
 <template>
-  <div class="container">
+  <div class="container ui-pro-page">
     <div class="ui-page-header">
       <h1 class="h1 ui-page-title">Personas</h1>
 
@@ -19,7 +19,7 @@ const tab = ref<Tab>('members');
       </div>
     </div>
 
-    <div class="card mt-3.5">
+    <div class="card ui-pro-panel mt-1">
       <div class="mb-3.5 flex gap-2.5">
         <button
           class="btn opacity-60"

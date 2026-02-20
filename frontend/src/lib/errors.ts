@@ -30,10 +30,32 @@ function humanMessageForApiCode(code: string | null): string | null {
   return null;
 }
 
+function humanMessageForAuthFailure(error: unknown): string | null {
+  if (!axios.isAxiosError(error)) return null;
+
+  const status = error.response?.status;
+  const url = error.config?.url ?? '';
+  if (status === 401 && url.includes('/api/auth/token/')) {
+    return 'Usuario o contrasena incorrectos.';
+  }
+
+  const data = error.response?.data;
+  if (isRecord(data) && typeof data.detail === 'string') {
+    if (data.detail.toLowerCase().includes('no active account found')) {
+      return 'Usuario o contrasena incorrectos.';
+    }
+  }
+
+  return null;
+}
+
 export function toApiErrorMessage(error: unknown): string {
   const code = getApiErrorCode(error);
   const mapped = humanMessageForApiCode(code);
   if (mapped) return mapped;
+
+  const authMessage = humanMessageForAuthFailure(error);
+  if (authMessage) return authMessage;
 
   const maybe = error as { response?: { data?: unknown }; message?: string } | null | undefined;
   const data = maybe?.response?.data;

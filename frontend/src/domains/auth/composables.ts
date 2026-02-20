@@ -35,6 +35,7 @@ export function useLoginForm() {
   async function login() {
     loading.value = true;
     error.value = null;
+    sessionNotice.value = null;
     try {
       const res = await authApi.login({ username: username.value, password: password.value });
 

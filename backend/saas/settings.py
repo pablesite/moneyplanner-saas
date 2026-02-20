@@ -3,6 +3,10 @@ import os
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = BASE_DIR / "logs"
+if LOG_DIR.exists() and not LOG_DIR.is_dir():
+    LOG_DIR = BASE_DIR / ".logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def env_bool(name: str, default: str = "0") -> bool:
@@ -135,3 +139,32 @@ CORE_LINKING_SHARED_SECRET = os.getenv("CORE_LINKING_SHARED_SECRET", "").strip()
 CORE_LINKING_TOKEN_MAX_AGE_SECONDS = int(os.getenv("CORE_LINKING_TOKEN_MAX_AGE_SECONDS", "300"))
 AUTH_TRANSITION_MODE = os.getenv("AUTH_TRANSITION_MODE", "stable").strip().lower()
 AUTH_SESSION_COMPAT_ENABLED = env_bool("AUTH_SESSION_COMPAT_ENABLED", "1")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+        "auth_audit_file": {
+            "class": "logging.FileHandler",
+            "formatter": "default",
+            "filename": str(LOG_DIR / "auth_audit.log"),
+            "encoding": "utf-8",
+        },
+    },
+    "loggers": {
+        "auth.audit": {
+            "handlers": ["console", "auth_audit_file"],
+            "level": "INFO",
+            "propagate": False,
+        }
+    },
+}

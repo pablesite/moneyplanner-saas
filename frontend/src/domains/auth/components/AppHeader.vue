@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { clearAuthTokens, getAccessToken } from '@/domains/auth/session';
+import { clearAuthTokens, hasAccessToken } from '@/domains/auth/session';
 
 const router = useRouter();
 
-const hasToken = computed(() => !!getAccessToken());
+const hasToken = computed(() => hasAccessToken.value);
 
 function logout() {
   clearAuthTokens();

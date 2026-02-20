@@ -4,6 +4,10 @@ import json
 import logging
 from typing import Any
 
+from django.db import DatabaseError
+
+from memberships.models import SaasAuthAuditEvent
+
 logger = logging.getLogger("auth.audit")
 
 
@@ -17,3 +21,12 @@ def log_auth_event(
         "metadata": metadata,
     }
     logger.info(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    try:
+        SaasAuthAuditEvent.objects.create(
+            event=event,
+            outcome=outcome,
+            actor_user_id=user_id,
+            metadata=metadata,
+        )
+    except DatabaseError:
+        logger.exception("Failed to persist auth audit event")

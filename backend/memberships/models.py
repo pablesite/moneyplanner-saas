@@ -198,3 +198,28 @@ class SaasAccessProfile(models.Model):
 
     def is_admin(self) -> bool:
         return self.role == self.Role.ADMIN
+
+
+class SaasAuthAuditEvent(models.Model):
+    event = models.CharField(max_length=64)
+    outcome = models.CharField(max_length=16)
+    actor_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="saas_auth_audit_events",
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["event", "created_at"]),
+            models.Index(fields=["actor_user", "created_at"]),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.created_at.isoformat()} {self.event} ({self.outcome})"

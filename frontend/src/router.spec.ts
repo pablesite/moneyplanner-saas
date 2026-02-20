@@ -33,6 +33,8 @@ describe('router (saas)', () => {
           expect.objectContaining({ path: '/login' }),
           expect.objectContaining({ path: '/' }),
           expect.objectContaining({ path: '/data' }),
+          expect.objectContaining({ path: '/data/fx' }),
+          expect.objectContaining({ path: '/data/ipc' }),
           expect.objectContaining({ path: '/account' }),
           expect.objectContaining({ path: '/admin/users' }),
           expect.objectContaining({ path: '/people' }),

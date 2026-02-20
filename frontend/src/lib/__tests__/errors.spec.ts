@@ -28,6 +28,17 @@ describe('api error helpers', () => {
     spy.mockRestore();
   });
 
+  it('maps 401 token endpoint to invalid credentials message', () => {
+    const err = {
+      response: { status: 401, data: { detail: 'No active account found with the given credentials' } },
+      config: { url: '/api/auth/token/' },
+      message: 'Request failed with status code 401',
+    };
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(toApiErrorMessage(err)).toBe('Usuario o contrasena incorrectos.');
+    spy.mockRestore();
+  });
+
   it('returns null code for non axios errors', () => {
     const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(false);
     expect(getApiErrorCode(new Error('x'))).toBeNull();

@@ -41,6 +41,10 @@ docker compose up --build -d
 4. Auth throttling (`429`):
    - inspect backend logs
    - adjust throttle env vars for local
+5. Missing SaaS user or role changes:
+   - review auth audit file: `backend/logs/auth_audit.log`
+   - review DB audit table from Django shell:
+     `docker compose exec saas_backend python manage.py shell -c "from memberships.models import SaasAuthAuditEvent as E; print(list(E.objects.values('created_at','event','outcome','actor_user_id','metadata')[:20]))"`
 
 ## Safe Operations
 1. Allowed by default:
