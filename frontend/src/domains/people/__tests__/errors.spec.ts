@@ -25,7 +25,7 @@ describe('people error mapper', () => {
       'detail-msg',
     );
     expect(toPeopleErrorMessage({ response: { data: { field: ['first-error'] } } })).toBe(
-      'first-error',
+      'field: first-error',
     );
     expect(toPeopleErrorMessage({ response: { data: null }, message: 'axios-msg' })).toBe(
       'axios-msg',
