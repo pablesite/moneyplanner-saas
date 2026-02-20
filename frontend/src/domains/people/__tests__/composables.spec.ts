@@ -114,7 +114,8 @@ describe('people composables (saas)', () => {
     expect(store.fetchOwnerships).not.toHaveBeenCalled();
     expect(store.fetchMembers).not.toHaveBeenCalled();
 
-    expect(ownerships.ownershipsSorted.value[0]?.kind).toBe('individual');
+    expect(ownerships.ownershipsSorted.value.map((item) => item.id)).toEqual([2]);
+    expect(ownerships.ownershipsSorted.value[0]?.kind).toBe('shared');
     ownerships.openCreate();
     ownerships.toggleMember(1);
     ownerships.toggleMember(2);
