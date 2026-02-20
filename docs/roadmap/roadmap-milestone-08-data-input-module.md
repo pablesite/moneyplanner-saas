@@ -126,5 +126,5 @@ Build a unified data input module to register annual income, annual expenses, as
 ## Current Progress
 1. `Introduccion de datos` view is available in sidebar navigation for SaaS and Core frontends.
 2. Annual income taxonomy (generic categories/subcategories) is defined and tested in both frontends.
-3. Core backend annual-income API is implemented (`/api/core/annual-income/` and `/api/core/annual-income/totals/`) with taxonomy validation and tests.
-4. Core and SaaS frontends are connected to core annual-income API (list/create/delete/totals), removing temporary local persistence.
+3. Core backend annual-income API is implemented in dedicated `budget` app (`/api/budget/annual-income/` and `/api/budget/annual-income/totals/`) with taxonomy validation and tests.
+4. Core and SaaS frontends are connected to budget annual-income API (list/create/delete/totals), removing temporary local persistence.

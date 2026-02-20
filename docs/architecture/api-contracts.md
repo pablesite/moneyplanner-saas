@@ -7,7 +7,7 @@ Document stable API behavior for both stacks.
 1. Auth/token/settings endpoints.
 2. Net-worth assets/liabilities/snapshots endpoints.
 3. Summary and settings contracts.
-4. Annual income endpoints (`/api/core/annual-income/` + `/api/core/annual-income/totals/`).
+4. Annual income endpoints (`/api/budget/annual-income/` + `/api/budget/annual-income/totals/`).
 
 ## SaaS API (Premium)
 1. Membership and ownership endpoints.
