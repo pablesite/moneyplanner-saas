@@ -55,7 +55,7 @@ General dashboards foundation:
 4. Investment portfolio (`Cartera de Inversion`)
 5. Simulators (`Simuladores`)
 
-### Milestone 08
+### Milestone 08 (Completed)
 Data input module update:
 1. (New) Annual income (`Ingresos anuales`)
 2. (New) Annual expenses (`Gastos anuales`)
@@ -66,6 +66,7 @@ Data input module update:
 
 Reference:
 - `docs/roadmap/roadmap-milestone-08-data-input-module.md`
+- `docs/roadmap/release-summary-milestone-08-data-input-module.md`
 
 ### Milestone 09
 Phase 1: Debt (`Fase 1: Deuda`) - diagnostic score pending definition.

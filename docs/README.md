@@ -18,8 +18,8 @@ Keep documentation centralized, consistent, and easy to navigate.
 4. Operations and troubleshooting: `docs/operations/runbook.md`
 5. Development setup and quality matrix: `docs/operations/dev-setup.md`
 6. Product roadmap: `docs/roadmap/roadmap.md`
-7. Current release roadmap: `docs/roadmap/roadmap-milestone-04-refactor.md`
-8. Release summary (current): `docs/roadmap/release-summary-milestone-06-net-worth-ux-analytics.md`
+7. Current release roadmap: `docs/roadmap/roadmap-milestone-08-data-input-module.md`
+8. Release summary (current): `docs/roadmap/release-summary-milestone-08-data-input-module.md`
 9. Code-quality conventions: `docs/standards/code-quality-conventions.md`
 
 ## Maintenance Rules
