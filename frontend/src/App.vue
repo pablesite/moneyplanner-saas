@@ -26,6 +26,13 @@ const isLoginRoute = computed(() => route.name === 'login');
 const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [
     { id: 'home', icon: 'GU', label: 'Guia', hint: 'Plan paso a paso', to: '/inicio' },
+    {
+      id: 'data-input',
+      icon: 'IN',
+      label: 'Introduccion de datos',
+      hint: 'Ingresos, gastos, activos y pasivos',
+      to: '/introduccion-datos',
+    },
     { id: 'net-worth', icon: 'PT', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
   ];
 
@@ -35,6 +42,9 @@ const navItems = computed<NavItem[]>(() => {
 const pageTitle = computed(() => {
   if (route.path === '/inicio') {
     return 'Tu plan financiero';
+  }
+  if (route.path === '/introduccion-datos') {
+    return 'Introduccion de datos';
   }
   return 'Moneyplanner';
 });
