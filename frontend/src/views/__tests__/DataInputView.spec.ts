@@ -6,6 +6,7 @@ import DataInputView from '../DataInputView.vue';
 
 const mockUseNetWorthViewState = vi.fn();
 const mockUseNetWorthViewExtensions = vi.fn();
+const mockUseAnnualIncomeStore = vi.fn();
 
 function makeStub(name: string) {
   return defineComponent({
@@ -30,6 +31,10 @@ vi.mock('@/domains/ui', () => ({
     },
     template: '<div><slot v-if="open" /></div>',
   }),
+}));
+
+vi.mock('@/domains/data-input/annualIncomeStore', () => ({
+  useAnnualIncomeStore: () => mockUseAnnualIncomeStore(),
 }));
 
 function makeState(overrides: Record<string, unknown> = {}) {
@@ -79,6 +84,7 @@ describe('DataInputView', () => {
   beforeEach(() => {
     mockUseNetWorthViewState.mockReset();
     mockUseNetWorthViewExtensions.mockReset();
+    mockUseAnnualIncomeStore.mockReset();
   });
 
   it('renders Activos and Pasivos sections moved from Patrimonio', () => {
@@ -86,6 +92,15 @@ describe('DataInputView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({
       itemFormProps: {},
       itemListProps: {},
+    });
+    mockUseAnnualIncomeStore.mockReturnValue({
+      entries: ref([]),
+      totalAnnual: ref(0),
+      loading: ref(false),
+      error: ref(null),
+      loadAll: vi.fn(),
+      addEntry: vi.fn(async () => ({ ok: true })),
+      deleteEntry: vi.fn(async () => {}),
     });
 
     const wrapper = mount(DataInputView);
