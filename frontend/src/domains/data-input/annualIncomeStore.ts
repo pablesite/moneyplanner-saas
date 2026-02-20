@@ -13,6 +13,7 @@ export type AnnualIncomeEntry = {
   owner: string;
   incomeType: AnnualIncomeType;
   amountAnnual: number;
+  fiscalYear: number;
   currency: string;
   notes: string;
   createdAt: string;
@@ -25,6 +26,7 @@ export type AnnualIncomeDraft = {
   owner: string;
   incomeType: AnnualIncomeType;
   amountAnnual: string;
+  fiscalYear: number;
   currency: string;
   notes: string;
 };
@@ -39,6 +41,7 @@ type AnnualIncomeApiItem = {
   owner_name: string;
   income_type: AnnualIncomeType;
   amount_annual: string;
+  fiscal_year: number;
   currency: string;
   notes: string;
   created_at: string;
@@ -50,14 +53,34 @@ type TotalsResponse = {
 };
 
 function parseAmount(raw: string): number {
-  const normalized = String(raw ?? '')
+  let normalized = String(raw ?? '')
     .trim()
-    .replace(/\s/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.');
+    .replace(/\s/g, '');
+
+  const hasComma = normalized.includes(',');
+  const hasDot = normalized.includes('.');
+  if (hasComma && hasDot) {
+    const lastComma = normalized.lastIndexOf(',');
+    const lastDot = normalized.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalized = normalized.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    normalized = normalized.replace(',', '.');
+  }
+
   const value = Number(normalized);
   if (!Number.isFinite(value) || value <= 0) return 0;
   return value;
+}
+
+function normalizeOwnerName(raw: string): string {
+  return String(raw ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 120);
 }
 
 function mapApiItem(item: AnnualIncomeApiItem): AnnualIncomeEntry {
@@ -69,6 +92,7 @@ function mapApiItem(item: AnnualIncomeApiItem): AnnualIncomeEntry {
     owner: item.owner_name || '',
     incomeType: item.income_type,
     amountAnnual: Number(item.amount_annual),
+    fiscalYear: Number(item.fiscal_year),
     currency: item.currency,
     notes: item.notes || '',
     createdAt: item.created_at,
@@ -81,13 +105,17 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  async function loadAll(): Promise<void> {
+  async function loadAll(year?: number): Promise<void> {
     loading.value = true;
     error.value = null;
     try {
       const [listRes, totalsRes] = await Promise.all([
-        coreApi.get<AnnualIncomeApiItem[]>('/api/budget/annual-income/'),
-        coreApi.get<TotalsResponse>('/api/budget/annual-income/totals/'),
+        coreApi.get<AnnualIncomeApiItem[]>('/api/budget/annual-income/', {
+          params: year ? { year } : undefined,
+        }),
+        coreApi.get<TotalsResponse>('/api/budget/annual-income/totals/', {
+          params: year ? { year } : undefined,
+        }),
       ]);
       entries.value = (listRes.data ?? []).map(mapApiItem);
       totalAnnual.value = Number(totalsRes.data?.total_annual ?? '0');
@@ -98,7 +126,7 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
     }
   }
 
-  async function addEntry(draft: AnnualIncomeDraft): Promise<AddResult> {
+  async function addEntry(draft: AnnualIncomeDraft, year?: number): Promise<AddResult> {
     const name = draft.name.trim();
     if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
 
@@ -119,14 +147,15 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
         name,
         category: draft.category,
         subcategory: draft.subcategory,
-        owner_name: draft.owner.trim(),
+        owner_name: normalizeOwnerName(draft.owner),
         income_type: draft.incomeType,
         amount_annual: amount.toFixed(2),
+        fiscal_year: draft.fiscalYear,
         currency: (draft.currency || 'EUR').toUpperCase(),
         notes: draft.notes.trim(),
         is_active: true,
       });
-      await loadAll();
+      await loadAll(year ?? draft.fiscalYear);
       return { ok: true };
     } catch (e: unknown) {
       const message = toApiErrorMessage(e);
@@ -137,12 +166,12 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
     }
   }
 
-  async function deleteEntry(id: number): Promise<void> {
+  async function deleteEntry(id: number, year?: number): Promise<void> {
     loading.value = true;
     error.value = null;
     try {
       await coreApi.delete(`/api/budget/annual-income/${id}/`);
-      await loadAll();
+      await loadAll(year);
     } catch (e: unknown) {
       error.value = toApiErrorMessage(e);
     } finally {

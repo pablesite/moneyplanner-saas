@@ -128,3 +128,5 @@ Build a unified data input module to register annual income, annual expenses, as
 2. Annual income taxonomy (generic categories/subcategories) is defined and tested in both frontends.
 3. Core backend annual-income API is implemented in dedicated `budget` app (`/api/budget/annual-income/` and `/api/budget/annual-income/totals/`) with taxonomy validation and tests.
 4. Core and SaaS frontends are connected to budget annual-income API (list/create/delete/totals), removing temporary local persistence.
+5. Annual income now supports `fiscal_year` end-to-end in Core API and both frontends (query, create, delete, totals by year).
+6. Header KPI alignment was unified in Data Input for annual balance and net-worth balance cards (total on top, context line below).

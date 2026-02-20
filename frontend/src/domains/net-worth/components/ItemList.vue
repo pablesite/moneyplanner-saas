@@ -376,7 +376,7 @@ function headerBaseLabel() {
   if (!props.baseCurrency) return null;
   const v = headerBaseValue.value;
   if (v == null) return null;
-  return `${formatAmount(String(v), { currency: props.baseCurrency })} ${props.baseCurrency}`;
+  return formatAmountWithUnit(v, props.baseCurrency);
 }
 
 function toNumberAmount(raw: string) {
@@ -400,8 +400,15 @@ function categoryTotals(items: Item[]) {
 function formatTotalsLine(totals: Record<string, number>) {
   const parts = Object.entries(totals)
     .filter(([, v]) => v !== 0)
-    .map(([cur, v]) => `${formatAmount(String(v), { currency: cur })} ${cur}`);
+    .map(([cur, v]) => formatAmountWithUnit(v, cur));
   return parts.join(' | ');
+}
+
+function formatAmountWithUnit(value: unknown, currency: string) {
+  const amount = formatAmount(String(value), { currency });
+  if (currency === 'EUR') return `${amount} €`;
+  if (currency === 'USD') return `${amount} $`;
+  return `${amount} ${currency}`.trim();
 }
 
 function rawValue(v: string) {
@@ -479,14 +486,14 @@ function baseTotalLabel(category: string, items: Item[]) {
   if (!props.baseCurrency) return null;
   const v = categoryBaseValue(category, items);
   if (v == null) return null;
-  return `${formatAmount(String(v), { currency: props.baseCurrency })} ${props.baseCurrency}`;
+  return formatAmountWithUnit(v, props.baseCurrency);
 }
 
 function subcategoryBaseLabel(category: string, subcategory: string | null, items: Item[]) {
   if (!props.baseCurrency) return null;
   const v = subcategoryBaseValue(category, subcategory, items);
   if (v == null) return null;
-  return `${formatAmount(String(v), { currency: props.baseCurrency })} ${props.baseCurrency}`;
+  return formatAmountWithUnit(v, props.baseCurrency);
 }
 
 function subcategoryPercent(
@@ -692,9 +699,7 @@ async function saveEdit(id: number) {
                 <ItemDisplayRow
                   v-if="editingId !== it.id"
                   :item="it"
-                  :formatted-amount="
-                    formatAmount(String(displayAmount(it)), { currency: it.currency })
-                  "
+                  :formatted-amount="formatAmountWithUnit(displayAmount(it), it.currency)"
                   :is-liabilities-list="isLiabilitiesList"
                   :financed-asset-name="financedAssetName(it.financed_asset_ref)"
                   :ownership-label="ownershipShortLabel(it.ownership_ref)"

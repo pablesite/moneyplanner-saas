@@ -49,6 +49,28 @@ function humanMessageForAuthFailure(error: unknown): string | null {
   return null;
 }
 
+function firstValidationMessage(data: unknown): string | null {
+  if (!isRecord(data)) return null;
+
+  for (const [field, raw] of Object.entries(data)) {
+    if (field === 'error' || field === 'detail') continue;
+
+    if (typeof raw === 'string' && raw.trim()) {
+      return `${field}: ${raw}`;
+    }
+
+    if (Array.isArray(raw)) {
+      const first = raw.find((item) => typeof item === 'string' && item.trim());
+      if (typeof first === 'string' && first.trim()) {
+        return `${field}: ${first}`;
+      }
+    }
+  }
+
+  if (typeof data.detail === 'string' && data.detail.trim()) return data.detail;
+  return null;
+}
+
 export function toApiErrorMessage(error: unknown): string {
   const code = getApiErrorCode(error);
   const mapped = humanMessageForApiCode(code);
@@ -64,6 +86,9 @@ export function toApiErrorMessage(error: unknown): string {
     if (typeof envelope.error?.message === 'string' && envelope.error.message.length > 0) {
       return envelope.error.message;
     }
+
+    const validation = firstValidationMessage(data);
+    if (validation) return validation;
   }
   if (typeof data === 'string') return data;
   if (maybe?.message) return maybe.message;

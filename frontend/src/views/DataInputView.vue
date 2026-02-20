@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import {
   ItemForm,
   ItemList,
@@ -38,7 +38,6 @@ const { itemFormProps, itemListProps } = useNetWorthViewExtensions(store);
 
 const {
   entries: annualIncomeEntries,
-  totalAnnual,
   loading: annualIncomeLoading,
   error: annualIncomeApiError,
   loadAll: loadAnnualIncome,
@@ -47,6 +46,7 @@ const {
 } = useAnnualIncomeStore('saas');
 const annualIncomeError = ref<string | null>(null);
 const showIncomeModal = ref(false);
+const expandedIncomeCats = ref<Set<string>>(new Set());
 
 const annualIncomeForm = reactive({
   category: 'salary' as IncomeCategoryKey,
@@ -70,7 +70,9 @@ function sharedOwnershipLabel(
 ): string {
   if (!splits.length) return 'Compartido';
   const names = splits.map((split) => split.member.name);
-  return `Compartido (${names.join(' + ')})`;
+  const compact =
+    names.length <= 2 ? names.join(' / ') : `${names[0]} + ${Math.max(names.length - 1, 1)}`;
+  return `Compartido (${compact})`;
 }
 
 const ownerOptions = computed(() => {
@@ -96,6 +98,26 @@ const ownerOptions = computed(() => {
   return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
 });
 const showOwnerField = computed(() => ownerOptions.value.length > 1);
+const annualIncomeOwnerFilter = ref<string>('all');
+const fiscalYear = ref(2026);
+const fiscalYearOptions = computed(() => {
+  const current = new Date().getFullYear();
+  const years = new Set<number>([current - 1, current, current + 1, 2026]);
+  return Array.from(years).sort((a, b) => b - a);
+});
+
+const filteredAnnualIncomeEntries = computed(() => {
+  const list = annualIncomeEntries.value;
+  if (annualIncomeOwnerFilter.value === 'all') return list;
+  if (annualIncomeOwnerFilter.value === 'unassigned') {
+    return list.filter((entry) => !entry.owner);
+  }
+  return list.filter((entry) => entry.owner === annualIncomeOwnerFilter.value);
+});
+
+const filteredAnnualIncomeTotal = computed(() =>
+  filteredAnnualIncomeEntries.value.reduce((sum, entry) => sum + entry.amountAnnual, 0),
+);
 
 watch(
   () => annualIncomeForm.category,
@@ -126,6 +148,19 @@ watch(
   },
   { immediate: true },
 );
+watch(
+  [ownerOptions, annualIncomeEntries],
+  ([options, entries]) => {
+    const filter = annualIncomeOwnerFilter.value;
+    if (filter === 'all' || filter === 'unassigned') return;
+    const validFromOptions = options.some((option) => option.value === filter);
+    const validFromEntries = entries.some((entry) => entry.owner === filter);
+    if (!validFromOptions && !validFromEntries) {
+      annualIncomeOwnerFilter.value = 'all';
+    }
+  },
+  { immediate: true },
+);
 
 function formatMoneyAmount(value: number, currency: string): string {
   return new Intl.NumberFormat('es-ES', {
@@ -135,6 +170,22 @@ function formatMoneyAmount(value: number, currency: string): string {
     maximumFractionDigits: 2,
   }).format(value);
 }
+
+function parseNumeric(raw: unknown): number {
+  const normalized = String(raw ?? '')
+    .trim()
+    .replace(/\s/g, '')
+    .replace(',', '.');
+  const value = Number(normalized);
+  return Number.isFinite(value) ? value : 0;
+}
+
+const assetsTotalBase = computed(() => parseNumeric(store.summary?.total_assets ?? '0'));
+const liabilitiesTotalBase = computed(() => parseNumeric(store.summary?.total_liabilities ?? '0'));
+const netAssetsBase = computed(() => assetsTotalBase.value - liabilitiesTotalBase.value);
+const netAssetsCurrency = computed(
+  () => store.baseCurrency ?? store.summary?.base_currency ?? 'EUR',
+);
 
 type AnnualIncomeEntry = (typeof annualIncomeEntries.value)[number];
 type AnnualIncomeSubgroup = {
@@ -179,7 +230,7 @@ function sumByCurrency(entries: AnnualIncomeEntry[]): Record<string, number> {
 function formatTotalsLine(totals: Record<string, number>): string {
   return Object.entries(totals)
     .filter(([, amount]) => amount !== 0)
-    .map(([currency, amount]) => `${formatMoneyAmount(amount, currency)} ${currency}`)
+    .map(([currency, amount]) => formatMoneyAmount(amount, currency))
     .join(' | ');
 }
 
@@ -187,10 +238,32 @@ function incomeCategoryClass(category: string): string {
   return `income-cat-${category || 'other_income'}`;
 }
 
+function incomeCategoryPercent(entries: AnnualIncomeEntry[]): string | null {
+  if (!filteredAnnualIncomeTotal.value) return null;
+  const categoryTotal = entries.reduce((sum, entry) => sum + entry.amountAnnual, 0);
+  if (!categoryTotal) return null;
+  const pct = (categoryTotal / filteredAnnualIncomeTotal.value) * 100;
+  return new Intl.NumberFormat('es-ES', {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  }).format(pct);
+}
+
+function isIncomeGroupExpanded(category: string): boolean {
+  return expandedIncomeCats.value.has(category);
+}
+
+function toggleIncomeCategory(category: string): void {
+  const next = new Set(expandedIncomeCats.value);
+  if (next.has(category)) next.delete(category);
+  else next.add(category);
+  expandedIncomeCats.value = next;
+}
+
 const annualIncomeGroups = computed<AnnualIncomeGroup[]>(() => {
   const categoryMap = new Map<string, AnnualIncomeEntry[]>();
 
-  for (const entry of annualIncomeEntries.value) {
+  for (const entry of filteredAnnualIncomeEntries.value) {
     if (!categoryMap.has(entry.category)) categoryMap.set(entry.category, []);
     categoryMap.get(entry.category)!.push(entry);
   }
@@ -268,20 +341,24 @@ async function submitAnnualIncome(): Promise<void> {
   const rawAmount = Number(String(annualIncomeForm.amountAnnual).replace(',', '.'));
   const normalizedAmount = Number.isFinite(rawAmount)
     ? annualIncomeForm.amountInputPeriod === 'monthly'
-      ? rawAmount * 12
+      ? Math.round(rawAmount * 12 * 100) / 100
       : rawAmount
     : annualIncomeForm.amountAnnual;
 
-  const result = await addEntry({
-    name: annualIncomeForm.name,
-    category: annualIncomeForm.category,
-    subcategory: annualIncomeForm.subcategory,
-    owner: annualIncomeForm.owner,
-    incomeType: annualIncomeForm.isRecurrent ? 'recurrent' : 'one_off',
-    amountAnnual: String(normalizedAmount),
-    currency: annualIncomeForm.currency,
-    notes: annualIncomeForm.notes,
-  });
+  const result = await addEntry(
+    {
+      name: annualIncomeForm.name,
+      category: annualIncomeForm.category,
+      subcategory: annualIncomeForm.subcategory,
+      owner: annualIncomeForm.owner,
+      incomeType: annualIncomeForm.isRecurrent ? 'recurrent' : 'one_off',
+      amountAnnual: String(normalizedAmount),
+      fiscalYear: fiscalYear.value,
+      currency: annualIncomeForm.currency,
+      notes: annualIncomeForm.notes,
+    },
+    fiscalYear.value,
+  );
   if (!result.ok) {
     annualIncomeError.value = result.error;
     return;
@@ -292,10 +369,16 @@ async function submitAnnualIncome(): Promise<void> {
 }
 
 async function removeAnnualIncome(id: number): Promise<void> {
-  await deleteEntry(id);
+  await deleteEntry(id, fiscalYear.value);
 }
 
-onMounted(loadAnnualIncome);
+watch(
+  fiscalYear,
+  (year) => {
+    loadAnnualIncome(year);
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -310,13 +393,49 @@ onMounted(loadAnnualIncome);
     </section>
 
     <div class="grid-2">
+      <section class="section ui-flow-air md:col-span-2">
+        <div class="nw-list-header ui-flow-air-header">
+          <div class="nw-list-header-left ui-flow-air-left">
+            <h2 class="ui-flow-air-title">Balance anual</h2>
+            <div class="ui-flow-air-meta">
+              <span class="ui-flow-air-subtitle">Ingresos y gastos</span>
+              <select
+                id="fiscal-year-income-expense"
+                v-model.number="fiscalYear"
+                class="select nw-select-sm ui-flow-air-year-select"
+                aria-label="Ejercicio"
+              >
+                <option v-for="year in fiscalYearOptions" :key="year" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="nw-list-header-right ui-flow-air-right">
+            <div class="nw-list-total-inline ui-flow-air-total">
+              {{ formatMoneyAmount(filteredAnnualIncomeTotal, 'EUR') }}
+            </div>
+            <div class="nw-list-total-details">Ingresos del ejercicio {{ fiscalYear }}</div>
+          </div>
+        </div>
+      </section>
+
       <article class="card ui-pro-panel">
         <div class="nw-list-header">
           <div class="nw-list-header-left">
             <h2 class="card-header-title mt-0">Ingresos anuales</h2>
+            <select v-model="annualIncomeOwnerFilter" class="select nw-select-sm">
+              <option value="all">Todos los miembros</option>
+              <option value="unassigned">Sin asignar</option>
+              <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </div>
           <div class="nw-list-header-right">
-            <div class="nw-list-total-inline">{{ formatMoneyAmount(totalAnnual, 'EUR') }}</div>
+            <div class="nw-list-total-inline">
+              {{ formatMoneyAmount(filteredAnnualIncomeTotal, 'EUR') }}
+            </div>
             <button
               class="btn btn-primary btn-sm nw-list-add-icon-only"
               type="button"
@@ -340,6 +459,13 @@ onMounted(loadAnnualIncome);
           No hay ingresos anuales todavia.
         </div>
 
+        <div
+          v-else-if="!filteredAnnualIncomeEntries.length && !annualIncomeLoading"
+          class="subtle mt-3"
+        >
+          No hay ingresos con este filtro.
+        </div>
+
         <div v-else class="mt-3 grid gap-4">
           <section
             v-for="group in annualIncomeGroups"
@@ -354,12 +480,33 @@ onMounted(loadAnnualIncome);
               </div>
               <div class="nw-cat-right">
                 <div class="nw-cat-total">
-                  <div class="nw-cat-total-primary">{{ formatTotalsLine(group.totals) }}</div>
+                  <div class="nw-cat-total-primary">
+                    {{ formatTotalsLine(group.totals) }}
+                    <span v-if="incomeCategoryPercent(group.entries)" class="nw-cat-percent">
+                      . {{ incomeCategoryPercent(group.entries) }}%
+                    </span>
+                  </div>
                 </div>
+                <button
+                  class="icon-btn nw-cat-toggle"
+                  type="button"
+                  :aria-label="
+                    isIncomeGroupExpanded(group.category) ? 'Ocultar desglose' : 'Mostrar desglose'
+                  "
+                  :title="
+                    isIncomeGroupExpanded(group.category) ? 'Ocultar desglose' : 'Mostrar desglose'
+                  "
+                  @click="toggleIncomeCategory(group.category)"
+                >
+                  <span v-if="isIncomeGroupExpanded(group.category)" class="icon" aria-hidden="true"
+                    >&#9662;</span
+                  >
+                  <span v-else class="icon" aria-hidden="true">&#9656;</span>
+                </button>
               </div>
             </div>
 
-            <div class="subcat-list">
+            <div v-if="isIncomeGroupExpanded(group.category)" class="subcat-list">
               <div
                 v-for="subgroup in group.subgroups"
                 :key="`${group.category}:${subgroup.subcategory}`"
@@ -434,7 +581,22 @@ onMounted(loadAnnualIncome);
       {{ prettyError() }}
     </div>
 
-    <div class="grid-2 section">
+    <section class="section ui-balance-air">
+      <div class="nw-list-header ui-balance-air-header">
+        <div class="nw-list-header-left ui-balance-air-left">
+          <h2 class="ui-balance-air-title">Balance patrimonial</h2>
+          <span class="ui-balance-air-subtitle">Activos y pasivos</span>
+        </div>
+        <div class="nw-list-header-right ui-balance-air-right">
+          <div class="nw-list-total-inline ui-balance-air-total">
+            {{ formatMoneyAmount(netAssetsBase, netAssetsCurrency) }}
+          </div>
+          <div class="nw-list-total-details">Neto (activos - pasivos)</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid-2">
       <ItemList
         title="Activos"
         :items="store.assets"
