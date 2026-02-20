@@ -490,3 +490,257 @@ body {
 .icon-btn:hover {
   background: rgba(255, 255, 255, 0.06);
 }
+
+.ui-home-intro {
+  display: block;
+}
+
+.ui-home-title {
+  margin-bottom: 8px;
+}
+
+.ui-home-copy {
+  margin: 0;
+}
+
+.ui-home-block-copy {
+  margin-top: 0;
+}
+
+.ui-home-phase-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.ui-home-phase-card {
+  min-width: 220px;
+  max-width: 220px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 8px;
+  scroll-snap-align: start;
+}
+
+.ui-home-phase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ui-home-phase-id {
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.ui-home-phase-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ui-home-phase-focus {
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 34px;
+}
+
+.ui-home-phase-done {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.07);
+}
+
+.ui-home-phase-active {
+  border-color: rgba(45, 212, 191, 0.72);
+  background: rgba(45, 212, 191, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.2);
+}
+
+.ui-home-phase-donut {
+  --phase-progress: 0%;
+  width: 66px;
+  height: 66px;
+  border-radius: 999px;
+  background: conic-gradient(
+    rgba(45, 212, 191, 0.9) var(--phase-progress),
+    rgba(255, 255, 255, 0.16) 0
+  );
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.ui-home-phase-donut-inner {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: rgba(11, 13, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ui-profile-title {
+  margin: 0 0 4px;
+}
+
+.ui-profile-panel {
+  padding: 18px;
+}
+
+.ui-profile-head {
+  margin-bottom: 8px;
+}
+
+.ui-profile-head-title {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: 0.01em;
+}
+
+.ui-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+}
+
+.ui-profile-list {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.ui-profile-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ui-profile-row:first-child {
+  border-top: 0;
+}
+
+.ui-profile-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.ui-profile-value {
+  font-size: 16px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-wrap: anywhere;
+}
+
+.ui-profile-aside {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.ui-profile-aside-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.ui-profile-badge-on {
+  border-color: rgba(45, 212, 191, 0.55);
+  color: rgba(45, 212, 191, 0.95);
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.ui-profile-badge-off {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ui-settings-page-title {
+  margin: 0 0 4px;
+}
+
+.ui-settings-accordion-item {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ui-settings-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.ui-settings-toggle:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ui-settings-toggle-title {
+  text-align: left;
+  font-weight: 600;
+}
+
+.ui-settings-toggle-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.ui-settings-content {
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 12px 14px 14px;
+}
+
+.ui-settings-family-tabs {
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .ui-profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-profile-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
