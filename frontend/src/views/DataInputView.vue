@@ -100,14 +100,24 @@ const annualExpenseSubcategoryOptions = computed(() =>
 );
 type OwnerOption = { key: string; value: string; label: string };
 
+function formatOwnershipPercent(raw: string): string {
+  const value = Number(String(raw).replace(',', '.'));
+  if (!Number.isFinite(value)) return `${raw}%`;
+  const rounded = Math.round(value * 100) / 100;
+  const normalized = Number.isInteger(rounded)
+    ? String(rounded)
+    : String(rounded).replace(/\.?0+$/, '');
+  return `${normalized}%`;
+}
+
 function sharedOwnershipLabel(
   splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[],
 ): string {
   if (!splits.length) return 'Compartido';
-  const names = splits.map((split) => split.member.name);
-  const compact =
-    names.length <= 2 ? names.join(' / ') : `${names[0]} + ${Math.max(names.length - 1, 1)}`;
-  return `Compartido (${compact})`;
+  const details = splits.map(
+    (split) => `${split.member.name} ${formatOwnershipPercent(split.percent)}`,
+  );
+  return `Compartido (${details.join(' / ')})`;
 }
 
 const ownerOptions = computed(() => {
