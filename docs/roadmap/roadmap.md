@@ -63,6 +63,9 @@ Data input module update:
 4. Liabilities (`Pasivos`)
 5. (New) Liability interest (`Interes de la deuda`)
 
+Reference:
+- `docs/roadmap/roadmap-milestone-08-data-input-module.md`
+
 ### Milestone 09
 Phase 1: Debt (`Fase 1: Deuda`) - diagnostic score pending definition.
 
