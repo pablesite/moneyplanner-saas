@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / "logs"
@@ -17,7 +18,25 @@ def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
 
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret")
+DEFAULT_DEV_SECRET_KEY = "dev-only-not-for-production-change-me-please-32b"
+INSECURE_SECRET_VALUES = {
+    "",
+    "changeme",
+    "dev-insecure-secret",
+    DEFAULT_DEV_SECRET_KEY,
+}
+
+
+def validate_secret(name: str, value: str, *, min_length: int = 32) -> None:
+    if DEBUG:
+        return
+    if value in INSECURE_SECRET_VALUES:
+        raise ImproperlyConfigured(f"{name} uses an insecure default value.")
+    if len(value) < min_length:
+        raise ImproperlyConfigured(f"{name} must be at least {min_length} characters long.")
+
+
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", DEFAULT_DEV_SECRET_KEY).strip()
 DEBUG = env_bool("DJANGO_DEBUG", "0")
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost")
 
@@ -128,9 +147,12 @@ SPECTACULAR_SETTINGS = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "SIGNING_KEY": "",
     "ISSUER": os.getenv("JWT_ISSUER", "moneyplanner-saas"),
     "AUDIENCE": os.getenv("JWT_AUDIENCE", "moneyplanner-saas-api"),
 }
+JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY", SECRET_KEY).strip()
+SIMPLE_JWT["SIGNING_KEY"] = JWT_SIGNING_KEY
 
 # Roadmap 03 flags: auth autonomy + optional account linking.
 AUTH_MODE_SAAS_LOCAL = env_bool("AUTH_MODE_SAAS_LOCAL", "1")
@@ -139,6 +161,11 @@ CORE_LINKING_SHARED_SECRET = os.getenv("CORE_LINKING_SHARED_SECRET", "").strip()
 CORE_LINKING_TOKEN_MAX_AGE_SECONDS = int(os.getenv("CORE_LINKING_TOKEN_MAX_AGE_SECONDS", "300"))
 AUTH_TRANSITION_MODE = os.getenv("AUTH_TRANSITION_MODE", "stable").strip().lower()
 AUTH_SESSION_COMPAT_ENABLED = env_bool("AUTH_SESSION_COMPAT_ENABLED", "1")
+
+validate_secret("DJANGO_SECRET_KEY", SECRET_KEY)
+validate_secret("JWT_SIGNING_KEY", JWT_SIGNING_KEY)
+if ACCOUNT_LINKING_ENABLED and CORE_LINKING_SHARED_SECRET:
+    validate_secret("CORE_LINKING_SHARED_SECRET", CORE_LINKING_SHARED_SECRET)
 
 LOGGING = {
     "version": 1,

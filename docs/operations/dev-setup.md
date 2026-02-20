@@ -23,6 +23,10 @@ git submodule update --init --recursive
 - `core/backend/.env`
 - `backend/.env`
 - `frontend/.env`
+3. Security baseline for backend secrets:
+- In production (`DJANGO_DEBUG=0`), use strong values (>= 32 chars) for `DJANGO_SECRET_KEY`.
+- Define `JWT_SIGNING_KEY` explicitly instead of relying on implicit defaults.
+- If account linking is enabled, set a strong `CORE_LINKING_SHARED_SECRET` (>= 32 chars).
 
 ## Daily Operations
 Use:

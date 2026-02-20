@@ -867,7 +867,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
 
     @override_settings(
         ACCOUNT_LINKING_ENABLED=True,
-        CORE_LINKING_SHARED_SECRET="test-shared-secret",
+        CORE_LINKING_SHARED_SECRET="test-shared-secret-32-bytes-minimum",
         CORE_LINKING_TOKEN_MAX_AGE_SECONDS=300,
     )
     def test_core_link_from_token_creates_link(self):
@@ -879,7 +879,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
                 "core_username": "core_admin",
                 "core_email": "core@example.com",
             },
-            key="test-shared-secret",
+            key="test-shared-secret-32-bytes-minimum",
             salt="core-link-token",
         )
 
@@ -894,7 +894,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
 
     @override_settings(
         ACCOUNT_LINKING_ENABLED=True,
-        CORE_LINKING_SHARED_SECRET="test-shared-secret",
+        CORE_LINKING_SHARED_SECRET="test-shared-secret-32-bytes-minimum",
         CORE_LINKING_TOKEN_MAX_AGE_SECONDS=300,
     )
     def test_core_link_from_token_rejects_replay(self):
@@ -907,7 +907,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
                 "core_username": "core_user",
                 "core_email": "core99@example.com",
             },
-            key="test-shared-secret",
+            key="test-shared-secret-32-bytes-minimum",
             salt="core-link-token",
         )
 
@@ -929,7 +929,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
 
     @override_settings(
         ACCOUNT_LINKING_ENABLED=True,
-        CORE_LINKING_SHARED_SECRET="test-shared-secret",
+        CORE_LINKING_SHARED_SECRET="test-shared-secret-32-bytes-minimum",
         CORE_LINKING_TOKEN_MAX_AGE_SECONDS=300,
     )
     def test_session_compatibility_after_linking_from_token(self):
@@ -952,7 +952,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
                 "core_username": "core_session_user",
                 "core_email": "core-session@example.com",
             },
-            key="test-shared-secret",
+            key="test-shared-secret-32-bytes-minimum",
             salt="core-link-token",
         )
         link_res = self.client.post(
