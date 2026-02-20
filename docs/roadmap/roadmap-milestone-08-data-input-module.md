@@ -130,3 +130,4 @@ Build a unified data input module to register annual income, annual expenses, as
 4. Core and SaaS frontends are connected to budget annual-income API (list/create/delete/totals), removing temporary local persistence.
 5. Annual income now supports `fiscal_year` end-to-end in Core API and both frontends (query, create, delete, totals by year).
 6. Header KPI alignment was unified in Data Input for annual balance and net-worth balance cards (total on top, context line below).
+7. UI headers were refined in Guia/Introduccion/Patrimonio, including fixed app title branding and relocation of patrimonio KPI summary into the top panel.

@@ -39,15 +39,7 @@ const navItems = computed<NavItem[]>(() => {
   return baseItems;
 });
 
-const pageTitle = computed(() => {
-  if (route.path === '/inicio') {
-    return 'Tu plan financiero';
-  }
-  if (route.path === '/introduccion-datos') {
-    return 'Introduccion de datos';
-  }
-  return 'Moneyplanner';
-});
+const pageTitle = 'moneyplanner';
 
 const accountInitials = computed(() => {
   const text = accountLabel.value.trim();
