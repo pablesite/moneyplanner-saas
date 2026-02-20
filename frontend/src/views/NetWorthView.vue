@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-  NetWorthDonut,
-  SettingsPopover,
-  useNetWorthViewState,
-} from '@/domains/net-worth';
+import { NetWorthDonut, SettingsPopover, useNetWorthViewState } from '@/domains/net-worth';
 
 const {
   store,

@@ -122,3 +122,8 @@ Build a unified data input module to register annual income, annual expenses, as
 2. Frontend forms and list views for all milestone 8 entities.
 3. Updated integration contract for downstream dashboards.
 4. Documentation updates in roadmap and runbook sections as needed.
+
+## Current Progress
+1. `Introduccion de datos` view is available in sidebar navigation for SaaS and Core frontends.
+2. Annual income taxonomy (generic categories/subcategories) is defined and tested in both frontends.
+3. First annual-income input UI is implemented in both frontends with local persistence (`localStorage`) as a temporary layer until backend endpoints are available.

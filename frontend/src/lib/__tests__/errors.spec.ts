@@ -30,7 +30,10 @@ describe('api error helpers', () => {
 
   it('maps 401 token endpoint to invalid credentials message', () => {
     const err = {
-      response: { status: 401, data: { detail: 'No active account found with the given credentials' } },
+      response: {
+        status: 401,
+        data: { detail: 'No active account found with the given credentials' },
+      },
       config: { url: '/api/auth/token/' },
       message: 'Request failed with status code 401',
     };
