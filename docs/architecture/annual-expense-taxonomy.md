@@ -13,7 +13,7 @@ Define a generic, reusable taxonomy for annual expense records in Milestone 8.
 2. `financial_investments`: Inversion financiera
 3. `real_estate_assets`: Activos inmobiliarios
 4. `tangible_assets`: Activos mobiliarios
-5. `consumption_expenses`: Gasto puro y duro
+5. `consumption_expenses`: Gastos
 
 ## Subcategories
 1. `savings_allocation`
@@ -59,3 +59,4 @@ Define a generic, reusable taxonomy for annual expense records in Milestone 8.
 2. Resolve labels at presentation layer.
 3. Validate that `subcategory` belongs to selected `category`.
 4. Keep this file and frontend taxonomy constants synchronized.
+
