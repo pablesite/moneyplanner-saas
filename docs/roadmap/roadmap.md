@@ -48,20 +48,153 @@ Reference:
 - `docs/roadmap/release-summary-milestone-06-net-worth-ux-analytics.md`
 
 ### Milestone 07
-First production demo release.
+General dashboards foundation:
+1. Net worth (`Patrimonio`)
+2. Budget (`Presupuesto`)
+3. Monthly/Yearly result (`Resultado mensual/anual`)
+4. Investment portfolio (`Cartera de Inversion`)
+5. Simulators (`Simuladores`)
 
 ### Milestone 08
-Mobile strategy and implementation.
+Data input module update:
+1. (New) Annual income (`Ingresos anuales`)
+2. (New) Annual expenses (`Gastos anuales`)
+3. Assets (`Activos`)
+4. Liabilities (`Pasivos`)
+5. (New) Liability interest (`Interes de la deuda`)
 
 ### Milestone 09
-Landing + payment system for SaaS.
+Phase 1: Debt (`Fase 1: Deuda`) - diagnostic score pending definition.
+
+Objective:
+1. Eliminate bad debt with high interest and no asset backing.
+
+Inputs:
+1. Liabilities (`Pasivos`)
+
+Dashboard:
+1. Net worth (`Patrimonio`) - liabilities KPIs update.
+
+KPIs:
+1. Unbacked debt (`Deuda sin respaldo`)
+2. Max liability APR/TAE
+3. Related debt-risk indicators
 
 ### Milestone 10
-Remaining functional modules:
-1. Budget
-2. Accounting
-3. Investment portfolio
-4. Simulator
+Budget dashboard (`Dashboard Presupuesto`).
 
-### Milestone 11 (Continuous)
+### Milestone 11
+Phase 2: Cash flow (`Fase 2: Flujo de caja`) - diagnostic score pending definition.
+
+Objective:
+1. Keep positive cash flow with stable monthly surplus.
+
+Inputs:
+1. Income (`Ingresos`)
+2. Expenses (`Gastos`)
+
+Dashboard:
+1. Budget (`Presupuesto`)
+
+KPIs:
+1. Cash flow (`Flujo de caja`)
+2. Savings-to-income ratio (`% ahorro/ingresos`)
+3. Related cash-flow stability indicators
+
+### Milestone 12
+Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - diagnostic score pending definition.
+
+Objective:
+1. Build a financial safety buffer.
+
+Inputs:
+1. Assets - liquidity (`Activos - Liquidez`)
+
+Dashboard:
+1. Net worth (`Patrimonio`) - liquidity KPIs update.
+
+KPIs:
+1. Liquidity (`Liquidez`)
+2. Available expense coverage in months (`Meses de gastos disponibles`)
+
+### Milestone 13
+Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined, update.
+
+Objective:
+1. Balance assets and liabilities.
+
+Inputs:
+1. Assets (`Activos`)
+2. Liabilities (`Pasivos`)
+
+Dashboard:
+1. Net worth (`Patrimonio`) - general overview update.
+
+KPIs:
+1. Equity (`Capital propio`)
+2. Debt-to-assets ratio
+3. Leverage
+4. Liquidity coverage
+5. Unbacked debt
+6. Asset concentration
+
+### Milestone 14
+Accounting module (`Modulo Contabilidad`) - dashboard data-input update with temporality.
+
+Objective:
+1. Introduce temporal behavior in financial records.
+
+Scope updates:
+1. Income (`Ingresos`) - (New) one-off entries and monthly check-ins.
+2. Expenses (`Gastos`) - (New) one-off entries and monthly check-ins.
+3. Assets (`Activos`) - (New) depreciable furniture/equipment metadata and financial asset details (risk, volatility, yield, fees).
+4. Liabilities (`Pasivos`).
+
+### Milestone 15
+Investment portfolio dashboard (`Dashboard Cartera Inversion`).
+
+### Milestone 16
+Phase 5: Financial independence (`Fase 5: Independencia financiera`) - diagnostic score pending definition.
+
+Objective:
+1. Increase productive assets.
+
+Inputs:
+1. Productive assets (`Activos productivos`)
+
+Dashboard:
+1. Investment portfolio (`Cartera de Inversion`)
+
+KPIs:
+1. ROI
+2. CAGR
+3. Related productive-asset indicators
+
+### Milestone 17
+Monthly/Yearly result dashboard (`Dashboard Resultado mensual/anual`).
+
+Objective:
+1. Review month-end and year-end outcomes.
+2. Compare realized results vs budget.
+3. Manage transfers to family accounts.
+
+### Milestone 18
+First production demo release.
+
+### Milestone 19
+Mobile strategy and implementation.
+
+### Milestone 20
+Landing + payment system for SaaS.
+
+### Milestone 21
+Explainability (`Explicabilidad`):
+1. Concept information
+2. Glossary
+3. Chatbot
+
+### Milestone 22
+Simulators dashboard (`Dashboard Simuladores`) - likely SaaS-only.
+
+### Milestone 23 (Continuous)
 Iterative scaling: observability, performance, security, UX.
