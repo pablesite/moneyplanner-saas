@@ -126,7 +126,7 @@ describe('NetWorthView', () => {
     });
 
     expect(wrapper.text()).toContain('Patrimonio');
-    expect(wrapper.findAll('[data-test="ItemList"]')).toHaveLength(2);
+    expect(wrapper.findAll('[data-test="ItemList"]')).toHaveLength(0);
     expect(wrapper.text()).toContain('No hay snapshots');
   });
 

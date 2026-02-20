@@ -1,3 +1,30 @@
+<script setup lang="ts">
+import { ItemForm, ItemList, useNetWorthViewExtensions, useNetWorthViewState } from '@/domains/net-worth';
+import { BaseModal } from '@/domains/ui';
+
+const {
+  store,
+  assetCategories,
+  assetSubcategories,
+  liabilityCategories,
+  prettyError,
+  showAssetModal,
+  showLiabilityModal,
+  showEditModal,
+  editKind,
+  submitAsset,
+  submitLiability,
+  openEdit,
+  closeEdit,
+  editTitle,
+  editCategories,
+  editInitial,
+  submitEdit,
+} = useNetWorthViewState();
+
+const { itemFormProps, itemListProps } = useNetWorthViewExtensions(store);
+</script>
+
 <template>
   <div class="container ui-pro-page">
     <section class="card ui-pro-panel ui-data-input-intro">
@@ -18,6 +45,86 @@
         <li>Pasivos e interes de deuda: pendiente</li>
       </ul>
     </article>
+
+    <div v-if="store.error" class="alert mt-3">
+      {{ prettyError() }}
+    </div>
+
+    <div class="grid-2 section">
+      <ItemList
+        title="Activos"
+        :items="store.assets"
+        :categories="assetCategories"
+        :subcategories="assetSubcategories"
+        :base-currency="store.baseCurrency ?? store.summary?.base_currency ?? 'EUR'"
+        :category-totals-base="store.summary?.assets_by_category ?? {}"
+        :subcategory-totals-base="store.summary?.assets_by_subcategory ?? {}"
+        :total-base="store.summary?.total_assets ?? '0'"
+        v-bind="itemListProps"
+        :on-update="store.updateAsset"
+        :on-archive="store.archiveAsset"
+        :on-add="() => (showAssetModal = true)"
+        :on-edit="(it) => openEdit(it, 'asset')"
+      />
+
+      <ItemList
+        title="Pasivos"
+        :items="store.liabilities"
+        :categories="liabilityCategories"
+        :base-currency="store.baseCurrency ?? store.summary?.base_currency ?? 'EUR'"
+        :category-totals-base="store.summary?.liabilities_by_category ?? {}"
+        :total-base="store.summary?.total_liabilities ?? '0'"
+        v-bind="itemListProps"
+        :assets="store.assets"
+        :on-update="store.updateLiability"
+        :on-archive="store.archiveLiability"
+        :on-add="() => (showLiabilityModal = true)"
+        :on-edit="(it) => openEdit(it, 'liability')"
+      />
+    </div>
+
+    <div v-if="store.loading" class="ui-status-line">Cargando...</div>
+
+    <BaseModal :open="showAssetModal" title="Nuevo activo" @close="showAssetModal = false">
+      <ItemForm
+        title="Nuevo activo"
+        :categories="assetCategories"
+        :subcategories="assetSubcategories"
+        v-bind="itemFormProps"
+        :allow-negative="true"
+        :on-submit="submitAsset"
+        :on-cancel="() => (showAssetModal = false)"
+      />
+    </BaseModal>
+
+    <BaseModal :open="showLiabilityModal" title="Nuevo pasivo" @close="showLiabilityModal = false">
+      <ItemForm
+        title="Nuevo pasivo"
+        :categories="liabilityCategories"
+        v-bind="itemFormProps"
+        :assets="store.assets"
+        :show-financed-asset="true"
+        :on-submit="submitLiability"
+        :on-cancel="() => (showLiabilityModal = false)"
+      />
+    </BaseModal>
+
+    <BaseModal :open="showEditModal" :title="editTitle" @close="closeEdit">
+      <ItemForm
+        v-if="editInitial"
+        :title="editTitle"
+        :categories="editCategories"
+        :subcategories="editKind === 'asset' ? assetSubcategories : undefined"
+        v-bind="itemFormProps"
+        :assets="editKind === 'liability' ? store.assets : []"
+        :show-financed-asset="editKind === 'liability'"
+        :allow-negative="editKind === 'asset'"
+        mode="edit"
+        :initial="editInitial"
+        :on-submit="submitEdit"
+        :on-cancel="closeEdit"
+      />
+    </BaseModal>
   </div>
 </template>
 
