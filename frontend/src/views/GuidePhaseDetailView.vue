@@ -369,6 +369,28 @@ watch(isNetWorthHealthPhase, () => {
     </section>
 
     <section v-else class="card ui-pro-panel ui-guide-score-panel">
+      <div class="ui-guide-summary-grid">
+        <article class="ui-guide-summary-card">
+          <div class="ui-guide-summary-label">Patrimonio neto</div>
+          <div class="ui-guide-summary-value">{{ formatNumber(netWorthValue, 2) }}</div>
+        </article>
+        <article class="ui-guide-summary-card">
+          <div class="ui-guide-summary-label">Activos totales</div>
+          <div class="ui-guide-summary-value">{{ formatNumber(assetsValue, 2) }}</div>
+        </article>
+        <article class="ui-guide-summary-card">
+          <div class="ui-guide-summary-label">Pasivos totales</div>
+          <div class="ui-guide-summary-value">{{ formatNumber(liabilitiesValue, 2) }}</div>
+        </article>
+        <article class="ui-guide-summary-card">
+          <div class="ui-guide-summary-label">Deuda sin respaldo</div>
+          <div class="ui-guide-summary-value">{{ formatNumber(unbackedDebtValue, 2) }}</div>
+          <div class="ui-guide-summary-meta">
+            Con respaldo: {{ formatNumber(backedDebtValue, 2) }}
+          </div>
+        </article>
+      </div>
+
       <div class="ui-guide-score-top">
         <div class="ui-guide-health-badge" :class="`ui-guide-health-${globalToneValue}`">
           {{ globalLabelValue }}
@@ -408,28 +430,6 @@ watch(isNetWorthHealthPhase, () => {
               </div>
               <div class="ui-guide-score-kpi-hint">{{ kpi.hint }}</div>
             </div>
-          </div>
-        </article>
-      </div>
-
-      <div class="ui-guide-summary-grid">
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Patrimonio neto</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(netWorthValue, 2) }}</div>
-        </article>
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Activos totales</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(assetsValue, 2) }}</div>
-        </article>
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Pasivos totales</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(liabilitiesValue, 2) }}</div>
-        </article>
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Deuda sin respaldo</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(unbackedDebtValue, 2) }}</div>
-          <div class="ui-guide-summary-meta">
-            Con respaldo: {{ formatNumber(backedDebtValue, 2) }}
           </div>
         </article>
       </div>
@@ -505,6 +505,7 @@ watch(isNetWorthHealthPhase, () => {
 }
 
 .ui-guide-score-top {
+  margin-top: 12px;
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr);
   gap: 14px;
@@ -665,7 +666,7 @@ watch(isNetWorthHealthPhase, () => {
 }
 
 .ui-guide-summary-grid {
-  margin-top: 12px;
+  margin-top: 0;
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
