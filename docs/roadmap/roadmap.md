@@ -122,8 +122,11 @@ KPIs:
 1. Liquidity (`Liquidez`)
 2. Available expense coverage in months (`Meses de gastos disponibles`)
 
-### Milestone 13
-Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined, update.
+### Milestone 13 (Completed with caveat)
+Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined and delivered in SaaS frontend.
+
+Caveat:
+1. Pending parity work: full transfer of Milestone 13 phase-detail UX/scoring to `core` frontend.
 
 Objective:
 1. Balance assets and liabilities.
