@@ -392,13 +392,11 @@ watch(isNetWorthHealthPhase, () => {
       </div>
 
       <div class="ui-guide-score-top">
-        <div class="ui-guide-health-badge" :class="`ui-guide-health-${globalToneValue}`">
-          {{ globalLabelValue }}
-        </div>
-
-        <div class="ui-guide-global-score-wrap">
-          <div class="ui-guide-global-score-label">Score global Fase 4</div>
-          <div class="ui-guide-global-score-value">{{ formatNumber(globalScoreValue, 0) }}/100</div>
+        <div class="ui-guide-health-score-badge" :class="`ui-guide-health-${globalToneValue}`">
+          <span class="ui-guide-health-score-text">{{ globalLabelValue }}</span>
+          <strong class="ui-guide-health-score-value"
+            >{{ formatNumber(globalScoreValue, 0) }}/100</strong
+          >
         </div>
 
         <div class="ui-guide-health-copy">
@@ -507,19 +505,32 @@ watch(isNetWorthHealthPhase, () => {
 .ui-guide-score-top {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
   align-items: center;
 }
 
-.ui-guide-health-badge {
+.ui-guide-health-score-badge {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   border-radius: 999px;
-  padding: 7px 11px;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.18);
+  line-height: 1;
+}
+
+.ui-guide-health-score-text {
+  white-space: nowrap;
+}
+
+.ui-guide-health-score-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.96);
 }
 
 .ui-guide-health-solid {
@@ -540,24 +551,6 @@ watch(isNetWorthHealthPhase, () => {
 .ui-guide-health-risk {
   background: rgba(251, 113, 133, 0.16);
   color: rgba(251, 113, 133, 0.95);
-}
-
-.ui-guide-global-score-wrap {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 11px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.ui-guide-global-score-label {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.ui-guide-global-score-value {
-  margin-top: 1px;
-  font-size: 20px;
-  font-weight: 700;
 }
 
 .ui-guide-health-copy {
