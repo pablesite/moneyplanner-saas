@@ -72,6 +72,7 @@ const decimalsByCurrency: Record<string, number> = {
   ETH: 8,
 };
 const LIABILITY_CATEGORIES_REQUIRING_TAE = ['mortgage', 'personal_loan', 'credit_card'];
+const ASSET_SUBCATEGORIES_REQUIRING_TAE = ['bank_account', 'crypto_spot_earn'];
 
 const form = reactive({
   name: '',
@@ -102,8 +103,14 @@ const financedAssetOptions = computed(() => {
 });
 
 const showFinancedAsset = computed(() => !!props.showFinancedAsset);
-const showAnnualInterestInput = computed(
+const requiresLiabilityTae = computed(
   () => showFinancedAsset.value && LIABILITY_CATEGORIES_REQUIRING_TAE.includes(form.category),
+);
+const requiresAssetTae = computed(
+  () => !!props.subcategories && ASSET_SUBCATEGORIES_REQUIRING_TAE.includes(form.subcategory),
+);
+const showAnnualInterestInput = computed(
+  () => requiresLiabilityTae.value || requiresAssetTae.value,
 );
 const subcategoriesForCategory = computed(() => {
   if (!props.subcategories || !form.category) return [];
@@ -190,7 +197,7 @@ const annualInterestError = computed(() => {
   const raw = String(form.annual_interest_tae ?? '')
     .trim()
     .replace(',', '.');
-  if (!raw) return 'La TAE es obligatoria para este pasivo';
+  if (!raw) return 'La TAE es obligatoria para este indicador';
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) return 'TAE invalida';
   return '';

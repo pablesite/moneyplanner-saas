@@ -138,6 +138,7 @@ Dashboard:
 KPIs:
 1. Score Solidez estructural (`0-100`): equity ratio + debt-to-assets.
 2. Score Calidad de la estructura (`0-100`): activos productivos + activos iliquidos (inverso).
+   Productivo: inversiones + inmuebles (menos vivienda habitual) + liquidez remunerada (`bank_account`/`crypto_spot_earn` con `TAE > 0`).
 3. Score Distribucion del riesgo (`0-100`): concentracion top activo (inverso) + diversificacion.
 4. Score global fase 4 (`0-100`): ponderacion de los 3 scores anteriores.
 

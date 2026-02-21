@@ -90,13 +90,30 @@ function weightedScore(items: { score: number; weight: number }[]): number {
   return clamp(sum / totalWeight, 0, 100);
 }
 
-function kpiFillStyle(score: number): Record<string, string> {
+function scoreColor(score: number): string {
   const normalized = clamp(score, 0, 100);
   const hue = (normalized / 100) * 120;
+  return `hsl(${hue} 82% 52%)`;
+}
+
+function scoreFillStyle(score: number): Record<string, string> {
+  const normalized = clamp(score, 0, 100);
   return {
     width: `${normalized}%`,
-    backgroundColor: `hsl(${hue} 82% 52%)`,
+    backgroundColor: scoreColor(score),
   };
+}
+
+function gradeFromScore(score: number): string {
+  if (score >= 80) return 'A';
+  if (score >= 60) return 'B';
+  if (score >= 40) return 'C';
+  if (score >= 20) return 'D';
+  return 'E';
+}
+
+function gradeStyle(score: number): Record<string, string> {
+  return { color: scoreColor(score) };
 }
 
 const chartRows = computed(() => {
@@ -109,6 +126,7 @@ const chartRows = computed(() => {
 });
 
 const assetRows = computed(() => chartRows.value.filter((row) => row.assets > 0));
+const activeAssets = computed(() => store.assets.filter((asset) => asset.is_active));
 
 const assetsValue = computed(() => Math.max(0, toNumber(store.summary?.total_assets)));
 const liabilitiesValue = computed(() => Math.max(0, toNumber(store.summary?.total_liabilities)));
@@ -127,11 +145,31 @@ const debtToAssetsValue = computed(() =>
   assetsValue.value > 0 ? liabilitiesValue.value / assetsValue.value : null,
 );
 
+function isPositiveTae(raw: string | null | undefined): boolean {
+  if (raw == null) return false;
+  return toNumber(raw) > 0;
+}
+
 const productiveAssetsValue = computed(() => {
-  const productiveKeys = new Set(['investments', 'real_estate']);
-  return assetRows.value
-    .filter((row) => productiveKeys.has(row.key))
-    .reduce((acc, row) => acc + row.assets, 0);
+  return activeAssets.value.reduce((acc, asset) => {
+    const amountBase = Math.max(0, toNumber(asset.amount_base));
+    if (amountBase <= 0) return acc;
+
+    if (asset.category === 'investments') return acc + amountBase;
+
+    if (asset.category === 'real_estate') {
+      return asset.subcategory === 'primary_home' ? acc : acc + amountBase;
+    }
+
+    if (asset.category === 'cash') {
+      const isRemuneratedLiquidity =
+        (asset.subcategory === 'bank_account' || asset.subcategory === 'crypto_spot_earn') &&
+        isPositiveTae(asset.annual_interest_tae);
+      return isRemuneratedLiquidity ? acc + amountBase : acc;
+    }
+
+    return acc;
+  }, 0);
 });
 
 const productiveAssetsShareValue = computed(() =>
@@ -262,7 +300,7 @@ const scoreCards = computed<ScoreCard[]>(() => [
         label: '% activos productivos',
         valueText: formatPct(productiveAssetsShareValue.value, 0),
         score: productiveScoreValue.value,
-        hint: 'Inversiones + inmuebles',
+        hint: 'Inversiones + inmuebles (menos vivienda habitual) + liquidez con TAE > 0',
       },
       {
         id: 'illiquid-assets',
@@ -405,8 +443,13 @@ watch(isNetWorthHealthPhase, () => {
         </div>
       </div>
 
-      <div class="ui-guide-global-meter" :class="`ui-guide-global-meter-${globalToneValue}`">
-        <span class="ui-guide-global-meter-fill" :style="{ width: `${globalScoreValue}%` }"></span>
+      <div class="ui-guide-meter-row">
+        <span class="ui-guide-grade" :style="gradeStyle(globalScoreValue)">{{
+          gradeFromScore(globalScoreValue)
+        }}</span>
+        <div class="ui-guide-global-meter">
+          <span class="ui-guide-global-meter-fill" :style="scoreFillStyle(globalScoreValue)"></span>
+        </div>
       </div>
 
       <div class="ui-guide-score-grid">
@@ -423,8 +466,13 @@ watch(isNetWorthHealthPhase, () => {
                 <span>{{ kpi.label }}</span>
                 <strong>{{ kpi.valueText }}</strong>
               </div>
-              <div class="ui-guide-score-kpi-track">
-                <span class="ui-guide-score-kpi-fill" :style="kpiFillStyle(kpi.score)"></span>
+              <div class="ui-guide-meter-row ui-guide-meter-row-kpi">
+                <span class="ui-guide-grade" :style="gradeStyle(kpi.score)">{{
+                  gradeFromScore(kpi.score)
+                }}</span>
+                <div class="ui-guide-score-kpi-track">
+                  <span class="ui-guide-score-kpi-fill" :style="scoreFillStyle(kpi.score)"></span>
+                </div>
               </div>
               <div class="ui-guide-score-kpi-hint">{{ kpi.hint }}</div>
             </div>
@@ -559,7 +607,7 @@ watch(isNetWorthHealthPhase, () => {
 }
 
 .ui-guide-global-meter {
-  margin-top: 12px;
+  flex: 1 1 auto;
   height: 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
@@ -570,19 +618,25 @@ watch(isNetWorthHealthPhase, () => {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(74, 222, 128, 0.95), rgba(45, 212, 191, 0.95));
 }
 
-.ui-guide-global-meter-medium .ui-guide-global-meter-fill {
-  background: linear-gradient(90deg, rgba(132, 204, 22, 0.95), rgba(163, 230, 53, 0.95));
+.ui-guide-meter-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.ui-guide-global-meter-watch .ui-guide-global-meter-fill {
-  background: linear-gradient(90deg, rgba(250, 204, 21, 0.95), rgba(251, 191, 36, 0.95));
+.ui-guide-meter-row-kpi {
+  margin-top: 4px;
 }
 
-.ui-guide-global-meter-risk .ui-guide-global-meter-fill {
-  background: linear-gradient(90deg, rgba(251, 113, 133, 0.95), rgba(244, 63, 94, 0.95));
+.ui-guide-grade {
+  min-width: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .ui-guide-score-grid {
@@ -637,7 +691,7 @@ watch(isNetWorthHealthPhase, () => {
 }
 
 .ui-guide-score-kpi-track {
-  margin-top: 4px;
+  flex: 1 1 auto;
   height: 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.1);

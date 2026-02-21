@@ -41,7 +41,12 @@ All score components are computed with linear/clamped mappings so values move co
    - KPI B: `debt_to_assets = total_liabilities / total_assets` (lower is better)
    - Internal weighting: 60% equity, 40% debt-to-assets
 2. Score Calidad de la estructura:
-   - KPI A: `% activos productivos` (proxy from available categories; higher is better)
+   - KPI A: `% activos productivos` (higher is better), with these rules:
+     - Liquidez (`cash`): productivo solo si `subcategory in {bank_account, crypto_spot_earn}` y `annual_interest_tae > 0`
+     - Inversiones (`investments`): siempre productivo
+     - Inmuebles (`real_estate`): productivo excepto `primary_home` (vivienda habitual)
+     - Mobiliario (`furnishings`): no productivo
+     - Otros (`other`): no productivo
    - KPI B: `% activos iliquidos` (lower is better)
    - Internal weighting: 50% / 50%
 3. Score Distribucion del riesgo:
@@ -75,6 +80,8 @@ All score components are computed with linear/clamped mappings so values move co
    - Mitigation: centralize score logic in shared domain utility in a follow-up refinement.
 2. Risk: phase details without complete diagnostics may look unfinished.
    - Mitigation: explicit placeholder copy and phased rollout communication.
+3. Risk: missing `annual_interest_tae` in remunerated liquidity assets distorts productive ratio.
+   - Mitigation: `annual_interest_tae` is now required for `bank_account` and `crypto_spot_earn` assets.
 
 ## Deliverables
 1. Updated `HomeView` as generic guide roadmap.
