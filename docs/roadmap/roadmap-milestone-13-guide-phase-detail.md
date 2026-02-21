@@ -55,6 +55,7 @@ All score components are computed with linear/clamped mappings so values move co
 1. `Guia` becomes the strategic view (what stage and why).
 2. Each phase detail is tactical (where you stand in that phase and what to improve).
 3. Keep mobile-first behavior for phase cards and diagnostic panels.
+4. KPI bars in phase detail use solid fill color mapped by KPI score (`0`=red, `100`=green), while width keeps representing progress.
 
 ## Acceptance Criteria
 1. Sidebar `Guia` opens the generic roadmap with clickable phases.

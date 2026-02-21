@@ -90,6 +90,15 @@ function weightedScore(items: { score: number; weight: number }[]): number {
   return clamp(sum / totalWeight, 0, 100);
 }
 
+function kpiFillStyle(score: number): Record<string, string> {
+  const normalized = clamp(score, 0, 100);
+  const hue = (normalized / 100) * 120;
+  return {
+    width: `${normalized}%`,
+    backgroundColor: `hsl(${hue} 82% 52%)`,
+  };
+}
+
 const chartRows = computed(() => {
   const chart = store.byCategoryChart;
   return chart.keys.map((key, index) => ({
@@ -395,7 +404,7 @@ watch(isNetWorthHealthPhase, () => {
                 <strong>{{ kpi.valueText }}</strong>
               </div>
               <div class="ui-guide-score-kpi-track">
-                <span class="ui-guide-score-kpi-fill" :style="{ width: `${kpi.score}%` }"></span>
+                <span class="ui-guide-score-kpi-fill" :style="kpiFillStyle(kpi.score)"></span>
               </div>
               <div class="ui-guide-score-kpi-hint">{{ kpi.hint }}</div>
             </div>
@@ -419,7 +428,9 @@ watch(isNetWorthHealthPhase, () => {
         <article class="ui-guide-summary-card">
           <div class="ui-guide-summary-label">Deuda sin respaldo</div>
           <div class="ui-guide-summary-value">{{ formatNumber(unbackedDebtValue, 2) }}</div>
-          <div class="ui-guide-summary-meta">Con respaldo: {{ formatNumber(backedDebtValue, 2) }}</div>
+          <div class="ui-guide-summary-meta">
+            Con respaldo: {{ formatNumber(backedDebtValue, 2) }}
+          </div>
         </article>
       </div>
 
@@ -644,12 +655,7 @@ watch(isNetWorthHealthPhase, () => {
   height: 100%;
   border-radius: 999px;
   width: 0%;
-  background: linear-gradient(
-    90deg,
-    rgba(244, 63, 94, 0.96) 0%,
-    rgba(251, 191, 36, 0.96) 55%,
-    rgba(34, 197, 94, 0.96) 100%
-  );
+  background: hsl(0 82% 52%);
 }
 
 .ui-guide-score-kpi-hint {
