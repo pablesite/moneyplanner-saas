@@ -6,13 +6,13 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 ## Scope
 1. `Guia` acts as a generic roadmap view with clickable phase cards.
 2. New route and view for phase detail (`/guia/fases/:phaseId`).
-3. Fase 4 detail includes the full balance-health diagnostic currently drafted in `Patrimonio`.
+3. Fase 4 detail includes a dedicated structural net-worth diagnostic model (phase-specific).
 4. `Patrimonio` keeps operational KPIs and charts, but no longer owns the phase diagnostic block.
 
 ## First Increment (Current Delivery)
 1. Update `Inicio` (`Guia`) to expose cards that open each phase detail.
 2. Create a reusable detail shell for all phases.
-3. Move the risk/score diagnostic card from `Patrimonio` to Fase 4 detail.
+3. Replace the initial moved diagnostic with a phase-4-specific scoring model (3 scores + global score).
 4. Keep non-Fase-4 details as structured placeholders to expand in future milestones.
 
 ## Out Of Scope
@@ -24,12 +24,32 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 1. Every phase card in `Guia` must navigate to its detail view.
 2. Phase detail must show phase context (title, focus, objective, progress).
 3. Fase 4 detail must display:
-   - Balance health score (`0-100`)
-   - Risk tone label
-   - Meter bar
-   - Four dimensions: apalancamiento, deuda sin respaldo, concentracion, liquidez
-4. The diagnostic must consume current patrimonio data (assets, liabilities, category composition).
-5. `Patrimonio` must remain fully usable after removing the diagnostic block.
+   - Score Solidez estructural (`0-100`)
+   - Score Calidad de la estructura (`0-100`)
+   - Score Distribucion del riesgo (`0-100`)
+   - Score global Fase 4 (`0-100`) as weighted aggregate
+4. Each score must be built from two related KPIs (continuous formulas, no hard steps).
+5. Score changes must be continuous point-by-point (1 percentage point change in KPI must impact score).
+6. The diagnostic must consume current patrimonio data (assets, liabilities, category composition).
+7. `Patrimonio` must remain fully usable after removing the diagnostic block.
+
+## Scoring Model (Fase 4)
+All score components are computed with linear/clamped mappings so values move continuously.
+
+1. Score Solidez estructural:
+   - KPI A: `equity_ratio = net_worth / total_assets` (higher is better)
+   - KPI B: `debt_to_assets = total_liabilities / total_assets` (lower is better)
+   - Internal weighting: 60% equity, 40% debt-to-assets
+2. Score Calidad de la estructura:
+   - KPI A: `% activos productivos` (proxy from available categories; higher is better)
+   - KPI B: `% activos iliquidos` (lower is better)
+   - Internal weighting: 50% / 50%
+3. Score Distribucion del riesgo:
+   - KPI A: `% concentracion top activo` (lower is better)
+   - KPI B: `indice de diversificacion` (from HHI normalized; higher is better)
+   - Internal weighting: 50% / 50%
+4. Score global Fase 4:
+   - `0.40 * Solidez + 0.30 * Calidad + 0.30 * Distribucion`
 
 ## UX Notes
 1. `Guia` becomes the strategic view (what stage and why).
@@ -39,9 +59,10 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 ## Acceptance Criteria
 1. Sidebar `Guia` opens the generic roadmap with clickable phases.
 2. Clicking any phase opens `/guia/fases/:phaseId`.
-3. Fase 4 detail renders the moved diagnostic panel and uses live net-worth data.
-4. `Patrimonio` no longer renders the diagnostic score panel.
-5. Frontend quality gates pass in Docker for SaaS stack.
+3. Fase 4 detail renders 3 phase-specific scores plus global score using live net-worth data.
+4. Each score shows its two related KPIs and updates continuously with underlying values.
+5. `Patrimonio` no longer renders the diagnostic score panel.
+6. Frontend quality gates pass in Docker for SaaS stack.
 
 ## Validation Plan
 1. `docker compose exec -T saas_frontend npm run lint`
@@ -57,5 +78,5 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 ## Deliverables
 1. Updated `HomeView` as generic guide roadmap.
 2. New `GuidePhaseDetailView` route and UI.
-3. Diagnostic panel moved from `NetWorthView` to Fase 4 detail.
+3. Fase 4 diagnostic panel redesigned around 3 domain scores + global score.
 4. Milestone 13 roadmap document.

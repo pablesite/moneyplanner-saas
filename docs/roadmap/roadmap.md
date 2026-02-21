@@ -133,15 +133,13 @@ Inputs:
 2. Liabilities (`Pasivos`)
 
 Dashboard:
-1. Net worth (`Patrimonio`) - general overview update.
+1. Guide (`Guia`) - phase 4 detail view.
 
 KPIs:
-1. Equity (`Capital propio`)
-2. Debt-to-assets ratio
-3. Leverage
-4. Liquidity coverage
-5. Unbacked debt
-6. Asset concentration
+1. Score Solidez estructural (`0-100`): equity ratio + debt-to-assets.
+2. Score Calidad de la estructura (`0-100`): activos productivos + activos iliquidos (inverso).
+3. Score Distribucion del riesgo (`0-100`): concentracion top activo (inverso) + diversificacion.
+4. Score global fase 4 (`0-100`): ponderacion de los 3 scores anteriores.
 
 Reference:
 - `docs/roadmap/roadmap-milestone-13-guide-phase-detail.md`
