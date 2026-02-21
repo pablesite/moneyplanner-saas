@@ -83,5 +83,6 @@ All score components are computed with linear/clamped mappings so values move co
 ## Deliverables
 1. Updated `HomeView` as generic guide roadmap.
 2. New `GuidePhaseDetailView` route and UI.
-3. Fase 4 diagnostic panel redesigned around 3 domain scores + global score.
+3. Fase 4 diagnostic panel redesigned around 2 domain scores + global score.
 4. Milestone 13 roadmap document.
+5. Release summary: `docs/roadmap/release-summary-milestone-13-guide-phase-detail.md`.
