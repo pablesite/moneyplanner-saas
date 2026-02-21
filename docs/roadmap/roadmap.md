@@ -143,6 +143,9 @@ KPIs:
 5. Unbacked debt
 6. Asset concentration
 
+Reference:
+- `docs/roadmap/roadmap-milestone-13-guide-phase-detail.md`
+
 ### Milestone 14
 Accounting module (`Modulo Contabilidad`) - dashboard data-input update with temporality.
 

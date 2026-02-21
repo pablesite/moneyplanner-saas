@@ -6,6 +6,10 @@ const mocks = vi.hoisted(() => ({
   createWebHistory: vi.fn(() => 'history'),
 }));
 
+function viewStub(name: string) {
+  return { default: { name } };
+}
+
 vi.mock('vue-router', () => ({
   createRouter: mocks.createRouter,
   createWebHistory: mocks.createWebHistory,
@@ -14,6 +18,22 @@ vi.mock('vue-router', () => ({
 vi.mock('@/domains/auth', () => ({
   registerAuthGuard: mocks.registerAuthGuard,
 }));
+
+vi.mock('@/domains/capabilities', () => ({
+  capabilities: { people: true },
+}));
+
+vi.mock('./views/NetWorthView.vue', () => viewStub('NetWorthView'));
+vi.mock('./views/LoginView.vue', () => viewStub('LoginView'));
+vi.mock('./views/HomeView.vue', () => viewStub('HomeView'));
+vi.mock('./views/GuidePhaseDetailView.vue', () => viewStub('GuidePhaseDetailView'));
+vi.mock('./views/DataInputView.vue', () => viewStub('DataInputView'));
+vi.mock('./views/PeopleView.vue', () => viewStub('PeopleView'));
+vi.mock('./views/AuxDataView.vue', () => viewStub('AuxDataView'));
+vi.mock('./views/SettingsFxView.vue', () => viewStub('SettingsFxView'));
+vi.mock('./views/SettingsIpcView.vue', () => viewStub('SettingsIpcView'));
+vi.mock('./views/AccountView.vue', () => viewStub('AccountView'));
+vi.mock('./views/AdminUsersView.vue', () => viewStub('AdminUsersView'));
 
 describe('router (saas)', () => {
   beforeEach(() => {
@@ -32,6 +52,7 @@ describe('router (saas)', () => {
         routes: expect.arrayContaining([
           expect.objectContaining({ path: '/login' }),
           expect.objectContaining({ path: '/introduccion-datos' }),
+          expect.objectContaining({ path: '/guia/fases/:phaseId' }),
           expect.objectContaining({ path: '/' }),
           expect.objectContaining({ path: '/data' }),
           expect.objectContaining({ path: '/data/fx' }),
