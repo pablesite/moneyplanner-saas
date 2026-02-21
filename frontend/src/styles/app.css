@@ -689,11 +689,12 @@ body {
 
 .ui-home-phase-donut {
   --phase-progress: 0%;
+  --phase-progress-color: rgba(45, 212, 191, 0.9);
   width: 66px;
   height: 66px;
   border-radius: 999px;
   background: conic-gradient(
-    rgba(45, 212, 191, 0.9) var(--phase-progress),
+    var(--phase-progress-color) var(--phase-progress),
     rgba(255, 255, 255, 0.16) 0
   );
   display: inline-flex;

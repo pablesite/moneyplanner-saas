@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { findGuidePhaseById, getActiveGuidePhase, guidePhases } from '@/domains/guide/phases';
+import { findGuidePhaseById, guidePhases } from '@/domains/guide/phases';
 import { useNetWorthStore } from '@/stores/netWorth';
 
 type ScoreTone = 'solid' | 'medium' | 'watch' | 'risk';
@@ -37,7 +37,6 @@ const phaseId = computed(() => {
 });
 
 const phase = computed(() => (phaseId.value == null ? null : findGuidePhaseById(phaseId.value)));
-const activePhase = computed(() => getActiveGuidePhase());
 const isNetWorthHealthPhase = computed(() => phase.value?.id === 4);
 const summaryExtended = computed(() => store.summary as SummaryExtended | null);
 
@@ -131,18 +130,8 @@ const activeAssets = computed(() => store.assets.filter((asset) => asset.is_acti
 const assetsValue = computed(() => Math.max(0, toNumber(store.summary?.total_assets)));
 const liabilitiesValue = computed(() => Math.max(0, toNumber(store.summary?.total_liabilities)));
 const netWorthValue = computed(() => toNumber(store.summary?.net_worth));
-const backedDebtValue = computed(() =>
-  Math.max(0, toNumber(summaryExtended.value?.liabilities_asset_backed)),
-);
 const unbackedDebtValue = computed(() =>
   Math.max(0, toNumber(summaryExtended.value?.liabilities_unbacked)),
-);
-
-const equityRatioValue = computed(() =>
-  assetsValue.value > 0 ? netWorthValue.value / assetsValue.value : null,
-);
-const debtToAssetsValue = computed(() =>
-  assetsValue.value > 0 ? liabilitiesValue.value / assetsValue.value : null,
 );
 
 function isPositiveTae(raw: string | null | undefined): boolean {
@@ -150,41 +139,44 @@ function isPositiveTae(raw: string | null | undefined): boolean {
   return toNumber(raw) > 0;
 }
 
-const productiveAssetsValue = computed(() => {
+const illiquidInvestmentSubcategories = new Set([
+  'pension_plans',
+  'real_estate_crowd',
+  'crowdlending',
+  'other',
+]);
+
+const illiquidAssetsValue = computed(() => {
   return activeAssets.value.reduce((acc, asset) => {
     const amountBase = Math.max(0, toNumber(asset.amount_base));
     if (amountBase <= 0) return acc;
 
-    if (asset.category === 'investments') return acc + amountBase;
+    const illiquidByCategory =
+      asset.category === 'real_estate' ||
+      asset.category === 'furnishings' ||
+      asset.category === 'other';
 
-    if (asset.category === 'real_estate') {
-      return asset.subcategory === 'primary_home' ? acc : acc + amountBase;
-    }
+    const illiquidByInvestmentSubcategory =
+      asset.category === 'investments' &&
+      illiquidInvestmentSubcategories.has(asset.subcategory || 'other');
 
-    if (asset.category === 'cash') {
-      const isRemuneratedLiquidity =
-        (asset.subcategory === 'bank_account' || asset.subcategory === 'crypto_spot_earn') &&
-        isPositiveTae(asset.annual_interest_tae);
-      return isRemuneratedLiquidity ? acc + amountBase : acc;
-    }
+    const illiquidByCashOtherDeposit =
+      asset.category === 'cash' &&
+      asset.subcategory === 'other' &&
+      isPositiveTae(asset.annual_interest_tae);
 
-    return acc;
+    return illiquidByCategory || illiquidByInvestmentSubcategory || illiquidByCashOtherDeposit
+      ? acc + amountBase
+      : acc;
   }, 0);
-});
-
-const productiveAssetsShareValue = computed(() =>
-  assetsValue.value > 0 ? productiveAssetsValue.value / assetsValue.value : null,
-);
-
-const illiquidAssetsValue = computed(() => {
-  const illiquidKeys = new Set(['real_estate', 'furnishings', 'other']);
-  return assetRows.value
-    .filter((row) => illiquidKeys.has(row.key))
-    .reduce((acc, row) => acc + row.assets, 0);
 });
 
 const illiquidAssetsShareValue = computed(() =>
   assetsValue.value > 0 ? illiquidAssetsValue.value / assetsValue.value : null,
+);
+
+const unbackedDebtToAssetsValue = computed(() =>
+  assetsValue.value > 0 ? unbackedDebtValue.value / assetsValue.value : null,
 );
 
 const topAssetShareValue = computed(() => {
@@ -203,14 +195,11 @@ const diversificationIndexValue = computed(() => {
   return clamp((maxHhi - hhi) / (maxHhi - minHhi), 0, 1);
 });
 
-const equityScoreValue = computed(() => linearScoreIncreasing(equityRatioValue.value, 0.2, 0.8));
-const debtScoreValue = computed(() => linearScoreDecreasing(debtToAssetsValue.value, 0.2, 0.8));
-
-const productiveScoreValue = computed(() =>
-  linearScoreIncreasing(productiveAssetsShareValue.value, 0.2, 0.7),
-);
 const illiquidScoreValue = computed(() =>
   linearScoreDecreasing(illiquidAssetsShareValue.value, 0.25, 0.8),
+);
+const unbackedDebtScoreValue = computed(() =>
+  linearScoreDecreasing(unbackedDebtToAssetsValue.value, 0.05, 0.35),
 );
 
 const concentrationScoreValue = computed(() =>
@@ -220,16 +209,9 @@ const diversificationScoreValue = computed(() =>
   linearScoreIncreasing(diversificationIndexValue.value, 0.2, 0.8),
 );
 
-const structuralScoreValue = computed(() =>
+const supportScoreValue = computed(() =>
   weightedScore([
-    { score: equityScoreValue.value, weight: 0.6 },
-    { score: debtScoreValue.value, weight: 0.4 },
-  ]),
-);
-
-const qualityScoreValue = computed(() =>
-  weightedScore([
-    { score: productiveScoreValue.value, weight: 0.5 },
+    { score: unbackedDebtScoreValue.value, weight: 0.5 },
     { score: illiquidScoreValue.value, weight: 0.5 },
   ]),
 );
@@ -243,9 +225,8 @@ const riskDistributionScoreValue = computed(() =>
 
 const globalScoreValue = computed(() =>
   weightedScore([
-    { score: structuralScoreValue.value, weight: 0.4 },
-    { score: qualityScoreValue.value, weight: 0.3 },
-    { score: riskDistributionScoreValue.value, weight: 0.3 },
+    { score: supportScoreValue.value, weight: 0.5 },
+    { score: riskDistributionScoreValue.value, weight: 0.5 },
   ]),
 );
 
@@ -268,46 +249,24 @@ const globalLabelValue = computed(() => {
 
 const scoreCards = computed<ScoreCard[]>(() => [
   {
-    id: 'structural',
-    title: 'Solidez estructural',
-    score: structuralScoreValue.value,
-    description: 'Cuanta estructura propia sostiene el balance frente al pasivo.',
+    id: 'support',
+    title: 'Respaldo patrimonial',
+    score: supportScoreValue.value,
+    description: 'Calidad de respaldo del patrimonio frente a iliquidez y deuda no respaldada.',
     kpis: [
       {
-        id: 'equity-ratio',
-        label: 'Equity ratio',
-        valueText: formatPct(equityRatioValue.value, 0),
-        score: equityScoreValue.value,
-        hint: 'Patrimonio / activos',
-      },
-      {
-        id: 'debt-assets',
-        label: 'Debt-to-assets',
-        valueText: formatPct(debtToAssetsValue.value, 0),
-        score: debtScoreValue.value,
-        hint: 'Pasivo / activos (inverso)',
-      },
-    ],
-  },
-  {
-    id: 'quality',
-    title: 'Calidad de la estructura',
-    score: qualityScoreValue.value,
-    description: 'Peso relativo de activos utiles frente a carga iliquida.',
-    kpis: [
-      {
-        id: 'productive-assets',
-        label: '% activos productivos',
-        valueText: formatPct(productiveAssetsShareValue.value, 0),
-        score: productiveScoreValue.value,
-        hint: 'Inversiones + inmuebles (menos vivienda habitual) + liquidez con TAE > 0',
+        id: 'unbacked-debt-assets',
+        label: '% deuda sin respaldo / activos',
+        valueText: formatPct(unbackedDebtToAssetsValue.value, 0),
+        score: unbackedDebtScoreValue.value,
+        hint: 'Pasivos sin activo asociado (inverso)',
       },
       {
         id: 'illiquid-assets',
         label: '% activos iliquidos',
         valueText: formatPct(illiquidAssetsShareValue.value, 0),
         score: illiquidScoreValue.value,
-        hint: 'Inmuebles + mobiliario + otros (inverso)',
+        hint: 'Inmuebles + mobiliario + otros + inversiones iliquidas + liquidez/otros con TAE (inverso)',
       },
     ],
   },
@@ -315,7 +274,7 @@ const scoreCards = computed<ScoreCard[]>(() => [
     id: 'distribution',
     title: 'Distribucion del riesgo',
     score: riskDistributionScoreValue.value,
-    description: 'Dependencia de un unico bloque frente a reparto equilibrado.',
+    description: 'Dependencia de un unico bloque frente a reparto patrimonial equilibrado.',
     kpis: [
       {
         id: 'top-share',
@@ -375,13 +334,9 @@ watch(isNetWorthHealthPhase, () => {
       <template v-if="phase">
         <p class="ui-pro-kicker">Fase {{ phase.id }}</p>
         <h1 class="h1 ui-guide-phase-title">{{ phase.title }}</h1>
-        <p class="subtle ui-guide-phase-copy">{{ phase.objective }}</p>
-
-        <div class="ui-guide-phase-meta">
-          <span class="ui-pro-chip">Foco: {{ phase.focus }}</span>
-          <span class="ui-pro-chip">Progreso: {{ phase.progress }}%</span>
-          <span class="ui-pro-chip">Fase activa: F{{ activePhase.id }}</span>
-        </div>
+        <p class="subtle ui-guide-phase-copy">
+          Diagnostico de salud patrimonial: respaldo patrimonial y distribucion del riesgo.
+        </p>
       </template>
 
       <template v-else>
@@ -423,9 +378,6 @@ watch(isNetWorthHealthPhase, () => {
         <article class="ui-guide-summary-card">
           <div class="ui-guide-summary-label">Deuda sin respaldo</div>
           <div class="ui-guide-summary-value">{{ formatNumber(unbackedDebtValue, 2) }}</div>
-          <div class="ui-guide-summary-meta">
-            Con respaldo: {{ formatNumber(backedDebtValue, 2) }}
-          </div>
         </article>
       </div>
 
@@ -436,15 +388,10 @@ watch(isNetWorthHealthPhase, () => {
             >{{ formatNumber(globalScoreValue, 0) }}/100</strong
           >
         </div>
-
-        <div class="ui-guide-health-copy">
-          Diagnostico estructural del patrimonio: solidez, calidad de la estructura y distribucion
-          del riesgo.
-        </div>
       </div>
 
       <div class="ui-guide-meter-row">
-        <span class="ui-guide-grade" :style="gradeStyle(globalScoreValue)">{{
+        <span class="ui-guide-grade ui-guide-grade-global" :style="gradeStyle(globalScoreValue)">{{
           gradeFromScore(globalScoreValue)
         }}</span>
         <div class="ui-guide-global-meter">
@@ -452,11 +399,16 @@ watch(isNetWorthHealthPhase, () => {
         </div>
       </div>
 
-      <div class="ui-guide-score-grid">
+      <div class="ui-guide-score-grid" :class="`ui-guide-score-grid-cols-${scoreCards.length}`">
         <article v-for="card in scoreCards" :key="card.id" class="ui-guide-score-card">
           <div class="ui-guide-score-card-head">
             <h3 class="ui-guide-score-card-title">{{ card.title }}</h3>
-            <div class="ui-guide-score-card-value">{{ formatNumber(card.score, 0) }}/100</div>
+            <div class="ui-guide-score-card-value-wrap">
+              <span class="ui-guide-score-card-grade" :style="gradeStyle(card.score)">{{
+                gradeFromScore(card.score)
+              }}</span>
+              <div class="ui-guide-score-card-value">{{ formatNumber(card.score, 0) }}/100</div>
+            </div>
           </div>
           <p class="ui-guide-score-card-copy">{{ card.description }}</p>
 
@@ -639,11 +591,24 @@ watch(isNetWorthHealthPhase, () => {
   text-align: center;
 }
 
+.ui-guide-grade-global {
+  font-size: 28px;
+  font-weight: 800;
+}
+
 .ui-guide-score-grid {
   margin-top: 12px;
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.ui-guide-score-grid-cols-1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ui-guide-score-grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .ui-guide-score-card {
@@ -651,6 +616,7 @@ watch(isNetWorthHealthPhase, () => {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.02);
   padding: 12px;
+  height: 100%;
 }
 
 .ui-guide-score-card-head {
@@ -669,6 +635,18 @@ watch(isNetWorthHealthPhase, () => {
 .ui-guide-score-card-value {
   font-size: 14px;
   font-weight: 700;
+}
+
+.ui-guide-score-card-value-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ui-guide-score-card-grade {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .ui-guide-score-card-copy {

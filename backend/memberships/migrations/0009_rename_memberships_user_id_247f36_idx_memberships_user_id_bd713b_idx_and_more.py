@@ -4,40 +4,39 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('memberships', '0008_saasauthauditevent_and_more'),
+        ("memberships", "0008_saasauthauditevent_and_more"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='ownershiplink',
-            new_name='memberships_user_id_bd713b_idx',
-            old_name='memberships_user_id_247f36_idx',
+            model_name="ownershiplink",
+            new_name="memberships_user_id_bd713b_idx",
+            old_name="memberships_user_id_247f36_idx",
         ),
         migrations.RenameIndex(
-            model_name='ownershiplink',
-            new_name='memberships_ownersh_fe3f32_idx',
-            old_name='memberships_ownersh_95cc7f_idx',
+            model_name="ownershiplink",
+            new_name="memberships_ownersh_fe3f32_idx",
+            old_name="memberships_ownersh_95cc7f_idx",
         ),
         migrations.RenameIndex(
-            model_name='saasaccessprofile',
-            new_name='memberships_role_6f3e7b_idx',
-            old_name='memberships_role_b013fd_idx',
+            model_name="saasaccessprofile",
+            new_name="memberships_role_6f3e7b_idx",
+            old_name="memberships_role_b013fd_idx",
         ),
         migrations.RenameIndex(
-            model_name='saasconsumedcorelinktoken',
-            new_name='memberships_user_id_9d3894_idx',
-            old_name='memberships_user_id_1ef7c7_idx',
+            model_name="saasconsumedcorelinktoken",
+            new_name="memberships_user_id_9d3894_idx",
+            old_name="memberships_user_id_1ef7c7_idx",
         ),
         migrations.RenameIndex(
-            model_name='saascoreaccountlink',
-            new_name='memberships_user_id_729b44_idx',
-            old_name='memberships_user_id_0ded26_idx',
+            model_name="saascoreaccountlink",
+            new_name="memberships_user_id_729b44_idx",
+            old_name="memberships_user_id_0ded26_idx",
         ),
         migrations.RenameIndex(
-            model_name='saassubscription',
-            new_name='memberships_status_753bb9_idx',
-            old_name='memberships_status_d0a8d4_idx',
+            model_name="saassubscription",
+            new_name="memberships_status_753bb9_idx",
+            old_name="memberships_status_d0a8d4_idx",
         ),
     ]

@@ -6,13 +6,13 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 ## Scope
 1. `Guia` acts as a generic roadmap view with clickable phase cards.
 2. New route and view for phase detail (`/guia/fases/:phaseId`).
-3. Fase 4 detail includes a dedicated structural net-worth diagnostic model (phase-specific).
+3. Fase 4 detail includes a dedicated net-worth health diagnostic model (phase-specific).
 4. `Patrimonio` keeps operational KPIs and charts, but no longer owns the phase diagnostic block.
 
 ## First Increment (Current Delivery)
 1. Update `Inicio` (`Guia`) to expose cards that open each phase detail.
 2. Create a reusable detail shell for all phases.
-3. Replace the initial moved diagnostic with a phase-4-specific scoring model (3 scores + global score).
+3. Replace the initial moved diagnostic with a phase-4-specific scoring model (2 scores + global score).
 4. Keep non-Fase-4 details as structured placeholders to expand in future milestones.
 
 ## Out Of Scope
@@ -22,10 +22,9 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 
 ## Functional Requirements
 1. Every phase card in `Guia` must navigate to its detail view.
-2. Phase detail must show phase context (title, focus, objective, progress).
+2. Phase detail must show phase context (title + diagnostic framing copy).
 3. Fase 4 detail must display:
-   - Score Solidez estructural (`0-100`)
-   - Score Calidad de la estructura (`0-100`)
+   - Score Respaldo patrimonial (`0-100`)
    - Score Distribucion del riesgo (`0-100`)
    - Score global Fase 4 (`0-100`) as weighted aggregate
 4. Each score must be built from two related KPIs (continuous formulas, no hard steps).
@@ -36,25 +35,23 @@ Convert `Guia` into the generic phase hub and add per-phase detail views, starti
 ## Scoring Model (Fase 4)
 All score components are computed with linear/clamped mappings so values move continuously.
 
-1. Score Solidez estructural:
-   - KPI A: `equity_ratio = net_worth / total_assets` (higher is better)
-   - KPI B: `debt_to_assets = total_liabilities / total_assets` (lower is better)
-   - Internal weighting: 60% equity, 40% debt-to-assets
-2. Score Calidad de la estructura:
-   - KPI A: `% activos productivos` (higher is better), with these rules:
-     - Liquidez (`cash`): productivo solo si `subcategory in {bank_account, crypto_spot_earn}` y `annual_interest_tae > 0`
-     - Inversiones (`investments`): siempre productivo
-     - Inmuebles (`real_estate`): productivo excepto `primary_home` (vivienda habitual)
-     - Mobiliario (`furnishings`): no productivo
-     - Otros (`other`): no productivo
+1. Score Respaldo patrimonial:
+   - KPI A: `% deuda sin respaldo / activos` (lower is better)
    - KPI B: `% activos iliquidos` (lower is better)
    - Internal weighting: 50% / 50%
+2. `% activos iliquidos` includes:
+   - Category-based: `real_estate`, `furnishings`, `other`
+   - Investment subcategories considered illiquid: `pension_plans`, `real_estate_crowd`, `crowdlending`, `investments:other`
+   - Cash/deposit proxy considered illiquid: `cash:other` when `annual_interest_tae > 0`
 3. Score Distribucion del riesgo:
    - KPI A: `% concentracion top activo` (lower is better)
    - KPI B: `indice de diversificacion` (from HHI normalized; higher is better)
    - Internal weighting: 50% / 50%
 4. Score global Fase 4:
-   - `0.40 * Solidez + 0.30 * Calidad + 0.30 * Distribucion`
+   - `0.50 * Respaldo + 0.50 * Distribucion`
+5. Visual grading:
+   - A/B/C/D/E shown in bars and cards by score bands (`A>=80`, `B>=60`, `C>=40`, `D>=20`, `E<20`)
+6. Home (`Inicio`) uses the same calculated Fase 4 score for the phase card donut and color.
 
 ## UX Notes
 1. `Guia` becomes the strategic view (what stage and why).
@@ -65,7 +62,7 @@ All score components are computed with linear/clamped mappings so values move co
 ## Acceptance Criteria
 1. Sidebar `Guia` opens the generic roadmap with clickable phases.
 2. Clicking any phase opens `/guia/fases/:phaseId`.
-3. Fase 4 detail renders 3 phase-specific scores plus global score using live net-worth data.
+3. Fase 4 detail renders 2 phase-specific scores plus global score using live net-worth data.
 4. Each score shows its two related KPIs and updates continuously with underlying values.
 5. `Patrimonio` no longer renders the diagnostic score panel.
 6. Frontend quality gates pass in Docker for SaaS stack.
@@ -81,7 +78,7 @@ All score components are computed with linear/clamped mappings so values move co
 2. Risk: phase details without complete diagnostics may look unfinished.
    - Mitigation: explicit placeholder copy and phased rollout communication.
 3. Risk: missing `annual_interest_tae` in remunerated liquidity assets distorts productive ratio.
-   - Mitigation: `annual_interest_tae` is now required for `bank_account` and `crypto_spot_earn` assets.
+   - Mitigation: `annual_interest_tae` is now required for `cash` subcategories `bank_account`, `crypto_spot_earn`, and `other`.
 
 ## Deliverables
 1. Updated `HomeView` as generic guide roadmap.

@@ -136,11 +136,10 @@ Dashboard:
 1. Guide (`Guia`) - phase 4 detail view.
 
 KPIs:
-1. Score Solidez estructural (`0-100`): equity ratio + debt-to-assets.
-2. Score Calidad de la estructura (`0-100`): activos productivos + activos iliquidos (inverso).
-   Productivo: inversiones + inmuebles (menos vivienda habitual) + liquidez remunerada (`bank_account`/`crypto_spot_earn` con `TAE > 0`).
+1. Score Respaldo patrimonial (`0-100`): deuda sin respaldo/activos (inverso) + activos iliquidos (inverso).
+2. `% activos iliquidos` incluye: inmuebles + mobiliario + otros + inversiones iliquidas (`pension_plans`, `real_estate_crowd`, `crowdlending`, `investments:other`) + `cash:other` con `TAE > 0`.
 3. Score Distribucion del riesgo (`0-100`): concentracion top activo (inverso) + diversificacion.
-4. Score global fase 4 (`0-100`): ponderacion de los 3 scores anteriores.
+4. Score global fase 4 (`0-100`): `0.50 * Respaldo + 0.50 * Distribucion`.
 
 Reference:
 - `docs/roadmap/roadmap-milestone-13-guide-phase-detail.md`
