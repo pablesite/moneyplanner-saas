@@ -54,6 +54,15 @@ docker compose up --build -d
    - `docker compose down -v`
 3. Never delete DB volumes unless explicitly authorized.
 
+## Data Transfer Between PCs
+1. Use `Introduccion de datos` -> `Exportar datos` to generate a portable JSON.
+2. On the target PC, use:
+   - `Importar datos` to append data
+   - `Reemplazar datos` to replace the current dataset with the JSON
+3. Export/import includes annual income, annual expense, assets, liabilities, settings (`base_currency`), and snapshots.
+4. SaaS exports/imports also include family members, ownerships, and ownership links.
+5. `Reemplazar datos` deletes current records in the covered blocks before importing (it does not delete DB volumes).
+
 ## References
 1. `docs/operations/dev-setup.md`
 2. `docs/architecture/architecture.md`
