@@ -341,8 +341,9 @@ const debtHighInterestShareScoreValue = computed(() =>
 
 const phase1DebtCostScoreValue = computed(() =>
   weightedScore([
-    { score: debtMaxTaeScoreValue.value, weight: 0.5 },
-    { score: debtWeightedTaeScoreValue.value, weight: 0.5 },
+    { score: debtMaxTaeScoreValue.value, weight: 0.4 },
+    { score: debtWeightedTaeScoreValue.value, weight: 0.4 },
+    { score: debtPaymentToIncomeScoreValue.value, weight: 0.2 },
   ]),
 );
 
