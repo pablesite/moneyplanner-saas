@@ -27,6 +27,12 @@ type ScoreCard = {
   kpis: ScoreKpi[];
 };
 
+type SummaryCard = {
+  id: string;
+  label: string;
+  valueText: string;
+};
+
 const route = useRoute();
 const store = useNetWorthStore();
 
@@ -37,7 +43,9 @@ const phaseId = computed(() => {
 });
 
 const phase = computed(() => (phaseId.value == null ? null : findGuidePhaseById(phaseId.value)));
+const isDebtPhase = computed(() => phase.value?.id === 1);
 const isNetWorthHealthPhase = computed(() => phase.value?.id === 4);
+const hasDiagnosticPhase = computed(() => isDebtPhase.value || isNetWorthHealthPhase.value);
 const summaryExtended = computed(() => store.summary as SummaryExtended | null);
 
 function toNumber(raw: unknown): number {
@@ -68,6 +76,11 @@ function formatPct(n: number | null, decimals = 0): string {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(n);
+}
+
+function formatPctFromPercentValue(n: number | null, decimals = 1): string {
+  if (n == null || !Number.isFinite(n)) return '-';
+  return formatPct(n / 100, decimals);
 }
 
 function linearScoreIncreasing(value: number | null, min: number, max: number): number {
@@ -103,6 +116,16 @@ function scoreFillStyle(score: number): Record<string, string> {
   };
 }
 
+function scoreBadgeStyle(score: number): Record<string, string> {
+  const normalized = clamp(score, 0, 100);
+  const hue = (normalized / 100) * 120;
+  return {
+    background: `hsl(${hue} 82% 52% / 0.16)`,
+    color: `hsl(${hue} 82% 66%)`,
+    borderColor: `hsl(${hue} 82% 66% / 0.26)`,
+  };
+}
+
 function gradeFromScore(score: number): string {
   if (score >= 80) return 'A';
   if (score >= 60) return 'B';
@@ -126,6 +149,9 @@ const chartRows = computed(() => {
 
 const assetRows = computed(() => chartRows.value.filter((row) => row.assets > 0));
 const activeAssets = computed(() => store.assets.filter((asset) => asset.is_active));
+const activeLiabilities = computed(() =>
+  store.liabilities.filter((liability) => liability.is_active),
+);
 
 const assetsValue = computed(() => Math.max(0, toNumber(store.summary?.total_assets)));
 const liabilitiesValue = computed(() => Math.max(0, toNumber(store.summary?.total_liabilities)));
@@ -175,8 +201,27 @@ const illiquidAssetsShareValue = computed(() =>
   assetsValue.value > 0 ? illiquidAssetsValue.value / assetsValue.value : null,
 );
 
+const debtRows = computed(() =>
+  activeLiabilities.value
+    .map((liability) => {
+      const amountBase = Math.max(0, toNumber(liability.amount_base));
+      const tae = liability.annual_interest_tae;
+      const taePct = tae == null || String(tae).trim() === '' ? null : toNumber(tae);
+      const hasKnownTae = taePct != null && Number.isFinite(taePct) && taePct >= 0;
+      return {
+        amountBase,
+        taePct: hasKnownTae ? taePct : null,
+      };
+    })
+    .filter((row) => row.amountBase > 0),
+);
+
 const unbackedDebtToAssetsValue = computed(() =>
   assetsValue.value > 0 ? unbackedDebtValue.value / assetsValue.value : null,
+);
+
+const unbackedDebtToLiabilitiesValue = computed(() =>
+  liabilitiesValue.value > 0 ? unbackedDebtValue.value / liabilitiesValue.value : null,
 );
 
 const topAssetShareValue = computed(() => {
@@ -195,6 +240,49 @@ const diversificationIndexValue = computed(() => {
   return clamp((maxHhi - hhi) / (maxHhi - minHhi), 0, 1);
 });
 
+const topLiabilityShareValue = computed(() => {
+  if (liabilitiesValue.value <= 0) return null;
+  const topLiability = debtRows.value.map((row) => row.amountBase).sort((a, b) => b - a)[0] ?? 0;
+  return topLiability / liabilitiesValue.value;
+});
+
+const liabilityDebtWithKnownTaeValue = computed(() =>
+  debtRows.value.reduce((acc, row) => (row.taePct != null ? acc + row.amountBase : acc), 0),
+);
+
+const liabilityTaeCoverageValue = computed(() =>
+  liabilitiesValue.value > 0 ? liabilityDebtWithKnownTaeValue.value / liabilitiesValue.value : null,
+);
+
+const maxLiabilityTaePctValue = computed(() => {
+  const taes = debtRows.value
+    .map((row) => row.taePct)
+    .filter((value): value is number => value != null && Number.isFinite(value));
+  if (!taes.length) return null;
+  return Math.max(...taes);
+});
+
+const weightedLiabilityTaePctValue = computed(() => {
+  const rows = debtRows.value.filter((row) => row.taePct != null);
+  const denominator = rows.reduce((acc, row) => acc + row.amountBase, 0);
+  if (denominator <= 0) return null;
+  const numerator = rows.reduce((acc, row) => acc + row.amountBase * (row.taePct ?? 0), 0);
+  return numerator / denominator;
+});
+
+const highInterestDebtThresholdPct = 8;
+const highInterestDebtValue = computed(() =>
+  debtRows.value.reduce(
+    (acc, row) =>
+      row.taePct != null && row.taePct >= highInterestDebtThresholdPct ? acc + row.amountBase : acc,
+    0,
+  ),
+);
+
+const highInterestDebtShareValue = computed(() =>
+  liabilitiesValue.value > 0 ? highInterestDebtValue.value / liabilitiesValue.value : null,
+);
+
 const illiquidScoreValue = computed(() =>
   linearScoreDecreasing(illiquidAssetsShareValue.value, 0.25, 0.8),
 );
@@ -209,24 +297,66 @@ const diversificationScoreValue = computed(() =>
   linearScoreIncreasing(diversificationIndexValue.value, 0.2, 0.8),
 );
 
-const supportScoreValue = computed(() =>
+const phase4SupportScoreValue = computed(() =>
   weightedScore([
     { score: unbackedDebtScoreValue.value, weight: 0.5 },
     { score: illiquidScoreValue.value, weight: 0.5 },
   ]),
 );
 
-const riskDistributionScoreValue = computed(() =>
+const phase4RiskDistributionScoreValue = computed(() =>
   weightedScore([
     { score: concentrationScoreValue.value, weight: 0.5 },
     { score: diversificationScoreValue.value, weight: 0.5 },
   ]),
 );
 
-const globalScoreValue = computed(() =>
+const phase4GlobalScoreValue = computed(() =>
   weightedScore([
-    { score: supportScoreValue.value, weight: 0.5 },
-    { score: riskDistributionScoreValue.value, weight: 0.5 },
+    { score: phase4SupportScoreValue.value, weight: 0.5 },
+    { score: phase4RiskDistributionScoreValue.value, weight: 0.5 },
+  ]),
+);
+
+const debtMaxTaeScoreValue = computed(() =>
+  linearScoreDecreasing(maxLiabilityTaePctValue.value, 4, 30),
+);
+const debtWeightedTaeScoreValue = computed(() =>
+  linearScoreDecreasing(weightedLiabilityTaePctValue.value, 3, 18),
+);
+const debtTaeCoverageScoreValue = computed(() =>
+  linearScoreIncreasing(liabilityTaeCoverageValue.value, 0.5, 1),
+);
+const debtUnbackedScoreValue = computed(() =>
+  linearScoreDecreasing(unbackedDebtToLiabilitiesValue.value, 0.1, 0.7),
+);
+const debtConcentrationScoreValue = computed(() =>
+  linearScoreDecreasing(topLiabilityShareValue.value, 0.35, 0.85),
+);
+const debtHighInterestShareScoreValue = computed(() =>
+  linearScoreDecreasing(highInterestDebtShareValue.value, 0.05, 0.6),
+);
+
+const phase1DebtCostScoreValue = computed(() =>
+  weightedScore([
+    { score: debtMaxTaeScoreValue.value, weight: 0.4 },
+    { score: debtWeightedTaeScoreValue.value, weight: 0.4 },
+    { score: debtTaeCoverageScoreValue.value, weight: 0.2 },
+  ]),
+);
+
+const phase1DebtRiskScoreValue = computed(() =>
+  weightedScore([
+    { score: debtUnbackedScoreValue.value, weight: 0.4 },
+    { score: debtConcentrationScoreValue.value, weight: 0.3 },
+    { score: debtHighInterestShareScoreValue.value, weight: 0.3 },
+  ]),
+);
+
+const phase1GlobalScoreValue = computed(() =>
+  weightedScore([
+    { score: phase1DebtCostScoreValue.value, weight: 0.5 },
+    { score: phase1DebtRiskScoreValue.value, weight: 0.5 },
   ]),
 );
 
@@ -237,21 +367,34 @@ function toneFromScore(score: number): ScoreTone {
   return 'risk';
 }
 
+const globalScoreValue = computed(() => {
+  if (isDebtPhase.value) return phase1GlobalScoreValue.value;
+  if (isNetWorthHealthPhase.value) return phase4GlobalScoreValue.value;
+  return 0;
+});
+
 const globalToneValue = computed(() => toneFromScore(globalScoreValue.value));
+const globalBadgeStyleValue = computed(() => scoreBadgeStyle(globalScoreValue.value));
 
 const globalLabelValue = computed(() => {
   const tone = globalToneValue.value;
+  if (isDebtPhase.value) {
+    if (tone === 'solid') return 'Deuda saneada';
+    if (tone === 'medium') return 'Deuda controlada';
+    if (tone === 'watch') return 'Deuda en vigilancia';
+    return 'Deuda critica';
+  }
   if (tone === 'solid') return 'Salud patrimonial solida';
   if (tone === 'medium') return 'Salud patrimonial equilibrada';
   if (tone === 'watch') return 'Salud patrimonial mejorable';
   return 'Salud patrimonial vulnerable';
 });
 
-const scoreCards = computed<ScoreCard[]>(() => [
+const phase4ScoreCards = computed<ScoreCard[]>(() => [
   {
     id: 'support',
     title: 'Respaldo patrimonial',
-    score: supportScoreValue.value,
+    score: phase4SupportScoreValue.value,
     description: 'Calidad de respaldo del patrimonio frente a iliquidez y deuda no respaldada.',
     kpis: [
       {
@@ -273,7 +416,7 @@ const scoreCards = computed<ScoreCard[]>(() => [
   {
     id: 'distribution',
     title: 'Distribucion del riesgo',
-    score: riskDistributionScoreValue.value,
+    score: phase4RiskDistributionScoreValue.value,
     description: 'Dependencia de un unico bloque frente a reparto patrimonial equilibrado.',
     kpis: [
       {
@@ -294,8 +437,141 @@ const scoreCards = computed<ScoreCard[]>(() => [
   },
 ]);
 
+const phase1ScoreCards = computed<ScoreCard[]>(() => [
+  {
+    id: 'debt-cost',
+    title: 'Coste y visibilidad de deuda',
+    score: phase1DebtCostScoreValue.value,
+    description:
+      'Coste financiero de los pasivos y calidad del dato de TAE para priorizar amortizacion.',
+    kpis: [
+      {
+        id: 'max-liability-tae',
+        label: 'TAE maxima de pasivos',
+        valueText: formatPctFromPercentValue(maxLiabilityTaePctValue.value, 1),
+        score: debtMaxTaeScoreValue.value,
+        hint: 'Peor pasivo por coste (inverso)',
+      },
+      {
+        id: 'weighted-liability-tae',
+        label: 'TAE media ponderada',
+        valueText: formatPctFromPercentValue(weightedLiabilityTaePctValue.value, 1),
+        score: debtWeightedTaeScoreValue.value,
+        hint: 'Coste medio ponderado por importe (inverso)',
+      },
+      {
+        id: 'liability-tae-coverage',
+        label: 'Cobertura de TAE informada',
+        valueText: formatPct(liabilityTaeCoverageValue.value, 0),
+        score: debtTaeCoverageScoreValue.value,
+        hint: 'Importe de pasivos con TAE registrada',
+      },
+    ],
+  },
+  {
+    id: 'debt-structure',
+    title: 'Riesgo estructural de deuda',
+    score: phase1DebtRiskScoreValue.value,
+    description:
+      'Respaldo, concentracion y exposicion a deuda cara para ordenar el plan de reduccion.',
+    kpis: [
+      {
+        id: 'unbacked-debt-liabilities',
+        label: '% deuda sin respaldo / pasivos',
+        valueText: formatPct(unbackedDebtToLiabilitiesValue.value, 0),
+        score: debtUnbackedScoreValue.value,
+        hint: 'Pasivo sin activo asociado (inverso)',
+      },
+      {
+        id: 'top-liability-share',
+        label: 'Concentracion top pasivo',
+        valueText: formatPct(topLiabilityShareValue.value, 0),
+        score: debtConcentrationScoreValue.value,
+        hint: 'Peso del mayor pasivo sobre el total (inverso)',
+      },
+      {
+        id: 'high-interest-debt-share',
+        label: `% deuda con TAE >= ${highInterestDebtThresholdPct}%`,
+        valueText: formatPct(highInterestDebtShareValue.value, 0),
+        score: debtHighInterestShareScoreValue.value,
+        hint: 'Exposicion a deuda cara (inverso)',
+      },
+    ],
+  },
+]);
+
+const scoreCards = computed<ScoreCard[]>(() => {
+  if (isDebtPhase.value) return phase1ScoreCards.value;
+  if (isNetWorthHealthPhase.value) return phase4ScoreCards.value;
+  return [];
+});
+
+const summaryCards = computed<SummaryCard[]>(() => {
+  if (isDebtPhase.value) {
+    return [
+      {
+        id: 'liabilities-total',
+        label: 'Pasivos totales',
+        valueText: formatNumber(liabilitiesValue.value, 2),
+      },
+      {
+        id: 'unbacked-debt',
+        label: 'Deuda sin respaldo',
+        valueText: formatNumber(unbackedDebtValue.value, 2),
+      },
+      {
+        id: 'high-interest-debt',
+        label: `Deuda TAE >= ${highInterestDebtThresholdPct}%`,
+        valueText: formatNumber(highInterestDebtValue.value, 2),
+      },
+      {
+        id: 'max-tae',
+        label: 'TAE maxima',
+        valueText: formatPctFromPercentValue(maxLiabilityTaePctValue.value, 1),
+      },
+    ];
+  }
+
+  if (isNetWorthHealthPhase.value) {
+    return [
+      {
+        id: 'net-worth',
+        label: 'Patrimonio neto',
+        valueText: formatNumber(netWorthValue.value, 2),
+      },
+      {
+        id: 'assets-total',
+        label: 'Activos totales',
+        valueText: formatNumber(assetsValue.value, 2),
+      },
+      {
+        id: 'liabilities-total',
+        label: 'Pasivos totales',
+        valueText: formatNumber(liabilitiesValue.value, 2),
+      },
+      {
+        id: 'unbacked-debt',
+        label: 'Deuda sin respaldo',
+        valueText: formatNumber(unbackedDebtValue.value, 2),
+      },
+    ];
+  }
+
+  return [];
+});
+
+const phaseDiagnosticCopy = computed(() => {
+  if (isDebtPhase.value) {
+    return 'Diagnostico de deuda: coste, respaldo y concentracion para priorizar amortizacion.';
+  }
+  if (isNetWorthHealthPhase.value) {
+    return 'Diagnostico de salud patrimonial: respaldo patrimonial y distribucion del riesgo.';
+  }
+  return phase.value?.objective ?? '';
+});
+
 function maybeLoadNetWorthContext() {
-  if (!isNetWorthHealthPhase.value) return;
+  if (!hasDiagnosticPhase.value) return;
   void store.fetchSettings();
   void store.refreshAll();
 }
@@ -308,7 +584,7 @@ onMounted(() => {
   maybeLoadNetWorthContext();
 });
 
-watch(isNetWorthHealthPhase, () => {
+watch(hasDiagnosticPhase, () => {
   maybeLoadNetWorthContext();
 });
 </script>
@@ -332,10 +608,12 @@ watch(isNetWorthHealthPhase, () => {
       </div>
 
       <template v-if="phase">
-        <p class="ui-pro-kicker">Fase {{ phase.id }}</p>
-        <h1 class="h1 ui-guide-phase-title">{{ phase.title }}</h1>
+        <h1 class="h1 ui-guide-phase-title ui-guide-phase-title-inline">
+          <span class="ui-pro-kicker ui-guide-phase-title-inline-kicker">Fase {{ phase.id }}</span>
+          <span class="ui-pro-kicker ui-guide-phase-title-inline-name">{{ phase.title }}</span>
+        </h1>
         <p class="subtle ui-guide-phase-copy">
-          Diagnostico de salud patrimonial: respaldo patrimonial y distribucion del riesgo.
+          {{ phaseDiagnosticCopy }}
         </p>
       </template>
 
@@ -348,7 +626,7 @@ watch(isNetWorthHealthPhase, () => {
       <p class="subtle">La fase seleccionada no existe en la guia actual.</p>
     </section>
 
-    <section v-else-if="!isNetWorthHealthPhase" class="card ui-pro-panel">
+    <section v-else-if="!hasDiagnosticPhase" class="card ui-pro-panel">
       <h2 class="h2">Detalle en construccion</h2>
       <p class="subtle">
         Esta fase ya tiene su contexto funcional, pero el diagnostico detallado se publicara en
@@ -363,26 +641,22 @@ watch(isNetWorthHealthPhase, () => {
 
     <section v-else class="card ui-pro-panel ui-guide-score-panel">
       <div class="ui-guide-summary-grid">
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Patrimonio neto</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(netWorthValue, 2) }}</div>
-        </article>
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Activos totales</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(assetsValue, 2) }}</div>
-        </article>
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Pasivos totales</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(liabilitiesValue, 2) }}</div>
-        </article>
-        <article class="ui-guide-summary-card">
-          <div class="ui-guide-summary-label">Deuda sin respaldo</div>
-          <div class="ui-guide-summary-value">{{ formatNumber(unbackedDebtValue, 2) }}</div>
+        <article
+          v-for="summaryCard in summaryCards"
+          :key="summaryCard.id"
+          class="ui-guide-summary-card"
+        >
+          <div class="ui-guide-summary-label">{{ summaryCard.label }}</div>
+          <div class="ui-guide-summary-value">{{ summaryCard.valueText }}</div>
         </article>
       </div>
 
       <div class="ui-guide-score-top">
-        <div class="ui-guide-health-score-badge" :class="`ui-guide-health-${globalToneValue}`">
+        <div
+          class="ui-guide-health-score-badge"
+          :class="`ui-guide-health-${globalToneValue}`"
+          :style="globalBadgeStyleValue"
+        >
           <span class="ui-guide-health-score-text">{{ globalLabelValue }}</span>
           <strong class="ui-guide-health-score-value"
             >{{ formatNumber(globalScoreValue, 0) }}/100</strong
@@ -486,6 +760,24 @@ watch(isNetWorthHealthPhase, () => {
 
 .ui-guide-phase-title {
   margin-bottom: 2px;
+}
+
+.ui-guide-phase-title-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 2px;
+}
+
+.ui-guide-phase-title-inline-kicker {
+  margin: 0;
+  font-size: 13px;
+}
+
+.ui-guide-phase-title-inline-name {
+  margin: 0;
+  font-size: 13px;
 }
 
 .ui-guide-phase-copy {

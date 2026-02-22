@@ -68,8 +68,11 @@ Reference:
 - `docs/roadmap/roadmap-milestone-08-data-input-module.md`
 - `docs/roadmap/release-summary-milestone-08-data-input-module.md`
 
-### Milestone 09
-Phase 1: Debt (`Fase 1: Deuda`) - diagnostic score pending definition.
+### Milestone 09 (Completed with caveat)
+Phase 1: Debt (`Fase 1: Deuda`) - diagnostic score defined and delivered in SaaS frontend.
+
+Caveat:
+1. Pending parity work: full transfer of Milestone 09 phase-detail UX/scoring to `core` frontend.
 
 Objective:
 1. Eliminate bad debt with high interest and no asset backing.
@@ -84,6 +87,9 @@ KPIs:
 1. Unbacked debt (`Deuda sin respaldo`)
 2. Max liability APR/TAE
 3. Related debt-risk indicators
+
+Reference:
+- `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
 
 ### Milestone 10
 Budget dashboard (`Dashboard Presupuesto`).
