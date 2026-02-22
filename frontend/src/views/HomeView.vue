@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { getActiveGuidePhase, guidePhases, type GuidePhase } from '@/domains/guide/phases';
+import { gradeFromScore, scoreColor } from '@/domains/guide/scoreVisuals';
 import { useNetWorthStore } from '@/stores/netWorth';
 
 const phases = guidePhases;
@@ -53,12 +54,6 @@ function weightedScore(items: { score: number; weight: number }[]): number {
   if (totalWeight <= 0) return 0;
   const sum = items.reduce((acc, item) => acc + item.score * item.weight, 0);
   return clamp(sum / totalWeight, 0, 100);
-}
-
-function scoreColor(score: number): string {
-  const normalized = clamp(score, 0, 100);
-  const hue = (normalized / 100) * 120;
-  return `hsl(${hue} 82% 52%)`;
 }
 
 const summaryExtended = computed(() => store.summary as SummaryExtended | null);
@@ -173,14 +168,6 @@ function phaseDonutStyle(phase: GuidePhase): Record<string, string> {
     '--phase-progress': `${progress}%`,
     '--phase-progress-color': scoreColor(progress),
   };
-}
-
-function gradeFromScore(score: number): string {
-  if (score >= 80) return 'A';
-  if (score >= 60) return 'B';
-  if (score >= 40) return 'C';
-  if (score >= 20) return 'D';
-  return 'E';
 }
 
 function phaseGradeLabel(phase: GuidePhase): string {

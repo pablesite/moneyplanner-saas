@@ -19,17 +19,22 @@
 - `Coste y visibilidad de deuda`:
   - `TAE maxima`
   - `TAE media ponderada`
-  - `Cobertura de TAE informada`
+  - `% cuota / ingresos` (using manual liability monthly payment in current delivery)
 - `Riesgo estructural de deuda`:
   - `% deuda sin respaldo / pasivos`
   - `Concentracion top pasivo`
   - `% deuda con TAE >= 8%`
 
-3. Guide detail generalization:
+3. Liability input improvement (backend + frontend):
+- New optional manual field for liabilities: `monthly_payment_amount` (`cuota mensual`).
+- Exposed in core net-worth API and editable from `Introduccion de datos` -> `Pasivos`.
+- Added to support Fase 1 debt-service KPI while automatic amortization-based calculation remains pending.
+
+4. Guide detail generalization:
 - Phase-detail diagnostic panel now supports both Fase 1 and Fase 4.
 - Other phases remain placeholders.
 
-4. Documentation updates:
+5. Documentation updates:
 - `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
 - `docs/roadmap/roadmap.md`
 
@@ -43,6 +48,7 @@
 - Fase 1 and Fase 4 score formulas now coexist in `GuidePhaseDetailView`; extraction to shared scoring utilities is recommended.
 - Home (`Inicio`) phase card for Fase 1 still uses static roadmap progress (not the new diagnostic score).
 - Core frontend parity for Fase 1 detail remains pending.
+- Liability monthly payment is manual for now; automatic calculation requires amortization metadata (term/end date, schedule, rate behavior).
 
 ## Final Status
 - Milestone 09 (SaaS Fase 1 diagnostic in `Guia`): completed.

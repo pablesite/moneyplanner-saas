@@ -21,6 +21,7 @@ type Props = {
     subcategory?: string;
     amount: string;
     annual_interest_tae?: string | null;
+    monthly_payment_amount?: string | null;
     start_date: string;
     notes: string;
     currency: string;
@@ -80,6 +81,7 @@ const form = reactive({
   subcategory: '',
   amount: '',
   annual_interest_tae: '',
+  monthly_payment_amount: '',
   start_date: todayIsoDate(),
   notes: '',
   currency: '',
@@ -115,6 +117,7 @@ const requiresAssetTae = computed(
 const showAnnualInterestInput = computed(
   () => requiresLiabilityTae.value || requiresAssetTae.value,
 );
+const showMonthlyPaymentInput = computed(() => showFinancedAsset.value);
 const subcategoriesForCategory = computed(() => {
   if (!props.subcategories || !form.category) return [];
   return props.subcategories.filter((s) => s.category === form.category);
@@ -205,11 +208,19 @@ const annualInterestError = computed(() => {
   if (!Number.isFinite(n) || n < 0) return 'TAE invalida';
   return '';
 });
+const monthlyPaymentError = computed(() => {
+  if (!showMonthlyPaymentInput.value) return '';
+  const raw = String(form.monthly_payment_amount ?? '').trim();
+  if (!raw) return '';
+  const { error } = sanitizeAmount(raw, maxDecimals.value);
+  return error;
+});
 
 async function submit() {
   if (!form.name || !form.category || !form.currency || !form.amount || !form.start_date) return;
   if (props.subcategories && !form.subcategory) return;
   if (annualInterestError.value) return;
+  if (monthlyPaymentError.value) return;
 
   const { value: normalizedAmount, error } = sanitizeAmount(form.amount, maxDecimals.value);
   if (!normalizedAmount || error) return;
@@ -223,6 +234,10 @@ async function submit() {
     annual_interest_tae: showAnnualInterestInput.value
       ? String(form.annual_interest_tae).trim().replace(',', '.')
       : undefined,
+    monthly_payment_amount:
+      showMonthlyPaymentInput.value && String(form.monthly_payment_amount ?? '').trim()
+        ? sanitizeAmount(form.monthly_payment_amount, maxDecimals.value).value
+        : undefined,
     notes: form.notes,
     currency: form.currency,
     tracking_mode: form.tracking_mode,
@@ -241,6 +256,7 @@ async function submit() {
   form.subcategory = '';
   form.amount = '';
   form.annual_interest_tae = '';
+  form.monthly_payment_amount = '';
   form.start_date = todayIsoDate();
   form.notes = '';
   form.currency = '';
@@ -257,6 +273,7 @@ watch(
     form.subcategory = initial.subcategory ?? '';
     form.amount = initial.amount ?? '';
     form.annual_interest_tae = initial.annual_interest_tae ?? '';
+    form.monthly_payment_amount = initial.monthly_payment_amount ?? '';
     form.start_date = initial.start_date ?? todayIsoDate();
     form.notes = initial.notes ?? '';
     form.currency = initial.currency ?? '';
@@ -317,12 +334,23 @@ watch(
       <div v-if="annualInterestError" class="ui-form-help ui-form-help-error">
         {{ annualInterestError }}
       </div>
+      <div v-if="monthlyPaymentError" class="ui-form-help ui-form-help-error">
+        {{ monthlyPaymentError }}
+      </div>
 
       <input
         v-if="showAnnualInterestInput"
         v-model="form.annual_interest_tae"
         inputmode="decimal"
         placeholder="TAE anual (%)"
+        class="input"
+      />
+
+      <input
+        v-if="showMonthlyPaymentInput"
+        v-model="form.monthly_payment_amount"
+        inputmode="decimal"
+        placeholder="Cuota mensual (opcional)"
         class="input"
       />
 
@@ -359,7 +387,7 @@ watch(
         </button>
         <button
           class="btn btn-primary ui-form-action-btn"
-          :disabled="!!amountError || !!annualInterestError"
+          :disabled="!!amountError || !!annualInterestError || !!monthlyPaymentError"
           @click="submit"
         >
           {{ isEdit ? 'Guardar' : 'Crear' }}

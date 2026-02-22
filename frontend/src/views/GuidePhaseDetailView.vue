@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { useAnnualIncomeStore } from '@/domains/data-input/annualIncomeStore';
 import { findGuidePhaseById, guidePhases } from '@/domains/guide/phases';
+import { gradeFromScore, scoreBadgeStyle, scoreColor } from '@/domains/guide/scoreVisuals';
 import { useNetWorthStore } from '@/stores/netWorth';
 
 type ScoreTone = 'solid' | 'medium' | 'watch' | 'risk';
@@ -15,7 +17,7 @@ type ScoreKpi = {
   id: string;
   label: string;
   valueText: string;
-  score: number;
+  score: number | null;
   hint: string;
 };
 
@@ -35,6 +37,7 @@ type SummaryCard = {
 
 const route = useRoute();
 const store = useNetWorthStore();
+const annualIncomeStore = useAnnualIncomeStore('saas');
 
 const phaseId = computed(() => {
   const raw = String(route.params.phaseId ?? '');
@@ -102,36 +105,12 @@ function weightedScore(items: { score: number; weight: number }[]): number {
   return clamp(sum / totalWeight, 0, 100);
 }
 
-function scoreColor(score: number): string {
-  const normalized = clamp(score, 0, 100);
-  const hue = (normalized / 100) * 120;
-  return `hsl(${hue} 82% 52%)`;
-}
-
 function scoreFillStyle(score: number): Record<string, string> {
   const normalized = clamp(score, 0, 100);
   return {
     width: `${normalized}%`,
     backgroundColor: scoreColor(score),
   };
-}
-
-function scoreBadgeStyle(score: number): Record<string, string> {
-  const normalized = clamp(score, 0, 100);
-  const hue = (normalized / 100) * 120;
-  return {
-    background: `hsl(${hue} 82% 52% / 0.16)`,
-    color: `hsl(${hue} 82% 66%)`,
-    borderColor: `hsl(${hue} 82% 66% / 0.26)`,
-  };
-}
-
-function gradeFromScore(score: number): string {
-  if (score >= 80) return 'A';
-  if (score >= 60) return 'B';
-  if (score >= 40) return 'C';
-  if (score >= 20) return 'D';
-  return 'E';
 }
 
 function gradeStyle(score: number): Record<string, string> {
@@ -246,14 +225,6 @@ const topLiabilityShareValue = computed(() => {
   return topLiability / liabilitiesValue.value;
 });
 
-const liabilityDebtWithKnownTaeValue = computed(() =>
-  debtRows.value.reduce((acc, row) => (row.taePct != null ? acc + row.amountBase : acc), 0),
-);
-
-const liabilityTaeCoverageValue = computed(() =>
-  liabilitiesValue.value > 0 ? liabilityDebtWithKnownTaeValue.value / liabilitiesValue.value : null,
-);
-
 const maxLiabilityTaePctValue = computed(() => {
   const taes = debtRows.value
     .map((row) => row.taePct)
@@ -268,6 +239,37 @@ const weightedLiabilityTaePctValue = computed(() => {
   if (denominator <= 0) return null;
   const numerator = rows.reduce((acc, row) => acc + row.amountBase * (row.taePct ?? 0), 0);
   return numerator / denominator;
+});
+
+const liabilityTaeDispersionPctValue = computed(() => {
+  if (maxLiabilityTaePctValue.value == null || weightedLiabilityTaePctValue.value == null)
+    return null;
+  return Math.max(0, maxLiabilityTaePctValue.value - weightedLiabilityTaePctValue.value);
+});
+
+const liabilitiesWithAmountCountValue = computed(
+  () => debtRows.value.filter((row) => row.amountBase > 0).length,
+);
+
+const totalMonthlyDebtPaymentValue = computed(() =>
+  activeLiabilities.value.reduce((acc, liability) => {
+    const payment = Math.max(0, toNumber(liability.monthly_payment_amount));
+    return acc + payment;
+  }, 0),
+);
+
+const monthlyIncomeValue = computed(() => {
+  const annual = Number(annualIncomeStore.totalAnnual.value ?? 0);
+  if (!Number.isFinite(annual) || annual <= 0) return null;
+  return annual / 12;
+});
+
+const debtPaymentToIncomeValue = computed(() => {
+  if (liabilitiesValue.value <= 0) return 0;
+  if (monthlyIncomeValue.value == null || monthlyIncomeValue.value <= 0) return null;
+  if (liabilitiesWithAmountCountValue.value > 0 && totalMonthlyDebtPaymentValue.value <= 0)
+    return null;
+  return totalMonthlyDebtPaymentValue.value / monthlyIncomeValue.value;
 });
 
 const highInterestDebtThresholdPct = 8;
@@ -319,13 +321,13 @@ const phase4GlobalScoreValue = computed(() =>
 );
 
 const debtMaxTaeScoreValue = computed(() =>
-  linearScoreDecreasing(maxLiabilityTaePctValue.value, 4, 30),
+  linearScoreDecreasing(maxLiabilityTaePctValue.value, 0.5, 10),
 );
 const debtWeightedTaeScoreValue = computed(() =>
-  linearScoreDecreasing(weightedLiabilityTaePctValue.value, 3, 18),
+  linearScoreDecreasing(weightedLiabilityTaePctValue.value, 0.5, 10),
 );
-const debtTaeCoverageScoreValue = computed(() =>
-  linearScoreIncreasing(liabilityTaeCoverageValue.value, 0.5, 1),
+const debtPaymentToIncomeScoreValue = computed(() =>
+  linearScoreDecreasing(debtPaymentToIncomeValue.value, 0.1, 0.5),
 );
 const debtUnbackedScoreValue = computed(() =>
   linearScoreDecreasing(unbackedDebtToLiabilitiesValue.value, 0.1, 0.7),
@@ -339,9 +341,8 @@ const debtHighInterestShareScoreValue = computed(() =>
 
 const phase1DebtCostScoreValue = computed(() =>
   weightedScore([
-    { score: debtMaxTaeScoreValue.value, weight: 0.4 },
-    { score: debtWeightedTaeScoreValue.value, weight: 0.4 },
-    { score: debtTaeCoverageScoreValue.value, weight: 0.2 },
+    { score: debtMaxTaeScoreValue.value, weight: 0.5 },
+    { score: debtWeightedTaeScoreValue.value, weight: 0.5 },
   ]),
 );
 
@@ -460,11 +461,11 @@ const phase1ScoreCards = computed<ScoreCard[]>(() => [
         hint: 'Coste medio ponderado por importe (inverso)',
       },
       {
-        id: 'liability-tae-coverage',
-        label: 'Cobertura de TAE informada',
-        valueText: formatPct(liabilityTaeCoverageValue.value, 0),
-        score: debtTaeCoverageScoreValue.value,
-        hint: 'Importe de pasivos con TAE registrada',
+        id: 'debt-payment-income',
+        label: '% cuota / ingresos',
+        valueText: formatPct(debtPaymentToIncomeValue.value, 0),
+        score: debtPaymentToIncomeScoreValue.value,
+        hint: 'Suma de cuotas mensuales manuales / ingreso mensual (inverso)',
       },
     ],
   },
@@ -525,9 +526,9 @@ const summaryCards = computed<SummaryCard[]>(() => {
         valueText: formatNumber(highInterestDebtValue.value, 2),
       },
       {
-        id: 'max-tae',
-        label: 'TAE maxima',
-        valueText: formatPctFromPercentValue(maxLiabilityTaePctValue.value, 1),
+        id: 'tae-dispersion',
+        label: 'Dispersion de TAE',
+        valueText: formatPctFromPercentValue(liabilityTaeDispersionPctValue.value, 1),
       },
     ];
   }
@@ -574,6 +575,9 @@ function maybeLoadNetWorthContext() {
   if (!hasDiagnosticPhase.value) return;
   void store.fetchSettings();
   void store.refreshAll();
+  if (isDebtPhase.value) {
+    void annualIncomeStore.loadAll();
+  }
 }
 
 function phaseDetailTo(phaseIdParam: number): string {
@@ -692,7 +696,7 @@ watch(hasDiagnosticPhase, () => {
                 <span>{{ kpi.label }}</span>
                 <strong>{{ kpi.valueText }}</strong>
               </div>
-              <div class="ui-guide-meter-row ui-guide-meter-row-kpi">
+              <div v-if="kpi.score != null" class="ui-guide-meter-row ui-guide-meter-row-kpi">
                 <span class="ui-guide-grade" :style="gradeStyle(kpi.score)">{{
                   gradeFromScore(kpi.score)
                 }}</span>
@@ -700,6 +704,7 @@ watch(hasDiagnosticPhase, () => {
                   <span class="ui-guide-score-kpi-fill" :style="scoreFillStyle(kpi.score)"></span>
                 </div>
               </div>
+              <div v-else class="ui-guide-score-kpi-pending">Indicador informativo (pendiente)</div>
               <div class="ui-guide-score-kpi-hint">{{ kpi.hint }}</div>
             </div>
           </div>
@@ -980,6 +985,12 @@ watch(hasDiagnosticPhase, () => {
   margin-top: 4px;
   font-size: 12px;
   color: var(--muted);
+}
+
+.ui-guide-score-kpi-pending {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .ui-guide-summary-grid {

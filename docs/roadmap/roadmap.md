@@ -87,6 +87,7 @@ KPIs:
 1. Unbacked debt (`Deuda sin respaldo`)
 2. Max liability APR/TAE
 3. Related debt-risk indicators
+4. Debt service ratio (`% cuota/ingresos`) based on manual monthly payment per liability (temporary).
 
 Reference:
 - `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
@@ -164,6 +165,8 @@ Scope updates:
 2. Expenses (`Gastos`) - (New) one-off entries and monthly check-ins.
 3. Assets (`Activos`) - (New) depreciable furniture/equipment metadata and financial asset details (risk, volatility, yield, fees).
 4. Liabilities (`Pasivos`).
+5. Pending debt upgrade: amortization metadata to calculate liability monthly payment (`cuota mensual`)
+   automatically (term/end date, schedule, and rate behavior).
 
 ### Milestone 15
 Investment portfolio dashboard (`Dashboard Cartera Inversion`).

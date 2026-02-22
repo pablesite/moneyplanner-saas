@@ -12,8 +12,9 @@ Define and deliver the first debt diagnostic score in `Guia` for Fase 1 (`Deuda`
 ## Out Of Scope
 1. Backend-specific guide endpoints.
 2. Debt payoff recommendations / amortization strategy engine.
-3. Home (`Inicio`) phase-card donut sync for Fase 1 (follow-up if desired).
-4. Core frontend parity (SaaS-first delivery).
+3. Automatic liability monthly payment calculation (`cuota mensual`) from amortization metadata.
+4. Home (`Inicio`) phase-card donut sync for Fase 1 (follow-up if desired).
+5. Core frontend parity (SaaS-first delivery).
 
 ## Functional Requirements
 1. Fase 1 detail (`/guia/fases/1`) must render a live diagnostic panel instead of placeholder content.
@@ -28,12 +29,13 @@ All mappings use clamped linear formulas to avoid hard-step jumps.
 ### Score 1: Coste y visibilidad de deuda (`0-100`)
 1. `TAE maxima de pasivos` (inverse score)
 2. `TAE media ponderada` por importe de pasivo (inverse score)
-3. `Cobertura de TAE informada` (% del pasivo con TAE registrada, direct score)
+3. `% cuota/ingresos` (debt service ratio, inverse score) using manual monthly payment per liability
+   in current delivery
 
 Internal weighting:
 1. `0.40 * TAE maxima`
 2. `0.40 * TAE media ponderada`
-3. `0.20 * Cobertura TAE`
+3. `0.20 * % cuota/ingresos`
 
 ### Score 2: Riesgo estructural de deuda (`0-100`)
 1. `% deuda sin respaldo / pasivos` (inverse score)
@@ -52,8 +54,9 @@ Internal weighting:
 ## UX Notes
 1. Reuse the Fase 4 phase-detail visual language to keep cross-phase consistency.
 2. Keep summary cards debt-centric (pasivos, deuda sin respaldo, deuda cara, TAE maxima).
-3. Keep color semantics aligned with grade letters and bar colors.
-4. Show a debt-state badge (`Deuda saneada/controlada/en vigilancia/critica`) using score-based coloring.
+3. `Dispersion de TAE` is shown as informative KPI (summary card) and does not affect score.
+4. Keep color semantics aligned with grade letters and bar colors.
+5. Show a debt-state badge (`Deuda saneada/controlada/en vigilancia/critica`) using score-based coloring.
 
 ## Acceptance Criteria
 1. Fase 1 opens a diagnostic panel with global score and score cards.
@@ -71,9 +74,11 @@ Internal weighting:
 1. Risk: score logic grows inside `GuidePhaseDetailView`.
    - Mitigation: extract per-phase scoring utils in a follow-up (`frontend/src/domains/guide/scoring/`).
 2. Risk: incomplete TAE data distorts debt-cost score.
-   - Mitigation: explicit `Cobertura de TAE informada` KPI included in score and UI.
+   - Mitigation: required TAE for key debt categories and explicit debt-cost KPIs (`TAE maxima`, `TAE media ponderada`).
 3. Risk: category-level liability charts hide item-level debt concentration.
    - Mitigation: Fase 1 concentration uses individual liabilities (`store.liabilities`) instead of chart aggregation.
+4. Risk: manual `cuota mensual` can be stale/inaccurate.
+   - Mitigation: roadmap follow-up to model amortization metadata and compute quota automatically.
 
 ## Deliverables
 1. Fase 1 debt diagnostic in `GuidePhaseDetailView`.
