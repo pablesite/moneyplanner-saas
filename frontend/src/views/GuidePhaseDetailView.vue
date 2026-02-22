@@ -330,10 +330,10 @@ const debtPaymentToIncomeScoreValue = computed(() =>
   linearScoreDecreasing(debtPaymentToIncomeValue.value, 0.1, 0.5),
 );
 const debtUnbackedScoreValue = computed(() =>
-  linearScoreDecreasing(unbackedDebtToLiabilitiesValue.value, 0.1, 0.7),
+  linearScoreDecreasing(unbackedDebtToLiabilitiesValue.value, 0.01, 0.5),
 );
 const debtConcentrationScoreValue = computed(() =>
-  linearScoreDecreasing(topLiabilityShareValue.value, 0.35, 0.85),
+  linearScoreDecreasing(topLiabilityShareValue.value, 0.25, 0.95),
 );
 const debtHighInterestShareScoreValue = computed(() =>
   linearScoreDecreasing(highInterestDebtShareValue.value, 0.05, 0.6),
@@ -664,7 +664,7 @@ watch(hasDiagnosticPhase, () => {
         >
           <span class="ui-guide-health-score-text">{{ globalLabelValue }}</span>
           <strong class="ui-guide-health-score-value"
-            >{{ formatNumber(globalScoreValue, 0) }}/100</strong
+            >{{ formatNumber(globalScoreValue, 0) }}%</strong
           >
         </div>
       </div>
@@ -686,7 +686,7 @@ watch(hasDiagnosticPhase, () => {
               <span class="ui-guide-score-card-grade" :style="gradeStyle(card.score)">{{
                 gradeFromScore(card.score)
               }}</span>
-              <div class="ui-guide-score-card-value">{{ formatNumber(card.score, 0) }}/100</div>
+              <div class="ui-guide-score-card-value">{{ formatNumber(card.score, 0) }}%</div>
             </div>
           </div>
           <p class="ui-guide-score-card-copy">{{ card.description }}</p>

@@ -24,6 +24,8 @@
   - `% deuda sin respaldo / pasivos`
   - `Concentracion top pasivo`
   - `% deuda con TAE >= 8%`
+- `Dispersion de TAE` moved to informative summary card (does not affect score).
+- Score labels in phase detail display as percentages (`66%`) instead of `/100`.
 
 3. Liability input improvement (backend + frontend):
 - New optional manual field for liabilities: `monthly_payment_amount` (`cuota mensual`).

@@ -37,6 +37,11 @@ Internal weighting:
 2. `0.40 * TAE media ponderada`
 3. `0.20 * % cuota/ingresos`
 
+Current score thresholds:
+1. `TAE maxima`: `<= 0.5%` => 100, `>= 10%` => 0 (linear inverse)
+2. `TAE media ponderada`: `<= 0.5%` => 100, `>= 10%` => 0 (linear inverse)
+3. `% cuota/ingresos`: `<= 10%` => 100, `>= 50%` => 0 (linear inverse)
+
 ### Score 2: Riesgo estructural de deuda (`0-100`)
 1. `% deuda sin respaldo / pasivos` (inverse score)
 2. `Concentracion top pasivo` (inverse score)
@@ -47,6 +52,11 @@ Internal weighting:
 2. `0.30 * concentracion top pasivo`
 3. `0.30 * deuda cara`
 
+Current score thresholds:
+1. `% deuda sin respaldo / pasivos`: `<= 1%` => 100, `>= 50%` => 0 (linear inverse)
+2. `Concentracion top pasivo`: `<= 25%` => 100, `>= 95%` => 0 (linear inverse)
+3. `% deuda con TAE >= 8%`: `<= 5%` => 100, `>= 60%` => 0 (linear inverse)
+
 ### Score global Fase 1 (`0-100`)
 1. `0.50 * Coste y visibilidad`
 2. `0.50 * Riesgo estructural`
@@ -55,8 +65,9 @@ Internal weighting:
 1. Reuse the Fase 4 phase-detail visual language to keep cross-phase consistency.
 2. Keep summary cards debt-centric (pasivos, deuda sin respaldo, deuda cara, TAE maxima).
 3. `Dispersion de TAE` is shown as informative KPI (summary card) and does not affect score.
-4. Keep color semantics aligned with grade letters and bar colors.
-5. Show a debt-state badge (`Deuda saneada/controlada/en vigilancia/critica`) using score-based coloring.
+4. Scores are displayed as percentages (`66%`) instead of `/100` labels in phase detail UI.
+5. Keep color semantics aligned with grade letters and bar colors.
+6. Show a debt-state badge (`Deuda saneada/controlada/en vigilancia/critica`) using score-based coloring.
 
 ## Acceptance Criteria
 1. Fase 1 opens a diagnostic panel with global score and score cards.
