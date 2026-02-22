@@ -92,7 +92,7 @@ KPIs:
 Reference:
 - `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
 
-### Milestone 10
+### Milestone 10 (Completed)
 Budget dashboard (`Dashboard Presupuesto`).
 
 Objective:
@@ -105,6 +105,7 @@ UX direction:
 
 Reference:
 - `docs/roadmap/roadmap-milestone-10-budget-dashboard.md`
+- `docs/roadmap/release-summary-milestone-10-budget-dashboard.md`
 
 ### Milestone 11
 Phase 2: Cash flow (`Fase 2: Flujo de caja`) - diagnostic score pending definition.

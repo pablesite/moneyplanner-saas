@@ -164,3 +164,8 @@ Define and deliver the `Presupuesto` dashboard with a UX style consistent with `
 1. `Presupuesto` dashboard roadmap (this document).
 2. Milestone 10 frontend delivery (planned budget dashboard with sidebar access and planned-data baseline).
 3. Integration-ready placeholders/contracts for executed comparison bars pending accounting module.
+
+## Final Status
+1. Milestone 10 is closed for the planned-budget baseline scope (Core and SaaS frontends).
+2. `Presupuesto` dashboard is available from the sidebar with `Ingresos` / `Gastos` sections and planned-data KPIs/detail.
+3. Executed comparison remains intentionally pending Milestone 14 (`Modulo Contabilidad`) and is represented with explicit placeholders.
