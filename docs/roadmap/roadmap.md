@@ -95,6 +95,17 @@ Reference:
 ### Milestone 10
 Budget dashboard (`Dashboard Presupuesto`).
 
+Objective:
+1. Visualize annual budget plan (`Ingresos` / `Gastos`) and compare against executed evolution.
+
+UX direction:
+1. Same dashboard style and sidebar access pattern as `Patrimonio`.
+2. `Ingresos` section first, then `Gastos`.
+3. Category-level planned detail (from `Introduccion de datos`) plus executed evolution bars (dependent on future accounting module).
+
+Reference:
+- `docs/roadmap/roadmap-milestone-10-budget-dashboard.md`
+
 ### Milestone 11
 Phase 2: Cash flow (`Fase 2: Flujo de caja`) - diagnostic score pending definition.
 

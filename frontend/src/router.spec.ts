@@ -28,6 +28,7 @@ vi.mock('./views/LoginView.vue', () => viewStub('LoginView'));
 vi.mock('./views/HomeView.vue', () => viewStub('HomeView'));
 vi.mock('./views/GuidePhaseDetailView.vue', () => viewStub('GuidePhaseDetailView'));
 vi.mock('./views/DataInputView.vue', () => viewStub('DataInputView'));
+vi.mock('./views/BudgetDashboardView.vue', () => viewStub('BudgetDashboardView'));
 vi.mock('./views/PeopleView.vue', () => viewStub('PeopleView'));
 vi.mock('./views/AuxDataView.vue', () => viewStub('AuxDataView'));
 vi.mock('./views/SettingsFxView.vue', () => viewStub('SettingsFxView'));
@@ -52,6 +53,7 @@ describe('router (saas)', () => {
         routes: expect.arrayContaining([
           expect.objectContaining({ path: '/login' }),
           expect.objectContaining({ path: '/introduccion-datos' }),
+          expect.objectContaining({ path: '/presupuesto' }),
           expect.objectContaining({ path: '/guia/fases/:phaseId' }),
           expect.objectContaining({ path: '/' }),
           expect.objectContaining({ path: '/data' }),

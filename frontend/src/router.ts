@@ -4,6 +4,7 @@ import LoginView from './views/LoginView.vue';
 import HomeView from './views/HomeView.vue';
 import GuidePhaseDetailView from './views/GuidePhaseDetailView.vue';
 import DataInputView from './views/DataInputView.vue';
+import BudgetDashboardView from './views/BudgetDashboardView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AuxDataView from './views/AuxDataView.vue';
 import SettingsFxView from './views/SettingsFxView.vue';
@@ -19,6 +20,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/guia/fases/:phaseId', name: 'guide-phase', component: GuidePhaseDetailView },
   { path: '/introduccion-datos', name: 'data-input', component: DataInputView },
   { path: '/', name: 'networth', component: NetWorthView },
+  { path: '/presupuesto', name: 'budget-dashboard', component: BudgetDashboardView },
   { path: '/data', name: 'aux-data', component: AuxDataView },
   { path: '/data/fx', name: 'settings-fx', component: SettingsFxView },
   { path: '/data/ipc', name: 'settings-ipc', component: SettingsIpcView },

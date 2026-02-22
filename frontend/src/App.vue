@@ -34,6 +34,13 @@ const navItems = computed<NavItem[]>(() => {
       to: '/introduccion-datos',
     },
     { id: 'net-worth', icon: 'PT', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
+    {
+      id: 'budget',
+      icon: 'PR',
+      label: 'Presupuesto',
+      hint: 'Plan anual de ingresos y gastos',
+      to: '/presupuesto',
+    },
   ];
 
   return baseItems;

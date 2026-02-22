@@ -144,6 +144,32 @@ const ownerOptions = computed(() => {
   }
   return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
 });
+
+const sharedOwnershipAllocationsByLabel = computed(() => {
+  const map = new Map<string, { name: string; share: number }[]>();
+  for (const ownership of store.ownerships ?? []) {
+    if (ownership.kind !== 'shared') continue;
+    const label = sharedOwnershipLabel(ownership.splits ?? []);
+    const shares = (ownership.splits ?? [])
+      .map((split) => {
+        const share = Number(String(split.percent ?? '').replace(',', '.'));
+        const name = split.member?.name?.trim() ?? '';
+        if (!name || !Number.isFinite(share) || share <= 0) return null;
+        return { name, share };
+      })
+      .filter((row): row is { name: string; share: number } => row != null);
+    if (shares.length) {
+      map.set(label, shares);
+    }
+  }
+  return map;
+});
+
+const annualOwnerFilterOptions = computed(() =>
+  ownerOptions.value
+    .filter((option) => option.key.startsWith('individual:'))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+);
 const showOwnerField = computed(() => ownerOptions.value.length > 1);
 const annualIncomeOwnerFilter = ref<string>('all');
 const annualExpenseOwnerFilter = ref<string>('all');
@@ -154,22 +180,73 @@ const fiscalYearOptions = computed(() => {
   return Array.from(years).sort((a, b) => b - a);
 });
 
-const filteredAnnualIncomeEntries = computed(() => {
-  const list = annualIncomeEntries.value;
-  if (annualIncomeOwnerFilter.value === 'all') return list;
-  if (annualIncomeOwnerFilter.value === 'unassigned') {
-    return list.filter((entry) => !entry.owner);
+function parseSharedOwnerShares(ownerLabel: string): { name: string; share: number }[] {
+  const text = String(ownerLabel ?? '').trim();
+  if (!text) return [];
+  const match = text.match(/^Compartido\s*\((.*)\)$/i);
+  if (!match?.[1]) return [];
+  return match[1]
+    .split(/\s*\/\s*/)
+    .map((part) => {
+      const piece = part.trim();
+      const parsed = piece.match(/^(.*)\s+(\d+(?:[.,]\d+)?)\s*%?$/);
+      if (!parsed?.[1] || !parsed[2]) return null;
+      const name = parsed[1].trim();
+      const share = Number(parsed[2].replace(',', '.'));
+      if (!name || !Number.isFinite(share) || share <= 0) return null;
+      return { name, share };
+    })
+    .filter((row): row is { name: string; share: number } => row != null);
+}
+
+function allocatedFractionForAnnualOwner(ownerLabel: string, selectedOwner: string): number {
+  if (selectedOwner === 'all') return 1;
+  const text = String(ownerLabel ?? '').trim();
+  if (!text) return 0;
+  if (text.localeCompare(selectedOwner, 'es', { sensitivity: 'base' }) === 0) return 1;
+
+  const sharedFromOwnerships = Array.from(sharedOwnershipAllocationsByLabel.value.entries()).find(
+    ([label]) => label.localeCompare(text, 'es', { sensitivity: 'base' }) === 0,
+  )?.[1];
+  const shared = sharedFromOwnerships ?? parseSharedOwnerShares(text);
+  if (!shared.length) return 0;
+  const totalShare = shared.reduce((sum, row) => sum + row.share, 0);
+  const matchedShare = shared
+    .filter((row) => row.name.localeCompare(selectedOwner, 'es', { sensitivity: 'base' }) === 0)
+    .reduce((sum, row) => sum + row.share, 0);
+  if (!Number.isFinite(matchedShare) || matchedShare <= 0) return 0;
+
+  if (totalShare > 0 && totalShare <= 1.0001) {
+    return matchedShare / totalShare;
   }
-  return list.filter((entry) => entry.owner === annualIncomeOwnerFilter.value);
-});
-const filteredAnnualExpenseEntries = computed(() => {
-  const list = annualExpenseEntries.value;
-  if (annualExpenseOwnerFilter.value === 'all') return list;
-  if (annualExpenseOwnerFilter.value === 'unassigned') {
-    return list.filter((entry) => !entry.owner);
+  if (totalShare > 0 && totalShare <= 100.0001) {
+    return matchedShare / 100;
   }
-  return list.filter((entry) => entry.owner === annualExpenseOwnerFilter.value);
-});
+  return matchedShare / totalShare;
+}
+
+function filterAnnualEntriesByOwner<T extends { owner: string; amountAnnual: number }>(
+  list: T[],
+  selectedOwner: string,
+): T[] {
+  if (selectedOwner === 'all') return list;
+  if (selectedOwner === 'unassigned') {
+    return list.filter((entry) => !String(entry.owner ?? '').trim());
+  }
+  return list
+    .map((entry) => {
+      const fraction = allocatedFractionForAnnualOwner(entry.owner, selectedOwner);
+      return fraction > 0 ? { ...entry, amountAnnual: entry.amountAnnual * fraction } : null;
+    })
+    .filter((entry): entry is T => entry != null && entry.amountAnnual > 0);
+}
+
+const filteredAnnualIncomeEntries = computed(() =>
+  filterAnnualEntriesByOwner(annualIncomeEntries.value, annualIncomeOwnerFilter.value),
+);
+const filteredAnnualExpenseEntries = computed(() =>
+  filterAnnualEntriesByOwner(annualExpenseEntries.value, annualExpenseOwnerFilter.value),
+);
 
 const filteredAnnualIncomeTotal = computed(() =>
   filteredAnnualIncomeEntries.value.reduce((sum, entry) => sum + entry.amountAnnual, 0),
@@ -256,26 +333,22 @@ watch(
   { immediate: true },
 );
 watch(
-  [ownerOptions, annualIncomeEntries],
-  ([options, entries]) => {
+  [annualOwnerFilterOptions, annualIncomeEntries],
+  ([options]) => {
     const filter = annualIncomeOwnerFilter.value;
     if (filter === 'all' || filter === 'unassigned') return;
-    const validFromOptions = options.some((option) => option.value === filter);
-    const validFromEntries = entries.some((entry) => entry.owner === filter);
-    if (!validFromOptions && !validFromEntries) {
+    if (!options.some((option) => option.value === filter)) {
       annualIncomeOwnerFilter.value = 'all';
     }
   },
   { immediate: true },
 );
 watch(
-  [ownerOptions, annualExpenseEntries],
-  ([options, entries]) => {
+  [annualOwnerFilterOptions, annualExpenseEntries],
+  ([options]) => {
     const filter = annualExpenseOwnerFilter.value;
     if (filter === 'all' || filter === 'unassigned') return;
-    const validFromOptions = options.some((option) => option.value === filter);
-    const validFromEntries = entries.some((entry) => entry.owner === filter);
-    if (!validFromOptions && !validFromEntries) {
+    if (!options.some((option) => option.value === filter)) {
       annualExpenseOwnerFilter.value = 'all';
     }
   },
@@ -825,7 +898,10 @@ let dataTransferToastTimer: number | null = null;
 
 const dataTransferUiBusy = computed(
   () =>
-    dataTransferBusy.value || store.loading || annualIncomeLoading.value || annualExpenseLoading.value,
+    dataTransferBusy.value ||
+    store.loading ||
+    annualIncomeLoading.value ||
+    annualExpenseLoading.value,
 );
 
 function clearDataTransferFeedback(): void {
@@ -865,7 +941,9 @@ function normalizeImportedAssetTae(asset: PortableAssetRecord): string | null {
   const subcategory = String(asset.subcategory ?? '').trim();
   const requiresTae =
     category === 'cash' &&
-    (subcategory === 'bank_account' || subcategory === 'crypto_spot_earn' || subcategory === 'other');
+    (subcategory === 'bank_account' ||
+      subcategory === 'crypto_spot_earn' ||
+      subcategory === 'other');
 
   // Backward compatibility: older exports may not include TAE for assets that are now required.
   return requiresTae ? '0' : null;
@@ -893,7 +971,10 @@ function formatImportYearSummary(
     const year = Number(entry.fiscal_year);
     const amount = Number(entry.amount_annual ?? 0);
     const prev = totals.get(year) ?? { count: 0, amount: 0 };
-    totals.set(year, { count: prev.count + 1, amount: prev.amount + (Number.isFinite(amount) ? amount : 0) });
+    totals.set(year, {
+      count: prev.count + 1,
+      amount: prev.amount + (Number.isFinite(amount) ? amount : 0),
+    });
   }
   const segments = [...totals.entries()]
     .sort((a, b) => a[0] - b[0])
@@ -911,7 +992,9 @@ function buildImportPreviewMessage(bundle: PortableDataBundle, mode: ImportMode)
   const snapshots = bundle.data.snapshots ?? [];
   const sortedDates = snapshots.map((s) => s.snapshot_date).sort();
   const snapshotRange =
-    sortedDates.length > 0 ? `${sortedDates[0]} .. ${sortedDates[sortedDates.length - 1]}` : 'sin snapshots';
+    sortedDates.length > 0
+      ? `${sortedDates[0]} .. ${sortedDates[sortedDates.length - 1]}`
+      : 'sin snapshots';
   const hasPremium = Boolean(bundle.premium);
   const lines = [
     mode === 'replace'
@@ -964,18 +1047,17 @@ async function exportDataBundle(): Promise<void> {
       membersRes,
       ownershipsRes,
       linksRes,
-    ] =
-      await Promise.all([
-        coreApi.get<PortableAnnualIncomeRecord[]>('/api/budget/annual-income/'),
-        coreApi.get<PortableAnnualExpenseRecord[]>('/api/budget/annual-expense/'),
-        coreApi.get<PortableAssetRecord[]>('/api/net-worth/assets/'),
-        coreApi.get<PortableLiabilityRecord[]>('/api/net-worth/liabilities/'),
-        coreApi.get<PortableSnapshotRecord[]>('/api/net-worth/snapshots/'),
-        coreApi.get<PortableSettingsRecord>('/api/auth/settings/'),
-        api.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
-        api.get<PortableOwnershipRecord[]>('/api/ownerships/'),
-        api.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
-      ]);
+    ] = await Promise.all([
+      coreApi.get<PortableAnnualIncomeRecord[]>('/api/budget/annual-income/'),
+      coreApi.get<PortableAnnualExpenseRecord[]>('/api/budget/annual-expense/'),
+      coreApi.get<PortableAssetRecord[]>('/api/net-worth/assets/'),
+      coreApi.get<PortableLiabilityRecord[]>('/api/net-worth/liabilities/'),
+      coreApi.get<PortableSnapshotRecord[]>('/api/net-worth/snapshots/'),
+      coreApi.get<PortableSettingsRecord>('/api/auth/settings/'),
+      api.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
+      api.get<PortableOwnershipRecord[]>('/api/ownerships/'),
+      api.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
+    ]);
 
     const payload: PortableDataBundle = {
       schema_version: 1,
@@ -1006,7 +1088,7 @@ async function exportDataBundle(): Promise<void> {
     link.remove();
     URL.revokeObjectURL(url);
 
-    dataTransferStatus.value = `Exportacion completada: ${payload.data.annual_income.length} ingresos, ${payload.data.annual_expense.length} gastos, ${payload.data.assets.length} activos, ${payload.data.liabilities.length} pasivos, ${(payload.data.snapshots?.length ?? 0)} snapshots, ${(payload.premium?.family_members.length ?? 0)} miembros y ${(payload.premium?.ownerships.length ?? 0)} titularidades.`;
+    dataTransferStatus.value = `Exportacion completada: ${payload.data.annual_income.length} ingresos, ${payload.data.annual_expense.length} gastos, ${payload.data.assets.length} activos, ${payload.data.liabilities.length} pasivos, ${payload.data.snapshots?.length ?? 0} snapshots, ${payload.premium?.family_members.length ?? 0} miembros y ${payload.premium?.ownerships.length ?? 0} titularidades.`;
   } catch (e: unknown) {
     dataTransferError.value = `No se pudo exportar: ${toApiErrorMessage(e)}`;
   } finally {
@@ -1247,7 +1329,10 @@ async function importDataFromFile(event: Event): Promise<void> {
         notes: liability.notes ?? '',
         financed_asset_id: financedAssetId,
       };
-      const res = await coreApi.post<{ id: number }>('/api/net-worth/liabilities/', liabilityPayload);
+      const res = await coreApi.post<{ id: number }>(
+        '/api/net-worth/liabilities/',
+        liabilityPayload,
+      );
       if (typeof res.data?.id === 'number') liabilityIdMap.set(liability.id, res.data.id);
     }
 
@@ -1315,12 +1400,16 @@ async function importDataFromFile(event: Event): Promise<void> {
       }
     }
 
-    await Promise.all([store.refreshAll(), loadAnnualIncome(fiscalYear.value), loadAnnualExpense(fiscalYear.value)]);
+    await Promise.all([
+      store.refreshAll(),
+      loadAnnualIncome(fiscalYear.value),
+      loadAnnualExpense(fiscalYear.value),
+    ]);
 
     const peopleSummary = bundle.premium
       ? `, ${bundle.premium.family_members.length} miembros, ${bundle.premium.ownerships.length} titularidades y ${bundle.premium.ownership_links.length} enlaces de titularidad`
       : '';
-    const snapshotsSummary = `, ${(bundle.data.snapshots?.length ?? 0)} snapshots`;
+    const snapshotsSummary = `, ${bundle.data.snapshots?.length ?? 0} snapshots`;
     dataTransferStatus.value =
       importMode === 'replace'
         ? `Reemplazo completado: ${sortedIncome.length} ingresos, ${sortedExpense.length} gastos, ${sortedAssets.length} activos y ${sortedLiabilities.length} pasivos${snapshotsSummary}${peopleSummary}.`
@@ -1492,7 +1581,11 @@ watch(
             <select v-model="annualIncomeOwnerFilter" class="select nw-select-sm">
               <option value="all">Todos los miembros</option>
               <option value="unassigned">Sin asignar</option>
-              <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
+              <option
+                v-for="option in annualOwnerFilterOptions"
+                :key="option.key"
+                :value="option.value"
+              >
                 {{ option.label }}
               </option>
             </select>
@@ -1647,7 +1740,11 @@ watch(
             <select v-model="annualExpenseOwnerFilter" class="select nw-select-sm">
               <option value="all">Todos los miembros</option>
               <option value="unassigned">Sin asignar</option>
-              <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
+              <option
+                v-for="option in annualOwnerFilterOptions"
+                :key="option.key"
+                :value="option.value"
+              >
                 {{ option.label }}
               </option>
             </select>
