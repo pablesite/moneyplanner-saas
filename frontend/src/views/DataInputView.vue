@@ -5,6 +5,7 @@ import { toApiErrorMessage } from '@/lib/errors';
 import {
   ItemForm,
   ItemList,
+  type Ownership,
   useNetWorthViewExtensions,
   useNetWorthViewState,
 } from '@/domains/net-worth';
@@ -70,6 +71,8 @@ const editingExpenseId = ref<number | null>(null);
 const showExpenseModal = ref(false);
 const expandedIncomeCats = ref<Set<string>>(new Set());
 const expandedExpenseCats = ref<Set<string>>(new Set());
+const assetOwnershipFilter = ref<number | 'all' | 'unassigned'>('all');
+const liabilityOwnershipFilter = ref<number | 'all' | 'unassigned'>('all');
 
 const annualIncomeForm = reactive({
   category: 'salary' as IncomeCategoryKey,
@@ -165,6 +168,15 @@ const sharedOwnershipAllocationsByLabel = computed(() => {
   return map;
 });
 
+function normalizeOwnerKey(raw: string): string {
+  return String(raw ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
 const annualOwnerFilterOptions = computed(() =>
   ownerOptions.value
     .filter((option) => option.key.startsWith('individual:'))
@@ -186,7 +198,7 @@ function parseSharedOwnerShares(ownerLabel: string): { name: string; share: numb
   const match = text.match(/^Compartido\s*\((.*)\)$/i);
   if (!match?.[1]) return [];
   return match[1]
-    .split(/\s*\/\s*/)
+    .split(/\s*(?:\/|,|;)\s*/)
     .map((part) => {
       const piece = part.trim();
       const parsed = piece.match(/^(.*)\s+(\d+(?:[.,]\d+)?)\s*%?$/);
@@ -205,14 +217,20 @@ function allocatedFractionForAnnualOwner(ownerLabel: string, selectedOwner: stri
   if (!text) return 0;
   if (text.localeCompare(selectedOwner, 'es', { sensitivity: 'base' }) === 0) return 1;
 
-  const sharedFromOwnerships = Array.from(sharedOwnershipAllocationsByLabel.value.entries()).find(
-    ([label]) => label.localeCompare(text, 'es', { sensitivity: 'base' }) === 0,
+  const normalizedText = normalizeOwnerKey(text);
+  const sharedEntries = Array.from(sharedOwnershipAllocationsByLabel.value.entries());
+  const sharedFromOwnerships = sharedEntries.find(
+    ([label]) => normalizeOwnerKey(label) === normalizedText,
   )?.[1];
-  const shared = sharedFromOwnerships ?? parseSharedOwnerShares(text);
+  const fallbackBareShared =
+    normalizeOwnerKey(text) === 'compartido' && sharedEntries.length === 1
+      ? sharedEntries[0]?.[1]
+      : null;
+  const shared = sharedFromOwnerships ?? fallbackBareShared ?? parseSharedOwnerShares(text);
   if (!shared.length) return 0;
   const totalShare = shared.reduce((sum, row) => sum + row.share, 0);
   const matchedShare = shared
-    .filter((row) => row.name.localeCompare(selectedOwner, 'es', { sensitivity: 'base' }) === 0)
+    .filter((row) => normalizeOwnerKey(row.name) === normalizeOwnerKey(selectedOwner))
     .reduce((sum, row) => sum + row.share, 0);
   if (!Number.isFinite(matchedShare) || matchedShare <= 0) return 0;
 
@@ -373,8 +391,65 @@ function parseNumeric(raw: unknown): number {
   return Number.isFinite(value) ? value : 0;
 }
 
-const assetsTotalBase = computed(() => parseNumeric(store.summary?.total_assets ?? '0'));
-const liabilitiesTotalBase = computed(() => parseNumeric(store.summary?.total_liabilities ?? '0'));
+const ownershipById = computed(() => {
+  const map = new Map<number, Ownership>();
+  for (const ownership of store.ownerships ?? []) {
+    map.set(ownership.id, ownership);
+  }
+  return map;
+});
+
+function normalizeOwnershipSharePercent(raw: unknown): number {
+  const value = parseNumeric(raw);
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return value <= 1 ? value * 100 : value;
+}
+
+function allocatedFractionForNetWorthOwner(
+  ownershipRef: number | null | undefined,
+  selectedOwner: number | 'all' | 'unassigned',
+): number {
+  if (selectedOwner === 'all') return 1;
+  if (selectedOwner === 'unassigned') return ownershipRef == null ? 1 : 0;
+  if (ownershipRef == null) return 0;
+
+  const ownership = ownershipById.value.get(ownershipRef);
+  if (!ownership) return 0;
+
+  if (ownership.kind === 'individual') {
+    return ownership.member?.id === selectedOwner ? 1 : 0;
+  }
+
+  const split = (ownership.splits ?? []).find((row) => row.member?.id === selectedOwner);
+  if (!split) return 0;
+  return normalizeOwnershipSharePercent(split.percent) / 100;
+}
+
+function filteredNetWorthTotalBase(
+  items: Array<{ amount_base?: string | null; ownership_ref?: number | null }>,
+  selectedOwner: number | 'all' | 'unassigned',
+): number {
+  let total = 0;
+  for (const item of items) {
+    const amountBase = parseNumeric(item.amount_base ?? '0');
+    if (!Number.isFinite(amountBase) || amountBase === 0) continue;
+    const fraction = allocatedFractionForNetWorthOwner(item.ownership_ref, selectedOwner);
+    if (fraction <= 0) continue;
+    total += amountBase * fraction;
+  }
+  return total;
+}
+
+const assetsTotalBase = computed(() =>
+  assetOwnershipFilter.value === 'all'
+    ? parseNumeric(store.summary?.total_assets ?? '0')
+    : filteredNetWorthTotalBase(store.assets, assetOwnershipFilter.value),
+);
+const liabilitiesTotalBase = computed(() =>
+  liabilityOwnershipFilter.value === 'all'
+    ? parseNumeric(store.summary?.total_liabilities ?? '0')
+    : filteredNetWorthTotalBase(store.liabilities, liabilityOwnershipFilter.value),
+);
 const netAssetsBase = computed(() => assetsTotalBase.value - liabilitiesTotalBase.value);
 const netAssetsCurrency = computed(
   () => store.baseCurrency ?? store.summary?.base_currency ?? 'EUR',
@@ -1914,6 +1989,7 @@ watch(
 
     <div class="grid-2">
       <ItemList
+        v-model:ownership-filter-value="assetOwnershipFilter"
         title="Activos"
         :items="store.assets"
         :categories="assetCategories"
@@ -1930,6 +2006,7 @@ watch(
       />
 
       <ItemList
+        v-model:ownership-filter-value="liabilityOwnershipFilter"
         title="Pasivos"
         :items="store.liabilities"
         :categories="liabilityCategories"

@@ -33,6 +33,7 @@ type Props = {
   subcategoryTotalsBase?: Record<string, string>;
   totalBase?: string;
   ownerships?: Ownership[];
+  ownershipFilterValue?: number | 'all' | 'unassigned' | null;
   onUpdate: (
     id: number,
     payload: NetWorthWritePayload & { ownership_id?: number | null },
@@ -47,6 +48,9 @@ type Props = {
 };
 
 const props = defineProps<Props>();
+const emit = defineEmits<{
+  (e: 'update:ownershipFilterValue', value: number | 'all' | 'unassigned'): void;
+}>();
 
 const currencies = [
   { value: 'EUR', label: 'EUR' },
@@ -68,7 +72,19 @@ type EditDraft = {
   financed_asset_id?: number | null;
 };
 const draft = ref<EditDraft>({});
-const ownershipFilter = ref<number | 'all' | 'unassigned'>('all');
+function normalizeOwnershipFilterValue(raw: unknown): number | 'all' | 'unassigned' {
+  if (raw === 'all' || raw === 'unassigned') return raw;
+  if (typeof raw === 'number' && Number.isInteger(raw)) return raw;
+  if (typeof raw === 'string' && raw.trim() !== '') {
+    const parsed = Number(raw);
+    if (Number.isInteger(parsed)) return parsed;
+  }
+  return 'all';
+}
+
+const ownershipFilter = ref<number | 'all' | 'unassigned'>(
+  normalizeOwnershipFilterValue(props.ownershipFilterValue),
+);
 const expandedCats = ref<Set<string>>(new Set());
 
 const isLiabilitiesList = computed(() => props.title === 'Pasivos');
@@ -575,6 +591,24 @@ watch(
   () => {
     expandedCats.value = new Set();
   },
+);
+
+watch(
+  () => props.ownershipFilterValue,
+  (next) => {
+    const normalized = normalizeOwnershipFilterValue(next);
+    if (ownershipFilter.value !== normalized) {
+      ownershipFilter.value = normalized;
+    }
+  },
+);
+
+watch(
+  ownershipFilter,
+  (next) => {
+    emit('update:ownershipFilterValue', next);
+  },
+  { immediate: true },
 );
 
 function cancelEdit() {
