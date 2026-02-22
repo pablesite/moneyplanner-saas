@@ -79,4 +79,5 @@
 
 ## Final Status
 - Milestone 13: completed.
+- Core frontend parity caveat: resolved.
 - Deliverables accepted and documented.

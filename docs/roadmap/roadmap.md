@@ -129,11 +129,8 @@ KPIs:
 1. Liquidity (`Liquidez`)
 2. Available expense coverage in months (`Meses de gastos disponibles`)
 
-### Milestone 13 (Completed with caveat)
+### Milestone 13 (Completed)
 Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined and delivered in SaaS frontend.
-
-Caveat:
-1. Pending parity work: full transfer of Milestone 13 phase-detail UX/scoring to `core` frontend.
 
 Objective:
 1. Balance assets and liabilities.
@@ -153,6 +150,9 @@ KPIs:
 
 Reference:
 - `docs/roadmap/roadmap-milestone-13-guide-phase-detail.md`
+
+Parity status:
+1. Core frontend parity delivered (Guia phase detail UX/scoring for Fase 1 and Fase 4).
 
 ### Milestone 14
 Accounting module (`Modulo Contabilidad`) - dashboard data-input update with temporality.
