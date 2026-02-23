@@ -327,6 +327,10 @@ function phaseDisplayProgress(phase: GuidePhase): number {
     const sharedScore = Math.round(sharedPhaseDiagnostics.value.phase2GlobalScore);
     return Number.isFinite(sharedScore) ? sharedScore : phase.progress;
   }
+  if (phase.id === 3) {
+    const sharedScore = Math.round(sharedPhaseDiagnostics.value.phase3GlobalScore);
+    return Number.isFinite(sharedScore) ? sharedScore : phase.progress;
+  }
   return phase.progress;
 }
 

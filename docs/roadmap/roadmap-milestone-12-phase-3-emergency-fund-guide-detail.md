@@ -56,6 +56,11 @@ Pesos V1:
 3. Peso de liquidez sobre activos: `15%`
 4. Calidad inmediata dentro de la liquidez: `15%`
 
+Umbrales V1 (cobertura):
+1. `3 meses` => referencia baja (`0`)
+2. `12 meses` => referencia alta (`100`)
+3. Interpolacion lineal con clamp en ambos KPIs de cobertura
+
 ## UX / Information Architecture (V1)
 1. Mismo patron que Fases 1 y 4:
    - summary cards
