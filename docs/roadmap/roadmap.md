@@ -124,16 +124,15 @@ KPIs:
 1. Cash flow (`Flujo de caja`)
 2. Savings-to-income ratio (`% ahorro/ingresos`)
 3. Related cash-flow stability indicators
-4. Extra KPI: recurrent expense coverage (`Cobertura recurrente de gastos`) = ingresos recurrentes / gastos recurrentes
+4. Savings distribution by category (`Distribucion del ahorro por categoria`) - informativo
 
 Score definition (phase 2, `0-100`):
 1. Gasto operativo = solo categoria `Gastos` (`consumption_expenses`).
-2. Score Superavit operativo (`0-100`): `% ahorro recurrente/ingresos recurrentes` + `% gasto operativo/ingresos recurrentes` (inverso).
-3. `% ahorro recurrente` incluye: flujo operativo + categoria `Ahorro` (`savings_allocation`).
-4. Score Estabilidad operativa (`0-100`): cobertura recurrente de gastos (sobre gasto operativo).
-5. KPI especifico (informativo): `% inversion financiera + activos mobiliarios` (asignacion recurrente a patrimonio).
-6. KPI extraordinario (informativo): impacto extraordinario neto = `(ingresos no recurrentes - gastos no recurrentes) / gasto operativo recurrente`.
-7. Score global fase 2 (`0-100`, flujo operativo ajustado): `0.45 * ahorro recurrente + 0.25 * gasto operativo (inv) + 0.30 * cobertura recurrente`.
+2. Indicador unico Score Superavit operativo (`0-100`): `% gasto operativo recurrente / ingresos recurrentes` (inverso).
+3. Umbrales del score (inverso): `50%` (top) -> `100%` (bad).
+4. `% ahorro recurrente` se mantiene como concepto derivado (flujo operativo + categoria `Ahorro`), pero no puntua el score principal.
+5. KPIs informativos de distribucion del ahorro: `% inversiones financieras`, `% activos mobiliarios`, `% activos inmobiliarios` sobre ingresos recurrentes.
+6. Resumen inicial de fase 2 incluye: ingresos/gastos/flujo recurrente, flujo total y asignaciones recurrentes por ahorro + inversiones (financieras, mobiliarias, inmobiliarias).
 
 ### Milestone 12
 Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - diagnostic score pending definition.
