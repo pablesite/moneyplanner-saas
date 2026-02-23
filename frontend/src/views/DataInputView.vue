@@ -1331,6 +1331,174 @@ async function importPremiumPeopleData(
   return ownershipIdMap;
 }
 
+function setDataImportBusyState(importMode: 'append' | 'replace') {
+  dataTransferBusyLabel.value =
+    importMode === 'replace'
+      ? 'Reemplazando datos... Esto puede tardar unos segundos.'
+      : 'Importando datos...';
+  dataTransferBusy.value = true;
+}
+
+async function importPortableAssets(
+  assets: PortableAssetRecord[],
+): Promise<{ sortedAssets: PortableAssetRecord[]; assetIdMap: Map<number, number> }> {
+  const assetIdMap = new Map<number, number>();
+  const sortedAssets = [...assets].sort((a, b) => a.id - b.id);
+  for (const asset of sortedAssets) {
+    const assetPayload = {
+      name: asset.name,
+      category: asset.category,
+      subcategory: asset.subcategory,
+      tracking_mode: asset.tracking_mode,
+      accounting_account_id: asset.accounting_account_id,
+      currency: asset.currency,
+      start_date: asset.start_date,
+      annual_interest_tae: normalizeImportedAssetTae(asset),
+      amount: String(asset.amount),
+      is_active: asset.is_active ?? true,
+      notes: asset.notes ?? '',
+    };
+    const res = await coreApi.post<{ id: number }>('/api/net-worth/assets/', assetPayload);
+    if (typeof res.data?.id === 'number') assetIdMap.set(asset.id, res.data.id);
+  }
+  return { sortedAssets, assetIdMap };
+}
+
+async function importPortableLiabilities(
+  liabilities: PortableLiabilityRecord[],
+  assetIdMap: Map<number, number>,
+): Promise<{ sortedLiabilities: PortableLiabilityRecord[]; liabilityIdMap: Map<number, number> }> {
+  const liabilityIdMap = new Map<number, number>();
+  const sortedLiabilities = [...liabilities].sort((a, b) => a.id - b.id);
+  for (const liability of sortedLiabilities) {
+    const financedAssetId =
+      liability.financed_asset_ref != null
+        ? (assetIdMap.get(liability.financed_asset_ref) ?? null)
+        : null;
+    const liabilityPayload = {
+      name: liability.name,
+      category: liability.category,
+      tracking_mode: liability.tracking_mode,
+      accounting_account_id: liability.accounting_account_id,
+      currency: liability.currency,
+      start_date: liability.start_date,
+      annual_interest_tae: normalizeImportedLiabilityTae(liability),
+      monthly_payment_amount: normalizeOptionalText(liability.monthly_payment_amount),
+      amount: String(liability.amount),
+      is_active: liability.is_active ?? true,
+      notes: liability.notes ?? '',
+      financed_asset_id: financedAssetId,
+    };
+    const res = await coreApi.post<{ id: number }>('/api/net-worth/liabilities/', liabilityPayload);
+    if (typeof res.data?.id === 'number') liabilityIdMap.set(liability.id, res.data.id);
+  }
+  return { sortedLiabilities, liabilityIdMap };
+}
+
+async function importPortableAnnualIncomeEntries(
+  annualIncome: PortableAnnualIncomeRecord[],
+): Promise<PortableAnnualIncomeRecord[]> {
+  const sortedIncome = [...annualIncome].sort((a, b) => a.id - b.id);
+  for (const entry of sortedIncome) {
+    await coreApi.post('/api/budget/annual-income/', {
+      name: entry.name,
+      category: entry.category,
+      subcategory: entry.subcategory,
+      owner_name: String(entry.owner_name ?? '').trim(),
+      income_type: entry.income_type,
+      amount_annual: String(entry.amount_annual),
+      fiscal_year: Number(entry.fiscal_year),
+      currency: (entry.currency || 'EUR').toUpperCase(),
+      notes: entry.notes ?? '',
+      is_active: entry.is_active ?? true,
+    });
+  }
+  return sortedIncome;
+}
+
+async function importPortableAnnualExpenseEntries(
+  annualExpense: PortableAnnualExpenseRecord[],
+): Promise<PortableAnnualExpenseRecord[]> {
+  const sortedExpense = [...annualExpense].sort((a, b) => a.id - b.id);
+  for (const entry of sortedExpense) {
+    await coreApi.post('/api/budget/annual-expense/', {
+      name: entry.name,
+      category: entry.category,
+      subcategory: entry.subcategory,
+      owner_name: String(entry.owner_name ?? '').trim(),
+      expense_type: entry.expense_type,
+      amount_annual: String(entry.amount_annual),
+      fiscal_year: Number(entry.fiscal_year),
+      currency: (entry.currency || 'EUR').toUpperCase(),
+      notes: entry.notes ?? '',
+      is_active: entry.is_active ?? true,
+    });
+  }
+  return sortedExpense;
+}
+
+async function importPortableSettingsAndSnapshots(bundle: PortableDataBundle): Promise<void> {
+  if (bundle.settings?.base_currency) {
+    await coreApi.put('/api/auth/settings/', { base_currency: bundle.settings.base_currency });
+  }
+  if (!Array.isArray(bundle.data.snapshots) || !bundle.data.snapshots.length) return;
+  await coreApi.post(
+    '/api/net-worth/snapshots/import-bulk/',
+    bundle.data.snapshots.map((snapshot) => ({
+      snapshot_date: snapshot.snapshot_date,
+      base_currency: snapshot.base_currency,
+      total_assets: snapshot.total_assets,
+      total_liabilities: snapshot.total_liabilities,
+      net_worth: snapshot.net_worth,
+    })),
+  );
+}
+
+async function importPremiumOwnershipLinks(
+  premium: PortablePremiumData | undefined,
+  ownershipIdMap: Map<number, number>,
+  assetIdMap: Map<number, number>,
+  liabilityIdMap: Map<number, number>,
+): Promise<void> {
+  if (!premium) return;
+  for (const link of premium.ownership_links) {
+    const mappedTargetId =
+      link.target_type === 'asset'
+        ? (assetIdMap.get(link.target_id) ?? null)
+        : (liabilityIdMap.get(link.target_id) ?? null);
+    const mappedOwnershipId = ownershipIdMap.get(link.ownership_id) ?? null;
+    if (mappedTargetId == null || mappedOwnershipId == null) continue;
+    await api.post('/api/ownership-links/sync/', {
+      target_type: link.target_type,
+      target_id: mappedTargetId,
+      ownership_id: mappedOwnershipId,
+    });
+  }
+}
+
+async function refreshImportedDataViews(): Promise<void> {
+  await Promise.all([store.refreshAll(), loadAnnualIncome(fiscalYear.value), loadAnnualExpense(fiscalYear.value)]);
+}
+
+function buildImportCompletionStatus(params: {
+  importMode: 'append' | 'replace';
+  bundle: PortableDataBundle;
+  sortedIncomeCount: number;
+  sortedExpenseCount: number;
+  sortedAssetsCount: number;
+  sortedLiabilitiesCount: number;
+}): string {
+  const { importMode, bundle, sortedIncomeCount, sortedExpenseCount, sortedAssetsCount, sortedLiabilitiesCount } =
+    params;
+  const peopleSummary = bundle.premium
+    ? `, ${bundle.premium.family_members.length} miembros, ${bundle.premium.ownerships.length} titularidades y ${bundle.premium.ownership_links.length} enlaces de titularidad`
+    : '';
+  const snapshotsSummary = `, ${bundle.data.snapshots?.length ?? 0} snapshots`;
+  return importMode === 'replace'
+    ? `Reemplazo completado: ${sortedIncomeCount} ingresos, ${sortedExpenseCount} gastos, ${sortedAssetsCount} activos y ${sortedLiabilitiesCount} pasivos${snapshotsSummary}${peopleSummary}.`
+    : `Importacion completada: ${sortedIncomeCount} ingresos, ${sortedExpenseCount} gastos, ${sortedAssetsCount} activos y ${sortedLiabilitiesCount} pasivos${snapshotsSummary}${peopleSummary}.`;
+}
+
 async function importDataFromFile(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement | null;
   const file = input?.files?.[0];
@@ -1347,11 +1515,7 @@ async function importDataFromFile(event: Event): Promise<void> {
     const proceed = window.confirm(buildImportPreviewMessage(bundle, importMode));
     if (!proceed) return;
 
-    dataTransferBusyLabel.value =
-      importMode === 'replace'
-        ? 'Reemplazando datos... Esto puede tardar unos segundos.'
-        : 'Importando datos...';
-    dataTransferBusy.value = true;
+    setDataImportBusyState(importMode);
 
     if (importMode === 'replace') {
       await clearExistingCoreDataForReplace();
@@ -1361,134 +1525,25 @@ async function importDataFromFile(event: Event): Promise<void> {
     }
 
     const ownershipIdMap = await importPremiumPeopleData(bundle.premium);
+    const { sortedAssets, assetIdMap } = await importPortableAssets(bundle.data.assets);
+    const { sortedLiabilities, liabilityIdMap } = await importPortableLiabilities(
+      bundle.data.liabilities,
+      assetIdMap,
+    );
+    const sortedIncome = await importPortableAnnualIncomeEntries(bundle.data.annual_income);
+    const sortedExpense = await importPortableAnnualExpenseEntries(bundle.data.annual_expense);
+    await importPortableSettingsAndSnapshots(bundle);
+    await importPremiumOwnershipLinks(bundle.premium, ownershipIdMap, assetIdMap, liabilityIdMap);
+    await refreshImportedDataViews();
 
-    const assetIdMap = new Map<number, number>();
-    const liabilityIdMap = new Map<number, number>();
-
-    const sortedAssets = [...bundle.data.assets].sort((a, b) => a.id - b.id);
-    for (const asset of sortedAssets) {
-      const assetPayload = {
-        name: asset.name,
-        category: asset.category,
-        subcategory: asset.subcategory,
-        tracking_mode: asset.tracking_mode,
-        accounting_account_id: asset.accounting_account_id,
-        currency: asset.currency,
-        start_date: asset.start_date,
-        annual_interest_tae: normalizeImportedAssetTae(asset),
-        amount: String(asset.amount),
-        is_active: asset.is_active ?? true,
-        notes: asset.notes ?? '',
-      };
-      const res = await coreApi.post<{ id: number }>('/api/net-worth/assets/', assetPayload);
-      if (typeof res.data?.id === 'number') assetIdMap.set(asset.id, res.data.id);
-    }
-
-    const sortedLiabilities = [...bundle.data.liabilities].sort((a, b) => a.id - b.id);
-    for (const liability of sortedLiabilities) {
-      const financedAssetId =
-        liability.financed_asset_ref != null
-          ? (assetIdMap.get(liability.financed_asset_ref) ?? null)
-          : null;
-      const liabilityPayload = {
-        name: liability.name,
-        category: liability.category,
-        tracking_mode: liability.tracking_mode,
-        accounting_account_id: liability.accounting_account_id,
-        currency: liability.currency,
-        start_date: liability.start_date,
-        annual_interest_tae: normalizeImportedLiabilityTae(liability),
-        monthly_payment_amount: normalizeOptionalText(liability.monthly_payment_amount),
-        amount: String(liability.amount),
-        is_active: liability.is_active ?? true,
-        notes: liability.notes ?? '',
-        financed_asset_id: financedAssetId,
-      };
-      const res = await coreApi.post<{ id: number }>(
-        '/api/net-worth/liabilities/',
-        liabilityPayload,
-      );
-      if (typeof res.data?.id === 'number') liabilityIdMap.set(liability.id, res.data.id);
-    }
-
-    const sortedIncome = [...bundle.data.annual_income].sort((a, b) => a.id - b.id);
-    for (const entry of sortedIncome) {
-      await coreApi.post('/api/budget/annual-income/', {
-        name: entry.name,
-        category: entry.category,
-        subcategory: entry.subcategory,
-        owner_name: String(entry.owner_name ?? '').trim(),
-        income_type: entry.income_type,
-        amount_annual: String(entry.amount_annual),
-        fiscal_year: Number(entry.fiscal_year),
-        currency: (entry.currency || 'EUR').toUpperCase(),
-        notes: entry.notes ?? '',
-        is_active: entry.is_active ?? true,
-      });
-    }
-
-    const sortedExpense = [...bundle.data.annual_expense].sort((a, b) => a.id - b.id);
-    for (const entry of sortedExpense) {
-      await coreApi.post('/api/budget/annual-expense/', {
-        name: entry.name,
-        category: entry.category,
-        subcategory: entry.subcategory,
-        owner_name: String(entry.owner_name ?? '').trim(),
-        expense_type: entry.expense_type,
-        amount_annual: String(entry.amount_annual),
-        fiscal_year: Number(entry.fiscal_year),
-        currency: (entry.currency || 'EUR').toUpperCase(),
-        notes: entry.notes ?? '',
-        is_active: entry.is_active ?? true,
-      });
-    }
-
-    if (bundle.settings?.base_currency) {
-      await coreApi.put('/api/auth/settings/', { base_currency: bundle.settings.base_currency });
-    }
-    if (Array.isArray(bundle.data.snapshots) && bundle.data.snapshots.length) {
-      await coreApi.post(
-        '/api/net-worth/snapshots/import-bulk/',
-        bundle.data.snapshots.map((snapshot) => ({
-          snapshot_date: snapshot.snapshot_date,
-          base_currency: snapshot.base_currency,
-          total_assets: snapshot.total_assets,
-          total_liabilities: snapshot.total_liabilities,
-          net_worth: snapshot.net_worth,
-        })),
-      );
-    }
-
-    if (bundle.premium) {
-      for (const link of bundle.premium.ownership_links) {
-        const mappedTargetId =
-          link.target_type === 'asset'
-            ? (assetIdMap.get(link.target_id) ?? null)
-            : (liabilityIdMap.get(link.target_id) ?? null);
-        const mappedOwnershipId = ownershipIdMap.get(link.ownership_id) ?? null;
-        if (mappedTargetId == null || mappedOwnershipId == null) continue;
-        await api.post('/api/ownership-links/sync/', {
-          target_type: link.target_type,
-          target_id: mappedTargetId,
-          ownership_id: mappedOwnershipId,
-        });
-      }
-    }
-
-    await Promise.all([
-      store.refreshAll(),
-      loadAnnualIncome(fiscalYear.value),
-      loadAnnualExpense(fiscalYear.value),
-    ]);
-
-    const peopleSummary = bundle.premium
-      ? `, ${bundle.premium.family_members.length} miembros, ${bundle.premium.ownerships.length} titularidades y ${bundle.premium.ownership_links.length} enlaces de titularidad`
-      : '';
-    const snapshotsSummary = `, ${bundle.data.snapshots?.length ?? 0} snapshots`;
-    dataTransferStatus.value =
-      importMode === 'replace'
-        ? `Reemplazo completado: ${sortedIncome.length} ingresos, ${sortedExpense.length} gastos, ${sortedAssets.length} activos y ${sortedLiabilities.length} pasivos${snapshotsSummary}${peopleSummary}.`
-        : `Importacion completada: ${sortedIncome.length} ingresos, ${sortedExpense.length} gastos, ${sortedAssets.length} activos y ${sortedLiabilities.length} pasivos${snapshotsSummary}${peopleSummary}.`;
+    dataTransferStatus.value = buildImportCompletionStatus({
+      importMode,
+      bundle,
+      sortedIncomeCount: sortedIncome.length,
+      sortedExpenseCount: sortedExpense.length,
+      sortedAssetsCount: sortedAssets.length,
+      sortedLiabilitiesCount: sortedLiabilities.length,
+    });
   } catch (e: unknown) {
     dataTransferError.value = `No se pudo importar: ${toApiErrorMessage(e)}`;
   } finally {
