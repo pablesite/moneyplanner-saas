@@ -127,9 +127,10 @@ KPIs:
 4. Extra KPI: recurrent expense coverage (`Cobertura recurrente de gastos`) = ingresos recurrentes / gastos recurrentes
 
 Score definition (phase 2, `0-100`):
-1. Score Superavit y eficiencia (`0-100`): `% ahorro/ingresos` + `% gastos/ingresos` (inverso).
-2. Score Estabilidad del flujo (`0-100`): cobertura recurrente de gastos + `% ingresos no recurrentes` (inverso) + `% gastos no recurrentes` (inverso).
-3. Score global fase 2 (`0-100`): `0.50 * Superavit + 0.50 * Estabilidad`.
+1. Score Superavit operativo (`0-100`): `% ahorro recurrente/ingresos recurrentes` + `% gastos recurrentes/ingresos recurrentes` (inverso).
+2. Score Estabilidad operativa (`0-100`): cobertura recurrente de gastos.
+3. KPI extraordinario (informativo): impacto extraordinario neto = `(ingresos no recurrentes - gastos no recurrentes) / gastos recurrentes`.
+4. Score global fase 2 (`0-100`, flujo operativo ajustado): `0.45 * ahorro recurrente + 0.25 * gasto recurrente (inv) + 0.30 * cobertura recurrente`.
 
 ### Milestone 12
 Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - diagnostic score pending definition.
