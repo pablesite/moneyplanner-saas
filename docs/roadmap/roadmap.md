@@ -151,8 +151,8 @@ Reference:
 - `docs/roadmap/roadmap-milestone-11-phase-2-cash-flow-guide-detail.md`
 - `docs/roadmap/release-summary-milestone-11-phase-2-cash-flow-guide-detail.md`
 
-### Milestone 12
-Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - diagnostic score pending definition.
+### Milestone 12 (In progress)
+Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - v1 diagnostic score defined and first frontend delivery in progress/parity rollout.
 
 Objective:
 1. Build a financial safety buffer.
@@ -166,6 +166,18 @@ Dashboard:
 KPIs:
 1. Liquidity (`Liquidez`)
 2. Available expense coverage in months (`Meses de gastos disponibles`)
+
+V1 direction (aligned with current Fases 1, 2 y 4 implementations):
+1. Reuse Fase 2 cash-flow semantics to estimate emergency-fund denominator:
+   - gasto operativo estructural
+   - carga actual (operativo + compromisos temporales)
+2. Reuse Fase 4 liquidity/illiquidity criteria as classification baseline for emergency-fund usable liquidity.
+3. Follow Fases 1/4 detail UX pattern in `Guia`:
+   - summary cards + score cards + global score badge/meter
+4. Maintain Core/SaaS frontend parity for shared guide-phase diagnostics and phase-detail rendering.
+
+Reference:
+- `docs/roadmap/roadmap-milestone-12-phase-3-emergency-fund-guide-detail.md`
 
 ### Milestone 13 (Completed)
 Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined and delivered in SaaS frontend.
