@@ -107,8 +107,8 @@ Reference:
 - `docs/roadmap/roadmap-milestone-10-budget-dashboard.md`
 - `docs/roadmap/release-summary-milestone-10-budget-dashboard.md`
 
-### Milestone 11
-Phase 2: Cash flow (`Fase 2: Flujo de caja`) - diagnostic score pending definition.
+### Milestone 11 (Completed)
+Phase 2: Cash flow (`Fase 2: Flujo de caja`) - score defined and delivered in SaaS/Core frontend guide phase detail.
 
 Objective:
 1. Keep positive cash flow with stable monthly surplus.
@@ -124,6 +124,12 @@ KPIs:
 1. Cash flow (`Flujo de caja`)
 2. Savings-to-income ratio (`% ahorro/ingresos`)
 3. Related cash-flow stability indicators
+4. Extra KPI: recurrent expense coverage (`Cobertura recurrente de gastos`) = ingresos recurrentes / gastos recurrentes
+
+Score definition (phase 2, `0-100`):
+1. Score Superavit y eficiencia (`0-100`): `% ahorro/ingresos` + `% gastos/ingresos` (inverso).
+2. Score Estabilidad del flujo (`0-100`): cobertura recurrente de gastos + `% ingresos no recurrentes` (inverso) + `% gastos no recurrentes` (inverso).
+3. Score global fase 2 (`0-100`): `0.50 * Superavit + 0.50 * Estabilidad`.
 
 ### Milestone 12
 Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - diagnostic score pending definition.
