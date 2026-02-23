@@ -134,6 +134,10 @@ Score definition (phase 2, `0-100`):
 5. KPIs informativos de distribucion del ahorro: `% inversiones financieras`, `% activos mobiliarios`, `% activos inmobiliarios` sobre ingresos recurrentes.
 6. Resumen inicial de fase 2 incluye: ingresos/gastos/flujo recurrente, flujo total y asignaciones recurrentes por ahorro + inversiones (financieras, mobiliarias, inmobiliarias).
 
+Reference:
+- `docs/roadmap/roadmap-milestone-11-phase-2-cash-flow-guide-detail.md`
+- `docs/roadmap/release-summary-milestone-11-phase-2-cash-flow-guide-detail.md`
+
 ### Milestone 12
 Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - diagnostic score pending definition.
 
