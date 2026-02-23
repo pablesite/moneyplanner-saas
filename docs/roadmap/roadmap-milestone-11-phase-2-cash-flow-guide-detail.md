@@ -138,3 +138,23 @@ Define and deliver the detailed `Guia` diagnostic for `Fase 2: Flujo de caja`, f
 1. Milestone 11 is closed for the Guide Phase 2 frontend scoring/detail scope (Core and SaaS).
 2. Phase 2 now prioritizes operational cash-flow health and separates savings/investment distribution as informative context.
 3. No new taxonomy (`patrimonial`) was introduced in this milestone by design.
+
+## Post-Release Refinement (Cash-Flow Tension Model)
+1. Phase 2 was extended with a richer data model in `budget` (backend) to classify annual entries beyond `recurrent`/`one_off`:
+   - `time_profile` (`structural_recurrent`, `term_recurrent`, `one_off`)
+   - `cashflow_role`
+   - `event_group`
+   - `term_end_year`
+2. The Phase 2 score remains operationally focused but is no longer a single-ratio score.
+3. Current Phase 2 score (composite) weights:
+   - structural operating load ratio (`45%`)
+   - total committed load ratio (`40%`)
+   - temporary commitment burden ratio (`15%`)
+4. Guide Phase 2 UI now exposes explicit KPIs for:
+   - gasto operativo estructural
+   - compromisos temporales
+   - flujo recurrente tras compromisos
+   - colchon mensual tras compromisos
+5. This refinement directly supports cases like:
+   - cuotas temporales a 0% (fertilidad, entrada vivienda)
+   - eventos patrimoniales extraordinarios agrupados (ej. `vivienda_2026`)

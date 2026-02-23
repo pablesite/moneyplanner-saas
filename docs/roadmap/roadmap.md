@@ -110,6 +110,19 @@ Reference:
 ### Milestone 11 (Completed)
 Phase 2: Cash flow (`Fase 2: Flujo de caja`) - score defined and delivered in SaaS/Core frontend guide phase detail.
 
+Post-release refinement (completed):
+1. Phase 2 upgraded from a single operational ratio to a composite cash-flow tension score.
+2. Annual income/expense entries now support extra cash-flow dimensions for Phase 2 interpretation:
+   - `time_profile` (`structural_recurrent`, `term_recurrent`, `one_off`)
+   - `cashflow_role` (operating / temporary commitment / savings / investment / asset sale-purchase / etc.)
+   - `event_group` (for grouped extraordinary events like `vivienda_2026`)
+   - `term_end_year` (for temporary recurring commitments)
+3. Guide Phase 2 detail now separates:
+   - gasto operativo estructural
+   - compromisos temporales
+   - flujo recurrente tras compromisos
+   while keeping extraordinary flows as context.
+
 Objective:
 1. Keep positive cash flow with stable monthly surplus.
 
@@ -126,13 +139,13 @@ KPIs:
 3. Related cash-flow stability indicators
 4. Savings distribution by category (`Distribucion del ahorro por categoria`) - informativo
 
-Score definition (phase 2, `0-100`):
-1. Gasto operativo = solo categoria `Gastos` (`consumption_expenses`).
-2. Indicador unico Score Superavit operativo (`0-100`): `% gasto operativo recurrente / ingresos recurrentes` (inverso).
-3. Umbrales del score (inverso): `50%` (top) -> `100%` (bad).
-4. `% ahorro recurrente` se mantiene como concepto derivado (flujo operativo + categoria `Ahorro`), pero no puntua el score principal.
-5. KPIs informativos de distribucion del ahorro: `% inversiones financieras`, `% activos mobiliarios`, `% activos inmobiliarios` sobre ingresos recurrentes.
-6. Resumen inicial de fase 2 incluye: ingresos/gastos/flujo recurrente, flujo total y asignaciones recurrentes por ahorro + inversiones (financieras, mobiliarias, inmobiliarias).
+Score definition (phase 2, `0-100`) current:
+1. Composite tension score (weighted) using recurrent income as denominator:
+   - `% gasto operativo estructural / ingresos recurrentes`
+   - `% carga comprometida total (operativo + compromisos temporales) / ingresos recurrentes`
+   - `% compromisos temporales / ingresos recurrentes`
+2. Extraordinary events remain visible as context and distortion warning, but they do not dominate the score.
+3. Savings/investment allocations remain informative (not counted as operating tension).
 
 Reference:
 - `docs/roadmap/roadmap-milestone-11-phase-2-cash-flow-guide-detail.md`
