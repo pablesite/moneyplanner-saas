@@ -80,3 +80,14 @@
 ## Final Status
 - Milestone 11 (Guide Phase 2 cash-flow diagnostic in Core/SaaS frontends): completed.
 - Final model prioritizes operational signal clarity and preserves savings/investment distribution as contextual information.
+
+## Post-Release Refinements (2026-02-23)
+1. Phase 2 score evolved from a single KPI to a 4-KPI composite focused on cash-flow tension:
+   - base structural spending
+   - current total cash tension
+   - weight of temporary cash loads
+   - total annual cash-flow result (with bounded impact)
+2. Annual-entry taxonomy was expanded with temporal profile / cash-flow nature / event grouping to better model extraordinary housing operations and temporary commitments.
+3. Phase 2 UI was restructured to match other phases (summary first, score second, collapsible context).
+4. Extraordinary context now supports filtering by `Grupo de evento` in the UI.
+5. Select controls were visually standardized (dark theme) and critical selectors with poor native dropdown rendering were migrated to custom popovers.

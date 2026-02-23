@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { api, coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import {
@@ -77,6 +77,8 @@ const showIncomeModal = ref(false);
 const editingIncomeId = ref<number | null>(null);
 const editingExpenseId = ref<number | null>(null);
 const showExpenseModal = ref(false);
+const hydratingAnnualIncomeForm = ref(false);
+const hydratingAnnualExpenseForm = ref(false);
 const expandedIncomeCats = ref<Set<string>>(new Set());
 const expandedExpenseCats = ref<Set<string>>(new Set());
 const assetOwnershipFilter = ref<number | 'all' | 'unassigned'>('all');
@@ -324,17 +326,23 @@ const dataInputSummary = computed(() => {
 watch(
   () => annualIncomeForm.category,
   () => {
-    const first = annualSubcategoryOptions.value[0];
-    if (!first) return;
-    annualIncomeForm.subcategory = first.value;
+    const options = annualSubcategoryOptions.value;
+    if (!options.length) return;
+    const isCurrentValid = options.some((row) => row.value === annualIncomeForm.subcategory);
+    if (!isCurrentValid) {
+      annualIncomeForm.subcategory = options[0]!.value;
+    }
   },
 );
 watch(
   () => annualExpenseForm.category,
   () => {
-    const first = annualExpenseSubcategoryOptions.value[0];
-    if (!first) return;
-    annualExpenseForm.subcategory = first.value;
+    const options = annualExpenseSubcategoryOptions.value;
+    if (!options.length) return;
+    const isCurrentValid = options.some((row) => row.value === annualExpenseForm.subcategory);
+    if (!isCurrentValid) {
+      annualExpenseForm.subcategory = options[0]!.value;
+    }
   },
 );
 watch(
@@ -542,6 +550,14 @@ function expenseCashflowRoleLabel(role: AnnualExpenseCashflowRole): string {
   if (role === 'tax_fee') return 'Impuestos/gastos';
   if (role === 'transfer') return 'Transferencia';
   return 'Otro';
+}
+
+function timeProfileDotClass(
+  timeProfile: IncomeTimeProfile | ExpenseTimeProfile | undefined,
+): string {
+  if (timeProfile === 'term_recurrent') return 'income-rec-dot-recurrent-term';
+  if (timeProfile === 'one_off') return 'income-rec-dot-one-off';
+  return 'income-rec-dot-recurrent';
 }
 
 function defaultIncomeCashflowRole(category: IncomeCategoryKey): AnnualIncomeCashflowRole {
@@ -754,6 +770,7 @@ function resetExpenseForm(): void {
 
 function openIncomeModal(entry?: AnnualIncomeEntry): void {
   annualIncomeError.value = null;
+  hydratingAnnualIncomeForm.value = true;
   if (entry) {
     editingIncomeId.value = entry.id;
     annualIncomeForm.category = entry.category;
@@ -775,9 +792,13 @@ function openIncomeModal(entry?: AnnualIncomeEntry): void {
     resetIncomeForm();
   }
   showIncomeModal.value = true;
+  void nextTick(() => {
+    hydratingAnnualIncomeForm.value = false;
+  });
 }
 function openExpenseModal(entry?: AnnualExpenseEntry): void {
   annualExpenseError.value = null;
+  hydratingAnnualExpenseForm.value = true;
   if (entry) {
     editingExpenseId.value = entry.id;
     annualExpenseForm.category = entry.category;
@@ -799,6 +820,9 @@ function openExpenseModal(entry?: AnnualExpenseEntry): void {
     resetExpenseForm();
   }
   showExpenseModal.value = true;
+  void nextTick(() => {
+    hydratingAnnualExpenseForm.value = false;
+  });
 }
 
 function closeIncomeModal(): void {
@@ -864,9 +888,11 @@ watch(
   },
 );
 watch([() => annualIncomeForm.category], () => {
+  if (hydratingAnnualIncomeForm.value) return;
   annualIncomeForm.cashflowRole = defaultIncomeCashflowRole(annualIncomeForm.category);
 });
 watch([() => annualExpenseForm.category, () => annualExpenseForm.subcategory], () => {
+  if (hydratingAnnualExpenseForm.value) return;
   annualExpenseForm.cashflowRole = defaultExpenseCashflowRole(
     annualExpenseForm.category,
     annualExpenseForm.subcategory,
@@ -1968,11 +1994,7 @@ watch(
                         <div class="nw-item-name income-item-name">
                           <span
                             class="income-rec-dot"
-                            :class="
-                              entry.incomeType === 'recurrent'
-                                ? 'income-rec-dot-recurrent'
-                                : 'income-rec-dot-one-off'
-                            "
+                            :class="timeProfileDotClass(entry.timeProfile)"
                             aria-hidden="true"
                           ></span>
                           <span class="item-name-text">{{ entry.name }}</span>
@@ -2133,11 +2155,7 @@ watch(
                         <div class="nw-item-name income-item-name">
                           <span
                             class="income-rec-dot"
-                            :class="
-                              entry.expenseType === 'recurrent'
-                                ? 'income-rec-dot-recurrent'
-                                : 'income-rec-dot-one-off'
-                            "
+                            :class="timeProfileDotClass(entry.timeProfile)"
                             aria-hidden="true"
                           ></span>
                           <span class="item-name-text">{{ entry.name }}</span>
@@ -2343,7 +2361,7 @@ watch(
           placeholder="Ano fin compromiso (ej: 2027)"
         />
         <div
-          class="grid items-center gap-2.5 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto_auto_120px]"
+          class="grid items-center gap-2.5 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto_120px]"
         >
           <input
             v-model="annualIncomeForm.amountAnnual"
@@ -2351,10 +2369,6 @@ watch(
             inputmode="decimal"
             :placeholder="incomeAmountInputPlaceholder"
           />
-          <label class="checkbox-row whitespace-nowrap">
-            <input v-model="annualIncomeForm.isRecurrent" type="checkbox" />
-            Recurrente
-          </label>
           <div class="grid justify-items-center gap-1">
             <button
               type="button"
@@ -2364,7 +2378,7 @@ watch(
                   ? 'border-teal-300/60 bg-teal-400/20'
                   : 'border-white/20 bg-white/5'
               "
-              :disabled="!annualIncomeForm.isRecurrent"
+              :disabled="annualIncomeForm.timeProfile === 'one_off'"
               aria-label="Cambiar periodicidad mensual/anual"
               @click="
                 annualIncomeForm.amountInputPeriod =
@@ -2481,7 +2495,7 @@ watch(
           placeholder="Ano fin compromiso (ej: 2027)"
         />
         <div
-          class="grid items-center gap-2.5 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto_auto_120px]"
+          class="grid items-center gap-2.5 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto_120px]"
         >
           <input
             v-model="annualExpenseForm.amountAnnual"
@@ -2489,10 +2503,6 @@ watch(
             inputmode="decimal"
             :placeholder="expenseAmountInputPlaceholder"
           />
-          <label class="checkbox-row whitespace-nowrap">
-            <input v-model="annualExpenseForm.isRecurrent" type="checkbox" />
-            Recurrente
-          </label>
           <div class="grid justify-items-center gap-1">
             <button
               type="button"
@@ -2502,7 +2512,7 @@ watch(
                   ? 'border-teal-300/60 bg-teal-400/20'
                   : 'border-white/20 bg-white/5'
               "
-              :disabled="!annualExpenseForm.isRecurrent"
+              :disabled="annualExpenseForm.timeProfile === 'one_off'"
               aria-label="Cambiar periodicidad mensual/anual"
               @click="
                 annualExpenseForm.amountInputPeriod =
