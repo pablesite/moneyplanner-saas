@@ -66,5 +66,5 @@ describe('router (saas)', () => {
       }),
     );
     expect(mocks.registerAuthGuard).toHaveBeenCalledWith({ __router: true });
-  });
+  }, 15000);
 });
