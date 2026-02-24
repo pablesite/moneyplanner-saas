@@ -151,11 +151,8 @@ Reference:
 - `docs/roadmap/roadmap-milestone-11-phase-2-cash-flow-guide-detail.md`
 - `docs/roadmap/release-summary-milestone-11-phase-2-cash-flow-guide-detail.md`
 
-### Milestone 12 (Completed with caveat)
+### Milestone 12 (Completed)
 Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - v1 diagnostic score defined and delivered in SaaS/Core frontend guide phase detail.
-
-Caveat:
-1. Current SaaS targeted view test (`GuidePhaseDetailView.spec.ts`) fails in local validation due a Pinia test harness setup issue (`getActivePinia()`), while Core passes and the Phase 3 domain diagnostics tests pass in both stacks.
 
 Objective:
 1. Build a financial safety buffer.

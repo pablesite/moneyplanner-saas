@@ -54,25 +54,22 @@
 1. Fase 3 detail route renders diagnostics in Core and SaaS: completed.
 2. `computeGuidePhaseDiagnostics` exposes `phase3GlobalScore`: completed.
 3. Score improves with more usable liquidity / coverage (at equal expense): completed (unit tests cover this).
-4. Affected diagnostics/view tests pass in both frontends: partially completed (Core passes; SaaS view spec currently fails due Pinia test harness setup issue).
+4. Affected diagnostics/view tests pass in both frontends: completed.
 5. Core/SaaS parity in visual/scoring behavior: completed (code parity verified in shared diagnostics and view rendering paths).
 
 ## Validation Evidence (2026-02-24)
 - SaaS frontend (`moneyplanner/`):
   - `docker compose exec saas_frontend npm run typecheck` ✅
-  - `docker compose exec saas_frontend npm run test:unit -- src/domains/guide/__tests__/phaseDiagnostics.spec.ts src/views/__tests__/GuidePhaseDetailView.spec.ts` ❌
-  - Result details:
-    - `src/domains/guide/__tests__/phaseDiagnostics.spec.ts` passed
-    - `src/views/__tests__/GuidePhaseDetailView.spec.ts` failed (`getActivePinia()` called without active Pinia)
+  - `docker compose exec saas_frontend npm run test:unit -- src/domains/guide/__tests__/phaseDiagnostics.spec.ts src/views/__tests__/GuidePhaseDetailView.spec.ts` ✅
 
 - Core frontend (`moneyplanner/core/`):
   - `docker compose exec frontend npm run typecheck` ✅
   - `docker compose exec frontend npm run test:unit -- src/domains/guide/__tests__/phaseDiagnostics.spec.ts src/views/__tests__/GuidePhaseDetailView.spec.ts` ✅
 
 ## Residual Risks / Follow-Ups
-- SaaS `GuidePhaseDetailView` targeted view test harness needs Pinia setup alignment after recent view/store changes.
-- Until that test harness issue is fixed, Milestone 12 validation is feature-complete but not fully green in SaaS targeted view tests.
+- Phase 3 V1 still depends on correct expense taxonomy/cash-flow-role classification quality in annual entries (especially `operating` vs `temporary_commitment`).
+- Future milestones can refine emergency-fund thresholds by household profile and historical variability (Milestone 14), but this is out of scope for V1.
 
 ## Final Status
-- Milestone 12 (Guide Phase 3 emergency-fund diagnostic in Core/SaaS frontends): completed with caveat.
-- Caveat is limited to current SaaS view-test harness validation (`Pinia` setup), not Phase 3 scoring implementation parity.
+- Milestone 12 (Guide Phase 3 emergency-fund diagnostic in Core/SaaS frontends): completed.
+- Core/SaaS parity and targeted validation for the milestone are green.
