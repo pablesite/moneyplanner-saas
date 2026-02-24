@@ -15,7 +15,9 @@ const tab = ref<Tab>('members');
 
       <div class="ui-page-actions">
         <button class="btn" type="button" @click="router.push('/account')">Cuenta SaaS</button>
-        <button class="btn" type="button" @click="router.push('/')">Volver a Patrimonio</button>
+        <button class="btn" type="button" @click="router.push('/patrimonio')">
+          Volver a Patrimonio
+        </button>
       </div>
     </div>
 

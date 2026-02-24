@@ -11,25 +11,45 @@ import {
 } from '@/domains/net-worth';
 import { BaseModal } from '@/domains/ui';
 import {
-  useAnnualIncomeStore,
-  type AnnualIncomeCashflowRole,
-  type AnnualTimeProfile as IncomeTimeProfile,
-} from '@/domains/data-input/annualIncomeStore';
-import {
-  useAnnualExpenseStore,
-  type AnnualExpenseCashflowRole,
-  type AnnualTimeProfile as ExpenseTimeProfile,
-} from '@/domains/data-input/annualExpenseStore';
-import {
+  AnnualEntryModalForm,
   expenseCategories,
   expenseSubcategories,
   type ExpenseCategoryKey,
-} from '@/domains/data-input/expenseTaxonomy';
-import {
   incomeCategories,
   incomeSubcategories,
   type IncomeCategoryKey,
-} from '@/domains/data-input/incomeTaxonomy';
+  useAnnualIncomeStore,
+  type AnnualIncomeCashflowRole,
+  type AnnualIncomeTimeProfile as IncomeTimeProfile,
+  useAnnualExpenseStore,
+  type AnnualExpenseCashflowRole,
+  type AnnualExpenseTimeProfile as ExpenseTimeProfile,
+} from '@/domains/data-input';
+import {
+  buildImportPreviewMessage,
+  buildPortableFilename,
+  type ImportMode,
+  normalizeImportedAssetTae,
+  normalizeImportedLiabilityTae,
+  normalizeOptionalText,
+  parsePortableDataBundle,
+  type PortableAnnualExpenseRecord,
+  type PortableAnnualIncomeRecord,
+  type PortableAssetRecord,
+  type PortableDataBundle,
+  type PortableFamilyMemberRecord,
+  type PortableLiabilityRecord,
+  type PortableOwnershipLinkRecord,
+  type PortableOwnershipRecord,
+  type PortablePremiumData,
+  type PortableSettingsRecord,
+  type PortableSnapshotRecord,
+  toPortableAnnualExpenseRecord,
+  toPortableAnnualIncomeRecord,
+  toPortableAssetRecord,
+  toPortableLiabilityRecord,
+  toPortableOwnershipRecord,
+} from '@/domains/data-input/portableBundle';
 
 const {
   store,
@@ -115,6 +135,29 @@ const annualExpenseForm = reactive({
   notes: '',
 });
 
+type AnnualModalPatch = Partial<{
+  category: string;
+  subcategory: string;
+  name: string;
+  owner: string;
+  timeProfile: string;
+  cashflowRole: string;
+  eventGroup: string;
+  termEndYear: string;
+  amountInputPeriod: 'annual' | 'monthly';
+  amountAnnual: string;
+  currency: string;
+  notes: string;
+}>;
+
+function patchAnnualIncomeForm(patch: AnnualModalPatch): void {
+  Object.assign(annualIncomeForm, patch);
+}
+
+function patchAnnualExpenseForm(patch: AnnualModalPatch): void {
+  Object.assign(annualExpenseForm, patch);
+}
+
 const annualSubcategoryOptions = computed(() =>
   incomeSubcategories.filter((row) => row.category === annualIncomeForm.category),
 );
@@ -122,6 +165,38 @@ const annualExpenseSubcategoryOptions = computed(() =>
   expenseSubcategories.filter((row) => row.category === annualExpenseForm.category),
 );
 type OwnerOption = { key: string; value: string; label: string };
+type SelectOption = { value: string; label: string };
+
+const incomeTimeProfileOptions: SelectOption[] = [
+  { value: 'structural_recurrent', label: 'Recurrente estructural (base)' },
+  { value: 'term_recurrent', label: 'Recurrente temporal (con fin)' },
+  { value: 'one_off', label: 'Puntual / extraordinario' },
+];
+
+const incomeCashflowRoleOptions: SelectOption[] = [
+  { value: 'operating', label: 'Naturaleza: Operativo' },
+  { value: 'transfer', label: 'Naturaleza: Transferencia/apoyo' },
+  { value: 'asset_sale', label: 'Naturaleza: Venta de activo' },
+  { value: 'tax_adjustment', label: 'Naturaleza: Ajuste fiscal' },
+  { value: 'other', label: 'Naturaleza: Otro' },
+];
+
+const expenseTimeProfileOptions: SelectOption[] = [
+  { value: 'structural_recurrent', label: 'Recurrente estructural (estilo de vida)' },
+  { value: 'term_recurrent', label: 'Recurrente temporal (cuotas/compromiso)' },
+  { value: 'one_off', label: 'Puntual / extraordinario' },
+];
+
+const expenseCashflowRoleOptions: SelectOption[] = [
+  { value: 'operating', label: 'Naturaleza: Operativo' },
+  { value: 'temporary_commitment', label: 'Naturaleza: Compromiso temporal' },
+  { value: 'savings', label: 'Naturaleza: Ahorro' },
+  { value: 'investment', label: 'Naturaleza: Inversion' },
+  { value: 'asset_purchase', label: 'Naturaleza: Compra de activo' },
+  { value: 'tax_fee', label: 'Naturaleza: Impuestos/gastos' },
+  { value: 'transfer', label: 'Naturaleza: Transferencia' },
+  { value: 'other', label: 'Naturaleza: Otro' },
+];
 
 function formatOwnershipPercent(raw: string): string {
   const value = Number(String(raw).replace(',', '.'));
@@ -988,137 +1063,6 @@ async function removeAnnualExpense(id: number): Promise<void> {
   await deleteExpenseEntry(id, fiscalYear.value);
 }
 
-type PortableAnnualIncomeRecord = {
-  id: number;
-  name: string;
-  category: string;
-  subcategory: string;
-  owner_name?: string;
-  income_type: 'recurrent' | 'one_off';
-  time_profile?: 'structural_recurrent' | 'term_recurrent' | 'one_off';
-  cashflow_role?: 'operating' | 'transfer' | 'asset_sale' | 'tax_adjustment' | 'other';
-  event_group?: string;
-  term_end_year?: number | null;
-  amount_annual: string;
-  fiscal_year: number;
-  currency: string;
-  notes: string;
-  is_active?: boolean;
-};
-
-type PortableAnnualExpenseRecord = {
-  id: number;
-  name: string;
-  category: string;
-  subcategory: string;
-  owner_name?: string;
-  expense_type: 'recurrent' | 'one_off';
-  time_profile?: 'structural_recurrent' | 'term_recurrent' | 'one_off';
-  cashflow_role?:
-    | 'operating'
-    | 'temporary_commitment'
-    | 'savings'
-    | 'investment'
-    | 'asset_purchase'
-    | 'tax_fee'
-    | 'transfer'
-    | 'other';
-  event_group?: string;
-  term_end_year?: number | null;
-  amount_annual: string;
-  fiscal_year: number;
-  currency: string;
-  notes: string;
-  is_active?: boolean;
-};
-
-type PortableAssetRecord = {
-  id: number;
-  name: string;
-  category: string;
-  subcategory: string;
-  tracking_mode: string;
-  accounting_account_id: number | null;
-  currency: string;
-  start_date?: string;
-  annual_interest_tae?: string | null;
-  amount: string;
-  is_active: boolean;
-  notes: string;
-};
-
-type PortableLiabilityRecord = {
-  id: number;
-  name: string;
-  category: string;
-  tracking_mode: string;
-  accounting_account_id: number | null;
-  currency: string;
-  start_date?: string;
-  annual_interest_tae?: string | null;
-  monthly_payment_amount?: string | null;
-  amount: string;
-  is_active: boolean;
-  notes: string;
-  financed_asset_ref?: number | null;
-};
-
-type PortableSnapshotRecord = {
-  id: number;
-  snapshot_date: string;
-  base_currency: string;
-  total_assets: string;
-  total_liabilities: string;
-  net_worth: string;
-  created_at?: string;
-};
-
-type PortableSettingsRecord = {
-  base_currency: string;
-};
-
-type PortableFamilyMemberRecord = {
-  id: number;
-  name: string;
-  role: 'adult' | 'child';
-  is_active: boolean;
-};
-
-type PortableOwnershipRecord = {
-  id: number;
-  kind: 'individual' | 'shared';
-  member: { id: number; name: string; role: 'adult' | 'child' } | null;
-  splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
-  is_in_use?: boolean;
-};
-
-type PortableOwnershipLinkRecord = {
-  target_type: 'asset' | 'liability';
-  target_id: number;
-  ownership_id: number;
-};
-
-type PortablePremiumData = {
-  family_members: PortableFamilyMemberRecord[];
-  ownerships: PortableOwnershipRecord[];
-  ownership_links: PortableOwnershipLinkRecord[];
-};
-
-type PortableDataBundle = {
-  schema_version: 1;
-  exported_at: string;
-  source_app: 'core' | 'saas';
-  settings?: PortableSettingsRecord;
-  data: {
-    annual_income: PortableAnnualIncomeRecord[];
-    annual_expense: PortableAnnualExpenseRecord[];
-    assets: PortableAssetRecord[];
-    liabilities: PortableLiabilityRecord[];
-    snapshots?: PortableSnapshotRecord[];
-  };
-  premium?: PortablePremiumData;
-};
-
 const dataTransferBusy = ref(false);
 const dataTransferBusyLabel = ref<string | null>(null);
 const dataTransferStatus = ref<string | null>(null);
@@ -1126,7 +1070,6 @@ const dataTransferError = ref<string | null>(null);
 const dataTransferToastMessage = ref<string | null>(null);
 const dataTransferToastKind = ref<'success' | 'error'>('success');
 const importFileInputRef = ref<HTMLInputElement | null>(null);
-type ImportMode = 'append' | 'replace';
 const pendingImportMode = ref<ImportMode>('append');
 let dataTransferToastTimer: number | null = null;
 
@@ -1159,105 +1102,6 @@ function showDataTransferToast(message: string, kind: 'success' | 'error' = 'suc
     dataTransferToastMessage.value = null;
     dataTransferToastTimer = null;
   }, 5000);
-}
-
-function normalizeOptionalText(raw: unknown): string | null {
-  if (raw == null) return null;
-  const text = String(raw).trim();
-  return text ? text : null;
-}
-
-function normalizeImportedAssetTae(asset: PortableAssetRecord): string | null {
-  const normalized = normalizeOptionalText(asset.annual_interest_tae);
-  if (normalized != null) return normalized;
-
-  const category = String(asset.category ?? '').trim();
-  const subcategory = String(asset.subcategory ?? '').trim();
-  const requiresTae =
-    category === 'cash' &&
-    (subcategory === 'bank_account' ||
-      subcategory === 'crypto_spot_earn' ||
-      subcategory === 'other');
-
-  // Backward compatibility: older exports may not include TAE for assets that are now required.
-  return requiresTae ? '0' : null;
-}
-
-function normalizeImportedLiabilityTae(liability: PortableLiabilityRecord): string | null {
-  const normalized = normalizeOptionalText(liability.annual_interest_tae);
-  if (normalized != null) return normalized;
-
-  const category = String(liability.category ?? '').trim();
-  const requiresTae =
-    category === 'mortgage' || category === 'personal_loan' || category === 'credit_card';
-
-  // Backward compatibility: older exports may not include TAE for liabilities that are now required.
-  return requiresTae ? '0' : null;
-}
-
-function formatImportYearSummary(
-  entries: Array<{ fiscal_year: number; amount_annual: string | number }>,
-  label: string,
-): string {
-  if (!entries.length) return `${label}: 0`;
-  const totals = new Map<number, { count: number; amount: number }>();
-  for (const entry of entries) {
-    const year = Number(entry.fiscal_year);
-    const amount = Number(entry.amount_annual ?? 0);
-    const prev = totals.get(year) ?? { count: 0, amount: 0 };
-    totals.set(year, {
-      count: prev.count + 1,
-      amount: prev.amount + (Number.isFinite(amount) ? amount : 0),
-    });
-  }
-  const segments = [...totals.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(
-      ([year, info]) =>
-        `${year}: ${info.count} (${new Intl.NumberFormat('es-ES', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 0,
-        }).format(info.amount)})`,
-    );
-  return `${label}: ${segments.join(' | ')}`;
-}
-
-function buildImportPreviewMessage(bundle: PortableDataBundle, mode: ImportMode): string {
-  const snapshots = bundle.data.snapshots ?? [];
-  const sortedDates = snapshots.map((s) => s.snapshot_date).sort();
-  const snapshotRange =
-    sortedDates.length > 0
-      ? `${sortedDates[0]} .. ${sortedDates[sortedDates.length - 1]}`
-      : 'sin snapshots';
-  const hasPremium = Boolean(bundle.premium);
-  const lines = [
-    mode === 'replace'
-      ? 'Se reemplazaran los datos actuales por el archivo:'
-      : 'Se importaran datos (modo aditivo):',
-    `- Ingresos: ${bundle.data.annual_income.length}`,
-    `- Gastos: ${bundle.data.annual_expense.length}`,
-    `- Activos: ${bundle.data.assets.length}`,
-    `- Pasivos: ${bundle.data.liabilities.length}`,
-    `- Snapshots: ${snapshots.length} (${snapshotRange})`,
-    `- Configuracion base_currency: ${bundle.settings?.base_currency ?? 'sin incluir'}`,
-    hasPremium
-      ? `- Miembros: ${bundle.premium?.family_members.length ?? 0} | Titularidades: ${bundle.premium?.ownerships.length ?? 0} | Enlaces: ${bundle.premium?.ownership_links.length ?? 0}`
-      : '- Bloque premium: no incluido',
-    '',
-    formatImportYearSummary(bundle.data.annual_income, 'Ingresos por ano'),
-    formatImportYearSummary(bundle.data.annual_expense, 'Gastos por ano'),
-    '',
-    mode === 'replace'
-      ? 'Se borraran primero los datos actuales de estos bloques (incluidos snapshots).'
-      : 'La importacion anade registros y actualiza settings/snapshots/relaciones importados.',
-    'Continuar?',
-  ];
-  return lines.join('\n');
-}
-
-function buildPortableFilename(): string {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `moneyplanner-saas-data-${timestamp}.json`;
 }
 
 function triggerImportDialog(mode: ImportMode = 'append'): void {
@@ -1299,15 +1143,15 @@ async function exportDataBundle(): Promise<void> {
       source_app: 'saas',
       settings: settingsRes.data ?? undefined,
       data: {
-        annual_income: (incomeRes.data ?? []).slice(),
-        annual_expense: (expenseRes.data ?? []).slice(),
-        assets: (assetsRes.data ?? []).slice(),
-        liabilities: (liabilitiesRes.data ?? []).slice(),
+        annual_income: (incomeRes.data ?? []).map(toPortableAnnualIncomeRecord),
+        annual_expense: (expenseRes.data ?? []).map(toPortableAnnualExpenseRecord),
+        assets: (assetsRes.data ?? []).map((row) => toPortableAssetRecord(row)),
+        liabilities: (liabilitiesRes.data ?? []).map((row) => toPortableLiabilityRecord(row)),
         snapshots: (snapshotsRes.data ?? []).slice(),
       },
       premium: {
         family_members: (membersRes.data ?? []).slice(),
-        ownerships: (ownershipsRes.data ?? []).slice(),
+        ownerships: (ownershipsRes.data ?? []).map((row) => toPortableOwnershipRecord(row)),
         ownership_links: (linksRes.data ?? []).slice(),
       },
     };
@@ -1329,57 +1173,6 @@ async function exportDataBundle(): Promise<void> {
     dataTransferBusy.value = false;
     dataTransferBusyLabel.value = null;
   }
-}
-
-function parsePortableDataBundle(raw: string): PortableDataBundle {
-  const parsed = JSON.parse(raw) as Partial<PortableDataBundle>;
-  if (parsed?.schema_version !== 1 || !parsed.data) {
-    throw new Error('Formato de archivo no compatible.');
-  }
-  const { annual_income, annual_expense, assets, liabilities, snapshots } =
-    parsed.data as PortableDataBundle['data'];
-  if (
-    !Array.isArray(annual_income) ||
-    !Array.isArray(annual_expense) ||
-    !Array.isArray(assets) ||
-    !Array.isArray(liabilities)
-  ) {
-    throw new Error('El archivo no contiene las colecciones esperadas.');
-  }
-  const sourceApp = parsed.source_app === 'saas' ? 'saas' : 'core';
-  let premium: PortablePremiumData | undefined;
-  if (parsed.premium != null) {
-    const premiumRaw = parsed.premium as Partial<PortablePremiumData>;
-    if (
-      !Array.isArray(premiumRaw.family_members) ||
-      !Array.isArray(premiumRaw.ownerships) ||
-      !Array.isArray(premiumRaw.ownership_links)
-    ) {
-      throw new Error('El bloque premium del archivo no es valido.');
-    }
-    premium = {
-      family_members: premiumRaw.family_members,
-      ownerships: premiumRaw.ownerships,
-      ownership_links: premiumRaw.ownership_links,
-    };
-  }
-  return {
-    schema_version: 1,
-    exported_at: String(parsed.exported_at ?? ''),
-    source_app: sourceApp,
-    settings:
-      parsed.settings && typeof parsed.settings === 'object'
-        ? { base_currency: String((parsed.settings as PortableSettingsRecord).base_currency ?? '') }
-        : undefined,
-    data: {
-      annual_income,
-      annual_expense,
-      assets,
-      liabilities,
-      snapshots: Array.isArray(snapshots) ? snapshots : [],
-    },
-    premium,
-  };
 }
 
 async function clearExistingCoreDataForReplace(): Promise<void> {
@@ -1517,7 +1310,16 @@ async function importPortableAssets(
       is_active: asset.is_active ?? true,
       notes: asset.notes ?? '',
     };
-    const res = await coreApi.post<{ id: number }>('/api/net-worth/assets/', assetPayload);
+    let res;
+    try {
+      res = await coreApi.post<{ id: number }>('/api/net-worth/assets/', assetPayload);
+    } catch (e: unknown) {
+      // Compatibilidad con backends core que aun no exponen/aceptan `notes` en AssetSerializer.
+      const message = toApiErrorMessage(e).toLowerCase();
+      if (!message.includes('notes')) throw e;
+      const { notes: _ignoredNotes, ...assetPayloadWithoutNotes } = assetPayload;
+      res = await coreApi.post<{ id: number }>('/api/net-worth/assets/', assetPayloadWithoutNotes);
+    }
     if (typeof res.data?.id === 'number') assetIdMap.set(asset.id, res.data.id);
   }
   return { sortedAssets, assetIdMap };
@@ -2304,267 +2106,42 @@ watch(
       />
     </BaseModal>
 
-    <BaseModal :open="showIncomeModal" :title="incomeModalTitle" @close="closeIncomeModal">
-      <div class="grid gap-2.5 md:grid-cols-2">
-        <select v-model="annualIncomeForm.category" class="select ui-data-field">
-          <option
-            v-for="category in incomeCategories"
-            :key="category.value"
-            :value="category.value"
-          >
-            {{ category.label }}
-          </option>
-        </select>
-        <select v-model="annualIncomeForm.subcategory" class="select ui-data-field">
-          <option
-            v-for="subcategory in annualSubcategoryOptions"
-            :key="subcategory.value"
-            :value="subcategory.value"
-          >
-            {{ subcategory.label }}
-          </option>
-        </select>
-        <input
-          v-model="annualIncomeForm.name"
-          class="input ui-data-field"
-          :class="{ 'md:col-span-2': !showOwnerField }"
-          placeholder="Concepto (ej: CTN, Regalos Pablo)"
-        />
-        <select v-if="showOwnerField" v-model="annualIncomeForm.owner" class="select ui-data-field">
-          <option value="">Titular (opcional)</option>
-          <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-        <select v-model="annualIncomeForm.timeProfile" class="select ui-data-field">
-          <option value="structural_recurrent">Recurrente estructural (base)</option>
-          <option value="term_recurrent">Recurrente temporal (con fin)</option>
-          <option value="one_off">Puntual / extraordinario</option>
-        </select>
-        <select v-model="annualIncomeForm.cashflowRole" class="select ui-data-field">
-          <option value="operating">Naturaleza: Operativo</option>
-          <option value="transfer">Naturaleza: Transferencia/apoyo</option>
-          <option value="asset_sale">Naturaleza: Venta de activo</option>
-          <option value="tax_adjustment">Naturaleza: Ajuste fiscal</option>
-          <option value="other">Naturaleza: Otro</option>
-        </select>
-        <input
-          v-model="annualIncomeForm.eventGroup"
-          class="input ui-data-field"
-          placeholder="Grupo de evento (opcional, ej: vivienda_2026)"
-        />
-        <input
-          v-if="annualIncomeForm.timeProfile === 'term_recurrent'"
-          v-model="annualIncomeForm.termEndYear"
-          class="input ui-data-field"
-          inputmode="numeric"
-          placeholder="Ano fin compromiso (ej: 2027)"
-        />
-        <div
-          class="grid items-center gap-2.5 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto_120px]"
-        >
-          <input
-            v-model="annualIncomeForm.amountAnnual"
-            class="input ui-data-field"
-            inputmode="decimal"
-            :placeholder="incomeAmountInputPlaceholder"
-          />
-          <div class="grid justify-items-center gap-1">
-            <button
-              type="button"
-              class="relative inline-flex h-[34px] w-[58px] items-center rounded-full border transition"
-              :class="
-                annualIncomeForm.amountInputPeriod === 'monthly'
-                  ? 'border-teal-300/60 bg-teal-400/20'
-                  : 'border-white/20 bg-white/5'
-              "
-              :disabled="annualIncomeForm.timeProfile === 'one_off'"
-              aria-label="Cambiar periodicidad mensual/anual"
-              @click="
-                annualIncomeForm.amountInputPeriod =
-                  annualIncomeForm.amountInputPeriod === 'annual' ? 'monthly' : 'annual'
-              "
-            >
-              <span
-                class="inline-block h-6 w-6 rounded-full bg-white/90 transition-transform"
-                :class="
-                  annualIncomeForm.amountInputPeriod === 'monthly'
-                    ? 'translate-x-7'
-                    : 'translate-x-1'
-                "
-              />
-            </button>
-            <span class="subtle text-[11px]">
-              <span :class="annualIncomeForm.amountInputPeriod === 'annual' ? 'text-white/90' : ''">
-                Anual
-              </span>
-              /
-              <span
-                :class="annualIncomeForm.amountInputPeriod === 'monthly' ? 'text-white/90' : ''"
-              >
-                Mensual
-              </span>
-            </span>
-          </div>
-          <select v-model="annualIncomeForm.currency" class="select ui-data-field">
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-          </select>
-        </div>
-        <textarea
-          v-model="annualIncomeForm.notes"
-          class="textarea md:col-span-2"
-          rows="2"
-          placeholder="Notas (opcional)"
-        />
-        <div class="actions md:col-span-2">
-          <button class="btn btn-ghost" type="button" @click="closeIncomeModal">Cancelar</button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            :disabled="annualIncomeLoading"
-            @click="submitAnnualIncome"
-          >
-            {{ incomeSubmitLabel }}
-          </button>
-        </div>
-      </div>
-    </BaseModal>
+    <AnnualEntryModalForm
+      :open="showIncomeModal"
+      :title="incomeModalTitle"
+      :form="annualIncomeForm"
+      :loading="annualIncomeLoading"
+      :submit-label="incomeSubmitLabel"
+      :category-options="incomeCategories"
+      :subcategory-options="annualSubcategoryOptions"
+      :show-owner-field="showOwnerField"
+      :owner-options="ownerOptions"
+      :time-profile-options="incomeTimeProfileOptions"
+      :cashflow-role-options="incomeCashflowRoleOptions"
+      name-placeholder="Concepto (ej: CTN, Regalos Pablo)"
+      :amount-placeholder="incomeAmountInputPlaceholder"
+      @patch="patchAnnualIncomeForm"
+      @close="closeIncomeModal"
+      @submit="submitAnnualIncome"
+    />
 
-    <BaseModal :open="showExpenseModal" :title="expenseModalTitle" @close="closeExpenseModal">
-      <div class="grid gap-2.5 md:grid-cols-2">
-        <select v-model="annualExpenseForm.category" class="select ui-data-field">
-          <option
-            v-for="category in expenseCategories"
-            :key="category.value"
-            :value="category.value"
-          >
-            {{ category.label }}
-          </option>
-        </select>
-        <select v-model="annualExpenseForm.subcategory" class="select ui-data-field">
-          <option
-            v-for="subcategory in annualExpenseSubcategoryOptions"
-            :key="subcategory.value"
-            :value="subcategory.value"
-          >
-            {{ subcategory.label }}
-          </option>
-        </select>
-        <input
-          v-model="annualExpenseForm.name"
-          class="input ui-data-field"
-          :class="{ 'md:col-span-2': !showOwnerField }"
-          placeholder="Concepto (ej: Alimentacion, Hipoteca)"
-        />
-        <select
-          v-if="showOwnerField"
-          v-model="annualExpenseForm.owner"
-          class="select ui-data-field"
-        >
-          <option value="">Titular (opcional)</option>
-          <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-        <select v-model="annualExpenseForm.timeProfile" class="select ui-data-field">
-          <option value="structural_recurrent">Recurrente estructural (estilo de vida)</option>
-          <option value="term_recurrent">Recurrente temporal (cuotas/compromiso)</option>
-          <option value="one_off">Puntual / extraordinario</option>
-        </select>
-        <select v-model="annualExpenseForm.cashflowRole" class="select ui-data-field">
-          <option value="operating">Naturaleza: Operativo</option>
-          <option value="temporary_commitment">Naturaleza: Compromiso temporal</option>
-          <option value="savings">Naturaleza: Ahorro</option>
-          <option value="investment">Naturaleza: Inversion</option>
-          <option value="asset_purchase">Naturaleza: Compra de activo</option>
-          <option value="tax_fee">Naturaleza: Impuestos/gastos</option>
-          <option value="transfer">Naturaleza: Transferencia</option>
-          <option value="other">Naturaleza: Otro</option>
-        </select>
-        <input
-          v-model="annualExpenseForm.eventGroup"
-          class="input ui-data-field"
-          placeholder="Grupo de evento (opcional, ej: vivienda_2026)"
-        />
-        <input
-          v-if="annualExpenseForm.timeProfile === 'term_recurrent'"
-          v-model="annualExpenseForm.termEndYear"
-          class="input ui-data-field"
-          inputmode="numeric"
-          placeholder="Ano fin compromiso (ej: 2027)"
-        />
-        <div
-          class="grid items-center gap-2.5 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto_120px]"
-        >
-          <input
-            v-model="annualExpenseForm.amountAnnual"
-            class="input ui-data-field"
-            inputmode="decimal"
-            :placeholder="expenseAmountInputPlaceholder"
-          />
-          <div class="grid justify-items-center gap-1">
-            <button
-              type="button"
-              class="relative inline-flex h-[34px] w-[58px] items-center rounded-full border transition"
-              :class="
-                annualExpenseForm.amountInputPeriod === 'monthly'
-                  ? 'border-teal-300/60 bg-teal-400/20'
-                  : 'border-white/20 bg-white/5'
-              "
-              :disabled="annualExpenseForm.timeProfile === 'one_off'"
-              aria-label="Cambiar periodicidad mensual/anual"
-              @click="
-                annualExpenseForm.amountInputPeriod =
-                  annualExpenseForm.amountInputPeriod === 'annual' ? 'monthly' : 'annual'
-              "
-            >
-              <span
-                class="inline-block h-6 w-6 rounded-full bg-white/90 transition-transform"
-                :class="
-                  annualExpenseForm.amountInputPeriod === 'monthly'
-                    ? 'translate-x-7'
-                    : 'translate-x-1'
-                "
-              />
-            </button>
-            <span class="subtle text-[11px]">
-              <span
-                :class="annualExpenseForm.amountInputPeriod === 'annual' ? 'text-white/90' : ''"
-              >
-                Anual
-              </span>
-              /
-              <span
-                :class="annualExpenseForm.amountInputPeriod === 'monthly' ? 'text-white/90' : ''"
-              >
-                Mensual
-              </span>
-            </span>
-          </div>
-          <select v-model="annualExpenseForm.currency" class="select ui-data-field">
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-          </select>
-        </div>
-        <textarea
-          v-model="annualExpenseForm.notes"
-          class="textarea md:col-span-2"
-          rows="2"
-          placeholder="Notas (opcional)"
-        />
-        <div class="actions md:col-span-2">
-          <button class="btn btn-ghost" type="button" @click="closeExpenseModal">Cancelar</button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            :disabled="annualExpenseLoading"
-            @click="submitAnnualExpense"
-          >
-            {{ expenseSubmitLabel }}
-          </button>
-        </div>
-      </div>
-    </BaseModal>
+    <AnnualEntryModalForm
+      :open="showExpenseModal"
+      :title="expenseModalTitle"
+      :form="annualExpenseForm"
+      :loading="annualExpenseLoading"
+      :submit-label="expenseSubmitLabel"
+      :category-options="expenseCategories"
+      :subcategory-options="annualExpenseSubcategoryOptions"
+      :show-owner-field="showOwnerField"
+      :owner-options="ownerOptions"
+      :time-profile-options="expenseTimeProfileOptions"
+      :cashflow-role-options="expenseCashflowRoleOptions"
+      name-placeholder="Concepto (ej: Alimentacion, Hipoteca)"
+      :amount-placeholder="expenseAmountInputPlaceholder"
+      @patch="patchAnnualExpenseForm"
+      @close="closeExpenseModal"
+      @submit="submitAnnualExpense"
+    />
   </div>
 </template>

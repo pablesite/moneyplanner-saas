@@ -25,7 +25,7 @@ const hasToken = computed(() => hasAccessToken.value);
 const isLoginRoute = computed(() => route.name === 'login');
 const navItems = computed<NavItem[]>(() => {
   const baseItems: NavItem[] = [
-    { id: 'home', icon: 'GU', label: 'Guia', hint: 'Plan paso a paso', to: '/inicio' },
+    { id: 'home', icon: 'GU', label: 'Guia', hint: 'Plan paso a paso', to: '/' },
     {
       id: 'data-input',
       icon: 'IN',
@@ -33,7 +33,13 @@ const navItems = computed<NavItem[]>(() => {
       hint: 'Ingresos, gastos, activos y pasivos',
       to: '/introduccion-datos',
     },
-    { id: 'net-worth', icon: 'PT', label: 'Patrimonio', hint: 'Estado financiero', to: '/' },
+    {
+      id: 'net-worth',
+      icon: 'PT',
+      label: 'Patrimonio',
+      hint: 'Estado financiero',
+      to: '/patrimonio',
+    },
     {
       id: 'budget',
       icon: 'PR',
@@ -47,6 +53,13 @@ const navItems = computed<NavItem[]>(() => {
 });
 
 const pageTitle = 'moneyplanner';
+
+function isNavItemActive(item: NavItem): boolean {
+  if (item.id === 'home') {
+    return route.path === '/' || route.path.startsWith('/guia/');
+  }
+  return route.path === item.to || route.path.startsWith(`${item.to}/`);
+}
 
 const accountInitials = computed(() => {
   const text = accountLabel.value.trim();
@@ -177,8 +190,8 @@ onBeforeUnmount(() => {
           :key="item.id"
           :to="item.to"
           class="ui-shell-link"
+          :class="{ 'ui-shell-link-active': isNavItemActive(item) }"
           :title="`${item.label}: ${item.hint}`"
-          active-class="ui-shell-link-active"
           @click="closeSidebar"
         >
           <span class="ui-shell-link-icon" aria-hidden="true">{{ item.icon }}</span>
@@ -200,7 +213,7 @@ onBeforeUnmount(() => {
         >
           <span aria-hidden="true">&#9776;</span>
         </button>
-        <RouterLink class="ui-shell-header-title-link" to="/inicio">
+        <RouterLink class="ui-shell-header-title-link" to="/">
           <div class="ui-shell-header-title">{{ pageTitle }}</div>
         </RouterLink>
         <div v-if="hasToken" ref="accountMenuRef" class="ui-shell-account-menu">

@@ -18,6 +18,7 @@ Complete a broad refactor across `core` and `saas` with strong quality gates, co
 4. Frontend and backend coverage targets reached.
 5. Critical backend service coverage completed (`memberships/services` at 100%).
 6. Data Input annual income UI aligned with Net Worth style (category/subcategory grouping, owner badges, recurrent marker).
+7. Frontend refactor iteration completed for shared guide score UI, reusable annual-entry modal/form blocks, and portable import/export compatibility with evolving net-worth data shape.
 
 ## Coverage Snapshot
 1. SaaS backend: 93%
@@ -33,4 +34,3 @@ Complete a broad refactor across `core` and `saas` with strong quality gates, co
 - [x] UI consistency documented and applied.
 - [x] Frontend evolution without structural duplication.
 - [x] Code simplified with contextual comments where needed.
-

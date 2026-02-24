@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useAnnualExpenseStore } from '@/domains/data-input/annualExpenseStore';
-import { useAnnualIncomeStore } from '@/domains/data-input/annualIncomeStore';
-import { expenseCategories, expenseSubcategories } from '@/domains/data-input/expenseTaxonomy';
-import { incomeCategories, incomeSubcategories } from '@/domains/data-input/incomeTaxonomy';
+import {
+  expenseCategories,
+  expenseSubcategories,
+  incomeCategories,
+  incomeSubcategories,
+  useAnnualExpenseStore,
+  useAnnualIncomeStore,
+} from '@/domains/data-input';
 
 type BudgetRow = {
   key: string;

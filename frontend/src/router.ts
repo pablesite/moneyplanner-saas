@@ -16,10 +16,11 @@ import { capabilities } from '@/domains/capabilities';
 
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: LoginView },
-  { path: '/inicio', name: 'home', component: HomeView },
+  { path: '/', name: 'home', component: HomeView },
+  { path: '/inicio', redirect: '/' },
   { path: '/guia/fases/:phaseId', name: 'guide-phase', component: GuidePhaseDetailView },
   { path: '/introduccion-datos', name: 'data-input', component: DataInputView },
-  { path: '/', name: 'networth', component: NetWorthView },
+  { path: '/patrimonio', name: 'networth', component: NetWorthView },
   { path: '/presupuesto', name: 'budget-dashboard', component: BudgetDashboardView },
   { path: '/data', name: 'aux-data', component: AuxDataView },
   { path: '/data/fx', name: 'settings-fx', component: SettingsFxView },
