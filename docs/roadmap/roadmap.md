@@ -151,8 +151,11 @@ Reference:
 - `docs/roadmap/roadmap-milestone-11-phase-2-cash-flow-guide-detail.md`
 - `docs/roadmap/release-summary-milestone-11-phase-2-cash-flow-guide-detail.md`
 
-### Milestone 12 (In progress)
-Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - v1 diagnostic score defined and first frontend delivery in progress/parity rollout.
+### Milestone 12 (Completed with caveat)
+Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - v1 diagnostic score defined and delivered in SaaS/Core frontend guide phase detail.
+
+Caveat:
+1. Current SaaS targeted view test (`GuidePhaseDetailView.spec.ts`) fails in local validation due a Pinia test harness setup issue (`getActivePinia()`), while Core passes and the Phase 3 domain diagnostics tests pass in both stacks.
 
 Objective:
 1. Build a financial safety buffer.
@@ -178,6 +181,7 @@ V1 direction (aligned with current Fases 1, 2 y 4 implementations):
 
 Reference:
 - `docs/roadmap/roadmap-milestone-12-phase-3-emergency-fund-guide-detail.md`
+- `docs/roadmap/release-summary-milestone-12-phase-3-emergency-fund-guide-detail.md`
 
 ### Milestone 13 (Completed)
 Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined and delivered in SaaS frontend.
