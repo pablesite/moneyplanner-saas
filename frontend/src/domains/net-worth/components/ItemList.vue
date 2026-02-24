@@ -567,7 +567,11 @@ function editTarget(it: Item) {
 }
 
 function displayAmount(it: Item) {
-  return it._displayAmount ?? it.amount;
+  const base = it._displayAmount ?? it.amount;
+  if (isLiabilitiesList.value && !it._displayAmount && it.effective_amount) {
+    return it.effective_amount;
+  }
+  return base;
 }
 
 function toggleCategory(key: string) {

@@ -31,8 +31,8 @@ describe('ItemForm (saas)', () => {
     const categorySelect = selects[0]!;
     const subcategorySelect = selects[1]!;
     const currencySelect = selects[2]!;
-    const ownershipSelect = selects[3]!;
-    const financedAssetSelect = selects[4]!;
+    const ownershipSelect = selects.find((s) => s.text().includes('Selecciona titularidad'))!;
+    const financedAssetSelect = selects.find((s) => s.text().includes('No financia'))!;
 
     await categorySelect.setValue('cash');
     await subcategorySelect.setValue('wallet');

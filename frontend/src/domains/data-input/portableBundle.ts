@@ -51,6 +51,9 @@ export type PortableAssetRecord = {
   accounting_account_id: number | null;
   currency: string;
   start_date?: string;
+  initial_purchase_value?: string | null;
+  amortization_method?: string;
+  amortization_term_years?: number | null;
   annual_interest_tae?: string | null;
   amount: string;
   is_active: boolean;
@@ -65,8 +68,18 @@ export type PortableLiabilityRecord = {
   accounting_account_id: number | null;
   currency: string;
   start_date?: string;
+  expected_end_date?: string | null;
+  term_months?: number | null;
+  rate_type?: string;
+  payment_frequency?: string;
+  amortization_system?: string | null;
   annual_interest_tae?: string | null;
   monthly_payment_amount?: string | null;
+  principal_amount?: string | null;
+  opening_fees_amount?: string | null;
+  early_repayment_fee_percent?: string | null;
+  novation_subrogation_fee_amount?: string | null;
+  linked_products_monthly_cost?: string | null;
   amount: string;
   is_active: boolean;
   notes?: string;
@@ -284,6 +297,11 @@ export function toPortableAssetRecord(raw: Partial<PortableAssetRecord>): Portab
       raw.accounting_account_id == null ? null : Number(raw.accounting_account_id),
     currency: String(raw.currency ?? 'EUR').toUpperCase(),
     start_date: raw.start_date ? String(raw.start_date) : undefined,
+    initial_purchase_value:
+      raw.initial_purchase_value == null ? null : String(raw.initial_purchase_value),
+    amortization_method: raw.amortization_method == null ? 'none' : String(raw.amortization_method),
+    amortization_term_years:
+      raw.amortization_term_years == null ? null : Number(raw.amortization_term_years),
     annual_interest_tae: raw.annual_interest_tae == null ? null : String(raw.annual_interest_tae),
     amount: String(raw.amount ?? '0'),
     is_active: raw.is_active ?? true,
@@ -308,9 +326,26 @@ export function toPortableLiabilityRecord(
       raw.accounting_account_id == null ? null : Number(raw.accounting_account_id),
     currency: String(raw.currency ?? 'EUR').toUpperCase(),
     start_date: raw.start_date ? String(raw.start_date) : undefined,
+    expected_end_date: raw.expected_end_date ? String(raw.expected_end_date) : undefined,
+    term_months: raw.term_months == null ? null : Number(raw.term_months),
+    rate_type: raw.rate_type == null ? 'fixed' : String(raw.rate_type),
+    payment_frequency: raw.payment_frequency == null ? 'monthly' : String(raw.payment_frequency),
+    amortization_system:
+      raw.amortization_system == null ? null : String(raw.amortization_system),
     annual_interest_tae: raw.annual_interest_tae == null ? null : String(raw.annual_interest_tae),
     monthly_payment_amount:
       raw.monthly_payment_amount == null ? null : String(raw.monthly_payment_amount),
+    principal_amount: raw.principal_amount == null ? null : String(raw.principal_amount),
+    opening_fees_amount:
+      raw.opening_fees_amount == null ? null : String(raw.opening_fees_amount),
+    early_repayment_fee_percent:
+      raw.early_repayment_fee_percent == null ? null : String(raw.early_repayment_fee_percent),
+    novation_subrogation_fee_amount:
+      raw.novation_subrogation_fee_amount == null
+        ? null
+        : String(raw.novation_subrogation_fee_amount),
+    linked_products_monthly_cost:
+      raw.linked_products_monthly_cost == null ? null : String(raw.linked_products_monthly_cost),
     amount: String(raw.amount ?? '0'),
     is_active: raw.is_active ?? true,
     notes: raw.notes == null ? '' : String(raw.notes),
