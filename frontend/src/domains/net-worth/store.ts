@@ -140,9 +140,11 @@ export const useNetWorthStore = defineStore('netWorth', {
     async createLiability(payload: OwnershipAwarePayload) {
       this.loading = true;
       this.error = null;
+      let createdLiability: Liability | null = null;
       try {
         const { ownership_id = null, ...corePayload } = payload;
         const res = await coreNetWorthApi.createLiability(corePayload);
+        createdLiability = res?.data ?? null;
         if (res?.data?.id) {
           await premiumOwnershipApi.syncOwnershipLink({
             target_type: 'liability',
@@ -151,8 +153,18 @@ export const useNetWorthStore = defineStore('netWorth', {
           });
         }
         await this.refreshAll();
+        return createdLiability;
       } catch (e: unknown) {
         this.error = toApiErrorMessage(e);
+        if (createdLiability) {
+          try {
+            await this.refreshAll();
+          } catch {
+            // keep original error; pasivo ya fue creado en core
+          }
+          return createdLiability;
+        }
+        return null;
       } finally {
         this.loading = false;
       }

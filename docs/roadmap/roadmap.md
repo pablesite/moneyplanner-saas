@@ -211,6 +211,25 @@ Accounting module (`Modulo Contabilidad`) - dashboard data-input update with tem
 Objective:
 1. Introduce temporal behavior in financial records.
 
+Current progress (in progress):
+1. Liability (`Pasivos`) flow is being actively improved in `Introduccion de datos`.
+2. Liability creation now supports richer amortization base metadata (dates/term/rate behavior base).
+3. Automatic generation of recurring annual expense entries from liabilities is already working.
+4. UX improvements are in progress to reduce form noise and improve guided completion.
+
+Current focus inside Milestone 14:
+1. Introduce liabilities and generate recurring expenses (`gastos recurrentes`) from debt schedules.
+2. Validate/adjust the generated annual expense classification (for example debt used to buy an asset vs generic financial commitment).
+
+Next likely steps (Milestone 14 refinement):
+1. Add real functional behavior to liability conditions:
+   - interest type (`tipo de interes`)
+   - payment frequency (`frecuencia`)
+   - amortization system (`tipo de amortizacion`)
+2. Apply some fields conditionally by liability category (for example mortgage-specific behavior/inputs only for `hipoteca`).
+3. Autocomplete as many fields as possible depending on the selected category.
+4. Add smarter suggestions by name similarity (for example infer `activo financiado` if liability name resembles an existing asset name like `iPhone` vs `iPhone Pro 16`).
+
 Scope updates:
 1. Income (`Ingresos`) - (New) one-off entries and monthly check-ins.
 2. Expenses (`Gastos`) - (New) one-off entries and monthly check-ins.
@@ -267,3 +286,20 @@ Simulators dashboard (`Dashboard Simuladores`) - likely SaaS-only.
 
 ### Milestone 23 (Continuous)
 Iterative scaling: observability, performance, security, UX.
+
+### Milestone 24
+Guided onboarding / assisted data completion (`Acompanamiento guiado de captura de datos`).
+
+Objective:
+1. Help first-time users complete enough data to build a useful annual budget and net-worth baseline.
+
+Direction:
+1. First-open guided questionnaire / wizard (progressive questions, not a blank form).
+2. Smart prompts for common missing assets and liabilities (for example phone, laptop, jewelry, bike, vehicle, housing).
+3. Questions that fill both:
+   - net worth (`balance patrimonial`)
+   - annual budget (`balance anual`)
+4. Progressive enrichment: start with coarse data and refine later without blocking value.
+
+Reference:
+- `docs/roadmap/roadmap-milestone-24-assisted-data-capture.md`

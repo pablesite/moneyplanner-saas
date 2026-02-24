@@ -11,19 +11,33 @@ export type NetWorthViewExtensions = {
 
 export function useNetWorthViewExtensions(store?: unknown): NetWorthViewExtensions {
   const ownershipProps = computed<ExtensionProps>(() => {
+    const baseCurrency =
+      store && typeof store === 'object'
+        ? (('baseCurrency' in store &&
+            typeof (store as { baseCurrency?: unknown }).baseCurrency === 'string'
+            ? (store as { baseCurrency?: string | null }).baseCurrency
+            : null) ??
+          (('summary' in store &&
+            typeof (store as { summary?: { base_currency?: unknown } | null }).summary?.base_currency ===
+              'string')
+            ? String((store as { summary?: { base_currency?: string | null } | null }).summary?.base_currency)
+            : null))
+        : null;
+    const baseProps = baseCurrency ? { defaultCurrency: baseCurrency } : {};
+
     if (!capabilities.people || !store || typeof store !== 'object') {
-      return {};
+      return baseProps;
     }
     if (!('ownerships' in store)) {
-      return {};
+      return baseProps;
     }
 
     const ownerships = (store as { ownerships?: unknown }).ownerships;
     if (!Array.isArray(ownerships)) {
-      return {};
+      return baseProps;
     }
 
-    return { ownerships };
+    return { ...baseProps, ownerships };
   });
 
   return {

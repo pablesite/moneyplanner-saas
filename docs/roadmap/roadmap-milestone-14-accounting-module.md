@@ -9,6 +9,21 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 3. Milestone 11 (`Fase 2`) y Milestone 12 (`Fase 3`) se benefician en el futuro de historico mensual (variabilidad real, estacionalidad, confirmacion de recurrencias), aunque sus v1 no dependen de ello.
 4. Este hito crea la base temporal para pasar de `datos estaticos` a `evolucion mensual`, sin romper la semantica actual de entradas anuales.
 
+## Estado actual (progreso del hito)
+### Avance actual (en curso)
+1. Se esta trabajando activamente en el flujo de `Pasivos` dentro de `Introduccion de datos`.
+2. Ya existe generacion automatica de `gastos recurrentes` (entradas anuales recurrentes por ano) a partir de pasivos con calendario/cuotas.
+3. Se ha mejorado la UX del formulario de pasivos para reducir ruido y hacer mas compacta la captura.
+4. Se ha empezado a enlazar la logica de calendario del pasivo (plazo/cuotas y fecha fin) para acelerar la introduccion de datos.
+5. Se esta afinando la validacion del gasto autogenerado para evitar clasificaciones incorrectas (por ejemplo `compromiso financiero` cuando realmente corresponde a `compra de activo`).
+
+### Situacion funcional actual de este subfrente
+1. El subflujo de pasivos ya aporta valor a Milestone 14 porque conecta:
+   - metadata temporal del pasivo
+   - interpretacion de deuda
+   - generacion de gasto anual derivado
+2. El objetivo inmediato no es solo guardar el pasivo, sino mejorar la calidad del dato derivado que alimenta el `balance anual`.
+
 ## Intencion de producto
 1. Mantener la simplicidad de captura anual actual (`Introduccion de datos`) como capa de plan.
 2. Agregar una capa de seguimiento mensual (`check-ins`) para registrar lo que realmente ocurre.
@@ -51,6 +66,8 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
    - fecha prevista de finalizacion (`expected_end_date`) o plazo (`term_months`)
 2. Preparar ampliacion de metadata de amortizacion (base para `cuota mensual` automatica).
 3. Anadir metadata especifica para hipotecas y prestamos complejos (comisiones y costes del pasivo).
+4. Mejorar la UX del formulario de pasivos para autocompletar y reducir friccion de captura (en curso).
+5. Validar visualmente el gasto anual autogenerado desde el pasivo en el momento de creacion (en curso).
 
 ### 5) Upgrade de deuda pendiente (base de amortizacion)
 1. Agregar metadata necesaria para calculo automatico de `cuota mensual` cuando el producto lo soporte completamente:
@@ -59,6 +76,19 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
    - comportamiento del tipo (fijo/variable, v1 simplificado)
    - sistema de amortizacion (v1 puede quedar acotado a frances/fijo)
 2. Si el calculo automatico completo no entra en la entrega inicial del hito, al menos debe quedar el contrato persistido y validado.
+
+### 5B) Refinamiento de captura inteligente de pasivos (nuevo subfrente dentro del hito)
+1. Dependiendo de la categoria del pasivo, autocompletar el maximo de campos razonables:
+   - frecuencia por defecto
+   - tipo de interes por defecto
+   - sistema de amortizacion sugerido
+   - campos visibles/obligatorios por categoria (ej. hipoteca vs prestamo personal)
+2. Aplicar reglas especificas de `hipoteca` solo cuando corresponda (comisiones, costes y comportamiento esperado).
+3. Mejorar sugerencias de `activo financiado` con heuristicas de nombre:
+   - coincidencia exacta
+   - coincidencia parcial
+   - similitud simple (ej. `iPhone` -> `iPhone Pro 16`)
+4. Mantener confirmacion explicita del usuario antes de guardar sugerencias automaticas para evitar errores silenciosos.
 
 ## Fuera de alcance (Hito 14)
 1. Contabilidad de doble partida completa (asientos, libro mayor, conciliacion bancaria, plan contable formal).
@@ -227,6 +257,11 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 3. Si entra en plazo:
    - calculo automatico de cuota para caso simple (tipo fijo + cuota constante)
 
+### Fase D2 - Asistentes de captura y autocompletado en pasivos (prioridad media)
+1. Reglas de autocompletado por categoria de pasivo (`defaults` + visibilidad condicional).
+2. Sugerencias de `activo financiado` por similitud de nombre y contexto.
+3. Confirmacion/ajuste del gasto autogenerado en el flujo de alta del pasivo.
+
 ## Dependencias
 1. Milestone 08 (`Introduccion de datos`) como base de entradas anuales y categorias.
 2. Milestone 10 (`Dashboard Presupuesto`) como consumidor principal de `Ejecutado`.
@@ -244,6 +279,8 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 7. Hipotecas aceptan metadata de comisiones/costes del pasivo definida para la primera iteracion.
 8. Core y SaaS conservan contratos compartidos donde aplique (o divergencia documentada si es SaaS-only).
 9. Quality gates afectados pasan en Docker para los componentes modificados.
+10. El flujo de alta de pasivo reduce friccion de captura con autocompletado de campos por defecto (moneda/base y defaults de categoria donde aplique).
+11. El usuario puede revisar/validar el gasto anual autogenerado desde el pasivo antes de continuar.
 
 ## Plan de validacion (objetivo)
 1. SaaS backend (`backend/`):
@@ -295,6 +332,11 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 5. Tratamiento final de costes vinculados a hipoteca:
    - metadata dentro del pasivo
    - o gastos separados en `Gastos` con vinculacion al pasivo
+6. Estrategia de autocompletado de `activo financiado`:
+   - solo por seleccion manual
+   - sugerencia por nombre con confirmacion
+   - autoseleccion condicionada a alta confianza
+7. Que campos de `condiciones` deben ser editables/visibles por categoria de pasivo en v1 (especialmente `hipoteca`).
 
 ## Entregables esperados
 1. Documento de detalle del Milestone 14 (este archivo).
