@@ -217,26 +217,27 @@ Current progress (in progress):
 3. Automatic generation of recurring annual expense entries from liabilities is already working.
 4. UX improvements are in progress to reduce form noise and improve guided completion.
 5. `14A` (debt schedule v1 + generated recurring expenses) is functionally advanced and pending final closure docs/tests sweep.
+6. `14B` (liability form simplification + category defaults/autocomplete helpers) has been closed as a quick UX slice.
 
 Current focus inside Milestone 14:
-1. `14A`: liabilities (`Pasivos`) -> debt schedule v1 -> generated recurring annual expenses (`gastos recurrentes`) with safer sync.
-2. Stabilize generated annual expense classification and idempotent regeneration behavior.
+1. `14C` next: temporality for `Ingresos/Gastos` (one-off entries + monthly check-ins, starting with `Gastos`).
+2. Keep liability flow (`14A`/`14B`) stable while shifting effort to accounting temporality core.
 
-Current focus inside Milestone 14 (`14A` scope in execution):
-1. Supported debt engine v1: fixed-rate + monthly/quarterly schedule (constant installment).
-2. Annual generated expenses refresh on liability updates without duplicating entries.
-3. User edits on generated annual expenses are preserved when possible.
-4. Obsolete generated annualities are removed when the liability term is reduced.
-5. Liability form UX has been simplified to the currently supported combinations (reduced noise in `condiciones`).
+Recently closed inside Milestone 14 (`14A` + `14B`):
+1. Debt engine v1: fixed-rate + monthly/quarterly schedule (constant installment).
+2. Annual generated expenses sync on liability updates without duplication.
+3. Preservation of user edits on generated annual expenses when applicable.
+4. Removal of obsolete generated annualities when liability term shrinks.
+5. Liability form UX simplified to supported combinations plus category-based defaults/autocomplete hints.
 
 Next likely steps (Milestone 14 refinement):
-1. Close `14A` formally:
-   - backend normalization of annual expense `time_profile` / `cashflow_role`
-   - regression tests for liability regeneration paths
-   - roadmap/docs update and release checkpoint
-2. Apply more fields conditionally by liability category (for example mortgage-specific behavior/inputs only for `hipoteca`).
-3. Autocomplete as many fields as possible depending on the selected category.
-4. Add smarter suggestions by name similarity (for example infer `activo financiado` if liability name resembles an existing asset name like `iPhone` vs `iPhone Pro 16`).
+1. Start `14C` with a minimal slice in `Gastos`:
+   - `one-off` entries
+   - monthly check-ins
+   - read model (monthly / YTD) for planned vs executed
+2. Extend `14C` to `Ingresos` reusing the same temporal contracts.
+3. Integrate `14C` outputs into `Dashboard Presupuesto` (`Ejecutado` real).
+4. Revisit additional liability helpers only if they materially reduce capture friction (otherwise defer).
 
 Scope updates:
 1. Income (`Ingresos`) - (New) one-off entries and monthly check-ins.
@@ -312,3 +313,15 @@ Direction:
 
 Reference:
 - `docs/roadmap/roadmap-milestone-24-assisted-data-capture.md`
+
+### Milestone 25 (Candidate)
+Backend-first business logic delegation (`Delegar logica funcional del front al back`).
+
+Objective:
+1. Move critical business rules, normalizations and derived calculations from frontend forms/views to backend services/serializers.
+
+Direction:
+1. Reduce duplication between UI flows and import paths.
+2. Improve consistency across SaaS/Core and future clients.
+3. Keep frontend focused on UX guidance, not canonical domain rules.
+4. Prioritize high-risk domains first (budget classification, liability derivations, temporal accounting rules).

@@ -34,6 +34,20 @@ Pendiente para cerrar 14A:
 1. Remate de documentacion/roadmap (este paso).
 2. Barrido final de validaciones de calidad afectadas y checkpoint de release/commit.
 
+### Subhito 14B (cerrado - refinamiento UX de pasivos)
+Objetivo:
+1. Reducir friccion de captura en el formulario de `Pasivos` sin ampliar el alcance del motor financiero.
+
+Entregado (14B):
+1. Simplificacion de `condiciones` a lo soportado por v1 (TAE + frecuencia).
+2. Reordenacion/compactacion del formulario para flujo de captura mas guiado.
+3. Defaults por categoria de pasivo (en flujo de alta).
+4. Sugerencia de `activo financiado` por heuristica de nombre/categoria (editable por el usuario).
+
+Decision de alcance:
+1. Se cierra `14B` como slice UX rapido para no retrasar el objetivo principal del hito.
+2. Refinamientos adicionales de pasivos se evaluaran despues de avanzar `14C`.
+
 ### Situacion funcional actual de este subfrente
 1. El subflujo de pasivos ya aporta valor a Milestone 14 porque conecta:
    - metadata temporal del pasivo
@@ -262,6 +276,7 @@ Pendiente para cerrar 14A:
 1. Modelo de datos para eventos puntuales + check-ins mensuales.
 2. API/servicios para CRUD de check-ins.
 3. Soporte de captura simplificada (modo Lite como flujo principal).
+4. Siguiente paso activo tras cierre de `14B`: arrancar por `Gastos` con slice minimo (`one-off` + check-in mensual + agregados basicos).
 
 ### Fase C - Read model y consumo de presupuesto (prioridad alta)
 1. Agregados de lectura para series plan vs ejecutado (mensual + YTD).
