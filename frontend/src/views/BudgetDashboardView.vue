@@ -46,6 +46,45 @@ type ExpenseMonthlyCheckinApiItem = {
   updated_at: string;
 };
 
+type LiquidityMonthlyCheckinApiItem = {
+  id: number;
+  status: 'confirmed' | 'adjusted';
+  closing_balance_real: string;
+  note: string;
+  confirmed_at: string | null;
+  updated_at: string | null;
+};
+
+type LiquidityMonthlySummaryRow = {
+  asset_id: number;
+  asset_name: string;
+  asset_category: string;
+  asset_subcategory: string;
+  currency: string;
+  planned_closing_balance: string;
+  executed_closing_balance: string | null;
+  effective_closing_balance: string;
+  deviation: string;
+  planned_closing_balance_base: string;
+  executed_closing_balance_base: string | null;
+  effective_closing_balance_base: string;
+  deviation_base: string;
+  checkin: LiquidityMonthlyCheckinApiItem | null;
+};
+
+type LiquidityMonthlySummaryResponse = {
+  fiscal_year: number;
+  month: number;
+  base_currency: string;
+  planned_total: string;
+  executed_total: string;
+  deviation_total: string;
+  completion_ratio: number;
+  checkins_confirmed: number;
+  checkins_expected: number;
+  rows: LiquidityMonthlySummaryRow[];
+};
+
 type BudgetRow = {
   key: string;
   categoryKey: string;
@@ -117,6 +156,11 @@ const expenseExecutionLoading = ref(false);
 const expenseExecutionBusyEntryId = ref<number | null>(null);
 const expenseExecutionError = ref<string | null>(null);
 const expenseAdjustAmounts = ref<Record<number, string>>({});
+const liquidityMonthlySummary = ref<LiquidityMonthlySummaryResponse | null>(null);
+const liquidityExecutionLoading = ref(false);
+const liquidityExecutionBusyAssetId = ref<number | null>(null);
+const liquidityExecutionError = ref<string | null>(null);
+const liquidityAdjustAmounts = ref<Record<number, string>>({});
 
 const incomeCategoryLabels = new Map(
   incomeCategories.map((row) => [row.value, row.label] as const),
@@ -329,6 +373,34 @@ const selectedExpenseSummaryMonth = computed(() => {
   return expenseSummaryByMonth.value.get(selectedExecutionMonth.value) ?? null;
 });
 
+const selectedExpenseMonthPlanned = computed(() =>
+  toNumberOrZero(selectedExpenseSummaryMonth.value?.planned),
+);
+const selectedExpenseMonthExecuted = computed(() =>
+  toNumberOrZero(selectedExpenseSummaryMonth.value?.executed),
+);
+const selectedExpenseMonthDeviation = computed(
+  () => selectedExpenseMonthExecuted.value - selectedExpenseMonthPlanned.value,
+);
+
+const selectedLiquidityMonthPlanned = computed(() =>
+  toNumberOrZero(liquidityMonthlySummary.value?.planned_total),
+);
+const selectedLiquidityMonthExecuted = computed(() =>
+  toNumberOrZero(liquidityMonthlySummary.value?.executed_total),
+);
+const selectedLiquidityMonthDeviation = computed(
+  () => selectedLiquidityMonthExecuted.value - selectedLiquidityMonthPlanned.value,
+);
+
+const monthlyLiquidityExecutionRows = computed(() =>
+  (liquidityMonthlySummary.value?.rows ?? []).map((row) => {
+    const planned = toNumberOrZero(row.planned_closing_balance);
+    const executed = row.checkin ? toNumberOrZero(row.executed_closing_balance) : null;
+    return { ...row, planned, executed };
+  }),
+);
+
 const monthlyExpenseExecutionEntries = computed(() => {
   const month = selectedExecutionMonth.value;
   return expenseEntries.value
@@ -350,7 +422,65 @@ const monthlyExpenseExecutionEntries = computed(() => {
       };
     })
     .filter((row) => row.planned > 0)
-    .sort((a, b) => b.planned - a.planned || a.entry.name.localeCompare(b.entry.name, 'es'));
+    .sort(
+      (a, b) =>
+        expenseCheckinCategorySortWeight(a.entry.category) -
+          expenseCheckinCategorySortWeight(b.entry.category) ||
+        b.planned - a.planned ||
+        a.entry.name.localeCompare(b.entry.name, 'es'),
+    );
+});
+
+const groupedMonthlyExpenseExecutionEntries = computed(() => {
+  type Row = (typeof monthlyExpenseExecutionEntries.value)[number];
+  const groups = new Map<
+    string,
+    {
+      categoryKey: string;
+      categoryLabel: string;
+      rows: Row[];
+      plannedTotal: number;
+      executedTotal: number;
+      checkedCount: number;
+    }
+  >();
+
+  for (const row of monthlyExpenseExecutionEntries.value) {
+    const key = row.entry.category;
+    let group = groups.get(key);
+    if (!group) {
+      group = {
+        categoryKey: key,
+        categoryLabel: shortExpenseCategoryLabel(key),
+        rows: [],
+        plannedTotal: 0,
+        executedTotal: 0,
+        checkedCount: 0,
+      };
+      groups.set(key, group);
+    }
+    group.rows.push(row);
+    group.plannedTotal += row.planned;
+    if (row.checkin) {
+      group.checkedCount += 1;
+      if (row.checkin.status !== 'skipped' && row.executed != null) {
+        group.executedTotal += row.executed;
+      }
+    }
+  }
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      deviation: group.executedTotal - group.plannedTotal,
+      completionRatio: group.rows.length ? group.checkedCount / group.rows.length : 0,
+    }))
+    .sort(
+      (a, b) =>
+        expenseCheckinCategorySortWeight(a.categoryKey) -
+          expenseCheckinCategorySortWeight(b.categoryKey) ||
+        b.plannedTotal - a.plannedTotal,
+    );
 });
 
 const executionStatusLabel = computed(() => {
@@ -607,30 +737,153 @@ async function refreshExpenseExecutionData(): Promise<void> {
 }
 
 function suggestedExecutedAmountForRow(row: (typeof monthlyExpenseExecutionEntries.value)[number]): string {
+  if (row.checkin?.status === 'skipped') return '0.00';
   if (row.executed != null) return row.executed.toFixed(2);
   return row.planned.toFixed(2);
 }
 
-async function upsertExpenseCheckin(
+function ensureExpenseAdjustAmountPrefilled(
   row: (typeof monthlyExpenseExecutionEntries.value)[number],
-  status: 'confirmed' | 'adjusted' | 'skipped',
+): void {
+  const current = String(expenseAdjustAmounts.value[row.entry.id] ?? '').trim();
+  if (current) return;
+  expenseAdjustAmounts.value[row.entry.id] = suggestedExecutedAmountForRow(row);
+}
+
+function parseDecimalInput(raw: string): number | null {
+  const normalized = raw.trim().replace(',', '.');
+  if (!normalized) return null;
+  const value = Number(normalized);
+  if (!Number.isFinite(value) || value < 0) return null;
+  return value;
+}
+
+function checkinStatusLabel(status: ExpenseMonthlyCheckinApiItem['status']): string {
+  if (status === 'confirmed') return 'Confirmado';
+  if (status === 'adjusted') return 'Ajustado';
+  return 'No ocurrió';
+}
+
+function cleanedExpenseCheckinName(name: string): string {
+  return name.replace(/^Compromiso pasivo:\s*/i, '').trim();
+}
+
+function shortExpenseCategoryLabel(category: string): string {
+  if (category === 'real_estate_assets') return 'Act. Inm';
+  if (category === 'tangible_assets') return 'Act. Mob';
+  if (category === 'consumption_expenses') return 'Gastos';
+  if (category === 'financial_investments') return 'Inv. Fin';
+  if (category === 'savings_allocation') return 'Ahorro';
+  return expenseCategoryLabels.get(category as (typeof expenseCategories)[number]['value']) ?? category;
+}
+
+function expenseCheckinCategorySortWeight(category: string): number {
+  if (category === 'real_estate_assets') return 0; // Act. Inm
+  if (category === 'tangible_assets') return 1; // Act. mob
+  if (category === 'financial_investments') return 2; // Inversiones
+  if (category === 'consumption_expenses') return 3; // Gastos
+  if (category === 'savings_allocation') return 4; // Ahorro
+  return 99;
+}
+
+function amountsEqualCents(left: number, right: number): boolean {
+  return Math.round(left * 100) === Math.round(right * 100);
+}
+
+function expenseCheckinRowSummary(row: (typeof monthlyExpenseExecutionEntries.value)[number]): string {
+  const name = cleanedExpenseCheckinName(row.entry.name);
+  const subcategory = expenseSubcategoryLabels.get(row.entry.subcategory) ?? row.entry.subcategory;
+  return `${subcategory} · ${name}`;
+}
+
+async function clearExpenseCheckin(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
 ): Promise<void> {
+  const existing = expenseCheckinsByEntryId.value[row.entry.id];
+  if (!existing) return;
   expenseExecutionBusyEntryId.value = row.entry.id;
   expenseExecutionError.value = null;
   try {
+    await coreApi.delete(`/api/budget/annual-expense-checkins/${existing.id}/`);
+    await refreshExpenseExecutionData();
+  } catch (e: unknown) {
+    expenseExecutionError.value = toApiErrorMessage(e);
+  } finally {
+    expenseExecutionBusyEntryId.value = null;
+  }
+}
+
+function setExpenseAdjustAmountZero(row: (typeof monthlyExpenseExecutionEntries.value)[number]): void {
+  expenseAdjustAmounts.value[row.entry.id] = '0.00';
+}
+
+function setExpenseAdjustAmountPlanned(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+): void {
+  expenseAdjustAmounts.value[row.entry.id] = row.planned.toFixed(2);
+}
+
+async function resetExpenseCheckinDraftValue(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+  mode: 'zero' | 'planned',
+): Promise<void> {
+  if (mode === 'zero') setExpenseAdjustAmountZero(row);
+  else setExpenseAdjustAmountPlanned(row);
+  if (expenseCheckinsByEntryId.value[row.entry.id]) {
+    await clearExpenseCheckin(row);
+  }
+}
+
+async function saveExpenseCheckinFromInput(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+): Promise<void> {
+  ensureExpenseAdjustAmountPrefilled(row);
+  const rawAdjusted = String(expenseAdjustAmounts.value[row.entry.id] ?? '').trim();
+  const parsedAdjusted = parseDecimalInput(rawAdjusted);
+  if (parsedAdjusted == null) {
+    expenseExecutionError.value =
+      'Indica un importe valido para confirmar (por ejemplo 123,45).';
+    return;
+  }
+  expenseAdjustAmounts.value[row.entry.id] = parsedAdjusted.toFixed(2);
+  const status = amountsEqualCents(parsedAdjusted, row.planned) ? 'confirmed' : 'adjusted';
+  await upsertExpenseCheckin(row, status);
+}
+
+async function onExpenseCheckinCheckboxToggle(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+  checked: boolean,
+): Promise<void> {
+  if (checked) {
+    await saveExpenseCheckinFromInput(row);
+    return;
+  }
+  await clearExpenseCheckin(row);
+}
+
+async function onExpenseAdjustAmountBlur(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+): Promise<void> {
+  if (!expenseCheckinsByEntryId.value[row.entry.id]) return;
+  await saveExpenseCheckinFromInput(row);
+}
+
+async function upsertExpenseCheckin(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+  status: 'confirmed' | 'adjusted',
+): Promise<void> {
+  expenseExecutionError.value = null;
+  expenseExecutionBusyEntryId.value = row.entry.id;
+  try {
     const existing = expenseCheckinsByEntryId.value[row.entry.id];
-    const draftAmount =
-      status === 'adjusted'
-        ? String(expenseAdjustAmounts.value[row.entry.id] ?? '').trim()
-        : suggestedExecutedAmountForRow(row);
+    const draftAmount = String(expenseAdjustAmounts.value[row.entry.id] ?? '').trim();
 
     const payload = {
       annual_expense_entry_id: row.entry.id,
       fiscal_year: fiscalYear.value,
       month: selectedExecutionMonth.value,
       status,
-      executed_amount:
-        status === 'skipped' ? null : status === 'adjusted' ? (draftAmount || null) : draftAmount,
+      executed_amount: draftAmount || null,
     };
 
     if (existing) {
@@ -646,16 +899,187 @@ async function upsertExpenseCheckin(
   }
 }
 
+function shortLiquiditySubcategoryLabel(subcategory: string): string {
+  if (subcategory === 'bank_account') return 'Cuenta bancaria';
+  if (subcategory === 'wallet') return 'Monedero';
+  if (subcategory === 'crypto_spot_earn') return 'Spot/Earn';
+  return 'Liquidez';
+}
+
+function liquidityCheckinRowSummary(row: (typeof monthlyLiquidityExecutionRows.value)[number]): string {
+  return `${shortLiquiditySubcategoryLabel(row.asset_subcategory)} · ${row.asset_name}`;
+}
+
+function suggestedLiquidityClosingBalanceForRow(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): string {
+  if (row.executed != null) return row.executed.toFixed(2);
+  return row.planned.toFixed(2);
+}
+
+function ensureLiquidityAdjustAmountPrefilled(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): void {
+  const current = String(liquidityAdjustAmounts.value[row.asset_id] ?? '').trim();
+  if (current) return;
+  liquidityAdjustAmounts.value[row.asset_id] = suggestedLiquidityClosingBalanceForRow(row);
+}
+
+async function loadLiquidityExecutionSummary(): Promise<void> {
+  try {
+    const response = await coreApi.get<LiquidityMonthlySummaryResponse>(
+      '/api/net-worth/liquidity/monthly-summary/',
+      { params: { year: fiscalYear.value, month: selectedExecutionMonth.value } },
+    );
+    liquidityMonthlySummary.value = response.data ?? null;
+  } catch (e: unknown) {
+    liquidityExecutionError.value = toApiErrorMessage(e);
+  }
+}
+
+async function refreshLiquidityExecutionData(): Promise<void> {
+  liquidityExecutionLoading.value = true;
+  liquidityExecutionError.value = null;
+  try {
+    await loadLiquidityExecutionSummary();
+  } finally {
+    liquidityExecutionLoading.value = false;
+  }
+}
+
+async function clearLiquidityCheckin(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): Promise<void> {
+  if (!row.checkin) return;
+  liquidityExecutionBusyAssetId.value = row.asset_id;
+  liquidityExecutionError.value = null;
+  try {
+    await coreApi.delete(`/api/net-worth/liquidity-checkins/${row.checkin.id}/`);
+    await refreshLiquidityExecutionData();
+  } catch (e: unknown) {
+    liquidityExecutionError.value = toApiErrorMessage(e);
+  } finally {
+    liquidityExecutionBusyAssetId.value = null;
+  }
+}
+
+function setLiquidityAdjustAmountZero(row: (typeof monthlyLiquidityExecutionRows.value)[number]): void {
+  liquidityAdjustAmounts.value[row.asset_id] = '0.00';
+}
+
+function setLiquidityAdjustAmountPlanned(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): void {
+  liquidityAdjustAmounts.value[row.asset_id] = row.planned.toFixed(2);
+}
+
+async function resetLiquidityCheckinDraftValue(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+  mode: 'zero' | 'planned',
+): Promise<void> {
+  if (mode === 'zero') setLiquidityAdjustAmountZero(row);
+  else setLiquidityAdjustAmountPlanned(row);
+  if (row.checkin) {
+    await clearLiquidityCheckin(row);
+  }
+}
+
+async function upsertLiquidityCheckin(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+  status: 'confirmed' | 'adjusted',
+): Promise<void> {
+  liquidityExecutionError.value = null;
+  liquidityExecutionBusyAssetId.value = row.asset_id;
+  try {
+    const rawAdjusted = String(liquidityAdjustAmounts.value[row.asset_id] ?? '').trim();
+    const parsedAdjusted = parseDecimalInput(rawAdjusted);
+    if (parsedAdjusted == null) {
+      liquidityExecutionError.value = 'Indica un saldo válido para confirmar (por ejemplo 1234,56).';
+      return;
+    }
+    liquidityAdjustAmounts.value[row.asset_id] = parsedAdjusted.toFixed(2);
+    const payload = {
+      asset_id: row.asset_id,
+      fiscal_year: fiscalYear.value,
+      month: selectedExecutionMonth.value,
+      status,
+      closing_balance_real: parsedAdjusted.toFixed(2),
+    };
+    if (row.checkin) {
+      await coreApi.patch(`/api/net-worth/liquidity-checkins/${row.checkin.id}/`, payload);
+    } else {
+      await coreApi.post('/api/net-worth/liquidity-checkins/', payload);
+    }
+    await refreshLiquidityExecutionData();
+  } catch (e: unknown) {
+    liquidityExecutionError.value = toApiErrorMessage(e);
+  } finally {
+    liquidityExecutionBusyAssetId.value = null;
+  }
+}
+
+async function saveLiquidityCheckinFromInput(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): Promise<void> {
+  ensureLiquidityAdjustAmountPrefilled(row);
+  const rawAdjusted = String(liquidityAdjustAmounts.value[row.asset_id] ?? '').trim();
+  const parsedAdjusted = parseDecimalInput(rawAdjusted);
+  if (parsedAdjusted == null) {
+    liquidityExecutionError.value = 'Indica un saldo válido para confirmar (por ejemplo 1234,56).';
+    return;
+  }
+  const status = amountsEqualCents(parsedAdjusted, row.planned) ? 'confirmed' : 'adjusted';
+  await upsertLiquidityCheckin(row, status);
+}
+
+async function onLiquidityCheckinCheckboxToggle(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+  checked: boolean,
+): Promise<void> {
+  if (checked) {
+    await saveLiquidityCheckinFromInput(row);
+    return;
+  }
+  await clearLiquidityCheckin(row);
+}
+
+async function onLiquidityAdjustAmountBlur(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): Promise<void> {
+  if (!row.checkin) return;
+  await saveLiquidityCheckinFromInput(row);
+}
+
+watch(
+  monthlyExpenseExecutionEntries,
+  (rows) => {
+    for (const row of rows) {
+      ensureExpenseAdjustAmountPrefilled(row);
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  monthlyLiquidityExecutionRows,
+  (rows) => {
+    for (const row of rows) {
+      ensureLiquidityAdjustAmountPrefilled(row);
+    }
+  },
+  { immediate: true },
+);
+
 watch(
   fiscalYear,
   (year) => {
-    void Promise.all([refreshBudgetData(year), refreshExpenseExecutionData()]);
+    void Promise.all([refreshBudgetData(year), refreshExpenseExecutionData(), refreshLiquidityExecutionData()]);
   },
   { immediate: true },
 );
 
 watch(selectedExecutionMonth, () => {
-  void loadExpenseCheckinsForSelectedMonth();
+  void Promise.all([loadExpenseCheckinsForSelectedMonth(), refreshLiquidityExecutionData()]);
 });
 </script>
 
@@ -783,6 +1207,9 @@ watch(selectedExecutionMonth, () => {
     <div v-if="expenseExecutionError" class="alert mt-3">
       {{ expenseExecutionError }}
     </div>
+    <div v-if="liquidityExecutionError" class="alert mt-3">
+      {{ liquidityExecutionError }}
+    </div>
 
     <section class="card ui-pro-panel ui-budget-checkin mt-3">
       <div class="ui-budget-checkin-header">
@@ -807,15 +1234,23 @@ watch(selectedExecutionMonth, () => {
       <div v-if="expenseMonthlySummary" class="ui-budget-checkin-summary-grid">
         <article class="ui-budget-checkin-kpi">
           <span>Previsto mes</span>
-          <strong>{{ formatMoney(toNumberOrZero(selectedExpenseSummaryMonth?.planned)) }} EUR</strong>
+          <strong>{{ formatMoney(selectedExpenseMonthPlanned) }} €</strong>
         </article>
         <article class="ui-budget-checkin-kpi">
           <span>Ejecutado mes</span>
-          <strong>{{ formatMoney(toNumberOrZero(selectedExpenseSummaryMonth?.executed)) }} EUR</strong>
+          <strong>{{ formatMoney(selectedExpenseMonthExecuted) }} €</strong>
         </article>
-        <article class="ui-budget-checkin-kpi">
-          <span>Pendiente mes</span>
-          <strong>{{ formatMoney(toNumberOrZero(selectedExpenseSummaryMonth?.pending)) }} EUR</strong>
+        <article
+          class="ui-budget-checkin-kpi"
+          :class="{
+            'ui-budget-checkin-kpi-danger': selectedExpenseMonthDeviation > 0,
+            'ui-budget-checkin-kpi-good': selectedExpenseMonthDeviation < 0,
+          }"
+        >
+          <span>Desviación del mes</span>
+          <strong>
+            {{ selectedExpenseMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedExpenseMonthDeviation) }} €
+          </strong>
         </article>
         <article class="ui-budget-checkin-kpi">
           <span>Completitud</span>
@@ -825,65 +1260,266 @@ watch(selectedExecutionMonth, () => {
 
       <div class="ui-budget-checkin-list">
         <div v-if="expenseExecutionLoading" class="subtle">Cargando check-ins mensuales...</div>
-        <div v-else-if="!monthlyExpenseExecutionEntries.length" class="subtle">
+        <div v-else-if="!groupedMonthlyExpenseExecutionEntries.length" class="subtle">
           No hay gastos previstos para este mes con los filtros actuales.
         </div>
-        <article
-          v-for="row in monthlyExpenseExecutionEntries"
-          :key="`expense-checkin-${row.entry.id}`"
-          class="ui-budget-checkin-row"
-        >
-          <div class="ui-budget-checkin-row-main">
-            <div class="ui-budget-checkin-row-title">{{ row.entry.name }}</div>
-            <div class="ui-budget-checkin-row-meta">
-              {{ expenseCategoryLabels.get(row.entry.category) ?? row.entry.category }} ·
-              {{ expenseSubcategoryLabels.get(row.entry.subcategory) ?? row.entry.subcategory }}
-              · Previsto {{ formatMoney(row.planned) }} EUR
-              <template v-if="row.entry.expenseType === 'one_off'"> · Puntual</template>
-            </div>
-            <div v-if="row.checkin" class="ui-budget-checkin-row-state">
-              Estado: <strong>{{ row.checkin.status }}</strong>
-              <template v-if="row.checkin.status !== 'skipped' && row.executed != null">
-                · Ejecutado {{ formatMoney(row.executed) }} EUR
-              </template>
-            </div>
-          </div>
+        <div v-else class="ui-budget-checkin-groups-box">
+          <details
+            v-for="group in groupedMonthlyExpenseExecutionEntries"
+            :key="`expense-checkin-group-${group.categoryKey}`"
+            class="ui-budget-checkin-group"
+            open
+          >
+            <summary class="ui-budget-checkin-group-summary">
+              <div class="ui-budget-checkin-group-title-wrap">
+                <strong class="ui-budget-checkin-group-title">{{ group.categoryLabel }}</strong>
+                <span class="ui-budget-checkin-group-meta">
+                  {{ group.rows.length }} líneas ·
+                  {{ Math.round(group.completionRatio * 100) }} % completitud
+                </span>
+              </div>
+              <div class="ui-budget-checkin-group-kpis">
+                <span>P {{ formatMoney(group.plannedTotal) }} €</span>
+                <span>E {{ formatMoney(group.executedTotal) }} €</span>
+                <span
+                  :class="{
+                    'ui-budget-checkin-group-dev-pos': group.deviation > 0,
+                    'ui-budget-checkin-group-dev-neg': group.deviation < 0,
+                  }"
+                >
+                  D {{ group.deviation > 0 ? '+' : '' }}{{ formatMoney(group.deviation) }} €
+                </span>
+              </div>
+            </summary>
 
-          <div class="ui-budget-checkin-row-actions">
-            <button
-              type="button"
-              class="btn ui-budget-checkin-btn"
-              :disabled="expenseExecutionBusyEntryId === row.entry.id"
-              @click="upsertExpenseCheckin(row, 'confirmed')"
-            >
-              Confirmar
-            </button>
-            <button
-              type="button"
-              class="btn ui-budget-checkin-btn"
-              :disabled="expenseExecutionBusyEntryId === row.entry.id"
-              @click="upsertExpenseCheckin(row, 'skipped')"
-            >
-              No ocurrió
-            </button>
-            <div class="ui-budget-checkin-adjust">
-              <input
-                v-model="expenseAdjustAmounts[row.entry.id]"
-                inputmode="decimal"
-                class="input ui-data-field"
-                placeholder="Ajustar importe"
-              />
-              <button
-                type="button"
-                class="btn btn-primary ui-budget-checkin-btn"
-                :disabled="expenseExecutionBusyEntryId === row.entry.id"
-                @click="upsertExpenseCheckin(row, 'adjusted')"
+            <div class="ui-budget-checkin-group-rows">
+              <article
+                v-for="row in group.rows"
+                :key="`expense-checkin-${row.entry.id}`"
+                class="ui-budget-checkin-row"
               >
-                Guardar ajuste
-              </button>
+                <div class="ui-budget-checkin-row-main">
+                  <div class="ui-budget-checkin-row-title" :title="expenseCheckinRowSummary(row)">
+                    {{ expenseCheckinRowSummary(row) }}
+                    <span class="ui-budget-checkin-row-planned">
+                      (Previsto {{ formatMoney(row.planned) }} €)
+                    </span>
+                    <template v-if="row.entry.expenseType === 'one_off'"> · Puntual</template>
+                  </div>
+                  <div v-if="row.checkin" class="ui-budget-checkin-row-state">
+                    <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
+                    <template v-if="row.checkin.status !== 'skipped' && row.executed != null">
+                      ({{ formatMoney(row.executed) }} €)
+                    </template>
+                  </div>
+                </div>
+
+                <div class="ui-budget-checkin-row-actions">
+                  <div class="ui-budget-checkin-adjust">
+                    <div class="ui-budget-checkin-quick-actions">
+                      <button
+                        type="button"
+                        class="btn ui-budget-checkin-mini-btn"
+                        :disabled="expenseExecutionBusyEntryId === row.entry.id"
+                        title="Poner importe ejecutado a 0"
+                        @click="resetExpenseCheckinDraftValue(row, 'zero')"
+                      >
+                        Borrar
+                      </button>
+                      <button
+                        type="button"
+                        class="btn ui-budget-checkin-mini-btn"
+                        :disabled="expenseExecutionBusyEntryId === row.entry.id"
+                        title="Restaurar importe previsto del mes"
+                        @click="resetExpenseCheckinDraftValue(row, 'planned')"
+                      >
+                        Previsto
+                      </button>
+                    </div>
+                    <input
+                      v-model="expenseAdjustAmounts[row.entry.id]"
+                      inputmode="decimal"
+                      class="input ui-data-field"
+                      placeholder="Importe ejecutado"
+                      @focus="ensureExpenseAdjustAmountPrefilled(row)"
+                      @blur="onExpenseAdjustAmountBlur(row)"
+                      @keydown.enter.prevent="saveExpenseCheckinFromInput(row)"
+                    />
+                  </div>
+                  <label class="ui-budget-checkin-confirm" title="Confirmar check-in del mes">
+                    <input
+                      type="checkbox"
+                      :checked="!!row.checkin"
+                      :disabled="expenseExecutionBusyEntryId === row.entry.id"
+                      aria-label="Confirmar check-in del mes"
+                      @change="
+                        onExpenseCheckinCheckboxToggle(
+                          row,
+                          Boolean(($event.target as HTMLInputElement).checked),
+                        )
+                      "
+                    />
+                  </label>
+                </div>
+              </article>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="card ui-pro-panel ui-budget-checkin mt-3">
+      <div class="ui-budget-checkin-header">
+        <div>
+          <h2 class="ui-budget-checkin-title">Cierre de liquidez</h2>
+          <p class="ui-budget-checkin-subtitle">
+            Ajusta el saldo real de cuentas y activos líquidos para el mes seleccionado (14C v1).
+          </p>
+        </div>
+        <div class="ui-budget-checkin-controls">
+          <label>
+            <span>Mes</span>
+            <select
+              v-model="selectedExecutionMonth"
+              class="select ui-data-field"
+              :disabled="liquidityExecutionLoading"
+            >
+              <option v-for="(label, index) in monthLabels" :key="`liq-${label}`" :value="index + 1">
+                {{ label }}
+              </option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div v-if="liquidityMonthlySummary" class="ui-budget-checkin-summary-grid">
+        <article class="ui-budget-checkin-kpi">
+          <span>Previsto cierre</span>
+          <strong>{{ formatMoney(selectedLiquidityMonthPlanned) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Real cierre</span>
+          <strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} €</strong>
+        </article>
+        <article
+          class="ui-budget-checkin-kpi"
+          :class="{
+            'ui-budget-checkin-kpi-danger': selectedLiquidityMonthDeviation < 0,
+            'ui-budget-checkin-kpi-good': selectedLiquidityMonthDeviation > 0,
+          }"
+        >
+          <span>Desviación liquidez</span>
+          <strong>
+            {{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €
+          </strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Completitud</span>
+          <strong>{{ formatPercent(liquidityMonthlySummary.completion_ratio ?? null, 0) }}</strong>
+        </article>
+      </div>
+
+      <div class="ui-budget-checkin-list">
+        <div v-if="liquidityExecutionLoading" class="subtle">Cargando cierre de liquidez...</div>
+        <div v-else-if="!monthlyLiquidityExecutionRows.length" class="subtle">
+          No hay activos de liquidez activos para este mes.
+        </div>
+        <div v-else class="ui-budget-checkin-groups-box">
+          <div class="ui-budget-checkin-group">
+            <div class="ui-budget-checkin-group-summary">
+              <div class="ui-budget-checkin-group-title-wrap">
+                <strong class="ui-budget-checkin-group-title">Activos líquidos</strong>
+                <span class="ui-budget-checkin-group-meta">
+                  {{ monthlyLiquidityExecutionRows.length }} cuentas ·
+                  {{ formatPercent(liquidityMonthlySummary?.completion_ratio ?? null, 0) }} completitud
+                </span>
+              </div>
+              <div class="ui-budget-checkin-group-kpis">
+                <span>P {{ formatMoney(selectedLiquidityMonthPlanned) }} €</span>
+                <span>E {{ formatMoney(selectedLiquidityMonthExecuted) }} €</span>
+                <span
+                  :class="{
+                    'ui-budget-checkin-group-dev-pos': selectedLiquidityMonthDeviation > 0,
+                    'ui-budget-checkin-group-dev-neg': selectedLiquidityMonthDeviation < 0,
+                  }"
+                >
+                  D {{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €
+                </span>
+              </div>
+            </div>
+
+            <div class="ui-budget-checkin-group-rows">
+              <article
+                v-for="row in monthlyLiquidityExecutionRows"
+                :key="`liquidity-checkin-${row.asset_id}`"
+                class="ui-budget-checkin-row"
+              >
+                <div class="ui-budget-checkin-row-main">
+                  <div class="ui-budget-checkin-row-title" :title="liquidityCheckinRowSummary(row)">
+                    {{ liquidityCheckinRowSummary(row) }}
+                    <span class="ui-budget-checkin-row-planned">
+                      (Previsto {{ formatMoney(row.planned) }} {{ row.currency === 'EUR' ? '€' : row.currency }})
+                    </span>
+                  </div>
+                  <div v-if="row.checkin" class="ui-budget-checkin-row-state">
+                    <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
+                    <template v-if="row.executed != null">
+                      ({{ formatMoney(row.executed) }} {{ row.currency === 'EUR' ? '€' : row.currency }})
+                    </template>
+                  </div>
+                </div>
+
+                <div class="ui-budget-checkin-row-actions">
+                  <div class="ui-budget-checkin-adjust">
+                    <div class="ui-budget-checkin-quick-actions">
+                      <button
+                        type="button"
+                        class="btn ui-budget-checkin-mini-btn"
+                        :disabled="liquidityExecutionBusyAssetId === row.asset_id"
+                        title="Poner saldo real a 0"
+                        @click="resetLiquidityCheckinDraftValue(row, 'zero')"
+                      >
+                        Borrar
+                      </button>
+                      <button
+                        type="button"
+                        class="btn ui-budget-checkin-mini-btn"
+                        :disabled="liquidityExecutionBusyAssetId === row.asset_id"
+                        title="Restaurar saldo previsto"
+                        @click="resetLiquidityCheckinDraftValue(row, 'planned')"
+                      >
+                        Previsto
+                      </button>
+                    </div>
+                    <input
+                      v-model="liquidityAdjustAmounts[row.asset_id]"
+                      inputmode="decimal"
+                      class="input ui-data-field"
+                      placeholder="Saldo real"
+                      @focus="ensureLiquidityAdjustAmountPrefilled(row)"
+                      @blur="onLiquidityAdjustAmountBlur(row)"
+                      @keydown.enter.prevent="saveLiquidityCheckinFromInput(row)"
+                    />
+                  </div>
+                  <label class="ui-budget-checkin-confirm" title="Confirmar cierre de liquidez">
+                    <input
+                      type="checkbox"
+                      :checked="!!row.checkin"
+                      :disabled="liquidityExecutionBusyAssetId === row.asset_id"
+                      aria-label="Confirmar cierre de liquidez"
+                      @change="
+                        onLiquidityCheckinCheckboxToggle(
+                          row,
+                          Boolean(($event.target as HTMLInputElement).checked),
+                        )
+                      "
+                    />
+                  </label>
+                </div>
+              </article>
             </div>
           </div>
-        </article>
+        </div>
       </div>
     </section>
 
@@ -1353,29 +1989,127 @@ watch(selectedExecutionMonth, () => {
   font-size: 0.98rem;
 }
 
+.ui-budget-checkin-kpi-danger {
+  border-color: rgba(255, 108, 108, 0.28);
+  background: rgba(255, 72, 72, 0.04);
+}
+
+.ui-budget-checkin-kpi-danger span,
+.ui-budget-checkin-kpi-danger strong {
+  color: rgba(255, 132, 132, 0.95);
+}
+
+.ui-budget-checkin-kpi-good {
+  border-color: rgba(97, 216, 155, 0.24);
+  background: rgba(44, 196, 129, 0.04);
+}
+
+.ui-budget-checkin-kpi-good span,
+.ui-budget-checkin-kpi-good strong {
+  color: rgba(141, 241, 188, 0.95);
+}
+
 .ui-budget-checkin-list {
   display: grid;
   gap: 8px;
 }
 
+.ui-budget-checkin-groups-box {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.ui-budget-checkin-group + .ui-budget-checkin-group {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ui-budget-checkin-group-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+}
+
+.ui-budget-checkin-group-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ui-budget-checkin-group-title-wrap {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-budget-checkin-group-title {
+  font-size: 0.85rem;
+}
+
+.ui-budget-checkin-group-meta {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.72rem;
+}
+
+.ui-budget-checkin-group-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.74rem;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.ui-budget-checkin-group-dev-pos {
+  color: rgba(255, 132, 132, 0.95);
+}
+
+.ui-budget-checkin-group-dev-neg {
+  color: rgba(141, 241, 188, 0.95);
+}
+
+.ui-budget-checkin-group-rows {
+  display: grid;
+  gap: 0;
+  padding: 0 8px 8px 28px;
+}
+
 .ui-budget-checkin-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.015);
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 7px 2px;
+  background: transparent;
+}
+
+.ui-budget-checkin-group-rows .ui-budget-checkin-row:first-child {
+  border-top: none;
 }
 
 .ui-budget-checkin-row-title {
   font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-budget-checkin-row-planned {
+  margin-left: 6px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.72rem;
 }
 
 .ui-budget-checkin-row-meta,
 .ui-budget-checkin-row-state {
   color: rgba(255, 255, 255, 0.66);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   line-height: 1.35;
 }
 
@@ -1384,20 +2118,74 @@ watch(selectedExecutionMonth, () => {
 }
 
 .ui-budget-checkin-row-actions {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  align-content: start;
-  justify-items: end;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-.ui-budget-checkin-btn {
-  min-width: 110px;
+.ui-budget-checkin-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 30px;
+}
+
+.ui-budget-checkin-confirm input {
+  accent-color: rgb(22, 163, 137);
+  width: 16px;
+  height: 16px;
 }
 
 .ui-budget-checkin-adjust {
-  display: grid;
-  grid-template-columns: 150px auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 6px;
+}
+
+.ui-budget-checkin-quick-actions {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, auto));
+  gap: 4px;
+}
+
+.ui-budget-checkin-mini-btn {
+  min-width: 66px;
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.ui-budget-checkin-adjust .input {
+  width: 132px;
+}
+
+@media (max-width: 900px) {
+  .ui-budget-checkin-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ui-budget-checkin-group-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .ui-budget-checkin-group-kpis {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .ui-budget-checkin-row-actions {
+    justify-content: flex-start;
+  }
+  .ui-budget-checkin-adjust {
+    flex-wrap: wrap;
+  }
+  .ui-budget-checkin-quick-actions {
+    grid-template-columns: repeat(2, minmax(0, auto));
+    grid-template-rows: none;
+  }
 }
 
 .ui-budget-section {
