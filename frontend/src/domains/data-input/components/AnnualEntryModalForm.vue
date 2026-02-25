@@ -19,6 +19,7 @@ type AnnualEntryModalFormModel = {
   timeProfile: string;
   cashflowRole: string;
   eventGroup: string;
+  targetMonth: string;
   termEndYear: string;
   amountInputPeriod: 'annual' | 'monthly';
   amountAnnual: string;
@@ -148,6 +149,17 @@ const emit = defineEmits<{
         :placeholder="eventGroupPlaceholder"
         @input="
           emit('patch', { eventGroup: String(($event.target as HTMLInputElement).value ?? '') })
+        "
+      />
+
+      <input
+        v-if="form.timeProfile === 'one_off'"
+        :value="form.targetMonth"
+        class="input ui-data-field"
+        inputmode="numeric"
+        placeholder="Mes objetivo (1-12)"
+        @input="
+          emit('patch', { targetMonth: String(($event.target as HTMLInputElement).value ?? '') })
         "
       />
 

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { coreApi } from '@/lib/api';
+import { toApiErrorMessage } from '@/lib/errors';
 import {
   expenseCategories,
   expenseSubcategories,
@@ -8,6 +10,41 @@ import {
   useAnnualExpenseStore,
   useAnnualIncomeStore,
 } from '@/domains/data-input';
+
+type ExpenseMonthlySummaryMonth = {
+  month: number;
+  planned: string;
+  executed: string;
+  pending: string;
+  completion_ratio: number;
+  checkins_confirmed: number;
+  checkins_expected: number;
+};
+
+type ExpenseMonthlySummaryResponse = {
+  fiscal_year: number;
+  planned_total: string;
+  executed_total: string;
+  pending_total: string;
+  variance_total: string;
+  months: ExpenseMonthlySummaryMonth[];
+  completion_ratio: number;
+  months_with_checkins: number;
+  has_executed_data: boolean;
+};
+
+type ExpenseMonthlyCheckinApiItem = {
+  id: number;
+  annual_expense_entry_id: number;
+  fiscal_year: number;
+  month: number;
+  status: 'confirmed' | 'adjusted' | 'skipped';
+  executed_amount: string | null;
+  note: string;
+  confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 type BudgetRow = {
   key: string;
@@ -73,6 +110,13 @@ const monthLabels = [
   'Nov',
   'Dic',
 ];
+const selectedExecutionMonth = ref(new Date().getMonth() + 1);
+const expenseMonthlySummary = ref<ExpenseMonthlySummaryResponse | null>(null);
+const expenseCheckinsByEntryId = ref<Record<number, ExpenseMonthlyCheckinApiItem>>({});
+const expenseExecutionLoading = ref(false);
+const expenseExecutionBusyEntryId = ref<number | null>(null);
+const expenseExecutionError = ref<string | null>(null);
+const expenseAdjustAmounts = ref<Record<number, string>>({});
 
 const incomeCategoryLabels = new Map(
   incomeCategories.map((row) => [row.value, row.label] as const),
@@ -258,11 +302,68 @@ const plannedIncomeTotal = computed(() => sumPlanned(filteredIncomeEntries.value
 const plannedExpenseTotal = computed(() => sumPlanned(filteredExpenseEntries.value));
 const plannedBalanceTotal = computed(() => plannedIncomeTotal.value - plannedExpenseTotal.value);
 
-const executionStatusLabel = computed(() => 'Pendiente modulo contabilidad');
-const executionStatusDetail = computed(
-  () =>
-    'Las barras de ejecucion se activaran cuando exista el read-model agregado del modulo de contabilidad (hito 14).',
-);
+function toNumberOrZero(raw: unknown): number {
+  const n = Number(raw ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function monthlyPlannedAmountForExpenseEntry(
+  entry: (typeof expenseEntries.value)[number],
+  month: number,
+): number {
+  if (entry.expenseType === 'one_off') {
+    return entry.targetMonth === month ? toNumberOrZero(entry.amountAnnual) : 0;
+  }
+  return toNumberOrZero(entry.amountAnnual) / 12;
+}
+
+const expenseSummaryByMonth = computed(() => {
+  const map = new Map<number, ExpenseMonthlySummaryMonth>();
+  for (const row of expenseMonthlySummary.value?.months ?? []) {
+    map.set(row.month, row);
+  }
+  return map;
+});
+
+const selectedExpenseSummaryMonth = computed(() => {
+  return expenseSummaryByMonth.value.get(selectedExecutionMonth.value) ?? null;
+});
+
+const monthlyExpenseExecutionEntries = computed(() => {
+  const month = selectedExecutionMonth.value;
+  return expenseEntries.value
+    .filter((entry) => {
+      if (entry.expenseType === 'one_off') return entry.targetMonth === month;
+      return true;
+    })
+    .map((entry) => {
+      const checkin = expenseCheckinsByEntryId.value[entry.id] ?? null;
+      const planned = monthlyPlannedAmountForExpenseEntry(entry, month);
+      return {
+        entry,
+        planned,
+        checkin,
+        executed:
+          checkin && checkin.status !== 'skipped'
+            ? toNumberOrZero(checkin.executed_amount)
+            : null,
+      };
+    })
+    .filter((row) => row.planned > 0)
+    .sort((a, b) => b.planned - a.planned || a.entry.name.localeCompare(b.entry.name, 'es'));
+});
+
+const executionStatusLabel = computed(() => {
+  if (!expenseMonthlySummary.value) return 'Cargando contabilidad';
+  if (expenseMonthlySummary.value.has_executed_data) return 'Activo (gastos)';
+  return 'Sin check-ins (gastos)';
+});
+const executionStatusDetail = computed(() => {
+  if (!expenseMonthlySummary.value) {
+    return 'Cargando agregados mensuales de gastos (plan vs ejecutado).';
+  }
+  return `Gastos: ${expenseMonthlySummary.value.months_with_checkins}/12 meses con check-ins. Ingresos sigue pendiente en 14C.`;
+});
 
 function formatMoney(value: number, decimals = 2): string {
   return new Intl.NumberFormat('es-ES', {
@@ -468,13 +569,94 @@ async function refreshBudgetData(year = fiscalYear.value): Promise<void> {
   await Promise.all([incomeStore.loadAll(year), expenseStore.loadAll(year)]);
 }
 
+async function loadExpenseExecutionSummary(year = fiscalYear.value): Promise<void> {
+  try {
+    const response = await coreApi.get<ExpenseMonthlySummaryResponse>(
+      '/api/budget/annual-expense/monthly-summary/',
+      { params: { year } },
+    );
+    expenseMonthlySummary.value = response.data ?? null;
+  } catch (e: unknown) {
+    expenseExecutionError.value = toApiErrorMessage(e);
+  }
+}
+
+async function loadExpenseCheckinsForSelectedMonth(): Promise<void> {
+  try {
+    const response = await coreApi.get<ExpenseMonthlyCheckinApiItem[]>('/api/budget/annual-expense-checkins/', {
+      params: { year: fiscalYear.value, month: selectedExecutionMonth.value },
+    });
+    const nextMap: Record<number, ExpenseMonthlyCheckinApiItem> = {};
+    for (const row of response.data ?? []) {
+      nextMap[row.annual_expense_entry_id] = row;
+    }
+    expenseCheckinsByEntryId.value = nextMap;
+  } catch (e: unknown) {
+    expenseExecutionError.value = toApiErrorMessage(e);
+  }
+}
+
+async function refreshExpenseExecutionData(): Promise<void> {
+  expenseExecutionLoading.value = true;
+  expenseExecutionError.value = null;
+  try {
+    await Promise.all([loadExpenseExecutionSummary(), loadExpenseCheckinsForSelectedMonth()]);
+  } finally {
+    expenseExecutionLoading.value = false;
+  }
+}
+
+function suggestedExecutedAmountForRow(row: (typeof monthlyExpenseExecutionEntries.value)[number]): string {
+  if (row.executed != null) return row.executed.toFixed(2);
+  return row.planned.toFixed(2);
+}
+
+async function upsertExpenseCheckin(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+  status: 'confirmed' | 'adjusted' | 'skipped',
+): Promise<void> {
+  expenseExecutionBusyEntryId.value = row.entry.id;
+  expenseExecutionError.value = null;
+  try {
+    const existing = expenseCheckinsByEntryId.value[row.entry.id];
+    const draftAmount =
+      status === 'adjusted'
+        ? String(expenseAdjustAmounts.value[row.entry.id] ?? '').trim()
+        : suggestedExecutedAmountForRow(row);
+
+    const payload = {
+      annual_expense_entry_id: row.entry.id,
+      fiscal_year: fiscalYear.value,
+      month: selectedExecutionMonth.value,
+      status,
+      executed_amount:
+        status === 'skipped' ? null : status === 'adjusted' ? (draftAmount || null) : draftAmount,
+    };
+
+    if (existing) {
+      await coreApi.patch(`/api/budget/annual-expense-checkins/${existing.id}/`, payload);
+    } else {
+      await coreApi.post('/api/budget/annual-expense-checkins/', payload);
+    }
+    await refreshExpenseExecutionData();
+  } catch (e: unknown) {
+    expenseExecutionError.value = toApiErrorMessage(e);
+  } finally {
+    expenseExecutionBusyEntryId.value = null;
+  }
+}
+
 watch(
   fiscalYear,
   (year) => {
-    void refreshBudgetData(year);
+    void Promise.all([refreshBudgetData(year), refreshExpenseExecutionData()]);
   },
   { immediate: true },
 );
+
+watch(selectedExecutionMonth, () => {
+  void loadExpenseCheckinsForSelectedMonth();
+});
 </script>
 
 <template>
@@ -598,6 +780,112 @@ watch(
     <div v-if="firstError" class="alert mt-3">
       {{ firstError }}
     </div>
+    <div v-if="expenseExecutionError" class="alert mt-3">
+      {{ expenseExecutionError }}
+    </div>
+
+    <section class="card ui-pro-panel ui-budget-checkin mt-3">
+      <div class="ui-budget-checkin-header">
+        <div>
+          <h2 class="ui-budget-checkin-title">Check-in mensual de gastos</h2>
+          <p class="ui-budget-checkin-subtitle">
+            Cierre mensual rápido de `Gastos` (14C v1). `Ingresos` se integrará después con el mismo patrón.
+          </p>
+        </div>
+        <div class="ui-budget-checkin-controls">
+          <label>
+            <span>Mes</span>
+            <select v-model="selectedExecutionMonth" class="select ui-data-field" :disabled="expenseExecutionLoading">
+              <option v-for="(label, index) in monthLabels" :key="label" :value="index + 1">
+                {{ label }}
+              </option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div v-if="expenseMonthlySummary" class="ui-budget-checkin-summary-grid">
+        <article class="ui-budget-checkin-kpi">
+          <span>Previsto mes</span>
+          <strong>{{ formatMoney(toNumberOrZero(selectedExpenseSummaryMonth?.planned)) }} EUR</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Ejecutado mes</span>
+          <strong>{{ formatMoney(toNumberOrZero(selectedExpenseSummaryMonth?.executed)) }} EUR</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Pendiente mes</span>
+          <strong>{{ formatMoney(toNumberOrZero(selectedExpenseSummaryMonth?.pending)) }} EUR</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Completitud</span>
+          <strong>{{ formatPercent(selectedExpenseSummaryMonth?.completion_ratio ?? null, 0) }}</strong>
+        </article>
+      </div>
+
+      <div class="ui-budget-checkin-list">
+        <div v-if="expenseExecutionLoading" class="subtle">Cargando check-ins mensuales...</div>
+        <div v-else-if="!monthlyExpenseExecutionEntries.length" class="subtle">
+          No hay gastos previstos para este mes con los filtros actuales.
+        </div>
+        <article
+          v-for="row in monthlyExpenseExecutionEntries"
+          :key="`expense-checkin-${row.entry.id}`"
+          class="ui-budget-checkin-row"
+        >
+          <div class="ui-budget-checkin-row-main">
+            <div class="ui-budget-checkin-row-title">{{ row.entry.name }}</div>
+            <div class="ui-budget-checkin-row-meta">
+              {{ expenseCategoryLabels.get(row.entry.category) ?? row.entry.category }} ·
+              {{ expenseSubcategoryLabels.get(row.entry.subcategory) ?? row.entry.subcategory }}
+              · Previsto {{ formatMoney(row.planned) }} EUR
+              <template v-if="row.entry.expenseType === 'one_off'"> · Puntual</template>
+            </div>
+            <div v-if="row.checkin" class="ui-budget-checkin-row-state">
+              Estado: <strong>{{ row.checkin.status }}</strong>
+              <template v-if="row.checkin.status !== 'skipped' && row.executed != null">
+                · Ejecutado {{ formatMoney(row.executed) }} EUR
+              </template>
+            </div>
+          </div>
+
+          <div class="ui-budget-checkin-row-actions">
+            <button
+              type="button"
+              class="btn ui-budget-checkin-btn"
+              :disabled="expenseExecutionBusyEntryId === row.entry.id"
+              @click="upsertExpenseCheckin(row, 'confirmed')"
+            >
+              Confirmar
+            </button>
+            <button
+              type="button"
+              class="btn ui-budget-checkin-btn"
+              :disabled="expenseExecutionBusyEntryId === row.entry.id"
+              @click="upsertExpenseCheckin(row, 'skipped')"
+            >
+              No ocurrió
+            </button>
+            <div class="ui-budget-checkin-adjust">
+              <input
+                v-model="expenseAdjustAmounts[row.entry.id]"
+                inputmode="decimal"
+                class="input ui-data-field"
+                placeholder="Ajustar importe"
+              />
+              <button
+                type="button"
+                class="btn btn-primary ui-budget-checkin-btn"
+                :disabled="expenseExecutionBusyEntryId === row.entry.id"
+                @click="upsertExpenseCheckin(row, 'adjusted')"
+              >
+                Guardar ajuste
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <section v-if="!hasAnyPlannedData && !isLoading" class="card ui-pro-panel ui-budget-empty mt-3">
       <h2 class="mt-0">Sin presupuesto anual para {{ fiscalYear }}</h2>
@@ -1009,6 +1297,107 @@ watch(
   color: #ccfff1;
   text-decoration: none;
   background: rgba(55, 191, 163, 0.08);
+}
+
+.ui-budget-checkin {
+  display: grid;
+  gap: 12px;
+}
+
+.ui-budget-checkin-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ui-budget-checkin-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ui-budget-checkin-subtitle {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.82rem;
+}
+
+.ui-budget-checkin-controls label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ui-budget-checkin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ui-budget-checkin-kpi {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.ui-budget-checkin-kpi span {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.74rem;
+}
+
+.ui-budget-checkin-kpi strong {
+  font-size: 0.98rem;
+}
+
+.ui-budget-checkin-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-budget-checkin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.ui-budget-checkin-row-title {
+  font-weight: 600;
+}
+
+.ui-budget-checkin-row-meta,
+.ui-budget-checkin-row-state {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.ui-budget-checkin-row-state {
+  margin-top: 3px;
+}
+
+.ui-budget-checkin-row-actions {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  justify-items: end;
+}
+
+.ui-budget-checkin-btn {
+  min-width: 110px;
+}
+
+.ui-budget-checkin-adjust {
+  display: grid;
+  grid-template-columns: 150px auto;
+  gap: 6px;
 }
 
 .ui-budget-section {

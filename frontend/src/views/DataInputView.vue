@@ -130,6 +130,7 @@ const annualIncomeForm = reactive({
   timeProfile: 'structural_recurrent' as IncomeTimeProfile,
   cashflowRole: 'operating' as AnnualIncomeCashflowRole,
   eventGroup: '',
+  targetMonth: '',
   termEndYear: '',
   amountInputPeriod: 'annual' as 'annual' | 'monthly',
   amountAnnual: '',
@@ -145,6 +146,7 @@ const annualExpenseForm = reactive({
   timeProfile: 'structural_recurrent' as ExpenseTimeProfile,
   cashflowRole: 'operating' as AnnualExpenseCashflowRole,
   eventGroup: '',
+  targetMonth: '',
   termEndYear: '',
   amountInputPeriod: 'annual' as 'annual' | 'monthly',
   amountAnnual: '',
@@ -160,6 +162,7 @@ type AnnualModalPatch = Partial<{
   timeProfile: string;
   cashflowRole: string;
   eventGroup: string;
+  targetMonth: string;
   termEndYear: string;
   amountInputPeriod: 'annual' | 'monthly';
   amountAnnual: string;
@@ -896,6 +899,7 @@ function resetIncomeForm(): void {
   annualIncomeForm.timeProfile = 'structural_recurrent';
   annualIncomeForm.cashflowRole = defaultIncomeCashflowRole(annualIncomeForm.category);
   annualIncomeForm.eventGroup = '';
+  annualIncomeForm.targetMonth = '';
   annualIncomeForm.termEndYear = '';
   annualIncomeForm.amountInputPeriod = 'annual';
   annualIncomeForm.amountAnnual = '';
@@ -915,6 +919,7 @@ function resetExpenseForm(): void {
     annualExpenseForm.subcategory,
   );
   annualExpenseForm.eventGroup = '';
+  annualExpenseForm.targetMonth = '';
   annualExpenseForm.termEndYear = '';
   annualExpenseForm.amountInputPeriod = 'annual';
   annualExpenseForm.amountAnnual = '';
@@ -935,6 +940,7 @@ function openIncomeModal(entry?: AnnualIncomeEntry): void {
     annualIncomeForm.timeProfile = entry.timeProfile;
     annualIncomeForm.cashflowRole = entry.cashflowRole;
     annualIncomeForm.eventGroup = entry.eventGroup || '';
+    annualIncomeForm.targetMonth = '';
     annualIncomeForm.termEndYear =
       entry.termEndYear == null ? '' : String(Number(entry.termEndYear));
     annualIncomeForm.amountInputPeriod = 'annual';
@@ -963,6 +969,8 @@ function openExpenseModal(entry?: AnnualExpenseEntry): void {
     annualExpenseForm.timeProfile = entry.timeProfile;
     annualExpenseForm.cashflowRole = entry.cashflowRole;
     annualExpenseForm.eventGroup = entry.eventGroup || '';
+    annualExpenseForm.targetMonth =
+      entry.targetMonth == null ? '' : String(Number(entry.targetMonth));
     annualExpenseForm.termEndYear =
       entry.termEndYear == null ? '' : String(Number(entry.termEndYear));
     annualExpenseForm.amountInputPeriod = 'annual';
@@ -1092,6 +1100,7 @@ watch(
   (timeProfile) => {
     annualIncomeForm.isRecurrent = timeProfile !== 'one_off';
     if (timeProfile !== 'term_recurrent') annualIncomeForm.termEndYear = '';
+    if (timeProfile !== 'one_off') annualIncomeForm.targetMonth = '';
   },
 );
 watch(
@@ -1099,6 +1108,7 @@ watch(
   (timeProfile) => {
     annualExpenseForm.isRecurrent = timeProfile !== 'one_off';
     if (timeProfile !== 'term_recurrent') annualExpenseForm.termEndYear = '';
+    if (timeProfile !== 'one_off') annualExpenseForm.targetMonth = '';
     normalizeExpenseCashflowRoleForCurrentTimeProfile();
   },
 );
@@ -1179,6 +1189,10 @@ async function submitAnnualExpense(): Promise<void> {
     timeProfile: annualExpenseForm.timeProfile,
     cashflowRole: annualExpenseForm.cashflowRole,
     eventGroup: annualExpenseForm.eventGroup,
+    targetMonth:
+      annualExpenseForm.timeProfile === 'one_off' && String(annualExpenseForm.targetMonth).trim()
+        ? Number(annualExpenseForm.targetMonth)
+        : null,
     termEndYear:
       annualExpenseForm.timeProfile === 'term_recurrent' &&
       String(annualExpenseForm.termEndYear).trim()
