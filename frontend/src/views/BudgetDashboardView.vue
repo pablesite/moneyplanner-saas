@@ -144,6 +144,33 @@ type BudgetExecutionPreview = {
   overflow: boolean;
 };
 
+type MonthlyResultBreakdownSubrow = {
+  key: string;
+  subcategoryKey: string;
+  subcategoryLabel: string;
+  lineCount: number;
+  plannedTotal: number;
+  executedTotal: number;
+  deviation: number;
+  checkedCount: number;
+  completionRatio: number;
+  shareOfExecuted: number;
+};
+
+type MonthlyResultBreakdownGroup = {
+  key: string;
+  categoryKey: string;
+  categoryLabel: string;
+  lineCount: number;
+  plannedTotal: number;
+  executedTotal: number;
+  deviation: number;
+  checkedCount: number;
+  completionRatio: number;
+  shareOfExecuted: number;
+  rows: MonthlyResultBreakdownSubrow[];
+};
+
 const incomeStore = useAnnualIncomeStore('saas');
 const expenseStore = useAnnualExpenseStore('saas');
 
@@ -602,6 +629,274 @@ const groupedMonthlyExpenseExecutionEntries = computed(() => {
     );
 });
 
+function buildMonthlyResultBreakdown<
+  TEntry extends { category: string; subcategory: string },
+  TRow extends {
+    entry: TEntry;
+    planned: number;
+    checkin: { status: 'confirmed' | 'adjusted' | 'skipped' } | null;
+    executed: number | null;
+  },
+>(
+  rows: TRow[],
+  categoryLabels: Map<string, string>,
+  subcategoryLabels: Map<string, string>,
+  executedSectionTotal: number,
+): MonthlyResultBreakdownGroup[] {
+  const groups = new Map<
+    string,
+    {
+      key: string;
+      categoryKey: string;
+      categoryLabel: string;
+      lineCount: number;
+      plannedTotal: number;
+      executedTotal: number;
+      checkedCount: number;
+      rows: Map<
+        string,
+        {
+          key: string;
+          subcategoryKey: string;
+          subcategoryLabel: string;
+          lineCount: number;
+          plannedTotal: number;
+          executedTotal: number;
+          checkedCount: number;
+        }
+      >;
+    }
+  >();
+
+  for (const row of rows) {
+    const categoryKey = row.entry.category;
+    const subcategoryKey = row.entry.subcategory;
+    const planned = Number.isFinite(row.planned) ? row.planned : 0;
+    const executed =
+      row.checkin && row.checkin.status !== 'skipped' && row.executed != null && Number.isFinite(row.executed)
+        ? row.executed
+        : 0;
+    const isChecked = !!row.checkin;
+
+    let group = groups.get(categoryKey);
+    if (!group) {
+      group = {
+        key: categoryKey,
+        categoryKey,
+        categoryLabel: categoryLabels.get(categoryKey) ?? categoryKey,
+        lineCount: 0,
+        plannedTotal: 0,
+        executedTotal: 0,
+        checkedCount: 0,
+        rows: new Map(),
+      };
+      groups.set(categoryKey, group);
+    }
+
+    group.lineCount += 1;
+    group.plannedTotal += planned;
+    group.executedTotal += executed;
+    if (isChecked) group.checkedCount += 1;
+
+    let subrow = group.rows.get(subcategoryKey);
+    if (!subrow) {
+      subrow = {
+        key: `${categoryKey}::${subcategoryKey}`,
+        subcategoryKey,
+        subcategoryLabel: subcategoryLabels.get(subcategoryKey) ?? subcategoryKey,
+        lineCount: 0,
+        plannedTotal: 0,
+        executedTotal: 0,
+        checkedCount: 0,
+      };
+      group.rows.set(subcategoryKey, subrow);
+    }
+
+    subrow.lineCount += 1;
+    subrow.plannedTotal += planned;
+    subrow.executedTotal += executed;
+    if (isChecked) subrow.checkedCount += 1;
+  }
+
+  return Array.from(groups.values())
+    .map((group) => {
+      const rowsSorted = Array.from(group.rows.values())
+        .map((subrow) => ({
+          ...subrow,
+          deviation: subrow.executedTotal - subrow.plannedTotal,
+          completionRatio: subrow.lineCount ? subrow.checkedCount / subrow.lineCount : 0,
+          shareOfExecuted:
+            executedSectionTotal > 0 ? subrow.executedTotal / executedSectionTotal : 0,
+        }))
+        .sort(
+          (a, b) =>
+            b.executedTotal - a.executedTotal ||
+            b.plannedTotal - a.plannedTotal ||
+            a.subcategoryLabel.localeCompare(b.subcategoryLabel, 'es'),
+        );
+
+      return {
+        key: group.key,
+        categoryKey: group.categoryKey,
+        categoryLabel: group.categoryLabel,
+        lineCount: group.lineCount,
+        plannedTotal: group.plannedTotal,
+        executedTotal: group.executedTotal,
+        deviation: group.executedTotal - group.plannedTotal,
+        checkedCount: group.checkedCount,
+        completionRatio: group.lineCount ? group.checkedCount / group.lineCount : 0,
+        shareOfExecuted: executedSectionTotal > 0 ? group.executedTotal / executedSectionTotal : 0,
+        rows: rowsSorted,
+      } satisfies MonthlyResultBreakdownGroup;
+    })
+    .sort(
+      (a, b) =>
+        b.executedTotal - a.executedTotal ||
+        b.plannedTotal - a.plannedTotal ||
+        a.categoryLabel.localeCompare(b.categoryLabel, 'es'),
+    );
+}
+
+const monthlyIncomeResultBreakdown = computed(() =>
+  buildMonthlyResultBreakdown(
+    monthlyIncomeExecutionEntries.value,
+    incomeCategoryLabels,
+    incomeSubcategoryLabels,
+    selectedIncomeMonthExecuted.value,
+  ),
+);
+
+const monthlyExpenseResultBreakdown = computed(() =>
+  buildMonthlyResultBreakdown(
+    monthlyExpenseExecutionEntries.value,
+    expenseCategoryLabels,
+    expenseSubcategoryLabels,
+    selectedExpenseMonthExecuted.value,
+  ),
+);
+
+const selectedMonthlyExecutedVolume = computed(
+  () => selectedIncomeMonthExecuted.value + selectedExpenseMonthExecuted.value,
+);
+const selectedMonthlyResidualAbs = computed(() => Math.abs(selectedMonthlyCloseResidual.value));
+const selectedMonthlyResidualVolumeRatio = computed(() =>
+  selectedMonthlyExecutedVolume.value > 0
+    ? selectedMonthlyResidualAbs.value / selectedMonthlyExecutedVolume.value
+    : null,
+);
+const selectedMonthlyResidualIncomeRatio = computed(() =>
+  selectedIncomeMonthExecuted.value > 0
+    ? selectedMonthlyResidualAbs.value / selectedIncomeMonthExecuted.value
+    : null,
+);
+const selectedMonthlyResidualExpenseRatio = computed(() =>
+  selectedExpenseMonthExecuted.value > 0
+    ? selectedMonthlyResidualAbs.value / selectedExpenseMonthExecuted.value
+    : null,
+);
+const selectedMonthlyResidualExpectedCloseRatio = computed(() =>
+  Math.abs(selectedMonthlyCloseExpected.value) > 0
+    ? selectedMonthlyResidualAbs.value / Math.abs(selectedMonthlyCloseExpected.value)
+    : null,
+);
+
+const selectedMonthlyResidualSeverity = computed<'ok' | 'watch' | 'alert'>(() => {
+  const ratio = selectedMonthlyResidualVolumeRatio.value;
+  if (ratio == null) return 'ok';
+  if (ratio <= 0.01) return 'ok';
+  if (ratio <= 0.03) return 'watch';
+  return 'alert';
+});
+
+const selectedMonthlyResidualSeverityLabel = computed(() => {
+  if (selectedMonthlyResidualSeverity.value === 'ok') return 'Conciliacion OK';
+  if (selectedMonthlyResidualSeverity.value === 'watch') return 'Revisar residual';
+  return 'Residual alto';
+});
+
+const resultReconciliationFlowRows = computed(() => [
+  {
+    id: 'start',
+    label: 'Liquidez inicio (referencia)',
+    amount: selectedLiquidityStartBase.value,
+    tone: 'neutral' as const,
+    meta: 'Base de referencia del paso de liquidez',
+  },
+  {
+    id: 'income',
+    label: 'Ingresos ejecutados',
+    amount: selectedIncomeMonthExecuted.value,
+    tone: 'positive' as const,
+    meta:
+      selectedMonthlyExecutedVolume.value > 0
+        ? `${formatPercent(selectedIncomeMonthExecuted.value / selectedMonthlyExecutedVolume.value, 0)} del volumen`
+        : undefined,
+  },
+  {
+    id: 'expense',
+    label: 'Gastos ejecutados',
+    amount: -selectedExpenseMonthExecuted.value,
+    tone: 'warning' as const,
+    meta:
+      selectedMonthlyExecutedVolume.value > 0
+        ? `${formatPercent(selectedExpenseMonthExecuted.value / selectedMonthlyExecutedVolume.value, 0)} del volumen`
+        : undefined,
+  },
+  {
+    id: 'expected-close',
+    label: 'Cierre esperado',
+    amount: selectedMonthlyCloseExpected.value,
+    tone: 'neutral' as const,
+    meta: 'Liquidez inicio + ingresos - gastos',
+    isResult: true,
+  },
+  {
+    id: 'residual',
+    label: 'Ajuste de conciliacion (residual)',
+    amount: selectedMonthlyCloseResidual.value,
+    tone: selectedMonthlyCloseResidual.value < 0 ? ('negative' as const) : ('positive' as const),
+    meta:
+      selectedMonthlyResidualVolumeRatio.value == null
+        ? 'Sin volumen ejecutado'
+        : `${formatPercent(selectedMonthlyResidualVolumeRatio.value, 1)} del volumen ejecutado`,
+  },
+  {
+    id: 'real-close',
+    label: 'Cierre real',
+    amount: selectedLiquidityMonthExecuted.value,
+    tone: 'neutral' as const,
+    meta: 'Cierre de liquidez confirmado',
+    isResult: true,
+  },
+]);
+
+const resultReconciliationCompositionRows = computed(() => {
+  const volume = selectedMonthlyExecutedVolume.value;
+  return [
+    {
+      id: 'income',
+      label: 'Ingresos ejecutados',
+      amount: selectedIncomeMonthExecuted.value,
+      shareOfVolume: volume > 0 ? selectedIncomeMonthExecuted.value / volume : null,
+      tone: 'positive' as const,
+    },
+    {
+      id: 'expense',
+      label: 'Gastos ejecutados',
+      amount: selectedExpenseMonthExecuted.value,
+      shareOfVolume: volume > 0 ? selectedExpenseMonthExecuted.value / volume : null,
+      tone: 'warning' as const,
+    },
+    {
+      id: 'residual',
+      label: 'Ajuste de conciliacion (residual)',
+      amount: selectedMonthlyCloseResidual.value,
+      shareOfVolume: volume > 0 ? selectedMonthlyResidualAbs.value / volume : null,
+      tone: selectedMonthlyCloseResidual.value < 0 ? ('negative' as const) : ('neutral' as const),
+    },
+  ];
+});
+
 const executionStatusLabel = computed(() => {
   if (!expenseMonthlySummary.value) return 'Cargando contabilidad';
   if (expenseMonthlySummary.value.has_executed_data) return 'Activo (gastos)';
@@ -620,6 +915,10 @@ function formatMoney(value: number, decimals = 2): string {
     maximumFractionDigits: decimals,
     useGrouping: true,
   }).format(Number.isFinite(value) ? value : 0);
+}
+
+function formatSignedMoney(value: number, decimals = 2): string {
+  return `${value > 0 ? '+' : ''}${formatMoney(value, decimals)}`;
 }
 
 function formatPercent(value: number | null, decimals = 0): string {
@@ -1726,7 +2025,7 @@ watch(
 
       <div v-if="liquidityMonthlySummary" class="ui-budget-checkin-summary-grid">
         <article class="ui-budget-checkin-kpi">
-          <span>Previsto cierre</span>
+          <span>Saldo referencia</span>
           <strong>{{ formatMoney(selectedLiquidityMonthPlanned) }} €</strong>
         </article>
         <article class="ui-budget-checkin-kpi">
@@ -1767,7 +2066,7 @@ watch(
                 </span>
               </div>
               <div class="ui-budget-checkin-group-kpis">
-                <span>P {{ formatMoney(selectedLiquidityMonthPlanned) }} €</span>
+                <span>Ref {{ formatMoney(selectedLiquidityMonthPlanned) }} €</span>
                 <span>E {{ formatMoney(selectedLiquidityMonthExecuted) }} €</span>
                 <span
                   :class="{
@@ -1790,7 +2089,7 @@ watch(
                   <div class="ui-budget-checkin-row-title" :title="liquidityCheckinRowSummary(row)">
                     {{ liquidityCheckinRowSummary(row) }}
                     <span class="ui-budget-checkin-row-planned">
-                      (Previsto {{ formatMoney(row.planned) }} {{ row.currency === 'EUR' ? '€' : row.currency }})
+                      (Referencia {{ formatMoney(row.planned) }} {{ row.currency === 'EUR' ? '€' : row.currency }})
                     </span>
                   </div>
                   <div v-if="row.checkin" class="ui-budget-checkin-row-state">
@@ -1817,10 +2116,10 @@ watch(
                         type="button"
                         class="btn ui-budget-checkin-mini-btn"
                         :disabled="liquidityExecutionBusyAssetId === row.asset_id"
-                        title="Restaurar saldo previsto"
+                        title="Restaurar saldo de referencia"
                         @click="resetLiquidityCheckinDraftValue(row, 'planned')"
                       >
-                        Previsto
+                        Referencia
                       </button>
                     </div>
                     <input
@@ -1943,7 +2242,7 @@ watch(
         <div>
           <div class="ui-monthly-close-step-headline">
             <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">&larr;</button>
-            <h2 class="ui-budget-checkin-title">Paso 4 ? Resultado</h2>
+            <h2 class="ui-budget-checkin-title">Paso 4 · Resultado</h2>
             <button type="button" class="btn ui-monthly-close-step-nav-btn" disabled>&rarr;</button>
           </div>
           <p class="ui-budget-checkin-subtitle">
@@ -1952,17 +2251,161 @@ watch(
         </div>
       </div>
       <div class="ui-budget-checkin-summary-grid">
-        <article class="ui-budget-checkin-kpi"><span>Liquidez inicio</span><strong>{{ formatMoney(selectedLiquidityStartBase) }} ?</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Cierre esperado</span><strong>{{ formatMoney(selectedMonthlyCloseExpected) }} ?</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Cierre real</span><strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Liquidez inicio</span><strong>{{ formatMoney(selectedLiquidityStartBase) }} €</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Cierre esperado</span><strong>{{ formatMoney(selectedMonthlyCloseExpected) }} €</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Cierre real</span><strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} €</strong></article>
         <article class="ui-budget-checkin-kpi" :class="{ 'ui-budget-checkin-kpi-danger': selectedMonthlyCloseResidual < 0, 'ui-budget-checkin-kpi-good': selectedMonthlyCloseResidual > 0 }">
           <span>Residual contable</span>
-          <strong>{{ selectedMonthlyCloseResidual > 0 ? '+' : '' }}{{ formatMoney(selectedMonthlyCloseResidual) }} ?</strong>
+          <strong>{{ selectedMonthlyCloseResidual > 0 ? '+' : '' }}{{ formatMoney(selectedMonthlyCloseResidual) }} €</strong>
         </article>
-        <article class="ui-budget-checkin-kpi"><span>Ingresos ejecutados</span><strong>{{ formatMoney(selectedIncomeMonthExecuted) }} ?</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Gastos ejecutados</span><strong>{{ formatMoney(selectedExpenseMonthExecuted) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Ingresos ejecutados</span><strong>{{ formatMoney(selectedIncomeMonthExecuted) }} €</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Gastos ejecutados</span><strong>{{ formatMoney(selectedExpenseMonthExecuted) }} €</strong></article>
         <article class="ui-budget-checkin-kpi"><span>Completitud cierre</span><strong>{{ formatPercent(selectedMonthlyCloseCompletionRatio, 0) }}</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Desviacion liquidez</span><strong>{{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Desviacion liquidez</span><strong>{{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €</strong></article>
+      </div>
+      <div class="ui-budget-result-grid">
+        <section class="ui-budget-result-card">
+          <div class="ui-budget-result-card-head">
+            <h3 class="ui-budget-result-card-title">Conciliacion de cierre</h3>
+            <div class="ui-budget-result-card-meta">Volumen ejecutado {{ formatMoney(selectedMonthlyExecutedVolume) }} EUR</div>
+          </div>
+          <div class="ui-budget-recon-flow">
+            <div
+              v-for="row in resultReconciliationFlowRows"
+              :key="row.id"
+              class="ui-budget-recon-flow-row"
+              :class="{
+                'ui-budget-recon-flow-row-result': !!row.isResult,
+                'ui-budget-recon-flow-row-positive': row.tone === 'positive',
+                'ui-budget-recon-flow-row-warning': row.tone === 'warning',
+                'ui-budget-recon-flow-row-negative': row.tone === 'negative',
+              }"
+            >
+              <div class="ui-budget-recon-flow-row-main">
+                <div class="ui-budget-recon-flow-label">{{ row.label }}</div>
+                <div v-if="row.meta" class="ui-budget-recon-flow-meta">{{ row.meta }}</div>
+              </div>
+              <strong class="ui-budget-recon-flow-value">{{ formatSignedMoney(row.amount) }} EUR</strong>
+            </div>
+          </div>
+        </section>
+        <section class="ui-budget-result-card">
+          <div class="ui-budget-result-card-head">
+            <h3 class="ui-budget-result-card-title">Ajuste de conciliacion</h3>
+            <div class="ui-budget-result-badge" :class="`ui-budget-result-badge-${selectedMonthlyResidualSeverity}`">
+              {{ selectedMonthlyResidualSeverityLabel }}
+            </div>
+          </div>
+          <div class="ui-budget-result-residual-kpis">
+            <article class="ui-budget-result-mini-kpi"><span>Residual no contabilizado</span><strong>{{ formatSignedMoney(selectedMonthlyCloseResidual) }} EUR</strong></article>
+            <article class="ui-budget-result-mini-kpi"><span>% sobre volumen ejecutado</span><strong>{{ formatPercent(selectedMonthlyResidualVolumeRatio, 1) }}</strong></article>
+            <article class="ui-budget-result-mini-kpi"><span>% sobre ingresos ejecutados</span><strong>{{ formatPercent(selectedMonthlyResidualIncomeRatio, 1) }}</strong></article>
+            <article class="ui-budget-result-mini-kpi"><span>% sobre gastos ejecutados</span><strong>{{ formatPercent(selectedMonthlyResidualExpenseRatio, 1) }}</strong></article>
+            <article class="ui-budget-result-mini-kpi"><span>% impacto sobre cierre esperado</span><strong>{{ formatPercent(selectedMonthlyResidualExpectedCloseRatio, 1) }}</strong></article>
+            <article class="ui-budget-result-mini-kpi">
+              <span>Lectura</span>
+              <strong>{{
+                selectedMonthlyCloseResidual < 0
+                  ? 'Falta caja vs explicado'
+                  : selectedMonthlyCloseResidual > 0
+                    ? 'Sobra caja vs explicado'
+                    : 'Sin diferencia'
+              }}</strong>
+            </article>
+          </div>
+          <div class="ui-budget-result-composition">
+            <div v-for="row in resultReconciliationCompositionRows" :key="row.id" class="ui-budget-result-composition-row">
+              <div class="ui-budget-result-composition-main">
+                <span>{{ row.label }}</span>
+                <small>{{ formatSignedMoney(row.amount) }} EUR</small>
+              </div>
+              <div class="ui-budget-result-composition-bar">
+                <div
+                  class="ui-budget-result-composition-fill"
+                  :class="{
+                    'ui-budget-result-composition-fill-positive': row.tone === 'positive',
+                    'ui-budget-result-composition-fill-warning': row.tone === 'warning',
+                    'ui-budget-result-composition-fill-negative': row.tone === 'negative',
+                  }"
+                  :style="{
+                    width: `${
+                      row.shareOfVolume == null || row.shareOfVolume <= 0
+                        ? 0
+                        : Math.max(4, Math.min(100, row.shareOfVolume * 100))
+                    }%`,
+                  }"
+                />
+              </div>
+              <div class="ui-budget-result-composition-share">{{ formatPercent(row.shareOfVolume, 1) }}</div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="ui-budget-result-grid ui-budget-result-grid-detail">
+        <section class="ui-budget-result-card">
+          <div class="ui-budget-result-card-head">
+            <h3 class="ui-budget-result-card-title">Ingresos ejecutados (detalle del mes)</h3>
+            <div class="ui-budget-result-card-meta">{{ monthlyIncomeExecutionEntries.length }} lineas</div>
+          </div>
+          <div v-if="!monthlyIncomeResultBreakdown.length" class="subtle">No hay ingresos ejecutables para este mes.</div>
+          <div v-else class="ui-budget-result-breakdown-list">
+            <article v-for="group in monthlyIncomeResultBreakdown" :key="`result-income-${group.key}`" class="ui-budget-result-breakdown-group">
+              <div class="ui-budget-result-breakdown-group-head">
+                <div>
+                  <strong>{{ group.categoryLabel }}</strong>
+                  <div class="ui-budget-result-breakdown-submeta">{{ group.lineCount }} lineas - {{ formatPercent(group.completionRatio, 0) }} completitud</div>
+                </div>
+                <div class="ui-budget-result-breakdown-kpis">
+                  <span>E {{ formatMoney(group.executedTotal) }} EUR</span>
+                  <span>P {{ formatMoney(group.plannedTotal) }} EUR</span>
+                  <span :class="{ 'ui-budget-checkin-group-dev-pos': group.deviation > 0, 'ui-budget-checkin-group-dev-neg': group.deviation < 0 }">D {{ formatSignedMoney(group.deviation) }} EUR</span>
+                  <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
+                </div>
+              </div>
+              <div class="ui-budget-result-breakdown-rows">
+                <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="ui-budget-result-breakdown-row">
+                  <span class="ui-budget-result-breakdown-name">{{ row.subcategoryLabel }}</span>
+                  <span>{{ formatMoney(row.executedTotal) }} EUR</span>
+                  <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
+                  <span :class="{ 'ui-budget-checkin-group-dev-pos': row.deviation > 0, 'ui-budget-checkin-group-dev-neg': row.deviation < 0 }">{{ formatSignedMoney(row.deviation) }} EUR</span>
+                </div>
+                <div v-if="group.rows.length > 5" class="ui-budget-result-breakdown-more">+ {{ group.rows.length - 5 }} subcategorias mas</div>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="ui-budget-result-card">
+          <div class="ui-budget-result-card-head">
+            <h3 class="ui-budget-result-card-title">Gastos ejecutados (detalle del mes)</h3>
+            <div class="ui-budget-result-card-meta">{{ monthlyExpenseExecutionEntries.length }} lineas</div>
+          </div>
+          <div v-if="!monthlyExpenseResultBreakdown.length" class="subtle">No hay gastos ejecutables para este mes.</div>
+          <div v-else class="ui-budget-result-breakdown-list">
+            <article v-for="group in monthlyExpenseResultBreakdown" :key="`result-expense-${group.key}`" class="ui-budget-result-breakdown-group">
+              <div class="ui-budget-result-breakdown-group-head">
+                <div>
+                  <strong>{{ group.categoryLabel }}</strong>
+                  <div class="ui-budget-result-breakdown-submeta">{{ group.lineCount }} lineas - {{ formatPercent(group.completionRatio, 0) }} completitud</div>
+                </div>
+                <div class="ui-budget-result-breakdown-kpis">
+                  <span>E {{ formatMoney(group.executedTotal) }} EUR</span>
+                  <span>P {{ formatMoney(group.plannedTotal) }} EUR</span>
+                  <span :class="{ 'ui-budget-checkin-group-dev-pos': group.deviation > 0, 'ui-budget-checkin-group-dev-neg': group.deviation < 0 }">D {{ formatSignedMoney(group.deviation) }} EUR</span>
+                  <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
+                </div>
+              </div>
+              <div class="ui-budget-result-breakdown-rows">
+                <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="ui-budget-result-breakdown-row">
+                  <span class="ui-budget-result-breakdown-name">{{ row.subcategoryLabel }}</span>
+                  <span>{{ formatMoney(row.executedTotal) }} EUR</span>
+                  <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
+                  <span :class="{ 'ui-budget-checkin-group-dev-pos': row.deviation > 0, 'ui-budget-checkin-group-dev-neg': row.deviation < 0 }">{{ formatSignedMoney(row.deviation) }} EUR</span>
+                </div>
+                <div v-if="group.rows.length > 5" class="ui-budget-result-breakdown-more">+ {{ group.rows.length - 5 }} subcategorias mas</div>
+              </div>
+            </article>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -2469,6 +2912,11 @@ watch(
   align-items: flex-start;
 }
 
+.ui-budget-checkin-header > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .ui-budget-checkin-title {
   margin: 0;
   font-size: 1rem;
@@ -2491,6 +2939,273 @@ watch(
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
+}
+
+.ui-budget-result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ui-budget-result-grid-detail {
+  margin-top: 2px;
+}
+
+.ui-budget-result-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.ui-budget-result-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui-budget-result-card-title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.ui-budget-result-card-meta {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.ui-budget-result-badge {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.ui-budget-result-badge-ok {
+  color: rgba(141, 241, 188, 0.95);
+  border-color: rgba(97, 216, 155, 0.28);
+  background: rgba(44, 196, 129, 0.05);
+}
+
+.ui-budget-result-badge-watch {
+  color: rgba(255, 221, 135, 0.95);
+  border-color: rgba(255, 191, 66, 0.28);
+  background: rgba(255, 191, 66, 0.05);
+}
+
+.ui-budget-result-badge-alert {
+  color: rgba(255, 140, 140, 0.96);
+  border-color: rgba(255, 92, 92, 0.3);
+  background: rgba(255, 72, 72, 0.05);
+}
+
+.ui-budget-recon-flow {
+  display: grid;
+  gap: 6px;
+}
+
+.ui-budget-recon-flow-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.ui-budget-recon-flow-row-result {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.ui-budget-recon-flow-row-positive .ui-budget-recon-flow-value {
+  color: rgba(141, 241, 188, 0.95);
+}
+
+.ui-budget-recon-flow-row-warning .ui-budget-recon-flow-value {
+  color: rgba(255, 221, 135, 0.95);
+}
+
+.ui-budget-recon-flow-row-negative .ui-budget-recon-flow-value {
+  color: rgba(255, 140, 140, 0.96);
+}
+
+.ui-budget-recon-flow-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ui-budget-recon-flow-label {
+  font-size: 0.82rem;
+}
+
+.ui-budget-recon-flow-meta {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.72rem;
+}
+
+.ui-budget-recon-flow-value {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.ui-budget-result-residual-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ui-budget-result-mini-kpi {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.012);
+  padding: 8px 9px;
+  display: grid;
+  gap: 3px;
+}
+
+.ui-budget-result-mini-kpi span {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.72rem;
+}
+
+.ui-budget-result-mini-kpi strong {
+  font-size: 0.88rem;
+}
+
+.ui-budget-result-composition {
+  display: grid;
+  gap: 6px;
+}
+
+.ui-budget-result-composition-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(90px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ui-budget-result-composition-main {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.ui-budget-result-composition-main span {
+  font-size: 0.78rem;
+}
+
+.ui-budget-result-composition-main small {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.7rem;
+}
+
+.ui-budget-result-composition-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ui-budget-result-composition-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.ui-budget-result-composition-fill-positive {
+  background: linear-gradient(90deg, rgba(44, 196, 129, 0.55), rgba(141, 241, 188, 0.85));
+}
+
+.ui-budget-result-composition-fill-warning {
+  background: linear-gradient(90deg, rgba(255, 191, 66, 0.55), rgba(255, 221, 135, 0.85));
+}
+
+.ui-budget-result-composition-fill-negative {
+  background: linear-gradient(90deg, rgba(255, 72, 72, 0.55), rgba(255, 140, 140, 0.86));
+}
+
+.ui-budget-result-composition-share {
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+.ui-budget-result-breakdown-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-budget-result-breakdown-group {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.ui-budget-result-breakdown-group-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 9px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ui-budget-result-breakdown-submeta {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+
+.ui-budget-result-breakdown-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.ui-budget-result-breakdown-rows {
+  display: grid;
+  gap: 0;
+}
+
+.ui-budget-result-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 9px;
+  font-size: 0.74rem;
+}
+
+.ui-budget-result-breakdown-row + .ui-budget-result-breakdown-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ui-budget-result-breakdown-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-budget-result-breakdown-more {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.72rem;
+  padding: 7px 9px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .ui-budget-checkin-kpi {
@@ -3234,6 +3949,19 @@ watch(
     grid-column: span 6;
   }
 
+  .ui-budget-result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-budget-result-breakdown-group-head {
+    display: grid;
+  }
+
+  .ui-budget-result-breakdown-kpis {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
   .ui-budget-row {
     display: grid;
     gap: 8px;
@@ -3279,6 +4007,20 @@ watch(
 
   .ui-budget-kpi {
     grid-column: span 12;
+  }
+
+  .ui-budget-result-residual-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-budget-result-composition-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .ui-budget-result-breakdown-row {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
   }
 
   .ui-budget-evolution-bars {
