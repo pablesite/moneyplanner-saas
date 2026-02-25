@@ -1,327 +1,459 @@
-# Global Product Roadmap
+# Roadmap Global del Producto
 
-## Objective
-Track high-level product milestones from completed work to upcoming priorities.
+## Objetivo
+Mantener una vision unica del producto, alineada con el codigo y con la estrategia comercial actual:
+1. Lanzar primero `Community/Core` + `Cloud Basic` como PVM.
+2. Introducir `Cloud Pro` en una iteracion posterior.
+3. Introducir `Cloud Premium` en una iteracion posterior.
 
-## Global Status
-The project has moved from technical foundation into product growth and production-readiness.
+## Rebaselining de producto (2026-02-25)
+### Principio de valor por linea
+1. `Community/Core`: "Donde estoy?"
+2. `Cloud Pro`: "Como mejoro?"
+3. `Cloud Premium`: "Como optimizo y acelero?"
 
-## Milestones
-### Milestone 01 (Completed)
-Initial repository and first net-worth module release.
+### Mundos separados (decision de producto)
+1. `Community/Core` es `self-hosted` y no se conecta al Cloud.
+2. `Cloud Basic`, `Cloud Pro` y `Cloud Premium` existen solo en Cloud.
+3. `Cloud Basic` es el mismo core funcional servido como SaaS (comodidad + operacion gestionada), sin inteligencia Pro/Premium.
 
-### Milestone 02 (Completed)
-Split into two lines: `core` (OSS) and `saas` (premium/private).
+### Tiers objetivo (resumen)
+1. `Community/Core` (gratis, self-hosted): gestion financiera base + guia de entrada + estadisticas basicas.
+2. `Cloud Basic` (~3 EUR/mes): mismo core + hosting/backups/actualizaciones/multidispositivo/PWA minima.
+3. `Cloud Pro` (~10-15 EUR/mes): fases + scores + agente basico + objetivos + simulador basico + notificaciones basicas.
+4. `Cloud Premium` (~25-35 EUR/mes): familia + agente avanzado + simulacion avanzada + analisis avanzado + foto/voz + ASTRA informativo.
 
-### Milestone 03 (Completed)
-Improved collaboration and operational workflows with Codex and documentation.
+## Estado global (real, contrastado con docs y codigo)
+El producto ya tiene una base funcional y tecnica mas madura de lo que reflejaba el roadmap global anterior, pero la planificacion seguia organizada por milestones funcionales lineales y no por estrategia de producto/lanzamiento.
 
-### Milestone 04 (Completed)
-Refactor + quality hardening + testing strategy execution.
+### Que esta consolidado (historico)
+1. Separacion `core` / `saas` completada (Milestone 02).
+2. Refactor y endurecimiento de calidad/documentacion completados (Milestone 04).
+3. Identidad separada y RBAC SaaS completados (Milestone 05 / 05B).
+4. Mejoras de UX/analytics de patrimonio completadas (Milestone 06).
+5. `Introduccion de datos` (Milestone 08) completada en Core/SaaS.
+6. `Presupuesto` v1 (planificado) completado en Core/SaaS (Milestone 10).
+7. Fases/diagnosticos 1-4 de `Guia` entregados (Milestones 09, 11, 12, 13), con paridad Core/SaaS en diagnosticos compartidos.
 
-Current validated baseline:
-1. Backend coverage: SaaS 93%, Core 86%.
-2. Frontend coverage: SaaS 88.29%, Core 84.73%.
-3. Critical module coverage target reached (`memberships/services` 100%).
-4. Repo foundation completed (public `core`, release policy, submodule wiring).
+Referencias historicas relevantes:
+1. `docs/roadmap/release-summary-milestone-10-budget-dashboard.md`
+2. `docs/roadmap/release-summary-milestone-11-phase-2-cash-flow-guide-detail.md`
+3. `docs/roadmap/release-summary-milestone-12-phase-3-emergency-fund-guide-detail.md`
+4. `docs/roadmap/release-summary-milestone-13-guide-phase-detail.md`
 
-Reference:
-- `docs/roadmap/roadmap-milestone-04-refactor.md`
-- `docs/roadmap/release-summary-v2.md`
+### Estado construido actual (codigo) que impacta el PVM
+#### Core (`core/`) - base del PVM
+1. Backend con modulos `accounts`, `core`, `budget`, `net_worth`.
+2. Frontend con vistas operativas para:
+   - `Inicio`
+   - `Guia`
+   - `Introduccion de datos`
+   - `Patrimonio`
+   - `Presupuesto`
+   - `Data` (auxiliares)
+3. Datos anuales de ingresos/gastos con semantica `recurrente` y `puntual` (`one_off`).
+4. Metadatos de flujo de caja (`time_profile`, `cashflow_role`, `event_group`, `term_end_year`) ya presentes y usados por diagnosticos.
+5. Import/export portable (JSON) ya implementado en frontend de captura de datos (util para backup/manual migration).
+6. Evolucion del Milestone 14 ya avanzada en backend Core:
+   - `monthly check-ins` para ingresos y gastos
+   - resumenes mensuales / YTD de presupuesto
+   - `target_month` para gastos puntuales
+   - `LiquidityMonthlyCheckin` en patrimonio (base de cierre mensual de liquidez)
+7. Flujo de pasivos enriquecido (metadatos de amortizacion y sincronizacion con gasto anual autogenerado) en progreso avanzado.
 
-### Milestone 05 (Completed)
-Separated identity strategy for `core` and `saas`.
+#### SaaS (`backend/` + `frontend/`) - base de Cloud
+1. Backend SaaS dedicado para:
+   - auth SaaS
+   - admin SaaS
+   - membresias/suscripciones
+   - RBAC SaaS
+2. Frontend SaaS con features adicionales respecto a Core:
+   - `People` (familia/titularidades)
+   - `Account`
+   - `Admin users`
+   - vistas extra de settings (`FX`, `IPC`)
+   - `cierre-mensual` como modo de `Presupuesto`
+3. `capabilities` ya separan Core vs SaaS (actualmente con flags basicos `isPremium`, `people`, `ownership`).
+4. El gating actual de membresias es binario (`premium` si/no), no un modelo de planes `basic/pro/premium`.
 
-### Milestone 05B (Completed)
-SaaS multi-role authorization (RBAC).
+### Gaps claros frente a tu nueva estrategia (PVM y siguientes)
+#### Para `Community/Core` (PVM)
+1. Cerrar funcionalmente y documentar el alcance "core" objetivo (feature freeze explicito).
+2. Completar y estabilizar el tramo prioritario de Milestone 14 que aporta valor directo al core:
+   - cierre mensual / check-ins
+   - `Ejecutado` real en `Presupuesto`
+   - UX de cierre mensual util
+3. Consolidar un unico baseline de frontend Fase A entre `core` y `saas` (ahora van a ritmos diferentes por slices historicos).
+4. `Guia`/fases existen en frontend pero deben reubicarse como feature de `Cloud Pro` sin perder el trabajo ya hecho.
+5. Wizard de onboarding / checklist de completitud (Milestone 24) aun no implementado.
+6. CSV import manual basico no identificado como capability implementada (si existe portable JSON, pero no CSV).
+7. Cierres mensual/anual como flujo producto formal (mas alla de ruta/piezas tecnicas) aun requieren consolidacion UX y criterio de "cierre".
+8. `Cartera de inversion` como modulo dedicado aun no esta cerrada para Fase A (aunque hay base de seguimiento en patrimonio).
 
-### Milestone 06 (Completed)
-Net-worth module UX and analytics improvements.
+#### Para `Cloud Basic` (PVM)
+1. No hay PWA (no aparece plugin/config PWA en `frontend`).
+2. El modelo SaaS de suscripcion no distingue `Basic`, `Pro`, `Premium`.
+3. Falta mapa de capabilities por plan para backend/frontend.
+4. Falta aterrizar operacion de `Cloud Basic` como producto:
+   - backups automaticos
+   - actualizaciones operadas
+   - observabilidad minima
+   - runbook de incidencias SaaS en produccion
+5. Falta flujo comercial de cobro (landing/pagos) para lanzar SaaS de pago.
 
-Summary:
-1. App shell, navigation, account menu, and settings UX were reworked for clarity and consistency.
-2. `Inicio`, `Perfil`, and `Patrimonio` flows were streamlined with cleaner information hierarchy.
-3. Net-worth analytics UX was upgraded (score model, color levels, composition-focused visualization).
+#### Para `Cloud Pro` y `Cloud Premium`
+1. Existen piezas reutilizables (fases, scores, datos de calidad), pero no un producto Pro/Premium empaquetado.
+2. Falta arquitectura de planes/capabilities y separacion de features avanzada.
+3. Muchas capacidades descritas (agente, objetivos, simuladores avanzados, ASTRA, foto/voz) siguen en roadmap conceptual.
 
-Reference:
-- `docs/roadmap/roadmap-milestone-06-net-worth-ux-analytics.md`
-- `docs/roadmap/release-summary-milestone-06-net-worth-ux-analytics.md`
+## Estado de milestones (lectura actualizada)
+### Milestones historicos cerrados
+1. `01` a `06`: completados (fundacion, split, refactor, identidad/RBAC, UX net-worth).
+2. `08`: completado (`Introduccion de datos`).
+3. `09`, `11`, `12`, `13`: completados (fases/diagnosticos `Guia`; caveats de paridad ya resueltos segun release docs recientes).
+4. `10`: completado para `Planificado`; la parte `Ejecutado` depende de Milestone 14 y ahora debe priorizarse por PVM.
 
-### Milestone 07
-General dashboards foundation:
-1. Net worth (`Patrimonio`)
-2. Budget (`Presupuesto`)
-3. Monthly/Yearly result (`Resultado mensual/anual`)
-4. Investment portfolio (`Cartera de Inversion`)
-5. Simulators (`Simuladores`)
+### Milestones en curso o recontextualizados
+1. `14` (`Modulo Contabilidad con temporalidad`): en curso, con avance real superior al reflejado en el roadmap global anterior.
+2. `24` (`Asistente de captura de datos`): candidato clave para mejorar activacion de `Community/Core` y `Cloud Basic`, pero puede entrar como post-PVM si compromete fecha.
+3. `20` (`Landing + pagos SaaS`): pasa a ser critico para `Cloud Basic` (antes estaba demasiado tarde en la secuencia).
+4. `23` (escalado continuo): sigue vigente como pista transversal.
 
-### Milestone 08 (Completed)
-Data input module update:
-1. (New) Annual income (`Ingresos anuales`)
-2. (New) Annual expenses (`Gastos anuales`)
-3. Assets (`Activos`)
-4. Liabilities (`Pasivos`)
-5. (New) Liability interest (`Interes de la deuda`)
-6. First delivery: new `Introduccion de datos` view as second sidebar option (`Guia` -> `Introduccion de datos` -> dashboards, starting with `Patrimonio`)
+## Roadmap objetivo (nuevo, orientado a producto y lanzamiento)
+## Fase A - PVM (`Community/Core` + `Cloud Basic`)
+### Hito A0 - Congelar alcance y contratos de producto (inmediato)
+Objetivo:
+1. Traducir la segmentacion comercial a capacidades tecnicas y alcance release.
 
-Reference:
-- `docs/roadmap/roadmap-milestone-08-data-input-module.md`
-- `docs/roadmap/release-summary-milestone-08-data-input-module.md`
+Decisiones A0 ya cerradas (2026-02-25):
+1. `core.accounting_movements_manual` entra en Fase A (modo detalle opcional).
+2. `core.onboarding_assisted` entra en Fase A.
+3. `core.investment_portfolio_basic` se mantiene en Fase A como capability objetivo, con implementacion "cuando llegue el momento" dentro de la ejecucion de Fase A.
 
-### Milestone 09 (Completed with caveat)
-Phase 1: Debt (`Fase 1: Deuda`) - diagnostic score defined and delivered in SaaS frontend.
+Entregables:
+1. Matriz de capacidades por tier (`Community/Core`, `Cloud Basic`, `Cloud Pro`, `Cloud Premium`).
+2. Decision explicita de que entra en PVM vs se difiere:
+   - obligatorio PVM
+   - deseable PVM
+   - post-PVM
+3. Mapa de flags/capabilities backend/frontend (v1) alineado con planes.
+4. Actualizacion de docs de arquitectura funcional si cambia el boundary Core/Cloud.
 
-Caveat:
-1. Pending parity work: full transfer of Milestone 09 phase-detail UX/scoring to `core` frontend.
+Notas de implementacion:
+1. Reutilizar el patron ya existente de `capabilities` en frontend.
+2. Evolucionar `SaasSubscription` de binario a modelo de plan, sin romper el gating actual de `premium` mientras se migra.
 
-Objective:
-1. Eliminate bad debt with high interest and no asset backing.
+### Hito A1 - Cierre funcional de `Community/Core` (detalle alto)
+Objetivo:
+1. Dejar una version `Community/Core` cerrada, estable y defendible para salir a mercado en paralelo con `Cloud Basic`.
 
-Inputs:
-1. Liabilities (`Pasivos`)
+### A1.1 Recorte de alcance y preservacion de features ya implementadas (prioridad maxima)
+Objetivo:
+1. Sacar del alcance de Fase A las features ya implementadas que pasan a `Cloud Pro`, sin perder codigo ni UX ya construida.
 
-Dashboard:
-1. Net worth (`Patrimonio`) - liabilities KPIs update.
+Trabajo concreto:
+1. Reclasificar `Guia` (plan paso a paso + fases) como feature `Cloud Pro`.
+2. Reclasificar `ownership` / `People` (modo familia/titularidades) como feature de `Cloud Premium`, pero fuera de la oferta `Community/Core` y `Cloud Basic`.
+3. Mantener estas features preservadas en codigo:
+   - sin borrarlas
+   - con gating por capabilities
+   - con rutas/CTAs ocultos o bloqueados segun plan
+4. Documentar explicitamente en roadmap/capabilities que son "implementadas pero fuera de Fase A".
 
-KPIs:
-1. Unbacked debt (`Deuda sin respaldo`)
-2. Max liability APR/TAE
-3. Related debt-risk indicators
-4. Debt service ratio (`% cuota/ingresos`) based on manual monthly payment per liability (temporary).
+### A1.2 Convergencia de frontend Core/SaaS para Fase A (prioridad maxima)
+Objetivo:
+1. Consolidar un baseline comun de frontend para todo lo que si pertenece a Fase A y evitar que `core` y `saas` sigan divergiendo por descuidos.
 
-Reference:
-- `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
+Trabajo concreto:
+1. Definir lista de pantallas/componentes "baseline Fase A" compartidos:
+   - `Patrimonio`
+   - `Introduccion de datos`
+   - `Presupuesto`
+   - `Cartera de inversion` (cuando entre el slice basico)
+   - shell/navegacion/UX comun
+2. Identificar diferencias actuales `core/frontend` vs `frontend` (SaaS) y resolverlas con criterio:
+   - compartir codigo cuando aplique
+   - o mantener divergencia solo si esta documentada por capability
+3. Alinear rutas, copy y comportamiento de estados vacios para Fase A en ambos fronts.
+4. Dejar `Guia` y `People/ownership` fuera del baseline Fase A, aunque se conserven en SaaS para fases posteriores via gating.
 
-### Milestone 10 (Completed)
-Budget dashboard (`Dashboard Presupuesto`).
+### A1.3 Refactor de consolidacion (antes de seguir construyendo Fase A)
+Objetivo:
+1. Hacer un refactor completo de lo ya valido hasta ese momento para construir el resto de Fase A sobre una base mas solida.
 
-Objective:
-1. Visualize annual budget plan (`Ingresos` / `Gastos`) and compare against executed evolution.
+Trabajo concreto:
+1. Extraer logica duplicada `core`/`saas` en frontend (stores, composables, vistas y utilidades) donde sea rentable.
+2. Consolidar contratos y tipos compartidos en dominios clave (`net-worth`, `data-input`, `budget`).
+3. Reducir debt de capabilities/gating en frontend antes de introducir mas features de Fase A.
+4. Dejar pruebas de regresion en los flujos baseline Fase A para proteger el refactor.
 
-UX direction:
-1. Same dashboard style and sidebar access pattern as `Patrimonio`.
-2. `Ingresos` section first, then `Gastos`.
-3. Category-level planned detail (from `Introduccion de datos`) plus executed evolution bars (dependent on future accounting module).
+### A1.4 Alcance funcional a cerrar (PVM Core)
+Debe quedar disponible y usable:
+1. `Patrimonio`: activos, pasivos, patrimonio neto, snapshots/evolucion basica.
+2. `Contabilidad lite`: datos anuales (`Ingresos`/`Gastos`) + eventos puntuales (`one_off`) + check-ins mensuales.
+3. `Presupuesto`: planificado vs ejecutado (cuando haya check-ins).
+4. `Recurrentes`: gestion via entradas anuales recurrentes y gastos generados desde pasivos.
+5. `Cierres`: experiencia de cierre mensual util (aunque sea v1 apoyada en `Presupuesto` + check-ins).
+6. `Cartera de inversion` (si entra en Fase A, prioridad explicitada por producto):
+   - objetivo minimo: modulo de seguimiento basico
+   - puede salir como dashboard/simple slice incremental mientras se preserva una v1 defendible
+7. Estadisticas basicas:
+   - totales anuales/mensuales disponibles en dashboards actuales
+   - distribuciones y comparativas simples (`Patrimonio`/`Presupuesto`)
 
-Reference:
-- `docs/roadmap/roadmap-milestone-10-budget-dashboard.md`
-- `docs/roadmap/release-summary-milestone-10-budget-dashboard.md`
+No debe entrar en PVM Core:
+1. Agente de consejos.
+2. Objetivos.
+3. Simuladores inteligentes.
+4. Notificaciones inteligentes.
+5. `Guia` / fases (se mueve a `Cloud Pro`, aunque se preserve el trabajo ya implementado).
+6. Familia/titularidades (`ownership`, `People`) como modo producto (se mueve a `Cloud Premium`).
+7. ASTRA.
 
-### Milestone 11 (Completed)
-Phase 2: Cash flow (`Fase 2: Flujo de caja`) - score defined and delivered in SaaS/Core frontend guide phase detail.
+### A1.5 Trabajo tecnico prioritario (Core)
+#### A1.5.a Cerrar Milestone 14 para valor PVM (prioridad maxima)
+1. Verificar y finalizar `14A` (pasivos -> gasto autogenerado) con docs/tests/cierre de release interno.
+2. Cerrar `14C` minimo para `Gastos` e `Ingresos`:
+   - CRUD check-ins mensual
+   - estados `confirmed/adjusted/skipped/pending`
+   - lectura mensual/YTD
+3. Integrar `Ejecutado` real en `Dashboard Presupuesto` Core (no placeholder).
+4. Asegurar UX de `cierre mensual` en Core:
+   - decidir ubicacion final (`Presupuesto` modo cierre o vista dedicada)
+   - flujo por mes con estados claros `Plan/Ejecutado/Pendiente`
+5. Definir criterio funcional de "cierre" v1:
+   - que significa "mes cerrado"
+   - como se mide completitud
+   - que pasa si se reabre/ajusta despues
 
-Post-release refinement (completed):
-1. Phase 2 upgraded from a single operational ratio to a composite cash-flow tension score.
-2. Annual income/expense entries now support extra cash-flow dimensions for Phase 2 interpretation:
-   - `time_profile` (`structural_recurrent`, `term_recurrent`, `one_off`)
-   - `cashflow_role` (operating / temporary commitment / savings / investment / asset sale-purchase / etc.)
-   - `event_group` (for grouped extraordinary events like `vivienda_2026`)
-   - `term_end_year` (for temporary recurring commitments)
-3. Guide Phase 2 detail now separates:
-   - gasto operativo estructural
-   - compromisos temporales
-   - flujo recurrente tras compromisos
-   while keeping extraordinary flows as context.
+#### A1.5.b Modulo de cartera de inversion (Fase A, prioridad alta por producto)
+1. Repriorizar `Milestone 15` para que entre en Fase A con alcance v1 basico.
+2. Definir alcance minimo de "seguimiento basico":
+   - holdings/posiciones manuales
+   - valor actual y coste (si aplica)
+   - vista resumen de cartera
+   - metricas basicas (valor, variacion simple, distribucion)
+3. Integrar con datos de `Patrimonio` sin duplicar reglas cuando sea posible.
+4. Documentar explicitamente lo que queda fuera de v1 (analisis avanzado, rebalanceo, riesgo/retorno avanzado).
 
-Objective:
-1. Keep positive cash flow with stable monthly surplus.
+#### A1.5.c Cierre de experiencia de captura (PVM)
+1. Refinar `Introduccion de datos` para minimizar friccion en alta de:
+   - vivienda/hipoteca
+   - coche/prestamo
+   - efectivo/cuentas
+   - inversiones
+2. Completar ayudas de captura ya encaminadas (pasivos/autocompletados) antes de abrir nuevos subfrentes.
+3. Decidir alcance PVM de importacion:
+   - opcion A: lanzar con import/export portable JSON y documentarlo como importacion manual v1
+   - opcion B: anadir CSV basico manual para ingresos/gastos y/o movimientos
+4. Si CSV no entra, dejar Milestone especifico post-PVM documentado y no prometerlo en copy comercial.
 
-Inputs:
-1. Income (`Ingresos`)
-2. Expenses (`Gastos`)
+#### A1.5.d Activacion y onboarding (PVM vs post-PVM)
+1. `Wizard`/asistente (Milestone 24) es deseable, pero no debe bloquear salida si compromete fecha.
+2. Minimo PVM alternativo si se difiere el wizard:
+   - checklist de completitud de datos
+   - CTA guiados por modulo (`anade vivienda`, `anade deuda`, `anade ingreso principal`)
+   - estados vacios pedagogicos
+3. Si el wizard entra:
+   - limitar v1 a screening + propuestas simples
+   - reutilizar contratos existentes de `Introduccion de datos`
 
-Dashboard:
-1. Budget (`Presupuesto`)
-
-KPIs:
-1. Cash flow (`Flujo de caja`)
-2. Savings-to-income ratio (`% ahorro/ingresos`)
-3. Related cash-flow stability indicators
-4. Savings distribution by category (`Distribucion del ahorro por categoria`) - informativo
-
-Score definition (phase 2, `0-100`) current:
-1. Composite tension score (weighted) using recurrent income as denominator:
-   - `% gasto operativo estructural / ingresos recurrentes`
-   - `% carga comprometida total (operativo + compromisos temporales) / ingresos recurrentes`
-   - `% compromisos temporales / ingresos recurrentes`
-2. Extraordinary events remain visible as context and distortion warning, but they do not dominate the score.
-3. Savings/investment allocations remain informative (not counted as operating tension).
-
-Reference:
-- `docs/roadmap/roadmap-milestone-11-phase-2-cash-flow-guide-detail.md`
-- `docs/roadmap/release-summary-milestone-11-phase-2-cash-flow-guide-detail.md`
-
-### Milestone 12 (Completed)
-Phase 3: Emergency fund (`Fase 3: Fondo de emergencia`) - v1 diagnostic score defined and delivered in SaaS/Core frontend guide phase detail.
-
-Objective:
-1. Build a financial safety buffer.
-
-Inputs:
-1. Assets - liquidity (`Activos - Liquidez`)
-
-Dashboard:
-1. Net worth (`Patrimonio`) - liquidity KPIs update.
-
-KPIs:
-1. Liquidity (`Liquidez`)
-2. Available expense coverage in months (`Meses de gastos disponibles`)
-
-V1 direction (aligned with current Fases 1, 2 y 4 implementations):
-1. Reuse Fase 2 cash-flow semantics to estimate emergency-fund denominator:
-   - gasto operativo estructural
-   - carga actual (operativo + compromisos temporales)
-2. Reuse Fase 4 liquidity/illiquidity criteria as classification baseline for emergency-fund usable liquidity.
-3. Follow Fases 1/4 detail UX pattern in `Guia`:
-   - summary cards + score cards + global score badge/meter
-4. Maintain Core/SaaS frontend parity for shared guide-phase diagnostics and phase-detail rendering.
-
-Reference:
-- `docs/roadmap/roadmap-milestone-12-phase-3-emergency-fund-guide-detail.md`
-- `docs/roadmap/release-summary-milestone-12-phase-3-emergency-fund-guide-detail.md`
-
-### Milestone 13 (Completed)
-Phase 4: Net-worth health (`Fase 4: Salud patrimonial`) - score defined and delivered in SaaS frontend.
-
-Objective:
-1. Balance assets and liabilities.
-
-Inputs:
-1. Assets (`Activos`)
-2. Liabilities (`Pasivos`)
-
-Dashboard:
-1. Guide (`Guia`) - phase 4 detail view.
-
-KPIs:
-1. Score Respaldo patrimonial (`0-100`): deuda sin respaldo/activos (inverso) + activos iliquidos (inverso).
-2. `% activos iliquidos` incluye: inmuebles + mobiliario + otros + inversiones iliquidas (`pension_plans`, `real_estate_crowd`, `crowdlending`, `investments:other`) + `cash:other` con `TAE > 0`.
-3. Score Distribucion del riesgo (`0-100`): concentracion top activo (inverso) + diversificacion.
-4. Score global fase 4 (`0-100`): `0.50 * Respaldo + 0.50 * Distribucion`.
-
-Reference:
-- `docs/roadmap/roadmap-milestone-13-guide-phase-detail.md`
-
-Parity status:
-1. Core frontend parity delivered (Guia phase detail UX/scoring for Fase 1 and Fase 4).
-
-### Milestone 14
-Accounting module (`Modulo Contabilidad`) - dashboard data-input update with temporality.
-
-Objective:
-1. Introduce temporal behavior in financial records.
-
-Current progress (in progress):
-1. Liability (`Pasivos`) flow is being actively improved in `Introduccion de datos`.
-2. Liability creation now supports richer amortization base metadata (dates/term/rate behavior base).
-3. Automatic generation of recurring annual expense entries from liabilities is already working.
-4. UX improvements are in progress to reduce form noise and improve guided completion.
-5. `14A` (debt schedule v1 + generated recurring expenses) is functionally advanced and pending final closure docs/tests sweep.
-6. `14B` (liability form simplification + category defaults/autocomplete helpers) has been closed as a quick UX slice.
-
-Current focus inside Milestone 14:
-1. `14C` next: temporality for `Ingresos/Gastos` (one-off entries + monthly check-ins, starting with `Gastos`).
-2. Keep liability flow (`14A`/`14B`) stable while shifting effort to accounting temporality core.
-
-Recently closed inside Milestone 14 (`14A` + `14B`):
-1. Debt engine v1: fixed-rate + monthly/quarterly schedule (constant installment).
-2. Annual generated expenses sync on liability updates without duplication.
-3. Preservation of user edits on generated annual expenses when applicable.
-4. Removal of obsolete generated annualities when liability term shrinks.
-5. Liability form UX simplified to supported combinations plus category-based defaults/autocomplete hints.
-
-Next likely steps (Milestone 14 refinement):
-1. Start `14C` with a minimal slice in `Gastos`:
-   - `one-off` entries
+#### A1.5.e Hardening y release de Core
+1. Ejecutar matriz de calidad de `core/backend` y `core/frontend` en Docker.
+2. Ejecutar pruebas dirigidas de:
+   - net worth CRUD
+   - data input annual entries
    - monthly check-ins
-   - read model (monthly / YTD) for planned vs executed
-2. Extend `14C` to `Ingresos` reusing the same temporal contracts.
-3. Integrate `14C` outputs into `Dashboard Presupuesto` (`Ejecutado` real).
-4. Revisit additional liability helpers only if they materially reduce capture friction (otherwise defer).
+   - presupuesto plan vs ejecutado
+   - cartera de inversion v1 (si entra en el corte)
+   - guia/fases (regresion)
+3. Crear `release-summary` del cierre funcional que consolide el estado PVM Core.
+4. Actualizar docs de uso (`docs/operations/dev-setup.md`, `docs/operations/runbook.md`) si cambian flujos.
 
-Scope updates:
-1. Income (`Ingresos`) - (New) one-off entries and monthly check-ins.
-2. Expenses (`Gastos`) - (New) one-off entries and monthly check-ins.
-3. Assets (`Activos`) - (New) depreciable furniture/equipment metadata and financial asset details (risk, volatility, yield, fees).
-4. Liabilities (`Pasivos`).
-5. Pending debt upgrade: amortization metadata to calculate liability monthly payment (`cuota mensual`)
-   automatically (term/end date, schedule, and rate behavior).
-6. `14A` implementation slice (current): debt engine v1 (`fixed`, `monthly|quarterly`) + generated annual recurring expenses sync from liabilities.
+### Hito A2 - Producto `Cloud Basic` (detalle alto)
+Objetivo:
+1. Lanzar SaaS gestionado con el mismo valor funcional del core, sin features Pro/Premium.
 
-### Milestone 15
-Investment portfolio dashboard (`Dashboard Cartera Inversion`).
+### A2.1 Alcance funcional de `Cloud Basic`
+Incluye:
+1. Todo el alcance de `Community/Core` (misma base funcional).
+2. Auth SaaS + acceso web multi-dispositivo.
+3. Operacion gestionada (hosting/actualizaciones).
+4. Backups automaticos.
+5. PWA minima funcional.
 
-### Milestone 16
-Phase 5: Financial independence (`Fase 5: Independencia financiera`) - diagnostic score pending definition.
+No incluye:
+1. Fases/scores/agente/objetivos/simuladores/notificaciones inteligentes si decides reservarlos para Pro.
+2. Modo familia/titularidades como feature producto (aunque existan piezas internas en SaaS).
 
-Objective:
-1. Increase productive assets.
+### A2.2 Trabajo tecnico prioritario (SaaS)
+#### A2.2.a Planes y capabilities (prioridad maxima)
+1. Cambiar modelo de suscripcion SaaS de binario a planificado (`basic`, `pro`, `premium`), manteniendo compatibilidad temporal.
+2. Definir permisos/capabilities por plan en backend:
+   - `cloud_basic`
+   - `cloud_pro`
+   - `cloud_premium`
+   - flags funcionales derivados (ej. `people`, `ownership`, `guide_scores`, `agent`, `simulators`)
+3. Consumir capabilities en frontend SaaS para ocultar/mostrar rutas y CTAs correctamente.
+4. Desacoplar el significado actual de `isPremium` (hoy mezcla "SaaS avanzado" con "features family/ownership").
 
-Inputs:
-1. Productive assets (`Activos productivos`)
+#### A2.2.b Paridad funcional con Core (prioridad alta)
+1. Confirmar que la funcionalidad PVM Core consumida desde SaaS esta disponible (especialmente `Milestone 14` integrado).
+2. Evitar que SaaS exponga features avanzadas no vendidas en `Cloud Basic`:
+   - `Guia` / fases (si quedan visibles hoy)
+   - `People`
+   - titularidades avanzadas
+   - vistas admin solo internas
+3. Revisar copy/UI para que `Cloud Basic` no se perciba como "premium recortado", sino como "core gestionado".
 
-Dashboard:
-1. Investment portfolio (`Cartera de Inversion`)
+#### A2.2.c PWA minima (prioridad alta para promesa comercial)
+1. Implementar base PWA en frontend SaaS:
+   - manifest
+   - iconos
+   - service worker (cache shell)
+   - instalable en movil
+2. Asegurar funcionamiento minimo de vistas clave:
+   - login
+   - patrimonio
+   - presupuesto
+   - introduccion de datos
+3. Definir claramente limite v1:
+   - "PWA minima funcional" no implica offline full-sync.
 
-KPIs:
-1. ROI
-2. CAGR
-3. Related productive-asset indicators
+#### A2.2.d Operacion gestionada (prioridad alta)
+1. Backups automaticos:
+   - politica (frecuencia/retencion)
+   - restauracion validada
+   - runbook documentado
+2. Actualizaciones:
+   - proceso de despliegue reproducible
+   - rollback minimo
+3. Observabilidad minima:
+   - logs centralizados
+   - errores backend/frontend
+   - healthchecks basicos
+4. Seguridad operacional minima:
+   - gestion de secretos
+   - HTTPS/proxy de produccion
+   - controles de acceso admin
 
-### Milestone 17
-Monthly/Yearly result dashboard (`Dashboard Resultado mensual/anual`).
+#### A2.2.e Cobro y alta comercial (prioridad alta)
+1. Landing de SaaS (Milestone 20 re-priorizado).
+2. Pricing con comparativa `Basic / Pro / Premium` (aunque Pro/Premium esten "proximamente").
+3. Flujo de pago/suscripcion para `Cloud Basic`.
+4. Gestion de estado de suscripcion:
+   - alta
+   - renovacion
+   - cancelacion
+   - `past_due`
+5. Pantalla de cuenta/plan con estado de suscripcion y upgrade path.
 
-Objective:
-1. Review month-end and year-end outcomes.
-2. Compare realized results vs budget.
-3. Manage transfers to family accounts.
+### A2.3 Validacion de lanzamiento `Cloud Basic`
+1. Matriz de calidad SaaS backend/frontend en Docker.
+2. Smoke tests funcionales:
+   - registro/login
+   - acceso a app
+   - CRUD patrimonio
+   - introduccion de datos
+   - presupuesto con ejecutado
+   - cambio de plan/capabilities (si aplica con entornos seed)
+3. Smoke tests operativos:
+   - backup/restore
+   - deploy/rollback
+   - healthcheck
+4. Prueba PWA:
+   - instalacion
+   - carga inicial
+   - navegacion basica
 
-### Milestone 18
-First production demo release.
+### Hito A3 - Lanzamiento coordinado PVM (Core + Cloud Basic)
+Objetivo:
+1. Sacar ambas ofertas a mercado con narrativa y alcance coherentes, evitando divergencias de promesa.
 
-### Milestone 19
-Mobile strategy and implementation.
+Entregables:
+1. Version/tag de release PVM.
+2. Documentacion publica de diferencias `Community/Core` vs `Cloud Basic`.
+3. Runbook de soporte inicial.
+4. Checklist de incidentes/rollback de produccion.
+5. Release summaries de cierre (Core y SaaS/PVM).
 
-### Milestone 20
-Landing + payment system for SaaS.
+## Fase B - `Cloud Pro` (detalle medio)
+Objetivo:
+1. Convertir datos en mejora accionable (estructura + guia + recomendaciones + objetivos + simulacion simple).
 
-### Milestone 21
-Explainability (`Explicabilidad`):
-1. Concept information
-2. Glossary
-3. Chatbot
+Hitos propuestos (alto nivel):
+1. `B1` - Arquitectura de capabilities Pro y gating fino (si no quedo completa en A2).
+2. `B2` - Sistema de fases como feature de pago Cloud (estado, progreso, siguientes pasos).
+3. `B3` - Scores Pro (estabilidad/ahorro/control/resiliencia) con penalizacion por calidad de dato.
+4. `B4` - Agente financiero basico (consejos accionables + alertas por desvio + incoherencias simples).
+5. `B5` - Objetivos (creacion, seguimiento, estimacion simple).
+6. `B6` - Simulador basico (3-5 anos, escenarios tipicos).
+7. `B7` - Notificaciones inteligentes basicas.
 
-### Milestone 22
-Simulators dashboard (`Dashboard Simuladores`) - likely SaaS-only.
+Dependencias clave:
+1. Datos temporales y cierres mensuales (Milestone 14) suficientemente estables.
+2. Modelo de completitud/calidad de dato maduro.
+3. Capacidades/planes y billing ya estables desde `Cloud Basic`.
 
-### Milestone 23 (Continuous)
-Iterative scaling: observability, performance, security, UX.
+## Fase C - `Cloud Premium` (detalle medio-bajo)
+Objetivo:
+1. Optimizar y acelerar con capacidades avanzadas de hogar, simulacion y analitica.
 
-### Milestone 24
-Guided onboarding / assisted data completion (`Acompanamiento guiado de captura de datos`).
+Hitos propuestos (alto nivel):
+1. `C1` - Modo familia como producto premium (roles, privacidad por miembro, menores).
+2. `C2` - Agente avanzado (multi-escenario, sensibilidad, explicabilidad).
+3. `C3` - Simulador avanzado (Montecarlo, FIRE, escenarios macro).
+4. `C4` - Analisis avanzado de cartera (riesgo/retorno, concentracion, rebalanceo sugerido).
+5. `C5` - Entrada premium (foto/voz/importacion masiva).
+6. `C6` - ASTRA informativo (senales/backtests/simulacion, sin ejecucion real).
 
-Objective:
-1. Help first-time users complete enough data to build a useful annual budget and net-worth baseline.
+Dependencias clave:
+1. Capacidades de plan completamente desacopladas.
+2. Dataset/telemetria (si se usa benchmarking) con opt-in y diseno de privacidad correcto.
+3. Base de usuario y soporte operacional capaces de sostener features avanzadas.
 
-Direction:
-1. First-open guided questionnaire / wizard (progressive questions, not a blank form).
-2. Smart prompts for common missing assets and liabilities (for example phone, laptop, jewelry, bike, vehicle, housing).
-3. Questions that fill both:
-   - net worth (`balance patrimonial`)
-   - annual budget (`balance anual`)
-4. Progressive enrichment: start with coarse data and refine later without blocking value.
+## Trabajo inmediato (que hacer ahora mismo)
+### Prioridad 1 (esta iteracion)
+1. Actualizar y cerrar la matriz de capacidades por tier (docs + flags backend/frontend).
+2. Sacar de Fase A (sin perderlas) `Guia`/fases hacia `Cloud Pro` y `ownership`/`People` hacia `Cloud Premium` via gating/capabilities.
+3. Consolidar baseline de frontend Fase A entre `core` y `saas` (paridad y convergencia de UX/rutas).
+4. Planificar el refactor de consolidacion sobre ese baseline comun.
+5. Replanificar `Milestone 14` como bloque critico del PVM y definir subalcance exacto de cierre (`14A/14C`).
+6. Repriorizar `Milestone 15` (cartera) dentro de Fase A con alcance basico.
+7. Decidir si el wizard (`Milestone 24`) entra en PVM o pasa a post-PVM con fallback de checklist.
+8. Repriorizar `Milestone 20` (landing/pagos) al camino de `Cloud Basic`.
 
-Reference:
-- `docs/roadmap/roadmap-milestone-24-assisted-data-capture.md`
+### Prioridad 2 (siguiente iteracion corta)
+1. Ejecutar refactor de consolidacion del baseline Fase A (`core` + `saas`) con regresion controlada.
+2. Cerrar `Ejecutado` real en `Presupuesto` y experiencia de cierre mensual (Core + SaaS).
+3. Estabilizar pasivos/gasto autogenerado y validar regresion de captura de datos.
+4. Entregar `Cartera de inversion` v1 basica en Core/SaaS (si no entra en la iteracion anterior).
+5. Definir/implementar modelo de plan SaaS (`basic/pro/premium`) y capabilities v1.
+6. Delimitar y ocultar features no-PVM en frontend SaaS (`Guia`, `People`, titularidades avanzadas) para `Cloud Basic`.
 
-### Milestone 25 (Candidate)
-Backend-first business logic delegation (`Delegar logica funcional del front al back`).
+### Prioridad 3 (pre-lanzamiento)
+1. PWA minima SaaS.
+2. Backups + restore + runbook.
+3. Landing + cobro + pantalla de cuenta/plan.
+4. QA y smoke de lanzamiento PVM.
 
-Objective:
-1. Move critical business rules, normalizations and derived calculations from frontend forms/views to backend services/serializers.
+## Riesgos de planificacion (actualizados)
+1. Riesgo: intentar cerrar `Milestone 14`, `Milestone 24`, PWA y pagos a la vez.
+   - Mitigacion: fijar corte PVM estricto y diferir wizard o CSV si comprometen fecha.
+2. Riesgo: confundir capacidades tecnicas existentes en SaaS con producto vendible (`Cloud Basic`).
+   - Mitigacion: definir matriz de features vendidas y gating visible en UI/backend.
+3. Riesgo: mantener modelo de suscripcion binario demasiado tiempo.
+   - Mitigacion: introducir `plan_code`/capabilities antes del lanzamiento comercial.
+4. Riesgo: prometer PWA sin especificar alcance.
+   - Mitigacion: documentar explicitamente "PWA minima funcional (sin offline completo)".
+5. Riesgo: desalineacion entre `core` y `saas` al acelerar el lanzamiento.
+   - Mitigacion: tratar `core` como baseline funcional y validar paridad PVM en cada release candidate.
 
-Direction:
-1. Reduce duplication between UI flows and import paths.
-2. Improve consistency across SaaS/Core and future clients.
-3. Keep frontend focused on UX guidance, not canonical domain rules.
-4. Prioritize high-risk domains first (budget classification, liability derivations, temporal accounting rules).
+## Referencias principales
+1. `docs/roadmap/roadmap-milestone-14-accounting-module.md`
+2. `docs/roadmap/roadmap-milestone-24-assisted-data-capture.md`
+3. `docs/roadmap/release-summary-milestone-10-budget-dashboard.md`
+4. `docs/roadmap/release-summary-milestone-13-guide-phase-detail.md`
+5. `docs/architecture/capabilities-matrix.md`
+6. `docs/operations/release-checklist.md`
+7. `RELEASING.md`

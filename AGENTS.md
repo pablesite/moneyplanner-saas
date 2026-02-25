@@ -78,5 +78,55 @@ CI reference:
 3. Development setup: `docs/operations/dev-setup.md`
 4. Platform architecture: `docs/architecture/architecture.md`
 5. Product functional architecture: `docs/architecture/product-architecture.md`
-6. Current release roadmap: `docs/roadmap/roadmap-milestone-04-refactor.md`
+6. Capabilities matrix (plans/features mapping): `docs/architecture/capabilities-matrix.md`
+7. Global product roadmap: `docs/roadmap/roadmap.md`
+
+## AppCapabilities Governance (Important)
+Use these rules whenever introducing, moving, gating, or refactoring product features across `core` and `saas`.
+
+### Source of truth and ownership
+1. Treat `capabilities` as a versioned product contract, not as ad-hoc frontend flags.
+2. Backend is the canonical source of effective capabilities for Cloud plans.
+3. Frontend consumes capabilities and should not invent plan logic independently.
+4. `docs/architecture/capabilities-matrix.md` is the planning/reference source and must be updated when packaging changes.
+
+### Contract design rules
+1. Separate commercial plan identity (`plan_code`) from technical capabilities (`capabilities`).
+2. Prefer capability checks (feature-based) over direct `plan_code` checks in UI/business flows.
+3. Keep a `capabilities_version` in the contract and evolve it intentionally.
+4. Use compatibility fields only as migration bridges (for example `compat.isPremium`, `compat.people`, `compat.ownership`).
+5. Do not use compatibility fields as the long-term source of truth.
+
+### Implementation rules (backend/frontend)
+1. Backend should resolve effective capabilities from `plan_code` + subscription status (`trial`, `active`, `past_due`, `canceled`) in one place.
+2. Frontend should use helpers/wrappers for gating (for example `canUseGuide`, `canUseOwnership`) instead of scattered inline checks.
+3. Avoid hardcoding product packaging in multiple views/components.
+4. When moving a feature between plans, update the mapping first, then UI gating.
+
+### Feature workflow rule (mandatory)
+1. Every new feature must declare its capability before merge, or be explicitly marked as base/core (ungated).
+2. If a feature is implemented but not yet sold/exposed, preserve the code and gate it via capabilities.
+3. If a feature changes tier (for example `Pro` -> `Premium`), update:
+   - `docs/architecture/capabilities-matrix.md`
+   - affected backend capability mapping
+   - affected frontend gating/routes/menus
+   - roadmap/docs if product scope changed
+
+### Granularity rules (to avoid capability sprawl)
+1. Create a separate capability only if at least one of these is true:
+   - it can be sold in a different tier
+   - it can be rolled out independently
+   - it has materially different permissions/risk
+   - it needs explicit kill-switch control
+2. Do not split capabilities too much when the subfeature is always bundled with its parent.
+3. Prefer parent capability + internal implementation details when no independent gating is expected.
+4. Example guideline:
+   - Good split: `premium.ownership` vs `pro.guide_phase_hub` (different product tiers)
+   - Maybe too specific (unless independently gated): `core.net_worth_snapshots` if snapshots are always part of `core.net_worth`
+
+### Testing and drift prevention
+1. Add/maintain backend tests that assert the capabilities payload shape for representative plans.
+2. Add/maintain frontend tests (or parser/default tests) to tolerate missing/new flags safely.
+3. If backend/frontend capability keys diverge, fix the contract before continuing feature work.
+4. Prefer failing fast in development when a required capability key is missing.
 

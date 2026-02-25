@@ -24,6 +24,7 @@ Describe product modules and their functional dependencies.
 Reference:
 - `docs/architecture/annual-income-taxonomy.md`
 - `docs/architecture/annual-expense-taxonomy.md`
+- `docs/architecture/capabilities-matrix.md`
 
 ## Principles
 1. Keep modules cohesive.
