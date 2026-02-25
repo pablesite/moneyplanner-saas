@@ -133,6 +133,15 @@ const LIABILITY_PAYMENT_FREQUENCIES = [
   { value: 'monthly', label: 'Mensual' },
   { value: 'quarterly', label: 'Trimestral' },
 ];
+const LIABILITY_CATEGORY_DEFAULTS: Record<
+  string,
+  { paymentFrequency?: 'monthly' | 'quarterly'; preferredAssetCategories?: string[] }
+> = {
+  mortgage: { paymentFrequency: 'monthly', preferredAssetCategories: ['real_estate'] },
+  personal_loan: { paymentFrequency: 'monthly', preferredAssetCategories: ['furnishings', 'other'] },
+  credit_card: { paymentFrequency: 'monthly', preferredAssetCategories: [] },
+  other: { paymentFrequency: 'monthly', preferredAssetCategories: ['furnishings', 'other'] },
+};
 const ASSET_AMORTIZATION_METHODS = [
   { value: 'none', label: 'Sin amortizacion' },
   { value: 'straight_line', label: 'Lineal' },
@@ -204,6 +213,40 @@ const showAssetAmortizationFields = computed(() => isAssetForm.value);
 const requiresAssetAmortizationInputs = computed(
   () => showAssetAmortizationFields.value && form.amortization_method !== 'none',
 );
+const financedAssetSuggestion = computed(() => {
+  if (!showFinancedAsset.value) return null;
+  const assets = Array.isArray(props.assets) ? props.assets : [];
+  if (!assets.length) return null;
+  const defaults = LIABILITY_CATEGORY_DEFAULTS[String(form.category ?? '').trim()] ?? {};
+  const preferredCategories = new Set(defaults.preferredAssetCategories ?? []);
+  const hasPreferredFilter = preferredCategories.size > 0;
+
+  const candidates = assets
+    .map((asset) => {
+      let score = scoreAssetNameMatch(form.name, asset.name);
+      if (hasPreferredFilter && preferredCategories.has(asset.category)) score += 15;
+      return { asset, score };
+    })
+    .sort((a, b) => b.score - a.score || a.asset.name.localeCompare(b.asset.name));
+
+  if (!candidates.length) return null;
+  const best = candidates[0];
+  const second = candidates[1];
+  if (!best) return null;
+  if (best.score >= 70) return best.asset;
+  if (best.score >= 20 && (!second || best.score - second.score >= 15)) return best.asset;
+  if (!String(form.name ?? '').trim() && hasPreferredFilter) {
+    const preferredOnly = assets.filter((asset) => preferredCategories.has(asset.category));
+    if (preferredOnly.length === 1) return preferredOnly[0];
+  }
+  return null;
+});
+const financedAssetSuggestionHelp = computed(() => {
+  if (!showFinancedAsset.value || !financedAssetAutoMatched.value) return null;
+  const suggestion = financedAssetSuggestion.value;
+  if (!suggestion || form.financed_asset_id !== suggestion.id) return null;
+  return 'Activo financiado sugerido automáticamente (editable).';
+});
 const subcategoriesForCategory = computed(() => {
   if (!props.subcategories || !form.category) return [];
   return props.subcategories.filter((s) => s.category === form.category);
@@ -216,6 +259,8 @@ const normalizedDefaultCurrency = computed(() =>
     .toUpperCase(),
 );
 const activeLiabilityFieldGroup = ref<'term' | 'end' | null>(null);
+const financedAssetManuallySelected = ref(false);
+const financedAssetAutoMatched = ref(false);
 let syncingScheduleFields = false;
 
 watch(
@@ -226,6 +271,33 @@ watch(
     if (!valid) form.subcategory = '';
   },
 );
+
+function normalizeMatchText(raw: unknown): string {
+  return String(raw ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function scoreAssetNameMatch(liabilityName: string, assetName: string): number {
+  const left = normalizeMatchText(liabilityName);
+  const right = normalizeMatchText(assetName);
+  if (!left || !right) return 0;
+  if (left === right) return 100;
+  if (left.includes(right) || right.includes(left)) return 70;
+  const leftTokens = new Set(left.split(' ').filter(Boolean));
+  const rightTokens = new Set(right.split(' ').filter(Boolean));
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  let overlap = 0;
+  leftTokens.forEach((token) => {
+    if (rightTokens.has(token)) overlap += 1;
+  });
+  if (!overlap) return 0;
+  return Math.round((overlap / Math.max(leftTokens.size, rightTokens.size)) * 50);
+}
 
 function normalizeLooseNumber(raw: unknown) {
   // Allow only digits and separators, remove spaces (including NBSP)
@@ -512,6 +584,8 @@ async function submit() {
   form.currency = normalizedDefaultCurrency.value || '';
   form.ownership_id = null;
   form.financed_asset_id = null;
+  financedAssetManuallySelected.value = false;
+  financedAssetAutoMatched.value = false;
 }
 
 watch(
@@ -544,6 +618,8 @@ watch(
     form.is_active = initial.is_active ?? true;
     form.ownership_id = initial.ownership_id ?? null;
     form.financed_asset_id = initial.financed_asset_id ?? null;
+    financedAssetManuallySelected.value = form.financed_asset_id != null;
+    financedAssetAutoMatched.value = false;
   },
   { immediate: true, deep: true },
 );
@@ -557,6 +633,40 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  () => form.category,
+  (category) => {
+    if (!isLiabilityForm.value || isEdit.value) return;
+    const defaults = LIABILITY_CATEGORY_DEFAULTS[String(category ?? '').trim()];
+    if (defaults?.paymentFrequency) form.payment_frequency = defaults.paymentFrequency;
+    form.rate_type = 'fixed';
+    form.amortization_system = 'french';
+    if (!String(form.annual_interest_tae ?? '').trim()) form.annual_interest_tae = '0';
+    if (category !== 'mortgage') {
+      form.opening_fees_amount = '';
+      form.early_repayment_fee_percent = '';
+      form.novation_subrogation_fee_amount = '';
+      form.linked_products_monthly_cost = '';
+    }
+  },
+);
+
+watch(
+  [() => form.category, () => form.name, () => props.assets],
+  () => {
+    if (!showFinancedAsset.value || isEdit.value || financedAssetManuallySelected.value) return;
+    financedAssetAutoMatched.value = false;
+    const suggestion = financedAssetSuggestion.value;
+    if (!suggestion) {
+      form.financed_asset_id = null;
+      return;
+    }
+    if (form.financed_asset_id !== suggestion.id) form.financed_asset_id = suggestion.id;
+    financedAssetAutoMatched.value = true;
+  },
+  { deep: true },
 );
 
 function syncExpectedEndDateFromTerm(): void {
@@ -604,6 +714,11 @@ function onLiabilityTermInput(): void {
 function onLiabilityEndDateInput(): void {
   activeLiabilityFieldGroup.value = 'end';
   syncLinkedLiabilityScheduleField('end');
+}
+
+function onFinancedAssetChange(): void {
+  financedAssetManuallySelected.value = true;
+  financedAssetAutoMatched.value = false;
 }
 
 watch(
@@ -741,9 +856,10 @@ watch(
 
       <label v-if="showFinancedAsset" class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Activo financiado</span>
-        <select v-model="form.financed_asset_id" :class="['select ui-data-field', { 'ui-select-placeholder': form.financed_asset_id == null }]">
+        <select v-model="form.financed_asset_id" :class="['select ui-data-field', { 'ui-select-placeholder': form.financed_asset_id == null }]" @change="onFinancedAssetChange">
           <option v-for="a in financedAssetOptions" :key="String(a.value)" :value="a.value">{{ a.label }}</option>
         </select>
+        <div v-if="financedAssetSuggestionHelp" class="ui-form-help">{{ financedAssetSuggestionHelp }}</div>
       </label>
 
       <label class="ui-item-form-field ui-item-form-field-span-2">
