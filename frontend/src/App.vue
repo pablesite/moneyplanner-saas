@@ -47,6 +47,13 @@ const navItems = computed<NavItem[]>(() => {
       hint: 'Plan anual de ingresos y gastos',
       to: '/presupuesto',
     },
+    {
+      id: 'monthly-close',
+      icon: 'CM',
+      label: 'Cierre mensual',
+      hint: 'Liquidez, ingresos, gastos y residual',
+      to: '/cierre-mensual',
+    },
   ];
 
   return baseItems;

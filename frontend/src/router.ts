@@ -22,6 +22,12 @@ const routes: RouteRecordRaw[] = [
   { path: '/introduccion-datos', name: 'data-input', component: DataInputView },
   { path: '/patrimonio', name: 'networth', component: NetWorthView },
   { path: '/presupuesto', name: 'budget-dashboard', component: BudgetDashboardView },
+  {
+    path: '/cierre-mensual',
+    name: 'monthly-close',
+    component: BudgetDashboardView,
+    props: { mode: 'monthly-close' as const },
+  },
   { path: '/data', name: 'aux-data', component: AuxDataView },
   { path: '/data/fx', name: 'settings-fx', component: SettingsFxView },
   { path: '/data/ipc', name: 'settings-ipc', component: SettingsIpcView },

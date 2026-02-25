@@ -11,6 +11,12 @@ import {
   useAnnualIncomeStore,
 } from '@/domains/data-input';
 
+type BudgetDashboardMode = 'budget' | 'monthly-close';
+type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
+const props = withDefaults(defineProps<{ mode?: BudgetDashboardMode }>(), {
+  mode: 'budget',
+});
+
 type ExpenseMonthlySummaryMonth = {
   month: number;
   planned: string;
@@ -36,6 +42,19 @@ type ExpenseMonthlySummaryResponse = {
 type ExpenseMonthlyCheckinApiItem = {
   id: number;
   annual_expense_entry_id: number;
+  fiscal_year: number;
+  month: number;
+  status: 'confirmed' | 'adjusted' | 'skipped';
+  executed_amount: string | null;
+  note: string;
+  confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type IncomeMonthlyCheckinApiItem = {
+  id: number;
+  annual_income_entry_id: number;
   fiscal_year: number;
   month: number;
   status: 'confirmed' | 'adjusted' | 'skipped';
@@ -156,11 +175,17 @@ const expenseExecutionLoading = ref(false);
 const expenseExecutionBusyEntryId = ref<number | null>(null);
 const expenseExecutionError = ref<string | null>(null);
 const expenseAdjustAmounts = ref<Record<number, string>>({});
+const incomeCheckinsByEntryId = ref<Record<number, IncomeMonthlyCheckinApiItem>>({});
+const incomeExecutionLoading = ref(false);
+const incomeExecutionBusyEntryId = ref<number | null>(null);
+const incomeExecutionError = ref<string | null>(null);
+const incomeAdjustAmounts = ref<Record<number, string>>({});
 const liquidityMonthlySummary = ref<LiquidityMonthlySummaryResponse | null>(null);
 const liquidityExecutionLoading = ref(false);
 const liquidityExecutionBusyAssetId = ref<number | null>(null);
 const liquidityExecutionError = ref<string | null>(null);
 const liquidityAdjustAmounts = ref<Record<number, string>>({});
+const activeMonthlyCloseStep = ref<MonthlyCloseStepId>('liq');
 
 const incomeCategoryLabels = new Map(
   incomeCategories.map((row) => [row.value, row.label] as const),
@@ -174,6 +199,27 @@ const expenseCategoryLabels = new Map(
 const expenseSubcategoryLabels = new Map(
   expenseSubcategories.map((row) => [row.value, row.label] as const),
 );
+const isMonthlyCloseView = computed(() => props.mode === 'monthly-close');
+const monthlyCloseFlowSteps = computed<{ id: MonthlyCloseStepId; label: string; subtitle: string }[]>(() => [
+  { id: 'liq', label: 'Liquidez', subtitle: 'Saldo real de cuentas' },
+  { id: 'income', label: 'Ingresos', subtitle: 'Confirmar / ajustar' },
+  { id: 'expense', label: 'Gastos', subtitle: 'Confirmar / ajustar' },
+  { id: 'result', label: 'Resultado', subtitle: 'Residual y KPIs' },
+]);
+const monthlyCloseStepIds = computed(() => monthlyCloseFlowSteps.value.map((s) => s.id));
+const activeMonthlyCloseStepIndex = computed(() =>
+  monthlyCloseStepIds.value.findIndex((id) => id === activeMonthlyCloseStep.value),
+);
+const previousMonthlyCloseStep = computed<MonthlyCloseStepId | null>(() => {
+  const idx = activeMonthlyCloseStepIndex.value;
+  if (idx <= 0) return null;
+  return monthlyCloseStepIds.value[idx - 1] ?? null;
+});
+const nextMonthlyCloseStep = computed<MonthlyCloseStepId | null>(() => {
+  const idx = activeMonthlyCloseStepIndex.value;
+  if (idx < 0 || idx >= monthlyCloseStepIds.value.length - 1) return null;
+  return monthlyCloseStepIds.value[idx + 1] ?? null;
+});
 
 const fiscalYearOptions = computed(() => {
   const years = new Set<number>([
@@ -280,6 +326,18 @@ function closePopoverFromClick(event: Event): void {
   if (details) details.open = false;
 }
 
+function setActiveMonthlyCloseStep(step: MonthlyCloseStepId): void {
+  activeMonthlyCloseStep.value = step;
+}
+
+function goToPreviousMonthlyCloseStep(): void {
+  if (previousMonthlyCloseStep.value) activeMonthlyCloseStep.value = previousMonthlyCloseStep.value;
+}
+
+function goToNextMonthlyCloseStep(): void {
+  if (nextMonthlyCloseStep.value) activeMonthlyCloseStep.value = nextMonthlyCloseStep.value;
+}
+
 function selectOwnershipFilterOption(value: string, event: Event): void {
   ownershipFilter.value = value;
   closePopoverFromClick(event);
@@ -361,6 +419,11 @@ function monthlyPlannedAmountForExpenseEntry(
   return toNumberOrZero(entry.amountAnnual) / 12;
 }
 
+function monthlyPlannedAmountForIncomeEntry(entry: (typeof incomeEntries.value)[number], _month: number): number {
+  if (entry.incomeType === 'one_off') return 0;
+  return toNumberOrZero(entry.amountAnnual) / 12;
+}
+
 const expenseSummaryByMonth = computed(() => {
   const map = new Map<number, ExpenseMonthlySummaryMonth>();
   for (const row of expenseMonthlySummary.value?.months ?? []) {
@@ -383,6 +446,45 @@ const selectedExpenseMonthDeviation = computed(
   () => selectedExpenseMonthExecuted.value - selectedExpenseMonthPlanned.value,
 );
 
+const monthlyIncomeExecutionEntries = computed(() => {
+  return incomeEntries.value
+    .filter((entry) => entry.fiscalYear === fiscalYear.value && entry.incomeType !== 'one_off')
+    .map((entry) => {
+      const checkin = incomeCheckinsByEntryId.value[entry.id] ?? null;
+      const planned = monthlyPlannedAmountForIncomeEntry(entry, selectedExecutionMonth.value);
+      return {
+        entry,
+        planned,
+        checkin,
+        executed:
+          checkin && checkin.status !== 'skipped'
+            ? toNumberOrZero(checkin.executed_amount)
+            : null,
+      };
+    })
+    .filter((row) => row.planned > 0)
+    .sort((a, b) => b.planned - a.planned || a.entry.name.localeCompare(b.entry.name, 'es'));
+});
+
+const selectedIncomeMonthPlanned = computed(() =>
+  monthlyIncomeExecutionEntries.value.reduce((sum, row) => sum + row.planned, 0),
+);
+const selectedIncomeMonthExecuted = computed(() =>
+  monthlyIncomeExecutionEntries.value.reduce(
+    (sum, row) => sum + (row.checkin && row.executed != null ? row.executed : 0),
+    0,
+  ),
+);
+const selectedIncomeMonthDeviation = computed(
+  () => selectedIncomeMonthExecuted.value - selectedIncomeMonthPlanned.value,
+);
+const selectedIncomeMonthCompletionRatio = computed(() => {
+  const total = monthlyIncomeExecutionEntries.value.length;
+  if (!total) return 1;
+  const checked = monthlyIncomeExecutionEntries.value.filter((row) => !!row.checkin).length;
+  return checked / total;
+});
+
 const selectedLiquidityMonthPlanned = computed(() =>
   toNumberOrZero(liquidityMonthlySummary.value?.planned_total),
 );
@@ -392,6 +494,23 @@ const selectedLiquidityMonthExecuted = computed(() =>
 const selectedLiquidityMonthDeviation = computed(
   () => selectedLiquidityMonthExecuted.value - selectedLiquidityMonthPlanned.value,
 );
+const selectedLiquidityStartBase = computed(() => selectedLiquidityMonthPlanned.value);
+const selectedMonthlyCloseExpected = computed(
+  () => selectedLiquidityStartBase.value + selectedIncomeMonthExecuted.value - selectedExpenseMonthExecuted.value,
+);
+const selectedMonthlyCloseResidual = computed(
+  () => selectedLiquidityMonthExecuted.value - selectedMonthlyCloseExpected.value,
+);
+const selectedMonthlyCloseCompletionRatio = computed(() => {
+  const ratios = [
+    monthlyLiquidityExecutionRows.value.length
+      ? (liquidityMonthlySummary.value?.completion_ratio ?? 0)
+      : 1,
+    selectedIncomeMonthCompletionRatio.value,
+    selectedExpenseSummaryMonth.value?.completion_ratio ?? (monthlyExpenseExecutionEntries.value.length ? 0 : 1),
+  ];
+  return ratios.reduce((sum, r) => sum + r, 0) / ratios.length;
+});
 
 const monthlyLiquidityExecutionRows = computed(() =>
   (liquidityMonthlySummary.value?.rows ?? []).map((row) => {
@@ -699,6 +818,29 @@ async function refreshBudgetData(year = fiscalYear.value): Promise<void> {
   await Promise.all([incomeStore.loadAll(year), expenseStore.loadAll(year)]);
 }
 
+async function loadIncomeCheckinsForSelectedMonth(): Promise<void> {
+  try {
+    const response = await coreApi.get<IncomeMonthlyCheckinApiItem[]>('/api/budget/annual-income-checkins/', {
+      params: { year: fiscalYear.value, month: selectedExecutionMonth.value },
+    });
+    const nextMap: Record<number, IncomeMonthlyCheckinApiItem> = {};
+    for (const row of response.data ?? []) nextMap[row.annual_income_entry_id] = row;
+    incomeCheckinsByEntryId.value = nextMap;
+  } catch (e: unknown) {
+    incomeExecutionError.value = toApiErrorMessage(e);
+  }
+}
+
+async function refreshIncomeExecutionData(): Promise<void> {
+  incomeExecutionLoading.value = true;
+  incomeExecutionError.value = null;
+  try {
+    await loadIncomeCheckinsForSelectedMonth();
+  } finally {
+    incomeExecutionLoading.value = false;
+  }
+}
+
 async function loadExpenseExecutionSummary(year = fiscalYear.value): Promise<void> {
   try {
     const response = await coreApi.get<ExpenseMonthlySummaryResponse>(
@@ -758,10 +900,115 @@ function parseDecimalInput(raw: string): number | null {
   return value;
 }
 
-function checkinStatusLabel(status: ExpenseMonthlyCheckinApiItem['status']): string {
+function checkinStatusLabel(
+  status: ExpenseMonthlyCheckinApiItem['status'] | IncomeMonthlyCheckinApiItem['status'],
+): string {
   if (status === 'confirmed') return 'Confirmado';
   if (status === 'adjusted') return 'Ajustado';
   return 'No ocurrió';
+}
+
+function incomeCheckinRowSummary(row: (typeof monthlyIncomeExecutionEntries.value)[number]): string {
+  const subcategory = incomeSubcategoryLabels.get(row.entry.subcategory) ?? row.entry.subcategory;
+  return `${subcategory} · ${row.entry.name}`;
+}
+
+function suggestedIncomeExecutedAmountForRow(row: (typeof monthlyIncomeExecutionEntries.value)[number]): string {
+  if (row.checkin?.status === 'skipped') return '0.00';
+  if (row.executed != null) return row.executed.toFixed(2);
+  return row.planned.toFixed(2);
+}
+
+function ensureIncomeAdjustAmountPrefilled(row: (typeof monthlyIncomeExecutionEntries.value)[number]): void {
+  const current = String(incomeAdjustAmounts.value[row.entry.id] ?? '').trim();
+  if (current) return;
+  incomeAdjustAmounts.value[row.entry.id] = suggestedIncomeExecutedAmountForRow(row);
+}
+
+async function clearIncomeCheckin(row: (typeof monthlyIncomeExecutionEntries.value)[number]): Promise<void> {
+  const existing = incomeCheckinsByEntryId.value[row.entry.id];
+  if (!existing) return;
+  incomeExecutionBusyEntryId.value = row.entry.id;
+  incomeExecutionError.value = null;
+  try {
+    await coreApi.delete(`/api/budget/annual-income-checkins/${existing.id}/`);
+    await refreshIncomeExecutionData();
+  } catch (e: unknown) {
+    incomeExecutionError.value = toApiErrorMessage(e);
+  } finally {
+    incomeExecutionBusyEntryId.value = null;
+  }
+}
+
+async function upsertIncomeCheckin(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+  status: 'confirmed' | 'adjusted',
+): Promise<void> {
+  incomeExecutionError.value = null;
+  incomeExecutionBusyEntryId.value = row.entry.id;
+  try {
+    const parsed = parseDecimalInput(String(incomeAdjustAmounts.value[row.entry.id] ?? '').trim());
+    if (parsed == null) {
+      incomeExecutionError.value = 'Indica un importe valido para confirmar (por ejemplo 123,45).';
+      return;
+    }
+    incomeAdjustAmounts.value[row.entry.id] = parsed.toFixed(2);
+    const payload = {
+      annual_income_entry_id: row.entry.id,
+      fiscal_year: fiscalYear.value,
+      month: selectedExecutionMonth.value,
+      status,
+      executed_amount: parsed.toFixed(2),
+    };
+    const existing = incomeCheckinsByEntryId.value[row.entry.id];
+    if (existing) await coreApi.patch(`/api/budget/annual-income-checkins/${existing.id}/`, payload);
+    else await coreApi.post('/api/budget/annual-income-checkins/', payload);
+    await refreshIncomeExecutionData();
+  } catch (e: unknown) {
+    incomeExecutionError.value = toApiErrorMessage(e);
+  } finally {
+    incomeExecutionBusyEntryId.value = null;
+  }
+}
+
+async function saveIncomeCheckinFromInput(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+): Promise<void> {
+  ensureIncomeAdjustAmountPrefilled(row);
+  const parsed = parseDecimalInput(String(incomeAdjustAmounts.value[row.entry.id] ?? '').trim());
+  if (parsed == null) {
+    incomeExecutionError.value = 'Indica un importe valido para confirmar (por ejemplo 123,45).';
+    return;
+  }
+  incomeAdjustAmounts.value[row.entry.id] = parsed.toFixed(2);
+  const status = amountsEqualCents(parsed, row.planned) ? 'confirmed' : 'adjusted';
+  await upsertIncomeCheckin(row, status);
+}
+
+async function onIncomeCheckinCheckboxToggle(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+  checked: boolean,
+): Promise<void> {
+  if (checked) {
+    await saveIncomeCheckinFromInput(row);
+    return;
+  }
+  await clearIncomeCheckin(row);
+}
+
+async function onIncomeAdjustAmountBlur(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+): Promise<void> {
+  if (!incomeCheckinsByEntryId.value[row.entry.id]) return;
+  await saveIncomeCheckinFromInput(row);
+}
+
+async function resetIncomeCheckinDraftValue(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+  mode: 'zero' | 'planned',
+): Promise<void> {
+  incomeAdjustAmounts.value[row.entry.id] = mode === 'zero' ? '0.00' : row.planned.toFixed(2);
+  if (incomeCheckinsByEntryId.value[row.entry.id]) await clearIncomeCheckin(row);
 }
 
 function cleanedExpenseCheckinName(name: string): string {
@@ -1051,6 +1298,14 @@ async function onLiquidityAdjustAmountBlur(
 }
 
 watch(
+  monthlyIncomeExecutionEntries,
+  (rows) => {
+    for (const row of rows) ensureIncomeAdjustAmountPrefilled(row);
+  },
+  { immediate: true },
+);
+
+watch(
   monthlyExpenseExecutionEntries,
   (rows) => {
     for (const row of rows) {
@@ -1073,19 +1328,73 @@ watch(
 watch(
   fiscalYear,
   (year) => {
-    void Promise.all([refreshBudgetData(year), refreshExpenseExecutionData(), refreshLiquidityExecutionData()]);
+    void Promise.all([
+      refreshBudgetData(year),
+      refreshIncomeExecutionData(),
+      refreshExpenseExecutionData(),
+      refreshLiquidityExecutionData(),
+    ]);
   },
   { immediate: true },
 );
 
 watch(selectedExecutionMonth, () => {
-  void Promise.all([loadExpenseCheckinsForSelectedMonth(), refreshLiquidityExecutionData()]);
+  void Promise.all([
+    loadIncomeCheckinsForSelectedMonth(),
+    loadExpenseCheckinsForSelectedMonth(),
+    refreshLiquidityExecutionData(),
+  ]);
 });
+
+watch(
+  isMonthlyCloseView,
+  (enabled) => {
+    if (enabled) activeMonthlyCloseStep.value = 'liq';
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <div class="container ui-pro-page relative">
-    <section class="card ui-pro-panel ui-budget-hero">
+    <section v-if="isMonthlyCloseView" class="card ui-pro-panel ui-budget-hero">
+      <div class="ui-budget-hero-header">
+        <div>
+          <p class="ui-pro-kicker">Cierre mensual</p>
+          <h1 class="ui-budget-title">Flujo de cierre mensual</h1>
+          <p class="ui-budget-subtitle">
+            Empieza por la liquidez real, luego confirma ingresos y gastos, y termina revisando el residual contable.
+          </p>
+        </div>
+        <div class="ui-budget-checkin-controls">
+          <label>
+            <span>Mes</span>
+            <select v-model="selectedExecutionMonth" class="select ui-data-field">
+              <option v-for="(label, index) in monthLabels" :key="`close-${label}`" :value="index + 1">
+                {{ label }}
+              </option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="ui-monthly-close-flow">
+        <template v-for="(step, index) in monthlyCloseFlowSteps" :key="step.id">
+          <button
+            type="button"
+            class="ui-monthly-close-step-chip"
+            :class="{ 'ui-monthly-close-step-chip-active': activeMonthlyCloseStep === step.id }"
+            :aria-pressed="activeMonthlyCloseStep === step.id"
+            @click="setActiveMonthlyCloseStep(step.id)"
+          >
+            <strong>{{ index + 1 }}. {{ step.label }}</strong>
+            <span>{{ step.subtitle }}</span>
+          </button>
+          <div v-if="index < monthlyCloseFlowSteps.length - 1" class="ui-monthly-close-arrow">→</div>
+        </template>
+      </div>
+    </section>
+
+    <section v-if="!isMonthlyCloseView" class="card ui-pro-panel ui-budget-hero">
       <div class="ui-budget-hero-header">
         <div>
           <p class="ui-pro-kicker">Presupuesto</p>
@@ -1201,25 +1510,33 @@ watch(selectedExecutionMonth, () => {
       </div>
     </section>
 
-    <div v-if="firstError" class="alert mt-3">
+    <div v-if="!isMonthlyCloseView && firstError" class="alert mt-3">
       {{ firstError }}
     </div>
-    <div v-if="expenseExecutionError" class="alert mt-3">
+    <div v-if="!isMonthlyCloseView && expenseExecutionError" class="alert mt-3">
       {{ expenseExecutionError }}
     </div>
-    <div v-if="liquidityExecutionError" class="alert mt-3">
+    <div v-if="!isMonthlyCloseView && liquidityExecutionError" class="alert mt-3">
       {{ liquidityExecutionError }}
     </div>
 
-    <section class="card ui-pro-panel ui-budget-checkin mt-3">
+    <section
+      v-if="!isMonthlyCloseView || (isMonthlyCloseView && activeMonthlyCloseStep === 'expense')"
+      class="card ui-pro-panel ui-budget-checkin mt-3"
+    >
       <div class="ui-budget-checkin-header">
         <div>
-          <h2 class="ui-budget-checkin-title">Check-in mensual de gastos</h2>
+          <div v-if="isMonthlyCloseView" class="ui-monthly-close-step-headline">
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">←</button>
+            <h2 class="ui-budget-checkin-title">Paso 3 · Check-in mensual de gastos</h2>
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToNextMonthlyCloseStep()">→</button>
+          </div>
+          <h2 v-else class="ui-budget-checkin-title">Check-in mensual de gastos</h2>
           <p class="ui-budget-checkin-subtitle">
             Cierre mensual rápido de `Gastos` (14C v1). `Ingresos` se integrará después con el mismo patrón.
           </p>
         </div>
-        <div class="ui-budget-checkin-controls">
+        <div v-if="!isMonthlyCloseView" class="ui-budget-checkin-controls">
           <label>
             <span>Mes</span>
             <select v-model="selectedExecutionMonth" class="select ui-data-field" :disabled="expenseExecutionLoading">
@@ -1368,15 +1685,30 @@ watch(selectedExecutionMonth, () => {
       </div>
     </section>
 
-    <section class="card ui-pro-panel ui-budget-checkin mt-3">
+    <section
+      v-if="!isMonthlyCloseView || (isMonthlyCloseView && activeMonthlyCloseStep === 'liq')"
+      class="card ui-pro-panel ui-budget-checkin mt-3"
+    >
       <div class="ui-budget-checkin-header">
         <div>
-          <h2 class="ui-budget-checkin-title">Cierre de liquidez</h2>
+          <div v-if="isMonthlyCloseView" class="ui-monthly-close-step-headline">
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              :disabled="!previousMonthlyCloseStep"
+              @click="goToPreviousMonthlyCloseStep()"
+            >
+              ←
+            </button>
+            <h2 class="ui-budget-checkin-title">Paso 1 · Cierre de liquidez</h2>
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToNextMonthlyCloseStep()">→</button>
+          </div>
+          <h2 v-else class="ui-budget-checkin-title">Cierre de liquidez</h2>
           <p class="ui-budget-checkin-subtitle">
             Ajusta el saldo real de cuentas y activos líquidos para el mes seleccionado (14C v1).
           </p>
         </div>
-        <div class="ui-budget-checkin-controls">
+        <div v-if="!isMonthlyCloseView" class="ui-budget-checkin-controls">
           <label>
             <span>Mes</span>
             <select
@@ -1522,8 +1854,122 @@ watch(selectedExecutionMonth, () => {
         </div>
       </div>
     </section>
+    <section
+      v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'income'"
+      class="card ui-pro-panel ui-budget-checkin mt-3"
+    >
+      <div class="ui-budget-checkin-header">
+        <div>
+          <div class="ui-monthly-close-step-headline">
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">&larr;</button>
+            <h2 class="ui-budget-checkin-title">Paso 2 ? Check-in mensual de ingresos</h2>
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToNextMonthlyCloseStep()">&rarr;</button>
+          </div>
+          <p class="ui-budget-checkin-subtitle">
+            Confirma o ajusta ingresos recurrentes del mes. Los puntuales se integraran cuando tengan mes objetivo.
+          </p>
+        </div>
+      </div>
+      <div class="ui-budget-checkin-summary-grid">
+        <article class="ui-budget-checkin-kpi">
+          <span>Previsto mes</span>
+          <strong>{{ formatMoney(selectedIncomeMonthPlanned) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Ejecutado mes</span>
+          <strong>{{ formatMoney(selectedIncomeMonthExecuted) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi" :class="{ 'ui-budget-checkin-kpi-good': selectedIncomeMonthDeviation > 0, 'ui-budget-checkin-kpi-danger': selectedIncomeMonthDeviation < 0 }">
+          <span>Desviacion del mes</span>
+          <strong>{{ selectedIncomeMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedIncomeMonthDeviation) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Completitud</span>
+          <strong>{{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }}</strong>
+        </article>
+      </div>
+      <div class="ui-budget-checkin-list">
+        <div v-if="incomeExecutionLoading" class="subtle">Cargando check-ins de ingresos...</div>
+        <div v-else-if="incomeExecutionError" class="subtle text-red-400">{{ incomeExecutionError }}</div>
+        <div v-else-if="!monthlyIncomeExecutionEntries.length" class="subtle">No hay ingresos recurrentes previstos para este mes.</div>
+        <div v-else class="ui-budget-checkin-groups-box">
+          <div class="ui-budget-checkin-group">
+            <div class="ui-budget-checkin-group-summary">
+              <div class="ui-budget-checkin-group-title-wrap">
+                <strong class="ui-budget-checkin-group-title">Ingresos recurrentes</strong>
+                <span class="ui-budget-checkin-group-meta">{{ monthlyIncomeExecutionEntries.length }} lineas · {{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }} completitud</span>
+              </div>
+              <div class="ui-budget-checkin-group-kpis">
+                <span>P {{ formatMoney(selectedIncomeMonthPlanned) }} €</span>
+                <span>E {{ formatMoney(selectedIncomeMonthExecuted) }} €</span>
+                <span :class="{ 'ui-budget-checkin-group-dev-pos': selectedIncomeMonthDeviation > 0, 'ui-budget-checkin-group-dev-neg': selectedIncomeMonthDeviation < 0 }">D {{ selectedIncomeMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedIncomeMonthDeviation) }} €</span>
+              </div>
+            </div>
+            <div class="ui-budget-checkin-group-rows">
+              <article v-for="row in monthlyIncomeExecutionEntries" :key="`income-checkin-${row.entry.id}`" class="ui-budget-checkin-row">
+                <div class="ui-budget-checkin-row-main">
+                  <div class="ui-budget-checkin-row-title" :title="incomeCheckinRowSummary(row)">
+                    {{ incomeCheckinRowSummary(row) }}
+                    <span class="ui-budget-checkin-row-planned">(Previsto {{ formatMoney(row.planned) }} €)</span>
+                  </div>
+                  <div v-if="row.checkin" class="ui-budget-checkin-row-state">
+                    <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
+                    <template v-if="row.checkin.status !== 'skipped' && row.executed != null">({{ formatMoney(row.executed) }} €)</template>
+                  </div>
+                </div>
+                <div class="ui-budget-checkin-row-actions">
+                  <div class="ui-budget-checkin-adjust">
+                    <div class="ui-budget-checkin-quick-actions">
+                      <button type="button" class="btn ui-budget-checkin-mini-btn" :disabled="incomeExecutionBusyEntryId === row.entry.id" @click="resetIncomeCheckinDraftValue(row, 'zero')">Borrar</button>
+                      <button type="button" class="btn ui-budget-checkin-mini-btn" :disabled="incomeExecutionBusyEntryId === row.entry.id" @click="resetIncomeCheckinDraftValue(row, 'planned')">Previsto</button>
+                    </div>
+                    <input v-model="incomeAdjustAmounts[row.entry.id]" inputmode="decimal" class="input ui-data-field" placeholder="Importe ejecutado" @focus="ensureIncomeAdjustAmountPrefilled(row)" @blur="onIncomeAdjustAmountBlur(row)" @keydown.enter.prevent="saveIncomeCheckinFromInput(row)" />
+                  </div>
+                  <label class="ui-budget-checkin-confirm" title="Confirmar check-in del mes">
+                    <input type="checkbox" :checked="!!row.checkin" :disabled="incomeExecutionBusyEntryId === row.entry.id" @change="onIncomeCheckinCheckboxToggle(row, Boolean(($event.target as HTMLInputElement).checked))" />
+                  </label>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section
+      v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'result'"
+      class="card ui-pro-panel ui-budget-checkin mt-3"
+    >
+      <div class="ui-budget-checkin-header">
+        <div>
+          <div class="ui-monthly-close-step-headline">
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">&larr;</button>
+            <h2 class="ui-budget-checkin-title">Paso 4 ? Resultado</h2>
+            <button type="button" class="btn ui-monthly-close-step-nav-btn" disabled>&rarr;</button>
+          </div>
+          <p class="ui-budget-checkin-subtitle">
+            Residual contable provisional a partir de liquidez real y de ingresos/gastos confirmados del mes.
+          </p>
+        </div>
+      </div>
+      <div class="ui-budget-checkin-summary-grid">
+        <article class="ui-budget-checkin-kpi"><span>Liquidez inicio</span><strong>{{ formatMoney(selectedLiquidityStartBase) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Cierre esperado</span><strong>{{ formatMoney(selectedMonthlyCloseExpected) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Cierre real</span><strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi" :class="{ 'ui-budget-checkin-kpi-danger': selectedMonthlyCloseResidual < 0, 'ui-budget-checkin-kpi-good': selectedMonthlyCloseResidual > 0 }">
+          <span>Residual contable</span>
+          <strong>{{ selectedMonthlyCloseResidual > 0 ? '+' : '' }}{{ formatMoney(selectedMonthlyCloseResidual) }} ?</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi"><span>Ingresos ejecutados</span><strong>{{ formatMoney(selectedIncomeMonthExecuted) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Gastos ejecutados</span><strong>{{ formatMoney(selectedExpenseMonthExecuted) }} ?</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Completitud cierre</span><strong>{{ formatPercent(selectedMonthlyCloseCompletionRatio, 0) }}</strong></article>
+        <article class="ui-budget-checkin-kpi"><span>Desviacion liquidez</span><strong>{{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} ?</strong></article>
+      </div>
+    </section>
 
-    <section v-if="!hasAnyPlannedData && !isLoading" class="card ui-pro-panel ui-budget-empty mt-3">
+    <section
+      v-if="!isMonthlyCloseView && !hasAnyPlannedData && !isLoading"
+      class="card ui-pro-panel ui-budget-empty mt-3"
+    >
       <h2 class="mt-0">Sin presupuesto anual para {{ fiscalYear }}</h2>
       <p class="subtle mb-0">
         Carga primero `Ingresos anuales` y `Gastos anuales` en `Introduccion de datos` para ver el
@@ -1535,6 +1981,7 @@ watch(selectedExecutionMonth, () => {
     </section>
 
     <section
+      v-if="!isMonthlyCloseView"
       v-for="section in sections"
       :key="section.id"
       class="card ui-pro-panel ui-budget-section mt-3"
@@ -1822,6 +2269,81 @@ watch(selectedExecutionMonth, () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.ui-monthly-close-flow {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ui-monthly-close-step-chip {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  min-width: 180px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 12px;
+  color: var(--text);
+}
+
+.ui-monthly-close-step-chip strong {
+  font-size: 0.88rem;
+}
+
+.ui-monthly-close-step-chip span {
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.ui-monthly-close-step-chip-active {
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.ui-monthly-close-arrow {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+}
+
+.ui-monthly-close-step-headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.ui-monthly-close-step-headline .ui-budget-checkin-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ui-monthly-close-step-nav-btn {
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 800;
+}
+
+.ui-monthly-close-step-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ui-monthly-close-step-nav-btn:disabled {
+  opacity: 0.3;
 }
 
 .ui-budget-year-picker {
