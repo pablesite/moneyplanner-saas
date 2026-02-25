@@ -216,17 +216,25 @@ Current progress (in progress):
 2. Liability creation now supports richer amortization base metadata (dates/term/rate behavior base).
 3. Automatic generation of recurring annual expense entries from liabilities is already working.
 4. UX improvements are in progress to reduce form noise and improve guided completion.
+5. `14A` (debt schedule v1 + generated recurring expenses) is functionally advanced and pending final closure docs/tests sweep.
 
 Current focus inside Milestone 14:
-1. Introduce liabilities and generate recurring expenses (`gastos recurrentes`) from debt schedules.
-2. Validate/adjust the generated annual expense classification (for example debt used to buy an asset vs generic financial commitment).
+1. `14A`: liabilities (`Pasivos`) -> debt schedule v1 -> generated recurring annual expenses (`gastos recurrentes`) with safer sync.
+2. Stabilize generated annual expense classification and idempotent regeneration behavior.
+
+Current focus inside Milestone 14 (`14A` scope in execution):
+1. Supported debt engine v1: fixed-rate + monthly/quarterly schedule (constant installment).
+2. Annual generated expenses refresh on liability updates without duplicating entries.
+3. User edits on generated annual expenses are preserved when possible.
+4. Obsolete generated annualities are removed when the liability term is reduced.
+5. Liability form UX has been simplified to the currently supported combinations (reduced noise in `condiciones`).
 
 Next likely steps (Milestone 14 refinement):
-1. Add real functional behavior to liability conditions:
-   - interest type (`tipo de interes`)
-   - payment frequency (`frecuencia`)
-   - amortization system (`tipo de amortizacion`)
-2. Apply some fields conditionally by liability category (for example mortgage-specific behavior/inputs only for `hipoteca`).
+1. Close `14A` formally:
+   - backend normalization of annual expense `time_profile` / `cashflow_role`
+   - regression tests for liability regeneration paths
+   - roadmap/docs update and release checkpoint
+2. Apply more fields conditionally by liability category (for example mortgage-specific behavior/inputs only for `hipoteca`).
 3. Autocomplete as many fields as possible depending on the selected category.
 4. Add smarter suggestions by name similarity (for example infer `activo financiado` if liability name resembles an existing asset name like `iPhone` vs `iPhone Pro 16`).
 
@@ -237,6 +245,7 @@ Scope updates:
 4. Liabilities (`Pasivos`).
 5. Pending debt upgrade: amortization metadata to calculate liability monthly payment (`cuota mensual`)
    automatically (term/end date, schedule, and rate behavior).
+6. `14A` implementation slice (current): debt engine v1 (`fixed`, `monthly|quarterly`) + generated annual recurring expenses sync from liabilities.
 
 ### Milestone 15
 Investment portfolio dashboard (`Dashboard Cartera Inversion`).

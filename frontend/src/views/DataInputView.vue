@@ -1805,7 +1805,7 @@ watch(
             <p class="m-0 text-sm font-medium text-white">
               {{ dataTransferBusyLabel ?? 'Procesando datos...' }}
             </p>
-            <p class="m-0 text-xs text-white/65">No cierres la pestaÃ±a hasta que termine.</p>
+            <p class="m-0 text-xs text-white/65">No cierres la pestaña hasta que termine.</p>
           </div>
         </div>
       </div>
@@ -2305,7 +2305,7 @@ watch(
             "
             @click="openGeneratedExpenseReviewEntryFromVisibleYear"
           >
-            Revisar en gastos (aÃ±o visible)
+            Revisar en gastos (año visible)
           </button>
         </div>
       </div>

@@ -15,7 +15,24 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 2. Ya existe generacion automatica de `gastos recurrentes` (entradas anuales recurrentes por ano) a partir de pasivos con calendario/cuotas.
 3. Se ha mejorado la UX del formulario de pasivos para reducir ruido y hacer mas compacta la captura.
 4. Se ha empezado a enlazar la logica de calendario del pasivo (plazo/cuotas y fecha fin) para acelerar la introduccion de datos.
-5. Se esta afinando la validacion del gasto autogenerado para evitar clasificaciones incorrectas (por ejemplo `compromiso financiero` cuando realmente corresponde a `compra de activo`).
+5. Se esta afinando la validacion del gasto autogenerado para evitar clasificaciones incorrectas y reforzar reglas entre `temporalidad` y `naturaleza`.
+
+### Subhito 14A (estado actual)
+Objetivo:
+1. Cerrar un flujo robusto `pasivo -> cronograma de deuda v1 -> gastos recurrentes anuales autogenerados`.
+
+Implementado (14A):
+1. Motor de deuda v1 para `tipo fijo` con frecuencia `mensual` y `trimestral` (cuota constante).
+2. Validacion de plazo trimestral (`term_months` multiplo de 3).
+3. Generacion automatica de gastos recurrentes anuales a partir del cronograma del pasivo.
+4. Re-sincronizacion al editar pasivo (idempotente, sin duplicar entradas autogeneradas).
+5. Preservacion de overrides manuales del usuario en entradas anuales generadas cuando la anualidad sigue existiendo.
+6. Borrado de anualidades autogeneradas obsoletas cuando el nuevo cronograma reduce el plazo.
+7. UX del formulario de pasivos simplificada a lo soportado en v1 (menos ruido en `condiciones`).
+
+Pendiente para cerrar 14A:
+1. Remate de documentacion/roadmap (este paso).
+2. Barrido final de validaciones de calidad afectadas y checkpoint de release/commit.
 
 ### Situacion funcional actual de este subfrente
 1. El subflujo de pasivos ya aporta valor a Milestone 14 porque conecta:
@@ -256,6 +273,9 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 2. Mantener `manual_monthly_payment` como fallback.
 3. Si entra en plazo:
    - calculo automatico de cuota para caso simple (tipo fijo + cuota constante)
+4. Estado actual:
+   - caso simple operativo en v1 para `mensual` y `trimestral`
+   - fuera de alcance v1: variable/mixto, carencias, recalculo historico, otros sistemas de amortizacion
 
 ### Fase D2 - Asistentes de captura y autocompletado en pasivos (prioridad media)
 1. Reglas de autocompletado por categoria de pasivo (`defaults` + visibilidad condicional).
@@ -329,6 +349,7 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 3. Contrato exacto de `Ejecutado` para Milestone 10:
    - incluir `pending_by_month` o calcularlo solo en frontend
 4. Alcance real del calculo automatico de `cuota mensual` en este hito (metadata only vs caso simple operativo).
+   - Cerrado para `14A`: caso simple operativo (tipo fijo, cuota constante) con frecuencia mensual y trimestral.
 5. Tratamiento final de costes vinculados a hipoteca:
    - metadata dentro del pasivo
    - o gastos separados en `Gastos` con vinculacion al pasivo
@@ -337,6 +358,7 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
    - sugerencia por nombre con confirmacion
    - autoseleccion condicionada a alta confianza
 7. Que campos de `condiciones` deben ser editables/visibles por categoria de pasivo en v1 (especialmente `hipoteca`).
+   - Parcialmente cerrado en `14A`: UI simplificada a `TAE anual` + `frecuencia`; `tipo de interes` y `sistema de amortizacion` ocultos/fijados por defecto en v1.
 
 ## Entregables esperados
 1. Documento de detalle del Milestone 14 (este archivo).
