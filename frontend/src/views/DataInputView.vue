@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { api, coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
@@ -173,6 +173,7 @@ function patchAnnualIncomeForm(patch: AnnualModalPatch): void {
 
 function patchAnnualExpenseForm(patch: AnnualModalPatch): void {
   Object.assign(annualExpenseForm, patch);
+  normalizeExpenseCashflowRoleForCurrentTimeProfile();
 }
 
 const annualSubcategoryOptions = computed(() =>
@@ -214,6 +215,58 @@ const expenseCashflowRoleOptions: SelectOption[] = [
   { value: 'transfer', label: 'Naturaleza: Transferencia' },
   { value: 'other', label: 'Naturaleza: Otro' },
 ];
+
+const EXPENSE_STRUCTURAL_ALLOWED_CASHFLOW_ROLES: AnnualExpenseCashflowRole[] = [
+  'operating',
+  'savings',
+  'investment',
+  'tax_fee',
+  'other',
+];
+const EXPENSE_ONE_OFF_ALLOWED_CASHFLOW_ROLES: AnnualExpenseCashflowRole[] = [
+  'savings',
+  'investment',
+  'tax_fee',
+  'asset_purchase',
+  'transfer',
+  'other',
+];
+
+function allowedExpenseCashflowRolesForTimeProfile(
+  timeProfile: ExpenseTimeProfile,
+): AnnualExpenseCashflowRole[] {
+  if (timeProfile === 'term_recurrent') return ['temporary_commitment'];
+  if (timeProfile === 'one_off') return EXPENSE_ONE_OFF_ALLOWED_CASHFLOW_ROLES;
+  return EXPENSE_STRUCTURAL_ALLOWED_CASHFLOW_ROLES;
+}
+
+const filteredExpenseCashflowRoleOptions = computed<SelectOption[]>(() => {
+  const allowed = new Set(allowedExpenseCashflowRolesForTimeProfile(annualExpenseForm.timeProfile));
+  return expenseCashflowRoleOptions.filter((option) =>
+    allowed.has(option.value as AnnualExpenseCashflowRole),
+  );
+});
+
+const showExpenseCashflowRoleField = computed(
+  () => annualExpenseForm.timeProfile !== 'term_recurrent',
+);
+
+function normalizeExpenseCashflowRoleForCurrentTimeProfile(): void {
+  const allowed = allowedExpenseCashflowRolesForTimeProfile(annualExpenseForm.timeProfile);
+  if (!allowed.length) return;
+  if (allowed.includes(annualExpenseForm.cashflowRole)) return;
+
+  if (annualExpenseForm.timeProfile === 'term_recurrent') {
+    annualExpenseForm.cashflowRole = 'temporary_commitment';
+    return;
+  }
+
+  const suggested = defaultExpenseCashflowRole(
+    annualExpenseForm.category,
+    annualExpenseForm.subcategory,
+  );
+  annualExpenseForm.cashflowRole = allowed.includes(suggested) ? suggested : allowed[0]!;
+}
 
 function formatOwnershipPercent(raw: string): string {
   const value = Number(String(raw).replace(',', '.'));
@@ -644,6 +697,15 @@ function expenseCashflowRoleLabel(role: AnnualExpenseCashflowRole): string {
   return 'Otro';
 }
 
+function shouldHideExpenseCashflowRoleLabel(params: {
+  timeProfile: ExpenseTimeProfile;
+  cashflowRole: AnnualExpenseCashflowRole;
+}): boolean {
+  return (
+    params.timeProfile === 'term_recurrent' && params.cashflowRole === 'temporary_commitment'
+  );
+}
+
 function timeProfileDotClass(
   timeProfile: IncomeTimeProfile | ExpenseTimeProfile | undefined,
 ): string {
@@ -907,6 +969,7 @@ function openExpenseModal(entry?: AnnualExpenseEntry): void {
     annualExpenseForm.amountAnnual = String(entry.amountAnnual);
     annualExpenseForm.currency = entry.currency;
     annualExpenseForm.notes = entry.notes || '';
+    normalizeExpenseCashflowRoleForCurrentTimeProfile();
   } else {
     editingExpenseId.value = null;
     resetExpenseForm();
@@ -1036,6 +1099,7 @@ watch(
   (timeProfile) => {
     annualExpenseForm.isRecurrent = timeProfile !== 'one_off';
     if (timeProfile !== 'term_recurrent') annualExpenseForm.termEndYear = '';
+    normalizeExpenseCashflowRoleForCurrentTimeProfile();
   },
 );
 watch([() => annualIncomeForm.category], () => {
@@ -1048,6 +1112,7 @@ watch([() => annualExpenseForm.category, () => annualExpenseForm.subcategory], (
     annualExpenseForm.category,
     annualExpenseForm.subcategory,
   );
+  normalizeExpenseCashflowRoleForCurrentTimeProfile();
 });
 
 async function submitAnnualIncome(): Promise<void> {
@@ -1095,6 +1160,7 @@ async function removeAnnualIncome(id: number): Promise<void> {
 }
 
 async function submitAnnualExpense(): Promise<void> {
+  normalizeExpenseCashflowRoleForCurrentTimeProfile();
   const rawAmount = Number(String(annualExpenseForm.amountAnnual).replace(',', '.'));
   const normalizedAmount = Number.isFinite(rawAmount)
     ? annualExpenseForm.amountInputPeriod === 'monthly'
@@ -1739,7 +1805,7 @@ watch(
             <p class="m-0 text-sm font-medium text-white">
               {{ dataTransferBusyLabel ?? 'Procesando datos...' }}
             </p>
-            <p class="m-0 text-xs text-white/65">No cierres la pestaña hasta que termine.</p>
+            <p class="m-0 text-xs text-white/65">No cierres la pestaÃ±a hasta que termine.</p>
           </div>
         </div>
       </div>
@@ -2186,9 +2252,9 @@ watch(
     >
       <div v-if="generatedLiabilityExpenseReview" class="grid gap-3">
         <div class="rounded-xl border border-teal-300/20 bg-teal-400/10 px-3 py-2 text-sm text-white/90">
-          Se han generado {{ generatedLiabilityExpenseReview.entries.length }}
-          gasto(s) anual(es) automáticos para este pasivo. Revísalos y confirma que la
-          clasificación (categoría/subcategoría/naturaleza) es correcta.
+          Se han generado gastos recurrentes en {{ generatedLiabilityExpenseReview.entries.length }}
+          anualidades para este pasivo. Revisalos y confirma que la
+          clasificacion (categoria/subcategoria/naturaleza) es correcta.
         </div>
 
         <div class="grid gap-2">
@@ -2205,7 +2271,16 @@ watch(
             </div>
             <div class="mt-1 text-xs text-white/70">
               {{ expenseCategoryLabel(entry.category) }} / {{ expenseSubcategoryLabel(entry.subcategory) }}
-              . {{ expenseCashflowRoleLabel(entry.cashflowRole as AnnualExpenseCashflowRole) }}
+              <template
+                v-if="
+                  !shouldHideExpenseCashflowRoleLabel({
+                    timeProfile: entry.timeProfile as ExpenseTimeProfile,
+                    cashflowRole: entry.cashflowRole as AnnualExpenseCashflowRole,
+                  })
+                "
+              >
+                . {{ expenseCashflowRoleLabel(entry.cashflowRole as AnnualExpenseCashflowRole) }}
+              </template>
               . {{ timeProfileLabel(entry.timeProfile as ExpenseTimeProfile) }}
             </div>
             <div v-if="entry.notes" class="mt-1 text-xs text-white/55">
@@ -2230,7 +2305,7 @@ watch(
             "
             @click="openGeneratedExpenseReviewEntryFromVisibleYear"
           >
-            Revisar en gastos (año visible)
+            Revisar en gastos (aÃ±o visible)
           </button>
         </div>
       </div>
@@ -2283,7 +2358,8 @@ watch(
       :show-owner-field="showOwnerField"
       :owner-options="ownerOptions"
       :time-profile-options="expenseTimeProfileOptions"
-      :cashflow-role-options="expenseCashflowRoleOptions"
+      :cashflow-role-options="filteredExpenseCashflowRoleOptions"
+      :show-cashflow-role-field="showExpenseCashflowRoleField"
       name-placeholder="Concepto (ej: Alimentacion, Hipoteca)"
       :amount-placeholder="expenseAmountInputPlaceholder"
       @patch="patchAnnualExpenseForm"

@@ -39,6 +39,7 @@ const props = withDefaults(
     ownerOptions?: ReadonlyArray<OwnerOption>;
     timeProfileOptions: ReadonlyArray<SelectOption>;
     cashflowRoleOptions: ReadonlyArray<SelectOption>;
+    showCashflowRoleField?: boolean;
     namePlaceholder: string;
     amountPlaceholder: string;
     eventGroupPlaceholder?: string;
@@ -49,6 +50,7 @@ const props = withDefaults(
   {
     loading: false,
     showOwnerField: false,
+    showCashflowRoleField: true,
     ownerOptions: () => [],
     eventGroupPlaceholder: 'Grupo de evento (opcional, ej: vivienda_2026)',
     termEndYearPlaceholder: 'Ano fin compromiso (ej: 2027)',
@@ -128,6 +130,7 @@ const emit = defineEmits<{
       </select>
 
       <select
+        v-if="showCashflowRoleField"
         :value="form.cashflowRole"
         class="select ui-data-field"
         @change="

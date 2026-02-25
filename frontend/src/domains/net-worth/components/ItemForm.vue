@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import type { NetWorthWritePayload, Ownership } from '@/domains/net-worth/models';
 
@@ -128,24 +128,10 @@ const decimalsByCurrency: Record<string, number> = {
   BTC: 8,
   ETH: 8,
 };
-const LIABILITY_CATEGORIES_REQUIRING_TAE = ['mortgage', 'personal_loan', 'credit_card'];
 const ASSET_CASH_SUBCATEGORIES_REQUIRING_TAE = ['bank_account', 'crypto_spot_earn', 'other'];
-const LIABILITY_RATE_TYPES = [
-  { value: 'fixed', label: 'Tipo fijo' },
-  { value: 'variable', label: 'Tipo variable' },
-  { value: 'mixed', label: 'Tipo mixto' },
-];
 const LIABILITY_PAYMENT_FREQUENCIES = [
   { value: 'monthly', label: 'Mensual' },
   { value: 'quarterly', label: 'Trimestral' },
-  { value: 'yearly', label: 'Anual' },
-];
-const LIABILITY_AMORTIZATION_SYSTEMS = [
-  { value: '', label: 'Sistema amortizacion (opcional)' },
-  { value: 'french', label: 'Frances' },
-  { value: 'german', label: 'Aleman' },
-  { value: 'american', label: 'Americano' },
-  { value: 'manual', label: 'Manual' },
 ];
 const ASSET_AMORTIZATION_METHODS = [
   { value: 'none', label: 'Sin amortizacion' },
@@ -158,14 +144,14 @@ const form = reactive({
   category: '',
   subcategory: '',
   amount: '',
-  annual_interest_tae: '',
+  annual_interest_tae: props.showFinancedAsset ? '0' : '',
   monthly_payment_amount: '',
   start_date: todayIsoDate(),
   expected_end_date: '',
   term_months: '',
   rate_type: 'fixed',
   payment_frequency: 'monthly',
-  amortization_system: '',
+  amortization_system: 'french',
   opening_fees_amount: '',
   early_repayment_fee_percent: '',
   novation_subrogation_fee_amount: '',
@@ -186,7 +172,7 @@ const isEdit = computed(() => props.mode === 'edit');
 const financedAssetOptions = computed(() => {
   const list = Array.isArray(props.assets) ? props.assets : [];
   return [
-    { value: null, label: 'No financia ningÃºn activo' },
+    { value: null, label: 'No financia ningún activo' },
     ...list
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -197,9 +183,6 @@ const financedAssetOptions = computed(() => {
 const showFinancedAsset = computed(() => !!props.showFinancedAsset);
 const isLiabilityForm = computed(() => showFinancedAsset.value);
 const isAssetForm = computed(() => !showFinancedAsset.value);
-const requiresLiabilityTae = computed(
-  () => showFinancedAsset.value && LIABILITY_CATEGORIES_REQUIRING_TAE.includes(form.category),
-);
 const requiresAssetTae = computed(
   () =>
     !!props.subcategories &&
@@ -207,7 +190,10 @@ const requiresAssetTae = computed(
     ASSET_CASH_SUBCATEGORIES_REQUIRING_TAE.includes(form.subcategory),
 );
 const showAnnualInterestInput = computed(
-  () => requiresLiabilityTae.value || requiresAssetTae.value,
+  () => isLiabilityForm.value || requiresAssetTae.value,
+);
+const showAssetAnnualInterestInput = computed(
+  () => isAssetForm.value && showAnnualInterestInput.value,
 );
 const showMonthlyPaymentInput = computed(() => false);
 const showLiabilityAdvancedFields = computed(() => isLiabilityForm.value);
@@ -276,7 +262,7 @@ function sanitizeAmount(raw: unknown, decimals: number) {
   }
 
   // More than one dot => invalid
-  if ((s.match(/\./g) || []).length > 1) return { value: '', error: 'Importe invÃ¡lido' };
+  if ((s.match(/\./g) || []).length > 1) return { value: '', error: 'Importe inválido' };
 
   // Limit decimals
   const [intPart, decPart = ''] = s.split('.');
@@ -291,7 +277,7 @@ function sanitizeAmount(raw: unknown, decimals: number) {
   const signedValue = isNegative ? `-${finalValue}` : finalValue;
 
   // Validate numeric
-  if (Number.isNaN(Number(signedValue))) return { value: '', error: 'Importe invÃ¡lido' };
+  if (Number.isNaN(Number(signedValue))) return { value: '', error: 'Importe inválido' };
 
   // Block negatives (we removed '-' already, but keep for safety)
   if (!props.allowNegative && finalValue.includes('-')) {
@@ -343,10 +329,14 @@ const liabilityScheduleError = computed(() => {
   if (!showLiabilityAdvancedFields.value) return '';
   const hasTerm = String(form.term_months ?? '').trim().length > 0;
   const hasEndDate = String(form.expected_end_date ?? '').trim().length > 0;
+  const paymentFrequency = String(form.payment_frequency ?? '').trim();
   if (!hasTerm && !hasEndDate) return 'Indica cuotas o fecha fin (uno de los dos es obligatorio)';
   if (hasTerm) {
     const term = Number(String(form.term_months).trim());
     if (!Number.isInteger(term) || term <= 0) return 'Cuotas/plazo debe ser un entero > 0';
+    if (paymentFrequency === 'quarterly' && term % 3 !== 0) {
+      return 'En frecuencia trimestral, el plazo se indica en meses y debe ser multiplo de 3 (ej: 12, 24).';
+    }
   }
   if (hasEndDate && form.start_date) {
     const inferredMonths = monthsBetweenPreserveDayIso(String(form.start_date), String(form.expected_end_date));
@@ -367,7 +357,8 @@ const liabilityScheduleError = computed(() => {
 });
 const estimatedMonthlyPaymentPreview = computed(() => {
   if (!showLiabilityAdvancedFields.value) return null;
-  if (String(form.payment_frequency ?? '') !== 'monthly') return null;
+  const paymentFrequency = String(form.payment_frequency ?? '').trim();
+  if (paymentFrequency !== 'monthly' && paymentFrequency !== 'quarterly') return null;
   if (String(form.rate_type ?? '') !== 'fixed') return null;
   const amortSystem = String(form.amortization_system ?? '').trim();
   if (amortSystem && amortSystem !== 'french' && amortSystem !== 'manual') return null;
@@ -380,12 +371,16 @@ const estimatedMonthlyPaymentPreview = computed(() => {
   if (!Number.isFinite(principal) || principal <= 0) return null;
   if (!Number.isFinite(term) || term <= 0) return null;
   if (!Number.isFinite(tae) || tae < 0) return null;
+  const periodMonths = paymentFrequency === 'quarterly' ? 3 : 1;
+  const periodsPerYear = paymentFrequency === 'quarterly' ? 4 : 12;
+  if (!Number.isInteger(term) || term % periodMonths !== 0) return null;
+  const installments = term / periodMonths;
 
-  if (tae === 0) return principal / term;
-  const monthlyRate = tae / 100 / 12;
-  const denominator = 1 - Math.pow(1 + monthlyRate, -term);
+  if (tae === 0) return principal / installments;
+  const periodicRate = tae / 100 / periodsPerYear;
+  const denominator = 1 - Math.pow(1 + periodicRate, -installments);
   if (!Number.isFinite(denominator) || denominator === 0) return null;
-  const payment = (principal * monthlyRate) / denominator;
+  const payment = (principal * periodicRate) / denominator;
   return Number.isFinite(payment) ? payment : null;
 });
 const estimatedMonthlyPaymentPreviewText = computed(() => {
@@ -395,6 +390,26 @@ const estimatedMonthlyPaymentPreviewText = computed(() => {
     minimumFractionDigits: 2,
     maximumFractionDigits: maxDecimals.value,
   }).format(value);
+});
+const estimatedPaymentPreviewLabel = computed(() => {
+  const paymentFrequency = String(form.payment_frequency ?? '').trim();
+  if (paymentFrequency === 'quarterly') return 'Cuota trimestral estimada';
+  return 'Cuota mensual estimada';
+});
+const liabilityTermFieldLabel = computed(() => {
+  const paymentFrequency = String(form.payment_frequency ?? '').trim();
+  if (paymentFrequency === 'quarterly') return 'Plazo total (meses)';
+  return 'Cuotas (meses)';
+});
+const liabilityTermFieldPlaceholder = computed(() => {
+  const paymentFrequency = String(form.payment_frequency ?? '').trim();
+  if (paymentFrequency === 'quarterly') return 'Ej: 12 o 24 (multiplo de 3)';
+  return 'Ej: 24';
+});
+const liabilityTermFieldHint = computed(() => {
+  const paymentFrequency = String(form.payment_frequency ?? '').trim();
+  if (paymentFrequency !== 'quarterly') return null;
+  return 'Trimestral: introduce plazo total en meses (ej: 24 = 8 cuotas trimestrales).';
 });
 
 async function submit() {
@@ -430,7 +445,7 @@ async function submit() {
       showLiabilityAdvancedFields.value && String(form.term_months ?? '').trim()
         ? Number(String(form.term_months).trim())
         : undefined,
-    rate_type: showLiabilityAdvancedFields.value ? form.rate_type : undefined,
+    rate_type: showLiabilityAdvancedFields.value ? 'fixed' : undefined,
     payment_frequency: showLiabilityAdvancedFields.value ? form.payment_frequency : undefined,
     amortization_system:
       showLiabilityAdvancedFields.value && String(form.amortization_system ?? '').trim()
@@ -478,14 +493,14 @@ async function submit() {
   form.category = '';
   form.subcategory = '';
   form.amount = '';
-  form.annual_interest_tae = '';
+  form.annual_interest_tae = props.showFinancedAsset ? '0' : '';
   form.monthly_payment_amount = '';
   form.start_date = todayIsoDate();
   form.expected_end_date = '';
   form.term_months = '';
   form.rate_type = 'fixed';
   form.payment_frequency = 'monthly';
-  form.amortization_system = '';
+  form.amortization_system = 'french';
   form.opening_fees_amount = '';
   form.early_repayment_fee_percent = '';
   form.novation_subrogation_fee_amount = '';
@@ -507,12 +522,12 @@ watch(
     form.category = initial.category ?? '';
     form.subcategory = initial.subcategory ?? '';
     form.amount = initial.amount ?? '';
-    form.annual_interest_tae = initial.annual_interest_tae ?? '';
+    form.annual_interest_tae = initial.annual_interest_tae ?? (props.showFinancedAsset ? '0' : '');
     form.monthly_payment_amount = initial.monthly_payment_amount ?? '';
     form.start_date = initial.start_date ?? todayIsoDate();
     form.expected_end_date = initial.expected_end_date ?? '';
     form.term_months = initial.term_months == null ? '' : String(initial.term_months);
-    form.rate_type = initial.rate_type ?? 'fixed';
+    form.rate_type = props.showFinancedAsset ? 'fixed' : (initial.rate_type ?? 'fixed');
     form.payment_frequency = initial.payment_frequency ?? 'monthly';
     form.amortization_system = initial.amortization_system ?? '';
     form.opening_fees_amount = initial.opening_fees_amount ?? '';
@@ -611,18 +626,16 @@ watch(
 </script>
 
 <template>
-  <div class="card mb-3 ui-item-form-shell">
-    <h3 class="h3 ui-item-form-title">{{ title }}</h3>
-
+  <div>
     <div class="ui-item-form-grid">
       <label class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Nombre</span>
-        <input v-model="form.name" placeholder="Nombre" class="input" />
+        <input v-model="form.name" placeholder="Nombre" class="input ui-data-field" />
       </label>
 
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Categoría</span>
-        <select v-model="form.category" :class="['select', { 'ui-select-placeholder': !form.category }]">
+        <select v-model="form.category" :class="['select ui-data-field', { 'ui-select-placeholder': !form.category }]">
           <option value="" disabled>Selecciona categoría</option>
           <option v-for="c in categories" :key="c.value" :value="c.value">{{ c.label }}</option>
         </select>
@@ -630,39 +643,39 @@ watch(
 
       <label v-if="props.subcategories" class="ui-item-form-field">
         <span class="ui-item-form-label">Subcategoría</span>
-        <select v-model="form.subcategory" :class="['select', { 'ui-select-placeholder': !form.subcategory }]">
+        <select v-model="form.subcategory" :class="['select ui-data-field', { 'ui-select-placeholder': !form.subcategory }]">
           <option value="" disabled>Selecciona subcategoría</option>
           <option v-for="s in subcategoriesForCategory" :key="s.value" :value="s.value">{{ s.label }}</option>
         </select>
       </label>
 
       <label class="ui-item-form-field">
+        <span class="ui-item-form-label">{{ isLiabilityForm ? 'Fecha inicio préstamo' : 'Fecha inicio' }}</span>
+        <input v-model="form.start_date" type="date" class="input ui-data-field" />
+      </label>
+
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">{{ isLiabilityForm ? 'Principal / saldo actual' : 'Importe' }}</span>
+        <input v-model="form.amount" inputmode="decimal" placeholder="Importe" class="input ui-data-field" />
+      </label>
+
+      <label class="ui-item-form-field">
         <span class="ui-item-form-label">Moneda</span>
-        <select v-model="form.currency" :class="['select', { 'ui-select-placeholder': !form.currency }]">
+        <select v-model="form.currency" :class="['select ui-data-field', { 'ui-select-placeholder': !form.currency }]">
           <option value="" disabled>Selecciona moneda</option>
           <option v-for="c in currencies" :key="c.value" :value="c.value">{{ c.label }}</option>
         </select>
       </label>
 
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">{{ isLiabilityForm ? 'Principal / saldo actual' : 'Importe' }}</span>
-        <input v-model="form.amount" inputmode="decimal" placeholder="Importe" class="input" />
-      </label>
-
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">{{ isLiabilityForm ? 'Fecha inicio préstamo' : 'Fecha inicio' }}</span>
-        <input v-model="form.start_date" type="date" class="input" />
-      </label>
-
-      <label v-if="showAnnualInterestInput" class="ui-item-form-field">
+      <label v-if="showAssetAnnualInterestInput" class="ui-item-form-field">
         <span class="ui-item-form-label">TAE anual (%)</span>
-        <input v-model="form.annual_interest_tae" inputmode="decimal" placeholder="TAE anual (%)" class="input" />
+        <input v-model="form.annual_interest_tae" inputmode="decimal" placeholder="TAE anual (%)" class="input ui-data-field" />
       </label>
 
       <div v-if="showLiabilityAdvancedFields" class="ui-item-form-section ui-item-form-field-span-2">
         <div class="ui-item-form-section-head">
           <div>
-            <div class="ui-item-form-section-title">Calendario de cuotas</div>
+            <div class="ui-item-form-section-title">Calendario y condiciones</div>
             <div class="ui-item-form-section-subtitle">Indica <strong>cuotas</strong> o <strong>fecha fin</strong>. Se calcula la otra.</div>
           </div>
           <span class="badge">Requerido</span>
@@ -670,72 +683,65 @@ watch(
         <div class="ui-item-form-inline-grid">
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Fecha fin</span>
-            <input v-model="form.expected_end_date" type="date" class="input" @change="onLiabilityEndDateInput" />
+            <input v-model="form.expected_end_date" type="date" class="input ui-data-field" @change="onLiabilityEndDateInput" />
           </label>
           <label class="ui-item-form-field">
-            <span class="ui-item-form-label">Cuotas (meses)</span>
-            <input v-model="form.term_months" inputmode="numeric" placeholder="Ej: 24" class="input" @input="onLiabilityTermInput" />
+            <span class="ui-item-form-label">TAE anual (%)</span>
+            <input v-model="form.annual_interest_tae" inputmode="decimal" placeholder="0" class="input ui-data-field" />
           </label>
-        </div>
-        <div v-if="showLiabilityAdvancedFields && estimatedMonthlyPaymentPreviewText" class="ui-item-form-chipline">
-          <span class="ui-item-form-chip">Cuota estimada</span>
-          <span>{{ estimatedMonthlyPaymentPreviewText }} {{ form.currency || '' }} <small class="subtle">(simple, tipo fijo)</small></span>
-        </div>
-      </div>
-
-      <div v-if="showLiabilityAdvancedFields" class="ui-item-form-section ui-item-form-field-span-2">
-        <div class="ui-item-form-section-head"><div class="ui-item-form-section-title">Condiciones</div></div>
-        <div class="ui-item-form-inline-grid">
           <label class="ui-item-form-field">
-            <span class="ui-item-form-label">Tipo de interés</span>
-            <select v-model="form.rate_type" class="select">
-              <option v-for="opt in LIABILITY_RATE_TYPES" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
+            <span class="ui-item-form-label">{{ liabilityTermFieldLabel }}</span>
+            <input v-model="form.term_months" inputmode="numeric" :placeholder="liabilityTermFieldPlaceholder" class="input ui-data-field" @input="onLiabilityTermInput" />
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Frecuencia</span>
-            <select v-model="form.payment_frequency" class="select">
+            <select v-model="form.payment_frequency" class="select ui-data-field">
               <option v-for="opt in LIABILITY_PAYMENT_FREQUENCIES" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
             </select>
           </label>
-          <label class="ui-item-form-field ui-item-form-field-span-2">
-            <span class="ui-item-form-label">Sistema de amortización</span>
-            <select v-model="form.amortization_system" class="select">
-              <option v-for="opt in LIABILITY_AMORTIZATION_SYSTEMS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-          </label>
+        </div>
+        <div v-if="liabilityTermFieldHint" class="ui-form-help">
+          {{ liabilityTermFieldHint }}
+        </div>
+        <div v-if="estimatedMonthlyPaymentPreviewText" class="ui-item-form-chipline">
+          <span class="ui-item-form-chip">{{ estimatedPaymentPreviewLabel }}</span>
+          <span>
+            {{ estimatedMonthlyPaymentPreviewText }} {{ form.currency || '' }}
+            <small class="subtle">(simple, tipo fijo)</small>
+            <small v-if="showMortgageFeeFields" class="subtle">(sin incluir costes opcionales)</small>
+          </span>
         </div>
       </div>
 
       <details v-if="showMortgageFeeFields" class="ui-item-form-section ui-item-form-field-span-2">
         <summary class="ui-item-form-details-summary">Costes hipotecarios opcionales</summary>
         <div class="ui-item-form-inline-grid mt-2">
-          <label class="ui-item-form-field"><span class="ui-item-form-label">Comisión apertura</span><input v-model="form.opening_fees_amount" inputmode="decimal" placeholder="Opcional" class="input" /></label>
-          <label class="ui-item-form-field"><span class="ui-item-form-label">Amortización anticipada (%)</span><input v-model="form.early_repayment_fee_percent" inputmode="decimal" placeholder="Opcional" class="input" /></label>
-          <label class="ui-item-form-field"><span class="ui-item-form-label">Novación / subrogación</span><input v-model="form.novation_subrogation_fee_amount" inputmode="decimal" placeholder="Opcional" class="input" /></label>
-          <label class="ui-item-form-field"><span class="ui-item-form-label">Vinculados (mensual)</span><input v-model="form.linked_products_monthly_cost" inputmode="decimal" placeholder="Opcional" class="input" /></label>
+          <label class="ui-item-form-field"><span class="ui-item-form-label">Comisión apertura</span><input v-model="form.opening_fees_amount" inputmode="decimal" placeholder="Opcional" class="input ui-data-field" /></label>
+          <label class="ui-item-form-field"><span class="ui-item-form-label">Amortización anticipada (%)</span><input v-model="form.early_repayment_fee_percent" inputmode="decimal" placeholder="Opcional" class="input ui-data-field" /></label>
+          <label class="ui-item-form-field"><span class="ui-item-form-label">Novación / subrogación</span><input v-model="form.novation_subrogation_fee_amount" inputmode="decimal" placeholder="Opcional" class="input ui-data-field" /></label>
+          <label class="ui-item-form-field"><span class="ui-item-form-label">Vinculados (mensual)</span><input v-model="form.linked_products_monthly_cost" inputmode="decimal" placeholder="Opcional" class="input ui-data-field" /></label>
         </div>
       </details>
 
       <div v-if="showAssetAmortizationFields" class="ui-item-form-section ui-item-form-field-span-2">
         <div class="ui-item-form-section-head"><div class="ui-item-form-section-title">Amortización del activo</div></div>
         <div class="ui-item-form-inline-grid">
-          <label class="ui-item-form-field"><span class="ui-item-form-label">Método</span><select v-model="form.amortization_method" class="select"><option v-for="opt in ASSET_AMORTIZATION_METHODS" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select></label>
-          <label class="ui-item-form-field"><span class="ui-item-form-label">Valor compra inicial</span><input v-model="form.initial_purchase_value" inputmode="decimal" placeholder="Opcional" class="input" /></label>
-          <label v-if="requiresAssetAmortizationInputs" class="ui-item-form-field"><span class="ui-item-form-label">Plazo (años)</span><input v-model="form.amortization_term_years" inputmode="numeric" placeholder="Ej: 10" class="input" /></label>
+          <label class="ui-item-form-field"><span class="ui-item-form-label">Método</span><select v-model="form.amortization_method" class="select ui-data-field"><option v-for="opt in ASSET_AMORTIZATION_METHODS" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select></label>
+          <label class="ui-item-form-field"><span class="ui-item-form-label">Valor compra inicial</span><input v-model="form.initial_purchase_value" inputmode="decimal" placeholder="Opcional" class="input ui-data-field" /></label>
+          <label v-if="requiresAssetAmortizationInputs" class="ui-item-form-field"><span class="ui-item-form-label">Plazo (años)</span><input v-model="form.amortization_term_years" inputmode="numeric" placeholder="Ej: 10" class="input ui-data-field" /></label>
         </div>
       </div>
 
       <label class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Titularidad</span>
-        <select v-model="form.ownership_id" :class="['select', { 'ui-select-placeholder': form.ownership_id == null }]">
+        <select v-model="form.ownership_id" :class="['select ui-data-field', { 'ui-select-placeholder': form.ownership_id == null }]">
           <option v-for="o in ownershipOptions" :key="String(o.value)" :value="o.value">{{ o.label }}</option>
         </select>
       </label>
 
       <label v-if="showFinancedAsset" class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Activo financiado</span>
-        <select v-model="form.financed_asset_id" :class="['select', { 'ui-select-placeholder': form.financed_asset_id == null }]">
+        <select v-model="form.financed_asset_id" :class="['select ui-data-field', { 'ui-select-placeholder': form.financed_asset_id == null }]">
           <option v-for="a in financedAssetOptions" :key="String(a.value)" :value="a.value">{{ a.label }}</option>
         </select>
       </label>
@@ -766,3 +772,6 @@ watch(
     </div>
   </div>
 </template>
+
+
+
