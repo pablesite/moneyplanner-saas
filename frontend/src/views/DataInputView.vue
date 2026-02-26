@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
-import { api, coreApi } from '@/lib/api';
+import { coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import {
   ItemForm,
@@ -1288,9 +1288,9 @@ async function exportDataBundle(): Promise<void> {
       coreApi.get<PortableLiabilityRecord[]>('/api/net-worth/liabilities/'),
       coreApi.get<PortableSnapshotRecord[]>('/api/net-worth/snapshots/'),
       coreApi.get<PortableSettingsRecord>('/api/auth/settings/'),
-      api.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
-      api.get<PortableOwnershipRecord[]>('/api/ownerships/'),
-      api.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
+      coreApi.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
+      coreApi.get<PortableOwnershipRecord[]>('/api/ownerships/'),
+      coreApi.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
     ]);
 
     const payload: PortableDataBundle = {
@@ -1359,13 +1359,13 @@ async function clearExistingCoreDataForReplace(): Promise<void> {
 
 async function clearExistingPremiumDataForReplace(): Promise<void> {
   const [linksRes, ownershipsRes, membersRes] = await Promise.all([
-    api.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
-    api.get<PortableOwnershipRecord[]>('/api/ownerships/'),
-    api.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
+    coreApi.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
+    coreApi.get<PortableOwnershipRecord[]>('/api/ownerships/'),
+    coreApi.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
   ]);
 
   for (const link of linksRes.data ?? []) {
-    await api.post('/api/ownership-links/sync/', {
+    await coreApi.post('/api/ownership-links/sync/', {
       target_type: link.target_type,
       target_id: link.target_id,
       ownership_id: null,
@@ -1375,11 +1375,11 @@ async function clearExistingPremiumDataForReplace(): Promise<void> {
   for (const ownership of [...(ownershipsRes.data ?? [])]
     .filter((row) => row.kind === 'shared')
     .sort((a, b) => b.id - a.id)) {
-    await api.delete(`/api/ownerships/${ownership.id}/`);
+    await coreApi.delete(`/api/ownerships/${ownership.id}/`);
   }
 
   for (const member of [...(membersRes.data ?? [])].sort((a, b) => b.id - a.id)) {
-    await api.delete(`/api/family-members/${member.id}/`);
+    await coreApi.delete(`/api/family-members/${member.id}/`);
   }
 }
 
@@ -1392,7 +1392,7 @@ async function importPremiumPeopleData(
   const memberIdMap = new Map<number, number>();
   const sortedMembers = [...premium.family_members].sort((a, b) => a.id - b.id);
   for (const member of sortedMembers) {
-    const res = await api.post<{ id: number }>('/api/family-members/', {
+    const res = await coreApi.post<{ id: number }>('/api/family-members/', {
       name: member.name,
       role: member.role,
       is_active: member.is_active ?? true,
@@ -1400,7 +1400,7 @@ async function importPremiumPeopleData(
     if (typeof res.data?.id === 'number') memberIdMap.set(member.id, res.data.id);
   }
 
-  const currentOwnershipsRes = await api.get<PortableOwnershipRecord[]>('/api/ownerships/');
+  const currentOwnershipsRes = await coreApi.get<PortableOwnershipRecord[]>('/api/ownerships/');
   const currentOwnerships = currentOwnershipsRes.data ?? [];
   const exportedIndividuals = premium.ownerships.filter(
     (ownership) => ownership.kind === 'individual' && ownership.member,
@@ -1428,7 +1428,7 @@ async function importPremiumPeopleData(
       })
       .filter((split): split is { member_id: number; percent: string } => split != null);
     if (!splits.length) continue;
-    const res = await api.post<{ id: number }>('/api/ownerships/', {
+    const res = await coreApi.post<{ id: number }>('/api/ownerships/', {
       kind: 'shared',
       member: null,
       splits,
@@ -1607,7 +1607,7 @@ async function importPremiumOwnershipLinks(
         : (liabilityIdMap.get(link.target_id) ?? null);
     const mappedOwnershipId = ownershipIdMap.get(link.ownership_id) ?? null;
     if (mappedTargetId == null || mappedOwnershipId == null) continue;
-    await api.post('/api/ownership-links/sync/', {
+    await coreApi.post('/api/ownership-links/sync/', {
       target_type: link.target_type,
       target_id: mappedTargetId,
       ownership_id: mappedOwnershipId,

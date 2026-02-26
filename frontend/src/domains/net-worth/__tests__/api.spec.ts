@@ -2,10 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 
 const mocks = vi.hoisted(() => ({
-  api: {
-    get: vi.fn(),
-    post: vi.fn(),
-  },
   coreApi: {
     get: vi.fn(),
     post: vi.fn(),
@@ -16,7 +12,6 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  api: mocks.api,
   coreApi: mocks.coreApi,
 }));
 
@@ -68,9 +63,9 @@ describe('net worth api (saas)', () => {
       ownership_id: 2,
     });
 
-    expect(mocks.api.get).toHaveBeenCalledWith('/api/ownerships/');
-    expect(mocks.api.get).toHaveBeenCalledWith('/api/ownership-links/');
-    expect(mocks.api.post).toHaveBeenCalledWith('/api/ownership-links/sync/', {
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/ownerships/');
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/ownership-links/');
+    expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/ownership-links/sync/', {
       target_type: 'asset',
       target_id: 1,
       ownership_id: 2,

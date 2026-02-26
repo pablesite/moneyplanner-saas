@@ -299,11 +299,12 @@ Columnas recomendadas:
 1. Login/registro operativos [ ]
 2. Acceso a vistas baseline Core [en progreso]
 3. Backend SaaS `family/ownership` alineado a Core (sin gating premium; solo `IsAuthenticated`) [x]
-4. Rutas/menus de extras cloud no esenciales ocultos [ ]
-5. Pantallas admin solo para uso interno [x] (se mantienen habilitadas para operacion del piloto)
-6. Sin billing visible al usuario final [ ]
-7. Seed/onboarding manual de testers definido [ ]
-8. Runbook minimo de soporte piloto preparado [ ]
+4. Frontend SaaS `family/ownership` consume backend Core (mismo patron que `net_worth`) [x]
+5. Rutas/menus de extras cloud no esenciales ocultos [ ]
+6. Pantallas admin solo para uso interno [x] (se mantienen habilitadas para operacion del piloto)
+7. Sin billing visible al usuario final [ ]
+8. Seed/onboarding manual de testers definido [ ]
+9. Runbook minimo de soporte piloto preparado [ ]
 
 ## Validacion (antes de cerrar el hito)
 ### Core

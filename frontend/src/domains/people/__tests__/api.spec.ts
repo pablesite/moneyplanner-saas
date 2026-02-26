@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { corePeopleApi, peopleApi, premiumPeopleApi } from '@/domains/people/api';
 
 const mocks = vi.hoisted(() => ({
-  api: {
+  coreApi: {
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  api: mocks.api,
+  coreApi: mocks.coreApi,
 }));
 
 describe('people api (saas)', () => {
@@ -43,22 +43,22 @@ describe('people api (saas)', () => {
     await premiumPeopleApi.updateSharedOwnership(5, splitsPayload);
     await premiumPeopleApi.deleteOwnership(5);
 
-    expect(mocks.api.get).toHaveBeenCalledWith('/api/family-members/');
-    expect(mocks.api.post).toHaveBeenCalledWith('/api/family-members/', memberPayload);
-    expect(mocks.api.patch).toHaveBeenCalledWith('/api/family-members/1/', patchPayload);
-    expect(mocks.api.delete).toHaveBeenCalledWith('/api/family-members/1/');
-    expect(mocks.api.get).toHaveBeenCalledWith('/api/ownerships/');
-    expect(mocks.api.post).toHaveBeenCalledWith('/api/ownerships/', {
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/family-members/');
+    expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/family-members/', memberPayload);
+    expect(mocks.coreApi.patch).toHaveBeenCalledWith('/api/family-members/1/', patchPayload);
+    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/family-members/1/');
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/ownerships/');
+    expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/ownerships/', {
       kind: 'shared',
       member: null,
       splits: splitsPayload.splits,
     });
-    expect(mocks.api.patch).toHaveBeenCalledWith('/api/ownerships/5/', {
+    expect(mocks.coreApi.patch).toHaveBeenCalledWith('/api/ownerships/5/', {
       kind: 'shared',
       member: null,
       splits: splitsPayload.splits,
     });
-    expect(mocks.api.delete).toHaveBeenCalledWith('/api/ownerships/5/');
+    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/ownerships/5/');
   });
 
   it('rejects all core people operations as unsupported', async () => {

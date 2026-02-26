@@ -1,4 +1,4 @@
-import { api, coreApi } from '@/lib/api';
+import { coreApi } from '@/lib/api';
 import type {
   Asset,
   Liability,
@@ -58,12 +58,12 @@ export const coreNetWorthApi = {
 
 export const premiumOwnershipApi = {
   getOwnerships() {
-    return api.get<Ownership[]>('/api/ownerships/');
+    return coreApi.get<Ownership[]>('/api/ownerships/');
   },
   getOwnershipLinks() {
-    return api.get<OwnershipLink[]>('/api/ownership-links/');
+    return coreApi.get<OwnershipLink[]>('/api/ownership-links/');
   },
   syncOwnershipLink(payload: OwnershipSyncPayload) {
-    return api.post('/api/ownership-links/sync/', payload);
+    return coreApi.post('/api/ownership-links/sync/', payload);
   },
 };
