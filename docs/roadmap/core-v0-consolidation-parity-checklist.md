@@ -291,12 +291,13 @@ Columnas recomendadas:
 
 ## SaaS piloto gratis (mirror del Core) - checklist
 1. Login/registro operativos [ ]
-2. Acceso a vistas baseline Core [ ]
-3. Extras cloud no listos ocultos [ ]
-4. Pantallas admin solo para uso interno [ ]
-5. Sin billing visible al usuario final [ ]
-6. Seed/onboarding manual de testers definido [ ]
-7. Runbook minimo de soporte piloto preparado [ ]
+2. Acceso a vistas baseline Core [en progreso]
+3. Backend SaaS `family/ownership` alineado a Core (sin gating premium; solo `IsAuthenticated`) [x]
+4. Rutas/menus de extras cloud no esenciales ocultos [ ]
+5. Pantallas admin solo para uso interno [ ]
+6. Sin billing visible al usuario final [ ]
+7. Seed/onboarding manual de testers definido [ ]
+8. Runbook minimo de soporte piloto preparado [ ]
 
 ## Validacion (antes de cerrar el hito)
 ### Core

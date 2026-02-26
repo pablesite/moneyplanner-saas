@@ -4,7 +4,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import FamilyMember, Ownership, OwnershipLink
-from .permissions import HasPremiumAccess
 from .serializers import (
     FamilyMemberSerializer,
     OwnershipLinkReadSerializer,
@@ -30,8 +29,8 @@ class UserScopedQuerySetMixin:
 
 class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
     serializer_class = FamilyMemberSerializer
-    permission_classes = [IsAuthenticated, HasPremiumAccess]
-    throttle_scope = "premium_api"
+    # Pilot mirror: family/ownership is part of the Core baseline, so no premium gating here.
+    permission_classes = [IsAuthenticated]
     queryset = FamilyMember.objects.all()
 
     def perform_create(self, serializer):
@@ -48,8 +47,7 @@ class FamilyMemberViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
 
 class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, HasPremiumAccess]
-    throttle_scope = "premium_api"
+    permission_classes = [IsAuthenticated]
     queryset = Ownership.objects.all()
 
     def get_queryset(self):
@@ -77,8 +75,7 @@ class OwnershipViewSet(UserScopedQuerySetMixin, viewsets.ModelViewSet):
 
 
 class OwnershipLinkViewSet(UserScopedQuerySetMixin, viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, HasPremiumAccess]
-    throttle_scope = "premium_api"
+    permission_classes = [IsAuthenticated]
     queryset = OwnershipLink.objects.all()
 
     def list(self, request):

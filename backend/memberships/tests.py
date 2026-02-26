@@ -976,7 +976,7 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         self.assertIn("access", refresh_res.data)
 
 
-class SaasPremiumAccessPolicyTests(APITestCase):
+class SaasMembershipsPilotMirrorPolicyTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username="policy_user",
@@ -989,21 +989,19 @@ class SaasPremiumAccessPolicyTests(APITestCase):
         response = self.client.get("/api/family-members/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_memberships_access_blocked_for_canceled(self):
+    def test_memberships_access_allowed_for_canceled_in_pilot_mirror(self):
         sub = SaasSubscription.objects.create(
             user=self.user, status=SaasSubscription.Status.CANCELED
         )
         response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data["error"]["code"], "subscription_blocked")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         sub.refresh_from_db()
         self.assertEqual(sub.status, SaasSubscription.Status.CANCELED)
 
-    def test_memberships_access_blocked_for_past_due(self):
+    def test_memberships_access_allowed_for_past_due_in_pilot_mirror(self):
         SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.PAST_DUE)
         response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data["error"]["code"], "subscription_blocked")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_memberships_access_allowed_for_active(self):
         SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.ACTIVE)
@@ -1195,7 +1193,7 @@ class SaasAdminUsersApiTests(APITestCase):
         self.assertIn("roles", allowed.data["rbac"])
 
 
-class SaasPremiumRbacPolicyTests(APITestCase):
+class SaasMembershipsPilotMirrorRbacPolicyTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username="rbac_policy_user",
@@ -1204,13 +1202,12 @@ class SaasPremiumRbacPolicyTests(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
 
-    def test_memberships_access_blocked_for_invalid_role(self):
+    def test_memberships_access_ignores_saas_role_for_pilot_mirror(self):
         profile = get_or_create_access_profile(user=self.user)
         SaasAccessProfile.objects.filter(id=profile.id).update(role="legacy_role")
 
         response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data["error"]["code"], "permission_denied")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class SaasRbacServicesTests(TestCase):
