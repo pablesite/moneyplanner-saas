@@ -94,7 +94,7 @@ Columnas recomendadas:
 ### Matriz inicial (rellenada)
 | Area | Core frontend (estado) | SaaS frontend (estado) | Decision | Accion | Owner | Estado |
 |---|---|---|---|---|---|---|
-| `Home / shell / navigation` | Existe; rutas base mas simples (`/`, `/inicio` diferencias menores) | Mas avanzado; shell con rutas extra (`/account`, admin, settings, monthly-close) | `igualar con SaaS` (excepto admin) | Alinear rutas/base shell/nav de Core con SaaS para que ambos frontends queden iguales de momento, excluyendo `Admin users` | `Pablo` | `pendiente` |
+| `Home / shell / navigation` | Existe; rutas base mas simples (`/`, `/inicio` diferencias menores) | Mas avanzado; shell con rutas extra (`/account`, admin, settings, monthly-close) | `igualar con SaaS` (excepto admin) | Alinear rutas/base shell/nav de Core con SaaS para que ambos frontends queden iguales de momento, excluyendo `Admin users` | `Pablo` | `en progreso (rutas y shell de App.vue alineadas; falta QA visual final)` |
 | `Patrimonio` | Existe (`NetWorthView`) | Existe (`NetWorthView`), probable UX mas madura por iteraciones SaaS | `trasladar a Core` | Comparar vista + componentes + composables/stores y portar mejoras de UX/estados vacios | `Pablo` | `en progreso (NetWorthView SaaS portada y compilando)` |
 | `Presupuesto` | Existe (`/presupuesto`) | Existe (`/presupuesto`) + soporte `monthly-close` en misma vista | `trasladar a Core` (baseline) | Portar mejoras UX de presupuesto; decidir si `monthly-close` entra en Core v0 como modo o ruta | `Pablo` | `pendiente` |
 | `Cierre mensual` | No expuesto como ruta dedicada | Ruta `/cierre-mensual` en SaaS (modo de `BudgetDashboardView`) | `trasladar a Core` | Replicar modo/ruta en Core y alinear flujo/copy con SaaS | `Pablo` | `pendiente` |
