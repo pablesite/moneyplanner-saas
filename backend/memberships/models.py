@@ -121,12 +121,3 @@ class OwnershipLink(models.Model):
         return (
             f"{self.user_id} - {self.target_type}:{self.target_id} -> ownership:{self.ownership_id}"
         )
-
-
-from saas_access.models import (  # noqa: E402,F401
-    SaasAccessProfile,
-    SaasAuthAuditEvent,
-    SaasConsumedCoreLinkToken,
-    SaasCoreAccountLink,
-    SaasSubscription,
-)
