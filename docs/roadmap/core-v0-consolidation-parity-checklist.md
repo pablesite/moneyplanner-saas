@@ -294,6 +294,7 @@ Columnas recomendadas:
 1. `Subscription status` por defecto para testers: `trial` (suficiente para pruebas reales; sin activar billing).
 2. `Admin users` SaaS se mantiene operativo para alta/edicion manual de usuarios durante el piloto.
 3. Refactor backend SaaS completado (corte actual): `saas_access` concentra RBAC/suscripcion/core-link + modelos SaaS adoptados con `db_table`; `memberships` queda centrado en familia/ownership.
+4. Suite de tests separada por dominio: tests SaaS-only movidos a `backend/saas_access/tests.py` (manteniendo `memberships` para familia/ownership).
 
 1. Login/registro operativos [ ]
 2. Acceso a vistas baseline Core [en progreso]
