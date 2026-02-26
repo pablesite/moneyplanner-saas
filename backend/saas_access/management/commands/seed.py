@@ -28,8 +28,8 @@ class Command(BaseCommand):
             self.stderr.write("SEED_ADMIN_USERNAME is empty. Aborting.")
             return
 
-        User = get_user_model()
-        user, created = User.objects.get_or_create(
+        user_model = get_user_model()
+        user, created = user_model.objects.get_or_create(
             username=username,
             defaults={
                 "email": email,
@@ -39,23 +39,18 @@ class Command(BaseCommand):
         )
 
         changed = False
-
         if email and user.email != email:
             user.email = email
             changed = True
-
         if not user.is_staff:
             user.is_staff = True
             changed = True
-
         if not user.is_superuser:
             user.is_superuser = True
             changed = True
-
         if created or force_password:
             user.set_password(password)
             changed = True
-
         if changed:
             user.save()
 

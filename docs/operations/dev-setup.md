@@ -66,7 +66,7 @@ docker compose exec frontend npm run typecheck
 ## Test Commands
 1. SaaS backend:
 ```bash
-docker compose exec saas_backend python manage.py test memberships
+docker compose exec saas_backend python manage.py test saas_access
 ```
 2. SaaS frontend E2E:
 ```bash

@@ -65,7 +65,7 @@ Quality commands:
    - `npm run typecheck`
 
 Current tests:
-1. SaaS backend: `python manage.py test memberships` (suite in `backend/memberships/tests.py`).
+1. SaaS backend: `python manage.py test saas_access` (suite in `backend/saas_access/tests.py`).
 2. Core backend: base `tests.py` files exist, functional coverage is still evolving by domain.
 
 CI reference:

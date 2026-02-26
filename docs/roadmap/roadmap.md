@@ -70,8 +70,8 @@ Familia avanzada en Cloud:
    - adapters seleccionados por `capabilities.isPremium`
    - backend con permiso binario `HasPremiumAccess`
 3. El backend SaaS sigue modelando suscripcion como binaria (`trial/active/...` + `premium_enabled`), sin `plan_code`.
-4. La funcionalidad `People/ownership` vive hoy en `backend/memberships` y frontend SaaS (no en Core).
-5. `core/backend` ya no tiene el modelo de familia/titularidad operativo (quedo retirado del dominio base).
+4. La funcionalidad `People/ownership` ya vive en `core/backend/memberships` y el frontend SaaS la consume desde Core.
+5. El backend SaaS conserva solo `saas_access` (auth/rbac/suscripcion/core-link); `memberships` fue retirado del stack SaaS.
 6. `core/frontend` ya tiene buena parte del baseline que si queremos preservar como open-core:
    - `Guia`
    - `Patrimonio`
@@ -252,5 +252,5 @@ Hitos:
 6. `docs/roadmap/core-v0-consolidation-parity-checklist.md`
 7. `frontend/src/domains/capabilities/index.ts`
 8. `core/frontend/src/domains/capabilities/index.ts`
-9. `backend/memberships/models.py`
+9. `core/backend/memberships/models.py`
 10. `backend/saas/auth_views.py`

@@ -39,7 +39,7 @@ Definir boundaries coherentes con la estrategia `Open-Core + SaaS`:
 ## Estado actual del codigo (gap de boundary)
 1. `core/frontend` ya contiene parte importante del baseline funcional (`Guia`, `Patrimonio`, `Presupuesto`, `Introduccion de datos`), pero no necesariamente la UX mas madura en todos los flujos.
 2. `frontend` (SaaS) extiende con `People`/`ownership`, `Account`, `Admin`.
-3. `backend/memberships` concentra hoy `FamilyMember`, `Ownership`, `OwnershipLink` (SaaS).
+3. `family/ownership` ya se gestiona en `core/backend/memberships`; el frontend SaaS consume ese backend Core.
 4. `core/backend/net_worth` ya no contiene el modelo de titularidad/familia (quedo retirado de Core).
 5. El gating SaaS sigue apoyado en `premium` binario, lo que mezcla boundary tecnico con packaging historico.
 
@@ -49,7 +49,7 @@ Definir boundaries coherentes con la estrategia `Open-Core + SaaS`:
 2. `SaaS`: colaboracion cloud (miembros con login, privacidad, permisos y vistas compartidas).
 
 ### 2. Mantener compatibilidad temporal
-1. No romper `memberships` ni endpoints actuales de golpe.
+1. Mantener compatibilidad temporal en frontend/capabilities mientras se consolida el piloto (sin reintroducir dominio Core en backend SaaS).
 2. Introducir bridge/adapters mientras se mueve la logica base.
 3. Mantener `compat.people` / `compat.ownership` en frontend mientras migra el gating.
 
