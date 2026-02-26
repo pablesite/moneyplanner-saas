@@ -95,11 +95,11 @@ Columnas recomendadas:
 | Area | Core frontend (estado) | SaaS frontend (estado) | Decision | Accion | Owner | Estado |
 |---|---|---|---|---|---|---|
 | `Home / shell / navigation` | Existe; rutas base mas simples (`/`, `/inicio` diferencias menores) | Mas avanzado; shell con rutas extra (`/account`, admin, settings, monthly-close) | `igualar con SaaS` (excepto admin) | Alinear rutas/base shell/nav de Core con SaaS para que ambos frontends queden iguales de momento, excluyendo `Admin users` | `Pablo` | `pendiente` |
-| `Patrimonio` | Existe (`NetWorthView`) | Existe (`NetWorthView`), probable UX mas madura por iteraciones SaaS | `trasladar a Core` | Comparar vista + componentes + composables/stores y portar mejoras de UX/estados vacios | `Pablo` | `pendiente` |
+| `Patrimonio` | Existe (`NetWorthView`) | Existe (`NetWorthView`), probable UX mas madura por iteraciones SaaS | `trasladar a Core` | Comparar vista + componentes + composables/stores y portar mejoras de UX/estados vacios | `Pablo` | `en progreso (NetWorthView SaaS portada y compilando)` |
 | `Presupuesto` | Existe (`/presupuesto`) | Existe (`/presupuesto`) + soporte `monthly-close` en misma vista | `trasladar a Core` (baseline) | Portar mejoras UX de presupuesto; decidir si `monthly-close` entra en Core v0 como modo o ruta | `Pablo` | `pendiente` |
 | `Cierre mensual` | No expuesto como ruta dedicada | Ruta `/cierre-mensual` en SaaS (modo de `BudgetDashboardView`) | `trasladar a Core` | Replicar modo/ruta en Core y alinear flujo/copy con SaaS | `Pablo` | `pendiente` |
-| `Introduccion de datos` | Existe (`DataInputView`) | Existe (`DataInputView`), posible UX mas madura | `trasladar a Core` | Comparar UX y portar mejoras del flujo de captura al Core | `Pablo` | `pendiente` |
-| `Guia / coach` | Existe (`GuidePhaseDetailView`, ruta `guide-phase-detail`) | Existe (`GuidePhaseDetailView`, ruta `guide-phase`) | `trasladar a Core` (UX/nombres/rutas) | Unificar nombres/rutas/copy y llevar al Core la variante mas madura; mantener SaaS mirror igual | `Pablo` | `pendiente` |
+| `Introduccion de datos` | Existe (`DataInputView`) | Existe (`DataInputView`), posible UX mas madura | `trasladar a Core` | Comparar UX y portar mejoras del flujo de captura al Core | `Pablo` | `en progreso (DataInputView SaaS portado + adaptacion Core basica)` |
+| `Guia / coach` | Existe (`GuidePhaseDetailView`, ruta `guide-phase-detail`) | Existe (`GuidePhaseDetailView`, ruta `guide-phase`) | `trasladar a Core` (UX/nombres/rutas) | Unificar nombres/rutas/copy y llevar al Core la variante mas madura; mantener SaaS mirror igual | `Pablo` | `en progreso (vista SaaS + componentes score portados y compilando)` |
 | `Data / auxiliares` | Existe ruta `/data` (vista general) | Existe `/data` + subrutas `/data/fx` y `/data/ipc` | `trasladar a Core` | Trasladar tal cual a Core (`/data`, `/data/fx`, `/data/ipc`) y mantener paridad con SaaS | `Pablo` | `pendiente` |
 | `Auth` | Existe `LoginView` + guard sobre backend Django Core | Existe `LoginView` + guard + contexto SaaS (sesion/cuenta) | `igualar UX` + `mantener backend auth distinto` | Mantener login Core contra backend Django Core; trasladar UX/flujo comun donde aplique. La gestion de miembros/familia en Core no cambia el mecanismo de login base | `Pablo` | `pendiente` |
 | `Account` | No existe | Existe `AccountView` (`/account`) | `trasladar a Core` | Portar `AccountView`/ruta a Core y adaptar acciones para contexto Core (sin acoplar a billing SaaS) | `Pablo` | `pendiente` |
@@ -275,8 +275,9 @@ Columnas recomendadas:
 #### E. Orden de ejecucion recomendado (codigo)
 1. `T3.1` Router Core + `SettingsFxView` + `SettingsIpcView` + `AccountView` (adaptado Core) [hecho]
 2. `T3.2` `BudgetDashboardView` SaaS -> Core (para `cierre mensual`) [hecho]
-3. `T3.3` `People/ownership` + integracion en `net-worth` [en progreso: frontend + backend core portados; smoke backend `memberships` OK, falta smoke UI Core end-to-end]
+3. `T3.3` `People/ownership` + integracion en `net-worth` [en progreso: frontend + backend core portados; smoke backend `memberships` OK; uso UI observado en logs]
 4. `T3.4` `AuxDataView` SaaS -> Core (ya con `people` disponible) [hecho]
+5. `T3.5` Paridad de vistas base (`NetWorthView`, `GuidePhaseDetailView`, `DataInputView`) [en progreso: vistas SaaS portadas en Core y `typecheck` OK]
 
 ### Paso T3 - Ejecutar traslado por slices pequenos
 1. Shell/nav
@@ -305,6 +306,7 @@ Columnas recomendadas:
 4. Smoke de `Guia/coach` [ ]
 5. Smoke de `cierre mensual` / check-ins si entra en corte [ ]
 6. Smoke backend `family/ownership` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links/sync`) [x]
+7. Smoke UI Core observado en logs backend (lecturas y escrituras en `people`, `ownerships`, `data`, `budget`, `net-worth`) [x]
 
 ### SaaS (mismo baseline)
 1. Login [ ]
