@@ -62,26 +62,26 @@ Consolidar una primera version estable de `Core` (backend + frontend) y, en para
 
 ## Checklist de scope `Core v0` (rellenar y cerrar)
 ### A. Funcionalidad objetivo (producto)
-1. `Patrimonio` (CRUD activos/pasivos + resumen + snapshots basicos) [ ]
-2. `Presupuesto` (planificado + ejecutado si `Milestone 14` minimo esta integrado) [ ]
-3. `Contabilidad` v1 (annual entries + check-ins/cierre mensual v1) [ ]
-4. `Introduccion de datos` (flujo usable de alta y edicion) [ ]
-5. `Coach financiero` base usable con fases actuales (sin exigir Fase 5) [ ]
-6. `Data portability` basica (export/import portable actual) [ ]
+1. `Patrimonio` (CRUD activos/pasivos + resumen + snapshots basicos) [entra ]
+2. `Presupuesto` (planificado + ejecutado si `Milestone 14` minimo esta integrado) [entra ]
+3. `Contabilidad` v1 (annual entries + check-ins/cierre mensual v1) [entra ]
+4. `Introduccion de datos` (flujo usable de alta y edicion) [entra ]
+5. `Coach financiero` base usable con fases actuales (sin exigir Fase 5) [ entra]
+6. `Data portability` basica (export/import portable actual) [ entra]
 
 ### B. Puede entrar parcial (si llega con calidad)
-1. `Onboarding asistido` / checklist (sin wizard completo) [ ]
-2. `Cartera de inversion` v1 basica [ ]
-3. `Simulador financiero` v1 local [ ]
+1. `Onboarding asistido` / checklist (sin wizard completo) [diferido ]
+2. `Cartera de inversion` v1 basica [ diferido]
+3. `Simulador financiero` v1 local [diferido ]
 
 ### C. Diferido (documentar explicitamente)
-1. `Coach Fase 5` [ ]
-2. Billing/pagos SaaS [ ]
-3. PWA completa/offline [ ]
-4. Benchmarking/LLM cloud/ASTRA [ ]
-5. Familia cloud avanzada (multi-login + privacidad por miembro) [ ]
+1. `Coach Fase 5` [diferido ]
+2. Billing/pagos SaaS [ diferido]
+3. PWA completa/offline [diferido ]
+4. Benchmarking/LLM cloud/ASTRA [diferido ]
+5. Familia cloud avanzada (multi-login + privacidad por miembro) [ diferido]
 
-## Matriz de paridad - Frontend (rellenar durante la auditoria)
+## Matriz de paridad - Frontend (primera version, basada en rutas actuales)
 Columnas recomendadas:
 1. `Area`
 2. `Core frontend (estado)`
@@ -91,18 +91,25 @@ Columnas recomendadas:
 6. `Owner`
 7. `Estado`
 
-### Filas iniciales sugeridas
-1. `Home / shell / navigation`
-2. `Patrimonio`
-3. `Presupuesto`
-4. `Cierre mensual` (si hoy vive como modo en SaaS)
-5. `Introduccion de datos`
-6. `Guia / coach`
-7. `Data / auxiliares`
-8. `Auth`
-9. `Account`
-10. `Admin users`
-11. `People / ownership`
+### Matriz inicial (rellenada)
+| Area | Core frontend (estado) | SaaS frontend (estado) | Decision | Accion | Owner | Estado |
+|---|---|---|---|---|---|---|
+| `Home / shell / navigation` | Existe; rutas base mas simples (`/`, `/inicio` diferencias menores) | Mas avanzado; shell con rutas extra (`/account`, admin, settings, monthly-close) | `igualar con SaaS` (excepto admin) | Alinear rutas/base shell/nav de Core con SaaS para que ambos frontends queden iguales de momento, excluyendo `Admin users` | `Pablo` | `pendiente` |
+| `Patrimonio` | Existe (`NetWorthView`) | Existe (`NetWorthView`), probable UX mas madura por iteraciones SaaS | `trasladar a Core` | Comparar vista + componentes + composables/stores y portar mejoras de UX/estados vacios | `Pablo` | `pendiente` |
+| `Presupuesto` | Existe (`/presupuesto`) | Existe (`/presupuesto`) + soporte `monthly-close` en misma vista | `trasladar a Core` (baseline) | Portar mejoras UX de presupuesto; decidir si `monthly-close` entra en Core v0 como modo o ruta | `Pablo` | `pendiente` |
+| `Cierre mensual` | No expuesto como ruta dedicada | Ruta `/cierre-mensual` en SaaS (modo de `BudgetDashboardView`) | `trasladar a Core` | Replicar modo/ruta en Core y alinear flujo/copy con SaaS | `Pablo` | `pendiente` |
+| `Introduccion de datos` | Existe (`DataInputView`) | Existe (`DataInputView`), posible UX mas madura | `trasladar a Core` | Comparar UX y portar mejoras del flujo de captura al Core | `Pablo` | `pendiente` |
+| `Guia / coach` | Existe (`GuidePhaseDetailView`, ruta `guide-phase-detail`) | Existe (`GuidePhaseDetailView`, ruta `guide-phase`) | `trasladar a Core` (UX/nombres/rutas) | Unificar nombres/rutas/copy y llevar al Core la variante mas madura; mantener SaaS mirror igual | `Pablo` | `pendiente` |
+| `Data / auxiliares` | Existe ruta `/data` (vista general) | Existe `/data` + subrutas `/data/fx` y `/data/ipc` | `trasladar a Core` | Trasladar tal cual a Core (`/data`, `/data/fx`, `/data/ipc`) y mantener paridad con SaaS | `Pablo` | `pendiente` |
+| `Auth` | Existe `LoginView` + guard sobre backend Django Core | Existe `LoginView` + guard + contexto SaaS (sesion/cuenta) | `igualar UX` + `mantener backend auth distinto` | Mantener login Core contra backend Django Core; trasladar UX/flujo comun donde aplique. La gestion de miembros/familia en Core no cambia el mecanismo de login base | `Pablo` | `pendiente` |
+| `Account` | No existe | Existe `AccountView` (`/account`) | `trasladar a Core` | Portar `AccountView`/ruta a Core y adaptar acciones para contexto Core (sin acoplar a billing SaaS) | `Pablo` | `pendiente` |
+| `Admin users` | No existe | Existe `AdminUsersView` (`/admin/users`) | `mantener solo en SaaS (infra/admin)` | Mantener solo para uso interno; excluir de experiencia piloto de usuario final | `Pablo` | `pendiente` |
+| `People / ownership` | No existe como vista/ruta | Existe `PeopleView` y ruta condicional por `capabilities.people` | `trasladar a Core` | Portar `PeopleView` y flujo de ownership a Core desde ya; despues dejar SaaS y Core con el mismo comportamiento base | `Pablo` | `pendiente` |
+
+### Diferencias de rutas detectadas ya (para arrancar la auditoria)
+1. `Core` usa `/` como `networth` y `/inicio` como `home`; `SaaS` usa `/` como `home` y `/patrimonio` como `networth`.
+2. `SaaS` anade `/cierre-mensual`, `/data/fx`, `/data/ipc`, `/account`, `/admin/users`, `/people` (condicional); segun decisiones actuales, todas salvo `admin/users` pasan a Core.
+3. `Guia` tiene mismo componente pero distinto nombre de ruta (`guide-phase-detail` vs `guide-phase`).
 
 ### Criterio de decision (frontend)
 1. Si es UX base y aporta a Core -> `trasladar a Core`
@@ -146,10 +153,130 @@ Columnas recomendadas:
    - `Guia`
 3. Comparar dominios/composables/stores compartidos.
 
+### Resultado T1 (primera pasada, codigo actual)
+#### Rutas / shell detectadas
+1. Diferencias de routing a trasladar a Core:
+   - `/` -> `home` (SaaS) vs `networth` (Core)
+   - `/inicio` -> redirect a `/` (SaaS) vs ruta `home` real (Core)
+   - `/patrimonio` (SaaS) falta en Core
+   - `/cierre-mensual` (SaaS) falta en Core
+   - `/data/fx` y `/data/ipc` (SaaS) faltan en Core
+   - `/account` (SaaS) falta en Core
+   - `/people` (SaaS, condicional) falta en Core
+2. Ruta que NO pasa a Core:
+   - `/admin/users` (solo SaaS interno)
+3. Diferencia menor a unificar:
+   - nombre de ruta `Guia`: `guide-phase` (SaaS) vs `guide-phase-detail` (Core)
+
+#### Slice 1 - `Home / shell / navigation`
+##### Archivos a revisar/trasladar
+1. `frontend/src/router.ts` -> base de alineacion de rutas en Core (con exclusion de `admin/users`)
+2. `core/frontend/src/router.ts` -> destino del traslado
+3. `frontend/src/domains/auth/components/AppHeader.vue` y `core/frontend/src/domains/auth/components/AppHeader.vue` -> comparar UX/header (si difieren)
+
+##### Decision de T1
+1. Trasladar a Core el esquema de rutas/base shell de SaaS (excepto `admin/users`).
+2. Mantener `admin/users` solo en SaaS.
+
+#### Slice 2 - `Cierre mensual`
+##### Archivos a revisar/trasladar
+1. `frontend/src/router.ts` (ruta `/cierre-mensual`)
+2. `frontend/src/views/BudgetDashboardView.vue` (modo `monthly-close`)
+3. `core/frontend/src/views/BudgetDashboardView.vue` (destino)
+
+##### Hallazgo T1
+1. `BudgetDashboardView.vue` de SaaS es claramente mas avanzada (incluye `mode: 'monthly-close'` y logica de check-ins/resumen mensual).
+2. Esta vista es candidata directa a traslado SaaS -> Core (con adaptaciones de API si aparecieran).
+
+#### Slice 3 - `Data / auxiliares` (trasladar tal cual a Core)
+##### Archivos a trasladar (UI/rutas)
+1. `frontend/src/views/AuxDataView.vue` -> `core/frontend/src/views/AuxDataView.vue`
+2. `frontend/src/views/SettingsFxView.vue` -> nuevo en `core/frontend/src/views/SettingsFxView.vue`
+3. `frontend/src/views/SettingsIpcView.vue` -> nuevo en `core/frontend/src/views/SettingsIpcView.vue`
+4. `frontend/src/router.ts` -> portar rutas `/data/fx` y `/data/ipc`
+
+##### Dependencias de dominio
+1. `frontend/src/domains/aux-data/*` ya tiene paridad estructural con `core/frontend/src/domains/aux-data/*`
+2. La diferencia principal esta en vistas/rutas y en la integracion de familia dentro de `AuxDataView`
+
+##### Nota T1
+1. `frontend/src/views/AuxDataView.vue` incorpora `FamilyMemberManager` y `OwnershipManager`; al pasar `People/ownership` a Core, este traslado encaja con tu decision.
+
+#### Slice 4 - `People / ownership` (traspasar a Core desde ya)
+##### Archivos base a trasladar
+1. `frontend/src/views/PeopleView.vue` -> nuevo en `core/frontend/src/views/PeopleView.vue`
+2. `frontend/src/domains/people/**` -> nuevo dominio en `core/frontend/src/domains/people/`
+3. `frontend/src/stores/people.ts` -> `core/frontend/src/stores/people.ts`
+
+##### Dependencias adicionales (muy importantes)
+1. `frontend/src/lib/netWorthOwnership.ts` -> `core/frontend/src/lib/netWorthOwnership.ts`
+2. Integracion en `frontend/src/domains/net-worth/*` (API/store/composables/extensions/components) con ownership
+3. Ruta `/people` en router Core (sin gating condicional, salvo que decidas mantenerlo por compat)
+
+##### Hallazgo T1
+1. No es solo "copiar `PeopleView`"; el soporte de ownership ya toca `net-worth` en SaaS.
+2. El traslado correcto requiere portar tambien la capa de integracion de ownership en `net-worth`.
+3. El slice no queda funcional end-to-end hasta portar/activar endpoints de `family-members` y `ownerships` en `core/backend`.
+
+#### Slice 5 - `Account` (trasladar a Core con adaptacion)
+##### Archivos UI a trasladar
+1. `frontend/src/views/AccountView.vue` -> nuevo en `core/frontend/src/views/AccountView.vue`
+2. Ruta `/account` desde `frontend/src/router.ts` -> `core/frontend/src/router.ts`
+
+##### Dependencias SaaS-especificas (NO copiar tal cual)
+1. `frontend/src/domains/auth/accountApi.ts` (usa endpoints SaaS `/api/auth/mode`, `/api/auth/me`, `/api/auth/subscription`, `/api/auth/core-link`)
+2. `frontend/src/domains/auth/composables.ts` -> `useSaasAccountPage()` depende de APIs SaaS y de conceptos de suscripcion/role SaaS
+3. `frontend/src/domains/auth/adminApi.ts` y `useSaasAdminUsersPage()` (solo SaaS)
+
+##### Adaptacion requerida en Core
+1. Crear una variante `useCoreAccountPage()` o `useAccountPage()` compatible con endpoints Core reales.
+2. Reutilizar `AccountView` como base de UX, pero con campos/acciones soportados por Core.
+3. No arrastrar logica de admin SaaS ni billing al Core.
+
+#### Slice 6 - `Auth` (matiz confirmado)
+##### Hallazgo T1
+1. `useLoginForm()` existe en ambos lados y es muy parecido.
+2. En SaaS, `auth/composables.ts` incluye ademas `useSaasAccountPage()` y `useSaasAdminUsersPage()`.
+3. El login Core debe seguir autenticando contra backend Django Core (`core/frontend/src/domains/auth/api.ts`), aunque el Core tenga `People/ownership`.
+
+##### Accion T1
+1. Unificar UX de login donde sea util.
+2. Mantener backend auth separado (`Core` vs `SaaS`).
+
 ### Paso T2 - Definir paquete de traslado
 1. Lista de archivos SaaS que pasan a Core tal cual.
 2. Lista de archivos que pasan con adaptacion por capabilities.
 3. Lista de archivos que se quedan solo en SaaS (`Account`, `Admin`, cloud-only).
+
+### Resultado T2 (paquete de traslado inicial)
+#### A. Pasa a Core "tal cual" (primera ola)
+1. `frontend/src/views/SettingsFxView.vue` -> `core/frontend/src/views/SettingsFxView.vue`
+2. `frontend/src/views/SettingsIpcView.vue` -> `core/frontend/src/views/SettingsIpcView.vue`
+3. Rutas Core para `/data/fx` y `/data/ipc` (copiando esquema SaaS)
+4. Ajustes de routing base (`/`, `/inicio`, `/patrimonio`) para aproximar shell/nav a SaaS
+
+#### B. Pasa a Core con adaptacion (segunda ola inmediata)
+1. `frontend/src/views/AccountView.vue` (UX base) -> adaptar a endpoints/auth del Core
+2. `frontend/src/views/BudgetDashboardView.vue` -> traslado a Core para soportar `monthly-close` y mejoras de presupuesto
+3. `frontend/src/views/AuxDataView.vue` -> trasladar cuando tambien entre `domains/people` en Core
+
+#### C. Pasa a Core con adaptacion amplia (slice grande)
+1. `frontend/src/views/PeopleView.vue`
+2. `frontend/src/domains/people/**`
+3. `frontend/src/stores/people.ts`
+4. `frontend/src/lib/netWorthOwnership.ts`
+5. Integracion ownership en `frontend/src/domains/net-worth/**`
+
+#### D. Se queda solo en SaaS
+1. `frontend/src/views/AdminUsersView.vue`
+2. `frontend/src/domains/auth/adminApi.ts`
+3. `useSaasAdminUsersPage()` en `frontend/src/domains/auth/composables.ts`
+
+#### E. Orden de ejecucion recomendado (codigo)
+1. `T3.1` Router Core + `SettingsFxView` + `SettingsIpcView` + `AccountView` (adaptado Core) [hecho]
+2. `T3.2` `BudgetDashboardView` SaaS -> Core (para `cierre mensual`) [hecho]
+3. `T3.3` `People/ownership` + integracion en `net-worth` [en progreso: frontend + backend core portados; smoke backend `memberships` OK, falta smoke UI Core end-to-end]
+4. `T3.4` `AuxDataView` SaaS -> Core (ya con `people` disponible) [hecho]
 
 ### Paso T3 - Ejecutar traslado por slices pequenos
 1. Shell/nav
@@ -177,6 +304,7 @@ Columnas recomendadas:
 3. Smoke de `Presupuesto` [ ]
 4. Smoke de `Guia/coach` [ ]
 5. Smoke de `cierre mensual` / check-ins si entra en corte [ ]
+6. Smoke backend `family/ownership` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links/sync`) [x]
 
 ### SaaS (mismo baseline)
 1. Login [ ]
