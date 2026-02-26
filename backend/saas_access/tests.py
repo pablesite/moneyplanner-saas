@@ -227,39 +227,6 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         self.assertIn("access", refresh_res.data)
 
 
-class SaasMembershipsPilotMirrorPolicyTests(APITestCase):
-    def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="policy_user",
-            password="pass1234",
-            email="policy@example.com",
-        )
-        self.client.force_authenticate(user=self.user)
-
-    def test_memberships_access_allowed_for_trial(self):
-        response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_memberships_access_allowed_for_canceled_in_pilot_mirror(self):
-        sub = SaasSubscription.objects.create(
-            user=self.user, status=SaasSubscription.Status.CANCELED
-        )
-        response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        sub.refresh_from_db()
-        self.assertEqual(sub.status, SaasSubscription.Status.CANCELED)
-
-    def test_memberships_access_allowed_for_past_due_in_pilot_mirror(self):
-        SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.PAST_DUE)
-        response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_memberships_access_allowed_for_active(self):
-        SaasSubscription.objects.create(user=self.user, status=SaasSubscription.Status.ACTIVE)
-        response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-
 class SaasAuthAuditAndThrottleTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -442,23 +409,6 @@ class SaasAdminUsersApiTests(APITestCase):
         self.assertEqual(allowed.status_code, status.HTTP_200_OK)
         self.assertIn("rbac", allowed.data)
         self.assertIn("roles", allowed.data["rbac"])
-
-
-class SaasMembershipsPilotMirrorRbacPolicyTests(APITestCase):
-    def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="rbac_policy_user",
-            password="pass1234",
-            email="rbac_policy_user@example.com",
-        )
-        self.client.force_authenticate(user=self.user)
-
-    def test_memberships_access_ignores_saas_role_for_pilot_mirror(self):
-        profile = get_or_create_access_profile(user=self.user)
-        SaasAccessProfile.objects.filter(id=profile.id).update(role="legacy_role")
-
-        response = self.client.get("/api/family-members/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class SaasRbacServicesTests(TestCase):

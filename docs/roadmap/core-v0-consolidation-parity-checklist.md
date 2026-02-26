@@ -300,11 +300,12 @@ Columnas recomendadas:
 2. Acceso a vistas baseline Core [en progreso]
 3. Backend SaaS `family/ownership` alineado a Core (sin gating premium; solo `IsAuthenticated`) [x]
 4. Frontend SaaS `family/ownership` consume backend Core (mismo patron que `net_worth`) [x]
-5. Rutas/menus de extras cloud no esenciales ocultos [ ]
-6. Pantallas admin solo para uso interno [x] (se mantienen habilitadas para operacion del piloto)
-7. Sin billing visible al usuario final [ ]
-8. Seed/onboarding manual de testers definido [ ]
-9. Runbook minimo de soporte piloto preparado [ ]
+5. Backend SaaS deja de exponer endpoints publicos de `memberships` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links`) [x]
+6. Rutas/menus de extras cloud no esenciales ocultos [ ]
+7. Pantallas admin solo para uso interno [x] (se mantienen habilitadas para operacion del piloto)
+8. Sin billing visible al usuario final [ ]
+9. Seed/onboarding manual de testers definido [ ]
+10. Runbook minimo de soporte piloto preparado [ ]
 
 ## Validacion (antes de cerrar el hito)
 ### Core

@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.test.utils import override_settings
 from rest_framework import status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
@@ -33,6 +34,7 @@ from .services import (
 )
 
 
+@override_settings(ROOT_URLCONF="memberships.test_urls")
 class OwnershipUsageConstraintsTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="u1", password="pass1234")
@@ -107,6 +109,7 @@ class OwnershipUsageConstraintsTests(APITestCase):
         self.assertIn("no se puede eliminar", str(response.data).lower())
 
 
+@override_settings(ROOT_URLCONF="memberships.test_urls")
 class OwnershipLinkTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="u2", password="pass1234")
@@ -184,6 +187,7 @@ class OwnershipLinkTests(APITestCase):
         self.assertIn("en uso", str(response.data).lower())
 
 
+@override_settings(ROOT_URLCONF="memberships.test_urls")
 class FamilyMemberLifecycleTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="u_members", password="pass1234")
@@ -224,6 +228,7 @@ class FamilyMemberLifecycleTests(APITestCase):
         )
 
 
+@override_settings(ROOT_URLCONF="memberships.test_urls")
 class DualApiFlowTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="u4", password="pass1234")
