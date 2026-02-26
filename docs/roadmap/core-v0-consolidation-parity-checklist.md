@@ -275,7 +275,7 @@ Columnas recomendadas:
 #### E. Orden de ejecucion recomendado (codigo)
 1. `T3.1` Router Core + `SettingsFxView` + `SettingsIpcView` + `AccountView` (adaptado Core) [hecho]
 2. `T3.2` `BudgetDashboardView` SaaS -> Core (para `cierre mensual`) [hecho]
-3. `T3.3` `People/ownership` + integracion en `net-worth` [en progreso: frontend + backend core portados; smoke backend `memberships` OK; uso UI observado en logs]
+3. `T3.3` `People/ownership` + integracion en `net-worth` [hecho: frontend + backend Core portados, smoke backend `memberships` OK y validacion funcional en Core confirmada]
 4. `T3.4` `AuxDataView` SaaS -> Core (ya con `people` disponible) [hecho]
 5. `T3.5` Paridad de vistas base (`NetWorthView`, `GuidePhaseDetailView`, `DataInputView`) [hecho: vistas SaaS portadas en Core, `typecheck` OK, filtro de titularidad restaurado en `Balance patrimonial` (`ItemList`) y pasada visual rapida completada]
 
