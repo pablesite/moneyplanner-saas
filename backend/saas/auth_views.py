@@ -10,10 +10,10 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from memberships.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
-from memberships.permissions import IsSaasAdmin
-from memberships.rbac_services import get_or_create_access_profile
-from memberships.subscription_services import get_or_create_subscription
+from saas_access.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
+from saas_access.permissions import IsSaasAdmin
+from saas_access.rbac_services import get_or_create_access_profile
+from saas_access.subscription_services import get_or_create_subscription
 
 from .auth_serializers import (
     CoreAccountLinkFromTokenSerializer,

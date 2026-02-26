@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from memberships.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
+from saas_access.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
 
 
 class SaasRegisterSerializer(serializers.Serializer):

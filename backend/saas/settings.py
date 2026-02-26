@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "memberships",
+    "saas_access",
 ]
 
 MIDDLEWARE = [

@@ -1,12 +1,3 @@
-from __future__ import annotations
+"""Compatibility wrapper. New code should import from `saas_access.subscription_services`."""
 
-from .models import SaasSubscription
-
-
-def get_or_create_subscription(*, user) -> SaasSubscription:
-    return SaasSubscription.objects.get_or_create(user=user)[0]
-
-
-def has_premium_access(*, user) -> bool:
-    subscription = get_or_create_subscription(user=user)
-    return subscription.is_premium_enabled()
+from saas_access.subscription_services import *  # noqa: F403

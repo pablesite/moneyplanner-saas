@@ -3,8 +3,8 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from memberships.models import SaasAccessProfile
-from memberships.rbac_services import get_or_create_access_profile
+from saas_access.models import SaasAccessProfile
+from saas_access.rbac_services import get_or_create_access_profile
 
 
 class SaasAdminUserSerializer(serializers.ModelSerializer):

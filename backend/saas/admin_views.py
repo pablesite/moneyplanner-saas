@@ -9,9 +9,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from memberships.models import SaasAccessProfile
-from memberships.permissions import IsSaasAdmin
-from memberships.rbac_services import (
+from saas_access.models import SaasAccessProfile
+from saas_access.permissions import IsSaasAdmin
+from saas_access.rbac_services import (
     assign_role,
     ensure_user_can_lose_admin_role,
     get_or_create_access_profile,

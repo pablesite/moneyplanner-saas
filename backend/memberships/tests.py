@@ -16,11 +16,9 @@ from .models import (
     Ownership,
     OwnershipLink,
     OwnershipSplit,
-    SaasAccessProfile,
-    SaasCoreAccountLink,
-    SaasSubscription,
 )
-from .rbac_services import assign_role, get_or_create_access_profile
+from saas_access.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
+from saas_access.rbac_services import assign_role, get_or_create_access_profile
 from .services import (
     _build_unique_member_name,
     _default_member_name_for_user,

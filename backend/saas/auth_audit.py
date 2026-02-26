@@ -6,7 +6,7 @@ from typing import Any
 
 from django.db import DatabaseError
 
-from memberships.models import SaasAuthAuditEvent
+from saas_access.models import SaasAuthAuditEvent
 
 logger = logging.getLogger("auth.audit")
 
