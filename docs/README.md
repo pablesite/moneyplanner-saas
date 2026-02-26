@@ -18,9 +18,10 @@ Keep documentation centralized, consistent, and easy to navigate.
 4. Operations and troubleshooting: `docs/operations/runbook.md`
 5. Development setup and quality matrix: `docs/operations/dev-setup.md`
 6. Product roadmap: `docs/roadmap/roadmap.md`
-7. Current release roadmap: `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
-8. Release summary (current): `docs/roadmap/release-summary-milestone-09-phase-1-debt-guide-detail.md`
-9. Code-quality conventions: `docs/standards/code-quality-conventions.md`
+7. Core v0 consolidation checklist: `docs/roadmap/core-v0-consolidation-parity-checklist.md`
+8. Current release roadmap: `docs/roadmap/roadmap-milestone-09-phase-1-debt-guide-detail.md`
+9. Release summary (current): `docs/roadmap/release-summary-milestone-09-phase-1-debt-guide-detail.md`
+10. Code-quality conventions: `docs/standards/code-quality-conventions.md`
 
 ## Maintenance Rules
 1. If a rule impacts daily operation, update `docs/operations/runbook.md`.

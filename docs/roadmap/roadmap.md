@@ -77,6 +77,7 @@ Familia avanzada en Cloud:
    - `Patrimonio`
    - `Introduccion de datos`
    - `Presupuesto`
+7. En la iteracion actual, el frontend SaaS puede estar mas avanzado en UX en algunos flujos; se permite traslado temporal `SaaS -> Core` para consolidar `Core v0`.
 
 ### Implicacion para la estrategia nueva
 El codigo actual todavia refleja una estrategia anterior (gating funcional Pro/Premium). Con el enfoque nuevo, el primer paso no es "anadir features", sino reordenar responsabilidades entre `core` y `saas`.
@@ -239,6 +240,8 @@ Hitos:
    - `core` publico compartible
    - SaaS cloud operativo con usuarios reales
    - soporte manual sin billing
+6. Ejecutar el hito de consolidacion/paridad descrito en:
+   - `docs/roadmap/core-v0-consolidation-parity-checklist.md`
 
 ## Referencias principales
 1. `docs/architecture/capabilities-matrix.md`
@@ -246,7 +249,8 @@ Hitos:
 3. `docs/roadmap/roadmap-milestone-14-accounting-module.md`
 4. `docs/roadmap/roadmap-milestone-24-assisted-data-capture.md`
 5. `docs/roadmap/roadmap-milestone-02-core-saas.md`
-6. `frontend/src/domains/capabilities/index.ts`
-7. `core/frontend/src/domains/capabilities/index.ts`
-8. `backend/memberships/models.py`
-9. `backend/saas/auth_views.py`
+6. `docs/roadmap/core-v0-consolidation-parity-checklist.md`
+7. `frontend/src/domains/capabilities/index.ts`
+8. `core/frontend/src/domains/capabilities/index.ts`
+9. `backend/memberships/models.py`
+10. `backend/saas/auth_views.py`

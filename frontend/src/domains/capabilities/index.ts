@@ -30,7 +30,25 @@ export type AppCapabilitiesV2 = {
     statsBasic: boolean;
     dataPortabilityBasic: boolean;
     onboardingAssisted: boolean;
+    familyLogicalModel: boolean;
+    coachV1: boolean;
+    coachPhase5: boolean;
+    financialSimulatorBasic: boolean;
+    localAutomationHooks: boolean;
   };
+  familyCloud: {
+    memberLogins: boolean;
+    memberPrivacy: boolean;
+    sharedFamilyViews: boolean;
+  };
+  central: {
+    communityBenchmarkAnonymous: boolean;
+    computeHeavySimulation: boolean;
+    llmConversationalAdvanced: boolean;
+    astraModules: boolean;
+    smartNotifications: boolean;
+  };
+  // Legacy packaging groups kept as compatibility bridge while UI/backend migrate.
   pro: {
     guide: boolean;
     guidanceBasic: boolean;
@@ -53,6 +71,7 @@ export type AppCapabilitiesV2 = {
     accountPage: boolean;
     adminInternal: boolean;
     billingPortal: boolean;
+    planManagement: boolean;
   };
   compat: AppCapabilitiesCompat;
 };
@@ -62,10 +81,10 @@ export type AppCapabilities = AppCapabilitiesV2 & AppCapabilitiesCompat;
 
 function buildCompat(capabilities: AppCapabilitiesV2): AppCapabilitiesCompat {
   return {
-    // Transitional mapping: current SaaS "premium" stack exposes Pro + Premium features.
+    // Transitional mapping preserved for legacy checks during migration.
     isPremium: capabilities.planCode === 'cloud_pro' || capabilities.planCode === 'cloud_premium',
-    people: capabilities.premium.familyMode,
-    ownership: capabilities.premium.familyMode,
+    people: capabilities.familyCloud.sharedFamilyViews || capabilities.premium.familyMode,
+    ownership: capabilities.core.familyLogicalModel || capabilities.premium.familyMode,
   };
 }
 
@@ -80,7 +99,8 @@ function withCompat(base: Omit<AppCapabilitiesV2, 'compat'>): AppCapabilities {
 
 export const capabilities: AppCapabilities = withCompat({
   deploymentMode: 'cloud',
-  planCode: 'cloud_premium',
+  // Early-launch default profile: SaaS cloud running without paid plans yet.
+  planCode: 'cloud_basic',
   capabilitiesVersion: 1,
   platform: {
     selfHosted: false,
@@ -101,8 +121,26 @@ export const capabilities: AppCapabilities = withCompat({
     statsBasic: true,
     dataPortabilityBasic: true,
     onboardingAssisted: false,
+    familyLogicalModel: false,
+    coachV1: true,
+    coachPhase5: false,
+    financialSimulatorBasic: false,
+    localAutomationHooks: false,
+  },
+  familyCloud: {
+    memberLogins: false,
+    memberPrivacy: false,
+    sharedFamilyViews: false,
+  },
+  central: {
+    communityBenchmarkAnonymous: false,
+    computeHeavySimulation: false,
+    llmConversationalAdvanced: false,
+    astraModules: false,
+    smartNotifications: false,
   },
   pro: {
+    // Legacy aliases mapped to current open-core + cloud strategy.
     guide: true,
     guidanceBasic: false,
     goals: false,
@@ -111,7 +149,7 @@ export const capabilities: AppCapabilities = withCompat({
     assistedMonthlyClose: false,
   },
   premium: {
-    familyMode: true,
+    familyMode: false,
     agentAdvanced: false,
     simulatorAdvanced: false,
     portfolioAnalyticsAdvanced: false,
@@ -124,11 +162,14 @@ export const capabilities: AppCapabilities = withCompat({
     accountPage: true,
     adminInternal: true,
     billingPortal: false,
+    planManagement: false,
   },
 });
 
 export type CapabilityPath =
   | 'platform.appAuth'
+  | 'platform.cloudManagedServices'
+  | 'platform.cloudMultiDeviceAccess'
   | 'platform.pwaMinimal'
   | 'platform.mobileAppNative'
   | 'core.netWorth'
@@ -137,7 +178,22 @@ export type CapabilityPath =
   | 'core.accountingBasic'
   | 'core.accountingMovementsManual'
   | 'core.investmentPortfolioBasic'
+  | 'core.statsBasic'
+  | 'core.dataPortabilityBasic'
   | 'core.onboardingAssisted'
+  | 'core.familyLogicalModel'
+  | 'core.coachV1'
+  | 'core.coachPhase5'
+  | 'core.financialSimulatorBasic'
+  | 'core.localAutomationHooks'
+  | 'familyCloud.memberLogins'
+  | 'familyCloud.memberPrivacy'
+  | 'familyCloud.sharedFamilyViews'
+  | 'central.communityBenchmarkAnonymous'
+  | 'central.computeHeavySimulation'
+  | 'central.llmConversationalAdvanced'
+  | 'central.astraModules'
+  | 'central.smartNotifications'
   | 'pro.guide'
   | 'pro.guidanceBasic'
   | 'pro.goals'
@@ -154,7 +210,8 @@ export type CapabilityPath =
   | 'premium.astraSignalsInfo'
   | 'saas.accountPage'
   | 'saas.adminInternal'
-  | 'saas.billingPortal';
+  | 'saas.billingPortal'
+  | 'saas.planManagement';
 
 function getByPath(source: Record<string, unknown>, path: string): unknown {
   return path.split('.').reduce<unknown>((acc, key) => {
@@ -172,19 +229,19 @@ export function isCloudDeployment(source: AppCapabilities = capabilities): boole
 }
 
 export function canUseGuide(source: AppCapabilities = capabilities): boolean {
-  return source.pro.guide;
+  return source.core.coachV1 || source.pro.guide;
 }
 
 export function canUseFamilyMode(source: AppCapabilities = capabilities): boolean {
-  return source.premium.familyMode;
+  return source.familyCloud.sharedFamilyViews || source.premium.familyMode;
 }
 
 export function canUsePeople(source: AppCapabilities = capabilities): boolean {
-  return source.compat.people;
+  return source.familyCloud.sharedFamilyViews || source.compat.people;
 }
 
 export function canUseOwnership(source: AppCapabilities = capabilities): boolean {
-  return source.compat.ownership;
+  return source.core.familyLogicalModel || source.compat.ownership;
 }
 
 export function canUseAdminInternal(source: AppCapabilities = capabilities): boolean {

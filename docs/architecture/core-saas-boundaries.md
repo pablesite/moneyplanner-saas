@@ -37,7 +37,7 @@ Definir boundaries coherentes con la estrategia `Open-Core + SaaS`:
 5. Familia cloud avanzada (multi-login, privacidad por miembro)
 
 ## Estado actual del codigo (gap de boundary)
-1. `core/frontend` ya contiene parte importante del baseline funcional (`Guia`, `Patrimonio`, `Presupuesto`, `Introduccion de datos`).
+1. `core/frontend` ya contiene parte importante del baseline funcional (`Guia`, `Patrimonio`, `Presupuesto`, `Introduccion de datos`), pero no necesariamente la UX mas madura en todos los flujos.
 2. `frontend` (SaaS) extiende con `People`/`ownership`, `Account`, `Admin`.
 3. `backend/memberships` concentra hoy `FamilyMember`, `Ownership`, `OwnershipLink` (SaaS).
 4. `core/backend/net_worth` ya no contiene el modelo de titularidad/familia (quedo retirado de Core).
@@ -81,11 +81,17 @@ Definir boundaries coherentes con la estrategia `Open-Core + SaaS`:
 2. `frontend` (SaaS) = shell cloud + extensiones + features cloud.
 3. Gating por helpers/capabilities, no por checks dispersos (`isPremium` como fuente principal).
 
+### Excepcion temporal de consolidacion (bootstrap)
+1. Si `frontend` (SaaS) va por delante en UX de features base, se permite trasladar temporalmente `SaaS -> Core`.
+2. Esta excepcion solo aplica para consolidar el baseline de `Core v0`.
+3. Al cerrar la consolidacion, `core/frontend` vuelve a ser la referencia canonica para sync.
+
 ## Synchronization
 1. Canonical sync direction: `core -> saas` para baseline compartido.
 2. Sync manifest: `scripts/frontend-sync-manifest.txt`.
 3. Sync script: `scripts/sync_frontend_from_core.ps1`.
-4. Toda divergencia en SaaS debe estar justificada por capability/boundary.
+4. Excepcion temporal permitida en bootstrap de `Core v0`: `saas -> core` para trasladar mejoras de UX base.
+5. Toda divergencia en SaaS debe estar justificada por capability/boundary.
 
 ## Decision checklist (antes de crear/mover una feature)
 1. Se puede ejecutar localmente y entregar valor esencial? -> `Core`
