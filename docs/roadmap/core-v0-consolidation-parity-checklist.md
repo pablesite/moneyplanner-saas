@@ -293,7 +293,7 @@ Columnas recomendadas:
 ### Politica operativa actual (piloto)
 1. `Subscription status` por defecto para testers: `trial` (suficiente para pruebas reales; sin activar billing).
 2. `Admin users` SaaS se mantiene operativo para alta/edicion manual de usuarios durante el piloto.
-3. Refactor backend SaaS en curso: separacion logica `saas_access` (RBAC/suscripcion/core-link) sin migrar tablas todavia.
+3. Refactor backend SaaS en curso: `saas_access` separado (RBAC/suscripcion/core-link) y modelos SaaS adoptados con `db_table` sobre tablas existentes (sin mover tablas fisicas).
 
 1. Login/registro operativos [ ]
 2. Acceso a vistas baseline Core [en progreso]
