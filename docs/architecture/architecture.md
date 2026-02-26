@@ -1,32 +1,25 @@
-# Core/SaaS Architecture Contract
+# Arquitectura (SaaS + Core)
 
-## Objective
-Define platform boundaries and responsibilities between `core` and `saas`.
+## Resumen
+1. `core/` es la base funcional del producto (open-core).
+2. El SaaS añade infraestructura, acceso cloud y administración SaaS.
+3. El frontend SaaS consume dominios Core desde `core/backend`.
 
-## Responsibilities
-### Core (public OSS)
-1. Base net-worth domain (assets, liabilities, snapshots, summaries).
-2. Standalone authentication and settings.
-3. Stable base API contracts.
+## Stacks
+1. Core:
+   - `core/backend` (Django/DRF)
+   - `core/frontend` (Vue)
+2. SaaS:
+   - `backend` (Django, `saas_access`)
+   - `frontend` (Vue)
 
-### SaaS (private)
-1. Premium ownership and membership domain.
-2. Premium validation, access control, and advanced flows.
-3. Premium UX and feature gating.
+## Regla de diseño actual
+1. Dominio Core -> se implementa en `core/backend`.
+2. Extra SaaS (auth/rbac/subscription/admin/linking) -> `backend/saas_access`.
+3. El SaaS no duplica dominios Core en su backend.
 
-## Operational Strategy
-1. Version `core` independently.
-2. Consume `core` in `saas` through controlled submodule updates.
-3. Avoid breaking changes without migration notes.
-
-## Milestone 04 Status (as of 2026-02-18)
-1. Backend architecture aligned to `views -> serializers -> services`.
-2. Frontend base architecture aligned and synchronized from `core`.
-3. Quality checks active in CI for both stacks.
-4. Coverage targets achieved for backend and frontend.
-
-## Related Docs
-1. `docs/architecture/api-contracts.md`
+## Documentos relacionados
+1. `docs/architecture/core-saas-boundaries.md`
 2. `docs/architecture/product-architecture.md`
-3. `docs/roadmap/roadmap-milestone-04-refactor.md`
-
+3. `docs/architecture/capabilities-matrix.md`
+4. `docs/roadmap/roadmap.md`

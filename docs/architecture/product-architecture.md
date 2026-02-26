@@ -1,32 +1,29 @@
-ï»¿# Product Functional Architecture
+# Arquitectura funcional del producto
 
-## Objective
-Describe product modules and their functional dependencies.
+## Producto (visión actual)
+1. Base open-core fuerte y utilizable en local.
+2. SaaS para operar en cloud y añadir valor centralizado.
+3. Evolución hacia B2B (creadores / asesores) más adelante.
 
-## Current Core Module
-1. Net worth
-   - Assets
-   - Liabilities
-   - Snapshots
-   - Summary and settings
+## Módulos Core (alcance objetivo)
+1. Patrimonio
+2. Presupuesto
+3. Contabilidad
+4. Cartera de inversión (posterior)
+5. Simulador financiero
+6. Guía / coach financiero
+7. Familia / titularidad
+8. Introducción de datos asistida
 
-## Premium Module Layer (SaaS)
-1. Ownership/memberships and related controls.
-2. Role-based administration and subscription-aware access.
+## SaaS (valor adicional)
+1. Hosting gestionado, backups, multidispositivo
+2. Notificaciones
+3. Gestión avanzada de familia cloud (multi-login/privacidad)
+4. Benchmark anónimo y dataset agregado
+5. Cálculos pesados centralizados (ej. Montecarlo)
+6. LLM cloud avanzado y módulos ASTRA cloud-native
 
-## Planned Modules
-1. Budget
-2. Accounting
-3. Investment portfolio
-4. Simulator
-5. Data input module (annual income/expenses + assets + liabilities)
-
-Reference:
-- `docs/architecture/annual-income-taxonomy.md`
-- `docs/architecture/annual-expense-taxonomy.md`
-- `docs/architecture/capabilities-matrix.md`
-
-## Principles
-1. Keep modules cohesive.
-2. Minimize cross-module coupling.
-3. Keep contracts explicit at module boundaries.
+## Estado actual relevante
+1. Ya existe baseline Core v0 funcional en back y front.
+2. El frontend SaaS está alineado para consumir dominios Core.
+3. El backend SaaS se centra en `saas_access`.
