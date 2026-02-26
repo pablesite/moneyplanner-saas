@@ -4,9 +4,9 @@ from django.contrib.auth import get_user_model
 from django.core import signing
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
+from saas_access.core_bootstrap import ensure_primary_family_member_in_core_for_saas_user
 from saas_access.models import SaasConsumedCoreLinkToken, SaasCoreAccountLink
 from saas_access.rbac_services import get_or_create_access_profile
-from memberships.services import ensure_primary_family_member_for_user
 from saas_access.subscription_services import get_or_create_subscription
 
 
@@ -20,7 +20,7 @@ def create_saas_user(*, username: str, password: str, email: str) -> object:
     get_or_create_subscription(user=user)
     profile = get_or_create_access_profile(user=user)
     if profile.role == "saas_member":
-        ensure_primary_family_member_for_user(user=user)
+        ensure_primary_family_member_in_core_for_saas_user(user=user)
     return user
 
 

@@ -295,10 +295,12 @@ Columnas recomendadas:
 2. `Admin users` SaaS se mantiene operativo para alta/edicion manual de usuarios durante el piloto.
 3. Refactor backend SaaS completado (corte actual): `saas_access` concentra RBAC/suscripcion/core-link + modelos SaaS adoptados con `db_table`; `memberships` queda centrado en familia/ownership.
 4. Suite de tests separada por dominio: tests SaaS-only movidos a `backend/saas_access/tests.py` (manteniendo `memberships` para familia/ownership).
+5. Bootstrap de `family/ownership` al crear usuarios SaaS ya se ejecuta en Core (llamada backend-to-backend a `POST /api/family-members/ensure-primary/`).
+6. `backend/memberships` en SaaS queda sin uso runtime directo en auth/admin/UI; pendiente solo su eliminacion completa por dependencia historica de migraciones (`saas_access` -> `memberships`).
 
 1. Login/registro operativos [ ]
 2. Acceso a vistas baseline Core [en progreso]
-3. Backend SaaS `family/ownership` alineado a Core (sin gating premium; solo `IsAuthenticated`) [x]
+3. Backend SaaS `family/ownership` alineado a Core (sin gating premium; solo `IsAuthenticated`) [x] (ya no expuesto publicamente)
 4. Frontend SaaS `family/ownership` consume backend Core (mismo patron que `net_worth`) [x]
 5. Backend SaaS deja de exponer endpoints publicos de `memberships` (`/api/family-members`, `/api/ownerships`, `/api/ownership-links`) [x]
 6. Rutas/menus de extras cloud no esenciales ocultos [ ]

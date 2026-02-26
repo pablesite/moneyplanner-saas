@@ -11,7 +11,6 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
 from saas.auth_views import SaasTokenObtainPairView
 
-from memberships.models import FamilyMember, Ownership
 from saas_access.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
 from saas_access.rbac_services import assign_role, get_or_create_access_profile
 
@@ -24,27 +23,20 @@ class SaasAuthRoadmap03ApiTests(APITestCase):
         )
 
     def test_register_creates_user(self):
-        response = self.client.post(
-            "/api/auth/register/",
-            {
-                "username": "new_user",
-                "password": "pass12345",
-                "email": "new_user@example.com",
-            },
-            format="json",
-        )
+        with patch("saas.auth_services.ensure_primary_family_member_in_core_for_saas_user") as bootstrap:
+            response = self.client.post(
+                "/api/auth/register/",
+                {
+                    "username": "new_user",
+                    "password": "pass12345",
+                    "email": "new_user@example.com",
+                },
+                format="json",
+            )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_user = get_user_model().objects.get(username="new_user")
         self.assertTrue(created_user is not None)
-        member = FamilyMember.objects.get(user=created_user)
-        self.assertEqual(member.role, FamilyMember.Role.ADULT)
-        self.assertTrue(
-            Ownership.objects.filter(
-                user=created_user,
-                kind=Ownership.Kind.INDIVIDUAL,
-                member=member,
-            ).exists()
-        )
+        bootstrap.assert_called_once_with(user=created_user)
 
     def test_auth_mode_endpoint_reports_saas_local_mode(self):
         response = self.client.get("/api/auth/mode/")
@@ -311,47 +303,41 @@ class SaasAdminUsersApiTests(APITestCase):
 
     def test_admin_can_create_user_with_initial_role(self):
         self.client.force_authenticate(user=self.admin)
-        response = self.client.post(
-            "/api/admin/users/",
-            {
-                "username": "new_from_admin",
-                "password": "pass12345",
-                "email": "new_from_admin@example.com",
-                "role": SaasAccessProfile.Role.ADMIN,
-                "is_active": True,
-            },
-            format="json",
-        )
+        with patch("saas.admin_views.ensure_primary_family_member_in_core_for_saas_user") as bootstrap:
+            response = self.client.post(
+                "/api/admin/users/",
+                {
+                    "username": "new_from_admin",
+                    "password": "pass12345",
+                    "email": "new_from_admin@example.com",
+                    "role": SaasAccessProfile.Role.ADMIN,
+                    "is_active": True,
+                },
+                format="json",
+            )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created = get_user_model().objects.get(username="new_from_admin")
         profile = get_or_create_access_profile(user=created)
         self.assertEqual(profile.role, SaasAccessProfile.Role.ADMIN)
-        self.assertFalse(FamilyMember.objects.filter(user=created).exists())
+        bootstrap.assert_not_called()
 
     def test_admin_create_member_user_creates_primary_family_member(self):
         self.client.force_authenticate(user=self.admin)
-        response = self.client.post(
-            "/api/admin/users/",
-            {
-                "username": "new_member_user",
-                "password": "pass12345",
-                "email": "new_member_user@example.com",
-                "role": SaasAccessProfile.Role.MEMBER,
-                "is_active": True,
-            },
-            format="json",
-        )
+        with patch("saas.admin_views.ensure_primary_family_member_in_core_for_saas_user") as bootstrap:
+            response = self.client.post(
+                "/api/admin/users/",
+                {
+                    "username": "new_member_user",
+                    "password": "pass12345",
+                    "email": "new_member_user@example.com",
+                    "role": SaasAccessProfile.Role.MEMBER,
+                    "is_active": True,
+                },
+                format="json",
+            )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created = get_user_model().objects.get(username="new_member_user")
-        member = FamilyMember.objects.get(user=created)
-        self.assertEqual(member.role, FamilyMember.Role.ADULT)
-        self.assertTrue(
-            Ownership.objects.filter(
-                user=created,
-                kind=Ownership.Kind.INDIVIDUAL,
-                member=member,
-            ).exists()
-        )
+        bootstrap.assert_called_once_with(user=created)
 
     def test_admin_role_change_emits_audit_log(self):
         self.client.force_authenticate(user=self.admin)

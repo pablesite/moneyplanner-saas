@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from saas_access.core_bootstrap import ensure_primary_family_member_in_core_for_saas_user
 from saas_access.models import SaasAccessProfile
 from saas_access.permissions import IsSaasAdmin
 from saas_access.rbac_services import (
@@ -16,7 +17,6 @@ from saas_access.rbac_services import (
     ensure_user_can_lose_admin_role,
     get_or_create_access_profile,
 )
-from memberships.services import ensure_primary_family_member_for_user
 
 from .admin_serializers import (
     SaasAdminUserCreateSerializer,
@@ -60,7 +60,7 @@ class SaasAdminUserListCreateAPIView(APIView):
         )
         profile = assign_role(user=user, role=payload["role"])
         if profile.role == SaasAccessProfile.Role.MEMBER:
-            ensure_primary_family_member_for_user(user=user)
+            ensure_primary_family_member_in_core_for_saas_user(user=user)
         out = SaasAdminUserSerializer(user, context={"role_by_user_id": {user.id: profile.role}})
 
         log_auth_event(
@@ -88,7 +88,7 @@ class SaasAdminUserRoleAPIView(APIView):
         before = get_or_create_access_profile(user=user).role
         profile = assign_role(user=user, role=serializer.validated_data["role"])
         if profile.role == SaasAccessProfile.Role.MEMBER:
-            ensure_primary_family_member_for_user(user=user)
+            ensure_primary_family_member_in_core_for_saas_user(user=user)
         out = SaasAdminUserSerializer(user, context={"role_by_user_id": {user.id: profile.role}})
 
         log_auth_event(
