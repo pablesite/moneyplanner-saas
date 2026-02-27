@@ -12,7 +12,7 @@ const stubs = {
   },
   ItemDisplayRow: {
     template:
-      '<div><button data-test="edit" @click="$emit(\'edit\')">edit</button><button data-test="archive" @click="$emit(\'archive\')">archive</button></div>',
+      '<div><button data-test="edit" @click="$emit(\'edit\')">edit</button><button data-test="archive" @click="$emit(\'archive\')">archive</button><button data-test="delete" @click="$emit(\'delete\')">delete</button></div>',
   },
   EditableItemRow: {
     template:
@@ -21,10 +21,12 @@ const stubs = {
 };
 
 describe('ItemList (saas)', () => {
-  it('handles add, archive and edit/update flow', async () => {
+  it('handles add, archive, delete and edit/update flow', async () => {
     const onAdd = vi.fn();
     const onArchive = vi.fn().mockResolvedValue(undefined);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const onUpdate = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const wrapper = mount(ItemList, {
       props: {
         title: 'Activos',
@@ -38,6 +40,18 @@ describe('ItemList (saas)', () => {
             currency: 'EUR',
             notes: '',
             is_active: true,
+            tracking_mode: 'manual',
+            accounting_account_id: null,
+          },
+          {
+            id: 2,
+            name: 'Archivado',
+            category: 'cash',
+            subcategory: 'wallet',
+            amount: '1.00',
+            currency: 'EUR',
+            notes: '',
+            is_active: false,
             tracking_mode: 'manual',
             accounting_account_id: null,
           },
@@ -55,6 +69,7 @@ describe('ItemList (saas)', () => {
         ],
         onUpdate,
         onArchive,
+        onDelete,
         onAdd,
       },
       global: { stubs },
@@ -66,6 +81,8 @@ describe('ItemList (saas)', () => {
     await wrapper.find('[data-test="toggle"]').trigger('click');
     await wrapper.find('[data-test="archive"]').trigger('click');
     expect(onArchive).toHaveBeenCalledWith(1);
+    await wrapper.find('[data-test="delete"]').trigger('click');
+    expect(onDelete).toHaveBeenCalledWith(1);
 
     await wrapper.find('[data-test="edit"]').trigger('click');
     await wrapper.find('[data-test="save"]').trigger('click');
@@ -79,5 +96,6 @@ describe('ItemList (saas)', () => {
         amount: '100',
       }),
     );
+    expect(wrapper.findAll('[data-test="edit"]')).toHaveLength(1);
   });
 });

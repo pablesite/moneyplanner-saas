@@ -29,8 +29,10 @@ describe('net worth api (saas)', () => {
     await coreNetWorthApi.deleteSnapshot(3);
     await coreNetWorthApi.createAsset({ name: 'Cash' });
     await coreNetWorthApi.updateAsset(2, { name: 'Cash EUR' });
+    await coreNetWorthApi.deleteAsset(2);
     await coreNetWorthApi.createLiability({ name: 'Loan' });
     await coreNetWorthApi.updateLiability(4, { name: 'Loan EUR' });
+    await coreNetWorthApi.deleteLiability(4);
     await coreNetWorthApi.getSettings();
     await coreNetWorthApi.updateSettings({ base_currency: 'EUR' });
 
@@ -44,12 +46,14 @@ describe('net worth api (saas)', () => {
     expect(mocks.coreApi.patch).toHaveBeenCalledWith('/api/net-worth/assets/2/', {
       name: 'Cash EUR',
     });
+    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/net-worth/assets/2/');
     expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/net-worth/liabilities/', {
       name: 'Loan',
     });
     expect(mocks.coreApi.patch).toHaveBeenCalledWith('/api/net-worth/liabilities/4/', {
       name: 'Loan EUR',
     });
+    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/net-worth/liabilities/4/');
     expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/auth/settings/');
     expect(mocks.coreApi.put).toHaveBeenCalledWith('/api/auth/settings/', { base_currency: 'EUR' });
   });

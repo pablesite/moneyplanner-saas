@@ -12,8 +12,10 @@ const mocks = vi.hoisted(() => ({
     deleteSnapshot: vi.fn(),
     createAsset: vi.fn(),
     updateAsset: vi.fn(),
+    deleteAsset: vi.fn(),
     createLiability: vi.fn(),
     updateLiability: vi.fn(),
+    deleteLiability: vi.fn(),
     getSettings: vi.fn(),
     updateSettings: vi.fn(),
   },
@@ -116,6 +118,8 @@ describe('net worth store (saas)', () => {
 
     await store.archiveAsset(7);
     expect(mocks.coreNetWorthApi.updateAsset).toHaveBeenCalledWith(7, { is_active: false });
+    await store.deleteAsset(7);
+    expect(mocks.coreNetWorthApi.deleteAsset).toHaveBeenCalledWith(7);
   });
 
   it('creates and updates liabilities with premium ownership sync', async () => {
@@ -143,6 +147,8 @@ describe('net worth store (saas)', () => {
 
     await store.archiveLiability(9);
     expect(mocks.coreNetWorthApi.updateLiability).toHaveBeenCalledWith(9, { is_active: false });
+    await store.deleteLiability(9);
+    expect(mocks.coreNetWorthApi.deleteLiability).toHaveBeenCalledWith(9);
   });
 
   it('skips ownership sync when create operations return no id', async () => {
