@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { auxDataApi, coreAuxDataApi, premiumAuxDataApi } from '@/domains/aux-data/api';
+import { capabilities } from '@/domains/capabilities';
 
 const mocks = vi.hoisted(() => ({
   coreApi: {
@@ -19,8 +20,13 @@ describe('aux-data api (saas)', () => {
   });
 
   it('exports premium adapter as active api in saas', () => {
-    expect(auxDataApi).toBe(premiumAuxDataApi);
-    expect(auxDataApi).not.toBe(coreAuxDataApi);
+    if (capabilities.isPremium) {
+      expect(auxDataApi).toBe(premiumAuxDataApi);
+      expect(auxDataApi).not.toBe(coreAuxDataApi);
+      return;
+    }
+    expect(auxDataApi).toBe(coreAuxDataApi);
+    expect(auxDataApi).not.toBe(premiumAuxDataApi);
   });
 
   it('maps all aux-data endpoints through core api client', async () => {
