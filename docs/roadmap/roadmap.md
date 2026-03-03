@@ -25,6 +25,7 @@ Salir a producción en modo piloto cuanto antes con:
 6. Introducción de datos asistida
 7. Familia / titularidad
 8. Cartera de inversión (diferido en salida inicial)
+9. Valoración automática de vivienda habitual (fase 1: suelo + construcción, recálculo mensual)
 
 ## SaaS (piloto gratis)
 1. Hosting gestionado
@@ -43,3 +44,4 @@ Salir a producción en modo piloto cuanto antes con:
 
 ## Documento operativo asociado
 1. `docs/roadmap/core-v0-consolidation-parity-checklist.md`
+
