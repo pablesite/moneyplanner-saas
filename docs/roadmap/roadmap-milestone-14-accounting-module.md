@@ -10,6 +10,14 @@ Definir y entregar el primer modulo de contabilidad (`Modulo Contabilidad`) para
 4. Este hito crea la base temporal para pasar de `datos estaticos` a `evolucion mensual`, sin romper la semantica actual de entradas anuales.
 
 ## Estado actual (progreso del hito)
+### Actualizacion 2026-03-04 (activos mobiliarios)
+1. El valor efectivo de `mobiliario` con amortizacion `lineal` incorpora factor de IPC acumulado (ES/EUR) durante su vida util.
+2. En subcategorias `vehiculos` y `equipamiento deportivo` se aplica depreciacion degresiva suave con suelo residual (15% y 20%, respectivamente).
+3. El resto de subcategorias de `mobiliario` mantiene criterio sin residual y puede llegar a `0` al completar la vida util.
+4. En `vehiculos` y `equipamiento deportivo`, el plazo de amortizacion se autocompleta por perfil (20 y 15 anos) y deja de requerirse manualmente en el formulario.
+5. Se elimina en UI de mobiliario el campo `valor compra inicial`; la base de compra pasa a ser siempre `importe`.
+6. En UI de mobiliario se retira el metodo `manual` para evitar ambiguedad con `sin amortizacion`; el plazo solo se solicita cuando el metodo aplica calculo automatico.
+
 ### Avance actual (en curso)
 1. Se esta trabajando activamente en el flujo de `Pasivos` dentro de `Introduccion de datos`.
 2. Ya existe generacion automatica de `gastos recurrentes` (entradas anuales recurrentes por ano) a partir de pasivos con calendario/cuotas.
