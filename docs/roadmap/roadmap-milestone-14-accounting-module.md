@@ -382,3 +382,21 @@ Decision de alcance:
 4. Integracion de `Ejecutado` en `Dashboard Presupuesto`.
 5. Extension de metadatos en activos y pasivos segun alcance final del hito.
 6. Tests/validaciones y resumen de release del hito (`release-summary-milestone-14-...`) al cerrar implementacion.
+
+## Ajustes posteriores
+### 2026-03-04 - Perfil de valoracion vivienda habitual
+1. Corregida la deteccion del perfil en modo edicion para tolerar diferencias de formato decimal (`0.4` vs `0.40`) en `building_annual_depreciation_percent`.
+2. Resultado esperado: al guardar un perfil predefinido (por ejemplo `Conservador`) y reabrir edicion, el selector mantiene el perfil y no cae en `Personalizado` salvo cambios reales.
+3. Se anaden pruebas de regresion en SaaS y Core para cubrir este caso.
+
+### 2026-03-04 - Reformas capitalizables en vivienda habitual
+1. Se anade soporte de `reformas` como subregistros del activo inmobiliario (`AssetImprovement`) para vivienda habitual con valoracion automatica.
+2. Cada reforma admite:
+   - fecha e importe
+   - amortizacion (`none`, `straight_line`, `manual`)
+   - plazo de amortizacion (si aplica)
+   - TAE y capitalizacion opcional de interes
+   - valor actual manual (si amortizacion manual)
+3. El calculo de `effective_amount` de vivienda automatica suma el valor efectivo de reformas al bloque suelo+construccion.
+4. El formulario de activo permite alta/edicion/borrado de reformas dentro del mismo guardado del activo.
+5. Se anaden tests backend/frontend para persistencia y calculo de reformas.

@@ -192,6 +192,90 @@ describe('ItemForm (saas)', () => {
     );
   });
 
+  it('submits primary home improvements along with auto valuation', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const wrapper = mount(ItemForm, {
+      props: {
+        title: 'Nuevo activo',
+        categories: [{ value: 'real_estate', label: 'Inmuebles' }],
+        subcategories: [{ category: 'real_estate', value: 'primary_home', label: 'Vivienda habitual' }],
+        onSubmit,
+      },
+    });
+
+    await wrapper.find('input[placeholder="Nombre"]').setValue('Casa');
+    const selects = wrapper.findAll('select');
+    await selects[0]!.setValue('real_estate');
+    await selects[1]!.setValue('primary_home');
+    const currencySelect = selects.find((s) => s.text().includes('Selecciona moneda'))!;
+    await currencySelect.setValue('EUR');
+    await wrapper.find('input[placeholder="Importe"]').setValue('100000');
+
+    const modelSelect = wrapper
+      .findAll('select')
+      .find((s) => s.text().includes('Automatica (suelo + construccion)'))!;
+    await modelSelect.setValue('real_estate_auto');
+
+    await wrapper.find('button.ui-item-form-mini-btn').trigger('click');
+    await wrapper.find('input[placeholder="Ej: Reforma cocina"]').setValue('Reforma cocina');
+    const dateInputs = wrapper.findAll('input[type="date"]');
+    await dateInputs[1]!.setValue('2025-06-01');
+    await wrapper.find('input[placeholder="Ej: 12000"]').setValue('12000');
+
+    await wrapper.find('button.btn-primary').trigger('click');
+    await flushPromises();
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        valuation_model: 'real_estate_auto',
+        improvements: [
+          expect.objectContaining({
+            name: 'Reforma cocina',
+            reform_date: '2025-06-01',
+            amount: '12000',
+            amortization_method: 'none',
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('uses default term years, disables capitalized interest with TAE 0, and shows discard label for new improvements', async () => {
+    const wrapper = mount(ItemForm, {
+      props: {
+        title: 'Nuevo activo',
+        categories: [{ value: 'real_estate', label: 'Inmuebles' }],
+        subcategories: [{ category: 'real_estate', value: 'primary_home', label: 'Vivienda habitual' }],
+        onSubmit: vi.fn().mockResolvedValue(undefined),
+      },
+    });
+
+    await wrapper.find('input[placeholder="Nombre"]').setValue('Casa');
+    const selects = wrapper.findAll('select');
+    await selects[0]!.setValue('real_estate');
+    await selects[1]!.setValue('primary_home');
+    const currencySelect = selects.find((s) => s.text().includes('Selecciona moneda'))!;
+    await currencySelect.setValue('EUR');
+    await wrapper.find('input[placeholder="Importe"]').setValue('100000');
+
+    const modelSelect = wrapper
+      .findAll('select')
+      .find((s) => s.text().includes('Automatica (suelo + construccion)'))!;
+    await modelSelect.setValue('real_estate_auto');
+    await wrapper.find('button.ui-item-form-mini-btn').trigger('click');
+
+    const reformAmortizationSelect = wrapper
+      .findAll('select')
+      .find((s) => s.text().includes('Sin amortizacion') && s.text().includes('Lineal'))!;
+    await reformAmortizationSelect.setValue('straight_line');
+
+    const termInput = wrapper.find('input[placeholder="Ej: 10"]');
+    expect((termInput.element as HTMLInputElement).value).toBe('10');
+
+    expect(wrapper.text()).toContain('Disponible solo cuando la TAE de financiacion es mayor que 0.');
+    expect(wrapper.text()).toContain('Descartar reforma');
+  });
+
   it('autofills valuation parameters when selecting a profile and allows custom edits', async () => {
     const wrapper = mount(ItemForm, {
       props: {
@@ -230,6 +314,38 @@ describe('ItemForm (saas)', () => {
 
     await growthInput.setValue('7.1');
     expect((profileSelect.element as HTMLSelectElement).value).toBe('custom');
+  });
+
+  it('detects conservative profile in edit mode when backend returns trailing zeros', async () => {
+    const wrapper = mount(ItemForm, {
+      props: {
+        title: 'Editar activo',
+        mode: 'edit',
+        categories: [{ value: 'real_estate', label: 'Inmuebles' }],
+        subcategories: [{ category: 'real_estate', value: 'primary_home', label: 'Vivienda habitual' }],
+        onSubmit: vi.fn().mockResolvedValue(undefined),
+        initial: {
+          name: 'Casa',
+          category: 'real_estate',
+          subcategory: 'primary_home',
+          amount: '91000',
+          start_date: '2016-02-21',
+          valuation_model: 'real_estate_auto',
+          land_value_share_percent: '42.6',
+          land_annual_appreciation_percent: '5.5',
+          building_annual_depreciation_percent: '0.40',
+          notes: '',
+          currency: 'EUR',
+          tracking_mode: 'manual',
+          is_active: true,
+        },
+      },
+    });
+
+    const profileSelect = wrapper
+      .findAll('select')
+      .find((s) => s.text().includes('Conservador') && s.text().includes('Personalizado'))!;
+    expect((profileSelect.element as HTMLSelectElement).value).toBe('conservative');
   });
 
   it('limits land share and land appreciation to one decimal', async () => {

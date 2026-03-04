@@ -1,3 +1,18 @@
+export type AssetImprovement = {
+  id?: number;
+  name: string;
+  reform_date: string;
+  amount: string;
+  amortization_method: 'none' | 'straight_line' | 'manual';
+  amortization_term_years?: number | null;
+  annual_interest_tae?: string | null;
+  capitalize_interest?: boolean;
+  manual_current_value?: string | null;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type Asset = {
   id: number;
   name: string;
@@ -14,6 +29,7 @@ export type Asset = {
   land_value_share_percent?: string | null;
   land_annual_appreciation_percent?: string | null;
   building_annual_depreciation_percent?: string | null;
+  improvements?: AssetImprovement[];
   amount: string;
   annual_interest_tae?: string | null;
   estimated_average_balance_for_interest?: string | null;
