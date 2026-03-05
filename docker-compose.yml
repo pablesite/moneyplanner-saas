@@ -11,7 +11,7 @@ services:
     depends_on:
       - saas_db
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py migrate --fake-initial &&
              python manage.py seed &&
              python manage.py runserver 0.0.0.0:8000"
     networks:
