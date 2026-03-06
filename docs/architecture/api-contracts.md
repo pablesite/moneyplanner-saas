@@ -13,6 +13,7 @@ Document stable API behavior for both stacks.
 3. Summary and settings contracts.
 4. Annual income endpoints (`/api/budget/annual-income/` + `/api/budget/annual-income/totals/`).
 5. Annual expense endpoints (`/api/budget/annual-expense/` + `/api/budget/annual-expense/totals/`).
+   - Entry payloads include `is_active`, enabling UI visibility filters for active/archived/all.
 
 ## SaaS API (Premium)
 1. Membership and ownership endpoints.
