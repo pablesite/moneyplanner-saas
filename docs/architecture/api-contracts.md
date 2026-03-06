@@ -8,6 +8,8 @@ Document stable API behavior for both stacks.
 2. Net-worth assets/liabilities/snapshots endpoints.
    - Assets and liabilities include `start_date`.
    - Liabilities include fixed-rate `annual_interest_tae` for mortgage/personal loan/credit card.
+   - Residential real-estate assets with `valuation_model=real_estate_auto` keep
+     `initial_purchase_value` synchronized with the submitted `amount`.
 3. Summary and settings contracts.
 4. Annual income endpoints (`/api/budget/annual-income/` + `/api/budget/annual-income/totals/`).
 5. Annual expense endpoints (`/api/budget/annual-expense/` + `/api/budget/annual-expense/totals/`).
