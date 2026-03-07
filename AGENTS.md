@@ -3,29 +3,29 @@
 ## Objetivo
 Este repo contiene dos stacks coordinados:
 1. `core/` (OSS)
-2. SaaS (raíz: `backend/` + `frontend/`)
+2. SaaS (raï¿½z: `backend/` + `frontend/`)
 
 ## Regla de trabajo
 1. Diagnosticar primero.
-2. Cambiar lo mínimo necesario.
+2. Cambiar lo mï¿½nimo necesario.
 3. Validar dentro de Docker.
-4. Actualizar docs y versión.
+4. Actualizar docs y versiï¿½n.
 5. Commit con Conventional Commits.
 
-## Arranque estándar
+## Arranque estï¿½ndar
 1. `cd core`
 2. `docker compose up --build -d`
 3. `cd ..`
 4. `docker compose up --build -d`
 
-## Diagnóstico estándar
+## Diagnï¿½stico estï¿½ndar
 1. `docker compose ps`
 2. `docker compose logs --tail 100 <service>`
 3. Opcional: `docker compose ps -a`, `docker compose logs --tail 200 <service>`
 
 ## Restricciones operativas
-1. No borrar volúmenes de BD.
-2. No usar `docker compose down -v` salvo petición explícita.
+1. No borrar volÃºmenes de BD.
+2. No usar `docker compose down -v` salvo peticiÃ³n explÃ­cita.
 3. Ejecutar calidad/tests dentro de contenedores (`docker compose exec ...`).
 4. En PowerShell no usar `&&`.
 
@@ -35,11 +35,11 @@ Este repo contiene dos stacks coordinados:
 3. SaaS frontend (`frontend/`): `npm run lint`, `npm run format:check`, `npm run typecheck`
 4. Core frontend (`core/frontend/`): `npm run lint`, `npm run format:check`, `npm run typecheck`
 
-## Tests mínimos actuales
+## Tests mï¿½nimos actuales
 1. SaaS backend: `docker compose exec saas_backend python manage.py test saas_access`
 2. Core backend: cobertura por dominio (evolutiva)
 
-## Documentos canónicos (SaaS)
+## Documentos canï¿½nicos (SaaS)
 1. `docs/README.md`
 2. `docs/operations/dev-setup.md`
 3. `docs/operations/runbook.md`
