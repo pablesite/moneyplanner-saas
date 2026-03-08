@@ -6,9 +6,10 @@
 }
 
 .ui-amount-period-toggle-wrap {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
 }
 
 .ui-amount-period-toggle {
@@ -59,10 +60,18 @@
 
 .ui-amount-period-toggle-label {
   font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .ui-amount-period-toggle-label-active {
   color: rgba(255, 255, 255, 0.9);
+}
+
+.ui-notes-field {
+  min-height: 72px;
+  height: auto;
+  resize: none;
 }
 
 @media (max-width: 768px) {
@@ -71,6 +80,6 @@
   }
 
   .ui-amount-period-toggle-wrap {
-    justify-items: start;
+    justify-self: start;
   }
 }
