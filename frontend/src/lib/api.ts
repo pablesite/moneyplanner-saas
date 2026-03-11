@@ -106,6 +106,9 @@ function attachResponseInterceptor(client: typeof api) {
         }
 
         notifyPending(newToken);
+        original.headers = original.headers || {};
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return client(original);
       }
 
       return new Promise((resolve, reject) => {
