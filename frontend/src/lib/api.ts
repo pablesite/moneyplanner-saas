@@ -31,6 +31,11 @@ type PendingCallback = (token: string | null) => void;
 let isRefreshing = false;
 let pending: PendingCallback[] = [];
 
+function logAuthDebug(event: string, context: Record<string, unknown>) {
+  if (typeof console === 'undefined') return;
+  console.warn(`[auth] ${event}`, context);
+}
+
 function redirectToLoginWithSessionExpiredReason() {
   if (typeof window !== 'undefined') {
     window.location.href = '/login?reason=session_expired';
@@ -53,8 +58,16 @@ async function refreshAccessToken(): Promise<string | null> {
       setAccessToken(access);
       return access;
     }
+    logAuthDebug('refresh_missing_access', {
+      url: '/api/auth/refresh/',
+    });
     return null;
-  } catch {
+  } catch (error) {
+    const status = (error as { response?: { status?: number } } | undefined)?.response?.status;
+    logAuthDebug('refresh_failed', {
+      url: '/api/auth/refresh/',
+      status: status ?? null,
+    });
     return null;
   }
 }
@@ -70,7 +83,7 @@ function attachRequestInterceptor(client: typeof api) {
 attachRequestInterceptor(api);
 attachRequestInterceptor(coreApi);
 
-function attachResponseInterceptor(client: typeof api) {
+function attachResponseInterceptor(client: typeof api, source: 'saas' | 'core') {
   client.interceptors.response.use(
     (r) => r,
     async (error) => {
@@ -84,8 +97,18 @@ function attachResponseInterceptor(client: typeof api) {
         return Promise.reject(error);
       }
 
+      logAuthDebug('request_401', {
+        source,
+        url: requestUrl,
+        method: String(original.method ?? 'get').toUpperCase(),
+      });
+
       const refresh = getRefreshToken();
       if (!refresh) {
+        logAuthDebug('logout_no_refresh_token', {
+          source,
+          url: requestUrl,
+        });
         clearAuthTokens();
         redirectToLoginWithSessionExpiredReason();
         return Promise.reject(error);
@@ -99,6 +122,10 @@ function attachResponseInterceptor(client: typeof api) {
         isRefreshing = false;
 
         if (!newToken) {
+          logAuthDebug('logout_refresh_failed', {
+            source,
+            url: requestUrl,
+          });
           clearAuthTokens();
           notifyPending(null);
           redirectToLoginWithSessionExpiredReason();
@@ -126,5 +153,5 @@ function attachResponseInterceptor(client: typeof api) {
   );
 }
 
-attachResponseInterceptor(api);
-attachResponseInterceptor(coreApi);
+attachResponseInterceptor(api, 'saas');
+attachResponseInterceptor(coreApi, 'core');

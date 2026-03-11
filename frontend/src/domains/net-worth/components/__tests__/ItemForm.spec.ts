@@ -843,4 +843,46 @@ describe('ItemForm (saas)', () => {
       }),
     );
   });
+
+  it('autofills manual market value date when an edited investment has override without date', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const wrapper = mount(ItemForm, {
+      props: {
+        title: 'Editar activo',
+        mode: 'edit',
+        categories: [{ value: 'investments', label: 'Inversiones' }],
+        subcategories: [{ category: 'investments', value: 'funds', label: 'Fondos' }],
+        onSubmit,
+        initial: {
+          name: 'Fondo indexado',
+          category: 'investments',
+          subcategory: 'funds',
+          amount: '5000',
+          start_date: '2026-01-15',
+          currency: 'EUR',
+          investment_contribution_mode: 'periodic_contribution',
+          investment_contribution_currency: 'USD',
+          monthly_contribution_amount: '300',
+          market_value_override: '5300',
+          market_value_override_date: '',
+        },
+      },
+    });
+
+    const quotaCurrencySelect = wrapper
+      .findAll('select')
+      .find((s) => s.text().includes('Selecciona moneda cuota'))!;
+    await quotaCurrencySelect.setValue('EUR');
+
+    await wrapper.find('button.btn-primary').trigger('click');
+    await flushPromises();
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        market_value_override: '5300',
+        market_value_override_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        investment_contribution_currency: 'EUR',
+      }),
+    );
+  });
 });

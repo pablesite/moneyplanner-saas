@@ -28,6 +28,28 @@ describe('api error helpers', () => {
     spy.mockRestore();
   });
 
+  it('prioritizes validation details from API envelope', () => {
+    const err = {
+      response: {
+        data: {
+          error: {
+            code: 'validation_error',
+            message: 'Request failed.',
+            details: {
+              market_value_override_date: ['Requerida si se informa valor de mercado manual.'],
+            },
+          },
+        },
+      },
+      message: 'fallback',
+    };
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(toApiErrorMessage(err)).toBe(
+      'market_value_override_date: Requerida si se informa valor de mercado manual.',
+    );
+    spy.mockRestore();
+  });
+
   it('maps 401 token endpoint to invalid credentials message', () => {
     const err = {
       response: {

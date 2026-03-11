@@ -83,6 +83,9 @@ export function toApiErrorMessage(error: unknown): string {
   const data = maybe?.response?.data;
   if (isRecord(data)) {
     const envelope = data as ApiErrorEnvelope;
+    const detailsMessage = firstValidationMessage(envelope.error?.details);
+    if (detailsMessage) return detailsMessage;
+
     if (typeof envelope.error?.message === 'string' && envelope.error.message.length > 0) {
       return envelope.error.message;
     }
