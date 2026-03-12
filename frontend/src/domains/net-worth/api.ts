@@ -1,9 +1,16 @@
-import { coreApi } from '@/lib/api';
+import { api, coreApi } from '@/lib/api';
 import type {
   Asset,
+  AssetValuation,
+  InvestmentAssetEvent,
   Liability,
+  LiabilityEvent,
+  LiabilityValuation,
+  LiquidityAssetEvent,
+  NetWorthTimeline,
   NetWorthWritePayload,
   Ownership,
+  PositionTimeline,
   Snapshot,
   Summary,
 } from '@/domains/net-worth/models';
@@ -29,6 +36,40 @@ export const coreNetWorthApi = {
   },
   getSnapshots() {
     return coreApi.get<Snapshot[]>('/api/net-worth/snapshots/');
+  },
+  getTimeline(params?: { asset_category?: string | null; liability_category?: string | null }) {
+    return coreApi.get<NetWorthTimeline>('/api/net-worth/timeline/', {
+      params:
+        params?.asset_category || params?.liability_category
+          ? {
+              ...(params?.asset_category ? { asset_category: params.asset_category } : {}),
+              ...(params?.liability_category
+                ? { liability_category: params.liability_category }
+                : {}),
+            }
+          : undefined,
+    });
+  },
+  getAssetTimeline(id: number) {
+    return coreApi.get<PositionTimeline>(`/api/net-worth/assets/${id}/timeline/`);
+  },
+  getLiabilityTimeline(id: number) {
+    return coreApi.get<PositionTimeline>(`/api/net-worth/liabilities/${id}/timeline/`);
+  },
+  getAssetValuations() {
+    return coreApi.get<AssetValuation[]>('/api/net-worth/asset-valuations/');
+  },
+  getLiabilityValuations() {
+    return coreApi.get<LiabilityValuation[]>('/api/net-worth/liability-valuations/');
+  },
+  getInvestmentEvents() {
+    return coreApi.get<InvestmentAssetEvent[]>('/api/net-worth/investment-events/');
+  },
+  getLiquidityEvents() {
+    return coreApi.get<LiquidityAssetEvent[]>('/api/net-worth/liquidity-events/');
+  },
+  getLiabilityEvents() {
+    return coreApi.get<LiabilityEvent[]>('/api/net-worth/liability-events/');
   },
   createSnapshotFromCurrent() {
     return coreApi.post<Snapshot>('/api/net-worth/snapshots/from-current/');
@@ -64,12 +105,12 @@ export const coreNetWorthApi = {
 
 export const premiumOwnershipApi = {
   getOwnerships() {
-    return coreApi.get<Ownership[]>('/api/ownerships/');
+    return api.get<Ownership[]>('/api/ownerships/');
   },
   getOwnershipLinks() {
-    return coreApi.get<OwnershipLink[]>('/api/ownership-links/');
+    return api.get<OwnershipLink[]>('/api/ownership-links/');
   },
   syncOwnershipLink(payload: OwnershipSyncPayload) {
-    return coreApi.post('/api/ownership-links/sync/', payload);
+    return api.post('/api/ownership-links/sync/', payload);
   },
 };

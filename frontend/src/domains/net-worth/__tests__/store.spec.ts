@@ -8,6 +8,14 @@ const mocks = vi.hoisted(() => ({
     getAssets: vi.fn(),
     getLiabilities: vi.fn(),
     getSnapshots: vi.fn(),
+    getTimeline: vi.fn(),
+    getAssetTimeline: vi.fn(),
+    getLiabilityTimeline: vi.fn(),
+    getAssetValuations: vi.fn(),
+    getLiabilityValuations: vi.fn(),
+    getInvestmentEvents: vi.fn(),
+    getLiquidityEvents: vi.fn(),
+    getLiabilityEvents: vi.fn(),
     createSnapshotFromCurrent: vi.fn(),
     deleteSnapshot: vi.fn(),
     createAsset: vi.fn(),
@@ -25,8 +33,6 @@ const mocks = vi.hoisted(() => ({
     syncOwnershipLink: vi.fn(),
   },
   buildByCategoryChart: vi.fn(() => ({ labels: [], assets: [], liabilities: [] })),
-  buildOwnershipMaps: vi.fn(() => ({ assetOwnership: {}, liabilityOwnership: {} })),
-  attachOwnershipRef: vi.fn((items: unknown[]) => items),
   toApiErrorMessage: vi.fn(() => 'mapped-error'),
 }));
 
@@ -39,40 +45,45 @@ vi.mock('@/domains/net-worth/charts', () => ({
   buildByCategoryChart: mocks.buildByCategoryChart,
 }));
 
-vi.mock('@/domains/net-worth/ownership', () => ({
-  buildOwnershipMaps: mocks.buildOwnershipMaps,
-  attachOwnershipRef: mocks.attachOwnershipRef,
-}));
-
 vi.mock('@/lib/errors', () => ({
   toApiErrorMessage: mocks.toApiErrorMessage,
 }));
 
-describe('net worth store (saas)', () => {
+describe('net worth store (core)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    mocks.premiumOwnershipApi.getOwnerships.mockResolvedValue({ data: [] });
+    mocks.premiumOwnershipApi.getOwnershipLinks.mockResolvedValue({ data: [] });
   });
 
-  function mockRefreshPayloads() {
+  it('refreshes summary datasets', async () => {
     mocks.coreNetWorthApi.getSummary.mockResolvedValue({ data: { base_currency: 'EUR' } });
     mocks.coreNetWorthApi.getAssets.mockResolvedValue({ data: [{ id: 1 }] });
     mocks.coreNetWorthApi.getLiabilities.mockResolvedValue({ data: [{ id: 2 }] });
     mocks.coreNetWorthApi.getSnapshots.mockResolvedValue({ data: [{ id: 3 }] });
-    mocks.premiumOwnershipApi.getOwnerships.mockResolvedValue({ data: [{ id: 10 }] });
-    mocks.premiumOwnershipApi.getOwnershipLinks.mockResolvedValue({ data: [] });
-  }
-
-  it('refreshes core and premium datasets', async () => {
-    mockRefreshPayloads();
+    mocks.coreNetWorthApi.getTimeline.mockResolvedValue({
+      data: { rows: [], base_currency: 'EUR' },
+    });
     const store = useNetWorthStore();
 
     await store.refreshAll();
 
     expect(store.baseCurrency).toBe('EUR');
-    expect(store.assets).toEqual([{ id: 1 }]);
-    expect(store.liabilities).toEqual([{ id: 2 }]);
-    expect(store.ownerships).toEqual([{ id: 10 }]);
+    expect(store.assets).toEqual([{ id: 1, ownership_ref: null }]);
+    expect(store.liabilities).toEqual([{ id: 2, ownership_ref: null }]);
+    expect(store.snapshots).toEqual([{ id: 3 }]);
+    expect(store.timeline).toEqual({ rows: [], base_currency: 'EUR' });
+    expect(store.loading).toBe(false);
+  });
+
+  it('handles snapshot creation errors and resets loading', async () => {
+    mocks.coreNetWorthApi.createSnapshotFromCurrent.mockRejectedValue(new Error('boom'));
+    const store = useNetWorthStore();
+
+    await store.createTodaySnapshot();
+
+    expect(store.error).toBe('mapped-error');
     expect(store.loading).toBe(false);
   });
 
@@ -86,105 +97,66 @@ describe('net worth store (saas)', () => {
     expect(store.loading).toBe(false);
   });
 
-  it('creates asset and syncs ownership link', async () => {
-    mockRefreshPayloads();
-    mocks.coreNetWorthApi.createAsset.mockResolvedValue({ data: { id: 99 } });
-    mocks.premiumOwnershipApi.syncOwnershipLink.mockResolvedValue({});
-    const store = useNetWorthStore();
-
-    await store.createAsset({ name: 'A', ownership_id: 10 });
-
-    expect(mocks.coreNetWorthApi.createAsset).toHaveBeenCalled();
-    expect(mocks.premiumOwnershipApi.syncOwnershipLink).toHaveBeenCalledWith({
-      target_type: 'asset',
-      target_id: 99,
-      ownership_id: 10,
-    });
-  });
-
-  it('updates and archives assets with premium ownership sync', async () => {
-    mockRefreshPayloads();
+  it('creates and updates assets and liabilities', async () => {
+    mocks.coreNetWorthApi.createAsset.mockResolvedValue({});
     mocks.coreNetWorthApi.updateAsset.mockResolvedValue({});
-    mocks.premiumOwnershipApi.syncOwnershipLink.mockResolvedValue({});
-    const store = useNetWorthStore();
-
-    await store.updateAsset(7, { name: 'Asset', ownership_id: 11 });
-    expect(mocks.coreNetWorthApi.updateAsset).toHaveBeenCalledWith(7, { name: 'Asset' });
-    expect(mocks.premiumOwnershipApi.syncOwnershipLink).toHaveBeenCalledWith({
-      target_type: 'asset',
-      target_id: 7,
-      ownership_id: 11,
-    });
-
-    await store.archiveAsset(7);
-    expect(mocks.coreNetWorthApi.updateAsset).toHaveBeenCalledWith(7, { is_active: false });
-    await store.deleteAsset(7);
-    expect(mocks.coreNetWorthApi.deleteAsset).toHaveBeenCalledWith(7);
-  });
-
-  it('creates and updates liabilities with premium ownership sync', async () => {
-    mockRefreshPayloads();
-    mocks.coreNetWorthApi.createLiability.mockResolvedValue({ data: { id: 55 } });
+    mocks.coreNetWorthApi.createLiability.mockResolvedValue({});
     mocks.coreNetWorthApi.updateLiability.mockResolvedValue({});
-    mocks.premiumOwnershipApi.syncOwnershipLink.mockResolvedValue({});
+    mocks.coreNetWorthApi.getSummary.mockResolvedValue({ data: { base_currency: 'EUR' } });
+    mocks.coreNetWorthApi.getAssets.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getLiabilities.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getSnapshots.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getTimeline.mockResolvedValue({ data: { rows: [] } });
     const store = useNetWorthStore();
 
-    await store.createLiability({ name: 'Debt', ownership_id: 20 });
-    expect(mocks.coreNetWorthApi.createLiability).toHaveBeenCalledWith({ name: 'Debt' });
-    expect(mocks.premiumOwnershipApi.syncOwnershipLink).toHaveBeenCalledWith({
-      target_type: 'liability',
-      target_id: 55,
-      ownership_id: 20,
-    });
+    await store.createAsset({ name: 'Cash' });
+    expect(mocks.coreNetWorthApi.createAsset).toHaveBeenCalledWith({ name: 'Cash' });
 
-    await store.updateLiability(9, { name: 'Debt 2', ownership_id: 21 });
-    expect(mocks.coreNetWorthApi.updateLiability).toHaveBeenCalledWith(9, { name: 'Debt 2' });
-    expect(mocks.premiumOwnershipApi.syncOwnershipLink).toHaveBeenCalledWith({
-      target_type: 'liability',
-      target_id: 9,
-      ownership_id: 21,
-    });
+    await store.updateAsset(11, { name: 'Cash 2' });
+    expect(mocks.coreNetWorthApi.updateAsset).toHaveBeenCalledWith(11, { name: 'Cash 2' });
 
-    await store.archiveLiability(9);
-    expect(mocks.coreNetWorthApi.updateLiability).toHaveBeenCalledWith(9, { is_active: false });
-    await store.deleteLiability(9);
-    expect(mocks.coreNetWorthApi.deleteLiability).toHaveBeenCalledWith(9);
-  });
+    await store.archiveAsset(11);
+    expect(mocks.coreNetWorthApi.updateAsset).toHaveBeenCalledWith(11, { is_active: false });
+    await store.deleteAsset(11);
+    expect(mocks.coreNetWorthApi.deleteAsset).toHaveBeenCalledWith(11);
 
-  it('skips ownership sync when create operations return no id', async () => {
-    mockRefreshPayloads();
-    mocks.coreNetWorthApi.createAsset.mockResolvedValue({ data: {} });
-    mocks.coreNetWorthApi.createLiability.mockResolvedValue({ data: {} });
-    const store = useNetWorthStore();
-
-    await store.createAsset({ name: 'Asset' });
     await store.createLiability({ name: 'Debt' });
+    expect(mocks.coreNetWorthApi.createLiability).toHaveBeenCalledWith({ name: 'Debt' });
 
-    expect(mocks.premiumOwnershipApi.syncOwnershipLink).not.toHaveBeenCalled();
+    await store.updateLiability(22, { name: 'Debt 2' });
+    expect(mocks.coreNetWorthApi.updateLiability).toHaveBeenCalledWith(22, { name: 'Debt 2' });
+
+    await store.archiveLiability(22);
+    expect(mocks.coreNetWorthApi.updateLiability).toHaveBeenCalledWith(22, { is_active: false });
+    await store.deleteLiability(22);
+    expect(mocks.coreNetWorthApi.deleteLiability).toHaveBeenCalledWith(22);
   });
 
-  it('handles snapshot create/delete and maps errors', async () => {
-    mockRefreshPayloads();
-    mocks.coreNetWorthApi.createSnapshotFromCurrent.mockResolvedValue({});
+  it('deletes snapshots and maps delete errors', async () => {
     mocks.coreNetWorthApi.deleteSnapshot.mockResolvedValue({});
+    mocks.coreNetWorthApi.getSummary.mockResolvedValue({ data: { base_currency: 'EUR' } });
+    mocks.coreNetWorthApi.getAssets.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getLiabilities.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getSnapshots.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getTimeline.mockResolvedValue({ data: { rows: [] } });
     const store = useNetWorthStore();
 
-    await store.createTodaySnapshot();
-    expect(mocks.coreNetWorthApi.createSnapshotFromCurrent).toHaveBeenCalled();
-
-    await store.deleteSnapshot(4);
-    expect(mocks.coreNetWorthApi.deleteSnapshot).toHaveBeenCalledWith(4);
-
-    mocks.coreNetWorthApi.createSnapshotFromCurrent.mockRejectedValueOnce(new Error('boom'));
-    await store.createTodaySnapshot();
-    expect(store.error).toBe('mapped-error');
+    await store.deleteSnapshot(5);
+    expect(mocks.coreNetWorthApi.deleteSnapshot).toHaveBeenCalledWith(5);
     expect(store.loading).toBe(false);
+
+    mocks.coreNetWorthApi.deleteSnapshot.mockRejectedValueOnce(new Error('boom'));
+    await store.deleteSnapshot(6);
+    expect(store.error).toBe('mapped-error');
   });
 
-  it('fetches and updates base currency', async () => {
-    mockRefreshPayloads();
+  it('fetches settings and updates base currency', async () => {
     mocks.coreNetWorthApi.getSettings.mockResolvedValue({ data: { base_currency: 'USD' } });
     mocks.coreNetWorthApi.updateSettings.mockResolvedValue({ data: { base_currency: 'EUR' } });
+    mocks.coreNetWorthApi.getSummary.mockResolvedValue({ data: { base_currency: 'EUR' } });
+    mocks.coreNetWorthApi.getAssets.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getLiabilities.mockResolvedValue({ data: [] });
+    mocks.coreNetWorthApi.getSnapshots.mockResolvedValue({ data: [] });
     const store = useNetWorthStore();
 
     await store.fetchSettings();
@@ -195,19 +167,95 @@ describe('net worth store (saas)', () => {
     expect(store.baseCurrency).toBe('EUR');
   });
 
-  it('maps write/settings errors', async () => {
-    mocks.coreNetWorthApi.createAsset.mockRejectedValueOnce(new Error('boom'));
+  it('fetches timeline with category filter', async () => {
+    mocks.coreNetWorthApi.getTimeline.mockResolvedValue({
+      data: {
+        rows: [{ date: '2026-01-31', net_worth: '100.00' }],
+        base_currency: 'EUR',
+        filters: { asset_category: 'investments', liability_category: null },
+      },
+    });
+    const store = useNetWorthStore();
+
+    await store.fetchTimeline('investments');
+
+    expect(mocks.coreNetWorthApi.getTimeline).toHaveBeenCalledWith({
+      asset_category: 'investments',
+      liability_category: null,
+    });
+    expect(store.timelineCategoryFilter).toBe('investments');
+    expect(store.timelineCategoryFilterType).toBe('asset');
+    expect(store.timeline?.filters.asset_category).toBe('investments');
+    expect(store.timelineLoading).toBe(false);
+  });
+
+  it('fetches position timeline for assets and liabilities', async () => {
+    mocks.coreNetWorthApi.getAssetTimeline.mockResolvedValue({
+      data: {
+        position_type: 'asset',
+        position_id: 4,
+        rows: [{ date: '2026-03-31', value: '100' }],
+      },
+    });
+    mocks.coreNetWorthApi.getLiabilityTimeline.mockResolvedValue({
+      data: {
+        position_type: 'liability',
+        position_id: 7,
+        rows: [{ date: '2026-03-31', value: '50' }],
+      },
+    });
+    const store = useNetWorthStore();
+
+    await store.fetchPositionTimeline('asset', 4);
+    expect(mocks.coreNetWorthApi.getAssetTimeline).toHaveBeenCalledWith(4);
+    expect(store.positionTimeline?.position_id).toBe(4);
+
+    await store.fetchPositionTimeline('liability', 7);
+    expect(mocks.coreNetWorthApi.getLiabilityTimeline).toHaveBeenCalledWith(7);
+    expect(store.positionTimeline?.position_type).toBe('liability');
+    expect(store.positionTimelineLoading).toBe(false);
+  });
+
+  it('fetches position activity for asset and liability modes', async () => {
+    mocks.coreNetWorthApi.getAssetValuations.mockResolvedValue({
+      data: [{ id: 1, asset_ref: 4, value: '100', valuation_date: '2026-03-31', source: 'manual' }],
+    });
+    mocks.coreNetWorthApi.getInvestmentEvents.mockResolvedValue({
+      data: [
+        { id: 2, asset_ref: 4, amount: '20', event_date: '2026-03-15', event_type: 'contribution' },
+      ],
+    });
+    mocks.coreNetWorthApi.getLiabilityValuations.mockResolvedValue({
+      data: [
+        { id: 3, liability_ref: 7, value: '50', valuation_date: '2026-03-31', source: 'manual' },
+      ],
+    });
+    mocks.coreNetWorthApi.getLiabilityEvents.mockResolvedValue({
+      data: [
+        { id: 4, liability_ref: 7, amount: '10', event_date: '2026-03-18', event_type: 'payment' },
+      ],
+    });
+    const store = useNetWorthStore();
+
+    await store.fetchPositionActivity('asset', 4, 'investments');
+    expect(store.assetValuations).toHaveLength(1);
+    expect(store.investmentEvents).toHaveLength(1);
+
+    await store.fetchPositionActivity('liability', 7);
+    expect(store.liabilityValuations).toHaveLength(1);
+    expect(store.liabilityEvents).toHaveLength(1);
+    expect(store.positionActivityLoading).toBe(false);
+  });
+
+  it('maps settings and update errors', async () => {
     mocks.coreNetWorthApi.getSettings.mockRejectedValueOnce(new Error('boom'));
     mocks.coreNetWorthApi.updateSettings.mockRejectedValueOnce(new Error('boom'));
     const store = useNetWorthStore();
 
-    await store.createAsset({ name: 'Asset', ownership_id: 2 });
-    expect(store.error).toBe('mapped-error');
-
     await store.fetchSettings();
     expect(store.error).toBe('mapped-error');
 
-    await store.updateBaseCurrency('EUR');
+    await store.updateBaseCurrency('USD');
     expect(store.error).toBe('mapped-error');
     expect(store.loading).toBe(false);
   });

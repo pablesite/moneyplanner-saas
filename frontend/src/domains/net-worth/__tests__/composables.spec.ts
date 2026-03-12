@@ -47,7 +47,7 @@ function makeItem(overrides: Partial<Asset> = {}): Asset {
   };
 }
 
-describe('useNetWorthViewState (saas)', () => {
+describe('useNetWorthViewState (core)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal(
@@ -75,13 +75,13 @@ describe('useNetWorthViewState (saas)', () => {
 
     const state = useNetWorthViewState();
     state.showAssetModal.value = true;
-    await state.submitAsset({ name: 'A', ownership_id: 10 });
-    expect(store.createAsset).toHaveBeenCalledWith({ name: 'A', ownership_id: 10 });
+    await state.submitAsset({ name: 'A' });
+    expect(store.createAsset).toHaveBeenCalledWith({ name: 'A' });
     expect(state.showAssetModal.value).toBe(false);
 
     state.showLiabilityModal.value = true;
-    await state.submitLiability({ name: 'L', ownership_id: 20 });
-    expect(store.createLiability).toHaveBeenCalledWith({ name: 'L', ownership_id: 20 });
+    await state.submitLiability({ name: 'L' });
+    expect(store.createLiability).toHaveBeenCalledWith({ name: 'L' });
     expect(state.showLiabilityModal.value).toBe(false);
 
     state.confirmDeleteSnapshot(7);
@@ -127,13 +127,13 @@ describe('useNetWorthViewState (saas)', () => {
     expect(state.summaryAssets.value).toBe('900');
     expect(state.summaryAssetBackedLiabilities.value).toBe('80');
     expect(state.summaryUnbackedLiabilities.value).toBe('40');
+    expect(state.byCategoryKeys.value).toEqual(['cash', 'mortgage']);
     expect(state.byCategoryLabels.value).toEqual(['Liquidez', 'Hipoteca']);
     expect(state.byCategoryAssets.value).toEqual([10, 0]);
     expect(state.byCategoryLiabilities.value).toEqual([0, 5]);
 
     const asset = makeItem({
       financed_asset_ref: 33,
-      ownership_ref: 11,
       valuation_model: 'real_estate_auto',
       land_value_share_percent: '42.3',
       land_annual_appreciation_percent: '3',
@@ -143,14 +143,13 @@ describe('useNetWorthViewState (saas)', () => {
     expect(state.showEditModal.value).toBe(true);
     expect(state.editTitle.value).toBe('Editar activo');
     expect(state.editInitial.value?.amount).toBe('1000.5');
-    expect(state.editInitial.value?.ownership_id).toBe(11);
     expect(state.editInitial.value?.financed_asset_id).toBe(33);
     expect(state.editInitial.value?.valuation_model).toBe('real_estate_auto');
     expect(state.editInitial.value?.land_value_share_percent).toBe('42.3');
     expect(state.editInitial.value?.land_annual_appreciation_percent).toBe('3');
     expect(state.editInitial.value?.building_annual_depreciation_percent).toBe('1');
-    await state.submitEdit({ name: 'edited', financed_asset_id: 99, ownership_id: 77 });
-    expect(store.updateAsset).toHaveBeenCalledWith(1, { name: 'edited', ownership_id: 77 });
+    await state.submitEdit({ name: 'edited', financed_asset_id: 99 });
+    expect(store.updateAsset).toHaveBeenCalledWith(1, { name: 'edited' });
     expect(state.showEditModal.value).toBe(false);
 
     const liability = makeItem({ id: 2, name: 'Liability' }) as Liability;
