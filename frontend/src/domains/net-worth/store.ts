@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 import { buildByCategoryChart } from '@/domains/net-worth/charts';
@@ -22,6 +23,22 @@ import type {
 export type { Asset, Liability, Ownership, Snapshot, Summary } from '@/domains/net-worth/models';
 
 type OwnershipAwarePayload = NetWorthWritePayload & { ownership_id?: number | null };
+
+function requestTimeline(params: { asset_category?: string | null; liability_category?: string | null }) {
+  if (typeof coreNetWorthApi.getTimeline === 'function') {
+    return coreNetWorthApi.getTimeline(params);
+  }
+
+  return coreApi.get<NetWorthTimeline>('/api/net-worth/timeline/', {
+    params:
+      params.asset_category || params.liability_category
+        ? {
+            ...(params.asset_category ? { asset_category: params.asset_category } : {}),
+            ...(params.liability_category ? { liability_category: params.liability_category } : {}),
+          }
+        : undefined,
+  });
+}
 
 export const useNetWorthStore = defineStore('netWorth', {
   state: () => ({
@@ -96,7 +113,7 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.timelineCategoryFilter = category;
       this.timelineCategoryFilterType = categoryType;
       try {
-        const timelineRes = await coreNetWorthApi.getTimeline({
+        const timelineRes = await requestTimeline({
           asset_category: categoryType === 'asset' ? category : null,
           liability_category: categoryType === 'liability' ? category : null,
         });

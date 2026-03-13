@@ -24,6 +24,8 @@ Document stable API behavior for both stacks.
 3. Summary and settings contracts.
    - `/api/net-worth/timeline/` returns aggregate monthly evolution and accepts category
      filters.
+   - SaaS frontend may call `/api/net-worth/timeline/` directly as a runtime-safe fallback
+     if the client helper export is unavailable during dev/HMR reloads.
    - `/api/net-worth/assets/{id}/timeline/` and `/api/net-worth/liabilities/{id}/timeline/`
      return per-position monthly evolution.
 4. Annual income endpoints (`/api/budget/annual-income/` + `/api/budget/annual-income/totals/`).
