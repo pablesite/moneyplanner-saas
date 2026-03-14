@@ -1,5 +1,19 @@
-# Vue 3 + Vite
+﻿# Frontend SaaS
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Frontend SaaS de MoneyPlanner.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Stack
+1. Vue 3
+2. Vite
+3. TypeScript
+
+## Contexto
+1. Este frontend combina flujos propios SaaS con vistas y capacidades apoyadas en Core.
+2. La referencia de arquitectura y boundaries vive en `docs/architecture/`.
+3. La guia de trabajo visual/UX vive en `docs/frontend/`.
+
+## Documentacion util
+1. `docs/frontend/frontend-visual-guide.md`
+2. `docs/frontend/frontend-ux-iteration-playbook.md`
+3. `docs/frontend/frontend-css-workflow.md`
+4. `docs/architecture/architecture.md`

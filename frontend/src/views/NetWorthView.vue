@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { NetWorthDonut, SettingsPopover, useNetWorthViewState } from '@/domains/net-worth';
+import { BaseModal } from '@/domains/ui';
+import {
+  NetWorthDonut,
+  NetWorthTimelineChart,
+  SettingsPopover,
+  useNetWorthViewState,
+} from '@/domains/net-worth';
 
 const {
   store,
@@ -93,10 +99,16 @@ const selectedTimelineCategory = ref<string | null>(null);
 const selectedTimelineCategoryType = ref<'asset' | 'liability'>('asset');
 const selectedPositionType = ref<'asset' | 'liability' | null>(null);
 const selectedPositionId = ref<number | null>(null);
+const timelineExpanded = ref(false);
+const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | 'all'>('all');
+const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
+const timelinePresetOptions = ['1m', '3m', '6m', '1a', 'all'] as const;
 
 type TimelinePoint = {
   date: string;
   label: string;
+  shortLabel: string;
+  fullLabel: string;
   netWorth: number;
   assets: number;
   liabilities: number;
@@ -126,6 +138,12 @@ const timelineRows = computed<TimelinePoint[]>(() =>
   (store.timeline?.rows ?? []).map((row) => ({
     date: row.date,
     label: new Intl.DateTimeFormat('es-ES', { month: 'short', year: '2-digit' }).format(
+      new Date(row.date),
+    ),
+    shortLabel: new Intl.DateTimeFormat('es-ES', { month: 'short', year: '2-digit' }).format(
+      new Date(row.date),
+    ),
+    fullLabel: new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(
       new Date(row.date),
     ),
     netWorth: toNumber(row.net_worth),
@@ -162,6 +180,57 @@ const timelineDescription = computed(() => {
   return 'Serie mensual del valor total de la categoria de activos seleccionada.';
 });
 
+const timelinePresetPointCount: Record<(typeof timelinePresetOptions)[number], number> = {
+  '1m': 1,
+  '3m': 3,
+  '6m': 6,
+  '1a': 12,
+  all: Number.POSITIVE_INFINITY,
+};
+
+const timelineDefaultWindow = computed(() => {
+  const end = Math.max(0, timelineRows.value.length - 1);
+  const count = timelinePresetPointCount[selectedTimelinePreset.value];
+  if (!Number.isFinite(count)) return { start: 0, end };
+  return { start: Math.max(0, end - count + 1), end };
+});
+
+const visibleTimelineWindow = computed(() => {
+  const length = timelineRows.value.length;
+  if (length === 0) return { start: 0, end: 0 };
+  const source = customTimelineWindow.value ?? timelineDefaultWindow.value;
+  const start = Math.min(Math.max(0, source.start), length - 1);
+  const end = Math.min(Math.max(start, source.end), length - 1);
+  return { start, end };
+});
+
+const visibleTimelineRows = computed(() =>
+  timelineRows.value.slice(visibleTimelineWindow.value.start, visibleTimelineWindow.value.end + 1),
+);
+
+const visibleTimelineChartPoints = computed(() =>
+  visibleTimelineRows.value.map((row) => ({
+    date: row.date,
+    shortLabel: row.shortLabel,
+    fullLabel: row.fullLabel,
+    value: getTimelineMetricValue(row),
+  })),
+);
+
+const latestVisibleTimelinePoint = computed(
+  () => visibleTimelineRows.value[visibleTimelineRows.value.length - 1] ?? null,
+);
+
+const latestTimelinePoint = computed(() => latestVisibleTimelinePoint.value);
+
+const timelineVisibleRangeLabel = computed(() => {
+  if (visibleTimelineRows.value.length === 0) return '-';
+  const first = visibleTimelineRows.value[0];
+  const last = visibleTimelineRows.value[visibleTimelineRows.value.length - 1];
+  if (!first || !last) return '-';
+  return `${first.fullLabel} - ${last.fullLabel}`;
+});
+
 const timelineSummaryMeta = computed(() => {
   const point = latestTimelinePoint.value;
   if (!point) return '-';
@@ -180,56 +249,6 @@ const timelineSummaryMeta = computed(() => {
 const timelineSeriesColor = computed(() =>
   timelineMetric.value === 'liabilities' ? '#ff4d73' : '#4cc3ff',
 );
-
-const timelineRange = computed(() => {
-  const values = timelineRows.value.map((row) => getTimelineMetricValue(row));
-  if (!values.length) return { min: 0, max: 1 };
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  if (min === max) return { min: min - 1, max: max + 1 };
-  return { min, max };
-});
-
-const timelinePath = computed(() => {
-  const rows = timelineRows.value;
-  if (rows.length < 2) return '';
-  const { min, max } = timelineRange.value;
-  return rows
-    .map((row, index) => {
-      const x = (index / (rows.length - 1)) * 100;
-      const normalized = (getTimelineMetricValue(row) - min) / (max - min);
-      const y = 100 - normalized * 100;
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(' ');
-});
-
-const latestTimelinePoint = computed(
-  () => timelineRows.value[timelineRows.value.length - 1] ?? null,
-);
-
-const timelineYAxisLabels = computed(() => {
-  const { min, max } = timelineRange.value;
-  const mid = min + (max - min) / 2;
-  return [max, mid, min].map((value) => formatNumber(value, 0));
-});
-
-const timelineXAxisLabels = computed(() => {
-  const rows = timelineRows.value;
-  if (rows.length <= 6) return rows;
-  const indexes = Array.from(
-    new Set([
-      0,
-      Math.floor(rows.length / 4),
-      Math.floor(rows.length / 2),
-      Math.floor((rows.length * 3) / 4),
-      rows.length - 1,
-    ]),
-  );
-  return indexes
-    .map((index) => rows[index])
-    .filter((row): row is TimelinePoint => row !== undefined);
-});
 
 type PositionRow = {
   id: number;
@@ -438,6 +457,8 @@ async function applyTimelineCategoryFilter(
 ): Promise<void> {
   selectedTimelineCategory.value = category;
   selectedTimelineCategoryType.value = categoryType;
+  selectedTimelinePreset.value = 'all';
+  customTimelineWindow.value = null;
   if (
     selectedPositionType.value === 'asset' &&
     selectedPosition.value &&
@@ -487,6 +508,29 @@ async function selectPosition(row: PositionRow): Promise<void> {
     store.fetchPositionTimeline(row.type, row.id),
     store.fetchPositionActivity(row.type, row.id, row.type === 'asset' ? row.category : null),
   ]);
+}
+
+function setTimelinePreset(preset: (typeof timelinePresetOptions)[number]): void {
+  selectedTimelinePreset.value = preset;
+  customTimelineWindow.value = null;
+}
+
+function updateTimelineWindowStart(rawValue: string): void {
+  const nextStart = Number(rawValue);
+  const currentEnd = visibleTimelineWindow.value.end;
+  customTimelineWindow.value = {
+    start: Math.min(nextStart, currentEnd),
+    end: currentEnd,
+  };
+}
+
+function updateTimelineWindowEnd(rawValue: string): void {
+  const nextEnd = Number(rawValue);
+  const currentStart = visibleTimelineWindow.value.start;
+  customTimelineWindow.value = {
+    start: currentStart,
+    end: Math.max(currentStart, nextEnd),
+  };
 }
 </script>
 
@@ -654,71 +698,127 @@ async function selectPosition(row: PositionRow): Promise<void> {
           <div class="ui-nw-timeline-summary-label">{{ timelineSummaryLabel }}</div>
           <div class="ui-nw-timeline-summary-value">
             {{
-              formatNumber(latestTimelinePoint ? getTimelineMetricValue(latestTimelinePoint) : 0, 2)
+              formatNumber(
+                latestVisibleTimelinePoint ? getTimelineMetricValue(latestVisibleTimelinePoint) : 0,
+                2,
+              )
             }}
             {{ store.timeline?.base_currency }}
-          </div>
-          <div v-if="false" class="ui-nw-timeline-summary-meta">
-            {{ latestTimelinePoint?.label ?? '-' }} · Activos
-            {{ formatNumber(latestTimelinePoint?.assets ?? 0, 0) }} · Pasivos
-            {{ formatNumber(latestTimelinePoint?.liabilities ?? 0, 0) }}
           </div>
           <div class="ui-nw-timeline-summary-meta">{{ timelineSummaryMeta }}</div>
         </div>
 
-        <div class="ui-nw-timeline-chart-shell">
-          <div class="ui-nw-timeline-chart-layout">
-            <div class="ui-nw-timeline-y-axis" aria-hidden="true">
-              <span v-for="label in timelineYAxisLabels" :key="label">{{ label }}</span>
-            </div>
-            <div class="ui-nw-timeline-chart-stage">
-              <svg
-                class="ui-nw-timeline-chart"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                aria-label="Grafico de evolucion patrimonial"
-              >
-                <path
-                  class="ui-nw-timeline-grid"
-                  d="M 0 20 L 100 20 M 0 50 L 100 50 M 0 80 L 100 80"
-                />
-                <path
-                  v-if="timelinePath"
-                  class="ui-nw-timeline-line"
-                  :d="timelinePath"
-                  :style="{ stroke: timelineSeriesColor }"
-                />
-              </svg>
-            </div>
-          </div>
-          <div v-if="false">
-            <svg
-              class="ui-nw-timeline-chart"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-label="Grafico de evolucion patrimonial"
+        <div class="ui-nw-timeline-toolbar">
+          <div class="ui-nw-timeline-range-group" role="group" aria-label="Rango temporal">
+            <button
+              v-for="preset in timelinePresetOptions"
+              :key="preset"
+              class="ui-nw-timeline-range-button"
+              :class="{
+                'ui-nw-timeline-range-button-active':
+                  customTimelineWindow === null && selectedTimelinePreset === preset,
+              }"
+              type="button"
+              @click="setTimelinePreset(preset)"
             >
-              <path
-                class="ui-nw-timeline-grid"
-                d="M 0 20 L 100 20 M 0 50 L 100 50 M 0 80 L 100 80"
-              />
-              <path v-if="timelinePath" class="ui-nw-timeline-line" :d="timelinePath" />
-            </svg>
+              {{ preset }}
+            </button>
+          </div>
+
+          <div class="ui-nw-timeline-toolbar-actions">
+            <span class="ui-nw-timeline-range-caption">{{ timelineVisibleRangeLabel }}</span>
+            <button
+              class="ui-nw-timeline-expand-button"
+              type="button"
+              @click="timelineExpanded = true"
+            >
+              Expandir
+            </button>
           </div>
         </div>
 
-        <div class="ui-nw-timeline-x-axis" aria-hidden="true">
-          <span v-for="row in timelineXAxisLabels" :key="`axis-${row.date}`">{{ row.label }}</span>
+        <div class="ui-nw-timeline-chart-shell">
+          <NetWorthTimelineChart
+            :points="visibleTimelineChartPoints"
+            :unit="store.timeline?.base_currency ?? unitLabel()"
+            :series-label="timelineSummaryLabel"
+            :series-color="timelineSeriesColor"
+          />
         </div>
 
         <div class="ui-nw-timeline-points">
-          <div v-for="row in timelineRows.slice(-6)" :key="row.date" class="ui-nw-timeline-point">
-            <span>{{ row.label }}</span>
+          <div
+            v-for="row in visibleTimelineRows.slice(-6)"
+            :key="row.date"
+            class="ui-nw-timeline-point"
+          >
+            <span>{{ row.shortLabel }}</span>
             <strong>{{ formatNumber(getTimelineMetricValue(row), 0) }}</strong>
           </div>
         </div>
       </div>
     </section>
+
+    <BaseModal
+      :open="timelineExpanded"
+      title="Evolucion temporal"
+      panel-class="max-w-[1080px]"
+      @close="timelineExpanded = false"
+    >
+      <div class="ui-nw-timeline-modal">
+        <div class="ui-nw-timeline-modal-head">
+          <div>
+            <div class="ui-nw-timeline-modal-title">{{ timelineSummaryLabel }}</div>
+            <div class="ui-nw-timeline-modal-copy">{{ timelineVisibleRangeLabel }}</div>
+          </div>
+          <div class="ui-nw-timeline-modal-value">
+            {{
+              formatNumber(
+                latestVisibleTimelinePoint ? getTimelineMetricValue(latestVisibleTimelinePoint) : 0,
+                2,
+              )
+            }}
+            {{ store.timeline?.base_currency }}
+          </div>
+        </div>
+
+        <div class="ui-nw-timeline-modal-ranges">
+          <label class="ui-nw-timeline-slider-group">
+            <span>Inicio</span>
+            <input
+              class="ui-nw-timeline-slider"
+              type="range"
+              min="0"
+              :max="Math.max(0, timelineRows.length - 1)"
+              :value="visibleTimelineWindow.start"
+              @input="updateTimelineWindowStart(($event.target as HTMLInputElement).value)"
+            />
+            <strong>{{ visibleTimelineRows[0]?.fullLabel ?? '-' }}</strong>
+          </label>
+
+          <label class="ui-nw-timeline-slider-group">
+            <span>Fin</span>
+            <input
+              class="ui-nw-timeline-slider"
+              type="range"
+              min="0"
+              :max="Math.max(0, timelineRows.length - 1)"
+              :value="visibleTimelineWindow.end"
+              @input="updateTimelineWindowEnd(($event.target as HTMLInputElement).value)"
+            />
+            <strong>{{ latestVisibleTimelinePoint?.fullLabel ?? '-' }}</strong>
+          </label>
+        </div>
+
+        <NetWorthTimelineChart
+          :points="visibleTimelineChartPoints"
+          :unit="store.timeline?.base_currency ?? unitLabel()"
+          :series-label="timelineSummaryLabel"
+          :series-color="timelineSeriesColor"
+          expanded
+        />
+      </div>
+    </BaseModal>
 
     <section class="section card ui-pro-panel ui-nw-drilldown-panel">
       <div class="ui-nw-drilldown-head">
@@ -1048,6 +1148,60 @@ async function selectPosition(row: PositionRow): Promise<void> {
   gap: 1rem;
 }
 
+.ui-nw-timeline-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.ui-nw-timeline-range-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ui-nw-timeline-range-button,
+.ui-nw-timeline-expand-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.ui-nw-timeline-range-button:hover,
+.ui-nw-timeline-expand-button:hover {
+  border-color: rgba(76, 195, 255, 0.28);
+  background: rgba(76, 195, 255, 0.12);
+  color: #fff;
+}
+
+.ui-nw-timeline-range-button-active {
+  border-color: rgba(76, 195, 255, 0.42);
+  background: rgba(76, 195, 255, 0.18);
+  color: #fff;
+}
+
+.ui-nw-timeline-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ui-nw-timeline-range-caption {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .ui-nw-timeline-summary {
   border: 1px solid rgba(45, 212, 191, 0.22);
   border-radius: 14px;
@@ -1084,57 +1238,6 @@ async function selectPosition(row: PositionRow): Promise<void> {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.ui-nw-timeline-chart-layout {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 0.75rem;
-  align-items: stretch;
-}
-
-.ui-nw-timeline-y-axis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.52);
-}
-
-.ui-nw-timeline-chart-stage {
-  min-width: 0;
-}
-
-.ui-nw-timeline-chart {
-  display: block;
-  width: 100%;
-  height: 220px;
-}
-
-.ui-nw-timeline-grid {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.12);
-  stroke-width: 0.4;
-  vector-effect: non-scaling-stroke;
-}
-
-.ui-nw-timeline-line {
-  fill: none;
-  stroke: #4cc3ff;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.ui-nw-timeline-x-axis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
-  gap: 0.5rem;
-  padding: 0 0.1rem;
-  font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.52);
-}
-
 .ui-nw-timeline-points {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -1158,6 +1261,67 @@ async function selectPosition(row: PositionRow): Promise<void> {
 .ui-nw-timeline-point strong {
   font-size: 1rem;
   color: #fff;
+}
+
+.ui-nw-timeline-modal {
+  display: grid;
+  gap: 1rem;
+}
+
+.ui-nw-timeline-modal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.ui-nw-timeline-modal-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ui-nw-timeline-modal-copy {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.ui-nw-timeline-modal-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ui-nw-timeline-modal-ranges {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.ui-nw-timeline-slider-group {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ui-nw-timeline-slider-group span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ui-nw-timeline-slider-group strong {
+  font-size: 0.84rem;
+  color: #fff;
+}
+
+.ui-nw-timeline-slider {
+  width: 100%;
 }
 
 .ui-nw-drilldown-panel {
@@ -1420,13 +1584,13 @@ async function selectPosition(row: PositionRow): Promise<void> {
     font-size: 24px;
   }
 
-  .ui-nw-timeline-chart-layout {
-    grid-template-columns: 1fr;
+  .ui-nw-timeline-toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
-  .ui-nw-timeline-y-axis {
-    flex-direction: row;
-    gap: 0.75rem;
+  .ui-nw-timeline-modal-ranges {
+    grid-template-columns: 1fr;
   }
 }
 </style>

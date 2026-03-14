@@ -20,6 +20,7 @@ vi.mock('@/domains/net-worth', () => ({
   ItemList: makeStub('ItemList'),
   NetWorthByCategoryBar: makeStub('NetWorthByCategoryBar'),
   NetWorthDonut: makeStub('NetWorthDonut'),
+  NetWorthTimelineChart: makeStub('NetWorthTimelineChart'),
   SettingsPopover: makeStub('SettingsPopover'),
   useNetWorthViewState: () => mockUseNetWorthViewState(),
   useNetWorthViewExtensions: () => mockUseNetWorthViewExtensions(),
@@ -290,5 +291,42 @@ describe('NetWorthView', () => {
     await wrapper.get('button.ui-nw-position-button').trigger('click');
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
     expect(state.store.fetchPositionActivity).toHaveBeenCalledWith('asset', 11, 'cash');
+  });
+
+  it('opens the expanded timeline modal and updates the visible range', async () => {
+    const state = makeState({
+      store: {
+        ...makeState().store,
+        timeline: {
+          base_currency: 'EUR',
+          rows: [
+            { date: '2025-11-30', net_worth: '500', total_assets: '700', total_liabilities: '200' },
+            { date: '2025-12-31', net_worth: '520', total_assets: '720', total_liabilities: '200' },
+            { date: '2026-01-31', net_worth: '540', total_assets: '750', total_liabilities: '210' },
+            { date: '2026-02-28', net_worth: '560', total_assets: '780', total_liabilities: '220' },
+            { date: '2026-03-31', net_worth: '600', total_assets: '830', total_liabilities: '230' },
+          ],
+        },
+      },
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({
+      HeaderActions: null,
+      itemFormProps: {},
+      itemListProps: {},
+    });
+
+    const wrapper = mount(NetWorthView);
+
+    await wrapper.get('button.ui-nw-timeline-range-button').trigger('click');
+    await wrapper.get('button.ui-nw-timeline-expand-button').trigger('click');
+
+    expect(wrapper.text()).toContain('Inicio');
+    expect(wrapper.text()).toContain('Fin');
+
+    const sliders = wrapper.findAll('input.ui-nw-timeline-slider');
+    await sliders[0]!.setValue('2');
+
+    expect(wrapper.text()).toContain('enero de 2026 - marzo de 2026');
   });
 });

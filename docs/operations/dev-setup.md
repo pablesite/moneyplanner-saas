@@ -1,6 +1,6 @@
-# Setup de desarrollo (SaaS + Core)
+ï»¿# Desarrollo y operacion local (SaaS + Core)
 
-## Arranque local (orden)
+## Arranque local
 1. `cd core`
 2. `docker compose up --build -d`
 3. `cd ..`
@@ -13,9 +13,31 @@
 4. SaaS backend: `http://localhost:8001`
 
 ## Variables importantes (SaaS backend)
-1. `CORE_API_BASE_URL` -> URL pública/interna del backend Core
-2. `JWT_*` (issuer/audience/signing key SaaS)
-3. `ACCOUNT_LINKING_*` (si usas linking)
+1. `CORE_API_BASE_URL` -> URL publica/interna del backend Core
+2. `JWT_*` -> issuer, audience y signing key SaaS
+3. `ACCOUNT_LINKING_*` -> configuracion de linking, si aplica
+
+## Diagnostico estandar
+1. `docker compose ps`
+2. `docker compose logs --tail 100 <service>`
+3. Diagnostico profundo:
+   - `docker compose ps -a`
+   - `docker compose logs --tail 200 <service>`
+
+## Problemas frecuentes
+1. Frontend no refresca -> recarga dura y revisar logs del frontend.
+2. Error CORS -> revisar `CORS_ALLOWED_ORIGINS`.
+3. Error SaaS al crear usuario/member -> revisar `CORE_API_BASE_URL` y conectividad SaaS -> Core.
+4. Auth/admin SaaS -> revisar `backend/logs/auth_audit.log`.
+
+## Operacion segura
+1. No borrar volumenes.
+2. No usar `docker compose down -v` salvo peticion explicita.
+3. Ejecutar tests y calidad siempre dentro de Docker.
+4. En piloto SaaS:
+   - usuarios testers en `trial`
+   - alta manual desde Admin SaaS si hace falta
+   - `family/ownership` se crea en Core automaticamente durante alta/registro
 
 ## Calidad (siempre en Docker)
 ### SaaS backend
@@ -48,6 +70,6 @@ docker compose exec frontend npm run format:check
 docker compose exec frontend npm run typecheck
 ```
 
-## Tests mínimos actuales
+## Tests minimos actuales
 1. SaaS backend: `docker compose exec saas_backend python manage.py test saas_access`
-2. Core backend: tests por dominio (según avance)
+2. Core backend: tests por dominio (segun avance)
