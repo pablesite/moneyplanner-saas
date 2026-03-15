@@ -14,7 +14,7 @@
    - `docker compose exec saas_backend ruff check .`
    - `docker compose exec saas_backend ruff format --check .`
    - `docker compose exec saas_backend mypy .`
-   - `docker compose exec saas_backend python manage.py test memberships`
+   - `docker compose exec saas_backend python manage.py test saas_access`
    - `docker compose exec saas_frontend npm run lint`
    - `docker compose exec saas_frontend npm run format:check`
    - `docker compose exec saas_frontend npm run typecheck`

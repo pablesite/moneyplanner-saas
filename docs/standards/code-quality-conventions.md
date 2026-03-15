@@ -26,4 +26,4 @@ Run checks in Docker for the affected stack(s) before merge.
 
 ## CI References
 1. SaaS: `.github/workflows/quality-saas.yml`
-2. Core: `core/.github/workflows/quality-core.yml`
+2. Core: use the Core repo's own CI configuration if present; otherwise rely on the Docker validation matrix documented in `core/RELEASING.md` and `core/docs/operations/dev-setup.md`

@@ -1,52 +1,38 @@
-﻿# Arquitectura (SaaS + Core)
+﻿# SaaS Architecture
 
-## Objetivo
-Describir la arquitectura actual del repo y la relacion entre `core/` y el stack SaaS.
+## Objective
+Describe the current architecture of the MoneyPlanner SaaS stack.
 
-## Resumen
-1. `core/` es la base funcional del producto y concentra el dominio principal.
-2. El SaaS anade infraestructura, acceso cloud y operacion sobre ese baseline.
-3. El frontend SaaS consume capacidades Core y se apoya en servicios SaaS solo para extras de plataforma.
+## Summary
+1. The SaaS layer adds platform capabilities on top of `MoneyPlanner Core`.
+2. Core product functionality lives in the `core/` submodule.
+3. The SaaS stack is responsible for access, administration, subscription state, and cloud operation.
 
-## Stacks
-1. Core:
-   - `core/backend` (Django/DRF)
-   - `core/frontend` (Vue)
-2. SaaS:
-   - `backend` (Django, `saas_access`)
-   - `frontend` (Vue)
-
-## Principio de diseno
-1. Todo dominio funcional compartido vive en `core/backend`.
-2. El backend SaaS solo gestiona extras de plataforma:
-   - auth
+## SaaS Stack
+1. `backend/`
+   - Django backend for SaaS-specific platform features
+   - authentication
    - RBAC
-   - estado de cuenta
-   - linking con Core
-   - administracion SaaS
-3. El SaaS no debe duplicar dominio Core en su backend.
+   - account state
+   - SaaS administration
+   - Core linking
+2. `frontend/`
+   - Vue frontend for SaaS-specific flows and managed access to Core-powered functionality
 
-## Alcance funcional actual
-1. Core concentra el baseline de producto:
-   - patrimonio
-   - presupuesto y cierre mensual
-   - introduccion de datos
-   - guia / coach v1
-   - familia / titularidad
-   - simulacion y modulos base evolutivos
-2. SaaS aporta valor operativo y de plataforma:
-   - hosting gestionado
-   - acceso cloud
-   - administracion SaaS
-   - trial y operacion de usuarios
+## Deployment Model
+1. `core/backend` is deployed as the Core domain backend.
+2. `backend/` is deployed as the SaaS backend.
+3. `frontend/` is deployed as the SaaS frontend.
+4. SaaS backend must be configured to reach Core through `CORE_API_BASE_URL`.
 
-## Integracion entre stacks
-1. `core/backend` expone el dominio que usan ambos frontends.
-2. `backend/saas_access` resuelve autenticacion, linking y control de acceso SaaS.
-3. `frontend` SaaS combina flujos propios con vistas y helpers apoyados en Core.
+## Integration Model
+1. SaaS does not reimplement Core domain logic in its backend.
+2. SaaS frontend can consume Core-backed functionality while keeping SaaS-specific entry points and account flows.
+3. SaaS backend coordinates authentication, authorization, account state, and linking with Core.
 
-## Documentos relacionados
-1. `docs/architecture/core-saas-boundaries.md`
-2. `docs/architecture/capabilities-matrix.md`
-3. `docs/operations/dev-setup.md`
-4. `docs/roadmap/roadmap.md`
+## Related Documents
+1. `../../core/README.md`
+2. `../../core/docs/README.md`
+3. `core-saas-boundaries.md`
+4. `capabilities-matrix.md`
+5. `../operations/dev-setup.md`

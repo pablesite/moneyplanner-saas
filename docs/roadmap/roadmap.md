@@ -1,47 +1,43 @@
-# Roadmap (actual)
+ï»¿# SaaS Roadmap
 
-## Objetivo inmediato
-Salir a producción en modo piloto cuanto antes con:
-1. Repo `core` público y presentable.
-2. SaaS en cloud funcionando con usuarios reales (sin pagos).
+## Immediate Goal
+Launch and stabilize the MoneyPlanner SaaS pilot on top of the Core product baseline.
 
-## Definición de “salir a producción” (ahora)
-1. `core` listo para compartir con comunidad (primero círculo cercano).
-2. SaaS desplegado con alta/login y uso real de módulos Core.
-3. `trial` como estado por defecto para testers.
-4. Sin billing/pagos activados.
+## Current Priorities
+1. Reliable cloud deployment
+2. Stable login and account flows
+3. SaaS/Core linking and bootstrap reliability
+4. Internal admin operations for pilot support
+5. Pilot readiness for real testers
+6. Clear future path for packaging and monetization
 
-## Principio de arquitectura
-1. Todo dominio Core se implementa en `core/backend`.
-2. El backend SaaS solo gestiona extras (`saas_access`).
-3. El frontend SaaS puede consumir dominios Core directamente.
+## Pilot Definition
+1. SaaS is deployed and usable by real testers.
+2. Authentication and account access work reliably.
+3. Trial is the default tester state.
+4. Internal admin flows support onboarding and support tasks.
+5. Core-backed functionality is accessible through the SaaS experience.
+6. Billing is not yet exposed to end users.
 
-## Core (alcance de referencia)
-1. Patrimonio
-2. Presupuesto
-3. Contabilidad (evolutivo)
-4. Simulador financiero (evolutivo)
-5. Guía / coach v1
-6. Introducción de datos asistida
-7. Familia / titularidad
-8. Cartera de inversión (diferido en salida inicial)
-9. Valoración automática de vivienda habitual (fase 1: suelo + construcción, recálculo mensual)
+## In Scope Now
+1. Auth and access flows
+2. SaaS admin operations
+3. Trial state management
+4. Core linking
+5. Pilot support runbooks
+6. End-to-end validation in real deployment
 
-## SaaS (piloto gratis)
-1. Hosting gestionado
-2. Auth SaaS + RBAC
-3. Trial y admin SaaS interno
-4. Frontend SaaS usando baseline Core
-5. Linking SaaS/Core
+## Out Of Scope For This Stage
+1. Billing rollout
+2. Active monetization
+3. B2B workflows
+4. Advanced cloud-only modules as the main priority
+5. Large product-scope changes that belong to Core evolution
 
-## Qué está fuera del corte inicial
-1. Pagos / billing
-2. Monetización activa
-3. B2B (creadores/asesores)
-4. Módulos cloud avanzados (benchmark, heavy compute, LLM cloud) como foco principal
-5. Cartera de inversión v1 (si retrasa salida)
-6. Coach fase 5 (si retrasa salida)
+## Core Product Reference
+Core product scope, behavior, and functional evolution are documented in:
+1. `../../core/README.md`
+2. `../../core/docs/README.md`
 
-## Documento operativo asociado
-1. `docs/roadmap/core-v0-consolidation-parity-checklist.md`
-
+## Related Document
+1. `saas-pilot-integration-checklist.md`

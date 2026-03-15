@@ -1,38 +1,46 @@
-# Fronteras Core / SaaS
+ï»¿# Core / SaaS Boundaries
 
-## Principio rector
-1. Core = herramienta completa, inteligente y sin fricción.
-2. SaaS = infraestructura, potencia centralizada y ecosistema.
-3. Se monetiza lo que requiere servidor central o escalabilidad.
+## Objective
+Define the integration boundaries between `MoneyPlanner Core` and the SaaS stack.
 
-## Qué vive en Core (actual)
-1. Patrimonio (`net worth`)
-2. Presupuesto y cierre mensual
-3. Introducción de datos
-4. Guía / coach financiero v1
-5. Familia / titularidad (`memberships` en `core/backend`)
-6. Simulación y módulos base del dominio (según roadmap)
+## Boundary Rule
+1. Core owns product behavior and shared domain logic.
+2. SaaS owns platform behavior, managed access, and cloud-specific operation.
+3. SaaS must reference Core docs instead of duplicating Core product documentation.
 
-## Qué vive en SaaS backend (actual)
-1. Auth SaaS
-2. RBAC (`saas_admin`, `saas_member`)
-3. Suscripción/estado (`trial`, `active`, ...)
-4. Administración de usuarios SaaS
-5. Linking SaaS <-> Core
-6. Auditoría de auth/admin
+## What Lives In Core
+1. Product modules and domain behavior
+2. Core backend domain APIs
+3. Core frontend product UX
+4. Functional documentation for the open-source product
+5. Product roadmaps and scoring models
 
-## Qué consume el frontend SaaS desde Core
-1. `net-worth`
-2. `budget`
-3. `core` (guía/score)
-4. `family/ownership`
+Core canonical documentation lives in:
+1. `../../core/README.md`
+2. `../../core/docs/README.md`
 
-## Despliegue SaaS (piloto y producción)
-1. `core/backend` desplegado
-2. `backend` SaaS desplegado
-3. `frontend` SaaS desplegado
-4. Configurar `CORE_API_BASE_URL` en backend SaaS
+## What Lives In SaaS
+1. Authentication and account access
+2. RBAC
+3. Subscription and trial state
+4. SaaS administration
+5. SaaS-to-Core linking
+6. Cloud deployment and managed operations
+7. SaaS packaging and platform capabilities
 
-## Nota
-1. `backend/memberships` fue eliminado del SaaS.
-2. El bootstrap de familia al crear usuarios SaaS se ejecuta en Core vía endpoint `ensure-primary`.
+## Integration Rules
+1. Core domain modules must not be duplicated in the SaaS backend.
+2. SaaS documentation must not restate Core product behavior unless strictly necessary for integration.
+3. If packaging or capability exposure changes, update `capabilities-matrix.md`.
+4. If Core-facing integration flows change, update this document and the relevant operational docs.
+
+## Current Integration Points
+1. SaaS backend calls Core APIs for Core-owned functionality and bootstrap flows.
+2. SaaS frontend can expose Core-backed user flows through managed SaaS access.
+3. Family and ownership bootstrap is executed in Core through the relevant Core endpoint.
+
+## Related Documents
+1. `architecture.md`
+2. `capabilities-matrix.md`
+3. `../operations/dev-setup.md`
+4. `../roadmap/roadmap.md`
