@@ -1,34 +1,40 @@
-﻿# Documentacion SaaS
+# SaaS Documentation
 
-Documentacion actual y minima para operar y evolucionar el repo principal `core + saas`.
+Canonical documentation for the MoneyPlanner SaaS stack.
 
-## Leer primero
-1. `docs/roadmap/roadmap.md` -> estado y direccion actual
-2. `docs/roadmap/core-v0-consolidation-parity-checklist.md` -> checklist operativo del piloto
-3. `docs/architecture/architecture.md` -> arquitectura actual del repo
-4. `docs/architecture/core-saas-boundaries.md` -> que vive en Core y que vive en SaaS
-5. `docs/operations/dev-setup.md` -> arranque, diagnostico y validacion local
+## Scope
+This documentation covers only SaaS-specific concerns:
 
-## Documentos activos
+1. SaaS architecture
+2. Core-to-SaaS integration boundaries
+3. SaaS capabilities and packaging
+4. SaaS local and cloud operations
+5. SaaS pilot and rollout planning
+
+Core product functionality is documented in `core/README.md` and `core/docs/README.md`.
+
+## Read First
+1. `architecture/architecture.md` -> current SaaS architecture
+2. `architecture/core-saas-boundaries.md` -> integration contract between Core and SaaS
+3. `architecture/capabilities-matrix.md` -> SaaS capabilities and packaging rules
+4. `operations/dev-setup.md` -> local setup, diagnostics, and validation
+5. `roadmap/roadmap.md` -> current SaaS roadmap
+6. `roadmap/saas-pilot-integration-checklist.md` -> pilot integration and readiness checklist
+
+## Active Documents
 1. `architecture/`
-   - arquitectura actual
-   - boundaries Core/SaaS
-   - capabilities
-   - taxonomias anuales
+   - SaaS architecture
+   - Core/SaaS integration boundaries
+   - capabilities and packaging
 2. `operations/`
-   - desarrollo y operacion local
-   - importacion portable
+   - local development and SaaS operations
 3. `roadmap/`
-   - roadmap activo
-   - checklist operativo del piloto
+   - SaaS roadmap
+   - pilot integration checklist
 4. `frontend/`
-   - guia visual y de UX
-   - playbook de iteracion
-   - workflow de sync CSS
-5. `scoring/`
-   - modelos de scoring de la guia financiera por fase
+   - SaaS frontend visual and UX guidance
 
-## Criterio de uso
-1. Priorizar siempre estos documentos frente a notas antiguas o historicas.
-2. Si cambia arquitectura, packaging o capabilities, actualizar primero la documentacion canonica.
-3. La documentacion del repo publico `core` debe mantenerse separada y autocontenida.
+## Usage Rule
+1. This directory is the canonical source for SaaS-specific documentation.
+2. Core product behavior must be documented in `core/docs/`.
+3. If a SaaS document needs to mention Core functionality, it should link to the corresponding Core document instead of duplicating it.
