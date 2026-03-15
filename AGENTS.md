@@ -24,6 +24,7 @@ Este repo contiene dos stacks coordinados:
    - Ajustar version segun el impacto real del cambio.
 5. Cerrar con trazabilidad.
    - Dejar claro que se cambio, que se valido y que queda pendiente si aplica.
+   - Al terminar cada feature o bloque funcional validado, crear un commit.
    - Usar Conventional Commits.
    - Indicar riesgos, deuda pendiente o validaciones no ejecutadas si las hubiera.
 
