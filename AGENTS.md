@@ -14,6 +14,7 @@ Este repo contiene dos stacks coordinados:
    - Priorizar cambios acotados, reversibles y faciles de validar.
    - Evitar refactors o limpiezas fuera de alcance salvo que desbloqueen el problema.
    - No duplicar logica entre Core y SaaS.
+   - Cuando se actualice funcionalidad en `core/frontend/`, replicar el cambio equivalente en `frontend/` salvo que el alcance sea explicitamente Core-only.
 3. Validar dentro de Docker.
    - Ejecutar calidad, typecheck y tests en contenedores del stack afectado.
    - Si el cambio toca integracion Core/SaaS, validar ambos lados.

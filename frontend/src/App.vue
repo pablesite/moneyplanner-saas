@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getSaasMe } from '@/domains/auth/accountApi';
 import { clearAuthTokens, hasAccessToken } from '@/domains/auth/session';
 
 type NavItem = {
@@ -133,25 +132,16 @@ watch(
 
 watch(
   hasToken,
-  async (tokenPresent) => {
+  (tokenPresent) => {
     if (!tokenPresent) {
       accountLabel.value = 'Mi cuenta';
       accountRole.value = '';
       accountPlan.value = '';
       return;
     }
-    try {
-      const res = await getSaasMe();
-      accountLabel.value = res.data.username;
-      accountRole.value = res.data.role === 'saas_admin' ? 'Admin' : 'Member';
-      accountPlan.value = res.data.subscription_status
-        ? `Plan ${res.data.subscription_status}`
-        : '';
-    } catch {
-      accountLabel.value = 'Mi cuenta';
-      accountRole.value = '';
-      accountPlan.value = '';
-    }
+    accountLabel.value = 'Mi cuenta';
+    accountRole.value = '';
+    accountPlan.value = '';
   },
   { immediate: true },
 );

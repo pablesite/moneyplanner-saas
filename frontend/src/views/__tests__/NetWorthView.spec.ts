@@ -19,8 +19,41 @@ vi.mock('@/domains/net-worth', () => ({
   ItemForm: makeStub('ItemForm'),
   ItemList: makeStub('ItemList'),
   NetWorthByCategoryBar: makeStub('NetWorthByCategoryBar'),
-  NetWorthDonut: makeStub('NetWorthDonut'),
   NetWorthTimelineChart: makeStub('NetWorthTimelineChart'),
+  NetWorthDonut: defineComponent({
+    name: 'NetWorthDonut',
+    props: {
+      showComposition: { type: Boolean, required: false, default: true },
+    },
+    emits: ['select-category', 'add-type'],
+    template: `
+      <div data-test="NetWorthDonut">
+        <template v-if="showComposition">
+          <button
+            data-test="donut-select-asset"
+            type="button"
+            @click="$emit('select-category', { key: 'cash', type: 'asset' })"
+          >
+            asset
+          </button>
+          <button
+            data-test="donut-select-liability"
+            type="button"
+            @click="$emit('select-category', { key: 'mortgage', type: 'liability' })"
+          >
+            liability
+          </button>
+          <button
+            data-test="donut-add-asset"
+            type="button"
+            @click="$emit('add-type', { type: 'asset' })"
+          >
+            add-asset
+          </button>
+        </template>
+      </div>
+    `,
+  }),
   SettingsPopover: makeStub('SettingsPopover'),
   useNetWorthViewState: () => mockUseNetWorthViewState(),
   useNetWorthViewExtensions: () => mockUseNetWorthViewExtensions(),
@@ -32,6 +65,7 @@ vi.mock('@/domains/ui', () => ({
     props: {
       open: { type: Boolean, required: true },
       title: { type: String, required: false, default: '' },
+      panelClass: { type: String, required: false, default: '' },
     },
     template: '<div><slot v-if="open" /></div>',
   }),
@@ -54,6 +88,7 @@ function makeState(overrides: Record<string, unknown> = {}) {
     assets: [],
     liabilities: [],
     snapshots: [],
+    ownerships: [],
     timeline: { rows: [], base_currency: 'EUR' },
     timelineLoading: false,
     positionTimeline: { rows: [], base_currency: 'EUR', position_type: 'asset', position_id: 1 },
@@ -72,8 +107,10 @@ function makeState(overrides: Record<string, unknown> = {}) {
     updateBaseCurrency: vi.fn(),
     updateAsset: vi.fn(),
     archiveAsset: vi.fn(),
+    deleteAsset: vi.fn(),
     updateLiability: vi.fn(),
     archiveLiability: vi.fn(),
+    deleteLiability: vi.fn(),
   };
 
   return {
@@ -142,19 +179,89 @@ describe('NetWorthView', () => {
 
     expect(wrapper.text()).toContain('Patrimonio');
     expect(wrapper.text()).toContain('Patrimonio neto');
-    expect(wrapper.text()).toContain('Evolucion temporal');
-    expect(wrapper.text()).toContain('Detalle por posicion');
-    expect(wrapper.text()).toContain('Elige una posicion para inspeccionar su curva temporal');
-    expect(wrapper.text()).toContain('Capital propio sobre activos');
-    expect(wrapper.text()).toContain('Ratio deuda / activos');
+    expect(wrapper.find('select.ui-nw-position-select-input').exists()).toBe(false);
+    expect(wrapper.text()).toContain('Activos');
+    expect(wrapper.text()).toContain('Pasivos');
     expect(wrapper.find('[data-test="NetWorthDonut"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('No hay snapshots');
   });
 
-  it('wires header actions and snapshot deletion callback', async () => {
+  it('filters current net worth metrics by ownership from the header selector', async () => {
+    const baseState = makeState();
     const state = makeState({
       store: {
-        ...makeState().store,
+        ...baseState.store,
+        ownerships: [
+          {
+            id: 7,
+            kind: 'shared',
+            member: null,
+            splits: [
+              { member: { id: 3, name: 'Ana', role: 'adult' }, percent: '60' },
+              { member: { id: 4, name: 'Lucas', role: 'adult' }, percent: '40' },
+            ],
+            notes: '',
+          },
+        ],
+        assets: [
+          {
+            id: 11,
+            name: 'Cuenta Ana',
+            category: 'cash',
+            subcategory: 'bank_account',
+            amount: '1000',
+            amount_base: '1000',
+            currency: 'EUR',
+            is_active: true,
+            ownership_ref: 7,
+          },
+          {
+            id: 12,
+            name: 'Cuenta comun',
+            category: 'cash',
+            subcategory: 'bank_account',
+            amount: '200',
+            amount_base: '200',
+            currency: 'EUR',
+            is_active: true,
+            ownership_ref: null,
+          },
+        ],
+        liabilities: [
+          {
+            id: 21,
+            name: 'Tarjeta Ana',
+            category: 'credit_card',
+            amount: '500',
+            amount_base: '500',
+            currency: 'EUR',
+            is_active: true,
+            ownership_ref: 7,
+          },
+        ],
+      },
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({
+      HeaderActions: null,
+      itemFormProps: {},
+      itemListProps: {},
+    });
+
+    const wrapper = mount(NetWorthView);
+
+    await wrapper.get('[data-test="ownership-filter-option-3"]').trigger('click');
+
+    expect(wrapper.text()).toContain('300,00 €');
+    expect(wrapper.text()).toContain('600,00 €');
+    expect(wrapper.text()).toContain('Ana');
+  });
+
+  it('wires header actions and snapshot deletion callback', async () => {
+    const baseState = makeState();
+    const state = makeState({
+      store: {
+        ...baseState.store,
         snapshots: [
           {
             id: 5,
@@ -192,10 +299,23 @@ describe('NetWorthView', () => {
     expect(state.confirmDeleteSnapshot).toHaveBeenCalledWith(5);
   });
 
-  it('requests timeline when changing the category filter', async () => {
+  it('requests timeline when selecting an asset category from composition', async () => {
+    const baseState = makeState();
     const state = makeState({
       store: {
-        ...makeState().store,
+        ...baseState.store,
+        assets: [
+          {
+            id: 11,
+            name: 'Cuenta nomina',
+            category: 'cash',
+            subcategory: 'bank_account',
+            amount: '1000',
+            amount_base: '1000',
+            currency: 'EUR',
+            is_active: true,
+          },
+        ],
         timeline: {
           base_currency: 'EUR',
           rows: [
@@ -219,14 +339,49 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
 
-    await wrapper.get('button.ui-nw-timeline-filter').trigger('click');
-    expect(state.store.fetchTimeline).toHaveBeenCalledWith(null, 'asset');
+    await wrapper.get('[data-test="donut-select-asset"]').trigger('click');
+
+    expect(state.store.fetchTimeline).toHaveBeenCalledWith('cash', 'asset');
+    expect(wrapper.find('select.ui-nw-position-select-input').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Liquidez dentro de activos');
+    expect(wrapper.text()).toContain('1 posiciones');
   });
 
-  it('requests liability timeline when selecting a liability category filter', async () => {
+  it('opens the asset modal from composition actions', async () => {
+    const state = makeState({
+      showAssetModal: ref(false),
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({
+      HeaderActions: null,
+      itemFormProps: {},
+      itemListProps: {},
+    });
+
+    const wrapper = mount(NetWorthView);
+
+    await wrapper.get('[data-test="donut-add-asset"]').trigger('click');
+
+    expect(state.showAssetModal.value).toBe(true);
+    expect(wrapper.find('[data-test="ItemForm"]').exists()).toBe(true);
+  });
+
+  it('requests liability timeline when selecting a liability category from composition', async () => {
+    const baseState = makeState();
     const state = makeState({
       store: {
-        ...makeState().store,
+        ...baseState.store,
+        liabilities: [
+          {
+            id: 21,
+            name: 'Hipoteca casa',
+            category: 'mortgage',
+            amount: '250',
+            amount_base: '250',
+            currency: 'EUR',
+            is_active: true,
+          },
+        ],
         timeline: {
           base_currency: 'EUR',
           rows: [
@@ -249,19 +404,17 @@ describe('NetWorthView', () => {
     });
 
     const wrapper = mount(NetWorthView);
-    const liabilityFilter = wrapper
-      .findAll('button.ui-nw-timeline-filter')
-      .find((button) => button.text().includes('Pasivos'));
 
-    expect(liabilityFilter).toBeTruthy();
-    await liabilityFilter!.trigger('click');
+    await wrapper.get('[data-test="donut-select-liability"]').trigger('click');
+
     expect(state.store.fetchTimeline).toHaveBeenCalledWith('mortgage', 'liability');
   });
 
-  it('fetches per-position timeline when selecting an asset', async () => {
+  it('fetches per-position timeline when selecting an asset from the integrated selector', async () => {
+    const baseState = makeState();
     const state = makeState({
       store: {
-        ...makeState().store,
+        ...baseState.store,
         assets: [
           {
             id: 11,
@@ -288,15 +441,49 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
 
-    await wrapper.get('button.ui-nw-position-button').trigger('click');
+    await wrapper.get('[data-test="donut-select-asset"]').trigger('click');
+    await wrapper.get('select.ui-nw-position-select-input').setValue('11');
+
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
     expect(state.store.fetchPositionActivity).toHaveBeenCalledWith('asset', 11, 'cash');
   });
 
-  it('opens the expanded timeline modal and updates the visible range', async () => {
+  it('renders euro amounts with the symbol in visible net worth sections', () => {
+    const baseState = makeState();
     const state = makeState({
       store: {
-        ...makeState().store,
+        ...baseState.store,
+        snapshots: [
+          {
+            id: 5,
+            snapshot_date: '2026-01-01',
+            net_worth: '750',
+            total_assets: '1000',
+            total_liabilities: '250',
+            base_currency: 'EUR',
+          },
+        ],
+      },
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({
+      HeaderActions: null,
+      itemFormProps: {},
+      itemListProps: {},
+    });
+
+    const wrapper = mount(NetWorthView);
+
+    expect(wrapper.text()).toContain('750,00 €');
+    expect(wrapper.text()).toContain('1.000,00 €');
+    expect(wrapper.text()).not.toContain('750,00 EUR');
+  });
+
+  it('opens the expanded timeline modal and updates the visible range', async () => {
+    const baseState = makeState();
+    const state = makeState({
+      store: {
+        ...baseState.store,
         timeline: {
           base_currency: 'EUR',
           rows: [
