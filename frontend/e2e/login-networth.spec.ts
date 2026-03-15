@@ -30,15 +30,6 @@ async function mockApi(page: Page) {
     if (path === '/api/family-members/' && method === 'GET') {
       return json(route, []);
     }
-    if (path === '/api/ownerships/' && method === 'GET') {
-      return json(route, []);
-    }
-    if (path === '/api/ownership-links/' && method === 'GET') {
-      return json(route, []);
-    }
-    if (path === '/api/ownership-links/sync/' && method === 'POST') {
-      return json(route, { ok: true, ownership_id: null });
-    }
     if (path === '/api/net-worth/summary/' && method === 'GET') {
       return json(route, {
         base_currency: 'EUR',
@@ -87,29 +78,28 @@ async function mockApi(page: Page) {
   });
 }
 
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('input[autocomplete="username"]').fill('demo');
-  await page.locator('input[autocomplete="current-password"]').fill('demo');
-  await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page).toHaveURL(/\/$/);
-}
-
 test.beforeEach(async ({ page }) => {
   await mockApi(page);
 });
 
 test('login redirects to net worth page', async ({ page }) => {
-  await login(page);
+  await page.goto('/login');
+  await page.locator('input[autocomplete="username"]').fill('demo');
+  await page.locator('input[autocomplete="current-password"]').fill('demo');
+  await page.getByRole('button', { name: 'Entrar' }).click();
 
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { name: 'Patrimonio' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Personas' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Datos auxiliares' })).toBeVisible();
 });
 
-test('premium flow navigates from net worth to people page', async ({ page }) => {
-  await login(page);
+test('net worth can navigate to auxiliary data page', async ({ page }) => {
+  await page.goto('/login');
+  await page.locator('input[autocomplete="username"]').fill('demo');
+  await page.locator('input[autocomplete="current-password"]').fill('demo');
+  await page.getByRole('button', { name: 'Entrar' }).click();
 
-  await page.getByRole('button', { name: 'Personas' }).click();
-  await expect(page).toHaveURL(/\/people$/);
-  await expect(page.getByRole('heading', { name: 'Personas' })).toBeVisible();
+  await page.getByRole('button', { name: 'Datos auxiliares' }).click();
+  await expect(page).toHaveURL(/\/data$/);
+  await expect(page.getByRole('heading', { name: 'Datos auxiliares' })).toBeVisible();
 });

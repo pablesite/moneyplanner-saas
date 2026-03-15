@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import {
@@ -16,6 +17,7 @@ type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 const props = withDefaults(defineProps<{ mode?: BudgetDashboardMode }>(), {
   mode: 'budget',
 });
+const route = useRoute();
 
 type ExpenseMonthlySummaryMonth = {
   month: number;
@@ -38,6 +40,9 @@ type ExpenseMonthlySummaryResponse = {
   months_with_checkins: number;
   has_executed_data: boolean;
 };
+
+type IncomeMonthlySummaryMonth = ExpenseMonthlySummaryMonth;
+type IncomeMonthlySummaryResponse = ExpenseMonthlySummaryResponse;
 
 type ExpenseMonthlyCheckinApiItem = {
   id: number;
@@ -197,12 +202,14 @@ const monthLabels = [
 ];
 const selectedExecutionMonth = ref(new Date().getMonth() + 1);
 const expenseMonthlySummary = ref<ExpenseMonthlySummaryResponse | null>(null);
+const incomeMonthlySummary = ref<IncomeMonthlySummaryResponse | null>(null);
 const expenseCheckinsByEntryId = ref<Record<number, ExpenseMonthlyCheckinApiItem>>({});
 const expenseExecutionLoading = ref(false);
 const expenseExecutionBusyEntryId = ref<number | null>(null);
 const expenseExecutionError = ref<string | null>(null);
 const expenseAdjustAmounts = ref<Record<number, string>>({});
 const incomeCheckinsByEntryId = ref<Record<number, IncomeMonthlyCheckinApiItem>>({});
+const incomeCheckinsByEntryMonth = ref<Record<string, IncomeMonthlyCheckinApiItem>>({});
 const incomeExecutionLoading = ref(false);
 const incomeExecutionBusyEntryId = ref<number | null>(null);
 const incomeExecutionError = ref<string | null>(null);
@@ -226,8 +233,16 @@ const expenseCategoryLabels = new Map(
 const expenseSubcategoryLabels = new Map(
   expenseSubcategories.map((row) => [row.value, row.label] as const),
 );
-const isMonthlyCloseView = computed(() => props.mode === 'monthly-close');
-const monthlyCloseFlowSteps = computed<{ id: MonthlyCloseStepId; label: string; subtitle: string }[]>(() => [
+const isMonthlyCloseView = computed(
+  () =>
+    props.mode === 'monthly-close' ||
+    route.name === 'monthly-close' ||
+    route.path === '/cierre-mensual' ||
+    route.path.startsWith('/cierre-mensual/'),
+);
+const monthlyCloseFlowSteps = computed<
+  { id: MonthlyCloseStepId; label: string; subtitle: string }[]
+>(() => [
   { id: 'liq', label: 'Liquidez', subtitle: 'Saldo real de cuentas' },
   { id: 'income', label: 'Ingresos', subtitle: 'Confirmar / ajustar' },
   { id: 'expense', label: 'Gastos', subtitle: 'Confirmar / ajustar' },
@@ -446,7 +461,10 @@ function monthlyPlannedAmountForExpenseEntry(
   return toNumberOrZero(entry.amountAnnual) / 12;
 }
 
-function monthlyPlannedAmountForIncomeEntry(entry: (typeof incomeEntries.value)[number], _month: number): number {
+function monthlyPlannedAmountForIncomeEntry(
+  entry: (typeof incomeEntries.value)[number],
+  _month: number,
+): number {
   if (entry.incomeType === 'one_off') return 0;
   return toNumberOrZero(entry.amountAnnual) / 12;
 }
@@ -454,6 +472,14 @@ function monthlyPlannedAmountForIncomeEntry(entry: (typeof incomeEntries.value)[
 const expenseSummaryByMonth = computed(() => {
   const map = new Map<number, ExpenseMonthlySummaryMonth>();
   for (const row of expenseMonthlySummary.value?.months ?? []) {
+    map.set(row.month, row);
+  }
+  return map;
+});
+
+const incomeSummaryByMonth = computed(() => {
+  const map = new Map<number, IncomeMonthlySummaryMonth>();
+  for (const row of incomeMonthlySummary.value?.months ?? []) {
     map.set(row.month, row);
   }
   return map;
@@ -484,9 +510,7 @@ const monthlyIncomeExecutionEntries = computed(() => {
         planned,
         checkin,
         executed:
-          checkin && checkin.status !== 'skipped'
-            ? toNumberOrZero(checkin.executed_amount)
-            : null,
+          checkin && checkin.status !== 'skipped' ? toNumberOrZero(checkin.executed_amount) : null,
       };
     })
     .filter((row) => row.planned > 0)
@@ -512,6 +536,38 @@ const selectedIncomeMonthCompletionRatio = computed(() => {
   return checked / total;
 });
 
+const incomeEvolutionMonths = computed(() => {
+  const rows = monthLabels.map((label, index) => {
+    const month = index + 1;
+    const summary = incomeSummaryByMonth.value.get(month);
+    const planned = toNumberOrZero(summary?.planned);
+    const executed = toNumberOrZero(summary?.executed);
+    return {
+      month,
+      label,
+      planned,
+      executed,
+      hasExecuted: (summary?.checkins_confirmed ?? 0) > 0 || executed > 0,
+    };
+  });
+  const maxMonthAmount = Math.max(1, ...rows.map((row) => Math.max(row.planned, row.executed)));
+  const toHeightPct = (value: number) => {
+    if (value <= 0) return 0;
+    return Math.max(6, Math.min(100, (value / maxMonthAmount) * 100));
+  };
+  return rows.map((row) => ({
+    ...row,
+    planHeightPct: toHeightPct(row.planned),
+    execHeightPct: toHeightPct(row.executed),
+  }));
+});
+
+const incomeEvolutionBaseMonthly = computed(() => {
+  if (incomeMonthlySummary.value)
+    return toNumberOrZero(incomeMonthlySummary.value.planned_total) / 12;
+  return plannedIncomeTotal.value / 12;
+});
+
 const selectedLiquidityMonthPlanned = computed(() =>
   toNumberOrZero(liquidityMonthlySummary.value?.planned_total),
 );
@@ -523,7 +579,10 @@ const selectedLiquidityMonthDeviation = computed(
 );
 const selectedLiquidityStartBase = computed(() => selectedLiquidityMonthPlanned.value);
 const selectedMonthlyCloseExpected = computed(
-  () => selectedLiquidityStartBase.value + selectedIncomeMonthExecuted.value - selectedExpenseMonthExecuted.value,
+  () =>
+    selectedLiquidityStartBase.value +
+    selectedIncomeMonthExecuted.value -
+    selectedExpenseMonthExecuted.value,
 );
 const selectedMonthlyCloseResidual = computed(
   () => selectedLiquidityMonthExecuted.value - selectedMonthlyCloseExpected.value,
@@ -534,7 +593,8 @@ const selectedMonthlyCloseCompletionRatio = computed(() => {
       ? (liquidityMonthlySummary.value?.completion_ratio ?? 0)
       : 1,
     selectedIncomeMonthCompletionRatio.value,
-    selectedExpenseSummaryMonth.value?.completion_ratio ?? (monthlyExpenseExecutionEntries.value.length ? 0 : 1),
+    selectedExpenseSummaryMonth.value?.completion_ratio ??
+      (monthlyExpenseExecutionEntries.value.length ? 0 : 1),
   ];
   return ratios.reduce((sum, r) => sum + r, 0) / ratios.length;
 });
@@ -562,9 +622,7 @@ const monthlyExpenseExecutionEntries = computed(() => {
         planned,
         checkin,
         executed:
-          checkin && checkin.status !== 'skipped'
-            ? toNumberOrZero(checkin.executed_amount)
-            : null,
+          checkin && checkin.status !== 'skipped' ? toNumberOrZero(checkin.executed_amount) : null,
       };
     })
     .filter((row) => row.planned > 0)
@@ -624,8 +682,7 @@ const groupedMonthlyExpenseExecutionEntries = computed(() => {
     .sort(
       (a, b) =>
         expenseCheckinCategorySortWeight(a.categoryKey) -
-          expenseCheckinCategorySortWeight(b.categoryKey) ||
-        b.plannedTotal - a.plannedTotal,
+          expenseCheckinCategorySortWeight(b.categoryKey) || b.plannedTotal - a.plannedTotal,
     );
 });
 
@@ -673,7 +730,10 @@ function buildMonthlyResultBreakdown<
     const subcategoryKey = row.entry.subcategory;
     const planned = Number.isFinite(row.planned) ? row.planned : 0;
     const executed =
-      row.checkin && row.checkin.status !== 'skipped' && row.executed != null && Number.isFinite(row.executed)
+      row.checkin &&
+      row.checkin.status !== 'skipped' &&
+      row.executed != null &&
+      Number.isFinite(row.executed)
         ? row.executed
         : 0;
     const isChecked = !!row.checkin;
@@ -774,6 +834,126 @@ const monthlyExpenseResultBreakdown = computed(() =>
     selectedExpenseMonthExecuted.value,
   ),
 );
+
+const selectedExecutionMonthLabel = computed(
+  () => monthLabels[selectedExecutionMonth.value - 1] ?? String(selectedExecutionMonth.value),
+);
+
+type BudgetActualAggregateRow = {
+  planned: number;
+  executed: number;
+  checkedCount: number;
+  expectedCount: number;
+};
+
+const incomeYtdActualByCategory = computed(() => {
+  const monthsCount = Math.max(0, Math.min(12, selectedExecutionMonth.value));
+  const map = new Map<string, BudgetActualAggregateRow>();
+  for (const entry of filteredIncomeEntries.value) {
+    if (entry.incomeType === 'one_off') continue;
+    const categoryKey = entry.category;
+    const monthlyPlanned = monthlyPlannedAmountForIncomeEntry(entry, selectedExecutionMonth.value);
+    let row = map.get(categoryKey);
+    if (!row) {
+      row = { planned: 0, executed: 0, checkedCount: 0, expectedCount: 0 };
+      map.set(categoryKey, row);
+    }
+    row.planned += monthlyPlanned * monthsCount;
+    row.expectedCount += monthsCount;
+    for (let month = 1; month <= monthsCount; month++) {
+      const checkin = incomeCheckinsByEntryMonth.value[incomeEntryMonthKey(entry.id, month)];
+      if (!checkin) continue;
+      row.checkedCount += 1;
+      if (checkin.status !== 'skipped') row.executed += toNumberOrZero(checkin.executed_amount);
+    }
+  }
+  return map;
+});
+
+const incomeYtdActualBySubcategoryKey = computed(() => {
+  const monthsCount = Math.max(0, Math.min(12, selectedExecutionMonth.value));
+  const map = new Map<string, BudgetActualAggregateRow>();
+  for (const entry of filteredIncomeEntries.value) {
+    if (entry.incomeType === 'one_off') continue;
+    const key = `${entry.category}::${entry.subcategory}`;
+    const monthlyPlanned = monthlyPlannedAmountForIncomeEntry(entry, selectedExecutionMonth.value);
+    let row = map.get(key);
+    if (!row) {
+      row = { planned: 0, executed: 0, checkedCount: 0, expectedCount: 0 };
+      map.set(key, row);
+    }
+    row.planned += monthlyPlanned * monthsCount;
+    row.expectedCount += monthsCount;
+    for (let month = 1; month <= monthsCount; month++) {
+      const checkin = incomeCheckinsByEntryMonth.value[incomeEntryMonthKey(entry.id, month)];
+      if (!checkin) continue;
+      row.checkedCount += 1;
+      if (checkin.status !== 'skipped') row.executed += toNumberOrZero(checkin.executed_amount);
+    }
+  }
+  return map;
+});
+
+type BudgetActualExecution = {
+  planned: number;
+  executed: number;
+  deviation: number;
+  completionRatio: number;
+  ratio: number;
+  widthPct: number;
+  tone: BudgetExecutionTone;
+  overflow: boolean;
+};
+
+function buildActualExecution(
+  sectionId: BudgetSectionModel['id'],
+  planned: number,
+  executed: number,
+  completionRatio: number,
+): BudgetActualExecution | null {
+  if (!Number.isFinite(planned) || planned <= 0) return null;
+  const ratio = executed / planned;
+  return {
+    planned,
+    executed,
+    deviation: executed - planned,
+    completionRatio,
+    ratio,
+    widthPct: ratio <= 0 ? 0 : clamp(ratio * 100, 4, 100),
+    tone: executionToneFor(sectionId, ratio),
+    overflow: ratio > 1,
+  };
+}
+
+function budgetCategoryActualExecution(
+  sectionId: BudgetSectionModel['id'],
+  categoryKey: string,
+): BudgetActualExecution | null {
+  if (sectionId !== 'income') return null;
+  const row = incomeYtdActualByCategory.value.get(categoryKey);
+  if (!row) return null;
+  return buildActualExecution(
+    sectionId,
+    row.planned,
+    row.executed,
+    row.expectedCount > 0 ? row.checkedCount / row.expectedCount : 0,
+  );
+}
+
+function budgetSubcategoryActualExecution(
+  sectionId: BudgetSectionModel['id'],
+  rowKey: string,
+): BudgetActualExecution | null {
+  if (sectionId !== 'income') return null;
+  const row = incomeYtdActualBySubcategoryKey.value.get(rowKey);
+  if (!row) return null;
+  return buildActualExecution(
+    sectionId,
+    row.planned,
+    row.executed,
+    row.expectedCount > 0 ? row.checkedCount / row.expectedCount : 0,
+  );
+}
 
 const selectedMonthlyExecutedVolume = computed(
   () => selectedIncomeMonthExecuted.value + selectedExpenseMonthExecuted.value,
@@ -1119,12 +1299,49 @@ async function refreshBudgetData(year = fiscalYear.value): Promise<void> {
 
 async function loadIncomeCheckinsForSelectedMonth(): Promise<void> {
   try {
-    const response = await coreApi.get<IncomeMonthlyCheckinApiItem[]>('/api/budget/annual-income-checkins/', {
-      params: { year: fiscalYear.value, month: selectedExecutionMonth.value },
-    });
+    const response = await coreApi.get<IncomeMonthlyCheckinApiItem[]>(
+      '/api/budget/annual-income-checkins/',
+      {
+        params: { year: fiscalYear.value, month: selectedExecutionMonth.value },
+      },
+    );
     const nextMap: Record<number, IncomeMonthlyCheckinApiItem> = {};
     for (const row of response.data ?? []) nextMap[row.annual_income_entry_id] = row;
     incomeCheckinsByEntryId.value = nextMap;
+  } catch (e: unknown) {
+    incomeExecutionError.value = toApiErrorMessage(e);
+  }
+}
+
+function incomeEntryMonthKey(entryId: number, month: number): string {
+  return `${entryId}:${month}`;
+}
+
+async function loadIncomeCheckinsForYear(): Promise<void> {
+  try {
+    const response = await coreApi.get<IncomeMonthlyCheckinApiItem[]>(
+      '/api/budget/annual-income-checkins/',
+      {
+        params: { year: fiscalYear.value },
+      },
+    );
+    const nextMap: Record<string, IncomeMonthlyCheckinApiItem> = {};
+    for (const row of response.data ?? []) {
+      nextMap[incomeEntryMonthKey(row.annual_income_entry_id, row.month)] = row;
+    }
+    incomeCheckinsByEntryMonth.value = nextMap;
+  } catch (e: unknown) {
+    incomeExecutionError.value = toApiErrorMessage(e);
+  }
+}
+
+async function loadIncomeExecutionSummary(year = fiscalYear.value): Promise<void> {
+  try {
+    const response = await coreApi.get<IncomeMonthlySummaryResponse>(
+      '/api/budget/annual-income/monthly-summary/',
+      { params: { year } },
+    );
+    incomeMonthlySummary.value = response.data ?? null;
   } catch (e: unknown) {
     incomeExecutionError.value = toApiErrorMessage(e);
   }
@@ -1134,7 +1351,11 @@ async function refreshIncomeExecutionData(): Promise<void> {
   incomeExecutionLoading.value = true;
   incomeExecutionError.value = null;
   try {
-    await loadIncomeCheckinsForSelectedMonth();
+    await Promise.all([
+      loadIncomeExecutionSummary(),
+      loadIncomeCheckinsForYear(),
+      loadIncomeCheckinsForSelectedMonth(),
+    ]);
   } finally {
     incomeExecutionLoading.value = false;
   }
@@ -1154,9 +1375,12 @@ async function loadExpenseExecutionSummary(year = fiscalYear.value): Promise<voi
 
 async function loadExpenseCheckinsForSelectedMonth(): Promise<void> {
   try {
-    const response = await coreApi.get<ExpenseMonthlyCheckinApiItem[]>('/api/budget/annual-expense-checkins/', {
-      params: { year: fiscalYear.value, month: selectedExecutionMonth.value },
-    });
+    const response = await coreApi.get<ExpenseMonthlyCheckinApiItem[]>(
+      '/api/budget/annual-expense-checkins/',
+      {
+        params: { year: fiscalYear.value, month: selectedExecutionMonth.value },
+      },
+    );
     const nextMap: Record<number, ExpenseMonthlyCheckinApiItem> = {};
     for (const row of response.data ?? []) {
       nextMap[row.annual_expense_entry_id] = row;
@@ -1177,7 +1401,9 @@ async function refreshExpenseExecutionData(): Promise<void> {
   }
 }
 
-function suggestedExecutedAmountForRow(row: (typeof monthlyExpenseExecutionEntries.value)[number]): string {
+function suggestedExecutedAmountForRow(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+): string {
   if (row.checkin?.status === 'skipped') return '0.00';
   if (row.executed != null) return row.executed.toFixed(2);
   return row.planned.toFixed(2);
@@ -1207,24 +1433,32 @@ function checkinStatusLabel(
   return 'No ocurrió';
 }
 
-function incomeCheckinRowSummary(row: (typeof monthlyIncomeExecutionEntries.value)[number]): string {
+function incomeCheckinRowSummary(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+): string {
   const subcategory = incomeSubcategoryLabels.get(row.entry.subcategory) ?? row.entry.subcategory;
   return `${subcategory} · ${row.entry.name}`;
 }
 
-function suggestedIncomeExecutedAmountForRow(row: (typeof monthlyIncomeExecutionEntries.value)[number]): string {
+function suggestedIncomeExecutedAmountForRow(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+): string {
   if (row.checkin?.status === 'skipped') return '0.00';
   if (row.executed != null) return row.executed.toFixed(2);
   return row.planned.toFixed(2);
 }
 
-function ensureIncomeAdjustAmountPrefilled(row: (typeof monthlyIncomeExecutionEntries.value)[number]): void {
+function ensureIncomeAdjustAmountPrefilled(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+): void {
   const current = String(incomeAdjustAmounts.value[row.entry.id] ?? '').trim();
   if (current) return;
   incomeAdjustAmounts.value[row.entry.id] = suggestedIncomeExecutedAmountForRow(row);
 }
 
-async function clearIncomeCheckin(row: (typeof monthlyIncomeExecutionEntries.value)[number]): Promise<void> {
+async function clearIncomeCheckin(
+  row: (typeof monthlyIncomeExecutionEntries.value)[number],
+): Promise<void> {
   const existing = incomeCheckinsByEntryId.value[row.entry.id];
   if (!existing) return;
   incomeExecutionBusyEntryId.value = row.entry.id;
@@ -1260,7 +1494,8 @@ async function upsertIncomeCheckin(
       executed_amount: parsed.toFixed(2),
     };
     const existing = incomeCheckinsByEntryId.value[row.entry.id];
-    if (existing) await coreApi.patch(`/api/budget/annual-income-checkins/${existing.id}/`, payload);
+    if (existing)
+      await coreApi.patch(`/api/budget/annual-income-checkins/${existing.id}/`, payload);
     else await coreApi.post('/api/budget/annual-income-checkins/', payload);
     await refreshIncomeExecutionData();
   } catch (e: unknown) {
@@ -1320,7 +1555,9 @@ function shortExpenseCategoryLabel(category: string): string {
   if (category === 'consumption_expenses') return 'Gastos';
   if (category === 'financial_investments') return 'Inv. Fin';
   if (category === 'savings_allocation') return 'Ahorro';
-  return expenseCategoryLabels.get(category as (typeof expenseCategories)[number]['value']) ?? category;
+  return (
+    expenseCategoryLabels.get(category as (typeof expenseCategories)[number]['value']) ?? category
+  );
 }
 
 function expenseCheckinCategorySortWeight(category: string): number {
@@ -1336,7 +1573,9 @@ function amountsEqualCents(left: number, right: number): boolean {
   return Math.round(left * 100) === Math.round(right * 100);
 }
 
-function expenseCheckinRowSummary(row: (typeof monthlyExpenseExecutionEntries.value)[number]): string {
+function expenseCheckinRowSummary(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+): string {
   const name = cleanedExpenseCheckinName(row.entry.name);
   const subcategory = expenseSubcategoryLabels.get(row.entry.subcategory) ?? row.entry.subcategory;
   return `${subcategory} · ${name}`;
@@ -1359,7 +1598,9 @@ async function clearExpenseCheckin(
   }
 }
 
-function setExpenseAdjustAmountZero(row: (typeof monthlyExpenseExecutionEntries.value)[number]): void {
+function setExpenseAdjustAmountZero(
+  row: (typeof monthlyExpenseExecutionEntries.value)[number],
+): void {
   expenseAdjustAmounts.value[row.entry.id] = '0.00';
 }
 
@@ -1387,8 +1628,7 @@ async function saveExpenseCheckinFromInput(
   const rawAdjusted = String(expenseAdjustAmounts.value[row.entry.id] ?? '').trim();
   const parsedAdjusted = parseDecimalInput(rawAdjusted);
   if (parsedAdjusted == null) {
-    expenseExecutionError.value =
-      'Indica un importe valido para confirmar (por ejemplo 123,45).';
+    expenseExecutionError.value = 'Indica un importe valido para confirmar (por ejemplo 123,45).';
     return;
   }
   expenseAdjustAmounts.value[row.entry.id] = parsedAdjusted.toFixed(2);
@@ -1453,7 +1693,9 @@ function shortLiquiditySubcategoryLabel(subcategory: string): string {
   return 'Liquidez';
 }
 
-function liquidityCheckinRowSummary(row: (typeof monthlyLiquidityExecutionRows.value)[number]): string {
+function liquidityCheckinRowSummary(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): string {
   return `${shortLiquiditySubcategoryLabel(row.asset_subcategory)} · ${row.asset_name}`;
 }
 
@@ -1510,7 +1752,9 @@ async function clearLiquidityCheckin(
   }
 }
 
-function setLiquidityAdjustAmountZero(row: (typeof monthlyLiquidityExecutionRows.value)[number]): void {
+function setLiquidityAdjustAmountZero(
+  row: (typeof monthlyLiquidityExecutionRows.value)[number],
+): void {
   liquidityAdjustAmounts.value[row.asset_id] = '0.00';
 }
 
@@ -1541,7 +1785,8 @@ async function upsertLiquidityCheckin(
     const rawAdjusted = String(liquidityAdjustAmounts.value[row.asset_id] ?? '').trim();
     const parsedAdjusted = parseDecimalInput(rawAdjusted);
     if (parsedAdjusted == null) {
-      liquidityExecutionError.value = 'Indica un saldo válido para confirmar (por ejemplo 1234,56).';
+      liquidityExecutionError.value =
+        'Indica un saldo válido para confirmar (por ejemplo 1234,56).';
       return;
     }
     liquidityAdjustAmounts.value[row.asset_id] = parsedAdjusted.toFixed(2);
@@ -1663,14 +1908,19 @@ watch(
           <p class="ui-pro-kicker">Cierre mensual</p>
           <h1 class="ui-budget-title">Flujo de cierre mensual</h1>
           <p class="ui-budget-subtitle">
-            Empieza por la liquidez real, luego confirma ingresos y gastos, y termina revisando el residual contable.
+            Empieza por la liquidez real, luego confirma ingresos y gastos, y termina revisando el
+            residual contable.
           </p>
         </div>
         <div class="ui-budget-checkin-controls">
           <label>
             <span>Mes</span>
             <select v-model="selectedExecutionMonth" class="select ui-data-field">
-              <option v-for="(label, index) in monthLabels" :key="`close-${label}`" :value="index + 1">
+              <option
+                v-for="(label, index) in monthLabels"
+                :key="`close-${label}`"
+                :value="index + 1"
+              >
                 {{ label }}
               </option>
             </select>
@@ -1689,7 +1939,9 @@ watch(
             <strong>{{ index + 1 }}. {{ step.label }}</strong>
             <span>{{ step.subtitle }}</span>
           </button>
-          <div v-if="index < monthlyCloseFlowSteps.length - 1" class="ui-monthly-close-arrow">→</div>
+          <div v-if="index < monthlyCloseFlowSteps.length - 1" class="ui-monthly-close-arrow">
+            →
+          </div>
         </template>
       </div>
     </section>
@@ -1821,25 +2073,42 @@ watch(
     </div>
 
     <section
-      v-if="!isMonthlyCloseView || (isMonthlyCloseView && activeMonthlyCloseStep === 'expense')"
+      v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'expense'"
       class="card ui-pro-panel ui-budget-checkin mt-3"
     >
       <div class="ui-budget-checkin-header">
         <div>
           <div v-if="isMonthlyCloseView" class="ui-monthly-close-step-headline">
-            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">←</button>
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              @click="goToPreviousMonthlyCloseStep()"
+            >
+              ←
+            </button>
             <h2 class="ui-budget-checkin-title">Paso 3 · Check-in mensual de gastos</h2>
-            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToNextMonthlyCloseStep()">→</button>
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              @click="goToNextMonthlyCloseStep()"
+            >
+              →
+            </button>
           </div>
           <h2 v-else class="ui-budget-checkin-title">Check-in mensual de gastos</h2>
           <p class="ui-budget-checkin-subtitle">
-            Cierre mensual rápido de `Gastos` (14C v1). `Ingresos` se integrará después con el mismo patrón.
+            Cierre mensual rápido de `Gastos` (14C v1). `Ingresos` se integrará después con el mismo
+            patrón.
           </p>
         </div>
         <div v-if="!isMonthlyCloseView" class="ui-budget-checkin-controls">
           <label>
             <span>Mes</span>
-            <select v-model="selectedExecutionMonth" class="select ui-data-field" :disabled="expenseExecutionLoading">
+            <select
+              v-model="selectedExecutionMonth"
+              class="select ui-data-field"
+              :disabled="expenseExecutionLoading"
+            >
               <option v-for="(label, index) in monthLabels" :key="label" :value="index + 1">
                 {{ label }}
               </option>
@@ -1866,12 +2135,15 @@ watch(
         >
           <span>Desviación del mes</span>
           <strong>
-            {{ selectedExpenseMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedExpenseMonthDeviation) }} €
+            {{ selectedExpenseMonthDeviation > 0 ? '+' : ''
+            }}{{ formatMoney(selectedExpenseMonthDeviation) }} €
           </strong>
         </article>
         <article class="ui-budget-checkin-kpi">
           <span>Completitud</span>
-          <strong>{{ formatPercent(selectedExpenseSummaryMonth?.completion_ratio ?? null, 0) }}</strong>
+          <strong>{{
+            formatPercent(selectedExpenseSummaryMonth?.completion_ratio ?? null, 0)
+          }}</strong>
         </article>
       </div>
 
@@ -1891,8 +2163,8 @@ watch(
               <div class="ui-budget-checkin-group-title-wrap">
                 <strong class="ui-budget-checkin-group-title">{{ group.categoryLabel }}</strong>
                 <span class="ui-budget-checkin-group-meta">
-                  {{ group.rows.length }} líneas ·
-                  {{ Math.round(group.completionRatio * 100) }} % completitud
+                  {{ group.rows.length }} líneas · {{ Math.round(group.completionRatio * 100) }} %
+                  completitud
                 </span>
               </div>
               <div class="ui-budget-checkin-group-kpis">
@@ -1986,7 +2258,7 @@ watch(
     </section>
 
     <section
-      v-if="!isMonthlyCloseView || (isMonthlyCloseView && activeMonthlyCloseStep === 'liq')"
+      v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'liq'"
       class="card ui-pro-panel ui-budget-checkin mt-3"
     >
       <div class="ui-budget-checkin-header">
@@ -2001,7 +2273,13 @@ watch(
               ←
             </button>
             <h2 class="ui-budget-checkin-title">Paso 1 · Cierre de liquidez</h2>
-            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToNextMonthlyCloseStep()">→</button>
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              @click="goToNextMonthlyCloseStep()"
+            >
+              →
+            </button>
           </div>
           <h2 v-else class="ui-budget-checkin-title">Cierre de liquidez</h2>
           <p class="ui-budget-checkin-subtitle">
@@ -2016,7 +2294,11 @@ watch(
               class="select ui-data-field"
               :disabled="liquidityExecutionLoading"
             >
-              <option v-for="(label, index) in monthLabels" :key="`liq-${label}`" :value="index + 1">
+              <option
+                v-for="(label, index) in monthLabels"
+                :key="`liq-${label}`"
+                :value="index + 1"
+              >
                 {{ label }}
               </option>
             </select>
@@ -2042,7 +2324,8 @@ watch(
         >
           <span>Desviación liquidez</span>
           <strong>
-            {{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €
+            {{ selectedLiquidityMonthDeviation > 0 ? '+' : ''
+            }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €
           </strong>
         </article>
         <article class="ui-budget-checkin-kpi">
@@ -2063,7 +2346,8 @@ watch(
                 <strong class="ui-budget-checkin-group-title">Activos líquidos</strong>
                 <span class="ui-budget-checkin-group-meta">
                   {{ monthlyLiquidityExecutionRows.length }} cuentas ·
-                  {{ formatPercent(liquidityMonthlySummary?.completion_ratio ?? null, 0) }} completitud
+                  {{ formatPercent(liquidityMonthlySummary?.completion_ratio ?? null, 0) }}
+                  completitud
                 </span>
               </div>
               <div class="ui-budget-checkin-group-kpis">
@@ -2075,7 +2359,8 @@ watch(
                     'ui-budget-checkin-group-dev-neg': selectedLiquidityMonthDeviation < 0,
                   }"
                 >
-                  D {{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €
+                  D {{ selectedLiquidityMonthDeviation > 0 ? '+' : ''
+                  }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €
                 </span>
               </div>
             </div>
@@ -2090,13 +2375,15 @@ watch(
                   <div class="ui-budget-checkin-row-title" :title="liquidityCheckinRowSummary(row)">
                     {{ liquidityCheckinRowSummary(row) }}
                     <span class="ui-budget-checkin-row-planned">
-                      (Referencia {{ formatMoney(row.planned) }} {{ row.currency === 'EUR' ? '€' : row.currency }})
+                      (Referencia {{ formatMoney(row.planned) }}
+                      {{ row.currency === 'EUR' ? '€' : row.currency }})
                     </span>
                   </div>
                   <div v-if="row.checkin" class="ui-budget-checkin-row-state">
                     <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
                     <template v-if="row.executed != null">
-                      ({{ formatMoney(row.executed) }} {{ row.currency === 'EUR' ? '€' : row.currency }})
+                      ({{ formatMoney(row.executed) }}
+                      {{ row.currency === 'EUR' ? '€' : row.currency }})
                     </template>
                   </div>
                 </div>
@@ -2161,12 +2448,25 @@ watch(
       <div class="ui-budget-checkin-header">
         <div>
           <div class="ui-monthly-close-step-headline">
-            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">&larr;</button>
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              @click="goToPreviousMonthlyCloseStep()"
+            >
+              &larr;
+            </button>
             <h2 class="ui-budget-checkin-title">Paso 2 ? Check-in mensual de ingresos</h2>
-            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToNextMonthlyCloseStep()">&rarr;</button>
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              @click="goToNextMonthlyCloseStep()"
+            >
+              &rarr;
+            </button>
           </div>
           <p class="ui-budget-checkin-subtitle">
-            Confirma o ajusta ingresos recurrentes del mes. Los puntuales se integraran cuando tengan mes objetivo.
+            Confirma o ajusta ingresos recurrentes del mes. Los puntuales se integraran cuando
+            tengan mes objetivo.
           </p>
         </div>
       </div>
@@ -2179,9 +2479,18 @@ watch(
           <span>Ejecutado mes</span>
           <strong>{{ formatMoney(selectedIncomeMonthExecuted) }} €</strong>
         </article>
-        <article class="ui-budget-checkin-kpi" :class="{ 'ui-budget-checkin-kpi-good': selectedIncomeMonthDeviation > 0, 'ui-budget-checkin-kpi-danger': selectedIncomeMonthDeviation < 0 }">
+        <article
+          class="ui-budget-checkin-kpi"
+          :class="{
+            'ui-budget-checkin-kpi-good': selectedIncomeMonthDeviation > 0,
+            'ui-budget-checkin-kpi-danger': selectedIncomeMonthDeviation < 0,
+          }"
+        >
           <span>Desviacion del mes</span>
-          <strong>{{ selectedIncomeMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedIncomeMonthDeviation) }} €</strong>
+          <strong
+            >{{ selectedIncomeMonthDeviation > 0 ? '+' : ''
+            }}{{ formatMoney(selectedIncomeMonthDeviation) }} €</strong
+          >
         </article>
         <article class="ui-budget-checkin-kpi">
           <span>Completitud</span>
@@ -2190,43 +2499,97 @@ watch(
       </div>
       <div class="ui-budget-checkin-list">
         <div v-if="incomeExecutionLoading" class="subtle">Cargando check-ins de ingresos...</div>
-        <div v-else-if="incomeExecutionError" class="subtle text-red-400">{{ incomeExecutionError }}</div>
-        <div v-else-if="!monthlyIncomeExecutionEntries.length" class="subtle">No hay ingresos recurrentes previstos para este mes.</div>
+        <div v-else-if="incomeExecutionError" class="subtle text-red-400">
+          {{ incomeExecutionError }}
+        </div>
+        <div v-else-if="!monthlyIncomeExecutionEntries.length" class="subtle">
+          No hay ingresos recurrentes previstos para este mes.
+        </div>
         <div v-else class="ui-budget-checkin-groups-box">
           <div class="ui-budget-checkin-group">
             <div class="ui-budget-checkin-group-summary">
               <div class="ui-budget-checkin-group-title-wrap">
                 <strong class="ui-budget-checkin-group-title">Ingresos recurrentes</strong>
-                <span class="ui-budget-checkin-group-meta">{{ monthlyIncomeExecutionEntries.length }} lineas · {{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }} completitud</span>
+                <span class="ui-budget-checkin-group-meta"
+                  >{{ monthlyIncomeExecutionEntries.length }} lineas ·
+                  {{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }} completitud</span
+                >
               </div>
               <div class="ui-budget-checkin-group-kpis">
                 <span>P {{ formatMoney(selectedIncomeMonthPlanned) }} €</span>
                 <span>E {{ formatMoney(selectedIncomeMonthExecuted) }} €</span>
-                <span :class="{ 'ui-budget-checkin-group-dev-pos': selectedIncomeMonthDeviation > 0, 'ui-budget-checkin-group-dev-neg': selectedIncomeMonthDeviation < 0 }">D {{ selectedIncomeMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedIncomeMonthDeviation) }} €</span>
+                <span
+                  :class="{
+                    'ui-budget-checkin-group-dev-pos': selectedIncomeMonthDeviation > 0,
+                    'ui-budget-checkin-group-dev-neg': selectedIncomeMonthDeviation < 0,
+                  }"
+                  >D {{ selectedIncomeMonthDeviation > 0 ? '+' : ''
+                  }}{{ formatMoney(selectedIncomeMonthDeviation) }} €</span
+                >
               </div>
             </div>
             <div class="ui-budget-checkin-group-rows">
-              <article v-for="row in monthlyIncomeExecutionEntries" :key="`income-checkin-${row.entry.id}`" class="ui-budget-checkin-row">
+              <article
+                v-for="row in monthlyIncomeExecutionEntries"
+                :key="`income-checkin-${row.entry.id}`"
+                class="ui-budget-checkin-row"
+              >
                 <div class="ui-budget-checkin-row-main">
                   <div class="ui-budget-checkin-row-title" :title="incomeCheckinRowSummary(row)">
                     {{ incomeCheckinRowSummary(row) }}
-                    <span class="ui-budget-checkin-row-planned">(Previsto {{ formatMoney(row.planned) }} €)</span>
+                    <span class="ui-budget-checkin-row-planned"
+                      >(Previsto {{ formatMoney(row.planned) }} €)</span
+                    >
                   </div>
                   <div v-if="row.checkin" class="ui-budget-checkin-row-state">
                     <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
-                    <template v-if="row.checkin.status !== 'skipped' && row.executed != null">({{ formatMoney(row.executed) }} €)</template>
+                    <template v-if="row.checkin.status !== 'skipped' && row.executed != null"
+                      >({{ formatMoney(row.executed) }} €)</template
+                    >
                   </div>
                 </div>
                 <div class="ui-budget-checkin-row-actions">
                   <div class="ui-budget-checkin-adjust">
                     <div class="ui-budget-checkin-quick-actions">
-                      <button type="button" class="btn ui-budget-checkin-mini-btn" :disabled="incomeExecutionBusyEntryId === row.entry.id" @click="resetIncomeCheckinDraftValue(row, 'zero')">Borrar</button>
-                      <button type="button" class="btn ui-budget-checkin-mini-btn" :disabled="incomeExecutionBusyEntryId === row.entry.id" @click="resetIncomeCheckinDraftValue(row, 'planned')">Previsto</button>
+                      <button
+                        type="button"
+                        class="btn ui-budget-checkin-mini-btn"
+                        :disabled="incomeExecutionBusyEntryId === row.entry.id"
+                        @click="resetIncomeCheckinDraftValue(row, 'zero')"
+                      >
+                        Borrar
+                      </button>
+                      <button
+                        type="button"
+                        class="btn ui-budget-checkin-mini-btn"
+                        :disabled="incomeExecutionBusyEntryId === row.entry.id"
+                        @click="resetIncomeCheckinDraftValue(row, 'planned')"
+                      >
+                        Previsto
+                      </button>
                     </div>
-                    <input v-model="incomeAdjustAmounts[row.entry.id]" inputmode="decimal" class="input ui-data-field" placeholder="Importe ejecutado" @focus="ensureIncomeAdjustAmountPrefilled(row)" @blur="onIncomeAdjustAmountBlur(row)" @keydown.enter.prevent="saveIncomeCheckinFromInput(row)" />
+                    <input
+                      v-model="incomeAdjustAmounts[row.entry.id]"
+                      inputmode="decimal"
+                      class="input ui-data-field"
+                      placeholder="Importe ejecutado"
+                      @focus="ensureIncomeAdjustAmountPrefilled(row)"
+                      @blur="onIncomeAdjustAmountBlur(row)"
+                      @keydown.enter.prevent="saveIncomeCheckinFromInput(row)"
+                    />
                   </div>
                   <label class="ui-budget-checkin-confirm" title="Confirmar check-in del mes">
-                    <input type="checkbox" :checked="!!row.checkin" :disabled="incomeExecutionBusyEntryId === row.entry.id" @change="onIncomeCheckinCheckboxToggle(row, Boolean(($event.target as HTMLInputElement).checked))" />
+                    <input
+                      type="checkbox"
+                      :checked="!!row.checkin"
+                      :disabled="incomeExecutionBusyEntryId === row.entry.id"
+                      @change="
+                        onIncomeCheckinCheckboxToggle(
+                          row,
+                          Boolean(($event.target as HTMLInputElement).checked),
+                        )
+                      "
+                    />
                   </label>
                 </div>
               </article>
@@ -2242,33 +2605,75 @@ watch(
       <div class="ui-budget-checkin-header">
         <div>
           <div class="ui-monthly-close-step-headline">
-            <button type="button" class="btn ui-monthly-close-step-nav-btn" @click="goToPreviousMonthlyCloseStep()">&larr;</button>
+            <button
+              type="button"
+              class="btn ui-monthly-close-step-nav-btn"
+              @click="goToPreviousMonthlyCloseStep()"
+            >
+              &larr;
+            </button>
             <h2 class="ui-budget-checkin-title">Paso 4 · Resultado</h2>
             <button type="button" class="btn ui-monthly-close-step-nav-btn" disabled>&rarr;</button>
           </div>
           <p class="ui-budget-checkin-subtitle">
-            Residual contable provisional a partir de liquidez real y de ingresos/gastos confirmados del mes.
+            Residual contable provisional a partir de liquidez real y de ingresos/gastos confirmados
+            del mes.
           </p>
         </div>
       </div>
       <div class="ui-budget-checkin-summary-grid">
-        <article class="ui-budget-checkin-kpi"><span>Liquidez inicio</span><strong>{{ formatMoney(selectedLiquidityStartBase) }} €</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Cierre esperado</span><strong>{{ formatMoney(selectedMonthlyCloseExpected) }} €</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Cierre real</span><strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} €</strong></article>
-        <article class="ui-budget-checkin-kpi" :class="{ 'ui-budget-checkin-kpi-danger': selectedMonthlyCloseResidual < 0, 'ui-budget-checkin-kpi-good': selectedMonthlyCloseResidual > 0 }">
-          <span>Residual contable</span>
-          <strong>{{ selectedMonthlyCloseResidual > 0 ? '+' : '' }}{{ formatMoney(selectedMonthlyCloseResidual) }} €</strong>
+        <article class="ui-budget-checkin-kpi">
+          <span>Liquidez inicio</span
+          ><strong>{{ formatMoney(selectedLiquidityStartBase) }} €</strong>
         </article>
-        <article class="ui-budget-checkin-kpi"><span>Ingresos ejecutados</span><strong>{{ formatMoney(selectedIncomeMonthExecuted) }} €</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Gastos ejecutados</span><strong>{{ formatMoney(selectedExpenseMonthExecuted) }} €</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Completitud cierre</span><strong>{{ formatPercent(selectedMonthlyCloseCompletionRatio, 0) }}</strong></article>
-        <article class="ui-budget-checkin-kpi"><span>Desviacion liquidez</span><strong>{{ selectedLiquidityMonthDeviation > 0 ? '+' : '' }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €</strong></article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Cierre esperado</span
+          ><strong>{{ formatMoney(selectedMonthlyCloseExpected) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Cierre real</span
+          ><strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} €</strong>
+        </article>
+        <article
+          class="ui-budget-checkin-kpi"
+          :class="{
+            'ui-budget-checkin-kpi-danger': selectedMonthlyCloseResidual < 0,
+            'ui-budget-checkin-kpi-good': selectedMonthlyCloseResidual > 0,
+          }"
+        >
+          <span>Residual contable</span>
+          <strong
+            >{{ selectedMonthlyCloseResidual > 0 ? '+' : ''
+            }}{{ formatMoney(selectedMonthlyCloseResidual) }} €</strong
+          >
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Ingresos ejecutados</span
+          ><strong>{{ formatMoney(selectedIncomeMonthExecuted) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Gastos ejecutados</span
+          ><strong>{{ formatMoney(selectedExpenseMonthExecuted) }} €</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Completitud cierre</span
+          ><strong>{{ formatPercent(selectedMonthlyCloseCompletionRatio, 0) }}</strong>
+        </article>
+        <article class="ui-budget-checkin-kpi">
+          <span>Desviacion liquidez</span
+          ><strong
+            >{{ selectedLiquidityMonthDeviation > 0 ? '+' : ''
+            }}{{ formatMoney(selectedLiquidityMonthDeviation) }} €</strong
+          >
+        </article>
       </div>
       <div class="ui-budget-result-grid">
         <section class="ui-budget-result-card">
           <div class="ui-budget-result-card-head">
             <h3 class="ui-budget-result-card-title">Conciliacion de cierre</h3>
-            <div class="ui-budget-result-card-meta">Volumen ejecutado {{ formatMoney(selectedMonthlyExecutedVolume) }} EUR</div>
+            <div class="ui-budget-result-card-meta">
+              Volumen ejecutado {{ formatMoney(selectedMonthlyExecutedVolume) }} EUR
+            </div>
           </div>
           <div class="ui-budget-recon-flow">
             <div
@@ -2286,23 +2691,43 @@ watch(
                 <div class="ui-budget-recon-flow-label">{{ row.label }}</div>
                 <div v-if="row.meta" class="ui-budget-recon-flow-meta">{{ row.meta }}</div>
               </div>
-              <strong class="ui-budget-recon-flow-value">{{ formatSignedMoney(row.amount) }} EUR</strong>
+              <strong class="ui-budget-recon-flow-value"
+                >{{ formatSignedMoney(row.amount) }} EUR</strong
+              >
             </div>
           </div>
         </section>
         <section class="ui-budget-result-card">
           <div class="ui-budget-result-card-head">
             <h3 class="ui-budget-result-card-title">Ajuste de conciliacion</h3>
-            <div class="ui-budget-result-badge" :class="`ui-budget-result-badge-${selectedMonthlyResidualSeverity}`">
+            <div
+              class="ui-budget-result-badge"
+              :class="`ui-budget-result-badge-${selectedMonthlyResidualSeverity}`"
+            >
               {{ selectedMonthlyResidualSeverityLabel }}
             </div>
           </div>
           <div class="ui-budget-result-residual-kpis">
-            <article class="ui-budget-result-mini-kpi"><span>Residual no contabilizado</span><strong>{{ formatSignedMoney(selectedMonthlyCloseResidual) }} EUR</strong></article>
-            <article class="ui-budget-result-mini-kpi"><span>% sobre volumen ejecutado</span><strong>{{ formatPercent(selectedMonthlyResidualVolumeRatio, 1) }}</strong></article>
-            <article class="ui-budget-result-mini-kpi"><span>% sobre ingresos ejecutados</span><strong>{{ formatPercent(selectedMonthlyResidualIncomeRatio, 1) }}</strong></article>
-            <article class="ui-budget-result-mini-kpi"><span>% sobre gastos ejecutados</span><strong>{{ formatPercent(selectedMonthlyResidualExpenseRatio, 1) }}</strong></article>
-            <article class="ui-budget-result-mini-kpi"><span>% impacto sobre cierre esperado</span><strong>{{ formatPercent(selectedMonthlyResidualExpectedCloseRatio, 1) }}</strong></article>
+            <article class="ui-budget-result-mini-kpi">
+              <span>Residual no contabilizado</span
+              ><strong>{{ formatSignedMoney(selectedMonthlyCloseResidual) }} EUR</strong>
+            </article>
+            <article class="ui-budget-result-mini-kpi">
+              <span>% sobre volumen ejecutado</span
+              ><strong>{{ formatPercent(selectedMonthlyResidualVolumeRatio, 1) }}</strong>
+            </article>
+            <article class="ui-budget-result-mini-kpi">
+              <span>% sobre ingresos ejecutados</span
+              ><strong>{{ formatPercent(selectedMonthlyResidualIncomeRatio, 1) }}</strong>
+            </article>
+            <article class="ui-budget-result-mini-kpi">
+              <span>% sobre gastos ejecutados</span
+              ><strong>{{ formatPercent(selectedMonthlyResidualExpenseRatio, 1) }}</strong>
+            </article>
+            <article class="ui-budget-result-mini-kpi">
+              <span>% impacto sobre cierre esperado</span
+              ><strong>{{ formatPercent(selectedMonthlyResidualExpectedCloseRatio, 1) }}</strong>
+            </article>
             <article class="ui-budget-result-mini-kpi">
               <span>Lectura</span>
               <strong>{{
@@ -2315,7 +2740,11 @@ watch(
             </article>
           </div>
           <div class="ui-budget-result-composition">
-            <div v-for="row in resultReconciliationCompositionRows" :key="row.id" class="ui-budget-result-composition-row">
+            <div
+              v-for="row in resultReconciliationCompositionRows"
+              :key="row.id"
+              class="ui-budget-result-composition-row"
+            >
               <div class="ui-budget-result-composition-main">
                 <span>{{ row.label }}</span>
                 <small>{{ formatSignedMoney(row.amount) }} EUR</small>
@@ -2337,7 +2766,9 @@ watch(
                   }"
                 />
               </div>
-              <div class="ui-budget-result-composition-share">{{ formatPercent(row.shareOfVolume, 1) }}</div>
+              <div class="ui-budget-result-composition-share">
+                {{ formatPercent(row.shareOfVolume, 1) }}
+              </div>
             </div>
           </div>
         </section>
@@ -2346,31 +2777,60 @@ watch(
         <section class="ui-budget-result-card">
           <div class="ui-budget-result-card-head">
             <h3 class="ui-budget-result-card-title">Ingresos ejecutados (detalle del mes)</h3>
-            <div class="ui-budget-result-card-meta">{{ monthlyIncomeExecutionEntries.length }} lineas</div>
+            <div class="ui-budget-result-card-meta">
+              {{ monthlyIncomeExecutionEntries.length }} lineas
+            </div>
           </div>
-          <div v-if="!monthlyIncomeResultBreakdown.length" class="subtle">No hay ingresos ejecutables para este mes.</div>
+          <div v-if="!monthlyIncomeResultBreakdown.length" class="subtle">
+            No hay ingresos ejecutables para este mes.
+          </div>
           <div v-else class="ui-budget-result-breakdown-list">
-            <article v-for="group in monthlyIncomeResultBreakdown" :key="`result-income-${group.key}`" class="ui-budget-result-breakdown-group">
+            <article
+              v-for="group in monthlyIncomeResultBreakdown"
+              :key="`result-income-${group.key}`"
+              class="ui-budget-result-breakdown-group"
+            >
               <div class="ui-budget-result-breakdown-group-head">
                 <div>
                   <strong>{{ group.categoryLabel }}</strong>
-                  <div class="ui-budget-result-breakdown-submeta">{{ group.lineCount }} lineas - {{ formatPercent(group.completionRatio, 0) }} completitud</div>
+                  <div class="ui-budget-result-breakdown-submeta">
+                    {{ group.lineCount }} lineas -
+                    {{ formatPercent(group.completionRatio, 0) }} completitud
+                  </div>
                 </div>
                 <div class="ui-budget-result-breakdown-kpis">
                   <span>E {{ formatMoney(group.executedTotal) }} EUR</span>
                   <span>P {{ formatMoney(group.plannedTotal) }} EUR</span>
-                  <span :class="{ 'ui-budget-checkin-group-dev-pos': group.deviation > 0, 'ui-budget-checkin-group-dev-neg': group.deviation < 0 }">D {{ formatSignedMoney(group.deviation) }} EUR</span>
+                  <span
+                    :class="{
+                      'ui-budget-checkin-group-dev-pos': group.deviation > 0,
+                      'ui-budget-checkin-group-dev-neg': group.deviation < 0,
+                    }"
+                    >D {{ formatSignedMoney(group.deviation) }} EUR</span
+                  >
                   <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
                 </div>
               </div>
               <div class="ui-budget-result-breakdown-rows">
-                <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="ui-budget-result-breakdown-row">
+                <div
+                  v-for="row in group.rows.slice(0, 5)"
+                  :key="row.key"
+                  class="ui-budget-result-breakdown-row"
+                >
                   <span class="ui-budget-result-breakdown-name">{{ row.subcategoryLabel }}</span>
                   <span>{{ formatMoney(row.executedTotal) }} EUR</span>
                   <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
-                  <span :class="{ 'ui-budget-checkin-group-dev-pos': row.deviation > 0, 'ui-budget-checkin-group-dev-neg': row.deviation < 0 }">{{ formatSignedMoney(row.deviation) }} EUR</span>
+                  <span
+                    :class="{
+                      'ui-budget-checkin-group-dev-pos': row.deviation > 0,
+                      'ui-budget-checkin-group-dev-neg': row.deviation < 0,
+                    }"
+                    >{{ formatSignedMoney(row.deviation) }} EUR</span
+                  >
                 </div>
-                <div v-if="group.rows.length > 5" class="ui-budget-result-breakdown-more">+ {{ group.rows.length - 5 }} subcategorias mas</div>
+                <div v-if="group.rows.length > 5" class="ui-budget-result-breakdown-more">
+                  + {{ group.rows.length - 5 }} subcategorias mas
+                </div>
               </div>
             </article>
           </div>
@@ -2378,31 +2838,60 @@ watch(
         <section class="ui-budget-result-card">
           <div class="ui-budget-result-card-head">
             <h3 class="ui-budget-result-card-title">Gastos ejecutados (detalle del mes)</h3>
-            <div class="ui-budget-result-card-meta">{{ monthlyExpenseExecutionEntries.length }} lineas</div>
+            <div class="ui-budget-result-card-meta">
+              {{ monthlyExpenseExecutionEntries.length }} lineas
+            </div>
           </div>
-          <div v-if="!monthlyExpenseResultBreakdown.length" class="subtle">No hay gastos ejecutables para este mes.</div>
+          <div v-if="!monthlyExpenseResultBreakdown.length" class="subtle">
+            No hay gastos ejecutables para este mes.
+          </div>
           <div v-else class="ui-budget-result-breakdown-list">
-            <article v-for="group in monthlyExpenseResultBreakdown" :key="`result-expense-${group.key}`" class="ui-budget-result-breakdown-group">
+            <article
+              v-for="group in monthlyExpenseResultBreakdown"
+              :key="`result-expense-${group.key}`"
+              class="ui-budget-result-breakdown-group"
+            >
               <div class="ui-budget-result-breakdown-group-head">
                 <div>
                   <strong>{{ group.categoryLabel }}</strong>
-                  <div class="ui-budget-result-breakdown-submeta">{{ group.lineCount }} lineas - {{ formatPercent(group.completionRatio, 0) }} completitud</div>
+                  <div class="ui-budget-result-breakdown-submeta">
+                    {{ group.lineCount }} lineas -
+                    {{ formatPercent(group.completionRatio, 0) }} completitud
+                  </div>
                 </div>
                 <div class="ui-budget-result-breakdown-kpis">
                   <span>E {{ formatMoney(group.executedTotal) }} EUR</span>
                   <span>P {{ formatMoney(group.plannedTotal) }} EUR</span>
-                  <span :class="{ 'ui-budget-checkin-group-dev-pos': group.deviation > 0, 'ui-budget-checkin-group-dev-neg': group.deviation < 0 }">D {{ formatSignedMoney(group.deviation) }} EUR</span>
+                  <span
+                    :class="{
+                      'ui-budget-checkin-group-dev-pos': group.deviation > 0,
+                      'ui-budget-checkin-group-dev-neg': group.deviation < 0,
+                    }"
+                    >D {{ formatSignedMoney(group.deviation) }} EUR</span
+                  >
                   <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
                 </div>
               </div>
               <div class="ui-budget-result-breakdown-rows">
-                <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="ui-budget-result-breakdown-row">
+                <div
+                  v-for="row in group.rows.slice(0, 5)"
+                  :key="row.key"
+                  class="ui-budget-result-breakdown-row"
+                >
                   <span class="ui-budget-result-breakdown-name">{{ row.subcategoryLabel }}</span>
                   <span>{{ formatMoney(row.executedTotal) }} EUR</span>
                   <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
-                  <span :class="{ 'ui-budget-checkin-group-dev-pos': row.deviation > 0, 'ui-budget-checkin-group-dev-neg': row.deviation < 0 }">{{ formatSignedMoney(row.deviation) }} EUR</span>
+                  <span
+                    :class="{
+                      'ui-budget-checkin-group-dev-pos': row.deviation > 0,
+                      'ui-budget-checkin-group-dev-neg': row.deviation < 0,
+                    }"
+                    >{{ formatSignedMoney(row.deviation) }} EUR</span
+                  >
                 </div>
-                <div v-if="group.rows.length > 5" class="ui-budget-result-breakdown-more">+ {{ group.rows.length - 5 }} subcategorias mas</div>
+                <div v-if="group.rows.length > 5" class="ui-budget-result-breakdown-more">
+                  + {{ group.rows.length - 5 }} subcategorias mas
+                </div>
               </div>
             </article>
           </div>
@@ -2425,8 +2914,8 @@ watch(
     </section>
 
     <section
-      v-if="!isMonthlyCloseView"
       v-for="section in sections"
+      v-show="!isMonthlyCloseView"
       :key="section.id"
       class="card ui-pro-panel ui-budget-section mt-3"
       :class="section.toneClass"
@@ -2510,36 +2999,89 @@ watch(
         <div class="ui-budget-evolution-head">
           <div>
             <h3>Evolucion ejecutada (barras)</h3>
-            <p>
+            <p v-if="section.id === 'income'">
+              Compara `Previsto` vs `Ejecutado` por mes usando los check-ins del cierre mensual
+              (ingresos recurrentes).
+            </p>
+            <p v-else>
               Preparado para comparar `Previsto` vs `Ejecutado` por mes. Actualmente en modo
               placeholder hasta implementar contabilidad.
             </p>
           </div>
-          <span class="ui-budget-pill">Pendiente contabilidad</span>
+          <span class="ui-budget-pill">
+            {{ section.id === 'income' ? 'Cierre mensual activo' : 'Pendiente contabilidad' }}
+          </span>
         </div>
 
-        <div class="ui-budget-evolution-bars" aria-label="Placeholder de barras de evolucion">
+        <div
+          class="ui-budget-evolution-bars"
+          :aria-label="
+            section.id === 'income'
+              ? 'Barras de evolucion de ingresos previsto vs ejecutado por mes'
+              : 'Placeholder de barras de evolucion'
+          "
+        >
           <div
-            v-for="month in monthLabels"
-            :key="`${section.id}-${month}`"
+            v-for="point in section.id === 'income'
+              ? incomeEvolutionMonths
+              : monthLabels.map((label) => ({ label }))"
+            :key="`${section.id}-${point.label}`"
             class="ui-budget-month-col"
           >
             <div class="ui-budget-month-rail">
-              <div class="ui-budget-month-plan" />
-              <div class="ui-budget-month-exec-pending" />
+              <div
+                class="ui-budget-month-plan"
+                :style="
+                  section.id === 'income' && 'planHeightPct' in point
+                    ? { height: `${point.planHeightPct}%` }
+                    : undefined
+                "
+                :title="
+                  section.id === 'income' && 'planned' in point
+                    ? `Previsto ${point.label}: ${formatMoney(Number(point.planned))} EUR`
+                    : undefined
+                "
+              />
+              <div
+                :class="
+                  section.id === 'income' && 'hasExecuted' in point && point.hasExecuted
+                    ? 'ui-budget-month-exec'
+                    : 'ui-budget-month-exec-pending'
+                "
+                :style="
+                  section.id === 'income' && 'execHeightPct' in point
+                    ? { height: `${point.execHeightPct}%` }
+                    : undefined
+                "
+                :title="
+                  section.id === 'income' && 'executed' in point
+                    ? `Ejecutado ${point.label}: ${formatMoney(Number(point.executed))} EUR`
+                    : undefined
+                "
+              />
             </div>
-            <span class="ui-budget-month-label">{{ month }}</span>
+            <span class="ui-budget-month-label">{{ point.label }}</span>
           </div>
         </div>
 
         <div class="ui-budget-evolution-legend">
           <span><i class="ui-budget-legend-dot ui-budget-legend-plan" /> Previsto</span>
-          <span
-            ><i class="ui-budget-legend-dot ui-budget-legend-exec" /> Ejecutado (pendiente)</span
-          >
+          <span v-if="section.id === 'income'">
+            <i class="ui-budget-legend-dot ui-budget-legend-exec-solid" /> Ejecutado
+          </span>
+          <span v-else>
+            <i class="ui-budget-legend-dot ui-budget-legend-exec" /> Ejecutado (pendiente)
+          </span>
           <span>
-            Base mensual orientativa:
-            <strong>{{ formatCompactMoney(section.totalAnnual / 12) }} EUR</strong>
+            {{ section.id === 'income' ? 'Base recurrente mensual:' : 'Base mensual orientativa:' }}
+            <strong
+              >{{
+                formatCompactMoney(
+                  section.id === 'income' ? incomeEvolutionBaseMonthly : section.totalAnnual / 12,
+                )
+              }}
+              EUR</strong
+            >
           </span>
         </div>
       </div>
@@ -2558,7 +3100,59 @@ watch(
                 {{ group.rows.length }} subcategorias ·
                 {{ formatPercent(group.shareOfSection, 0) }} de {{ section.title.toLowerCase() }}
               </p>
-              <div class="ui-budget-inline-progress" aria-label="Placeholder ejecucion categoria">
+              <div
+                v-if="budgetCategoryActualExecution(section.id, group.categoryKey)"
+                class="ui-budget-inline-progress"
+                :aria-label="`Ejecucion YTD categoria ${group.categoryLabel}`"
+              >
+                <div class="ui-budget-inline-progress-labels">
+                  <span
+                    >Previsto vs Ejecutado acumulado (YTD hasta
+                    {{ selectedExecutionMonthLabel }})</span
+                  >
+                  <span>
+                    {{
+                      formatPercent(
+                        budgetCategoryActualExecution(section.id, group.categoryKey)
+                          ?.completionRatio ?? null,
+                        0,
+                      )
+                    }}
+                    completitud
+                    <span
+                      class="ui-budget-inline-progress-preview-pill"
+                      :class="`ui-budget-inline-progress-preview-pill-${budgetCategoryActualExecution(section.id, group.categoryKey)?.tone}`"
+                    >
+                      {{
+                        formatPercent(
+                          budgetCategoryActualExecution(section.id, group.categoryKey)?.ratio ??
+                            null,
+                          0,
+                        )
+                      }}
+                    </span>
+                  </span>
+                </div>
+                <div class="ui-budget-inline-progress-track ui-budget-inline-progress-track-lg">
+                  <div
+                    class="ui-budget-inline-progress-fill"
+                    :class="`ui-budget-inline-progress-fill-${budgetCategoryActualExecution(section.id, group.categoryKey)?.tone}`"
+                    :style="{
+                      width: `${budgetCategoryActualExecution(section.id, group.categoryKey)?.widthPct ?? 8}%`,
+                    }"
+                  />
+                  <span
+                    v-if="budgetCategoryActualExecution(section.id, group.categoryKey)?.overflow"
+                    class="ui-budget-inline-progress-overflow-marker"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+              <div
+                v-else
+                class="ui-budget-inline-progress"
+                aria-label="Placeholder ejecucion categoria"
+              >
                 <div class="ui-budget-inline-progress-labels">
                   <span>Previsto vs Ejecutado</span>
                   <span>
@@ -2607,6 +3201,49 @@ watch(
                   {{ formatMoney(row.plannedAnnual / 12) }} EUR/mes previsto
                 </div>
                 <div
+                  v-if="budgetSubcategoryActualExecution(section.id, row.key)"
+                  class="ui-budget-inline-progress ui-budget-inline-progress-row"
+                  :aria-label="`Ejecucion YTD subcategoria ${row.subcategoryLabel}`"
+                >
+                  <div class="ui-budget-inline-progress-track">
+                    <div
+                      class="ui-budget-inline-progress-fill"
+                      :class="`ui-budget-inline-progress-fill-${budgetSubcategoryActualExecution(section.id, row.key)?.tone}`"
+                      :style="{
+                        width: `${budgetSubcategoryActualExecution(section.id, row.key)?.widthPct ?? 8}%`,
+                      }"
+                    />
+                    <span
+                      v-if="budgetSubcategoryActualExecution(section.id, row.key)?.overflow"
+                      class="ui-budget-inline-progress-overflow-marker"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div class="ui-budget-inline-progress-caption">
+                    YTD hasta {{ selectedExecutionMonthLabel }} - completitud
+                    {{
+                      formatPercent(
+                        budgetSubcategoryActualExecution(section.id, row.key)?.completionRatio ??
+                          null,
+                        0,
+                      )
+                    }}
+                    <span
+                      :class="`ui-budget-inline-progress-caption-tone-${
+                        budgetSubcategoryActualExecution(section.id, row.key)?.tone
+                      }`"
+                    >
+                      {{
+                        formatPercent(
+                          budgetSubcategoryActualExecution(section.id, row.key)?.ratio ?? null,
+                          0,
+                        )
+                      }}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  v-else
                   class="ui-budget-inline-progress ui-budget-inline-progress-row"
                   aria-label="Placeholder ejecucion subcategoria"
                 >
@@ -2638,25 +3275,51 @@ watch(
               </div>
               <div class="ui-budget-row-metrics">
                 <div class="ui-budget-row-metric">
-                  <span>Previsto</span>
-                  <strong>{{ formatMoney(row.plannedAnnual) }} EUR</strong>
-                </div>
-                <div class="ui-budget-row-metric">
-                  <span>Ejecutado</span>
-                  <strong
-                    class="ui-budget-pending-text"
-                    :class="`ui-budget-pending-text-${executionPreview(section.id, `row:${row.key}`).tone}`"
-                  >
-                    Pendiente
+                  <span>{{
+                    budgetSubcategoryActualExecution(section.id, row.key)
+                      ? 'Previsto YTD'
+                      : 'Previsto'
+                  }}</span>
+                  <strong>
+                    {{
+                      budgetSubcategoryActualExecution(section.id, row.key)
+                        ? `${formatMoney(budgetSubcategoryActualExecution(section.id, row.key)?.planned ?? 0)} EUR`
+                        : `${formatMoney(row.plannedAnnual)} EUR`
+                    }}
                   </strong>
                 </div>
                 <div class="ui-budget-row-metric">
-                  <span>Desviacion</span>
+                  <span>{{
+                    budgetSubcategoryActualExecution(section.id, row.key)
+                      ? 'Ejecutado YTD'
+                      : 'Ejecutado'
+                  }}</span>
                   <strong
                     class="ui-budget-pending-text"
-                    :class="`ui-budget-pending-text-${executionPreview(section.id, `row:${row.key}`).tone}`"
+                    :class="`ui-budget-pending-text-${budgetSubcategoryActualExecution(section.id, row.key)?.tone ?? executionPreview(section.id, `row:${row.key}`).tone}`"
                   >
-                    Pendiente
+                    {{
+                      budgetSubcategoryActualExecution(section.id, row.key)
+                        ? `${formatMoney(budgetSubcategoryActualExecution(section.id, row.key)?.executed ?? 0)} EUR`
+                        : 'Pendiente'
+                    }}
+                  </strong>
+                </div>
+                <div class="ui-budget-row-metric">
+                  <span>{{
+                    budgetSubcategoryActualExecution(section.id, row.key)
+                      ? 'Desviacion YTD'
+                      : 'Desviacion'
+                  }}</span>
+                  <strong
+                    class="ui-budget-pending-text"
+                    :class="`ui-budget-pending-text-${budgetSubcategoryActualExecution(section.id, row.key)?.tone ?? executionPreview(section.id, `row:${row.key}`).tone}`"
+                  >
+                    {{
+                      budgetSubcategoryActualExecution(section.id, row.key)
+                        ? `${formatSignedMoney(budgetSubcategoryActualExecution(section.id, row.key)?.deviation ?? 0)} EUR`
+                        : 'Pendiente'
+                    }}
                   </strong>
                 </div>
               </div>
@@ -3634,9 +4297,9 @@ watch(
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
   padding: 6px 4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
   gap: 4px;
 }
 
@@ -3645,6 +4308,7 @@ watch(
   border-radius: 6px;
   background: linear-gradient(180deg, rgba(110, 209, 255, 0.28), rgba(110, 209, 255, 0.12));
   border: 1px solid rgba(110, 209, 255, 0.2);
+  min-height: 3px;
 }
 
 .ui-budget-month-exec-pending {
@@ -3656,6 +4320,15 @@ watch(
     rgba(255, 255, 255, 0.08) 0 4px,
     rgba(255, 255, 255, 0.02) 4px 8px
   );
+  min-height: 3px;
+}
+
+.ui-budget-month-exec {
+  height: 22%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(110, 255, 214, 0.34), rgba(54, 211, 153, 0.16));
+  border: 1px solid rgba(94, 234, 212, 0.28);
+  min-height: 3px;
 }
 
 .ui-budget-month-label {
@@ -3687,6 +4360,10 @@ watch(
 .ui-budget-legend-exec {
   background: rgba(255, 255, 255, 0.2);
   border: 1px dashed rgba(255, 255, 255, 0.35);
+}
+
+.ui-budget-legend-exec-solid {
+  background: rgba(94, 234, 212, 0.75);
 }
 
 .ui-budget-groups {

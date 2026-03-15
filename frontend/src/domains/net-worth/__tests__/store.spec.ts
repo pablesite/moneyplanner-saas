@@ -198,7 +198,8 @@ describe('net worth store (core)', () => {
   });
 
   it('falls back to direct timeline request when api helper is missing at runtime', async () => {
-    mocks.coreNetWorthApi.getTimeline = undefined as unknown as typeof mocks.coreNetWorthApi.getTimeline;
+    mocks.coreNetWorthApi.getTimeline =
+      undefined as unknown as typeof mocks.coreNetWorthApi.getTimeline;
     mocks.coreApi.get.mockResolvedValue({
       data: {
         rows: [{ date: '2026-01-31', net_worth: '100.00' }],

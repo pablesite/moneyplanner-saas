@@ -24,7 +24,10 @@ export type { Asset, Liability, Ownership, Snapshot, Summary } from '@/domains/n
 
 type OwnershipAwarePayload = NetWorthWritePayload & { ownership_id?: number | null };
 
-function requestTimeline(params: { asset_category?: string | null; liability_category?: string | null }) {
+function requestTimeline(params: {
+  asset_category?: string | null;
+  liability_category?: string | null;
+}) {
   if (typeof coreNetWorthApi.getTimeline === 'function') {
     return coreNetWorthApi.getTimeline(params);
   }
