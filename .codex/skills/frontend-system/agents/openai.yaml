@@ -1,0 +1,4 @@
+version: 1
+display_name: Frontend System
+short_description: Repo-specific workflow for coherent frontend UI across core and saas.
+default_prompt: Use the shared frontend visual contract and guardrails for this repo.

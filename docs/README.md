@@ -33,6 +33,7 @@ Core product functionality is documented in `core/README.md` and `core/docs/READ
    - pilot integration checklist
 4. `frontend/`
    - SaaS frontend visual and UX guidance
+   - frontend visual contract
 
 ## Usage Rule
 1. This directory is the canonical source for SaaS-specific documentation.

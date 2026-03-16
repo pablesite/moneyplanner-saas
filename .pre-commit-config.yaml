@@ -10,6 +10,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: frontend-visual-guardrails
+        name: frontend visual guardrails
+        entry: python scripts/check_frontend_visual_guardrails.py
+        language: system
+        pass_filenames: false
+
       - id: saas-frontend-eslint
         name: saas frontend eslint
         entry: npm --prefix frontend run lint

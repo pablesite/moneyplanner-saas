@@ -89,3 +89,5 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 ## Workflow Reference
 1. For iterative UX implementation from zero context, use:
    - `docs/frontend/frontend-ux-iteration-playbook.md`
+2. For the minimum shared pattern contract, use:
+   - `docs/frontend/frontend-visual-contract.md`

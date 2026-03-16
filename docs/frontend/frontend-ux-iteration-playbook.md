@@ -23,10 +23,11 @@ Use this playbook for UI/UX work in `frontend/` (SaaS) and reuse the same approa
 ## Zero-Context Start Checklist
 1. Read `AGENTS.md`.
 2. Read `docs/frontend/frontend-visual-guide.md`.
-3. Inspect current app shell and routing:
+3. Read `docs/frontend/frontend-visual-contract.md`.
+4. Inspect current app shell and routing:
    - `frontend/src/App.vue`
    - `frontend/src/router.ts`
-4. Confirm current milestone and UX goal in:
+5. Confirm current milestone and UX goal in:
    - `docs/roadmap/roadmap.md`
 
 ## Iteration Framework
