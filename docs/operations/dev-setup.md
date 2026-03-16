@@ -3,8 +3,9 @@
 ## Arranque local
 1. `cd core`
 2. `docker compose up --build -d`
-3. `cd ..`
-4. `docker compose up --build -d`
+3. Verificar en `core/` que `backend`, `frontend`, `db` y `fx_sync` estan `Up` con `docker compose ps`
+4. `cd ..`
+5. `docker compose up --build -d`
 
 ## Endpoints locales
 1. Core frontend: `http://localhost:5173`
@@ -23,6 +24,8 @@
 3. Diagnostico profundo:
    - `docker compose ps -a`
    - `docker compose logs --tail 200 <service>`
+
+En `core/`, `fx_sync` debe aparecer levantado porque mantiene el historico de FX usado por patrimonio.
 
 ## Problemas frecuentes
 1. Frontend no refresca -> recarga dura y revisar logs del frontend.

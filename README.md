@@ -23,8 +23,9 @@ Private SaaS repository for MoneyPlanner.
 ## Local Startup Order
 1. `cd core`
 2. `docker compose up --build -d`
-3. `cd ..`
-4. `docker compose up --build -d`
+3. Verificar en `core/` que `backend`, `frontend`, `db` y `fx_sync` estan `Up` con `docker compose ps`
+4. `cd ..`
+5. `docker compose up --build -d`
 
 ## Local Endpoints
 1. Core frontend: `http://localhost:5173`
