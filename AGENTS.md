@@ -46,6 +46,17 @@ Este repo contiene dos stacks coordinados:
 3. Ejecutar calidad/tests dentro de contenedores (`docker compose exec ...`).
 4. En PowerShell no usar `&&`.
 
+## Migraciones (obligatorio cuando cambia modelo de datos)
+1. Si se modifica cualquier `models.py`, generar migraciones en el stack afectado:
+   - Core: `docker compose exec backend python manage.py makemigrations`
+   - SaaS: `docker compose exec backend python manage.py makemigrations`
+2. Aplicar migraciones antes de cerrar la tarea:
+   - Core: `docker compose exec backend python manage.py migrate`
+   - SaaS: `docker compose exec backend python manage.py migrate`
+3. Verificar estado aplicado:
+   - `docker compose exec backend python manage.py showmigrations <app>`
+4. No dar por finalizado un cambio de modelo sin `migrate` aplicado y verificado.
+
 ## Calidad (estado actual)
 1. SaaS backend (`backend/`): `ruff check .`, `ruff format --check .`, `mypy .`
 2. Core backend (`core/backend/`): `ruff check .`, `ruff format --check .`, `mypy .`
