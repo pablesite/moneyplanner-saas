@@ -921,7 +921,10 @@ watch(availableManualPositionOptions, (options) => {
           </label>
         </div>
 
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
+        <div
+          class="ui-accounting-form-grid"
+          :class="editKindNeedsCounterparty ? 'ui-accounting-form-grid-wide' : 'ui-accounting-form-grid-edit-simple'"
+        >
           <select v-model="editTransactionForm.account_id" class="select" required>
             <option :value="null" disabled>Cuenta principal</option>
             <option v-for="account in editAccountOptions" :key="account.id" :value="account.id">
@@ -954,24 +957,18 @@ watch(availableManualPositionOptions, (options) => {
               {{ account.name }} / {{ account.currency }}
             </option>
           </select>
-
-          <div v-else-if="editKindNeedsClassification" class="ui-accounting-inline-note">
-            Selecciona categoria y subcategoria debajo.
-          </div>
-
-          <div v-else class="ui-accounting-inline-note">
-            {{
-              editTransactionForm.kind === 'balance_adjustment'
-                ? 'Introduce el saldo objetivo actual de la cuenta.'
-                : 'No requiere contracuenta manual para este tipo.'
-            }}
-          </div>
         </div>
         <p
           v-if="editKindNeedsCounterparty && !editCounterpartyOptions.length"
           class="ui-accounting-inline-note"
         >
           {{ editCounterpartyMissingHint }}
+        </p>
+        <p v-else-if="editKindNeedsClassification" class="ui-accounting-inline-note">
+          Selecciona categoria y subcategoria debajo.
+        </p>
+        <p v-else-if="editTransactionForm.kind !== 'balance_adjustment'" class="ui-accounting-inline-note">
+          No requiere contracuenta manual para este tipo.
         </p>
 
         <div
@@ -1104,7 +1101,16 @@ watch(availableManualPositionOptions, (options) => {
           Normalmente coinciden. Si el banco liquida despues, usa una fecha valor posterior.
         </p>
 
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
+        <div
+          class="ui-accounting-form-grid"
+          :class="
+            quickEntryForm.movement_type === 'transfer' ||
+            quickEntryForm.movement_type === 'investment_purchase' ||
+            quickEntryForm.movement_type === 'debt_payment'
+              ? 'ui-accounting-form-grid-wide'
+              : 'ui-accounting-form-grid-edit-simple'
+          "
+        >
           <select v-model="quickEntryForm.account_id" class="select" required>
             <option :value="null">Cuenta de liquidez</option>
             <option v-for="account in liquidityAccounts" :key="account.id" :value="account.id">
@@ -1135,13 +1141,6 @@ watch(availableManualPositionOptions, (options) => {
               {{ account.name }} / {{ account.currency }}
             </option>
           </select>
-
-          <div
-            v-else-if="quickEntryForm.movement_type === 'income'"
-            class="ui-accounting-inline-note"
-          >
-            Selecciona categoria y subcategoria debajo.
-          </div>
 
           <select
             v-else-if="quickEntryForm.movement_type === 'investment_purchase'"
@@ -1174,10 +1173,6 @@ watch(availableManualPositionOptions, (options) => {
               {{ account.name }} / {{ account.currency }}
             </option>
           </select>
-
-          <div v-else class="ui-accounting-inline-note">
-            Selecciona categoria y subcategoria debajo.
-          </div>
         </div>
 
         <div
@@ -1343,9 +1338,10 @@ watch(availableManualPositionOptions, (options) => {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  padding-right: 14px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  margin-right: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
 }
 
 .ui-period-field {
@@ -1362,6 +1358,8 @@ watch(availableManualPositionOptions, (options) => {
   height: 38px;
   padding-top: 0;
   padding-bottom: 0;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Ledger panel ────────────────────────────────────────────── */
