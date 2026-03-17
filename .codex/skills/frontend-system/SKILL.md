@@ -22,12 +22,13 @@ Keep the UI coherent across screens and across `core` and `saas`.
 ## Source Of Truth
 
 1. Base visual patterns live in `core/frontend/src/styles/app.css`.
-2. Reusable behavior and base styles should be implemented in `core/frontend/` first.
-3. Equivalent SaaS changes must be replicated in `frontend/` unless the task is explicitly Core-only.
+2. **Siempre empezar por `core/frontend/`.** Buscar primero el equivalente en Core antes de tocar `frontend/` (SaaS).
+3. Después de implementar en Core, replicar el cambio equivalente en `frontend/` salvo que el scope sea explícitamente Core-only.
+4. Si la vista solo existe en SaaS y no tiene equivalente en Core, documentarlo explícitamente antes de continuar.
 
 ## Workflow
 
-1. Inspect the current shell, shared styles, and the affected view before proposing changes.
+1. Antes de tocar cualquier fichero, localizar el equivalente en `core/frontend/` de la vista o componente en scope. Si existe, ese es el punto de partida.
 2. Define the UX problem in terms of:
    - page structure,
    - interaction model,

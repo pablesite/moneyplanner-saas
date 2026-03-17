@@ -21,14 +21,12 @@ Use this playbook for UI/UX work in `frontend/` (SaaS) and reuse the same approa
 6. Repeat in short cycles until the behavior and visual hierarchy are clear.
 
 ## Zero-Context Start Checklist
-1. Read `AGENTS.md`.
-2. Read `docs/frontend/frontend-visual-guide.md`.
-3. Read `docs/frontend/frontend-visual-contract.md`.
-4. Inspect current app shell and routing:
+1. Usar skill `frontend-system` (cubre AGENTS.md, visual-guide, visual-contract y css-workflow).
+2. Inspect current app shell and routing:
    - `frontend/src/App.vue`
    - `frontend/src/router.ts`
-5. Confirm current milestone and UX goal in:
-   - `docs/roadmap/roadmap.md`
+3. Confirm current milestone and UX goal in:
+   - `docs/project-status.md`
 
 ## Iteration Framework
 Work in micro-rounds, each round with one clear outcome:
@@ -55,15 +53,24 @@ Work in micro-rounds, each round with one clear outcome:
 4. Use small, reviewable commits per iteration.
 
 ## Validation (Docker Only)
-Run from repo root:
+Usar skill `validate` o ejecutar manualmente desde raíz del repo:
+
+**SaaS frontend:**
 ```bash
 docker compose exec saas_frontend npm run lint
 docker compose exec saas_frontend npm run format:check
 docker compose exec saas_frontend npm run typecheck
 ```
 
+**Core frontend:**
+```bash
+docker compose -f core/docker-compose.yml exec frontend npm run lint
+docker compose -f core/docker-compose.yml exec frontend npm run format:check
+docker compose -f core/docker-compose.yml exec frontend npm run typecheck
+```
+
 ## Delivery Checklist
-1. Update related docs under `docs/frontend/` and `docs/roadmap/roadmap.md` when scope or direction changes.
+1. Update related docs under `docs/frontend/` and `docs/project-status.md` when scope or direction changes.
 2. Bump root `VERSION` by SemVer impact:
    - `PATCH`: UX/docs/internal adjustments without new public feature.
    - `MINOR`: new UX feature or new user-visible module capability.

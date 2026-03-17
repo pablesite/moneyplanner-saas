@@ -6,33 +6,27 @@ Estado actual de funcionalidades por área. Actualizar cuando cambie el estado d
 
 ---
 
-## En curso y próximas tareas
+## Tareas del Core
 
-> Convención de tipo de tarea:
-> - **(Manual)** — requiere guía directa del usuario; la dirección se define sobre la marcha. No delegable a un agente sin esa guía.
-> - **(Agente)** — delegable; requiere un plan maestro pero no decisiones continuas del usuario.
+Ver `core/docs/project-status.md` para el estado y las próximas tareas de los módulos del producto.
 
-### En curso
+---
 
-| Módulo | Tipo | Descripción |
-|--------|------|-------------|
-| Contabilidad | Manual | Revisión de la experiencia de uso del módulo para decidir mejoras y orientación funcional. Ver `core/docs/roadmap/product-roadmap.md`. |
+## Pendiente SaaS — pre-producción
 
-### Siguiente tarea disponible
-
-Seleccionar según disponibilidad: ejecutar tareas **(Agente)** cuando haya capacidad para delegar; **(Manual)** cuando haya tiempo para guiar.
-
-| Módulo | Tipo | Descripción | Spec |
-|--------|------|-------------|------|
-| Importador MoneyWiz | Agente | Importar movimientos desde MoneyWiz con mapeo de tipos. | Pendiente de diseñar tras revisión del módulo de contabilidad. |
-| Presupuesto | Manual | Revisión integral de experiencia de uso del módulo. | Se define durante la revisión. |
-
-### Pendiente de diseñar
-
-| Área | Descripción |
-|------|-------------|
-| Deployment a producción | Definir estrategia y entorno final de despliegue. No iniciado: hay que diseñarlo antes de implementar. |
-| Gestión de secretos en producción | Definir cómo se gestionan variables sensibles en producción (gestor de secretos, variables del proveedor cloud, etc.). A decidir junto con el deployment. |
+| Área | Prioridad | Estado | Descripción |
+|------|-----------|--------|-------------|
+| Deployment a producción | Alta | 🔄 | Definir estrategia y entorno final de despliegue. No iniciado: diseñar antes de implementar. |
+| Gestión de secretos en producción | Alta | ⚪ | Variables sensibles en producción (gestor de secretos, variables del proveedor cloud). A decidir junto con el deployment. |
+| Sistema de usuarios trial | Alta | ⚪ | Crear usuario root, flujo de acceso controlado para early adopters. |
+| Admin UI | Media | ⚪ | Las ops de admin son solo backend por ahora; pendiente de crear interfaz. |
+| Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
+| Revisión auth SaaS | Alta | ⚪ | Revisar login, permisos, RBAC y flujos reales (registro, sesión, expiración). |
+| Auditoría de seguridad | Alta | ⚪ | Vulnerabilidades backend SaaS, CVEs en dependencias, validación auth/permisos/inputs. |
+| CI/CD deployment | Alta | ⚪ | Pipeline de despliegue automático a producción (build, test, deploy). Complementa la infraestructura cloud; diseñar junto con el deployment. |
+| PWA — frontend adaptado | Media | ⚪ | Adaptar el frontend a Progressive Web App como primer paso hacia móvil. Paso previo a cualquier desarrollo de app nativa. |
+| Validación pre-lanzamiento | Alta | ⚪ | Tests con early adopters; feedback sobre UX, comprensión y valor real — crítico antes de MVP. |
+| Open Source — repo Core listo | Media | ⚪ | Licencia (EUPL u otra), guía de contribución, documentación técnica, guía de despliegue. |
 
 ---
 
