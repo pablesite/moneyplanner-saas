@@ -1,0 +1,26 @@
+{
+  "enabledMcpjsonServers": ["postgres-saas"],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Recuerda actualizar docs/project-status.md si implementaste o cambiaste alguna funcionalidad en esta sesion.\"}'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat | grep -q 'docker compose down -v' && printf '{\"continue\":false,\"stopReason\":\"PELIGRO: docker compose down -v elimina los volumenes de BD. Solicita confirmacion explicita del usuario antes de continuar.\"}' && exit 2 || exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

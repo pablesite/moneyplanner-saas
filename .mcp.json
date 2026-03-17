@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "postgres-saas": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://saas:saas@localhost:5433/saas"
+      ]
+    }
+  }
+}
