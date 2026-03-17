@@ -20,7 +20,7 @@ const stubs = {
   },
 };
 
-describe('ItemList (saas)', () => {
+describe('ItemList (core)', () => {
   it('handles add, archive, delete and edit/update flow', async () => {
     const onAdd = vi.fn();
     const onArchive = vi.fn().mockResolvedValue(undefined);
@@ -58,15 +58,6 @@ describe('ItemList (saas)', () => {
         ],
         categories: [{ value: 'cash', label: 'Cash' }],
         subcategories: [{ value: 'wallet', label: 'Wallet', category: 'cash' }],
-        ownerships: [
-          {
-            id: 10,
-            kind: 'individual',
-            member: { id: 1, name: 'Pablo', role: 'adult' },
-            splits: [],
-            notes: '',
-          },
-        ],
         onUpdate,
         onArchive,
         onDelete,

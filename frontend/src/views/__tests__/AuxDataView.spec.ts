@@ -4,79 +4,76 @@ import { mount } from '@vue/test-utils';
 import { ref } from 'vue';
 import AuxDataView from '../AuxDataView.vue';
 
-vi.mock('@/domains/people', () => ({
-  FamilyMemberManager: {
-    template: '<div data-testid="family-manager">Family manager mock</div>',
-  },
-  OwnershipManager: {
-    template: '<div data-testid="ownership-manager">Ownership manager mock</div>',
-  },
-}));
+const mockUseAuxDataPage = vi.fn();
 
 vi.mock('@/domains/aux-data', () => ({
-  useAuxDataPage: () => ({
-    loading: ref(false),
-    error: ref(null),
-    successMessage: ref(null),
-    inflation: ref([]),
-    ipcForm: ref({ region: 'ES', period: '', index: '' }),
-    createInflation: vi.fn(),
-    deleteInflation: vi.fn(),
-    formatInflationIndex: (value: string) => value,
-    fxRates: ref([]),
-    fxForm: ref({ rate_date: '', pair: 'USD_EUR', rate: '' }),
-    fxPairs: [{ value: 'USD_EUR', label: 'USD -> EUR' }],
-    fxRatePlaceholder: ref('0.92'),
-    createFxRate: vi.fn(),
-    deleteFxRate: vi.fn(),
-    formatFxRate: (value: string) => value,
-  }),
+  useAuxDataPage: () => mockUseAuxDataPage(),
 }));
 
-describe('AuxDataView (settings accordion)', () => {
+vi.mock('@/domains/people', () => ({
+  FamilyMemberManager: {
+    name: 'FamilyMemberManager',
+    template: '<div data-test="FamilyMemberManager" />',
+  },
+  OwnershipManager: {
+    name: 'OwnershipManager',
+    template: '<div data-test="OwnershipManager" />',
+  },
+}));
+
+function makeState(overrides: Record<string, unknown> = {}) {
+  return {
+    loading: ref(false),
+    error: ref<string | null>(null),
+    fxRates: ref([]),
+    inflation: ref([]),
+    fxStates: ref([]),
+    inflationStates: ref([]),
+    supportedInflationRegions: ref([{ code: 'ES', label: 'Espana' }]),
+    formatFxRate: vi.fn(() => '0.9200'),
+    formatInflationIndex: vi.fn(() => '118.0'),
+    ...overrides,
+  };
+}
+
+describe('AuxDataView', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockUseAuxDataPage.mockReset();
   });
 
-  it('renders the three settings sections', () => {
+  it('renders settings and accordion sections', () => {
+    mockUseAuxDataPage.mockReturnValue(makeState());
     const wrapper = mount(AuxDataView);
 
     expect(wrapper.text()).toContain('Settings');
-    expect(wrapper.text()).toContain('Miembros de la familia');
     expect(wrapper.text()).toContain('Datos IPC');
     expect(wrapper.text()).toContain('Tasas de conversion');
-    expect(wrapper.text()).toContain('Titularidades');
+    expect(wrapper.text()).toContain('No hay indices IPC sincronizados todavia.');
+    expect(wrapper.text()).toContain('No hay FX rates sincronizados todavia.');
   });
 
-  it('toggles each section in the same view', async () => {
+  it('toggles IPC and FX sections in place', async () => {
+    mockUseAuxDataPage.mockReturnValue(makeState());
     const wrapper = mount(AuxDataView);
-
-    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(true);
 
     const toggles = wrapper.findAll('.ui-settings-toggle');
-    await toggles[0]!.trigger('click');
-    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(false);
-
     await toggles[1]!.trigger('click');
-    expect(wrapper.text()).toContain('No hay indices IPC todavia.');
-
-    await toggles[1]!.trigger('click');
-    expect(wrapper.text()).not.toContain('No hay indices IPC todavia.');
+    expect(wrapper.text()).not.toContain('No hay indices IPC sincronizados todavia.');
 
     await toggles[2]!.trigger('click');
-    expect(wrapper.text()).toContain('No hay FX rates todavia.');
+    expect(wrapper.text()).not.toContain('No hay FX rates sincronizados todavia.');
   });
 
-  it('switches between miembros and titularidades inside family section', async () => {
+  it('renders loading and error messages', () => {
+    mockUseAuxDataPage.mockReturnValue(
+      makeState({
+        loading: ref(true),
+        error: ref('Error de red'),
+      }),
+    );
     const wrapper = mount(AuxDataView);
 
-    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="ownership-manager"]').exists()).toBe(false);
-
-    const ownershipTab = wrapper.findAll('.ui-settings-family-tabs button')[1];
-    await ownershipTab!.trigger('click');
-
-    expect(wrapper.find('[data-testid="family-manager"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="ownership-manager"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Error de red');
+    expect(wrapper.text()).toContain('Cargando datos auxiliares...');
   });
 });

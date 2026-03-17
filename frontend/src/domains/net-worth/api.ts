@@ -1,4 +1,4 @@
-import { coreApi } from '@/lib/api';
+import { api, coreApi } from '@/lib/api';
 import type {
   Asset,
   AssetValuation,
@@ -11,13 +11,13 @@ import type {
   NetWorthWritePayload,
   Ownership,
   PositionTimeline,
+  Settings,
   Snapshot,
   Summary,
 } from '@/domains/net-worth/models';
 import type { OwnershipLink } from '@/domains/net-worth/ownership';
 
 type TargetType = 'asset' | 'liability';
-type Settings = { base_currency: string };
 type OwnershipSyncPayload = {
   target_type: TargetType;
   target_id: number;
@@ -105,12 +105,12 @@ export const coreNetWorthApi = {
 
 export const premiumOwnershipApi = {
   getOwnerships() {
-    return coreApi.get<Ownership[]>('/api/ownerships/');
+    return api.get<Ownership[]>('/api/ownerships/');
   },
   getOwnershipLinks() {
-    return coreApi.get<OwnershipLink[]>('/api/ownership-links/');
+    return api.get<OwnershipLink[]>('/api/ownership-links/');
   },
   syncOwnershipLink(payload: OwnershipSyncPayload) {
-    return coreApi.post('/api/ownership-links/sync/', payload);
+    return api.post('/api/ownership-links/sync/', payload);
   },
 };

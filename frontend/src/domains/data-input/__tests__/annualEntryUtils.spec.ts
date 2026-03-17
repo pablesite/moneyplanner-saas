@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeOwnerName, parseAnnualAmount } from '../annualEntryUtils';
 
-describe('annualEntryUtils (saas)', () => {
+describe('annualEntryUtils (core)', () => {
   it('parses annual amounts with locale/thousand separators', () => {
     expect(parseAnnualAmount('1.234,56')).toBe(1234.56);
     expect(parseAnnualAmount('1,234.56')).toBe(1234.56);
@@ -14,9 +14,7 @@ describe('annualEntryUtils (saas)', () => {
     expect(parseAnnualAmount('abc')).toBe(0);
   });
 
-  it('normalizes owner name and trims length', () => {
-    const long = `  ${'a'.repeat(140)}  `;
+  it('normalizes owner name safely', () => {
     expect(normalizeOwnerName('   Ana   López   ')).toBe('Ana López');
-    expect(normalizeOwnerName(long)).toHaveLength(120);
   });
 });

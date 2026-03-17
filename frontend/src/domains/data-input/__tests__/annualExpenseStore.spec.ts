@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAnnualExpenseStore } from '../annualExpenseStore';
 
 const mocks = vi.hoisted(() => ({
-  coreApi: {
+  api: {
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
@@ -11,20 +11,20 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  coreApi: mocks.coreApi,
+  api: mocks.api,
 }));
 
 vi.mock('@/lib/errors', () => ({
   toApiErrorMessage: (error: unknown) => (error instanceof Error ? error.message : 'error'),
 }));
 
-describe('annual expense store (saas)', () => {
+describe('annual expense store (core)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('loads entries and totals from core api', async () => {
-    mocks.coreApi.get
+    mocks.api.get
       .mockResolvedValueOnce({
         data: [
           {
@@ -44,7 +44,7 @@ describe('annual expense store (saas)', () => {
       })
       .mockResolvedValueOnce({ data: { total_annual: '5500.00', currency_hint: 'mixed' } });
 
-    const store = useAnnualExpenseStore('saas');
+    const store = useAnnualExpenseStore('core');
     await store.loadAll(2026);
 
     expect(store.entries.value).toHaveLength(1);
@@ -52,18 +52,17 @@ describe('annual expense store (saas)', () => {
   });
 
   it('creates, updates and deletes entries via core api', async () => {
-    mocks.coreApi.post.mockResolvedValue({ data: { id: 1 } });
-    mocks.coreApi.patch.mockResolvedValue({ data: { id: 1 } });
-    mocks.coreApi.delete.mockResolvedValue({ data: {} });
-    mocks.coreApi.get.mockResolvedValue({ data: [] });
+    mocks.api.post.mockResolvedValue({ data: { id: 1 } });
+    mocks.api.patch.mockResolvedValue({ data: { id: 1 } });
+    mocks.api.delete.mockResolvedValue({ data: {} });
+    mocks.api.get.mockResolvedValue({ data: [] });
 
-    const store = useAnnualExpenseStore('saas');
+    const store = useAnnualExpenseStore('core');
     const createResult = await store.addEntry(
       {
         name: 'Alimentacion',
         category: 'consumption_expenses',
         subcategory: 'living_expenses',
-        owner: 'Pablo',
         expenseType: 'recurrent',
         amountAnnual: '5500,00',
         fiscalYear: 2026,
@@ -74,13 +73,12 @@ describe('annual expense store (saas)', () => {
     );
 
     expect(createResult.ok).toBe(true);
-    expect(mocks.coreApi.post).toHaveBeenCalledWith(
+    expect(mocks.api.post).toHaveBeenCalledWith(
       '/api/budget/annual-expense/',
       expect.objectContaining({
         name: 'Alimentacion',
         category: 'consumption_expenses',
         subcategory: 'living_expenses',
-        owner_name: 'Pablo',
         amount_annual: '5500.00',
         fiscal_year: 2026,
       }),
@@ -92,7 +90,6 @@ describe('annual expense store (saas)', () => {
         name: 'Alimentacion actualizada',
         category: 'consumption_expenses',
         subcategory: 'living_expenses',
-        owner: '  Pablo   Ruiz  ',
         expenseType: 'recurrent',
         amountAnnual: '1.234,56',
         fiscalYear: 2026,
@@ -103,16 +100,15 @@ describe('annual expense store (saas)', () => {
     );
 
     expect(updateResult.ok).toBe(true);
-    expect(mocks.coreApi.patch).toHaveBeenCalledWith(
+    expect(mocks.api.patch).toHaveBeenCalledWith(
       '/api/budget/annual-expense/1/',
       expect.objectContaining({
         name: 'Alimentacion actualizada',
-        owner_name: 'Pablo Ruiz',
         amount_annual: '1234.56',
       }),
     );
 
     await store.deleteEntry(10, 2026);
-    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/budget/annual-expense/10/');
+    expect(mocks.api.delete).toHaveBeenCalledWith('/api/budget/annual-expense/10/');
   });
 });

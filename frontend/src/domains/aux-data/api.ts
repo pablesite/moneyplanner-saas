@@ -1,6 +1,5 @@
-import { coreApi } from '@/lib/api';
-import { capabilities } from '@/domains/capabilities';
-import type { FxRate, InflationIndex } from '@/domains/aux-data/types';
+import { api } from '@/lib/api';
+import type { MarketDataStatus } from '@/domains/aux-data/types';
 
 export type CreateFxRatePayload = {
   rate_date: string;
@@ -16,56 +15,13 @@ export type CreateInflationPayload = {
 };
 
 export type AuxDataApiAdapter = {
-  getFxRates(): ReturnType<typeof coreApi.get<FxRate[]>>;
-  getInflation(): ReturnType<typeof coreApi.get<InflationIndex[]>>;
-  createFxRate(payload: CreateFxRatePayload): ReturnType<typeof coreApi.post>;
-  deleteFxRate(id: number): ReturnType<typeof coreApi.delete>;
-  createInflation(payload: CreateInflationPayload): ReturnType<typeof coreApi.post>;
-  deleteInflation(id: number): ReturnType<typeof coreApi.delete>;
+  getStatus(): ReturnType<typeof api.get<MarketDataStatus>>;
 };
 
 export const coreAuxDataApi: AuxDataApiAdapter = {
-  getFxRates() {
-    return coreApi.get<FxRate[]>('/api/core/fx-rates/');
-  },
-  getInflation() {
-    return coreApi.get<InflationIndex[]>('/api/core/inflation/');
-  },
-  createFxRate(payload: CreateFxRatePayload) {
-    return coreApi.post('/api/core/fx-rates/', payload);
-  },
-  deleteFxRate(id: number) {
-    return coreApi.delete(`/api/core/fx-rates/${id}/`);
-  },
-  createInflation(payload: CreateInflationPayload) {
-    return coreApi.post('/api/core/inflation/', payload);
-  },
-  deleteInflation(id: number) {
-    return coreApi.delete(`/api/core/inflation/${id}/`);
+  getStatus() {
+    return api.get<MarketDataStatus>('/api/core/market-data/status/');
   },
 };
 
-export const premiumAuxDataApi: AuxDataApiAdapter = {
-  getFxRates() {
-    return coreApi.get<FxRate[]>('/api/core/fx-rates/');
-  },
-  getInflation() {
-    return coreApi.get<InflationIndex[]>('/api/core/inflation/');
-  },
-  createFxRate(payload: CreateFxRatePayload) {
-    return coreApi.post('/api/core/fx-rates/', payload);
-  },
-  deleteFxRate(id: number) {
-    return coreApi.delete(`/api/core/fx-rates/${id}/`);
-  },
-  createInflation(payload: CreateInflationPayload) {
-    return coreApi.post('/api/core/inflation/', payload);
-  },
-  deleteInflation(id: number) {
-    return coreApi.delete(`/api/core/inflation/${id}/`);
-  },
-};
-
-export const auxDataApi: AuxDataApiAdapter = capabilities.isPremium
-  ? premiumAuxDataApi
-  : coreAuxDataApi;
+export const auxDataApi: AuxDataApiAdapter = coreAuxDataApi;

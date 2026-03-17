@@ -1,24 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { useAuxData } from '@/domains/aux-data/composables';
 
 const mocks = vi.hoisted(() => ({
-  getFxRates: vi.fn(),
-  getInflation: vi.fn(),
-  createFxRate: vi.fn(),
-  deleteFxRate: vi.fn(),
-  createInflation: vi.fn(),
-  deleteInflation: vi.fn(),
+  getStatus: vi.fn(),
   toApiErrorMessage: vi.fn(() => 'mapped-error'),
 }));
 
 vi.mock('@/domains/aux-data/api', () => ({
   auxDataApi: {
-    getFxRates: mocks.getFxRates,
-    getInflation: mocks.getInflation,
-    createFxRate: mocks.createFxRate,
-    deleteFxRate: mocks.deleteFxRate,
-    createInflation: mocks.createInflation,
-    deleteInflation: mocks.deleteInflation,
+    getStatus: mocks.getStatus,
   },
 }));
 
@@ -26,54 +16,41 @@ vi.mock('@/lib/errors', () => ({
   toApiErrorMessage: mocks.toApiErrorMessage,
 }));
 
-describe('useAuxData (saas)', () => {
+describe('useAuxData (core)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal(
-      'confirm',
-      vi.fn(() => true),
-    );
   });
 
-  it('creates FX and inflation records and sets success messages', async () => {
-    mocks.getFxRates.mockResolvedValue({ data: [] });
-    mocks.getInflation.mockResolvedValue({ data: [] });
-    mocks.createFxRate.mockResolvedValue({});
-    mocks.createInflation.mockResolvedValue({});
+  it('loads market data status', async () => {
+    mocks.getStatus.mockResolvedValueOnce({
+      data: {
+        supported_inflation_regions: [{ code: 'ES', label: 'Espana' }],
+        datasets: {
+          fx: { states: [{ scope: 'USD->EUR' }], latest_rows: [{ id: 1 }] },
+          inflation: { states: [{ scope: 'ES' }], latest_rows: [{ id: 2 }] },
+        },
+      },
+    });
     const state = useAuxData();
 
-    state.fxForm.value = { rate_date: '2026-02-18', pair: 'USD_EUR', rate: '0.95' };
-    await state.createFxRate();
-    expect(mocks.createFxRate).toHaveBeenCalledWith({
-      rate_date: '2026-02-18',
-      from_currency: 'USD',
-      to_currency: 'EUR',
-      rate: '0.95',
-    });
-    expect(state.successMessage.value).toContain('FX rate');
+    await state.loadAll();
 
-    state.ipcForm.value = { region: 'ES', period: '2026-02', index: '101.2' };
-    await state.createInflation();
-    expect(mocks.createInflation).toHaveBeenCalledWith({
-      region: 'ES',
-      period: '2026-02-01',
-      index: '101.2',
-    });
-    expect(state.successMessage.value).toContain('IPC');
-  });
-
-  it('deletes records and maps API errors', async () => {
-    mocks.getFxRates.mockResolvedValue({ data: [] });
-    mocks.getInflation.mockResolvedValue({ data: [] });
-    mocks.deleteFxRate.mockResolvedValue({});
-    mocks.deleteInflation.mockRejectedValue(new Error('boom'));
-    const state = useAuxData();
-
-    await state.deleteFxRate(1);
-    expect(mocks.deleteFxRate).toHaveBeenCalledWith(1);
-
-    await state.deleteInflation(2);
-    expect(state.error.value).toBe('mapped-error');
+    expect(state.fxRates.value).toEqual([{ id: 1 }]);
+    expect(state.inflation.value).toEqual([{ id: 2 }]);
+    expect(state.fxStates.value).toEqual([{ scope: 'USD->EUR' }]);
+    expect(state.supportedInflationRegions.value).toEqual([{ code: 'ES', label: 'Espana' }]);
     expect(state.loading.value).toBe(false);
+    expect(state.error.value).toBeNull();
+  });
+
+  it('maps API errors and formats helper outputs', async () => {
+    mocks.getStatus.mockRejectedValueOnce(new Error('boom'));
+    const state = useAuxData();
+
+    await state.loadAll();
+
+    expect(state.error.value).toBe('mapped-error');
+    expect(state.formatFxRate('1,2345', 'USD', 'EUR')).toBe('1.2345');
+    expect(state.formatInflationIndex('100,55')).toBe('100.550');
   });
 });

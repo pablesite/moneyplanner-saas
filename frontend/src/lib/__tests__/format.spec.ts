@@ -4,14 +4,14 @@ import { formatAmount, formatMoney, getMaxDecimals, normalizeNumberInput } from 
 describe('format helpers', () => {
   it('normalizes number input with spaces and commas', () => {
     expect(normalizeNumberInput(' 1 234,56 ')).toBe('1234.56');
-    expect(normalizeNumberInput(null)).toBe('');
+    expect(normalizeNumberInput(undefined)).toBe('');
   });
 
   it('resolves max decimals by currency with fallback', () => {
     expect(getMaxDecimals('EUR')).toBe(2);
     expect(getMaxDecimals('BTC')).toBe(8);
     expect(getMaxDecimals('UNKNOWN')).toBe(2);
-    expect(getMaxDecimals(undefined)).toBe(2);
+    expect(getMaxDecimals()).toBe(2);
   });
 
   it('formats amount and money values', () => {

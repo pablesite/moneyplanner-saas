@@ -1,55 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { auxDataApi, coreAuxDataApi, premiumAuxDataApi } from '@/domains/aux-data/api';
-import { capabilities } from '@/domains/capabilities';
+import { auxDataApi, coreAuxDataApi } from '@/domains/aux-data/api';
 
 const mocks = vi.hoisted(() => ({
-  coreApi: {
+  api: {
     get: vi.fn(),
-    post: vi.fn(),
-    delete: vi.fn(),
   },
 }));
 
 vi.mock('@/lib/api', () => ({
-  coreApi: mocks.coreApi,
+  api: mocks.api,
 }));
 
-describe('aux-data api (saas)', () => {
+describe('aux-data api (core)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('exports premium adapter as active api in saas', () => {
-    if (capabilities.isPremium) {
-      expect(auxDataApi).toBe(premiumAuxDataApi);
-      expect(auxDataApi).not.toBe(coreAuxDataApi);
-      return;
-    }
+  it('exports core adapter as active api', () => {
     expect(auxDataApi).toBe(coreAuxDataApi);
-    expect(auxDataApi).not.toBe(premiumAuxDataApi);
   });
 
-  it('maps all aux-data endpoints through core api client', async () => {
-    const payloadFx = {
-      rate_date: '2026-02-18',
-      from_currency: 'USD',
-      to_currency: 'EUR',
-      rate: '0.95',
-    };
-    const payloadInflation = { region: 'ES', period: '2026-02-01', index: '101.2' };
+  it('maps status endpoint through core api client', async () => {
+    await coreAuxDataApi.getStatus();
 
-    await premiumAuxDataApi.getFxRates();
-    await premiumAuxDataApi.getInflation();
-    await premiumAuxDataApi.createFxRate(payloadFx);
-    await premiumAuxDataApi.deleteFxRate(7);
-    await premiumAuxDataApi.createInflation(payloadInflation);
-    await premiumAuxDataApi.deleteInflation(9);
-
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/core/fx-rates/');
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/core/inflation/');
-    expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/core/fx-rates/', payloadFx);
-    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/core/fx-rates/7/');
-    expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/core/inflation/', payloadInflation);
-    expect(mocks.coreApi.delete).toHaveBeenCalledWith('/api/core/inflation/9/');
+    expect(mocks.api.get).toHaveBeenCalledWith('/api/core/market-data/status/');
   });
 });

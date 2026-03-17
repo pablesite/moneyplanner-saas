@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
-import { coreApi } from '@/lib/api';
+import { api, coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import {
   ItemForm,
@@ -83,7 +83,7 @@ const {
   addEntry: addIncomeEntry,
   updateEntry: updateIncomeEntry,
   deleteEntry: deleteIncomeEntry,
-} = useAnnualIncomeStore('saas');
+} = useAnnualIncomeStore('core');
 const {
   entries: annualExpenseEntries,
   loading: annualExpenseLoading,
@@ -93,7 +93,7 @@ const {
   updateEntry: updateExpenseEntry,
   deleteEntry: deleteExpenseEntry,
   listBySourceLiability,
-} = useAnnualExpenseStore('saas');
+} = useAnnualExpenseStore('core');
 const annualIncomeError = ref<string | null>(null);
 const annualExpenseError = ref<string | null>(null);
 const showIncomeModal = ref(false);
@@ -1903,15 +1903,15 @@ async function exportDataBundle(): Promise<void> {
       coreApi.get<PortableLiabilityRecord[]>('/api/net-worth/liabilities/'),
       coreApi.get<PortableSnapshotRecord[]>('/api/net-worth/snapshots/'),
       coreApi.get<PortableSettingsRecord>('/api/auth/settings/'),
-      coreApi.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
-      coreApi.get<PortableOwnershipRecord[]>('/api/ownerships/'),
-      coreApi.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
+      api.get<PortableFamilyMemberRecord[]>('/api/family-members/'),
+      api.get<PortableOwnershipRecord[]>('/api/ownerships/'),
+      api.get<PortableOwnershipLinkRecord[]>('/api/ownership-links/'),
     ]);
 
     const payload: PortableDataBundle = {
       schema_version: 1,
       exported_at: new Date().toISOString(),
-      source_app: 'saas',
+      source_app: 'core',
       exported_app_version: appVersion,
       settings: settingsRes.data ?? undefined,
       data: {

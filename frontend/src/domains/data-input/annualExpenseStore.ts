@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { coreApi } from '@/lib/api';
+import { api } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import {
   expenseSubcategories,
@@ -132,10 +132,10 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
     error.value = null;
     try {
       const [listRes, totalsRes] = await Promise.all([
-        coreApi.get<AnnualExpenseApiItem[]>('/api/budget/annual-expense/', {
+        api.get<AnnualExpenseApiItem[]>('/api/budget/annual-expense/', {
           params: year ? { year } : undefined,
         }),
-        coreApi.get<TotalsResponse>('/api/budget/annual-expense/totals/', {
+        api.get<TotalsResponse>('/api/budget/annual-expense/totals/', {
           params: year ? { year } : undefined,
         }),
       ]);
@@ -165,7 +165,7 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
     loading.value = true;
     error.value = null;
     try {
-      await coreApi.post('/api/budget/annual-expense/', {
+      await api.post('/api/budget/annual-expense/', {
         name,
         category: draft.category,
         subcategory: draft.subcategory,
@@ -218,7 +218,7 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
     loading.value = true;
     error.value = null;
     try {
-      await coreApi.patch(`/api/budget/annual-expense/${id}/`, {
+      await api.patch(`/api/budget/annual-expense/${id}/`, {
         name,
         category: draft.category,
         subcategory: draft.subcategory,
@@ -253,7 +253,7 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
     loading.value = true;
     error.value = null;
     try {
-      await coreApi.delete(`/api/budget/annual-expense/${id}/`);
+      await api.delete(`/api/budget/annual-expense/${id}/`);
       await loadAll(year);
     } catch (e: unknown) {
       error.value = toApiErrorMessage(e);
@@ -263,7 +263,7 @@ export function useAnnualExpenseStore(_scope: 'saas' | 'core' = 'saas') {
   }
 
   async function listBySourceLiability(sourceLiabilityId: number): Promise<AnnualExpenseEntry[]> {
-    const response = await coreApi.get<AnnualExpenseApiItem[]>('/api/budget/annual-expense/', {
+    const response = await api.get<AnnualExpenseApiItem[]>('/api/budget/annual-expense/', {
       params: { source_liability_id: sourceLiabilityId },
     });
     return (response.data ?? []).map(mapApiItem);

@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { coreApi } from '@/lib/api';
+import { api } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import { incomeSubcategories, type IncomeCategoryKey } from '@/domains/data-input/incomeTaxonomy';
 import { normalizeOwnerName, parseAnnualAmount } from '@/domains/data-input/annualEntryUtils';
@@ -120,10 +120,10 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
     error.value = null;
     try {
       const [listRes, totalsRes] = await Promise.all([
-        coreApi.get<AnnualIncomeApiItem[]>('/api/budget/annual-income/', {
+        api.get<AnnualIncomeApiItem[]>('/api/budget/annual-income/', {
           params: year ? { year } : undefined,
         }),
-        coreApi.get<TotalsResponse>('/api/budget/annual-income/totals/', {
+        api.get<TotalsResponse>('/api/budget/annual-income/totals/', {
           params: year ? { year } : undefined,
         }),
       ]);
@@ -153,7 +153,7 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
     loading.value = true;
     error.value = null;
     try {
-      await coreApi.post('/api/budget/annual-income/', {
+      await api.post('/api/budget/annual-income/', {
         name,
         category: draft.category,
         subcategory: draft.subcategory,
@@ -206,7 +206,7 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
     loading.value = true;
     error.value = null;
     try {
-      await coreApi.patch(`/api/budget/annual-income/${id}/`, {
+      await api.patch(`/api/budget/annual-income/${id}/`, {
         name,
         category: draft.category,
         subcategory: draft.subcategory,
@@ -241,7 +241,7 @@ export function useAnnualIncomeStore(_scope: 'saas' | 'core' = 'saas') {
     loading.value = true;
     error.value = null;
     try {
-      await coreApi.delete(`/api/budget/annual-income/${id}/`);
+      await api.delete(`/api/budget/annual-income/${id}/`);
       await loadAll(year);
     } catch (e: unknown) {
       error.value = toApiErrorMessage(e);

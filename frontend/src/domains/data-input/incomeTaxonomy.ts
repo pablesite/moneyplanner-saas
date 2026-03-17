@@ -49,10 +49,22 @@ export const incomeSubcategories: IncomeSubcategory[] = [
     label: 'Venta de activos financieros',
   },
   { category: 'capital_gains', value: 'sale_real_estate', label: 'Venta de inmueble' },
-  { category: 'capital_gains', value: 'sale_business_asset', label: 'Venta de activo de negocio' },
-  { category: 'capital_gains', value: 'sale_personal_asset', label: 'Venta de activo personal' },
+  {
+    category: 'capital_gains',
+    value: 'sale_business_asset',
+    label: 'Venta de activo de negocio',
+  },
+  {
+    category: 'capital_gains',
+    value: 'sale_personal_asset',
+    label: 'Venta de activo personal',
+  },
   { category: 'capital_gains', value: 'fx_gain', label: 'Ganancia por divisa' },
-  { category: 'capital_gains', value: 'other_capital_gains', label: 'Otras ganancias de capital' },
+  {
+    category: 'capital_gains',
+    value: 'other_capital_gains',
+    label: 'Otras ganancias de capital',
+  },
 
   { category: 'transfers_support', value: 'family_support', label: 'Apoyo familiar' },
   { category: 'transfers_support', value: 'gifts_received', label: 'Regalos recibidos' },
@@ -62,16 +74,32 @@ export const incomeSubcategories: IncomeSubcategory[] = [
     value: 'alimony_received',
     label: 'Pension/alimentos recibidos',
   },
-  { category: 'transfers_support', value: 'insurance_payout', label: 'Indemnizacion de seguro' },
+  {
+    category: 'transfers_support',
+    value: 'insurance_payout',
+    label: 'Indemnizacion de seguro',
+  },
   {
     category: 'transfers_support',
     value: 'other_transfers_support',
     label: 'Otras transferencias',
   },
 
-  { category: 'public_benefits', value: 'unemployment_benefit', label: 'Prestacion por desempleo' },
-  { category: 'public_benefits', value: 'retirement_pension', label: 'Pension de jubilacion' },
-  { category: 'public_benefits', value: 'disability_benefit', label: 'Prestacion por incapacidad' },
+  {
+    category: 'public_benefits',
+    value: 'unemployment_benefit',
+    label: 'Prestacion por desempleo',
+  },
+  {
+    category: 'public_benefits',
+    value: 'retirement_pension',
+    label: 'Pension de jubilacion',
+  },
+  {
+    category: 'public_benefits',
+    value: 'disability_benefit',
+    label: 'Prestacion por incapacidad',
+  },
   { category: 'public_benefits', value: 'scholarship', label: 'Beca' },
   { category: 'public_benefits', value: 'subsidy_grant', label: 'Subsidio/ayuda publica' },
   {

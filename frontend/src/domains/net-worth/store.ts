@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import { coreApi } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 import { buildByCategoryChart } from '@/domains/net-worth/charts';
@@ -16,6 +15,7 @@ import type {
   NetWorthWritePayload,
   Ownership,
   PositionTimeline,
+  Settings,
   Snapshot,
   Summary,
 } from '@/domains/net-worth/models';
@@ -24,31 +24,13 @@ export type { Asset, Liability, Ownership, Snapshot, Summary } from '@/domains/n
 
 type OwnershipAwarePayload = NetWorthWritePayload & { ownership_id?: number | null };
 
-function requestTimeline(params: {
-  asset_category?: string | null;
-  liability_category?: string | null;
-}) {
-  if (typeof coreNetWorthApi.getTimeline === 'function') {
-    return coreNetWorthApi.getTimeline(params);
-  }
-
-  return coreApi.get<NetWorthTimeline>('/api/net-worth/timeline/', {
-    params:
-      params.asset_category || params.liability_category
-        ? {
-            ...(params.asset_category ? { asset_category: params.asset_category } : {}),
-            ...(params.liability_category ? { liability_category: params.liability_category } : {}),
-          }
-        : undefined,
-  });
-}
-
 export const useNetWorthStore = defineStore('netWorth', {
   state: () => ({
     loading: false as boolean,
     error: null as string | null,
 
     baseCurrency: null as string | null,
+    inflationRegion: 'ES' as string,
 
     summary: null as Summary | null,
     assets: [] as Asset[],
@@ -116,7 +98,7 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.timelineCategoryFilter = category;
       this.timelineCategoryFilterType = categoryType;
       try {
-        const timelineRes = await requestTimeline({
+        const timelineRes = await coreNetWorthApi.getTimeline({
           asset_category: categoryType === 'asset' ? category : null,
           liability_category: categoryType === 'liability' ? category : null,
         });
@@ -365,23 +347,36 @@ export const useNetWorthStore = defineStore('netWorth', {
       try {
         const res = await coreNetWorthApi.getSettings();
         this.baseCurrency = res.data.base_currency;
+        this.inflationRegion = res.data.inflation_region;
       } catch (e: unknown) {
         this.error = toApiErrorMessage(e);
       }
     },
 
-    async updateBaseCurrency(currency: string) {
+    async updateSettings(payload: Partial<Settings>) {
       this.loading = true;
       this.error = null;
       try {
-        const res = await coreNetWorthApi.updateSettings({ base_currency: currency });
+        const res = await coreNetWorthApi.updateSettings({
+          base_currency: payload.base_currency ?? this.baseCurrency ?? 'EUR',
+          inflation_region: payload.inflation_region ?? this.inflationRegion ?? 'ES',
+        });
         this.baseCurrency = res.data.base_currency;
+        this.inflationRegion = res.data.inflation_region;
         await this.refreshAll();
       } catch (e: unknown) {
         this.error = toApiErrorMessage(e);
       } finally {
         this.loading = false;
       }
+    },
+
+    async updateBaseCurrency(currency: string) {
+      await this.updateSettings({ base_currency: currency });
+    },
+
+    async updateInflationRegion(region: string) {
+      await this.updateSettings({ inflation_region: region });
     },
   },
 });

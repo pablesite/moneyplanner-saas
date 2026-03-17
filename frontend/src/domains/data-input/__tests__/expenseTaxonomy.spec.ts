@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { expenseCategories, expenseSubcategories } from '../expenseTaxonomy';
 
-describe('expense taxonomy', () => {
+describe('expense taxonomy (core)', () => {
   it('defines subcategories for every category', () => {
     const categories = expenseCategories.map((c) => c.value);
     for (const category of categories) {

@@ -3,9 +3,6 @@ import { createPinia, setActivePinia } from 'pinia';
 import { useNetWorthStore } from '@/domains/net-worth/store';
 
 const mocks = vi.hoisted(() => ({
-  coreApi: {
-    get: vi.fn(),
-  },
   coreNetWorthApi: {
     getSummary: vi.fn(),
     getAssets: vi.fn(),
@@ -44,10 +41,6 @@ vi.mock('@/domains/net-worth/api', () => ({
   premiumOwnershipApi: mocks.premiumOwnershipApi,
 }));
 
-vi.mock('@/lib/api', () => ({
-  coreApi: mocks.coreApi,
-}));
-
 vi.mock('@/domains/net-worth/charts', () => ({
   buildByCategoryChart: mocks.buildByCategoryChart,
 }));
@@ -60,7 +53,6 @@ describe('net worth store (core)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
-    mocks.coreNetWorthApi.getTimeline ??= vi.fn();
     mocks.premiumOwnershipApi.getOwnerships.mockResolvedValue({ data: [] });
     mocks.premiumOwnershipApi.getOwnershipLinks.mockResolvedValue({ data: [] });
   });
@@ -159,8 +151,12 @@ describe('net worth store (core)', () => {
   });
 
   it('fetches settings and updates base currency', async () => {
-    mocks.coreNetWorthApi.getSettings.mockResolvedValue({ data: { base_currency: 'USD' } });
-    mocks.coreNetWorthApi.updateSettings.mockResolvedValue({ data: { base_currency: 'EUR' } });
+    mocks.coreNetWorthApi.getSettings.mockResolvedValue({
+      data: { base_currency: 'USD', inflation_region: 'ES' },
+    });
+    mocks.coreNetWorthApi.updateSettings.mockResolvedValue({
+      data: { base_currency: 'EUR', inflation_region: 'ES-MD' },
+    });
     mocks.coreNetWorthApi.getSummary.mockResolvedValue({ data: { base_currency: 'EUR' } });
     mocks.coreNetWorthApi.getAssets.mockResolvedValue({ data: [] });
     mocks.coreNetWorthApi.getLiabilities.mockResolvedValue({ data: [] });
@@ -169,10 +165,21 @@ describe('net worth store (core)', () => {
 
     await store.fetchSettings();
     expect(store.baseCurrency).toBe('USD');
+    expect(store.inflationRegion).toBe('ES');
 
     await store.updateBaseCurrency('EUR');
-    expect(mocks.coreNetWorthApi.updateSettings).toHaveBeenCalledWith({ base_currency: 'EUR' });
+    expect(mocks.coreNetWorthApi.updateSettings).toHaveBeenCalledWith({
+      base_currency: 'EUR',
+      inflation_region: 'ES',
+    });
     expect(store.baseCurrency).toBe('EUR');
+
+    await store.updateInflationRegion('ES-MD');
+    expect(mocks.coreNetWorthApi.updateSettings).toHaveBeenLastCalledWith({
+      base_currency: 'EUR',
+      inflation_region: 'ES-MD',
+    });
+    expect(store.inflationRegion).toBe('ES-MD');
   });
 
   it('fetches timeline with category filter', async () => {
@@ -194,27 +201,6 @@ describe('net worth store (core)', () => {
     expect(store.timelineCategoryFilter).toBe('investments');
     expect(store.timelineCategoryFilterType).toBe('asset');
     expect(store.timeline?.filters.asset_category).toBe('investments');
-    expect(store.timelineLoading).toBe(false);
-  });
-
-  it('falls back to direct timeline request when api helper is missing at runtime', async () => {
-    mocks.coreNetWorthApi.getTimeline =
-      undefined as unknown as typeof mocks.coreNetWorthApi.getTimeline;
-    mocks.coreApi.get.mockResolvedValue({
-      data: {
-        rows: [{ date: '2026-01-31', net_worth: '100.00' }],
-        base_currency: 'EUR',
-        filters: { asset_category: null, liability_category: 'mortgage' },
-      },
-    });
-    const store = useNetWorthStore();
-
-    await store.fetchTimeline('mortgage', 'liability');
-
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/net-worth/timeline/', {
-      params: { liability_category: 'mortgage' },
-    });
-    expect(store.timeline?.filters.liability_category).toBe('mortgage');
     expect(store.timelineLoading).toBe(false);
   });
 
