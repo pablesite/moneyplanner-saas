@@ -425,8 +425,8 @@ watch(availableManualPositionOptions, (options) => {
           <p class="ui-page-eyebrow">Accounting Movements</p>
           <h1 class="ui-accounting-hero-title">Libro diario operativo</h1>
         </div>
-        <div class="ui-page-actions">
-          <div class="ui-period-bar">
+        <div class="ui-accounting-hero-right">
+          <div class="ui-period-bar ui-accounting-period-bar">
             <label class="ui-period-field">
               <span>Ejercicio</span>
               <select v-model="selectedYear" class="select ui-period-select" @change="reloadPeriod">
@@ -446,26 +446,28 @@ watch(availableManualPositionOptions, (options) => {
               </select>
             </label>
           </div>
-          <button
-            class="btn"
-            type="button"
-            aria-label="Activar tracking contable"
-            title="Activar tracking contable"
-            :disabled="!hasAvailableManualPositions"
-            @click="openActivationModal"
-          >
-            + Activar tracking
-          </button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            aria-label="Registrar movimiento diario"
-            title="Registrar movimiento diario"
-            :disabled="!liquidityAccounts.length"
-            @click="showQuickEntryModal = true"
-          >
-            + Registrar movimiento
-          </button>
+          <div class="ui-page-actions">
+            <button
+              class="btn"
+              type="button"
+              aria-label="Activar tracking contable"
+              title="Activar tracking contable"
+              :disabled="!hasAvailableManualPositions"
+              @click="openActivationModal"
+            >
+              Activar tracking
+            </button>
+            <button
+              class="btn btn-primary ui-accounting-cta"
+              type="button"
+              aria-label="Registrar movimiento diario"
+              title="Registrar movimiento diario"
+              :disabled="!liquidityAccounts.length"
+              @click="showQuickEntryModal = true"
+            >
+              + Registrar movimiento
+            </button>
+          </div>
         </div>
       </div>
 
@@ -494,7 +496,12 @@ watch(availableManualPositionOptions, (options) => {
 
       <!-- Monthly cashflow strip -->
       <div v-if="summaryRows.length" class="ui-cashflow-strip">
-        <div v-for="row in summaryRows" :key="row.month" class="ui-cashflow-month">
+        <div
+          v-for="row in summaryRows"
+          :key="row.month"
+          class="ui-cashflow-month"
+          :class="{ 'ui-cashflow-month-active': row.month === selectedMonth }"
+        >
           <span class="ui-cashflow-month-label">{{ monthLabel(row.month) }}</span>
           <strong
             class="ui-cashflow-month-value"
@@ -526,8 +533,10 @@ watch(availableManualPositionOptions, (options) => {
         <div class="ui-section-copy">
           <h2 class="ui-section-title">Cuentas + historico por cuenta</h2>
           <p class="ui-section-subtitle">
-            {{ filteredTransactions.length }} movimientos &middot;
-            {{ operationalAccountsCount }} cuentas activas
+            {{ monthOptions.find((m) => m.value === selectedMonth)?.label ?? '' }}
+            {{ selectedYear }}
+            &middot; {{ filteredTransactions.length }} movimientos
+            &middot; {{ operationalAccountsCount }} cuentas activas
           </p>
         </div>
       </div>
@@ -766,10 +775,10 @@ watch(availableManualPositionOptions, (options) => {
         class="ui-accounting-form ui-accounting-modal-form"
         @submit.prevent="activatePositionFromModal"
       >
-        <div class="ui-accounting-form-head">
-          <h3>Activar tracking contable</h3>
-          <span class="subtle">Selecciona una posicion manual ya existente del patrimonio</span>
-        </div>
+        <p class="subtle">
+          Selecciona una o varias posiciones manuales del patrimonio para activar su seguimiento
+          contable en el ledger. Core generara automaticamente el saldo de apertura.
+        </p>
 
         <div class="ui-accounting-form-grid">
           <select v-model="activationForm.position_type" class="select">
@@ -894,13 +903,13 @@ watch(availableManualPositionOptions, (options) => {
           </button>
         </div>
 
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
-          <input
-            v-model="editTransactionForm.description"
-            class="input"
-            placeholder="Nomina marzo, compra semanal, mover a ahorro..."
-            required
-          />
+        <input
+          v-model="editTransactionForm.description"
+          class="input"
+          placeholder="Nomina marzo, compra semanal, mover a ahorro..."
+          required
+        />
+        <div class="ui-accounting-form-grid ui-accounting-form-grid-dates">
           <label class="ui-accounting-field">
             <span>Fecha contabilizacion</span>
             <input v-model="editTransactionForm.booking_date" type="date" class="input" required />
@@ -909,12 +918,6 @@ watch(availableManualPositionOptions, (options) => {
             <span>Fecha valor</span>
             <input v-model="editTransactionForm.value_date" type="date" class="input" required />
           </label>
-        </div>
-        <p class="ui-accounting-inline-note">
-          La API persiste fecha de contabilizacion y fecha valor. La hora todavia no.
-        </p>
-
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
           <label class="ui-accounting-field">
             <span>Hora</span>
             <input v-model="editTransactionForm.booking_time" type="time" class="input" />
@@ -1333,7 +1336,23 @@ watch(availableManualPositionOptions, (options) => {
   letter-spacing: 0.01em;
 }
 
-/* Period selector in page-actions */
+/* Right cluster: period bar stacked above action buttons, right-aligned */
+.ui-accounting-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .ui-accounting-hero-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+
+/* Period selector — compact context indicator, not an action */
 .ui-period-bar {
   display: flex;
   gap: 8px;
@@ -1342,6 +1361,12 @@ watch(availableManualPositionOptions, (options) => {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
   padding: 8px 12px;
+}
+
+.ui-accounting-period-bar {
+  padding: 6px 10px;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .ui-period-field {
@@ -1360,6 +1385,30 @@ watch(availableManualPositionOptions, (options) => {
   padding-bottom: 0;
   background: transparent;
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Primary CTA — more visual weight than secondary actions */
+.ui-accounting-cta {
+  padding: 10px 22px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Net balance hero number — larger than the shared kpi-value */
+.ui-accounting-hero-panel .ui-kpi-card-primary .ui-kpi-value {
+  font-size: 2rem;
+}
+
+/* Force 12-month cashflow in one row — override shared minmax(88px) */
+.ui-accounting-hero-panel .ui-cashflow-strip {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+/* Active month highlight in cashflow strip */
+.ui-cashflow-month-active {
+  border-color: rgba(45, 212, 191, 0.32);
+  background: rgba(45, 212, 191, 0.07);
 }
 
 /* ── Ledger panel ────────────────────────────────────────────── */
@@ -1508,6 +1557,10 @@ watch(availableManualPositionOptions, (options) => {
   border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
+.ui-entry-row:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
 .ui-entry-date {
   font-size: 0.75rem;
   color: var(--muted);
@@ -1635,6 +1688,13 @@ watch(availableManualPositionOptions, (options) => {
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 }
 
+/* 3-column row for booking_date + value_date + time in edit modal */
+.ui-accounting-form-grid-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.75fr;
+  gap: 10px;
+}
+
 .ui-accounting-field {
   display: grid;
   gap: 6px;
@@ -1718,19 +1778,46 @@ watch(availableManualPositionOptions, (options) => {
   padding-right: 56px;
 }
 
+/* Segmented movement type selector — full-width tabs, no wrapping */
 .ui-accounting-segmented {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: flex;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.ui-accounting-segmented-btn {
-  min-width: 120px;
+.ui-accounting-segmented .ui-accounting-segmented-btn {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 8px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: none;
 }
 
-.ui-accounting-segmented-btn-active {
-  border-color: rgba(45, 212, 191, 0.34);
-  background: rgba(45, 212, 191, 0.12);
+.ui-accounting-segmented .ui-accounting-segmented-btn:last-child {
+  border-right: none;
+}
+
+.ui-accounting-segmented .ui-accounting-segmented-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: transparent;
+  border-right-color: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.ui-accounting-segmented .ui-accounting-segmented-btn.ui-accounting-segmented-btn-active {
+  background: rgba(45, 212, 191, 0.1);
+  color: rgba(45, 212, 191, 0.95);
+  font-weight: 600;
 }
 
 .ui-accounting-annual-link {
@@ -1841,6 +1928,14 @@ watch(availableManualPositionOptions, (options) => {
     flex-wrap: wrap;
   }
 
+  .ui-accounting-hero-right {
+    align-items: flex-start;
+  }
+
+  .ui-accounting-hero-panel .ui-cashflow-strip {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
   .ui-entry-row {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
@@ -1857,6 +1952,7 @@ watch(availableManualPositionOptions, (options) => {
   .ui-accounting-form-grid,
   .ui-accounting-form-grid-wide,
   .ui-accounting-form-grid-edit-simple,
+  .ui-accounting-form-grid-dates,
   .ui-accounting-entry-editor-row {
     grid-template-columns: 1fr;
   }
