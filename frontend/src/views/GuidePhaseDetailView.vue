@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAnnualExpenseStore, useAnnualIncomeStore } from '@/domains/data-input';
 import { RouterLink, useRoute } from 'vue-router';
 import ScoreGradeLabel from '@/domains/guide/components/ScoreGradeLabel.vue';
@@ -68,6 +68,7 @@ const store = useNetWorthStore();
 const annualIncomeStore = useAnnualIncomeStore('saas');
 const annualExpenseStore = useAnnualExpenseStore('saas');
 const selectedExtraordinaryEventGroup = ref<string>('all');
+const guideFiscalYear = computed(() => new Date().getFullYear());
 
 const phaseId = computed(() => {
   const raw = String(route.params.phaseId ?? '');
@@ -1500,10 +1501,10 @@ function maybeLoadNetWorthContext() {
   void store.fetchSettings();
   void store.refreshAll();
   if (isDebtPhase.value || isCashFlowPhase.value) {
-    void annualIncomeStore.loadAll();
+    void annualIncomeStore.loadAll(guideFiscalYear.value);
   }
   if (isCashFlowPhase.value || isEmergencyFundPhase.value) {
-    void annualExpenseStore.loadAll();
+    void annualExpenseStore.loadAll(guideFiscalYear.value);
   }
 }
 
@@ -1511,13 +1512,13 @@ function phaseDetailTo(phaseIdParam: number): string {
   return `/guia/fases/${phaseIdParam}`;
 }
 
-onMounted(() => {
-  maybeLoadNetWorthContext();
-});
-
-watch(hasDiagnosticPhase, () => {
-  maybeLoadNetWorthContext();
-});
+watch(
+  phaseId,
+  () => {
+    maybeLoadNetWorthContext();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

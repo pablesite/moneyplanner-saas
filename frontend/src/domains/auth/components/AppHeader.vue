@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { clearAuthTokens, hasAccessToken } from '@/domains/auth/session';
+import { clearAuthTokens, getAccessToken } from '@/domains/auth/session';
 
 const router = useRouter();
 
-const hasToken = computed(() => hasAccessToken.value);
+const hasToken = computed(() => !!getAccessToken());
 
 function logout() {
   clearAuthTokens();
@@ -16,7 +16,7 @@ function logout() {
 <template>
   <header class="app-header">
     <div class="container ui-app-header-inner">
-      <div class="ui-app-header-title">moneyplanner</div>
+      <div class="ui-app-header-title">moneyplanner core</div>
 
       <div v-if="hasToken" class="ui-app-header-actions">
         <button class="btn" type="button" @click="logout">Logout</button>

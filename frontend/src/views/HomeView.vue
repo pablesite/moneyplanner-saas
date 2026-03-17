@@ -10,8 +10,8 @@ import { useNetWorthStore } from '@/domains/net-worth';
 
 const phases = guidePhases;
 const store = useNetWorthStore();
-const annualIncomeStore = useAnnualIncomeStore('saas');
-const annualExpenseStore = useAnnualExpenseStore('saas');
+const annualIncomeStore = useAnnualIncomeStore('core');
+const annualExpenseStore = useAnnualExpenseStore('core');
 const sharedPhaseDiagnostics = computed(() =>
   computeGuidePhaseDiagnostics({
     summary: store.summary as typeof store.summary & { liabilities_unbacked?: string | null },

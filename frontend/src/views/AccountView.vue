@@ -1,18 +1,34 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useSaasAccountPage } from '@/domains/auth';
+import { authApi } from '@/domains/auth';
+import { toApiErrorMessage } from '@/lib/errors';
 
 const route = useRoute();
 
-const { loading, error, success, username, email, role, subscriptionStatus, premiumEnabled } =
-  useSaasAccountPage();
+const loading = ref(true);
+const error = ref<string | null>(null);
+const baseCurrency = ref<string>('');
 
-const permissionNotice = computed(() =>
+const permissionNotice =
   route.query.reason === 'permission_denied'
-    ? 'No tienes permisos de administracion para acceder a esa seccion.'
-    : null,
-);
+    ? 'No tienes permisos para acceder a esa seccion.'
+    : null;
+
+async function load() {
+  loading.value = true;
+  error.value = null;
+  try {
+    const res = await authApi.validateSession();
+    baseCurrency.value = res.data?.base_currency ?? '';
+  } catch (e: unknown) {
+    error.value = toApiErrorMessage(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -27,53 +43,25 @@ const permissionNotice = computed(() =>
       {{ permissionNotice }}
     </div>
 
-    <div v-if="success" class="ui-alert-success mt-3">
-      {{ success }}
-    </div>
-
     <div v-if="loading" class="ui-status-line mt-3">Cargando cuenta...</div>
 
     <div v-else class="grid gap-3.5">
       <section class="card ui-pro-panel ui-profile-panel">
         <div class="ui-profile-head">
-          <h2 class="ui-profile-head-title">Identidad</h2>
+          <h2 class="ui-profile-head-title">Cuenta Core</h2>
         </div>
 
         <div class="ui-profile-layout">
           <div class="ui-profile-list">
             <div class="ui-profile-row">
-              <span class="ui-profile-label">Usuario</span>
-              <strong class="ui-profile-value">{{ username }}</strong>
+              <span class="ui-profile-label">Deployment</span>
+              <strong class="ui-profile-value">Core (self-hosted)</strong>
             </div>
             <div class="ui-profile-row">
-              <span class="ui-profile-label">Email</span>
-              <strong class="ui-profile-value">{{ email || 'sin email' }}</strong>
-            </div>
-            <div class="ui-profile-row">
-              <span class="ui-profile-label">Rol</span>
-              <strong class="ui-profile-value">{{ role }}</strong>
-            </div>
-            <div class="ui-profile-row">
-              <span class="ui-profile-label">Suscripcion</span>
-              <strong class="ui-profile-value">{{ subscriptionStatus }}</strong>
+              <span class="ui-profile-label">Moneda base</span>
+              <strong class="ui-profile-value">{{ baseCurrency || 'no configurada' }}</strong>
             </div>
           </div>
-
-          <aside class="ui-profile-aside">
-            <span class="ui-profile-aside-label">Estado del plan</span>
-            <span
-              class="badge"
-              :class="premiumEnabled ? 'ui-profile-badge-on' : 'ui-profile-badge-off'"
-            >
-              {{ premiumEnabled ? 'Premium habilitado' : 'Premium bloqueado' }}
-            </span>
-          </aside>
-        </div>
-
-        <div v-if="role === 'saas_admin'" class="mt-2.5">
-          <button class="btn btn-sm" type="button" @click="$router.push('/admin/users')">
-            Administrar usuarios SaaS
-          </button>
         </div>
       </section>
     </div>

@@ -1,6 +1,5 @@
 import type { AxiosResponse } from 'axios';
 import { api } from '@/lib/api';
-import { capabilities } from '@/domains/capabilities';
 
 export type LoginPayload = {
   username: string;
@@ -14,7 +13,7 @@ export type LoginResponse = {
 
 export type AuthApiAdapter = {
   login(payload: LoginPayload): Promise<AxiosResponse<LoginResponse>>;
-  validateSession(): Promise<AxiosResponse<unknown>>;
+  validateSession(): Promise<AxiosResponse<{ base_currency: string }>>;
 };
 
 export const coreAuthApi: AuthApiAdapter = {
@@ -22,17 +21,8 @@ export const coreAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get('/api/auth/me/');
+    return api.get<{ base_currency: string }>('/api/auth/settings/');
   },
 };
 
-export const premiumAuthApi: AuthApiAdapter = {
-  login(payload: LoginPayload) {
-    return api.post<LoginResponse>('/api/auth/token/', payload);
-  },
-  validateSession() {
-    return api.get('/api/auth/me/');
-  },
-};
-
-export const authApi: AuthApiAdapter = capabilities.isPremium ? premiumAuthApi : coreAuthApi;
+export const authApi: AuthApiAdapter = coreAuthApi;

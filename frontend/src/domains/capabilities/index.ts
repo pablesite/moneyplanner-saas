@@ -76,12 +76,10 @@ export type AppCapabilitiesV2 = {
   compat: AppCapabilitiesCompat;
 };
 
-// Backward-compatible shape while existing code still reads top-level flags.
 export type AppCapabilities = AppCapabilitiesV2 & AppCapabilitiesCompat;
 
 function buildCompat(capabilities: AppCapabilitiesV2): AppCapabilitiesCompat {
   return {
-    // Transitional mapping preserved for legacy checks during migration.
     isPremium: capabilities.planCode === 'cloud_pro' || capabilities.planCode === 'cloud_premium',
     people:
       capabilities.core.familyLogicalModel ||
@@ -101,16 +99,15 @@ function withCompat(base: Omit<AppCapabilitiesV2, 'compat'>): AppCapabilities {
 }
 
 export const capabilities: AppCapabilities = withCompat({
-  deploymentMode: 'cloud',
-  // Early-launch default profile: SaaS cloud running without paid plans yet.
-  planCode: 'cloud_basic',
+  deploymentMode: 'self_hosted',
+  planCode: 'community_core',
   capabilitiesVersion: 1,
   platform: {
-    selfHosted: false,
-    cloudHosted: true,
+    selfHosted: true,
+    cloudHosted: false,
     appAuth: true,
-    cloudManagedServices: true,
-    cloudMultiDeviceAccess: true,
+    cloudManagedServices: false,
+    cloudMultiDeviceAccess: false,
     pwaMinimal: false,
     mobileAppNative: false,
   },
@@ -143,7 +140,6 @@ export const capabilities: AppCapabilities = withCompat({
     smartNotifications: false,
   },
   pro: {
-    // Legacy aliases mapped to current open-core + cloud strategy.
     guide: true,
     guidanceBasic: false,
     goals: false,
@@ -162,8 +158,8 @@ export const capabilities: AppCapabilities = withCompat({
     astraSignalsInfo: false,
   },
   saas: {
-    accountPage: true,
-    adminInternal: true,
+    accountPage: false,
+    adminInternal: false,
     billingPortal: false,
     planManagement: false,
   },

@@ -4,27 +4,14 @@ import {
   getAccessToken,
   getRefreshToken,
   setAccessToken,
+  setRefreshToken,
 } from '@/lib/authSession';
 
-function getFallbackBaseURL() {
-  if (typeof window === 'undefined') {
-    return 'http://localhost:8001';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:8001`;
-}
-
-function getFallbackCoreBaseURL() {
-  if (typeof window === 'undefined') {
-    return 'http://localhost:8000';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:8000`;
-}
-
-const baseURL = import.meta.env.VITE_API_BASE_URL || getFallbackBaseURL();
-const coreBaseURL = import.meta.env.VITE_CORE_API_BASE_URL || getFallbackCoreBaseURL();
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export const api = axios.create({ baseURL });
-export const coreApi = axios.create({ baseURL: coreBaseURL });
+// Compatibility alias used by SaaS-derived views that call Core endpoints explicitly.
+export const coreApi = api;
 const refreshClient = axios.create({ baseURL });
 
 type PendingCallback = (token: string | null) => void;
@@ -54,8 +41,12 @@ async function refreshAccessToken(): Promise<string | null> {
   try {
     const res = await refreshClient.post('/api/auth/refresh/', { refresh });
     const access = res.data?.access;
+    const nextRefresh = res.data?.refresh;
     if (access) {
       setAccessToken(access);
+      if (typeof nextRefresh === 'string' && nextRefresh.length > 0) {
+        setRefreshToken(nextRefresh);
+      }
       return access;
     }
     logAuthDebug('refresh_missing_access', {
@@ -72,86 +63,77 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-function attachRequestInterceptor(client: typeof api) {
-  client.interceptors.request.use((config) => {
-    const token = getAccessToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
-}
+// Attach access token
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-attachRequestInterceptor(api);
-attachRequestInterceptor(coreApi);
+api.interceptors.response.use(
+  (r) => r,
+  async (error) => {
+    const status = error.response?.status;
+    const original = error.config || {};
+    const requestUrl = String(original.url ?? '');
+    const isRefreshCall = requestUrl.includes('/api/auth/refresh/');
+    const isTokenCall = requestUrl.includes('/api/auth/token/');
 
-function attachResponseInterceptor(client: typeof api, source: 'saas' | 'core') {
-  client.interceptors.response.use(
-    (r) => r,
-    async (error) => {
-      const status = error.response?.status;
-      const original = error.config || {};
-      const requestUrl = String(original.url ?? '');
-      const isRefreshCall = requestUrl.includes('/api/auth/refresh/');
-      const isTokenCall = requestUrl.includes('/api/auth/token/');
+    if (status !== 401 || isRefreshCall || isTokenCall || original._retry) {
+      return Promise.reject(error);
+    }
 
-      if (status !== 401 || isRefreshCall || isTokenCall || original._retry) {
-        return Promise.reject(error);
-      }
+    logAuthDebug('request_401', {
+      source: 'core',
+      url: requestUrl,
+      method: String(original.method ?? 'get').toUpperCase(),
+    });
 
-      logAuthDebug('request_401', {
-        source,
+    const refresh = getRefreshToken();
+    if (!refresh) {
+      logAuthDebug('logout_no_refresh_token', {
+        source: 'core',
         url: requestUrl,
-        method: String(original.method ?? 'get').toUpperCase(),
       });
+      clearAuthTokens();
+      redirectToLoginWithSessionExpiredReason();
+      return Promise.reject(error);
+    }
 
-      const refresh = getRefreshToken();
-      if (!refresh) {
-        logAuthDebug('logout_no_refresh_token', {
-          source,
+    original._retry = true;
+
+    if (!isRefreshing) {
+      isRefreshing = true;
+      const newToken = await refreshAccessToken();
+      isRefreshing = false;
+
+      if (!newToken) {
+        logAuthDebug('logout_refresh_failed', {
+          source: 'core',
           url: requestUrl,
         });
         clearAuthTokens();
+        notifyPending(null);
         redirectToLoginWithSessionExpiredReason();
         return Promise.reject(error);
       }
 
-      original._retry = true;
+      notifyPending(newToken);
+      original.headers = original.headers || {};
+      original.headers.Authorization = `Bearer ${newToken}`;
+      return api(original);
+    }
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-        const newToken = await refreshAccessToken();
-        isRefreshing = false;
-
-        if (!newToken) {
-          logAuthDebug('logout_refresh_failed', {
-            source,
-            url: requestUrl,
-          });
-          clearAuthTokens();
-          notifyPending(null);
-          redirectToLoginWithSessionExpiredReason();
-          return Promise.reject(error);
+    return new Promise((resolve, reject) => {
+      pending.push((token) => {
+        if (!token) {
+          reject(error);
+          return;
         }
-
-        notifyPending(newToken);
         original.headers = original.headers || {};
-        original.headers.Authorization = `Bearer ${newToken}`;
-        return client(original);
-      }
-
-      return new Promise((resolve, reject) => {
-        pending.push((token) => {
-          if (!token) {
-            reject(error);
-            return;
-          }
-          original.headers = original.headers || {};
-          original.headers.Authorization = `Bearer ${token}`;
-          resolve(client(original));
-        });
+        original.headers.Authorization = `Bearer ${token}`;
+        resolve(api(original));
       });
-    },
-  );
-}
-
-attachResponseInterceptor(api, 'saas');
-attachResponseInterceptor(coreApi, 'core');
+    });
+  },
+);
