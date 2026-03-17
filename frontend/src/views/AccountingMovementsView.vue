@@ -1343,6 +1343,9 @@ watch(availableManualPositionOptions, (options) => {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  padding-right: 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  margin-right: 4px;
 }
 
 .ui-period-field {
@@ -1371,10 +1374,13 @@ watch(availableManualPositionOptions, (options) => {
 .ui-accounting-filter-input {
   min-width: 200px;
   flex: 1;
+  width: auto;
 }
 
 .ui-accounting-filter-select {
   min-width: 160px;
+  width: auto;
+  flex: 1;
 }
 
 /* ── Ledger accordion — category level ──────────────────────── */
@@ -1649,6 +1655,13 @@ watch(availableManualPositionOptions, (options) => {
   font-size: 0.82rem;
 }
 
+.ui-accounting-form-grid > .ui-accounting-inline-note,
+.ui-accounting-form-grid-wide > .ui-accounting-inline-note {
+  align-self: center;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.76rem;
+}
+
 .ui-accounting-edit-readonly {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1735,6 +1748,28 @@ watch(availableManualPositionOptions, (options) => {
   cursor: pointer;
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.84rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-accounting-annual-link summary::-webkit-details-marker {
+  display: none;
+}
+
+.ui-accounting-annual-link summary::before {
+  content: '›';
+  display: inline-block;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--muted);
+  transition: transform 0.18s;
+  flex-shrink: 0;
+}
+
+.ui-accounting-annual-link[open] summary::before {
+  transform: rotate(90deg);
 }
 
 .ui-accounting-activation-list {
