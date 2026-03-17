@@ -81,11 +81,10 @@ Este repo contiene dos stacks coordinados:
 10. `docs/operations/dev-setup.md`
 11. `docs/operations/portable-import.md`
 12. `docs/roadmap/roadmap.md`
-13. `docs/roadmap/core-v0-consolidation-parity-checklist.md`
-14. `docs/frontend/frontend-visual-guide.md`
-15. `docs/frontend/frontend-ux-iteration-playbook.md`
-16. `docs/frontend/frontend-css-workflow.md`
-17. `docs/frontend/domain-map.md` — dominios frontend SaaS, rutas y clientes API
+13. `docs/frontend/frontend-visual-guide.md`
+14. `docs/frontend/frontend-ux-iteration-playbook.md`
+15. `docs/frontend/frontend-css-workflow.md`
+16. `docs/frontend/domain-map.md` — dominios frontend SaaS, rutas y clientes API
 
 ## Patrones de trabajo
 
@@ -126,7 +125,7 @@ Este repo contiene dos stacks coordinados:
 4. `core/docs/architecture/accounting-movements-architecture.md` — modelo contable (LedgerAccount/Transaction/Entry)
 5. `core/docs/roadmap/community-roadmap.md` — estado actual del roadmap Core
 6. `core/docs/roadmap/backend-refactor-roadmap.md` — refactor backend activo
-7. `core/docs/roadmap/accounting-category-budget-separation-roadmap.md` — separación accounting/budget activa
+7. `core/docs/roadmap/terminados/accounting-category-budget-separation-roadmap.md` — separación accounting/budget (terminado)
 8. `core/docs/roadmap/frontend-refactor-roadmap.md` — refactor frontend (no iniciado)
 9. `core/docs/operations/dev-setup.md`
 10. `core/docs/frontend/accounting-movements-ux-notes.md`

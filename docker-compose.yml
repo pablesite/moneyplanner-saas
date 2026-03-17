@@ -22,9 +22,9 @@ services:
   saas_db:
     image: postgres:15
     environment:
-      POSTGRES_DB: saas
-      POSTGRES_USER: saas
-      POSTGRES_PASSWORD: saas
+      POSTGRES_DB: ${DB_NAME:-saas}
+      POSTGRES_USER: ${DB_USER:-saas}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-saas}
     ports:
       - "5433:5432"
     volumes:

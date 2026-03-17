@@ -28,8 +28,7 @@ Track the minimum integration and operational readiness needed to run the SaaS p
 5. Basic support and recovery flow for pilot users
 
 ## Related Documents
-1. `roadmap.md`
-2. `../architecture/architecture.md`
+1. `../architecture/architecture.md`
 3. `../architecture/core-saas-boundaries.md`
 4. `../operations/dev-setup.md`
 5. `../../core/docs/README.md`

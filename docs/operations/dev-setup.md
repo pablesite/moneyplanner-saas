@@ -1,5 +1,22 @@
 ﻿# Desarrollo y operacion local (SaaS + Core)
 
+## Primer arranque: configurar .env
+
+Antes del primer `docker compose up`, crear los archivos `.env` copiando los ejemplos:
+
+```bash
+# SaaS backend
+cp backend/.env.example backend/.env
+
+# SaaS frontend
+cp frontend/.env.example frontend/.env
+
+# Core backend
+cp core/backend/.env.example core/backend/.env
+```
+
+Para desarrollo local no es necesario cambiar ningún valor — los defaults de los `.env.example` funcionan tal cual.
+
 ## Arranque local
 1. `cd core`
 2. `docker compose up --build -d`
