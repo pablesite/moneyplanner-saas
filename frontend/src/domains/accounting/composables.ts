@@ -1,6 +1,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAccountingStore } from '@/domains/accounting/store';
+import { coreAccountingApi } from '@/domains/accounting/api';
 import { coreNetWorthApi } from '@/domains/net-worth/api';
 import {
   expenseCategories,
@@ -15,6 +16,7 @@ import {
   type IncomeCategoryKey,
 } from '@/domains/data-input';
 import type {
+  LedgerAccount,
   LedgerAccountBalanceSummaryItem,
   LedgerAccountType,
   LedgerEntrySide,
@@ -701,6 +703,44 @@ export function useAccountingPage() {
     }
   }
 
+  async function removeNetWorthTracking(account: LedgerAccount) {
+    const targetType =
+      account.asset_id != null ? 'asset' : account.liability_id != null ? 'liability' : null;
+    const targetId = account.asset_id ?? account.liability_id;
+    if (!targetType || targetId == null) return;
+
+    successMessage.value = null;
+    if (
+      !confirm(
+        `Quitar tracking contable de "${account.name}"?\n\n` +
+          'La posicion volvera a tracking manual y dejara de formar parte del resumen contable.',
+      )
+    )
+      return;
+
+    accountActivationLoading.value = true;
+    store.error = null;
+    try {
+      if (targetType === 'asset') {
+        await coreNetWorthApi.updateAsset(targetId, { tracking_mode: 'manual' });
+      } else {
+        await coreNetWorthApi.updateLiability(targetId, { tracking_mode: 'manual' });
+      }
+      await coreAccountingApi.updateAccount(account.id, {
+        is_active: false,
+        asset_id: null,
+        liability_id: null,
+      });
+      await Promise.all([store.refreshAll(), refreshManualPositionOptions()]);
+      successMessage.value = 'Tracking contable desactivado para la cuenta seleccionada.';
+    } catch (error: unknown) {
+      store.error = toApiErrorMessage(error);
+      throw error;
+    } finally {
+      accountActivationLoading.value = false;
+    }
+  }
+
   async function deleteAccount(accountId: number, accountName: string) {
     successMessage.value = null;
     if (
@@ -853,6 +893,7 @@ export function useAccountingPage() {
     reloadPeriod,
     activateNetWorthPosition,
     activateNetWorthPositions,
+    removeNetWorthTracking,
     refreshManualPositionOptions,
     submitAccount,
     deleteAccount,

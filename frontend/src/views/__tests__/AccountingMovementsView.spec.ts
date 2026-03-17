@@ -25,7 +25,7 @@ function makeState(overrides: Record<string, unknown> = {}) {
         account_type: 'asset',
         currency: 'EUR',
         origin: 'user',
-        asset_id: null,
+        asset_id: 91,
         liability_id: null,
         is_active: true,
         notes: '',
@@ -287,6 +287,7 @@ function makeState(overrides: Record<string, unknown> = {}) {
     reloadPeriod: vi.fn(),
     activateNetWorthPosition: vi.fn(),
     activateNetWorthPositions: vi.fn(),
+    removeNetWorthTracking: vi.fn(),
     refreshManualPositionOptions: vi.fn(),
     submitAccount: vi.fn(),
     submitQuickEntry: vi.fn(),
@@ -393,5 +394,22 @@ describe('AccountingMovementsView', () => {
     expect(state.activateNetWorthPositions).toHaveBeenCalledWith('asset', [91]);
     expect(wrapper.text()).toContain('Patrimonio neto contable');
     expect(wrapper.text()).toContain('Contrapartidas tecnicas del sistema');
+  });
+
+  it('allows removing accounting tracking for linked positions', async () => {
+    const state = makeState();
+    mockUseAccountingPage.mockReturnValue(state);
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const wrapper = mount(AccountingMovementsView);
+
+    const untrackButton = wrapper
+      .findAll('button')
+      .find((candidate) => candidate.text().includes('Quitar tracking'));
+    await untrackButton?.trigger('click');
+
+    expect(state.removeNetWorthTracking).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, asset_id: 91 }),
+    );
+    confirmSpy.mockRestore();
   });
 });

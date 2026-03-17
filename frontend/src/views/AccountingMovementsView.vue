@@ -50,6 +50,7 @@ const {
   removeEntry,
   reloadPeriod,
   activateNetWorthPositions,
+  removeNetWorthTracking,
   deleteAccount,
   submitQuickEntry,
   submitTransaction,
@@ -303,6 +304,15 @@ watch(availableManualPositionOptions, (options) => {
                 <div class="ui-accounting-account-actions">
                   <span>{{ formatCompact(account.current_balance, account.currency) }}</span>
                   <button
+                    v-if="account.asset_id != null || account.liability_id != null"
+                    class="btn ui-accounting-account-untrack-btn"
+                    type="button"
+                    :disabled="accountActivationLoading || accountCreationLoading"
+                    @click="removeNetWorthTracking(account)"
+                  >
+                    Quitar tracking
+                  </button>
+                  <button
                     v-if="account.origin === 'user'"
                     class="btn ui-accounting-account-delete-btn"
                     type="button"
@@ -347,6 +357,15 @@ watch(availableManualPositionOptions, (options) => {
                   </div>
                   <div class="ui-accounting-account-actions">
                     <span>{{ formatCompact(account.current_balance, account.currency) }}</span>
+                    <button
+                      v-if="account.asset_id != null || account.liability_id != null"
+                      class="btn ui-accounting-account-untrack-btn"
+                      type="button"
+                      :disabled="accountActivationLoading || accountCreationLoading"
+                      @click="removeNetWorthTracking(account)"
+                    >
+                      Quitar tracking
+                    </button>
                     <button
                       v-if="account.origin === 'user'"
                       class="btn ui-accounting-account-delete-btn"
@@ -1214,6 +1233,12 @@ watch(availableManualPositionOptions, (options) => {
 }
 
 .ui-accounting-account-delete-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.74rem;
+}
+
+.ui-accounting-account-untrack-btn {
   min-height: 30px;
   padding: 0 10px;
   font-size: 0.74rem;
