@@ -595,17 +595,13 @@ watch(availableManualPositionOptions, (options) => {
             >
               <summary class="ui-ledger-account-summary">
                 <div class="ui-ledger-account-meta">
-                  <strong>{{ accountDisplayName(row.account) }}</strong>
+                  <strong class="ui-ledger-account-name">{{ accountDisplayName(row.account) }}</strong>
                   <div class="ui-action-bar ui-ledger-account-chips">
                     <span class="ui-pro-chip">{{ row.account.currency }}</span>
-                    <span class="ui-pro-chip">
-                      {{ row.account.account_type === 'asset' ? 'Activo' : 'Pasivo' }}
-                    </span>
-                    <span v-if="row.account.origin === 'system'" class="ui-pro-chip">Sistema</span>
                   </div>
                 </div>
                 <div class="ui-ledger-account-info">
-                  <span class="ui-pro-chip">{{ row.movement_count }} movs.</span>
+                  <span class="ui-ledger-movs-count">{{ row.movement_count }} mov.</span>
                   <strong class="ui-ledger-account-balance">
                     {{ formatCompact(row.account.current_balance, row.account.currency) }}
                   </strong>
@@ -1461,6 +1457,17 @@ watch(availableManualPositionOptions, (options) => {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.ui-ledger-account-name {
+  color: rgba(245, 250, 255, 0.92);
+}
+
+.ui-ledger-movs-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .ui-ledger-account-balance {
