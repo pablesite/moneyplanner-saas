@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '{\"systemMessage\": \"Recuerda actualizar docs/project-status.md si implementaste o cambiaste alguna funcionalidad en esta sesion.\"}'"
+            "command": "{ git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } | grep -qE \"\\.(py|ts|vue|js)$\" && printf '{\"systemMessage\": \"Docs: si esta sesion cambio funcionalidad o estado de modulos, actualiza docs/project-status.md (SaaS) y/o core/docs/project-status.md (Core). Si cambia el alcance pre-produccion, actualiza tambien core/docs/roadmap/product-roadmap.md.\"}' || true"
           }
         ]
       }

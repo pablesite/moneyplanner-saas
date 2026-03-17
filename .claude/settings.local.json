@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(git -C /c/Users/pablo/Proyectos/moneyplanner diff --name-only)",
-      "Read(//mnt/c/Users/pablo/Proyectos/moneyplanner/**)"
+      "Read(//mnt/c/Users/pablo/Proyectos/moneyplanner/**)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker compose exec saas_backend python manage.py shell -c \":*)",
+      "Bash(find c:/Users/pablo/Proyectos/moneyplanner -name urls.py -not -path */node_modules/* -not -path */.git/*)",
+      "Bash(find c:/Users/pablo/Proyectos/moneyplanner -name .env* -not -path */.git/* -not -path */node_modules/*)",
+      "Bash(find c:UserspabloProyectosmoneyplannerfrontendsrc -type f -name *ccounting*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"Activo\\\\|Cash\\\\|historico\" /c/Users/pablo/Proyectos/moneyplanner/frontend/src --include=*.vue --include=*.tsx)",
+      "Bash(grep -r \"account.*group\\\\|account.*type\" /c/Users/pablo/Proyectos/moneyplanner/frontend/src --include=*.vue -i)"
     ]
   }
 }
