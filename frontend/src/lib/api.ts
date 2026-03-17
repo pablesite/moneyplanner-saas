@@ -8,7 +8,7 @@ import {
 } from '@/lib/authSession';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
-const coreBaseURL = import.meta.env.VITE_CORE_API_BASE_URL || baseURL;
+const coreBaseURL = import.meta.env.VITE_CORE_API_BASE_URL || 'http://localhost:8000';
 
 export const api = axios.create({ baseURL });
 export const coreApi = axios.create({ baseURL: coreBaseURL });
