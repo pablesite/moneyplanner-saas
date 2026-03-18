@@ -28,6 +28,7 @@ domains/budget/components/BudgetMonthlyCloseExpenseSection.vue
 domains/budget/components/BudgetMonthlyCloseIncomeSection.vue
 domains/budget/components/BudgetMonthlyCloseLiquiditySection.vue
 domains/budget/components/BudgetMonthlyCloseResultSection.vue
+domains/budget/styles/dashboard.css
 domains/net-worth/charts.ts
 domains/ui/components/BaseModal.vue
 lib/authApi.ts
