@@ -25,6 +25,7 @@ domains/net-worth/components/SettingsPopover.vue
 domains/budget/components/BudgetHeroSection.vue
 domains/budget/components/BudgetMonthlyCloseIncomeSection.vue
 domains/budget/components/BudgetMonthlyCloseLiquiditySection.vue
+domains/budget/components/BudgetMonthlyCloseResultSection.vue
 domains/net-worth/charts.ts
 domains/ui/components/BaseModal.vue
 lib/authApi.ts
