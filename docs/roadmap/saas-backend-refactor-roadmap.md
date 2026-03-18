@@ -53,7 +53,7 @@ preparándolo para producción. Sin cambios de comportamiento funcional ni de co
 |------|--------|------|--------|
 | 1 | Test coverage baseline (≥80%) | `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` | ✅ |
 | 2 | Thin views (extracción de negocio a services) | `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` | ✅ |
-| 3 | Exception handler canónico | `docs/tasks/backend-refactor/phase-3-error-standardization/backend.md` | ⚪ |
+| 3 | Exception handler canónico | `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` | ✅ |
 
 ## Detalle de fases
 
@@ -101,6 +101,13 @@ Trabajo:
 - Registrar en `REST_FRAMEWORK.EXCEPTION_HANDLER` en settings
 - Añadir contract tests para shapes de error en todos los endpoints críticos
 - Eliminar respuestas ad-hoc que no usen el contrato canónico
+
+Estado real 2026-03-18:
+- Completada
+- Handler canónico movido a `saas/exception_handler.py` y registrado en `REST_FRAMEWORK.EXCEPTION_HANDLER`
+- Todos los error paths del backend SaaS responden con `{code, message, details}`
+- El account linking deja de emitir responses manuales ad-hoc y entra por el mismo pipeline de excepciones
+- Contract tests añadidos para 400, 401, 403, 404, 405 y 429, preservando `Retry-After` en throttling
 
 ## Secuencia de ejecución
 1. Fase 1 (test baseline) — prerrequisito de seguridad

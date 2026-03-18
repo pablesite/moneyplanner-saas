@@ -23,7 +23,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
 | Refactor backend SaaS — Phase 1 | Alta | ✅ | Test coverage baseline completado: suite reorganizada por dominio, rollback real en registro si falla bootstrap Core, 138 tests y 96% de coverage sobre `saas` + `saas_access`. Spec: `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` |
 | Refactor backend SaaS — Phase 2 | Media | ✅ | Thin views completado: `auth_views.py` en 122 líneas, `admin_views.py` en 96, lógica extraída a `saas/auth_services.py`, `saas/auth_link_views.py` y `saas_access/rbac_services.py`. Spec: `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` |
-| Refactor backend SaaS — Phase 3 | Media | ⚪ | Exception handler canónico: contrato {code, message, details} en todos los endpoints. Spec: `docs/tasks/backend-refactor/phase-3-error-standardization/backend.md` |
+| Refactor backend SaaS — Phase 3 | Media | ✅ | Exception handler canónico completado: contrato `{code, message, details}` en todos los endpoints y contract tests de error shape. Spec: `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` |
 | Revisión auth SaaS | Alta | ⚪ | Revisar login, permisos, RBAC y flujos reales (registro, sesión, expiración). |
 | Auditoría de seguridad | Alta | ⚪ | Vulnerabilidades backend SaaS, CVEs en dependencias, validación auth/permisos/inputs. |
 | CI/CD deployment | Alta | ⚪ | Pipeline de despliegue automático a producción (build, test, deploy). Complementa la infraestructura cloud; diseñar junto con el deployment. |

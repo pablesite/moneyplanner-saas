@@ -10,8 +10,9 @@ from rest_framework import status
 from rest_framework.exceptions import ErrorDetail, ValidationError as DRFValidationError
 from rest_framework.response import Response
 from rest_framework.test import APITestCase
+from rest_framework.throttling import SimpleRateThrottle
 
-from saas import auth_services, exceptions, settings as saas_settings
+from saas import auth_services, exception_handler, settings as saas_settings
 from saas.auth_views import (
     SaasCoreAccountLinkAPIView,
     SaasCoreAccountLinkFromTokenAPIView,
@@ -49,8 +50,8 @@ class SaasAuthApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data["error"]["code"], "unauthorized")
-        self.assertIn("message", response.data["error"])
+        self.assertEqual(response.data["code"], "authentication_failed")
+        self.assertIn("message", response.data)
 
     def test_login_rejects_inactive_user(self):
         self.user.is_active = False
@@ -61,7 +62,7 @@ class SaasAuthApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data["error"]["code"], "unauthorized")
+        self.assertEqual(response.data["code"], "authentication_failed")
 
     def test_refresh_returns_new_access_token(self):
         token_res = self.client.post(
@@ -84,7 +85,7 @@ class SaasAuthApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data["error"]["code"], "unauthorized")
+        self.assertEqual(response.data["code"], "authentication_failed")
 
     def test_register_creates_user(self):
         with patch(
@@ -115,8 +116,8 @@ class SaasAuthApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "validation_error")
-        self.assertIn("username", response.data["error"]["details"])
+        self.assertEqual(response.data["code"], "validation_error")
+        self.assertIn("username", response.data["details"])
 
     def test_register_rejects_duplicate_email(self):
         response = self.client.post(
@@ -129,8 +130,8 @@ class SaasAuthApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "validation_error")
-        self.assertIn("email", response.data["error"]["details"])
+        self.assertEqual(response.data["code"], "validation_error")
+        self.assertIn("email", response.data["details"])
 
     def test_register_rejects_short_password(self):
         response = self.client.post(
@@ -143,8 +144,8 @@ class SaasAuthApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "validation_error")
-        self.assertIn("password", response.data["error"]["details"])
+        self.assertEqual(response.data["code"], "validation_error")
+        self.assertIn("password", response.data["details"])
 
     def test_auth_mode_endpoint_reports_saas_local_mode(self):
         response = self.client.get("/api/auth/mode/")
@@ -160,7 +161,7 @@ class SaasAuthApiTests(APITestCase):
     def test_me_requires_authentication(self):
         response = self.client.get("/api/auth/me/")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data["error"]["code"], "unauthorized")
+        self.assertEqual(response.data["code"], "authentication_failed")
 
     def test_me_returns_current_user_payload(self):
         self.client.force_authenticate(user=self.user)
@@ -193,7 +194,7 @@ class SaasAuthApiTests(APITestCase):
     def test_subscription_requires_authentication(self):
         response = self.client.get("/api/auth/subscription/")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data["error"]["code"], "unauthorized")
+        self.assertEqual(response.data["code"], "authentication_failed")
 
     def test_subscription_endpoint_returns_default_trial(self):
         self.client.force_authenticate(user=self.user)
@@ -276,6 +277,101 @@ class SaasAuthThrottleScopeTests(APITestCase):
 
     def test_core_link_from_token_endpoint_declares_auth_core_link_token_throttle_scope(self):
         self.assertEqual(SaasCoreAccountLinkFromTokenAPIView.throttle_scope, "auth_core_link_token")
+
+
+class SaasAuthErrorShapeContractTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="contract-user",
+            password="pass1234",
+            email="contract@example.com",
+        )
+
+    def assert_canonical_error(
+        self,
+        response,
+        *,
+        code: str,
+        detail_keys: set[str] | None = None,
+    ) -> None:
+        self.assertEqual(set(response.data.keys()), {"code", "message", "details"})
+        self.assertEqual(response.data["code"], code)
+        self.assertIsInstance(response.data["message"], str)
+        if detail_keys is None:
+            self.assertIsNone(response.data["details"])
+            return
+        self.assertIsInstance(response.data["details"], dict)
+        self.assertTrue(detail_keys.issubset(set(response.data["details"].keys())))
+
+    def test_login_failure_returns_canonical_shape(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "bad-pass"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assert_canonical_error(response, code="authentication_failed")
+
+    def test_register_duplicate_email_returns_canonical_shape(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "contract-new-user",
+                "password": "pass12345",
+                "email": self.user.email,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assert_canonical_error(response, code="validation_error", detail_keys={"email"})
+
+    def test_unauthenticated_me_returns_canonical_shape(self):
+        response = self.client.get("/api/auth/me/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assert_canonical_error(response, code="authentication_failed")
+
+    def test_method_not_allowed_returns_canonical_shape(self):
+        response = self.client.get("/api/auth/register/")
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assert_canonical_error(response, code="method_not_allowed")
+
+    @override_settings(
+        ACCOUNT_LINKING_ENABLED=False,
+        CORE_LINKING_SHARED_SECRET="test-shared-secret-32-bytes-minimum",
+    )
+    def test_feature_disabled_returns_canonical_shape(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/auth/core-link/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assert_canonical_error(
+            response,
+            code="feature_disabled",
+            detail_keys={"account_linking_enabled"},
+        )
+
+    def test_throttled_login_returns_canonical_shape(self):
+        class ContractThrottle(SimpleRateThrottle):
+            scope = "auth_login"
+            rate = "1/min"
+
+            def get_cache_key(self, request, view):
+                return "contract-auth-login-throttle"
+
+        with patch.object(SaasTokenObtainPairView, "throttle_classes", [ContractThrottle]):
+            first = self.client.post(
+                "/api/auth/token/",
+                {"username": self.user.username, "password": "pass1234"},
+                format="json",
+            )
+            second = self.client.post(
+                "/api/auth/token/",
+                {"username": self.user.username, "password": "pass1234"},
+                format="json",
+            )
+        self.assertEqual(first.status_code, status.HTTP_200_OK)
+        self.assertEqual(second.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn("Retry-After", second.headers)
+        self.assert_canonical_error(second, code="throttled")
 
 
 class SaasAuthServicesTests(APITestCase):
@@ -447,11 +543,11 @@ class SaasAuthServicesTests(APITestCase):
 class SaasExceptionHandlerTests(SimpleTestCase):
     def test_normalize_error_details_handles_nested_values(self):
         detail = {"field": [ErrorDetail("bad", "invalid")], "other": ErrorDetail("oops", "invalid")}
-        normalized = exceptions._normalize_error_details(detail)
+        normalized = exception_handler._normalize_error_details(detail)
         self.assertEqual(normalized, {"field": ["bad"], "other": "oops"})
 
     def test_infer_error_code_prefers_validation_error(self):
-        code = exceptions._infer_error_code(
+        code = exception_handler._infer_error_code(
             status.HTTP_400_BAD_REQUEST,
             DRFValidationError({"field": "bad"}),
         )
@@ -459,67 +555,87 @@ class SaasExceptionHandlerTests(SimpleTestCase):
 
     def test_infer_error_code_prefers_permission_denied_default_code(self):
         exc = type("Exc", (), {"default_code": "permission_denied"})()
-        code = exceptions._infer_error_code(status.HTTP_403_FORBIDDEN, exc)
+        code = exception_handler._infer_error_code(status.HTTP_403_FORBIDDEN, exc)
         self.assertEqual(code, "permission_denied")
 
     def test_infer_error_message_uses_detail_field(self):
         self.assertEqual(
-            exceptions._infer_message(status.HTTP_400_BAD_REQUEST, {"detail": "bad request"}),
+            exception_handler._infer_message(
+                status.HTTP_400_BAD_REQUEST, {"detail": "bad request"}
+            ),
             "bad request",
         )
 
     def test_infer_error_message_falls_back_for_server_error(self):
         self.assertEqual(
-            exceptions._infer_message(status.HTTP_500_INTERNAL_SERVER_ERROR, {"field": "bad"}),
+            exception_handler._infer_message(
+                status.HTTP_500_INTERNAL_SERVER_ERROR, {"field": "bad"}
+            ),
             "Unexpected server error.",
         )
 
     def test_custom_exception_handler_returns_none_when_drf_handler_returns_none(self):
-        with patch("saas.exceptions.exception_handler", return_value=None):
-            self.assertIsNone(exceptions.custom_exception_handler(Exception("boom"), {}))
+        with patch("saas.exception_handler.exception_handler", return_value=None):
+            self.assertIsNone(exception_handler.custom_exception_handler(Exception("boom"), {}))
 
     def test_custom_exception_handler_wraps_validation_error(self):
         drf_response = Response({"field": [ErrorDetail("bad", "invalid")]}, status=400)
-        with patch("saas.exceptions.exception_handler", return_value=drf_response):
-            response = exceptions.custom_exception_handler(
+        with patch("saas.exception_handler.exception_handler", return_value=drf_response):
+            response = exception_handler.custom_exception_handler(
                 DRFValidationError({"field": ["bad"]}),
                 {},
             )
-        self.assertEqual(response.data["error"]["code"], "validation_error")
-        self.assertIn("message", response.data["error"])
+        self.assertEqual(response.data["code"], "validation_error")
+        self.assertIn("message", response.data)
 
     def test_custom_exception_handler_wraps_not_found(self):
         drf_response = Response({"detail": ErrorDetail("Not found.", "not_found")}, status=404)
-        with patch("saas.exceptions.exception_handler", return_value=drf_response):
-            response = exceptions.custom_exception_handler(Http404(), {})
-        self.assertEqual(response.data["error"]["code"], "not_found")
+        with patch("saas.exception_handler.exception_handler", return_value=drf_response):
+            response = exception_handler.custom_exception_handler(Http404(), {})
+        self.assertEqual(response.data["code"], "not_found")
 
     def test_infer_error_code_handles_unauthorized(self):
-        code = exceptions._infer_error_code(status.HTTP_401_UNAUTHORIZED, Exception("boom"))
-        self.assertEqual(code, "unauthorized")
+        code = exception_handler._infer_error_code(status.HTTP_401_UNAUTHORIZED, Exception("boom"))
+        self.assertEqual(code, "authentication_failed")
 
     def test_infer_error_code_handles_forbidden(self):
-        code = exceptions._infer_error_code(status.HTTP_403_FORBIDDEN, Exception("boom"))
-        self.assertEqual(code, "forbidden")
+        code = exception_handler._infer_error_code(status.HTTP_403_FORBIDDEN, Exception("boom"))
+        self.assertEqual(code, "permission_denied")
 
     def test_infer_error_code_handles_server_error(self):
-        code = exceptions._infer_error_code(
+        code = exception_handler._infer_error_code(
             status.HTTP_500_INTERNAL_SERVER_ERROR, Exception("boom")
         )
-        self.assertEqual(code, "server_error")
+        self.assertEqual(code, "internal_error")
 
-    def test_infer_error_code_handles_api_error_default(self):
-        code = exceptions._infer_error_code(status.HTTP_400_BAD_REQUEST, Exception("boom"))
-        self.assertEqual(code, "api_error")
+    def test_infer_error_code_handles_method_not_allowed(self):
+        code = exception_handler._infer_error_code(
+            status.HTTP_405_METHOD_NOT_ALLOWED, Exception("boom")
+        )
+        self.assertEqual(code, "method_not_allowed")
+
+    def test_infer_error_code_handles_throttled(self):
+        code = exception_handler._infer_error_code(
+            status.HTTP_429_TOO_MANY_REQUESTS, Exception("boom")
+        )
+        self.assertEqual(code, "throttled")
 
     def test_infer_error_message_returns_string_as_is(self):
-        self.assertEqual(exceptions._infer_message(status.HTTP_400_BAD_REQUEST, "plain"), "plain")
+        self.assertEqual(
+            exception_handler._infer_message(status.HTTP_400_BAD_REQUEST, "plain"), "plain"
+        )
 
     def test_infer_error_message_returns_generic_request_failed(self):
         self.assertEqual(
-            exceptions._infer_message(status.HTTP_400_BAD_REQUEST, {"field": "bad"}),
+            exception_handler._infer_message(status.HTTP_400_BAD_REQUEST, {"field": "bad"}),
             "Request failed.",
         )
+
+    def test_extract_contract_details_strips_transport_keys(self):
+        details = exception_handler._extract_contract_details(
+            {"detail": "bad", "code": "invalid", "field": ["oops"]}
+        )
+        self.assertEqual(details, {"field": ["oops"]})
 
 
 class SaasSettingsHelperTests(SimpleTestCase):

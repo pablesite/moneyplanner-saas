@@ -36,14 +36,14 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "feature_disabled")
-        self.assertEqual(response.data["error"]["details"]["account_linking_enabled"], False)
+        self.assertEqual(response.data["code"], "feature_disabled")
+        self.assertEqual(response.data["details"]["account_linking_enabled"], False)
 
     def test_core_link_get_returns_400_when_disabled(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.get("/api/auth/core-link/")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["details"]["account_linking_enabled"], False)
+        self.assertEqual(response.data["details"]["account_linking_enabled"], False)
 
     @override_settings(ACCOUNT_LINKING_ENABLED=True)
     def test_core_link_create_and_delete_when_enabled(self):
@@ -86,7 +86,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("core_user_ref", response.data["error"]["details"])
+        self.assertIn("core_user_ref", response.data["details"])
 
     @override_settings(
         ACCOUNT_LINKING_ENABLED=True,
@@ -146,7 +146,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
 
         self.assertEqual(first.status_code, status.HTTP_200_OK)
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("link_token", second.data["error"]["details"])
+        self.assertIn("link_token", second.data["details"])
 
     @override_settings(
         ACCOUNT_LINKING_ENABLED=True,
@@ -161,7 +161,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("link_token", response.data["error"]["details"])
+        self.assertIn("link_token", response.data["details"])
 
     @override_settings(
         ACCOUNT_LINKING_ENABLED=True,
@@ -188,7 +188,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("core_user_ref", response.data["error"]["details"])
+        self.assertIn("core_user_ref", response.data["details"])
 
     @override_settings(ACCOUNT_LINKING_ENABLED=True, CORE_LINKING_SHARED_SECRET="")
     def test_core_link_from_token_returns_400_when_secret_missing(self):
@@ -199,7 +199,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["details"]["core_linking_shared_secret"], False)
+        self.assertEqual(response.data["details"]["core_linking_shared_secret"], False)
 
     def test_register_rolls_back_when_bootstrap_fails(self):
         with patch(

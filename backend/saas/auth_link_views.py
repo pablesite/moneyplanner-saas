@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from .exception_handler import FeatureDisabled
 from .auth_serializers import (
     CoreAccountLinkFromTokenSerializer,
     CoreAccountLinkSerializer,
@@ -20,19 +21,6 @@ from .auth_services import (
 )
 
 
-def _feature_disabled_response(*, message: str, details: dict[str, object]) -> Response:
-    return Response(
-        {
-            "error": {
-                "code": "feature_disabled",
-                "message": message,
-                "details": details,
-            }
-        },
-        status=status.HTTP_400_BAD_REQUEST,
-    )
-
-
 class SaasCoreAccountLinkAPIView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -40,37 +28,27 @@ class SaasCoreAccountLinkAPIView(APIView):
 
     def _assert_enabled(self):
         if not getattr(settings, "ACCOUNT_LINKING_ENABLED", False):
-            return _feature_disabled_response(
+            raise FeatureDisabled(
                 message="El account linking esta deshabilitado.",
                 details={"account_linking_enabled": False},
             )
-        return None
 
     def get(self, request):
-        disabled = self._assert_enabled()
-        if disabled is not None:
-            return disabled
-
+        self._assert_enabled()
         payload = build_me_payload(user=request.user)["account_link"]
         if not payload:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(payload)
 
     def post(self, request):
-        disabled = self._assert_enabled()
-        if disabled is not None:
-            return disabled
-
+        self._assert_enabled()
         serializer = CoreAccountLinkWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         link = link_core_account(user=request.user, **serializer.validated_data)
         return Response(CoreAccountLinkSerializer(link).data, status=status.HTTP_200_OK)
 
     def delete(self, request):
-        disabled = self._assert_enabled()
-        if disabled is not None:
-            return disabled
-
+        self._assert_enabled()
         unlink_core_account_with_audit(user=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -82,22 +60,18 @@ class SaasCoreAccountLinkFromTokenAPIView(APIView):
 
     def _assert_enabled(self):
         if not getattr(settings, "ACCOUNT_LINKING_ENABLED", False):
-            return _feature_disabled_response(
+            raise FeatureDisabled(
                 message="El account linking esta deshabilitado.",
                 details={"account_linking_enabled": False},
             )
         if not getattr(settings, "CORE_LINKING_SHARED_SECRET", ""):
-            return _feature_disabled_response(
+            raise FeatureDisabled(
                 message="Core linking token deshabilitado por configuracion.",
                 details={"core_linking_shared_secret": False},
             )
-        return None
 
     def post(self, request):
-        disabled = self._assert_enabled()
-        if disabled is not None:
-            return disabled
-
+        self._assert_enabled()
         serializer = CoreAccountLinkFromTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         link = link_core_account_by_token(

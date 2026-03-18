@@ -135,7 +135,7 @@ REST_FRAMEWORK = {
         "premium_api": os.getenv("THROTTLE_PREMIUM_API", "240/min"),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "EXCEPTION_HANDLER": "saas.exceptions.custom_exception_handler",
+    "EXCEPTION_HANDLER": "saas.exception_handler.custom_exception_handler",
 }
 
 SPECTACULAR_SETTINGS = {

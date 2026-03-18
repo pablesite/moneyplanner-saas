@@ -36,7 +36,7 @@ class SaasAdminUsersApiTests(APITestCase):
         self.client.force_authenticate(user=self.member)
         response = self.client.get("/api/admin/users/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data["error"]["code"], "permission_denied")
+        self.assertEqual(response.data["code"], "permission_denied")
 
     def test_admin_users_list_returns_roles(self):
         self.client.force_authenticate(user=self.admin)
@@ -101,7 +101,7 @@ class SaasAdminUsersApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("username", response.data["error"]["details"])
+        self.assertIn("username", response.data["details"])
 
     def test_admin_create_user_rollback_when_bootstrap_fails(self):
         self.client.force_authenticate(user=self.admin)
@@ -121,6 +121,7 @@ class SaasAdminUsersApiTests(APITestCase):
                 format="json",
             )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["code"], "validation_error")
         self.assertFalse(
             get_user_model().objects.filter(username="member_with_bootstrap_failure").exists()
         )
@@ -160,7 +161,7 @@ class SaasAdminUsersApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertEqual(response.data["code"], "validation_error")
 
     def test_admin_status_change_allows_member_deactivation(self):
         self.client.force_authenticate(user=self.admin)
@@ -181,7 +182,7 @@ class SaasAdminUsersApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertEqual(response.data["code"], "validation_error")
 
     def test_admin_delete_user_emits_audit_log(self):
         self.client.force_authenticate(user=self.admin)
@@ -206,19 +207,56 @@ class SaasAdminUsersApiTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
         response = self.client.delete(f"/api/admin/users/{self.admin.id}/")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertEqual(response.data["code"], "validation_error")
 
     def test_auth_ops_metrics_requires_admin_role(self):
         self.client.force_authenticate(user=self.member)
         denied = self.client.get("/api/auth/ops/metrics/")
         self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(denied.data["error"]["code"], "permission_denied")
+        self.assertEqual(denied.data["code"], "permission_denied")
 
         self.client.force_authenticate(user=self.admin)
         allowed = self.client.get("/api/auth/ops/metrics/")
         self.assertEqual(allowed.status_code, status.HTTP_200_OK)
         self.assertIn("rbac", allowed.data)
         self.assertIn("roles", allowed.data["rbac"])
+
+
+class SaasAdminErrorShapeContractTests(APITestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser(
+            username="contract-admin",
+            email="contract-admin@example.com",
+            password="pass1234",
+        )
+        self.member = get_user_model().objects.create_user(
+            username="contract-member",
+            email="contract-member@example.com",
+            password="pass1234",
+        )
+        get_or_create_access_profile(user=self.admin)
+        get_or_create_access_profile(user=self.member)
+
+    def assert_canonical_error(self, response, *, code: str) -> None:
+        self.assertEqual(set(response.data.keys()), {"code", "message", "details"})
+        self.assertEqual(response.data["code"], code)
+        self.assertIsInstance(response.data["message"], str)
+
+    def test_forbidden_admin_endpoint_returns_canonical_shape(self):
+        self.client.force_authenticate(user=self.member)
+        response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assert_canonical_error(response, code="permission_denied")
+
+    def test_not_found_admin_endpoint_returns_canonical_shape(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            "/api/admin/users/999999/role/",
+            {"role": SaasAccessProfile.Role.MEMBER},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assert_canonical_error(response, code="not_found")
 
 
 class SaasAdminServicesTests(TestCase):
