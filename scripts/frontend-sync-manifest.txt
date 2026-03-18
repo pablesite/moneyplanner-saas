@@ -7,6 +7,18 @@ domains/auth/session.ts
 domains/net-worth/components/NetWorthByCategoryBar.vue
 domains/net-worth/components/NetWorthByMemberBar.vue
 domains/net-worth/components/NetWorthDonut.vue
+domains/net-worth/components/NetWorthHeroSection.vue
+domains/net-worth/components/NetWorthSnapshotsSection.vue
+domains/net-worth/components/NetWorthTimelineMain.vue
+domains/net-worth/components/NetWorthCategoryWorkspace.vue
+domains/net-worth/net-worth-view.css
+domains/net-worth/useNetWorthAccountingActivity.ts
+domains/net-worth/useNetWorthOwnership.ts
+domains/net-worth/useNetWorthPageMetrics.ts
+domains/net-worth/useNetWorthPositionActivity.ts
+domains/net-worth/useNetWorthPageActions.ts
+domains/net-worth/useNetWorthTimeline.ts
+domains/net-worth/useNetWorthTimelineLayout.ts
 domains/net-worth/components/SettingsPopover.vue
 domains/net-worth/charts.ts
 domains/ui/components/BaseModal.vue
@@ -19,3 +31,4 @@ main.ts
 style.css
 styles/app.css
 views/LoginView.vue
+views/NetWorthView.vue
