@@ -23,6 +23,7 @@ domains/net-worth/useNetWorthTimelineLayout.ts
 domains/net-worth/__tests__/page-refactor.spec.ts
 domains/net-worth/components/SettingsPopover.vue
 domains/budget/components/BudgetHeroSection.vue
+domains/budget/components/BudgetAnnualSection.vue
 domains/budget/components/BudgetMonthlyCloseExpenseSection.vue
 domains/budget/components/BudgetMonthlyCloseIncomeSection.vue
 domains/budget/components/BudgetMonthlyCloseLiquiditySection.vue
