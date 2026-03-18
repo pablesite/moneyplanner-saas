@@ -10,4 +10,3 @@ def get_or_create_subscription(*, user) -> SaasSubscription:
 def has_premium_access(*, user) -> bool:
     subscription = get_or_create_subscription(user=user)
     return subscription.is_premium_enabled()
-

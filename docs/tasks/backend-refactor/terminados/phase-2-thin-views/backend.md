@@ -145,8 +145,8 @@ Resultados esperados:
 
 ## Required Documentation Updates
 
-- [ ] `docs/roadmap/saas-backend-refactor-roadmap.md` — marcar Phase 2 completada
-- [ ] `docs/project-status.md` — actualizar estado de la tarea
+- [x] `docs/roadmap/saas-backend-refactor-roadmap.md` — marcar Phase 2 completada
+- [x] `docs/project-status.md` — actualizar estado de la tarea
 
 ## Risks
 
@@ -156,11 +156,24 @@ Resultados esperados:
 
 ## Completion Criteria
 
-- [ ] `auth_views.py` ≤ 150 líneas, sin lógica de negocio
-- [ ] `admin_views.py` ≤ 100 líneas, sin lógica de negocio
-- [ ] `auth_services.py` tiene las 5 funciones extraídas con type annotations
-- [ ] Unit tests para `register_saas_user` y `build_me_payload` existen
-- [ ] `python manage.py test saas_access` pasa sin errores
-- [ ] `ruff check .` y `mypy .` limpios
-- [ ] Spec movida a `terminados/`
+- [x] `auth_views.py` ≤ 150 líneas, sin lógica de negocio relevante
+- [x] `admin_views.py` ≤ 100 líneas, sin lógica de negocio relevante
+- [x] `auth_services.py` tiene las funciones extraídas con type annotations
+- [x] Unit tests para `register_saas_user` y `build_me_payload` existen
+- [x] `python manage.py test saas_access --keepdb --noinput` pasa sin errores
+- [x] `ruff check .`, `ruff format --check .` y `mypy .` limpios
+- [x] Spec movida a `terminados/`
 - [ ] Commit: `refactor(saas): extract business logic from views to auth_services`
+
+## Resultado real
+
+ - `auth_views.py` quedó en 122 líneas y `admin_views.py` en 96 líneas.
+- Las views de linking se separaron en `saas/auth_link_views.py` para mantener `auth_views.py` enfocado.
+- Se extrajeron payloads y operaciones de auth a `saas/auth_services.py`:
+  `register_saas_user`, `build_auth_mode_payload`, `build_me_payload`,
+  `link_core_account`, `unlink_core_account_with_audit`,
+  `link_core_account_by_token`, `build_auth_ops_metrics_payload`.
+- Se extrajeron operaciones admin a `saas_access/rbac_services.py`:
+  `list_admin_users_with_roles`, `create_admin_user`, `update_admin_user_role`,
+  `update_admin_user_status`, `delete_admin_user`.
+- Se añadieron tests unitarios para las funciones extraídas y se mantuvieron verdes los tests de API.

@@ -14,7 +14,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="SaasCoreAccountLink",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
                 ("core_user_ref", models.CharField(max_length=128, unique=True)),
                 ("core_username", models.CharField(blank=True, default="", max_length=150)),
                 ("core_email", models.EmailField(blank=True, default="", max_length=254)),
@@ -39,8 +44,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="SaasSubscription",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("status", models.CharField(choices=[("trial", "Trial"), ("active", "Active"), ("past_due", "Past Due"), ("canceled", "Canceled")], default="trial", max_length=16)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("trial", "Trial"),
+                            ("active", "Active"),
+                            ("past_due", "Past Due"),
+                            ("canceled", "Canceled"),
+                        ],
+                        default="trial",
+                        max_length=16,
+                    ),
+                ),
                 ("started_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
@@ -61,7 +83,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="SaasConsumedCoreLinkToken",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
                 ("jti", models.CharField(max_length=64, unique=True)),
                 ("consumed_at", models.DateTimeField(auto_now_add=True)),
                 (
@@ -77,13 +104,27 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="saasconsumedcorelinktoken",
-            index=models.Index(fields=["user", "consumed_at"], name="memberships_user_id_9d3894_idx"),
+            index=models.Index(
+                fields=["user", "consumed_at"], name="memberships_user_id_9d3894_idx"
+            ),
         ),
         migrations.CreateModel(
             name="SaasAccessProfile",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("role", models.CharField(choices=[("saas_admin", "SaaS Admin"), ("saas_member", "SaaS Member")], default="saas_member", max_length=16)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "role",
+                    models.CharField(
+                        choices=[("saas_admin", "SaaS Admin"), ("saas_member", "SaaS Member")],
+                        default="saas_member",
+                        max_length=16,
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
@@ -104,7 +145,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="SaasAuthAuditEvent",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
                 ("event", models.CharField(max_length=64)),
                 ("outcome", models.CharField(max_length=16)),
                 ("metadata", models.JSONField(blank=True, default=dict)),
@@ -135,6 +181,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="saasauthauditevent",
-            index=models.Index(fields=["actor_user", "created_at"], name="memberships_actor_u_4920ce_idx"),
+            index=models.Index(
+                fields=["actor_user", "created_at"], name="memberships_actor_u_4920ce_idx"
+            ),
         ),
     ]

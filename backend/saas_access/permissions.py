@@ -49,4 +49,3 @@ class HasPremiumAccess(BasePermission):
         if not has_premium_access(user=user):
             raise SubscriptionBlocked(self.message)
         return True
-

@@ -34,7 +34,9 @@ def _auth_headers_for_user(*, user) -> dict[str, str]:
     }
 
 
-def _http_json_request(*, method: str, url: str, headers: dict[str, str], payload: dict | None) -> tuple[int, object]:
+def _http_json_request(
+    *, method: str, url: str, headers: dict[str, str], payload: dict | None
+) -> tuple[int, object]:
     data = None
     if payload is not None:
         data = json.dumps(payload).encode("utf-8")

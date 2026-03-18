@@ -17,7 +17,9 @@ class SaasCoreAccountLink(models.Model):
 
     class Meta:
         db_table = "memberships_saascoreaccountlink"
-        indexes = [models.Index(fields=["user", "is_active"], name="memberships_user_id_729b44_idx")]
+        indexes = [
+            models.Index(fields=["user", "is_active"], name="memberships_user_id_729b44_idx")
+        ]
 
     def __str__(self) -> str:
         return f"{self.user_id} -> core:{self.core_user_ref}"
@@ -103,7 +105,9 @@ class SaasAuthAuditEvent(models.Model):
         indexes = [
             models.Index(fields=["created_at"], name="memberships_created_85056c_idx"),
             models.Index(fields=["event", "created_at"], name="memberships_event_e89c20_idx"),
-            models.Index(fields=["actor_user", "created_at"], name="memberships_actor_u_4920ce_idx"),
+            models.Index(
+                fields=["actor_user", "created_at"], name="memberships_actor_u_4920ce_idx"
+            ),
         ]
         ordering = ["-created_at"]
 
