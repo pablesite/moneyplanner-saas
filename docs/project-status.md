@@ -21,10 +21,14 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Sistema de usuarios trial | Alta | ⚪ | Crear usuario root, flujo de acceso controlado para early adopters. |
 | Admin UI | Media | ⚪ | Las ops de admin son solo backend por ahora; pendiente de crear interfaz. |
 | Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
+| Refactor backend SaaS — Phase 1 | Alta | ⚪ | Test coverage baseline: de ~24% a ≥80%, reorganizar tests por dominio, ≥150 test methods. Spec: `docs/tasks/backend-refactor/phase-1-test-coverage-baseline/backend.md` |
+| Refactor backend SaaS — Phase 2 | Media | ⚪ | Thin views: extraer negocio de auth_views.py a auth_services.py. Spec: `docs/tasks/backend-refactor/phase-2-thin-views/backend.md` |
+| Refactor backend SaaS — Phase 3 | Media | ⚪ | Exception handler canónico: contrato {code, message, details} en todos los endpoints. Spec: `docs/tasks/backend-refactor/phase-3-error-standardization/backend.md` |
 | Revisión auth SaaS | Alta | ⚪ | Revisar login, permisos, RBAC y flujos reales (registro, sesión, expiración). |
 | Auditoría de seguridad | Alta | ⚪ | Vulnerabilidades backend SaaS, CVEs en dependencias, validación auth/permisos/inputs. |
 | CI/CD deployment | Alta | ⚪ | Pipeline de despliegue automático a producción (build, test, deploy). Complementa la infraestructura cloud; diseñar junto con el deployment. |
 | PWA — frontend adaptado | Media | ⚪ | Adaptar el frontend a Progressive Web App como primer paso hacia móvil. Paso previo a cualquier desarrollo de app nativa. |
+| Refactor frontend SaaS | Media | ⚪ | Core-first: se ejecuta después de cada fase Core. 11 fases. Ver `docs/roadmap/frontend-refactor-roadmap.md`. Coverage target ≥80%. |
 | Validación pre-lanzamiento | Alta | ⚪ | Tests con early adopters; feedback sobre UX, comprensión y valor real — crítico antes de MVP. |
 | Open Source — repo Core listo | Media | ⚪ | Licencia (EUPL u otra), guía de contribución, documentación técnica, guía de despliegue. |
 
