@@ -22,6 +22,7 @@ domains/net-worth/useNetWorthTimeline.ts
 domains/net-worth/useNetWorthTimelineLayout.ts
 domains/net-worth/__tests__/page-refactor.spec.ts
 domains/net-worth/components/SettingsPopover.vue
+domains/budget/components/BudgetHeroSection.vue
 domains/net-worth/charts.ts
 domains/ui/components/BaseModal.vue
 lib/authApi.ts
@@ -33,4 +34,5 @@ main.ts
 style.css
 styles/app.css
 views/LoginView.vue
+views/BudgetDashboardView.vue
 views/NetWorthView.vue
