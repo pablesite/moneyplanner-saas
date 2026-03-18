@@ -19,6 +19,7 @@ domains/net-worth/useNetWorthPositionActivity.ts
 domains/net-worth/useNetWorthPageActions.ts
 domains/net-worth/useNetWorthTimeline.ts
 domains/net-worth/useNetWorthTimelineLayout.ts
+domains/net-worth/__tests__/page-refactor.spec.ts
 domains/net-worth/components/SettingsPopover.vue
 domains/net-worth/charts.ts
 domains/ui/components/BaseModal.vue
