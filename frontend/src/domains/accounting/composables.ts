@@ -781,6 +781,110 @@ export function useAccountingPage() {
     }),
   );
 
+  // ── Tab state & per-account/all-movements pagination ──────────────
+  type MovementsTab = 'cuentas' | 'todos' | 'estadisticas';
+  const activeTab = ref<MovementsTab>('cuentas');
+
+  const MOVEMENTS_PAGE_SIZE = 50;
+  const cuentasSelectedAccountId = ref<number | null>(null);
+  const cuentasDateFrom = ref('');
+  const cuentasDateTo = ref('');
+  const cuentasVisibleCount = ref(MOVEMENTS_PAGE_SIZE);
+
+  const todosDateFrom = ref('');
+  const todosDateTo = ref('');
+  const todosVisibleCount = ref(MOVEMENTS_PAGE_SIZE);
+
+  function signedImpact(accountType: string, side: 'debit' | 'credit', amount: string): number {
+    const value = toNumber(amount);
+    if (value === 0) return 0;
+    const increasesOnDebit = accountType === 'asset' || accountType === 'expense';
+    return (increasesOnDebit ? side === 'debit' : side === 'credit') ? value : -value;
+  }
+
+  function impactTone(value: number): 'positive' | 'negative' | 'neutral' {
+    if (value > 0) return 'positive';
+    if (value < 0) return 'negative';
+    return 'neutral';
+  }
+
+  const cuentasSelectedAccount = computed(() =>
+    cuentasSelectedAccountId.value != null
+      ? accounts.value.find((a) => a.id === cuentasSelectedAccountId.value) ?? null
+      : null,
+  );
+
+  const cuentasRawTransactions = computed(() => {
+    if (cuentasSelectedAccountId.value === null) return [];
+    const accountId = cuentasSelectedAccountId.value;
+    const account = cuentasSelectedAccount.value;
+    if (!account) return [];
+    return transactions.value
+      .filter(
+        (t) =>
+          t.entries.some((e) => e.account_id === accountId) &&
+          (!cuentasDateFrom.value || t.booking_date >= cuentasDateFrom.value) &&
+          (!cuentasDateTo.value || t.booking_date <= cuentasDateTo.value),
+      )
+      .map((t) => {
+        const impactValue = t.entries
+          .filter((e) => e.account_id === accountId)
+          .reduce((sum, e) => sum + signedImpact(account.account_type, e.side, e.amount), 0);
+        return { ...t, impactValue, tone: impactTone(impactValue) };
+      });
+  });
+
+  const cuentasVisibleTransactions = computed(() =>
+    cuentasRawTransactions.value.slice(0, cuentasVisibleCount.value),
+  );
+
+  const cuentasHasMore = computed(
+    () => cuentasVisibleCount.value < cuentasRawTransactions.value.length,
+  );
+
+  function loadMoreCuentas() {
+    cuentasVisibleCount.value += MOVEMENTS_PAGE_SIZE;
+  }
+
+  watch(cuentasSelectedAccountId, () => {
+    cuentasVisibleCount.value = MOVEMENTS_PAGE_SIZE;
+  });
+
+  watch([cuentasDateFrom, cuentasDateTo], () => {
+    cuentasVisibleCount.value = MOVEMENTS_PAGE_SIZE;
+  });
+
+  const todosRawTransactions = computed(() =>
+    filteredTransactions.value.filter(
+      (t) =>
+        (!todosDateFrom.value || t.booking_date >= todosDateFrom.value) &&
+        (!todosDateTo.value || t.booking_date <= todosDateTo.value),
+    ),
+  );
+
+  const todosVisibleTransactions = computed(() =>
+    todosRawTransactions.value.slice(0, todosVisibleCount.value),
+  );
+
+  const todosHasMore = computed(
+    () => todosVisibleCount.value < todosRawTransactions.value.length,
+  );
+
+  function loadMoreTodos() {
+    todosVisibleCount.value += MOVEMENTS_PAGE_SIZE;
+  }
+
+  watch([activityFilters, todosDateFrom, todosDateTo], () => {
+    todosVisibleCount.value = MOVEMENTS_PAGE_SIZE;
+  });
+
+  function transactionMainAmount(t: (typeof transactions.value)[0]): number {
+    const debitTotal = t.entries
+      .filter((e) => e.side === 'debit')
+      .reduce((sum, e) => sum + toNumber(e.amount), 0);
+    return debitTotal;
+  }
+
   function resetAccountForm() {
     accountForm.name = '';
     accountForm.account_type = 'asset';
@@ -1344,7 +1448,7 @@ export function useAccountingPage() {
       incomeStore.loadAll(selectedYear.value),
       expenseStore.loadAll(selectedYear.value),
     ]);
-    await store.setPeriod(selectedYear.value, selectedMonth.value);
+    await store.setStatsYear(selectedYear.value);
   }
 
   async function refreshManualPositionOptions() {
@@ -1747,6 +1851,22 @@ export function useAccountingPage() {
     transactionBalanced,
     summaryRows,
     filteredTransactions,
+    activeTab,
+    cuentasSelectedAccountId,
+    cuentasSelectedAccount,
+    cuentasDateFrom,
+    cuentasDateTo,
+    cuentasRawTransactions,
+    cuentasVisibleTransactions,
+    cuentasHasMore,
+    loadMoreCuentas,
+    todosDateFrom,
+    todosDateTo,
+    todosRawTransactions,
+    todosVisibleTransactions,
+    todosHasMore,
+    loadMoreTodos,
+    transactionMainAmount,
     addEntry,
     activityKindLabel,
     liquidityBalanceDeltaTone,

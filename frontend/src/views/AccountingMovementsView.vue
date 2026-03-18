@@ -16,7 +16,6 @@ const {
   transactions,
   moneyWizImportPreview,
   selectedYear,
-  selectedMonth,
   yearOptions,
   monthOptions,
   accountTypeOptions,
@@ -39,7 +38,6 @@ const {
   activityFilters,
   liquidityAccounts,
   availableManualPositionOptions,
-  accountPositionMetaByAccountId,
   accountDisplayName,
   hasAvailableManualPositions,
   annualIncomeOptionsCompatible,
@@ -54,7 +52,22 @@ const {
   quickEntryReady,
   editEntryReady,
   summaryRows,
-  filteredTransactions,
+  activeTab,
+  cuentasSelectedAccountId,
+  cuentasSelectedAccount,
+  cuentasDateFrom,
+  cuentasDateTo,
+  cuentasRawTransactions,
+  cuentasVisibleTransactions,
+  cuentasHasMore,
+  loadMoreCuentas,
+  todosDateFrom,
+  todosDateTo,
+  todosRawTransactions,
+  todosVisibleTransactions,
+  todosHasMore,
+  loadMoreTodos,
+  transactionMainAmount,
   activityKindLabel,
   reloadPeriod,
   activateNetWorthPositions,
@@ -102,12 +115,6 @@ function monthLabel(month: number): string {
   );
 }
 
-function humanizeKey(value: string): string {
-  const normalized = String(value ?? '').trim();
-  if (!normalized) return 'Sin clasificar';
-  return normalized.replace(/_/g, ' ').replace(/\b\w/g, (match) => match.toUpperCase());
-}
-
 const accountsByType = computed(() => {
   const groups = new Map<string, typeof accounts.value>();
   accounts.value.forEach((account) => {
@@ -135,12 +142,6 @@ const accountingNetBalance = computed(
 const operationalAccountTypeOptions = computed(() =>
   accountTypeOptions.filter((type) => type.value === 'asset' || type.value === 'liability'),
 );
-const operationalAccountsCount = computed(() =>
-  operationalAccountTypeOptions.value.reduce(
-    (total, type) => total + (accountsByType.value.get(type.value)?.length ?? 0),
-    0,
-  ),
-);
 const operationalAccounts = computed(() =>
   operationalAccountTypeOptions.value.flatMap((type) => accountsByType.value.get(type.value) ?? []),
 );
@@ -164,130 +165,11 @@ const hasCompatibleAnnualPlanOptions = computed(() => {
   }
   return false;
 });
-const selectedOperationalAccountId = computed<number | null>(() => {
-  if (activityFilters.accountId === 'all') return null;
-  const parsed = Number(activityFilters.accountId);
-  return Number.isFinite(parsed) ? parsed : null;
-});
-
-function signedEntryImpact(accountType: string, side: 'debit' | 'credit', amount: string): number {
-  const value = toNumber(amount);
-  if (value === 0) return 0;
-  const increasesOnDebit = accountType === 'asset' || accountType === 'expense';
-  const increases = increasesOnDebit ? side === 'debit' : side === 'credit';
-  return increases ? value : -value;
-}
-
-function impactTone(value: number): 'positive' | 'negative' | 'neutral' {
-  if (value > 0) return 'positive';
-  if (value < 0) return 'negative';
-  return 'neutral';
-}
-
 function formatSignedMoney(value: number, currency = 'EUR'): string {
   if (value > 0) return `+${formatMoney(value, currency)}`;
   if (value < 0) return `-${formatMoney(Math.abs(value), currency)}`;
   return formatMoney(0, currency);
 }
-
-const accountTimelineRows = computed(() => {
-  const scopedAccounts = operationalAccounts.value.filter(
-    (account) =>
-      selectedOperationalAccountId.value == null ||
-      account.id === selectedOperationalAccountId.value,
-  );
-  const rows = scopedAccounts
-    .map((account) => {
-      const movements = filteredTransactions.value
-        .map((transaction) => {
-          const impactValue = transaction.entries
-            .filter((entry) => entry.account_id === account.id)
-            .reduce(
-              (total, entry) =>
-                total + signedEntryImpact(account.account_type, entry.side, entry.amount),
-              0,
-            );
-          if (impactValue === 0) return null;
-          return {
-            id: transaction.id,
-            booking_date: transaction.booking_date,
-            description: transaction.description,
-            kind_label: activityKindLabel(transaction),
-            origin: transaction.origin,
-            status: transaction.status,
-            impact_value: impactValue,
-            tone: impactTone(impactValue),
-          };
-        })
-        .filter((movement): movement is NonNullable<typeof movement> => movement != null)
-        .sort((a, b) => b.booking_date.localeCompare(a.booking_date) || b.id - a.id);
-      return {
-        account,
-        movements,
-        movement_count: movements.length,
-      };
-    })
-    .filter((row) => row.movement_count > 0);
-  return rows.sort(
-    (left, right) =>
-      right.movement_count - left.movement_count ||
-      accountDisplayName(left.account).localeCompare(accountDisplayName(right.account), 'es'),
-  );
-});
-const groupedAccountTimelineRows = computed(() => {
-  const grouped = new Map<
-    string,
-    {
-      positionType: 'asset' | 'liability';
-      category: string;
-      subgroups: Map<string, typeof accountTimelineRows.value>;
-    }
-  >();
-  accountTimelineRows.value.forEach((row) => {
-    const meta = accountPositionMetaByAccountId.value.get(row.account.id);
-    const positionType =
-      meta?.position_type ?? (row.account.account_type === 'liability' ? 'liability' : 'asset');
-    const category = meta?.category ?? 'other';
-    const subcategory = meta?.subcategory ?? 'other';
-    const categoryKey = `${positionType}:${category}`;
-    const categoryBucket = grouped.get(categoryKey) ?? {
-      positionType,
-      category,
-      subgroups: new Map<string, typeof accountTimelineRows.value>(),
-    };
-    const subRows = categoryBucket.subgroups.get(subcategory) ?? [];
-    subRows.push(row);
-    categoryBucket.subgroups.set(subcategory, subRows);
-    grouped.set(categoryKey, categoryBucket);
-  });
-  return Array.from(grouped.entries())
-    .map(([key, group]) => {
-      const subgroups = Array.from(group.subgroups.entries())
-        .map(([subcategory, rows]) => ({
-          key: `${key}:${subcategory}`,
-          subcategory,
-          rows: rows
-            .slice()
-            .sort((a, b) =>
-              accountDisplayName(a.account).localeCompare(accountDisplayName(b.account), 'es'),
-            ),
-          accountCount: rows.length,
-        }))
-        .sort((a, b) => a.subcategory.localeCompare(b.subcategory, 'es'));
-      return {
-        key,
-        positionType: group.positionType,
-        category: group.category,
-        subgroups,
-        accountCount: subgroups.reduce((total, subgroup) => total + subgroup.accountCount, 0),
-      };
-    })
-    .sort((a, b) => {
-      const typeOrder = a.positionType === b.positionType ? 0 : a.positionType === 'asset' ? -1 : 1;
-      if (typeOrder !== 0) return typeOrder;
-      return a.category.localeCompare(b.category, 'es');
-    });
-});
 
 const showActivationModal = ref(false);
 const showEditTransactionModal = ref(false);
@@ -454,7 +336,7 @@ watch(availableManualPositionOptions, (options) => {
 
 <template>
   <div class="container ui-page-shell">
-    <!-- ── Hero: period selector + KPIs + monthly cashflow ── -->
+    <!-- ── Header: title + saldo neto + actions ── -->
     <section class="ui-section-card ui-accounting-hero-panel">
       <div class="ui-page-head">
         <div>
@@ -462,26 +344,6 @@ watch(availableManualPositionOptions, (options) => {
           <h1 class="ui-accounting-hero-title">Libro diario operativo</h1>
         </div>
         <div class="ui-accounting-hero-right">
-          <div class="ui-period-bar ui-accounting-period-bar">
-            <label class="ui-period-field">
-              <span>Ejercicio</span>
-              <select v-model="selectedYear" class="select ui-period-select" @change="reloadPeriod">
-                <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}</option>
-              </select>
-            </label>
-            <label class="ui-period-field">
-              <span>Mes</span>
-              <select
-                v-model="selectedMonth"
-                class="select ui-period-select"
-                @change="reloadPeriod"
-              >
-                <option v-for="month in monthOptions" :key="month.value" :value="month.value">
-                  {{ month.label }}
-                </option>
-              </select>
-            </label>
-          </div>
           <div class="ui-page-actions">
             <button
               class="btn"
@@ -516,13 +378,273 @@ watch(availableManualPositionOptions, (options) => {
         </div>
       </div>
 
-      <!-- KPI strip -->
-      <div class="ui-kpi-strip">
+      <!-- Saldo neto contable — always visible -->
+      <div class="ui-accounting-net-kpi">
         <div class="ui-kpi-card ui-kpi-card-primary">
           <span class="ui-kpi-label">Saldo neto contable</span>
           <strong class="ui-kpi-value">{{ formatMoney(accountingNetBalance) }}</strong>
           <p class="ui-kpi-meta">Activo contable - Pasivo contable</p>
         </div>
+      </div>
+
+      <div v-if="error" class="ui-state-block ui-state-error">{{ error }}</div>
+      <div v-if="successMessage" class="ui-state-block ui-state-success">{{ successMessage }}</div>
+    </section>
+
+    <!-- ── Tab bar ── -->
+    <div class="ui-view-tabs">
+      <button
+        class="ui-view-tab"
+        :class="{ 'ui-view-tab-active': activeTab === 'cuentas' }"
+        type="button"
+        @click="activeTab = 'cuentas'"
+      >
+        Cuentas
+      </button>
+      <button
+        class="ui-view-tab"
+        :class="{ 'ui-view-tab-active': activeTab === 'todos' }"
+        type="button"
+        @click="activeTab = 'todos'"
+      >
+        Todos los movimientos
+      </button>
+      <button
+        class="ui-view-tab"
+        :class="{ 'ui-view-tab-active': activeTab === 'estadisticas' }"
+        type="button"
+        @click="activeTab = 'estadisticas'"
+      >
+        Estadísticas
+      </button>
+    </div>
+
+    <!-- ── Tab: Cuentas ── -->
+    <section v-if="activeTab === 'cuentas'" class="ui-section-card">
+      <div class="ui-section-head">
+        <div class="ui-section-copy">
+          <h2 class="ui-section-title">Cuentas</h2>
+          <p v-if="cuentasSelectedAccount" class="ui-section-subtitle">
+            {{ cuentasVisibleTransactions.length }} de
+            {{ cuentasRawTransactions.length }} movimientos
+          </p>
+          <p v-else class="ui-section-subtitle">Selecciona una cuenta para ver sus movimientos</p>
+        </div>
+      </div>
+
+      <div class="ui-action-bar">
+        <select
+          v-model="cuentasSelectedAccountId"
+          class="select ui-accounting-filter-select"
+        >
+          <option :value="null">Selecciona una cuenta...</option>
+          <option v-for="account in operationalAccounts" :key="account.id" :value="account.id">
+            {{ accountDisplayName(account) }}
+            ({{ formatCompact(account.current_balance, account.currency) }})
+          </option>
+        </select>
+        <input
+          v-model="cuentasDateFrom"
+          type="date"
+          class="input ui-accounting-date-filter"
+          title="Desde"
+        />
+        <input
+          v-model="cuentasDateTo"
+          type="date"
+          class="input ui-accounting-date-filter"
+          title="Hasta"
+        />
+      </div>
+
+      <div v-if="loading && !transactions.length" class="ui-state-block ui-state-loading">
+        Cargando movimientos...
+      </div>
+      <div v-else-if="!cuentasSelectedAccountId" class="ui-state-block ui-state-empty">
+        Selecciona una cuenta para ver sus movimientos recientes.
+      </div>
+      <div v-else-if="!cuentasRawTransactions.length" class="ui-state-block ui-state-empty">
+        Sin movimientos para los filtros actuales.
+      </div>
+      <ul v-else class="ui-entry-list">
+        <li
+          v-for="movement in cuentasVisibleTransactions"
+          :key="movement.id"
+          class="ui-entry-row"
+        >
+          <span class="ui-entry-date">{{ formatDate(movement.booking_date) }}</span>
+          <div class="ui-entry-body">
+            <strong class="ui-entry-desc">{{ movement.description }}</strong>
+            <div class="ui-action-bar ui-entry-tags">
+              <span :class="`ui-type-badge ui-type-badge-${movement.tone}`">
+                {{ activityKindLabel(movement) }}
+              </span>
+              <span class="ui-entry-status">
+                {{ movement.status === 'posted' ? '●' : '○' }}
+                {{ movement.origin !== 'system' ? movement.origin : '' }}
+              </span>
+            </div>
+          </div>
+          <span
+            class="ui-accounting-balance-delta"
+            :class="`ui-accounting-balance-delta-${movement.tone}`"
+          >
+            {{ formatSignedMoney(movement.impactValue, cuentasSelectedAccount?.currency) }}
+          </span>
+          <div class="ui-entry-actions">
+            <button
+              v-if="movement.origin !== 'system'"
+              class="icon-btn ui-accounting-entry-action-btn"
+              type="button"
+              title="Editar movimiento"
+              aria-label="Editar movimiento"
+              :disabled="transactionCreationLoading"
+              @click="openEditTransactionModal(movement.id)"
+            >
+              &#9998;&#65039;
+            </button>
+            <button
+              v-if="movement.origin !== 'system'"
+              class="icon-btn ui-accounting-entry-action-btn"
+              type="button"
+              title="Eliminar movimiento"
+              aria-label="Eliminar movimiento"
+              :disabled="transactionCreationLoading"
+              @click="deleteTransactionFromTimeline(movement.id, movement.description)"
+            >
+              &#128465;&#65039;
+            </button>
+          </div>
+        </li>
+      </ul>
+      <div v-if="cuentasHasMore" class="ui-load-more">
+        <button class="btn" type="button" @click="loadMoreCuentas">Cargar más</button>
+      </div>
+      <p v-else-if="cuentasSelectedAccountId && cuentasRawTransactions.length" class="ui-load-more-hint">
+        Todos los movimientos cargados
+      </p>
+    </section>
+
+    <!-- ── Tab: Todos los movimientos ── -->
+    <section v-else-if="activeTab === 'todos'" class="ui-section-card">
+      <div class="ui-section-head">
+        <div class="ui-section-copy">
+          <h2 class="ui-section-title">Todos los movimientos</h2>
+          <p class="ui-section-subtitle">
+            {{ todosVisibleTransactions.length }} de {{ todosRawTransactions.length }} movimientos
+          </p>
+        </div>
+      </div>
+
+      <div class="ui-action-bar">
+        <input
+          v-model="activityFilters.query"
+          class="input ui-accounting-filter-input"
+          placeholder="Filtrar por texto"
+        />
+        <select v-model="activityFilters.kind" class="select ui-accounting-filter-select">
+          <option value="all">Todos los tipos</option>
+          <option value="income">Solo ingresos</option>
+          <option value="expense">Solo gastos</option>
+          <option value="transfer">Solo transferencias</option>
+          <option value="investment_purchase">Solo compras de inversion</option>
+          <option value="debt_payment">Solo pagos de deuda</option>
+        </select>
+        <input
+          v-model="todosDateFrom"
+          type="date"
+          class="input ui-accounting-date-filter"
+          title="Desde"
+        />
+        <input
+          v-model="todosDateTo"
+          type="date"
+          class="input ui-accounting-date-filter"
+          title="Hasta"
+        />
+      </div>
+
+      <div v-if="loading && !transactions.length" class="ui-state-block ui-state-loading">
+        Cargando movimientos...
+      </div>
+      <div v-else-if="!todosRawTransactions.length" class="ui-state-block ui-state-empty">
+        Sin movimientos para los filtros actuales.
+      </div>
+      <ul v-else class="ui-entry-list">
+        <li
+          v-for="transaction in todosVisibleTransactions"
+          :key="transaction.id"
+          class="ui-entry-row"
+        >
+          <span class="ui-entry-date">{{ formatDate(transaction.booking_date) }}</span>
+          <div class="ui-entry-body">
+            <strong class="ui-entry-desc">{{ transaction.description }}</strong>
+            <div class="ui-action-bar ui-entry-tags">
+              <span class="ui-type-badge">{{ activityKindLabel(transaction) }}</span>
+              <span class="ui-entry-status">
+                {{ transaction.status === 'posted' ? '●' : '○' }}
+                {{ transaction.origin !== 'system' ? transaction.origin : '' }}
+              </span>
+              <span class="ui-entry-accounts">
+                {{ transaction.entries.map((e) => e.account_name).join(' · ') }}
+              </span>
+            </div>
+          </div>
+          <span class="ui-accounting-balance-delta ui-accounting-balance-delta-neutral">
+            {{ formatMoney(transactionMainAmount(transaction)) }}
+          </span>
+          <div class="ui-entry-actions">
+            <button
+              v-if="transaction.origin !== 'system'"
+              class="icon-btn ui-accounting-entry-action-btn"
+              type="button"
+              title="Editar movimiento"
+              aria-label="Editar movimiento"
+              :disabled="transactionCreationLoading"
+              @click="openEditTransactionModal(transaction.id)"
+            >
+              &#9998;&#65039;
+            </button>
+            <button
+              v-if="transaction.origin !== 'system'"
+              class="icon-btn ui-accounting-entry-action-btn"
+              type="button"
+              title="Eliminar movimiento"
+              aria-label="Eliminar movimiento"
+              :disabled="transactionCreationLoading"
+              @click="deleteTransactionFromTimeline(transaction.id, transaction.description)"
+            >
+              &#128465;&#65039;
+            </button>
+          </div>
+        </li>
+      </ul>
+      <div v-if="todosHasMore" class="ui-load-more">
+        <button class="btn" type="button" @click="loadMoreTodos">Cargar más</button>
+      </div>
+      <p v-else-if="todosRawTransactions.length" class="ui-load-more-hint">
+        Todos los movimientos cargados
+      </p>
+    </section>
+
+    <!-- ── Tab: Estadísticas ── -->
+    <section v-else-if="activeTab === 'estadisticas'" class="ui-section-card">
+      <div class="ui-section-head">
+        <div class="ui-section-copy">
+          <h2 class="ui-section-title">Estadísticas</h2>
+        </div>
+        <div class="ui-period-bar">
+          <label class="ui-period-field">
+            <span>Ejercicio</span>
+            <select v-model="selectedYear" class="select ui-period-select" @change="reloadPeriod">
+              <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Activos + Pasivos -->
+      <div class="ui-kpi-strip ui-kpi-strip-2col">
         <div class="ui-kpi-card">
           <span class="ui-kpi-label">Activos</span>
           <strong class="ui-kpi-value">{{ formatMoney(accountingAssetsTotal) }}</strong>
@@ -541,7 +663,6 @@ watch(availableManualPositionOptions, (options) => {
           v-for="row in summaryRows"
           :key="row.month"
           class="ui-cashflow-month"
-          :class="{ 'ui-cashflow-month-active': row.month === selectedMonth }"
         >
           <span class="ui-cashflow-month-label">{{ monthLabel(row.month) }}</span>
           <strong
@@ -564,187 +685,6 @@ watch(availableManualPositionOptions, (options) => {
         Este saldo solo incluye cuentas contables activas en esta vista. No incluye vivienda,
         mobiliario u otros activos fuera del ledger.
       </p>
-
-      <div v-if="error" class="ui-state-block ui-state-error">{{ error }}</div>
-      <div v-if="successMessage" class="ui-state-block ui-state-success">{{ successMessage }}</div>
-    </section>
-
-    <!-- ── Ledger: filters + account / movement timeline ── -->
-    <section class="ui-section-card ui-accounting-ledger-panel">
-      <div class="ui-section-head">
-        <div class="ui-section-copy">
-          <h2 class="ui-section-title">Cuentas + historico por cuenta</h2>
-          <p class="ui-section-subtitle">
-            {{ monthOptions.find((m) => m.value === selectedMonth)?.label ?? '' }}
-            {{ selectedYear }}
-            &middot; {{ filteredTransactions.length }} movimientos &middot;
-            {{ operationalAccountsCount }} cuentas activas
-          </p>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="ui-action-bar">
-        <input
-          v-model="activityFilters.query"
-          class="input ui-accounting-filter-input"
-          placeholder="Filtrar por texto o cuenta"
-        />
-        <select v-model="activityFilters.accountId" class="select ui-accounting-filter-select">
-          <option value="all">Todas las cuentas</option>
-          <option v-for="account in accounts" :key="account.id" :value="String(account.id)">
-            {{ accountDisplayName(account) }}
-          </option>
-        </select>
-        <select v-model="activityFilters.kind" class="select ui-accounting-filter-select">
-          <option value="all">Todos los movimientos</option>
-          <option value="income">Solo ingresos</option>
-          <option value="expense">Solo gastos</option>
-          <option value="transfer">Solo transferencias</option>
-          <option value="investment_purchase">Solo compras de inversion</option>
-          <option value="debt_payment">Solo pagos de deuda</option>
-        </select>
-      </div>
-
-      <!-- States -->
-      <div v-if="loading && !transactions.length" class="ui-state-block ui-state-loading">
-        Cargando movimientos del periodo...
-      </div>
-      <div v-else-if="!accountTimelineRows.length" class="ui-state-block ui-state-empty">
-        Sin cuentas operativas para el periodo seleccionado.
-      </div>
-
-      <!-- Account groups — 2-level: category → account (subcategory as label) -->
-      <div v-else class="ui-ledger-groups">
-        <details
-          v-for="categoryGroup in groupedAccountTimelineRows"
-          :key="categoryGroup.key"
-          class="ui-ledger-category"
-          open
-        >
-          <summary class="ui-ledger-category-summary">
-            <strong>
-              {{
-                `${categoryGroup.positionType === 'asset' ? 'Activo' : 'Pasivo'} / ${humanizeKey(categoryGroup.category)}`
-              }}
-            </strong>
-            <span class="ui-pro-chip">{{ categoryGroup.accountCount }} cuentas</span>
-          </summary>
-
-          <template v-for="subcategoryGroup in categoryGroup.subgroups" :key="subcategoryGroup.key">
-            <div v-if="categoryGroup.subgroups.length > 1" class="ui-ledger-subcategory-label">
-              {{ humanizeKey(subcategoryGroup.subcategory) }}
-            </div>
-
-            <details
-              v-for="row in subcategoryGroup.rows"
-              :key="row.account.id"
-              class="ui-ledger-account ui-accounting-account-timeline"
-            >
-              <summary class="ui-ledger-account-summary">
-                <div class="ui-ledger-account-meta">
-                  <strong class="ui-ledger-account-name">{{
-                    accountDisplayName(row.account)
-                  }}</strong>
-                  <div class="ui-action-bar ui-ledger-account-chips">
-                    <span class="ui-pro-chip">{{ row.account.currency }}</span>
-                  </div>
-                </div>
-                <div class="ui-ledger-account-info">
-                  <span class="ui-ledger-movs-count">{{ row.movement_count }} mov.</span>
-                  <strong class="ui-ledger-account-balance">
-                    {{ formatCompact(row.account.current_balance, row.account.currency) }}
-                  </strong>
-                  <button
-                    v-if="row.account.asset_id != null || row.account.liability_id != null"
-                    class="icon-btn"
-                    type="button"
-                    title="Quitar tracking de patrimonio"
-                    aria-label="Quitar tracking de patrimonio"
-                    :disabled="accountActivationLoading || accountCreationLoading"
-                    @click.stop.prevent="removeNetWorthTracking(row.account)"
-                  >
-                    &#128279;
-                  </button>
-                  <button
-                    v-if="row.account.origin === 'user'"
-                    class="icon-btn"
-                    type="button"
-                    title="Eliminar cuenta"
-                    aria-label="Eliminar cuenta"
-                    :disabled="accountCreationLoading"
-                    @click.stop.prevent="
-                      deleteAccount(row.account.id, accountDisplayName(row.account))
-                    "
-                  >
-                    &#128465;&#65039;
-                  </button>
-                </div>
-              </summary>
-
-              <div class="ui-ledger-account-body">
-                <div
-                  v-if="!row.movements.length"
-                  class="ui-state-block ui-state-empty ui-ledger-empty"
-                >
-                  Sin movimientos para esta cuenta en los filtros actuales.
-                </div>
-                <ul v-else class="ui-entry-list">
-                  <li
-                    v-for="movement in row.movements"
-                    :key="`${row.account.id}-${movement.id}`"
-                    class="ui-entry-row"
-                  >
-                    <span class="ui-entry-date">{{ formatDate(movement.booking_date) }}</span>
-                    <div class="ui-entry-body">
-                      <strong class="ui-entry-desc">{{ movement.description }}</strong>
-                      <div class="ui-action-bar ui-entry-tags">
-                        <span :class="`ui-type-badge ui-type-badge-${movement.tone}`">
-                          {{ movement.kind_label }}
-                        </span>
-                        <span class="ui-entry-status">
-                          {{ movement.status === 'posted' ? '●' : '○' }}
-                          {{ movement.origin !== 'system' ? movement.origin : '' }}
-                        </span>
-                      </div>
-                    </div>
-                    <span
-                      class="ui-accounting-balance-delta"
-                      :class="`ui-accounting-balance-delta-${movement.tone}`"
-                    >
-                      {{ formatSignedMoney(movement.impact_value, row.account.currency) }}
-                    </span>
-                    <div class="ui-entry-actions">
-                      <button
-                        v-if="movement.origin !== 'system'"
-                        class="icon-btn ui-accounting-entry-action-btn"
-                        type="button"
-                        title="Editar movimiento"
-                        aria-label="Editar movimiento"
-                        :disabled="transactionCreationLoading"
-                        @click="openEditTransactionModal(movement.id)"
-                      >
-                        &#9998;&#65039;
-                      </button>
-                      <button
-                        v-if="movement.origin !== 'system'"
-                        class="icon-btn ui-accounting-entry-action-btn"
-                        type="button"
-                        title="Eliminar movimiento"
-                        aria-label="Eliminar movimiento"
-                        :disabled="transactionCreationLoading"
-                        @click="deleteTransactionFromTimeline(movement.id, movement.description)"
-                      >
-                        &#128465;&#65039;
-                      </button>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </details>
-          </template>
-        </details>
-      </div>
 
       <!-- Technical / system accounts -->
       <details v-if="hasTechnicalAccounts" class="ui-ledger-technical">
@@ -1595,8 +1535,18 @@ watch(availableManualPositionOptions, (options) => {
   font-size: 2rem;
 }
 
+/* Saldo neto KPI in header — single wide card */
+.ui-accounting-net-kpi .ui-kpi-card-primary {
+  max-width: 360px;
+}
+
 /* Force 12-month cashflow in one row — override shared minmax(88px) */
 .ui-accounting-hero-panel .ui-cashflow-strip {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+/* Estadísticas tab cashflow strip */
+.ui-section-card .ui-cashflow-strip {
   grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
@@ -1604,6 +1554,23 @@ watch(availableManualPositionOptions, (options) => {
 .ui-cashflow-month-active {
   border-color: rgba(45, 212, 191, 0.32);
   background: rgba(45, 212, 191, 0.07);
+}
+
+/* 2-column KPI strip (Activos + Pasivos only) */
+.ui-kpi-strip-2col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Date filter inputs */
+.ui-accounting-date-filter {
+  max-width: 160px;
+  flex: none;
+}
+
+/* Account list in "Todos" movements */
+.ui-entry-accounts {
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 
 /* ── Ledger panel ────────────────────────────────────────────── */
