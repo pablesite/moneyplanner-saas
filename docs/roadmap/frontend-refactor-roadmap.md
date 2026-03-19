@@ -5,7 +5,7 @@ Mantener el frontend SaaS alineado con el refactor del frontend Core, eliminando
 técnica acumulada y preparando el terreno para un futuro shared package Core/SaaS.
 
 ## Relación con el roadmap Core
-Este roadmap espeja `core/docs/roadmap/frontend-refactor-roadmap.md`.
+Este roadmap espeja `core/docs/roadmap/terminados/frontend-refactor-roadmap.md`.
 **El trabajo se ejecuta Core-first:** cada fase se implementa primero en Core y se replica
 en SaaS al cerrarla. Las specs de task están en `core/docs/tasks/frontend-refactor/` e
 incluyen una sección **SaaS Replication** con las instrucciones específicas para este frontend.
@@ -26,13 +26,13 @@ Creado el 2026-03-18. Baseline inicial documentada en esta fecha.
 ```
 statements: 80%, lines: 80%, functions: 80%, branches: 80%
 ```
-**Target acordado: ≥ 80% en todas las métricas** (Fase 0).
+**Target acordado: >= 80% en todas las métricas** (Fase 0).
 
 ### Coverage real actual (2026-03-19)
 - `statements: 88.72%`
-- `lines: 88.72%`
+- `lines: 81.73%`
 - `functions: 89.17%`
-- `branches: 81.73%`
+- `branches: 88.72%`
 
 Fase 0 cerrada: todos los thresholds de coverage (`>=80%`) pasan en Core y SaaS.
 Fases 3d, 3e, 4, 5 y 6 del espejo SaaS cerradas el 2026-03-19 y alineadas con Core.
@@ -98,6 +98,7 @@ Al replicar una fase de Core en SaaS:
    ```
 
 ## Nota de trazabilidad
-1. Este roadmap es el espejo SaaS de `core/docs/roadmap/frontend-refactor-roadmap.md`.
+1. Este roadmap es el espejo SaaS de `core/docs/roadmap/terminados/frontend-refactor-roadmap.md`.
 2. Las specs están centralizadas en `core/docs/tasks/frontend-refactor/` para evitar duplicación.
 3. Si una diferencia entre frontends requiere una spec SaaS exclusiva, crearla en `docs/tasks/frontend-refactor/`.
+
