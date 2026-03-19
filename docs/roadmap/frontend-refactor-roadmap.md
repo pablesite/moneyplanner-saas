@@ -42,10 +42,10 @@ Fase 0 cerrada: todos los thresholds de coverage (`>=80%`) pasan en Core y SaaS.
 |-------|--------|--------|
 | `BudgetDashboardView.vue` | 5,512 | Alto |
 | `NetWorthView.vue` | 3,608 | Alto |
-| `DataInputView.vue` | 2,742 | Alto |
+| `DataInputView.vue` | 16 | Completada Fase 3c el 2026-03-19 |
 | `AccountingMovementsView.vue` | 2,237 | Medio |
 | `GuidePhaseDetailView.vue` | 2,207 | Medio |
-| `App.vue` | ~492 | Medio |
+| `App.vue` | 13 | Completada Fase 2 el 2026-03-19 |
 
 ### Diferencias respecto a Core (solo 3-4 ficheros)
 - `lib/api.ts`: SaaS usa `http://localhost:8001` como baseURL
@@ -69,10 +69,10 @@ Cada fase se ejecuta después de que la fase equivalente de Core haya cerrado co
 |------|--------|-----------------|----------------------------------|
 | 0 | Baseline + tests ≥80% | Completada | `core/docs/tasks/frontend-refactor/phase-0-baseline/terminados/frontend.md` |
 | 1 | Arch boundaries | Completada | `core/docs/tasks/frontend-refactor/phase-1-arch-boundaries/terminados/frontend.md` |
-| 2 | Shell + router | Después de Core Fase 2 | `core/docs/tasks/frontend-refactor/phase-2-shell-router/frontend.md` |
+| 2 | Shell + router | Completada | `core/docs/tasks/frontend-refactor/phase-2-shell-router/terminados/frontend.md` |
 | 3a | BudgetDashboardView | Completada | `core/docs/tasks/frontend-refactor/phase-3a-budget-dashboard/terminados/frontend.md` |
 | 3b | NetWorthView | Completada | `core/docs/tasks/frontend-refactor/phase-3b-net-worth/terminados/frontend.md` |
-| 3c | DataInputView | Después de Core Fase 3c | `core/docs/tasks/frontend-refactor/phase-3c-data-input/frontend.md` |
+| 3c | DataInputView | Completada | `core/docs/tasks/frontend-refactor/phase-3c-data-input/terminados/frontend.md` |
 | 3d | GuidePhaseDetailView | Después de Core Fase 3d | `core/docs/tasks/frontend-refactor/phase-3d-guide-view/frontend.md` |
 | 3e | AccountingMovementsView | Después de Core Fase 3e | `core/docs/tasks/frontend-refactor/phase-3e-accounting-movements/frontend.md` |
 | 4 | CSS contract | Después de Core Fase 4 | `core/docs/tasks/frontend-refactor/phase-4-css-contract/frontend.md` |
