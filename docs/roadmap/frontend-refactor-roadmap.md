@@ -13,19 +13,28 @@ incluyen una sección **SaaS Replication** con las instrucciones específicas pa
 ## Estado de este documento
 Creado el 2026-03-18. Baseline inicial documentada en esta fecha.
 
-## Estado real (2026-03-18)
+## Estado real (2026-03-19)
 
 ### Validación actual en Docker
 - `docker compose exec saas_frontend npm run lint`: verde
 - `docker compose exec saas_frontend npm run typecheck`: verde
-- `docker compose exec saas_frontend npm run test:unit`: verde (35 suites)
-- `docker compose exec saas_frontend npm run format:check`: falla en `frontend/src/styles/app.css`
+- `docker compose exec saas_frontend npm run test:unit`: verde (37 suites)
+- `docker compose exec saas_frontend npm run format:check`: verde
+- `docker compose exec saas_frontend npm run test:coverage`: verde con thresholds `>=80%`
 
 ### Coverage thresholds actuales (vite.config.ts)
 ```
-statements: 15%, lines: 15%, functions: 30%, branches: 40%
+statements: 80%, lines: 80%, functions: 80%, branches: 80%
 ```
 **Target acordado: ≥ 80% en todas las métricas** (Fase 0).
+
+### Coverage real actual (2026-03-19)
+- `statements: 98.29%`
+- `lines: 98.29%`
+- `functions: 92.41%`
+- `branches: 81.50%`
+
+Fase 0 cerrada: todos los thresholds de coverage (`>=80%`) pasan en Core y SaaS.
 
 ### Hotspots de tamaño
 
@@ -58,11 +67,11 @@ Cada fase se ejecuta después de que la fase equivalente de Core haya cerrado co
 
 | Fase | Nombre | Cuándo ejecutar | Spec (sección SaaS Replication) |
 |------|--------|-----------------|----------------------------------|
-| 0 | Baseline + tests ≥80% | Después de Core Fase 0 | `core/docs/tasks/frontend-refactor/phase-0-baseline/frontend.md` |
-| 1 | Arch boundaries | Después de Core Fase 1 | `core/docs/tasks/frontend-refactor/phase-1-arch-boundaries/frontend.md` |
+| 0 | Baseline + tests ≥80% | Completada | `core/docs/tasks/frontend-refactor/phase-0-baseline/terminados/frontend.md` |
+| 1 | Arch boundaries | Completada | `core/docs/tasks/frontend-refactor/phase-1-arch-boundaries/terminados/frontend.md` |
 | 2 | Shell + router | Después de Core Fase 2 | `core/docs/tasks/frontend-refactor/phase-2-shell-router/frontend.md` |
-| 3a | BudgetDashboardView | Después de Core Fase 3a | `core/docs/tasks/frontend-refactor/phase-3a-budget-dashboard/frontend.md` |
-| 3b | NetWorthView | Después de Core Fase 3b | `core/docs/tasks/frontend-refactor/phase-3b-net-worth/frontend.md` |
+| 3a | BudgetDashboardView | Completada | `core/docs/tasks/frontend-refactor/phase-3a-budget-dashboard/terminados/frontend.md` |
+| 3b | NetWorthView | Completada | `core/docs/tasks/frontend-refactor/phase-3b-net-worth/terminados/frontend.md` |
 | 3c | DataInputView | Después de Core Fase 3c | `core/docs/tasks/frontend-refactor/phase-3c-data-input/frontend.md` |
 | 3d | GuidePhaseDetailView | Después de Core Fase 3d | `core/docs/tasks/frontend-refactor/phase-3d-guide-view/frontend.md` |
 | 3e | AccountingMovementsView | Después de Core Fase 3e | `core/docs/tasks/frontend-refactor/phase-3e-accounting-movements/frontend.md` |
