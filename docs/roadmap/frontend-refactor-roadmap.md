@@ -29,13 +29,13 @@ statements: 80%, lines: 80%, functions: 80%, branches: 80%
 **Target acordado: ≥ 80% en todas las métricas** (Fase 0).
 
 ### Coverage real actual (2026-03-19)
-- `statements: 98.29%`
-- `lines: 98.29%`
-- `functions: 92.41%`
-- `branches: 81.50%`
+- `statements: 88.72%`
+- `lines: 88.72%`
+- `functions: 89.17%`
+- `branches: 81.73%`
 
 Fase 0 cerrada: todos los thresholds de coverage (`>=80%`) pasan en Core y SaaS.
-Fases 4, 5 y 6 del espejo SaaS cerradas el 2026-03-19 y alineadas con Core.
+Fases 3d, 3e, 4, 5 y 6 del espejo SaaS cerradas el 2026-03-19 y alineadas con Core.
 
 ### Hotspots de tamaño
 
@@ -56,7 +56,7 @@ Fases 4, 5 y 6 del espejo SaaS cerradas el 2026-03-19 y alineadas con Core.
 
 Estas diferencias deben preservarse al replicar cada fase.
 
-### Candidatos a shared package (identificados, no ejecutar aún)
+### Candidatos a shared package (identificados, solo para extraccion futura)
 Dominios idénticos en Core y SaaS: `net-worth`, `people`, `guide`, `aux-data`, `data-input`, `ui`
 No compartibles: `auth`, `capabilities`, `lib/api.ts`
 La Fase 5 de Core preparo los dominios; la Fase 6 documento la extracción en
@@ -74,8 +74,8 @@ Cada fase se ejecuta después de que la fase equivalente de Core haya cerrado co
 | 3a | BudgetDashboardView | Completada | `core/docs/tasks/frontend-refactor/phase-3a-budget-dashboard/terminados/frontend.md` |
 | 3b | NetWorthView | Completada | `core/docs/tasks/frontend-refactor/phase-3b-net-worth/terminados/frontend.md` |
 | 3c | DataInputView | Completada | `core/docs/tasks/frontend-refactor/phase-3c-data-input/terminados/frontend.md` |
-| 3d | GuidePhaseDetailView | Después de Core Fase 3d | `core/docs/tasks/frontend-refactor/phase-3d-guide-view/frontend.md` |
-| 3e | AccountingMovementsView | Después de Core Fase 3e | `core/docs/tasks/frontend-refactor/phase-3e-accounting-movements/frontend.md` |
+| 3d | GuidePhaseDetailView | Completada | `core/docs/tasks/frontend-refactor/phase-3d-guide-view/terminados/frontend.md` |
+| 3e | AccountingMovementsView | Completada | `core/docs/tasks/frontend-refactor/phase-3e-accounting-movements/terminados/frontend.md` |
 | 4 | CSS contract | Completada | `core/docs/tasks/frontend-refactor/phase-4-css-contract/terminados/frontend.md` |
 | 5 | Domain contracts | Completada | `core/docs/tasks/frontend-refactor/phase-5-domain-contracts/terminados/frontend.md` |
 | 6 | Hardening | Completada | `core/docs/tasks/frontend-refactor/phase-6-hardening/terminados/frontend.md` |

@@ -2,7 +2,7 @@
 
 Estado actual de funcionalidades por área. Actualizar cuando cambie el estado de una funcionalidad.
 
-**Última revisión:** 2026-03-19 | **Versión SaaS:** 0.20.40 | **Versión Core:** 0.22.0
+**Última revisión:** 2026-03-19 | **Versión SaaS:** 0.20.40 | **Versión Core:** 0.23.1
 
 ---
 
@@ -87,7 +87,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 ### Refactor frontend
 | Funcionalidad | Estado | Notas |
 |--------------|--------|-------|
-| Refactor frontend SaaS | ✅ Completado | Core-first mirror cerrado; ver `docs/roadmap/frontend-refactor-roadmap.md` y las specs archivadas en Core. |
+| Refactor frontend SaaS | ✅ Completado | Core-first mirror cerrado; fases 0-6 completadas, ver `docs/roadmap/frontend-refactor-roadmap.md` y las specs archivadas en Core. |
 
 ### Auth
 | Funcionalidad | Estado | Notas |
