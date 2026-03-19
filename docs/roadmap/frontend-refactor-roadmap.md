@@ -35,6 +35,7 @@ statements: 80%, lines: 80%, functions: 80%, branches: 80%
 - `branches: 81.50%`
 
 Fase 0 cerrada: todos los thresholds de coverage (`>=80%`) pasan en Core y SaaS.
+Fases 4, 5 y 6 del espejo SaaS cerradas el 2026-03-19 y alineadas con Core.
 
 ### Hotspots de tamaño
 
@@ -58,7 +59,7 @@ Estas diferencias deben preservarse al replicar cada fase.
 ### Candidatos a shared package (identificados, no ejecutar aún)
 Dominios idénticos en Core y SaaS: `net-worth`, `people`, `guide`, `aux-data`, `data-input`, `ui`
 No compartibles: `auth`, `capabilities`, `lib/api.ts`
-La Fase 5 de Core prepara los dominios; la Fase 6 documenta la extracción en
+La Fase 5 de Core preparo los dominios; la Fase 6 documento la extracción en
 `core/docs/architecture/shared-package-candidates.md`.
 
 ## Fases SaaS (espejo de Core)
@@ -75,9 +76,9 @@ Cada fase se ejecuta después de que la fase equivalente de Core haya cerrado co
 | 3c | DataInputView | Completada | `core/docs/tasks/frontend-refactor/phase-3c-data-input/terminados/frontend.md` |
 | 3d | GuidePhaseDetailView | Después de Core Fase 3d | `core/docs/tasks/frontend-refactor/phase-3d-guide-view/frontend.md` |
 | 3e | AccountingMovementsView | Después de Core Fase 3e | `core/docs/tasks/frontend-refactor/phase-3e-accounting-movements/frontend.md` |
-| 4 | CSS contract | Después de Core Fase 4 | `core/docs/tasks/frontend-refactor/phase-4-css-contract/frontend.md` |
-| 5 | Domain contracts | Después de Core Fase 5 | `core/docs/tasks/frontend-refactor/phase-5-domain-contracts/frontend.md` |
-| 6 | Hardening | Después de Core Fase 6 | `core/docs/tasks/frontend-refactor/phase-6-hardening/frontend.md` |
+| 4 | CSS contract | Completada | `core/docs/tasks/frontend-refactor/phase-4-css-contract/terminados/frontend.md` |
+| 5 | Domain contracts | Completada | `core/docs/tasks/frontend-refactor/phase-5-domain-contracts/terminados/frontend.md` |
+| 6 | Hardening | Completada | `core/docs/tasks/frontend-refactor/phase-6-hardening/terminados/frontend.md` |
 
 ## Instrucciones de replicación
 

@@ -2,7 +2,7 @@
 
 Estado actual de funcionalidades por área. Actualizar cuando cambie el estado de una funcionalidad.
 
-**Última revisión:** 2026-03-18 | **Versión SaaS:** 0.20.40 | **Versión Core:** 0.22.0
+**Última revisión:** 2026-03-19 | **Versión SaaS:** 0.20.40 | **Versión Core:** 0.22.0
 
 ---
 
@@ -28,7 +28,6 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Auditoría de seguridad | Alta | ⚪ | Vulnerabilidades backend SaaS, CVEs en dependencias, validación auth/permisos/inputs. |
 | CI/CD deployment | Alta | ⚪ | Pipeline de despliegue automático a producción (build, test, deploy). Complementa la infraestructura cloud; diseñar junto con el deployment. |
 | PWA — frontend adaptado | Media | ⚪ | Adaptar el frontend a Progressive Web App como primer paso hacia móvil. Paso previo a cualquier desarrollo de app nativa. |
-| Refactor frontend SaaS | Media | ⚪ | Core-first: se ejecuta después de cada fase Core. 11 fases. Ver `docs/roadmap/frontend-refactor-roadmap.md`. Coverage target ≥80%. |
 | Validación pre-lanzamiento | Alta | ⚪ | Tests con early adopters; feedback sobre UX, comprensión y valor real — crítico antes de MVP. |
 | Open Source — repo Core listo | Media | ⚪ | Licencia (EUPL u otra), guía de contribución, documentación técnica, guía de despliegue. |
 
@@ -84,6 +83,11 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 ---
 
 ## Frontend SaaS
+
+### Refactor frontend
+| Funcionalidad | Estado | Notas |
+|--------------|--------|-------|
+| Refactor frontend SaaS | ✅ Completado | Core-first mirror cerrado; ver `docs/roadmap/frontend-refactor-roadmap.md` y las specs archivadas en Core. |
 
 ### Auth
 | Funcionalidad | Estado | Notas |
