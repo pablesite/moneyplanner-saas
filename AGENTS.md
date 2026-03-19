@@ -43,7 +43,9 @@ Leer al inicio de cualquier tarea, antes de tocar código o documentación:
 4. Actualizar documentacion y version cuando aplique.
    - Actualizar solo la documentacion canonica afectada por el cambio.
    - Si cambia arquitectura, boundaries o capabilities, reflejarlo antes de cerrar la tarea.
-   - Ajustar version segun el impacto real del cambio.
+   - El versionado es automatico via release-please: NO tocar VERSION ni package.json manualmente.
+   - El tipo de Conventional Commit determina el bump: `fix:` → PATCH, `feat:` → MINOR, `feat!:` / `BREAKING CHANGE:` → MAJOR. `chore:`, `docs:`, `refactor:` no generan release.
+   - Al hacer push a main, release-please abre un PR "Release vX.Y.Z" con el CHANGELOG generado. Al mergear ese PR se crea el tag y se actualiza VERSION + frontend/package.json.
 5. Cerrar con trazabilidad.
    - Dejar claro que se cambio, que se valido y que queda pendiente si aplica.
    - Al terminar cada feature o bloque funcional validado, crear un commit.
