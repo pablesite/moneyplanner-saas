@@ -84,12 +84,12 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 ---
 
-### `data-input` — Introducción de datos anuales
+### `data-input` — Dominio compartido de entradas anuales (sin ruta propia)
 **Origen:** Core (mirror)
 **Cliente:** `coreApi`
-**Ruta:** `/introduccion-datos`
+**Ruta:** _sin ruta de página_
 
-Estado actual del flujo: vista transitoria legacy. La gestión anual de ingresos y gastos se ejecuta desde `Presupuesto`, portable data está disponible también en `Account`, y la revisión de gasto generado por pasivo ya está integrada en `Patrimonio`.
+Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. La gestión anual de ingresos y gastos se ejecuta desde `Presupuesto` en flujo contextual por categoría/subcategoría; portable data vive en `Account`; y la revisión de gasto generado por pasivo está integrada en `Patrimonio`.
 
 | Archivo | Contenido |
 |---------|-----------|
@@ -164,12 +164,11 @@ Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia.
 | `/login` | `login` | `LoginView` | `auth` |
 | `/` | `home` | `HomeView` | — |
 | `/guia/fases/:phaseId` | `guide-phase` | `GuidePhaseDetailView` | `guide` |
-| `/introduccion-datos` | `data-input` | `DataInputView` | `data-input` (legacy transitorio; pendiente retirada) |
 | `/patrimonio` | `networth` | `NetWorthView` | `net-worth` |
-| `/presupuesto` | `budget-dashboard` | `BudgetDashboardView` | Incluye gestión anual de ingresos/gastos + dashboard |
+| `/presupuesto` | `budget-dashboard` | `BudgetDashboardView` | Incluye gestión anual contextual por categoría/subcategoría + dashboard |
 | `/cierre-mensual` | `monthly-close` | `BudgetDashboardView` (mode=monthly-close) | — |
 | `/data` | `aux-data` | `AuxDataView` | `aux-data` |
-| `/account` | `account` | `AccountView` | `auth` + portable data (export/import/replace) |
+| `/account` | `account` | `AccountView` | `auth` + portable data (export/import/replace) (home canónico) |
 | `/people` | `people` | `PeopleView` | `people` |
 | `/movimientos` | `accounting-movements` | `AccountingMovementsView` | `accounting` |
 
