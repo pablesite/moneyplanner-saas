@@ -21,7 +21,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Sistema de usuarios trial | Alta | ⚪ | Crear usuario root, flujo de acceso controlado para early adopters. |
 | Admin UI | Media | ⚪ | Las ops de admin son solo backend por ahora; pendiente de crear interfaz. |
 | Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
-| Consolidación funcional v1 (módulos espejo Core) | Alta | 🔄 | Repaso manual de Cierre, Presupuesto y Movimientos; migración fase 1 de entradas/salidas ya integrada en Presupuesto. Pendiente retirar la vista de Introducción de Datos. |
+| Consolidación funcional v1 (módulos espejo Core) | Alta | 🔄 | Repaso manual de Cierre, Presupuesto y Movimientos; ingresos/salidas ya en Presupuesto, portable data ya disponible en Cuenta y revisión de gasto generado por pasivo en Patrimonio. Pendiente retirar la vista de Introducción de Datos. |
 | Refactor backend SaaS — Phase 1 | Alta | ✅ | Test coverage baseline completado: suite reorganizada por dominio, rollback real en registro si falla bootstrap Core, 138 tests y 96% de coverage sobre `saas` + `saas_access`. Spec: `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` |
 | Refactor backend SaaS — Phase 2 | Media | ✅ | Thin views completado: `auth_views.py` en 122 líneas, `admin_views.py` en 96, lógica extraída a `saas/auth_services.py`, `saas/auth_link_views.py` y `saas_access/rbac_services.py`. Spec: `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` |
 | Refactor backend SaaS — Phase 3 | Media | ✅ | Exception handler canónico completado: contrato `{code, message, details}` en todos los endpoints y contract tests de error shape. Spec: `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` |
@@ -103,7 +103,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Dominio | Estado | Ruta | Notas |
 |---------|--------|------|-------|
 | Net Worth (patrimonio) | ✅ Implementado | `/patrimonio` | |
-| Data Input (introducción datos) | ✅ Implementado | `/introduccion-datos` | Vista transitoria: patrimonio + portable data. Ingresos/gastos anuales movidos a Presupuesto. |
+| Data Input (introducción datos) | ✅ Implementado | `/introduccion-datos` | Vista transitoria legacy. Ingresos/gastos anuales movidos a Presupuesto; portable data duplicado en Cuenta y revisión de gasto generado por pasivo disponible en Patrimonio. |
 | Budget (presupuesto) | ✅ Implementado | `/presupuesto` | |
 | Monthly Close (cierre mensual) | ✅ Implementado | `/cierre-mensual` | |
 | People (personas/familia) | ✅ Implementado | `/people` | |
