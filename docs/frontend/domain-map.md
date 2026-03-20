@@ -89,6 +89,8 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 **Cliente:** `coreApi`
 **Ruta:** `/introduccion-datos`
 
+Estado actual del flujo: vista transitoria centrada en patrimonio + portable data. La gestión anual de ingresos y gastos se ejecuta desde `Presupuesto`.
+
 | Archivo | Contenido |
 |---------|-----------|
 | `index.ts` | Re-exportaciones del dominio. |
@@ -162,9 +164,9 @@ Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia.
 | `/login` | `login` | `LoginView` | `auth` |
 | `/` | `home` | `HomeView` | — |
 | `/guia/fases/:phaseId` | `guide-phase` | `GuidePhaseDetailView` | `guide` |
-| `/introduccion-datos` | `data-input` | `DataInputView` | `data-input` |
+| `/introduccion-datos` | `data-input` | `DataInputView` | `data-input` (transitorio: patrimonio + portable data) |
 | `/patrimonio` | `networth` | `NetWorthView` | `net-worth` |
-| `/presupuesto` | `budget-dashboard` | `BudgetDashboardView` | — |
+| `/presupuesto` | `budget-dashboard` | `BudgetDashboardView` | Incluye gestión anual de ingresos/gastos + dashboard |
 | `/cierre-mensual` | `monthly-close` | `BudgetDashboardView` (mode=monthly-close) | — |
 | `/data` | `aux-data` | `AuxDataView` | `aux-data` |
 | `/account` | `account` | `AccountView` | `auth` (SaaS) |
