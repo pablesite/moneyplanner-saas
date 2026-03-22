@@ -1,14 +1,83 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
-import { type PropType } from 'vue';
+import { computed, type PropType } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
 
-defineProps({
+const props = defineProps({
   page: {
     type: Object as PropType<any>,
     required: true,
   },
 });
+
+type AccountOption = {
+  id: number;
+  name: string;
+  currency: string;
+  account_type?: string;
+  asset_id?: number | null;
+  liability_id?: number | null;
+  display_name?: string;
+};
+
+type AccountGroup = {
+  key: string;
+  label: string;
+  accounts: AccountOption[];
+};
+
+function accountTypeLabel(accountType?: string): string {
+  if (accountType === 'asset') return 'Activos';
+  if (accountType === 'liability') return 'Pasivos';
+  if (accountType === 'equity') return 'Patrimonio neto';
+  if (accountType === 'income') return 'Ingresos';
+  if (accountType === 'expense') return 'Gastos';
+  return 'Otras cuentas';
+}
+
+function accountLabel(account: AccountOption): string {
+  if (typeof props.page.accountDisplayName === 'function') {
+    return props.page.accountDisplayName(account);
+  }
+  return account.display_name || account.name;
+}
+
+function groupAndSortAccounts(accounts: AccountOption[]): AccountGroup[] {
+  const order = ['asset', 'liability', 'equity', 'income', 'expense', 'other'];
+  const groups = new Map<string, AccountOption[]>();
+
+  for (const account of accounts) {
+    const key = account.account_type ?? 'other';
+    const existing = groups.get(key) ?? [];
+    existing.push(account);
+    groups.set(key, existing);
+  }
+
+  return Array.from(groups.entries())
+    .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
+    .map(([key, grouped]) => ({
+      key,
+      label: accountTypeLabel(key),
+      accounts: grouped
+        .slice()
+        .sort((left, right) =>
+          accountLabel(left).localeCompare(accountLabel(right), 'es', { sensitivity: 'base' }),
+        ),
+    }));
+}
+
+const liquidityGroups = computed(() => groupAndSortAccounts(props.page.liquidityAccounts));
+const revaluationGroups = computed(() =>
+  groupAndSortAccounts(props.page.revaluationAccountOptions),
+);
+const transferGroups = computed(() => groupAndSortAccounts(props.page.transferCounterpartyOptions));
+const investmentGroups = computed(() =>
+  groupAndSortAccounts(props.page.investmentCounterpartyOptions),
+);
+const liabilityGroups = computed(() =>
+  groupAndSortAccounts(props.page.liabilityCounterpartyOptions),
+);
+const interestGroups = computed(() => groupAndSortAccounts(props.page.debtInterestOptions));
 </script>
 
 <template>
@@ -73,7 +142,52 @@ defineProps({
         Normalmente coinciden. Si el banco liquida despues, usa una fecha valor posterior.
       </p>
 
+      <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
+        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
+          <select v-model="page.quickEntryForm.account_id" class="select" required>
+            <option :value="null">Cuenta de inversion</option>
+            <optgroup v-for="group in revaluationGroups" :key="group.key" :label="group.label">
+              <option v-for="account in group.accounts" :key="account.id" :value="account.id">
+                {{ page.accountDisplayName(account) }} / {{ account.currency }}
+              </option>
+            </optgroup>
+          </select>
+
+          <input
+            v-model="page.quickEntryForm.revaluation_new_value"
+            class="input"
+            inputmode="decimal"
+            placeholder="Nuevo valor total del activo"
+            required
+          />
+        </div>
+
+        <p class="ui-accounting-inline-note">
+          <template v-if="page.revaluationCurrentBalance != null">
+            Saldo actual:
+            <strong>{{ page.revaluationCurrentBalance.toFixed(2) }}</strong
+            >.
+            <template v-if="page.revaluationDelta != null">
+              Revalorizacion:
+              <strong
+                :class="
+                  page.revaluationDelta > 0
+                    ? 'ui-accounting-tone-positive'
+                    : page.revaluationDelta < 0
+                      ? 'ui-accounting-tone-negative'
+                      : ''
+                "
+              >
+                {{ page.revaluationDelta >= 0 ? '+' : '' }}{{ page.revaluationDelta.toFixed(2) }}
+              </strong>
+            </template>
+          </template>
+          <template v-else> Selecciona la cuenta de inversion para ver el saldo actual. </template>
+        </p>
+      </template>
+
       <div
+        v-else
         class="ui-accounting-form-grid"
         :class="
           page.quickEntryForm.movement_type === 'transfer' ||
@@ -85,9 +199,11 @@ defineProps({
       >
         <select v-model="page.quickEntryForm.account_id" class="select" required>
           <option :value="null">Cuenta de liquidez</option>
-          <option v-for="account in page.liquidityAccounts" :key="account.id" :value="account.id">
-            {{ account.name }} / {{ account.currency }}
-          </option>
+          <optgroup v-for="group in liquidityGroups" :key="group.key" :label="group.label">
+            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
+              {{ accountLabel(account) }} / {{ account.currency }}
+            </option>
+          </optgroup>
         </select>
 
         <input
@@ -105,13 +221,11 @@ defineProps({
           required
         >
           <option :value="null">Cuenta destino</option>
-          <option
-            v-for="account in page.transferCounterpartyOptions"
-            :key="account.id"
-            :value="account.id"
-          >
-            {{ account.name }} / {{ account.currency }}
-          </option>
+          <optgroup v-for="group in transferGroups" :key="group.key" :label="group.label">
+            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
+              {{ accountLabel(account) }} / {{ account.currency }}
+            </option>
+          </optgroup>
         </select>
 
         <select
@@ -121,13 +235,11 @@ defineProps({
           required
         >
           <option :value="null">Cuenta de inversion</option>
-          <option
-            v-for="account in page.investmentCounterpartyOptions"
-            :key="account.id"
-            :value="account.id"
-          >
-            {{ account.name }} / {{ account.currency }}
-          </option>
+          <optgroup v-for="group in investmentGroups" :key="group.key" :label="group.label">
+            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
+              {{ accountLabel(account) }} / {{ account.currency }}
+            </option>
+          </optgroup>
         </select>
 
         <select
@@ -137,13 +249,11 @@ defineProps({
           required
         >
           <option :value="null">Cuenta de pasivo</option>
-          <option
-            v-for="account in page.liabilityCounterpartyOptions"
-            :key="account.id"
-            :value="account.id"
-          >
-            {{ account.name }} / {{ account.currency }}
-          </option>
+          <optgroup v-for="group in liabilityGroups" :key="group.key" :label="group.label">
+            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
+              {{ accountLabel(account) }} / {{ account.currency }}
+            </option>
+          </optgroup>
         </select>
       </div>
 
@@ -247,9 +357,11 @@ defineProps({
         />
         <select v-model="page.quickEntryForm.interest_account_id" class="select">
           <option :value="null">Cuenta de gasto por intereses (si aplica)</option>
-          <option v-for="account in page.debtInterestOptions" :key="account.id" :value="account.id">
-            {{ account.name }} / {{ account.currency }}
-          </option>
+          <optgroup v-for="group in interestGroups" :key="group.key" :label="group.label">
+            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
+              {{ accountLabel(account) }} / {{ account.currency }}
+            </option>
+          </optgroup>
         </select>
       </div>
 

@@ -317,6 +317,7 @@ export function useAccountingMovementsPage() {
     const csvWords = significantWords(csvNorm);
     const accWords = significantWords(accNorm);
     if (csvWords.length === 0 || accWords.length === 0) return 0;
+    // All words of the shorter name must appear in the longer name
     const [shorter, longer] =
       csvWords.length <= accWords.length ? [csvWords, accNorm] : [accWords, csvNorm];
     if (!shorter.every((w) => longer.includes(w))) return 0;
@@ -329,14 +330,17 @@ export function useAccountingMovementsPage() {
     role: string;
   }): number | null {
     const normalizedCsv = normalizeForMatch(detected.name);
+    // Search across asset + liability regardless of detected type (MoneyWiz may misclassify)
     const candidates = accounts.value.filter(
       (a) => a.account_type === 'asset' || a.account_type === 'liability',
     );
 
+    // Pass 1: exact normalized match, unique winner only
     const exactMatches = candidates.filter((a) => normalizeForMatch(a.name) === normalizedCsv);
     if (exactMatches.length === 1) return exactMatches[0]!.id;
-    if (exactMatches.length > 1) return null;
+    if (exactMatches.length > 1) return null; // ambiguous duplicates
 
+    // Pass 2: fuzzy word-score match, unique winner only
     const scored = candidates
       .map((a) => ({
         a,
@@ -347,6 +351,7 @@ export function useAccountingMovementsPage() {
     if (scored.length === 0) return null;
     const top = scored[0]!;
     const second = scored[1];
+    // Accept only if the top candidate is clearly better than the second
     if (!second || top.score > second.score) return top.a.id;
     return null;
   }
