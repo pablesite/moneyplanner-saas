@@ -291,7 +291,7 @@ export function useNetWorthViewState() {
       await store.updateLiability(id, payload);
     }
 
-    closeEdit();
+    if (!store.error) closeEdit();
   }
 
   const unitLabel = () => {
@@ -381,6 +381,8 @@ export function useNetWorthViewState() {
       : summaryExtended.value?.liabilities_unbacked,
   );
 
+  const editError = computed(() => (showEditModal.value ? prettyError() : null));
+
   onMounted(async () => {
     await store.fetchSettings();
     await store.refreshAll();
@@ -424,5 +426,6 @@ export function useNetWorthViewState() {
     byCategoryUnit,
     summaryAssetBackedLiabilities,
     summaryUnbackedLiabilities,
+    editError,
   };
 }
