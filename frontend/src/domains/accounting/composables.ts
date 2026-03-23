@@ -541,6 +541,13 @@ export function useAccountingPage() {
     }
     return 'No hay contracuentas disponibles para el tipo seleccionado.';
   });
+
+  function hasValidEditCounterpartySelection(kind: EditableActivityKind): boolean {
+    if (!isCounterpartyKind(kind)) return true;
+    const selectedId = editTransactionForm.counterparty_account_id;
+    if (selectedId == null) return false;
+    return editCounterpartyOptions.value.some((account) => account.id === selectedId);
+  }
   const editCategoryOptions = computed(() => {
     if (editTransactionForm.kind === 'income') return incomeCategories;
     if (editTransactionForm.kind === 'expense') return expenseCategories;
@@ -664,6 +671,9 @@ export function useAccountingPage() {
         editTransactionForm.subcategory_key = '';
       }
       if (isCounterpartyKind(kind)) {
+        if (!hasValidEditCounterpartySelection(kind)) {
+          editTransactionForm.counterparty_account_id = editCounterpartyOptions.value[0]?.id ?? null;
+        }
         if (
           editTransactionForm.counterparty_account_id == null &&
           editCounterpartyOptions.value.length
@@ -770,10 +780,12 @@ export function useAccountingPage() {
   const todosNextCursor = ref<string | null>(null);
   const todosTotalCount = ref(0);
   const todosLoading = ref(false);
+  const todosLoadingMore = ref(false);
   const cuentasTransactions = ref<AccountTimelineTransaction[]>([]);
   const cuentasNextCursor = ref<string | null>(null);
   const cuentasTotalCount = ref(0);
   const cuentasLoading = ref(false);
+  const cuentasLoadingMore = ref(false);
   let todosAbortController: AbortController | null = null;
   let cuentasAbortController: AbortController | null = null;
   let todosSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -806,12 +818,13 @@ export function useAccountingPage() {
       todosAbortController = new AbortController();
       todosNextCursor.value = null;
       todosTotalCount.value = 0;
-    } else if (!todosNextCursor.value || todosLoading.value) {
+    } else if (!todosNextCursor.value || todosLoading.value || todosLoadingMore.value) {
       return;
     }
     const controller = todosAbortController ?? new AbortController();
     todosAbortController = controller;
-    todosLoading.value = true;
+    todosLoading.value = reset;
+    todosLoadingMore.value = !reset;
     try {
       const kindParam = activityFilters.kind === 'all' ? undefined : activityFilters.kind;
       const accountParam =
@@ -837,6 +850,7 @@ export function useAccountingPage() {
       throw error;
     } finally {
       todosLoading.value = false;
+      todosLoadingMore.value = false;
     }
   }
 
@@ -854,12 +868,13 @@ export function useAccountingPage() {
       cuentasAbortController = new AbortController();
       cuentasNextCursor.value = null;
       cuentasTotalCount.value = 0;
-    } else if (!cuentasNextCursor.value || cuentasLoading.value) {
+    } else if (!cuentasNextCursor.value || cuentasLoading.value || cuentasLoadingMore.value) {
       return;
     }
     const controller = cuentasAbortController ?? new AbortController();
     cuentasAbortController = controller;
-    cuentasLoading.value = true;
+    cuentasLoading.value = reset;
+    cuentasLoadingMore.value = !reset;
     try {
       const page = await store.fetchTransactionsPage(
         {
@@ -888,6 +903,7 @@ export function useAccountingPage() {
       throw error;
     } finally {
       cuentasLoading.value = false;
+      cuentasLoadingMore.value = false;
     }
   }
 
@@ -1198,6 +1214,9 @@ export function useAccountingPage() {
       if (!targetAccount) return;
       entry.account_id = targetId;
       entry.currency = targetAccount.currency;
+      entry.asset_id = targetAccount.account_type === 'asset' ? (targetAccount.asset_id ?? null) : null;
+      entry.liability_id =
+        targetAccount.account_type === 'liability' ? (targetAccount.liability_id ?? null) : null;
     };
     if (kind === 'income') {
       setAccount(debitEntry, accountId);
@@ -1362,6 +1381,15 @@ export function useAccountingPage() {
           : 'Selecciona una contracuenta distinta.';
       return null;
     }
+    if (editKindNeedsCounterparty.value && !hasValidEditCounterpartySelection(editTransactionForm.kind)) {
+      store.error =
+        editTransactionForm.kind === 'investment_purchase'
+          ? 'Selecciona una cuenta de inversion contable valida.'
+          : editTransactionForm.kind === 'debt_payment'
+            ? 'Selecciona una cuenta de pasivo contable valida.'
+            : 'Selecciona una contracuenta valida para el tipo elegido.';
+      return null;
+    }
     const selectedAccount = accountMap.value.get(editTransactionForm.account_id);
     if (!selectedAccount) {
       store.error = 'La cuenta seleccionada no existe o no esta activa.';
@@ -1434,12 +1462,25 @@ export function useAccountingPage() {
     return 'other';
   }
 
+  function getInvestmentDirection(transaction: LedgerTransaction): 'inflow' | 'outflow' {
+    if (transaction.investment_direction === 'inflow' || transaction.investment_direction === 'outflow') {
+      return transaction.investment_direction;
+    }
+    const investmentEntry = transaction.entries.find((entry) => entry.asset_id != null);
+    if (!investmentEntry) return 'inflow';
+    return investmentEntry.side === 'credit' ? 'outflow' : 'inflow';
+  }
+
   function activityKindLabel(transaction: LedgerTransaction): string {
     const kind = getTransactionActivityKind(transaction);
     if (kind === 'income') return 'Ingreso';
     if (kind === 'expense') return 'Gasto';
     if (kind === 'transfer') return 'Transferencia';
-    if (kind === 'investment_purchase') return 'Compra inversion';
+    if (kind === 'investment_purchase') {
+      return getInvestmentDirection(transaction) === 'outflow'
+        ? 'Retirada inversion'
+        : 'Aporte inversion';
+    }
     if (kind === 'debt_payment') return 'Pago deuda';
     return 'Asiento';
   }
@@ -1919,6 +1960,7 @@ export function useAccountingPage() {
     cuentasTransactions,
     cuentasTotalCount,
     cuentasLoading,
+    cuentasLoadingMore,
     cuentasHasMore,
     loadMoreCuentas,
     todosDateFrom,
@@ -1926,6 +1968,7 @@ export function useAccountingPage() {
     todosTransactions,
     todosTotalCount,
     todosLoading,
+    todosLoadingMore,
     todosHasMore,
     loadMoreTodos,
     transactionMainAmount,
