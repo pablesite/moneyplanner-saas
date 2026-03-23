@@ -52,9 +52,18 @@ export type LedgerTransaction = {
   status: LedgerTransactionStatus;
   origin: LedgerTransactionOrigin;
   notes: string;
+  quick_entry_kind?: '' | QuickLedgerMovementType;
+  investment_direction?: '' | 'inflow' | 'outflow';
+  activity_kind: string;
   entries: LedgerEntry[];
   created_at: string;
   updated_at: string;
+};
+
+export type PaginatedTransactionsResponse = {
+  results: LedgerTransaction[];
+  next_cursor: string | null;
+  total_count: number;
 };
 
 export type MonthlyAccountingSummaryMonth = {

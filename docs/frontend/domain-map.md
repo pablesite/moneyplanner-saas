@@ -110,9 +110,9 @@ Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. 
 
 | Archivo | Contenido |
 |---------|-----------|
-| `api.ts` | Llamadas a Core: CRUD de movimientos contables. |
-| `store.ts` | Pinia store: movimientos, filtros, estado de carga. |
-| `composables.ts` | Composables para el workspace de movimientos. |
+| `api.ts` | Llamadas a Core: CRUD + listado paginado por cursor (`results`, `next_cursor`, `total_count`) con filtros server-side. |
+| `store.ts` | Pinia store: datos globales livianos (`accounts`, `monthlySummary`, `accountBalancesSummary`) + `fetchTransactionsPage()` request-scoped. |
+| `composables.ts` | Composables para el workspace de movimientos con paginación server-side en tabs "Todos" y "Cuentas" (debounce de búsqueda en "Todos"). |
 | `models.ts` | Tipos TypeScript: `AccountingMovement`, `MovementCategory`, etc. |
 
 **Requiere:** `core.accountingBasic: true` (activo). `core.accountingMovementsManual: false` (desactivado).

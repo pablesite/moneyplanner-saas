@@ -1,4 +1,4 @@
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAccountingStore } from '@/domains/accounting/store';
 import { coreAccountingApi } from '@/domains/accounting/api';
@@ -95,6 +95,10 @@ type AccountPositionMeta = {
   category: string;
   subcategory: string;
 };
+type AccountTimelineTransaction = LedgerTransaction & {
+  impactValue: number;
+  tone: 'positive' | 'negative' | 'neutral';
+};
 
 function formatDecimalInput(raw: string): string {
   return raw.replace(',', '.').trim();
@@ -123,7 +127,6 @@ export function useAccountingPage() {
   } = storeToRefs(store);
   const {
     accounts,
-    transactions,
     monthlySummary,
     accountBalancesSummary,
     moneyWizImportPreview,
@@ -753,34 +756,6 @@ export function useAccountingPage() {
   const liquidityBalanceTotal = computed(() =>
     toNumber(accountBalancesSummary.value?.totals_by_account_type.asset ?? '0'),
   );
-  const filteredTransactions = computed(() =>
-    transactions.value.filter((transaction) => {
-      const normalizedQuery = activityFilters.query.trim().toLocaleLowerCase('es');
-      if (normalizedQuery) {
-        const haystack = [
-          transaction.description,
-          transaction.notes,
-          ...transaction.entries.map((entry) => `${entry.account_name} ${entry.notes}`),
-        ]
-          .join(' ')
-          .toLocaleLowerCase('es');
-        if (!haystack.includes(normalizedQuery)) return false;
-      }
-
-      if (activityFilters.accountId !== 'all') {
-        const expectedAccountId = Number(activityFilters.accountId);
-        if (!transaction.entries.some((entry) => entry.account_id === expectedAccountId))
-          return false;
-      }
-
-      if (activityFilters.kind !== 'all') {
-        if (getTransactionActivityKind(transaction) !== activityFilters.kind) return false;
-      }
-
-      return true;
-    }),
-  );
-
   // ── Tab state & per-account/all-movements pagination ──────────────
   type MovementsTab = 'cuentas' | 'todos' | 'estadisticas';
   const activeTab = ref<MovementsTab>('cuentas');
@@ -789,11 +764,19 @@ export function useAccountingPage() {
   const cuentasSelectedAccountId = ref<number | null>(null);
   const cuentasDateFrom = ref('');
   const cuentasDateTo = ref('');
-  const cuentasVisibleCount = ref(MOVEMENTS_PAGE_SIZE);
-
   const todosDateFrom = ref('');
   const todosDateTo = ref('');
-  const todosVisibleCount = ref(MOVEMENTS_PAGE_SIZE);
+  const todosTransactions = ref<LedgerTransaction[]>([]);
+  const todosNextCursor = ref<string | null>(null);
+  const todosTotalCount = ref(0);
+  const todosLoading = ref(false);
+  const cuentasTransactions = ref<AccountTimelineTransaction[]>([]);
+  const cuentasNextCursor = ref<string | null>(null);
+  const cuentasTotalCount = ref(0);
+  const cuentasLoading = ref(false);
+  let todosAbortController: AbortController | null = null;
+  let cuentasAbortController: AbortController | null = null;
+  let todosSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   function signedImpact(accountType: string, side: 'debit' | 'credit', amount: string): number {
     const value = toNumber(amount);
@@ -814,69 +797,136 @@ export function useAccountingPage() {
       : null,
   );
 
-  const cuentasRawTransactions = computed(() => {
-    if (cuentasSelectedAccountId.value === null) return [];
-    const accountId = cuentasSelectedAccountId.value;
+  const todosHasMore = computed(() => todosNextCursor.value !== null);
+  const cuentasHasMore = computed(() => cuentasNextCursor.value !== null);
+
+  async function fetchTodosPage(reset: boolean): Promise<void> {
+    if (reset) {
+      todosAbortController?.abort();
+      todosAbortController = new AbortController();
+      todosNextCursor.value = null;
+      todosTotalCount.value = 0;
+    } else if (!todosNextCursor.value || todosLoading.value) {
+      return;
+    }
+    const controller = todosAbortController ?? new AbortController();
+    todosAbortController = controller;
+    todosLoading.value = true;
+    try {
+      const kindParam = activityFilters.kind === 'all' ? undefined : activityFilters.kind;
+      const accountParam =
+        activityFilters.accountId === 'all' ? undefined : Number(activityFilters.accountId);
+      const page = await store.fetchTransactionsPage(
+        {
+          page_size: MOVEMENTS_PAGE_SIZE,
+          cursor: reset ? undefined : (todosNextCursor.value ?? undefined),
+          query: activityFilters.query.trim() || undefined,
+          kind: kindParam,
+          account_id: Number.isFinite(accountParam ?? NaN) ? accountParam : undefined,
+          date_from: todosDateFrom.value || undefined,
+          date_to: todosDateTo.value || undefined,
+        },
+        { signal: controller.signal },
+      );
+      todosTransactions.value = reset ? page.results : todosTransactions.value.concat(page.results);
+      todosNextCursor.value = page.next_cursor;
+      todosTotalCount.value = page.total_count;
+    } catch (error: unknown) {
+      if ((error as { name?: string }).name === 'CanceledError') return;
+      if ((error as { code?: string }).code === 'ERR_CANCELED') return;
+      throw error;
+    } finally {
+      todosLoading.value = false;
+    }
+  }
+
+  async function fetchCuentasPage(reset: boolean): Promise<void> {
     const account = cuentasSelectedAccount.value;
-    if (!account) return [];
-    return transactions.value
-      .filter(
-        (t) =>
-          t.entries.some((e) => e.account_id === accountId) &&
-          (!cuentasDateFrom.value || t.booking_date >= cuentasDateFrom.value) &&
-          (!cuentasDateTo.value || t.booking_date <= cuentasDateTo.value),
-      )
-      .map((t) => {
-        const impactValue = t.entries
-          .filter((e) => e.account_id === accountId)
-          .reduce((sum, e) => sum + signedImpact(account.account_type, e.side, e.amount), 0);
-        return { ...t, impactValue, tone: impactTone(impactValue) };
+    const accountId = cuentasSelectedAccountId.value;
+    if (!account || accountId == null) {
+      cuentasTransactions.value = [];
+      cuentasNextCursor.value = null;
+      cuentasTotalCount.value = 0;
+      return;
+    }
+    if (reset) {
+      cuentasAbortController?.abort();
+      cuentasAbortController = new AbortController();
+      cuentasNextCursor.value = null;
+      cuentasTotalCount.value = 0;
+    } else if (!cuentasNextCursor.value || cuentasLoading.value) {
+      return;
+    }
+    const controller = cuentasAbortController ?? new AbortController();
+    cuentasAbortController = controller;
+    cuentasLoading.value = true;
+    try {
+      const page = await store.fetchTransactionsPage(
+        {
+          page_size: MOVEMENTS_PAGE_SIZE,
+          cursor: reset ? undefined : (cuentasNextCursor.value ?? undefined),
+          account_id: accountId,
+          date_from: cuentasDateFrom.value || undefined,
+          date_to: cuentasDateTo.value || undefined,
+        },
+        { signal: controller.signal },
+      );
+      const pageRows = page.results.map((transaction) => {
+        const impactValue = transaction.entries
+          .filter((entry) => entry.account_id === accountId)
+          .reduce((sum, entry) => {
+            return sum + signedImpact(account.account_type, entry.side, entry.amount);
+          }, 0);
+        return { ...transaction, impactValue, tone: impactTone(impactValue) };
       });
-  });
+      cuentasTransactions.value = reset ? pageRows : cuentasTransactions.value.concat(pageRows);
+      cuentasNextCursor.value = page.next_cursor;
+      cuentasTotalCount.value = page.total_count;
+    } catch (error: unknown) {
+      if ((error as { name?: string }).name === 'CanceledError') return;
+      if ((error as { code?: string }).code === 'ERR_CANCELED') return;
+      throw error;
+    } finally {
+      cuentasLoading.value = false;
+    }
+  }
 
-  const cuentasVisibleTransactions = computed(() =>
-    cuentasRawTransactions.value.slice(0, cuentasVisibleCount.value),
-  );
+  async function loadMoreCuentas() {
+    await fetchCuentasPage(false);
+  }
 
-  const cuentasHasMore = computed(
-    () => cuentasVisibleCount.value < cuentasRawTransactions.value.length,
-  );
-
-  function loadMoreCuentas() {
-    cuentasVisibleCount.value += MOVEMENTS_PAGE_SIZE;
+  async function loadMoreTodos() {
+    await fetchTodosPage(false);
   }
 
   watch(cuentasSelectedAccountId, () => {
-    cuentasVisibleCount.value = MOVEMENTS_PAGE_SIZE;
+    void fetchCuentasPage(true);
   });
 
   watch([cuentasDateFrom, cuentasDateTo], () => {
-    cuentasVisibleCount.value = MOVEMENTS_PAGE_SIZE;
+    if (cuentasSelectedAccountId.value != null) {
+      void fetchCuentasPage(true);
+    }
   });
 
-  const todosRawTransactions = computed(() =>
-    filteredTransactions.value.filter(
-      (t) =>
-        (!todosDateFrom.value || t.booking_date >= todosDateFrom.value) &&
-        (!todosDateTo.value || t.booking_date <= todosDateTo.value),
-    ),
+  watch(
+    [() => activityFilters.kind, () => activityFilters.accountId, todosDateFrom, todosDateTo],
+    () => {
+      void fetchTodosPage(true);
+    },
   );
 
-  const todosVisibleTransactions = computed(() =>
-    todosRawTransactions.value.slice(0, todosVisibleCount.value),
+  watch(
+    () => activityFilters.query,
+    () => {
+      if (todosSearchDebounceTimer) clearTimeout(todosSearchDebounceTimer);
+      todosSearchDebounceTimer = setTimeout(() => {
+        void fetchTodosPage(true);
+      }, 300);
+    },
   );
 
-  const todosHasMore = computed(() => todosVisibleCount.value < todosRawTransactions.value.length);
-
-  function loadMoreTodos() {
-    todosVisibleCount.value += MOVEMENTS_PAGE_SIZE;
-  }
-
-  watch([activityFilters, todosDateFrom, todosDateTo], () => {
-    todosVisibleCount.value = MOVEMENTS_PAGE_SIZE;
-  });
-
-  function transactionMainAmount(t: (typeof transactions.value)[0]): number {
+  function transactionMainAmount(t: LedgerTransaction): number {
     const debitTotal = t.entries
       .filter((e) => e.side === 'debit')
       .reduce((sum, e) => sum + toNumber(e.amount), 0);
@@ -1376,30 +1426,11 @@ export function useAccountingPage() {
   function getTransactionActivityKind(
     transaction: LedgerTransaction,
   ): Exclude<ActivityFilter, 'all'> | 'other' {
-    const hasIncomeClassified = transaction.entries.some((entry) => entry.flow_family === 'income');
-    if (hasIncomeClassified) return 'income';
-    const hasExpenseClassified = transaction.entries.some(
-      (entry) => entry.flow_family === 'expense',
-    );
-
-    const hasIncomeLink = transaction.entries.some((entry) => entry.annual_income_entry_id != null);
-    if (hasIncomeLink) return 'income';
-
-    const hasExpenseLink = transaction.entries.some(
-      (entry) => entry.annual_expense_entry_id != null,
-    );
-    const hasLiabilityLink = transaction.entries.some((entry) => entry.liability_id != null);
-    if (hasLiabilityLink) return 'debt_payment';
-    if (hasExpenseClassified) return 'expense';
-    if (hasExpenseLink) return 'expense';
-
-    const assetEntries = transaction.entries.filter(
-      (entry) => accountMap.value.get(entry.account_id)?.account_type === 'asset',
-    );
-    const hasAssetPositionLink = transaction.entries.some((entry) => entry.asset_id != null);
-    if (hasAssetPositionLink) return 'investment_purchase';
-    if (assetEntries.length >= 2) return 'transfer';
-
+    if (transaction.activity_kind === 'income') return 'income';
+    if (transaction.activity_kind === 'expense') return 'expense';
+    if (transaction.activity_kind === 'transfer') return 'transfer';
+    if (transaction.activity_kind === 'investment_purchase') return 'investment_purchase';
+    if (transaction.activity_kind === 'debt_payment') return 'debt_payment';
     return 'other';
   }
 
@@ -1580,6 +1611,20 @@ export function useAccountingPage() {
     successMessage.value = 'Cuenta contable eliminada.';
   }
 
+  function findLoadedTransactionById(transactionId: number): LedgerTransaction | undefined {
+    return (
+      todosTransactions.value.find((row) => row.id === transactionId) ??
+      cuentasTransactions.value.find((row) => row.id === transactionId)
+    );
+  }
+
+  async function reloadMovementPagesAfterMutation(): Promise<void> {
+    await fetchTodosPage(true);
+    if (cuentasSelectedAccountId.value != null) {
+      await fetchCuentasPage(true);
+    }
+  }
+
   async function submitTransaction() {
     successMessage.value = null;
     const payload: LedgerTransactionWritePayload = {
@@ -1598,12 +1643,13 @@ export function useAccountingPage() {
       })),
     };
     await store.createTransaction(payload);
+    await reloadMovementPagesAfterMutation();
     resetTransactionForm();
     successMessage.value = 'Movimiento contable registrado.';
   }
 
   function openTransactionForEditing(transactionId: number) {
-    const transaction = transactions.value.find((row) => row.id === transactionId);
+    const transaction = findLoadedTransactionById(transactionId);
     if (!transaction) return false;
     if (transaction.origin === 'system') {
       store.error = 'Los asientos de origen system no se pueden editar desde esta vista.';
@@ -1652,6 +1698,7 @@ export function useAccountingPage() {
     };
     try {
       await store.updateTransaction(editTransactionId.value, payload);
+      await reloadMovementPagesAfterMutation();
       resetEditTransactionForm();
       successMessage.value = 'Movimiento contable actualizado.';
       return true;
@@ -1661,7 +1708,7 @@ export function useAccountingPage() {
   }
 
   async function deleteTransaction(transactionId: number, transactionDescription: string) {
-    const transaction = transactions.value.find((row) => row.id === transactionId);
+    const transaction = findLoadedTransactionById(transactionId);
     if (transaction?.origin === 'system') {
       store.error = 'Los asientos de origen system no se pueden eliminar desde esta vista.';
       return;
@@ -1676,6 +1723,7 @@ export function useAccountingPage() {
       return;
     }
     await store.deleteTransaction(transactionId);
+    await reloadMovementPagesAfterMutation();
     successMessage.value = 'Movimiento contable eliminado.';
   }
 
@@ -1730,6 +1778,7 @@ export function useAccountingPage() {
         : {}),
     };
     await store.createQuickEntry(payload);
+    await reloadMovementPagesAfterMutation();
     resetQuickEntryForm();
     successMessage.value = 'Movimiento rapido registrado.';
   }
@@ -1768,6 +1817,7 @@ export function useAccountingPage() {
     }
     successMessage.value = null;
     const result = await store.commitMoneyWizImport(moneyWizImportFile.value);
+    await reloadMovementPagesAfterMutation();
     successMessage.value =
       result.created_count > 0
         ? `Importacion MoneyWiz completada: ${result.created_count} movimientos nuevos.`
@@ -1776,12 +1826,26 @@ export function useAccountingPage() {
   }
 
   onMounted(() => {
-    void Promise.all([
-      store.refreshAll(),
-      incomeStore.loadAll(selectedYear.value),
-      expenseStore.loadAll(selectedYear.value),
-      refreshManualPositionOptions(),
-    ]);
+    void (async () => {
+      await Promise.all([
+        store.refreshAll(),
+        incomeStore.loadAll(selectedYear.value),
+        expenseStore.loadAll(selectedYear.value),
+        refreshManualPositionOptions(),
+      ]);
+      await fetchTodosPage(true);
+      if (cuentasSelectedAccountId.value != null) {
+        await fetchCuentasPage(true);
+      }
+    })();
+  });
+  onBeforeUnmount(() => {
+    todosAbortController?.abort();
+    cuentasAbortController?.abort();
+    if (todosSearchDebounceTimer) {
+      clearTimeout(todosSearchDebounceTimer);
+      todosSearchDebounceTimer = null;
+    }
   });
 
   return {
@@ -1794,7 +1858,6 @@ export function useAccountingPage() {
     error,
     successMessage,
     accounts,
-    transactions,
     monthlySummary,
     accountBalancesSummary,
     moneyWizImportPreview,
@@ -1848,20 +1911,21 @@ export function useAccountingPage() {
     creditTotal,
     transactionBalanced,
     summaryRows,
-    filteredTransactions,
     activeTab,
     cuentasSelectedAccountId,
     cuentasSelectedAccount,
     cuentasDateFrom,
     cuentasDateTo,
-    cuentasRawTransactions,
-    cuentasVisibleTransactions,
+    cuentasTransactions,
+    cuentasTotalCount,
+    cuentasLoading,
     cuentasHasMore,
     loadMoreCuentas,
     todosDateFrom,
     todosDateTo,
-    todosRawTransactions,
-    todosVisibleTransactions,
+    todosTransactions,
+    todosTotalCount,
+    todosLoading,
     todosHasMore,
     loadMoreTodos,
     transactionMainAmount,

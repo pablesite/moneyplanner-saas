@@ -50,9 +50,7 @@ function accountLabel(account: any): string {
   return account.display_name || account.name;
 }
 
-const isLoading = computed(
-  () => props.page.importPreviewLoading || props.page.importCommitLoading,
-);
+const isLoading = computed(() => props.page.importPreviewLoading || props.page.importCommitLoading);
 const loadingMessage = computed(() =>
   props.page.importPreviewLoading ? 'Preparando preview...' : 'Importando datos...',
 );
