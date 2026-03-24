@@ -85,6 +85,8 @@ El Core backend expone su propia API completa. El frontend SaaS la consume direc
 |--------|------|-------------|
 | `GET/POST` | `/api/budget/annual-income/` | Entradas anuales de ingresos |
 | `GET/POST` | `/api/budget/annual-expense/` | Entradas anuales de gastos |
+| `GET` | `/api/budget/annual-income/monthly-summary/` | Resumen mensual ingreso previsto vs ejecutado |
+| `GET` | `/api/budget/annual-expense/monthly-summary/` | Resumen mensual gasto previsto vs ejecutado + cobertura presupuestaria (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) y `expense_execution_breakdown` por categorÃ­a/subcategorÃ­a |
 | `GET/POST` | `/api/budget/annual-income-checkins/` | Check-ins mensuales de ingresos |
 | `GET/POST` | `/api/budget/annual-expense-checkins/` | Check-ins mensuales de gastos |
 

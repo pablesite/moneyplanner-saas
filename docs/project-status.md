@@ -104,7 +104,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 |---------|--------|------|-------|
 | Net Worth (patrimonio) | ✅ Implementado | `/patrimonio` | |
 | Data Input (introducción datos) | ✅ Retirado | — | Ruta/módulo eliminados. Funciones reubicadas en Presupuesto, Patrimonio y Cuenta. |
-| Budget (presupuesto) | ✅ Implementado | `/presupuesto` | Flujo integrado de edición/alta/borrado por categoría/subcategoría, espejado desde Core. Evolución ejecutada (barras) funcional en ingresos y gastos, reactiva al filtro recurrente/puntual. Barras YTD de categoría/subcategoría funcionales para ambas secciones con selector de mes independiente (defecto: mes actual). |
+| Budget (presupuesto) | ✅ Implementado | `/presupuesto` | Flujo integrado de edición/alta/borrado por categoría/subcategoría, espejado desde Core. Evolución ejecutada (barras) funcional en ingresos y gastos, reactiva al filtro recurrente/puntual. Barras YTD de categoría/subcategoría funcionales para ambas secciones con selector de mes independiente (defecto: mes actual). Se muestra gasto real fuera de presupuesto con CTA contextual (`Anadir al presupuesto`) y KPIs separados (`executed_budgeted` / `executed_unbudgeted`). |
 | Monthly Close (cierre mensual) | ✅ Implementado | `/cierre-mensual` | |
 | People (personas/familia) | ✅ Implementado | `/people` | |
 | Guide (guía financiera) | ✅ Implementado | `/guia/fases/:phaseId` | |
@@ -151,3 +151,4 @@ Ver `core/docs/project-status.md`.
 | 🔄 | En progreso |
 | ⚪ | No iniciado (en scope futuro) |
 | ⛔ | Fuera de alcance explícito (decisión tomada) |
+
