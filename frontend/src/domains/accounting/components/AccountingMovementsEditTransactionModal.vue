@@ -138,6 +138,16 @@ const editCounterpartyGroups = computed(() =>
             : 'ui-accounting-form-grid-edit-simple'
         "
       >
+        <select v-model="page.editTransactionForm.ownership_id" class="select">
+          <option
+            v-for="option in page.ownershipOptions"
+            :key="option.value == null ? 'none' : option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+
         <select v-model="page.editTransactionForm.account_id" class="select" required>
           <option :value="null" disabled>Cuenta principal</option>
           <optgroup v-for="group in editAccountGroups" :key="group.key" :label="group.label">
@@ -184,6 +194,15 @@ const editCounterpartyGroups = computed(() =>
       <p v-else-if="page.editKindNeedsClassification" class="ui-accounting-inline-note">
         Selecciona categoria y subcategoria debajo.
       </p>
+      <div
+        v-if="page.editTransactionForm.kind === 'investment'"
+        class="ui-accounting-form-grid ui-accounting-form-grid-wide"
+      >
+        <select v-model="page.editTransactionForm.investment_direction" class="select">
+          <option value="inflow">Aporte (liquidez a inversion)</option>
+          <option value="outflow">Retirada inversion (inversion a liquidez)</option>
+        </select>
+      </div>
       <p
         v-else-if="
           page.editTransactionForm.kind !== 'balance_adjustment' &&

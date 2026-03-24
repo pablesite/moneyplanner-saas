@@ -7,12 +7,17 @@ export type QuickLedgerMovementType =
   | 'income'
   | 'expense'
   | 'transfer'
+  | 'investment'
   | 'investment_purchase'
-  | 'debt_payment';
+  | 'debt_payment'
+  | 'revaluation';
+
+export type InvestmentDirection = 'inflow' | 'outflow';
 
 export type LedgerAccount = {
   id: number;
   name: string;
+  display_name: string;
   account_type: LedgerAccountType;
   currency: string;
   origin: LedgerAccountOrigin;
@@ -52,8 +57,11 @@ export type LedgerTransaction = {
   status: LedgerTransactionStatus;
   origin: LedgerTransactionOrigin;
   notes: string;
-  quick_entry_kind?: '' | QuickLedgerMovementType;
-  investment_direction?: '' | 'inflow' | 'outflow';
+  ownership_id: number | null;
+  quick_entry_kind: '' | QuickLedgerMovementType;
+  investment_direction: '' | InvestmentDirection;
+  realized_cost_basis: string | null;
+  realized_gain_loss: string | null;
   activity_kind: string;
   entries: LedgerEntry[];
   created_at: string;
@@ -168,16 +176,19 @@ export type LedgerTransactionWritePayload = {
   status?: LedgerTransactionStatus;
   origin?: LedgerTransactionOrigin;
   notes?: string;
+  ownership_id?: number | null;
   entries: LedgerEntryWritePayload[];
 };
 
 export type QuickLedgerTransactionWritePayload = {
   movement_type: QuickLedgerMovementType;
+  investment_direction?: '' | InvestmentDirection;
   booking_date: string;
   value_date: string;
   description: string;
   amount: string;
   account_id: number;
+  ownership_id?: number | null;
   flow_family?: '' | 'income' | 'expense';
   category_key?: string;
   subcategory_key?: string;
@@ -186,6 +197,8 @@ export type QuickLedgerTransactionWritePayload = {
   interest_account_id?: number | null;
   principal_amount?: string | null;
   interest_amount?: string | null;
+  realized_cost_basis?: string | null;
+  realized_gain_loss?: string | null;
   annual_income_entry_id?: number | null;
   annual_expense_entry_id?: number | null;
   notes?: string;
@@ -226,6 +239,7 @@ export type MoneyWizImportPreviewRow = {
   currency: string;
   amount: string;
   movement_type: QuickLedgerMovementType;
+  movement_direction?: '' | InvestmentDirection;
   flow_family: '' | 'income' | 'expense';
   category_key: string;
   subcategory_key: string;
@@ -233,6 +247,14 @@ export type MoneyWizImportPreviewRow = {
   existing_transaction_id: number | null;
   warnings: string[];
   errors: string[];
+};
+
+export type MoneyWizUnmappedCategory = {
+  category_raw: string;
+  movement_type: 'income' | 'expense';
+  fallback_category_key: string;
+  fallback_subcategory_key: string;
+  row_count: number;
 };
 
 export type MoneyWizImportPreview = {
@@ -245,6 +267,7 @@ export type MoneyWizImportPreview = {
   warnings: string[];
   stats: MoneyWizImportStats;
   detected_accounts: MoneyWizImportDetectedAccount[];
+  unmapped_categories: MoneyWizUnmappedCategory[];
   rows: MoneyWizImportPreviewRow[];
 };
 
@@ -271,4 +294,8 @@ export type MoneyWizImportCommit = {
   >;
   preview: MoneyWizImportPreview;
   created_transaction_ids: number[];
+};
+
+export type DeleteImportedTransactionsResult = {
+  deleted_count: number;
 };

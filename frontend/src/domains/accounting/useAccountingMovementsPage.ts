@@ -31,6 +31,7 @@ export function useAccountingMovementsPage() {
     editSubcategoryOptions,
     activationForm,
     moneyWizImportFile,
+    ownershipOptions,
     quickEntryForm,
     editTransactionForm,
     activityFilters,
@@ -48,9 +49,13 @@ export function useAccountingMovementsPage() {
     investmentCounterpartyOptions,
     liabilityCounterpartyOptions,
     debtInterestOptions,
+    revaluationAccountOptions,
+    revaluationCurrentBalance,
+    revaluationDelta,
     quickEntryReady,
     editEntryReady,
     summaryRows,
+    hasImportedTransactions,
     activeTab,
     cuentasSelectedAccountId,
     cuentasSelectedAccount,
@@ -72,11 +77,15 @@ export function useAccountingMovementsPage() {
     loadMoreTodos,
     transactionMainAmount,
     activityKindLabel,
+    transactionOwnershipLabel,
+    transactionClassificationLabel,
+    transactionAccountTrailLabel,
     reloadPeriod,
     activateNetWorthPositions,
     removeNetWorthTracking,
     deleteAccount,
     deleteTransaction,
+    deleteImportedTransactions,
     openTransactionForEditing,
     setMoneyWizImportFile,
     previewMoneyWizImport,
@@ -386,7 +395,9 @@ export function useAccountingMovementsPage() {
     );
 
     // Pass 1: exact normalized match, unique winner only
-    const exactMatches = candidates.filter((a) => normalizeForMatch(a.name) === normalizedCsv);
+    const exactMatches = candidates.filter(
+      (a) => normalizeForMatch(accountDisplayName(a)) === normalizedCsv,
+    );
     if (exactMatches.length === 1) return exactMatches[0]!.id;
     if (exactMatches.length > 1) return null; // ambiguous duplicates
 
@@ -394,7 +405,7 @@ export function useAccountingMovementsPage() {
     const scored = candidates
       .map((a) => ({
         a,
-        score: fuzzyMatchScore(normalizedCsv, normalizeForMatch(a.name)),
+        score: fuzzyMatchScore(normalizedCsv, normalizeForMatch(accountDisplayName(a))),
       }))
       .filter(({ score }) => score > 0)
       .sort((x, y) => y.score - x.score);
@@ -427,7 +438,13 @@ export function useAccountingMovementsPage() {
   }
 
   async function commitMoneyWizImportFromModal() {
-    const result = await commitMoneyWizImport();
+    const accountIdMap: Record<string, number> = {};
+    for (const [csvName, accountId] of Object.entries(moneyWizAccountMap.value)) {
+      if (accountId != null) {
+        accountIdMap[csvName] = accountId;
+      }
+    }
+    const result = await commitMoneyWizImport(accountIdMap);
     if (result) {
       showMoneyWizImportModal.value = false;
     }
@@ -483,6 +500,7 @@ export function useAccountingMovementsPage() {
     editSubcategoryOptions,
     activationForm,
     moneyWizImportFile,
+    ownershipOptions,
     quickEntryForm,
     editTransactionForm,
     activityFilters,
@@ -500,9 +518,13 @@ export function useAccountingMovementsPage() {
     investmentCounterpartyOptions,
     liabilityCounterpartyOptions,
     debtInterestOptions,
+    revaluationAccountOptions,
+    revaluationCurrentBalance,
+    revaluationDelta,
     quickEntryReady,
     editEntryReady,
     summaryRows,
+    hasImportedTransactions,
     activeTab,
     groupedCuentasAccounts,
     cuentasSelectedAccountId,
@@ -525,11 +547,15 @@ export function useAccountingMovementsPage() {
     loadMoreTodos,
     transactionMainAmount,
     activityKindLabel,
+    transactionOwnershipLabel,
+    transactionClassificationLabel,
+    transactionAccountTrailLabel,
     reloadPeriod,
     activateNetWorthPositions,
     removeNetWorthTracking,
     deleteAccount,
     deleteTransaction,
+    deleteImportedTransactions,
     openTransactionForEditing,
     showActivationModal,
     showEditTransactionModal,
