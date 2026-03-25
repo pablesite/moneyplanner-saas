@@ -706,7 +706,7 @@ const {
                 expanded
               />
               <NetWorthDeltaChart
-                :rows="visibleTimelineRows"
+                :rows="timelineChartRows"
                 :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
               />
             </div>
