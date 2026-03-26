@@ -177,7 +177,9 @@ export type LedgerTransactionWritePayload = {
   origin?: LedgerTransactionOrigin;
   notes?: string;
   ownership_id?: number | null;
-  entries: LedgerEntryWritePayload[];
+  quick_entry_kind?: string;
+  investment_direction?: string;
+  entries?: LedgerEntryWritePayload[];
 };
 
 export type QuickLedgerTransactionWritePayload = {
@@ -187,6 +189,7 @@ export type QuickLedgerTransactionWritePayload = {
   value_date: string;
   description: string;
   amount: string;
+  destination_amount?: string | null;
   account_id: number;
   ownership_id?: number | null;
   flow_family?: '' | 'income' | 'expense';
