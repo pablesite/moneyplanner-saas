@@ -252,7 +252,7 @@ describe('ItemForm (saas)', () => {
         title: 'Nuevo activo',
         categories: [{ value: 'cash', label: 'Liquidez' }],
         subcategories: [
-          { category: 'cash', value: 'short_term_deposit', label: 'Deposito a corto plazo' },
+          { category: 'cash', value: 'short_term_deposit', label: 'Depósito a corto plazo' },
         ],
         onSubmit,
       },
