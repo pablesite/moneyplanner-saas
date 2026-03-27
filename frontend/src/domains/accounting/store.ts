@@ -13,6 +13,18 @@ import type {
 } from '@/domains/accounting/models';
 import { toApiErrorMessage } from '@/lib/errors';
 
+function isCanceledRequestError(error: unknown): boolean {
+  if ((error as { name?: string }).name === 'CanceledError') return true;
+  if ((error as { name?: string }).name === 'AbortError') return true;
+  if ((error as { code?: string }).code === 'ERR_CANCELED') return true;
+  const message = (error as { message?: string }).message;
+  if (typeof message === 'string') {
+    const normalized = message.trim().toLowerCase();
+    if (normalized === 'canceled' || normalized === 'cancelled') return true;
+  }
+  return false;
+}
+
 export const useAccountingStore = defineStore('accounting', {
   state: () => ({
     loading: false as boolean,
@@ -76,6 +88,9 @@ export const useAccountingStore = defineStore('accounting', {
         const response = await coreAccountingApi.getTransactions(params, options);
         return response.data;
       } catch (error: unknown) {
+        if (isCanceledRequestError(error)) {
+          throw error;
+        }
         this.error = toApiErrorMessage(error);
         throw error;
       }
@@ -203,11 +218,11 @@ export const useAccountingStore = defineStore('accounting', {
       }
     },
 
-    async commitMoneyWizImport(file: File) {
+    async commitMoneyWizImport(file: File, accountIdMap: Record<string, number> = {}) {
       this.importCommitLoading = true;
       this.error = null;
       try {
-        const response = await coreAccountingApi.commitMoneyWizImport(file);
+        const response = await coreAccountingApi.commitMoneyWizImport(file, accountIdMap);
         this.moneyWizImportCommitResult = response.data;
         this.moneyWizImportPreview = response.data.preview;
         await this.refreshAll();
@@ -217,6 +232,21 @@ export const useAccountingStore = defineStore('accounting', {
         throw error;
       } finally {
         this.importCommitLoading = false;
+      }
+    },
+
+    async deleteImportedTransactions() {
+      this.transactionCreationLoading = true;
+      this.error = null;
+      try {
+        const response = await coreAccountingApi.deleteImportedTransactions();
+        await this.refreshAll();
+        return response.data;
+      } catch (error: unknown) {
+        this.error = toApiErrorMessage(error);
+        throw error;
+      } finally {
+        this.transactionCreationLoading = false;
       }
     },
   },
