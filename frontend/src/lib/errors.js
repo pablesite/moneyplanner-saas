@@ -44,26 +44,35 @@ function humanMessageForAuthFailure(error) {
   }
   return null;
 }
-function firstValidationMessage(data) {
-  if (!isRecord(data)) return null;
-  for (var _i = 0, _a = Object.entries(data); _i < _a.length; _i++) {
-    var _b = _a[_i],
-      field = _b[0],
-      raw = _b[1];
-    if (field === 'error' || field === 'detail') continue;
-    if (typeof raw === 'string' && raw.trim()) {
-      return ''.concat(field, ': ').concat(raw);
-    }
-    if (Array.isArray(raw)) {
-      var first = raw.find(function (item) {
-        return typeof item === 'string' && item.trim();
-      });
-      if (typeof first === 'string' && first.trim()) {
-        return ''.concat(field, ': ').concat(first);
-      }
-    }
+function firstValidationMessage(data, path) {
+  if (path === void 0) {
+    path = [];
   }
-  if (typeof data.detail === 'string' && data.detail.trim()) return data.detail;
+  var label = path.length > 0 ? ''.concat(path.join('.'), ': ') : '';
+  if (typeof data === 'string' && data.trim()) {
+    return ''.concat(label).concat(data);
+  }
+  if (Array.isArray(data)) {
+    for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+      var item = data_1[_i];
+      var nested_1 = firstValidationMessage(item, path);
+      if (nested_1) return nested_1;
+    }
+    return null;
+  }
+  if (!isRecord(data)) return null;
+  for (var _a = 0, _b = Object.entries(data); _a < _b.length; _a++) {
+    var _c = _b[_a],
+      field = _c[0],
+      raw = _c[1];
+    if (field === 'error') continue;
+    var nextPath = field === 'detail' ? path : path.concat([field]);
+    var nested = firstValidationMessage(raw, nextPath);
+    if (nested) return nested;
+  }
+  if (typeof data.detail === 'string' && data.detail.trim()) {
+    return ''.concat(label).concat(data.detail);
+  }
   return null;
 }
 function toApiErrorMessage(error) {
