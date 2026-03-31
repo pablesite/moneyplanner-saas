@@ -44,6 +44,19 @@ Para desarrollo local no es necesario cambiar ningún valor — los defaults de 
 
 En `core/`, `fx_sync` debe aparecer levantado porque mantiene el historico de FX usado por patrimonio.
 
+## Backup/restore DB Core (comandos simples en cmder)
+1. Exportar DB completa:
+   - `.\scripts\db-export.cmd`
+2. Importar el ultimo dump de `.\backups`:
+   - `.\scripts\db-import.cmd`
+3. Importar un dump concreto:
+   - `.\scripts\db-import.cmd -DumpFile .\backups\core_db_YYYYMMDD_HHMMSS.dump`
+
+Notas:
+1. El import crea backup automatico antes de reemplazar (`core_db_pre_import_*.dump`).
+2. El import valida el dump con `pg_restore -l` antes de hacer operaciones destructivas.
+3. Formato oficial: `.dump` (PostgreSQL custom format).
+
 ## Problemas frecuentes
 1. Frontend no refresca -> recarga dura y revisar logs del frontend.
 2. Error CORS -> revisar `CORS_ALLOWED_ORIGINS`.

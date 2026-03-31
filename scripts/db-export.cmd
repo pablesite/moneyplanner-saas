@@ -2,7 +2,7 @@
 setlocal
 
 set "SCRIPT_DIR=%~dp0"
-set "PS_SCRIPT=%SCRIPT_DIR%export-core-db.ps1"
+set "PS_SCRIPT=%SCRIPT_DIR%db-export.ps1"
 
 if not exist "%PS_SCRIPT%" (
   echo ERROR: Missing script: "%PS_SCRIPT%"
@@ -12,4 +12,3 @@ if not exist "%PS_SCRIPT%" (
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 exit /b %EXIT_CODE%
-
