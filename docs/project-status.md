@@ -2,7 +2,7 @@
 
 Estado actual de funcionalidades por área. Actualizar cuando cambie el estado de una funcionalidad.
 
-**Última revisión:** 2026-03-27 | **Versión SaaS:** 0.20.41 | **Versión Core:** 0.23.2
+**Última revisión:** 2026-04-16 | **Versión SaaS:** 0.20.41 | **Versión Core:** 0.23.2
 
 ---
 
@@ -21,7 +21,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Sistema de usuarios trial | Alta | ⚪ | Crear usuario root, flujo de acceso controlado para early adopters. |
 | Admin UI | Media | ⚪ | Las ops de admin son solo backend por ahora; pendiente de crear interfaz. |
 | Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
-| Consolidación funcional v1 (módulos espejo Core) | Alta | 🔄 | Repaso manual de Cierre, Presupuesto y Movimientos; Presupuesto integra edición por categorías en flujo único, portable data consolidado en Cuenta y revisión de gasto generado por pasivo en Patrimonio. En Movimientos se desplegó soporte multimoneda para inversiones (alta/edición) y se completó la revisión operativa de Bitcoin/Spot Binance con clasificación canónica en aportes y retiradas. |
+| Consolidación funcional v1 (módulos espejo Core) | Alta | 🔄 | Vista de movimientos cerrada v1. Importación MoneyWiz consolidada. Pendiente: repaso manual de Cierre y Presupuesto. |
 | Refactor backend SaaS — Phase 1 | Alta | ✅ | Test coverage baseline completado: suite reorganizada por dominio, rollback real en registro si falla bootstrap Core, 138 tests y 96% de coverage sobre `saas` + `saas_access`. Spec: `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` |
 | Refactor backend SaaS — Phase 2 | Media | ✅ | Thin views completado: `auth_views.py` en 122 líneas, `admin_views.py` en 96, lógica extraída a `saas/auth_services.py`, `saas/auth_link_views.py` y `saas_access/rbac_services.py`. Spec: `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` |
 | Refactor backend SaaS — Phase 3 | Media | ✅ | Exception handler canónico completado: contrato `{code, message, details}` en todos los endpoints y contract tests de error shape. Spec: `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` |
@@ -109,7 +109,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | People (personas/familia) | ✅ Implementado | `/people` | |
 | Guide (guía financiera) | ✅ Implementado | `/guia/fases/:phaseId` | |
 | Aux Data (FX, IPC) | ✅ Implementado | `/data` | |
-| Accounting Movements (movimientos) | ✅ Implementado | `/movimientos` | Soporte multimoneda en alta y edición de inversiones desplegado (espejo Core/SaaS). Migración operativa del histórico Bitcoin completada (manual). |
+| Accounting Movements (movimientos) | ✅ Implementado | `/movimientos` | Vista cerrada v1. Soporte multimoneda en alta y edición de inversiones. Importación MoneyWiz consolidada. |
 
 ### SaaS-específico
 | Funcionalidad | Estado | Notas |
