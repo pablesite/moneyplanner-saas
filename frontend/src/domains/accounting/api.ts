@@ -1,8 +1,10 @@
 import { coreApi } from '@/lib/api';
 import type {
   BudgetDerivedSuggestions,
+  DeleteImportedTransactionsResult,
   LedgerAccount,
   LedgerAccountBalanceSummary,
+  LedgerDailyBalanceSeries,
   LedgerAccountWritePayload,
   LedgerEntry,
   LedgerTransaction,
@@ -101,6 +103,11 @@ export const coreAccountingApi = {
   createQuickEntry(payload: QuickLedgerTransactionWritePayload) {
     return coreApi.post<LedgerTransaction>('/api/accounting/transactions/quick-entry/', payload);
   },
+  deleteImportedTransactions() {
+    return coreApi.post<DeleteImportedTransactionsResult>(
+      '/api/accounting/transactions/delete-imported/',
+    );
+  },
   getEntries(params?: {
     account_id?: number;
     transaction_id?: number;
@@ -129,6 +136,25 @@ export const coreAccountingApi = {
       '/api/accounting/transactions/budget-suggestions/',
       {
         params: { year, lookback_years: lookbackYears },
+      },
+    );
+  },
+  getDailyBalanceSeries(params?: {
+    date_from?: string;
+    date_to?: string;
+    status?: 'posted' | 'draft';
+  }) {
+    return coreApi.get<LedgerDailyBalanceSeries>(
+      '/api/accounting/transactions/daily-balance-series/',
+      {
+        params:
+          params && (params.date_from || params.date_to || params.status)
+            ? {
+                ...(params.date_from ? { date_from: params.date_from } : {}),
+                ...(params.date_to ? { date_to: params.date_to } : {}),
+                ...(params.status ? { status: params.status } : {}),
+              }
+            : undefined,
       },
     );
   },
