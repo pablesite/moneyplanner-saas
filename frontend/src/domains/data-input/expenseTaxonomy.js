@@ -1,6 +1,11 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.expenseSubcategories = exports.expenseCategories = void 0;
+var expenseSubcategoryAliases = {
+  financial_investments: {
+    index_funds_etf: 'etf_indexed',
+  },
+};
 exports.expenseCategories = [
   { value: 'savings_allocation', label: 'Ahorro' },
   { value: 'financial_investments', label: 'Inversion financiera' },
@@ -18,6 +23,11 @@ exports.expenseSubcategories = [
   },
   { category: 'financial_investments', value: 'index_funds', label: 'Fondos indexados' },
   { category: 'financial_investments', value: 'etf_indexed', label: 'ETF indexados' },
+  {
+    category: 'financial_investments',
+    value: 'deposits_fixed_income',
+    label: 'Depositos / renta fija',
+  },
   { category: 'financial_investments', value: 'pension_plan', label: 'Plan de pensiones' },
   { category: 'financial_investments', value: 'stocks_dividends', label: 'Acciones / dividendos' },
   { category: 'financial_investments', value: 'crypto', label: 'Criptomonedas' },
@@ -90,3 +100,22 @@ exports.expenseSubcategories = [
     label: 'Otros gastos de consumo',
   },
 ];
+function normalizeExpenseTaxonomy(category, subcategory) {
+  var _a, _b;
+  var normalizedCategory = String(category !== null && category !== void 0 ? category : '').trim();
+  var normalizedSubcategory = String(
+    subcategory !== null && subcategory !== void 0 ? subcategory : '',
+  ).trim();
+  var alias =
+    (_b =
+      (_a = expenseSubcategoryAliases[normalizedCategory]) === null || _a === void 0
+        ? void 0
+        : _a[normalizedSubcategory]) !== null && _b !== void 0
+      ? _b
+      : null;
+  return {
+    category: normalizedCategory,
+    subcategory: alias !== null && alias !== void 0 ? alias : normalizedSubcategory,
+  };
+}
+exports.normalizeExpenseTaxonomy = normalizeExpenseTaxonomy;

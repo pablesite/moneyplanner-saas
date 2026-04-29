@@ -31,14 +31,15 @@ This document describes the `category` and `subcategory` layer of the contract. 
 ### `financial_investments`
 1. `index_funds`
 2. `etf_indexed`
-3. `index_funds_etf`
-4. `crowdfunding_real_estate`
-5. `pension_plan`
-6. `stocks_dividends`
-7. `crypto`
-8. `crowdlending_p2p`
-9. `roboadvisor`
-10. `other_financial_investments`
+3. `deposits_fixed_income`
+4. `index_funds_etf`
+5. `crowdfunding_real_estate`
+6. `pension_plan`
+7. `stocks_dividends`
+8. `crypto`
+9. `crowdlending_p2p`
+10. `roboadvisor`
+11. `other_financial_investments`
 
 ## Note
 `index_funds_etf` is still accepted in the backend taxonomy and should be treated as part of the current contract until legacy usage is fully removed.
