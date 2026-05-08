@@ -78,7 +78,7 @@ El Core backend expone su propia API completa. El frontend SaaS la consume direc
 | `GET/POST` | `/api/net-worth/snapshots/` | Snapshots patrimoniales |
 | `GET` | `/api/net-worth/summary/` | Resumen agregado de patrimonio |
 | `GET` | `/api/net-worth/timeline/` | Línea de tiempo patrimonial |
-| `GET` | `/api/net-worth/liquidity/monthly-summary/` | Resumen mensual de liquidez |
+| `GET` | `/api/net-worth/liquidity/monthly-summary/` | Resumen mensual de liquidez; las filas de activos incluyen `annual_interest_tae` para separar liquidez remunerada |
 
 ### Budget — `/api/budget/`
 | Método | Ruta | Descripción |
