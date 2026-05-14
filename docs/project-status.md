@@ -21,7 +21,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Sistema de usuarios trial | Alta | ⚪ | Crear usuario root, flujo de acceso controlado para early adopters. |
 | Admin UI | Media | ⚪ | Las ops de admin son solo backend por ahora; pendiente de crear interfaz. |
 | Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
-| Consolidación funcional v1 (módulos espejo Core) | Alta | 🔄 | Vista de movimientos cerrada v1. Importación MoneyWiz consolidada. Presupuesto v1 espejado y validado manualmente. Pendiente: repaso manual de Cierre. |
+| Consolidación funcional v1 (módulos espejo Core) | Alta | ✅ | Vista de movimientos cerrada v1. Importación MoneyWiz consolidada. Presupuesto v1 y Cierre mensual espejados y validados manualmente. |
 | Refactor backend SaaS — Phase 1 | Alta | ✅ | Test coverage baseline completado: suite reorganizada por dominio, rollback real en registro si falla bootstrap Core, 138 tests y 96% de coverage sobre `saas` + `saas_access`. Spec: `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` |
 | Refactor backend SaaS — Phase 2 | Media | ✅ | Thin views completado: `auth_views.py` en 122 líneas, `admin_views.py` en 96, lógica extraída a `saas/auth_services.py`, `saas/auth_link_views.py` y `saas_access/rbac_services.py`. Spec: `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` |
 | Refactor backend SaaS — Phase 3 | Media | ✅ | Exception handler canónico completado: contrato `{code, message, details}` en todos los endpoints y contract tests de error shape. Spec: `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` |
@@ -105,7 +105,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Net Worth (patrimonio) | ✅ Implementado | `/patrimonio` | |
 | Data Input (introducción datos) | ✅ Retirado | — | Ruta/módulo eliminados. Funciones reubicadas en Presupuesto, Patrimonio y Cuenta. |
 | Budget (presupuesto) | ✅ Implementado | `/presupuesto` | Flujo integrado de edición/alta/borrado por categoría/subcategoría, espejado desde Core. Evolución ejecutada (barras) funcional en ingresos y gastos, reactiva al filtro recurrente/puntual. Barras YTD de categoría/subcategoría funcionales para ambas secciones con selector de mes independiente (defecto: mes actual). Se muestra ejecución fuera de presupuesto en ingresos y gastos con CTA contextual (`Anadir al presupuesto`) y KPIs separados (`executed_budgeted` / `executed_unbudgeted`). Revisión manual completada el 2026-05-14. |
-| Monthly Close (cierre mensual) | ✅ Implementado | `/cierre-mensual` | |
+| Monthly Close (cierre mensual) | ✅ Implementado | `/cierre-mensual` | Modo dual espejado desde Core y revisión manual completada el 2026-05-14. |
 | People (personas/familia) | ✅ Implementado | `/people` | |
 | Guide (guía financiera) | ✅ Implementado | `/guia/fases/:phaseId` | |
 | Aux Data (FX, IPC) | ✅ Implementado | `/data` | |
