@@ -165,7 +165,7 @@ Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia.
 | `/` | `home` | `HomeView` | — |
 | `/guia/fases/:phaseId` | `guide-phase` | `GuidePhaseDetailView` | `guide` |
 | `/patrimonio` | `networth` | `NetWorthView` | `net-worth` |
-| `/presupuesto` | `budget-dashboard` | `BudgetDashboardView` | Incluye gestión anual contextual por categoría/subcategoría + dashboard con visibilidad de gasto fuera de presupuesto y CTA `Anadir al presupuesto` para subcategorías detectadas |
+| `/presupuesto` | `budget-dashboard` | `BudgetDashboardView` | Incluye gestión anual contextual por categoría/subcategoría, modales de líneas con errores backend persistentes, dashboard basado en summaries mensuales canónicos y visibilidad de gasto fuera de presupuesto con CTA `Anadir al presupuesto` para subcategorías detectadas |
 | `/cierre-mensual` | `monthly-close` | `BudgetDashboardView` (mode=monthly-close) | — |
 | `/data` | `aux-data` | `AuxDataView` | `aux-data` |
 | `/account` | `account` | `AccountView` | `auth` + portable data (export/import/replace) (home canónico) |
