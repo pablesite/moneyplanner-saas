@@ -255,7 +255,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     | 'none';
   type BudgetExecutionOrigin =
     | 'categorized_ledger'
-    | 'legacy_ledger'
     | 'user_override'
     | 'legacy_checkin'
     | 'ambiguous_taxonomy'
@@ -723,10 +722,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return `${month}::${budgetTaxonomyKey(category, subcategory)}`;
   }
 
-  function budgetMonthEntryKey(month: number, entryId: number): string {
-    return `${month}::${entryId}`;
-  }
-
   function parseBudgetTaxonomyKey(rowKey: string): { categoryKey: string; subcategoryKey: string } {
     const [categoryKey = '', subcategoryKey = ''] = rowKey.split('::');
     return { categoryKey, subcategoryKey };
@@ -753,8 +748,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
 
   function resolveLedgerEntryFlowFamily(entry: LedgerEntry): '' | 'income' | 'expense' {
     if (entry.flow_family === 'income' || entry.flow_family === 'expense') return entry.flow_family;
-    if (entry.annual_income_entry_id != null) return 'income';
-    if (entry.annual_expense_entry_id != null) return 'expense';
     return '';
   }
 
@@ -813,8 +806,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   type AccountingExecutionBucketAccumulator = {
     incomeCategorizedByMonthTaxonomy: Map<string, number>;
     expenseCategorizedByMonthTaxonomy: Map<string, number>;
-    incomeLegacyByMonthEntryId: Map<string, number>;
-    expenseLegacyByMonthEntryId: Map<string, number>;
     depositRotationIncomeByMonth: Map<number, number>;
     depositRotationExpenseByMonth: Map<number, number>;
     incomeUnclassifiedTotal: number;
@@ -886,26 +877,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return true;
   }
 
-  function collectLegacyExecution(
-    entry: AccountingPostedEntry,
-    flowFamily: 'income' | 'expense',
-    amount: number,
-    bookingMonth: number,
-    buckets: AccountingExecutionBucketAccumulator,
-  ): boolean {
-    if (flowFamily === 'income' && entry.annual_income_entry_id != null) {
-      const key = budgetMonthEntryKey(bookingMonth, entry.annual_income_entry_id);
-      addMapAmount(buckets.incomeLegacyByMonthEntryId, key, amount);
-      return true;
-    }
-    if (flowFamily === 'expense' && entry.annual_expense_entry_id != null) {
-      const key = budgetMonthEntryKey(bookingMonth, entry.annual_expense_entry_id);
-      addMapAmount(buckets.expenseLegacyByMonthEntryId, key, amount);
-      return true;
-    }
-    return false;
-  }
-
   function collectAccountingExecutionEntry(
     entry: AccountingPostedEntry,
     targets: Map<number, DebtPaymentExpenseTarget>,
@@ -945,7 +916,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       return;
     }
     if (collectTaxonomyExecution(entry, flowFamily, amount, bookingMonth, buckets)) return;
-    if (collectLegacyExecution(entry, flowFamily, amount, bookingMonth, buckets)) return;
     if (flowFamily === 'income') buckets.incomeUnclassifiedTotal += amount;
     if (flowFamily === 'expense') buckets.expenseUnclassifiedTotal += amount;
   }
@@ -1006,8 +976,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     const buckets: AccountingExecutionBucketAccumulator = {
       incomeCategorizedByMonthTaxonomy: new Map<string, number>(),
       expenseCategorizedByMonthTaxonomy: new Map<string, number>(),
-      incomeLegacyByMonthEntryId: new Map<string, number>(),
-      expenseLegacyByMonthEntryId: new Map<string, number>(),
       depositRotationIncomeByMonth: new Map<number, number>(),
       depositRotationExpenseByMonth: new Map<number, number>(),
       incomeUnclassifiedTotal: 0,
@@ -1060,10 +1028,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     const taxonomyKey = budgetMonthTaxonomyKey(month, entry.category, entry.subcategory);
     const categorizedLedgerExecuted =
       accountingExecutionBuckets.value.incomeCategorizedByMonthTaxonomy.get(taxonomyKey) ?? null;
-    const legacyLedgerExecuted =
-      accountingExecutionBuckets.value.incomeLegacyByMonthEntryId.get(
-        budgetMonthEntryKey(month, entry.id),
-      ) ?? null;
     const taxonomyLineCount = incomeTaxonomyLineCountsByMonth.value.get(taxonomyKey) ?? 0;
     const fallbackExecuted =
       checkin && checkin.status !== 'skipped' ? toNumberOrZero(checkin.executed_amount) : 0;
@@ -1078,12 +1042,10 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     let executionSource: BudgetExecutionSource = 'none';
     let executed: number | null = null;
 
-    if (uniqueCategorizedLedgerExecuted > 0 || legacyLedgerExecuted != null) {
-      executionOrigin =
-        uniqueCategorizedLedgerExecuted > 0 ? 'categorized_ledger' : 'legacy_ledger';
-      executionSource =
-        uniqueCategorizedLedgerExecuted > 0 ? 'categorized_ledger' : 'legacy_fallback';
-      executed = uniqueCategorizedLedgerExecuted + (legacyLedgerExecuted ?? 0);
+    if (uniqueCategorizedLedgerExecuted > 0) {
+      executionOrigin = 'categorized_ledger';
+      executionSource = 'categorized_ledger';
+      executed = uniqueCategorizedLedgerExecuted;
     } else if (categorizedLedgerExecuted != null && taxonomyLineCount > 1) {
       executionOrigin = 'ambiguous_taxonomy';
       executionSource = 'pending_classification';
@@ -1107,7 +1069,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       executionOrigin,
       executionSource,
       categorizedLedgerExecuted,
-      legacyLedgerExecuted,
     };
   }
 
@@ -1120,10 +1081,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     const taxonomyKey = budgetMonthTaxonomyKey(month, entry.category, entry.subcategory);
     const categorizedLedgerExecuted =
       accountingExecutionBuckets.value.expenseCategorizedByMonthTaxonomy.get(taxonomyKey) ?? null;
-    const legacyLedgerExecuted =
-      accountingExecutionBuckets.value.expenseLegacyByMonthEntryId.get(
-        budgetMonthEntryKey(month, entry.id),
-      ) ?? null;
     const taxonomyLineCount = expenseTaxonomyLineCountsByMonth.value.get(taxonomyKey) ?? 0;
     const fallbackExecuted =
       checkin && checkin.status !== 'skipped' ? toNumberOrZero(checkin.executed_amount) : 0;
@@ -1138,12 +1095,10 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     let executionSource: BudgetExecutionSource = 'none';
     let executed: number | null = null;
 
-    if (uniqueCategorizedLedgerExecuted > 0 || legacyLedgerExecuted != null) {
-      executionOrigin =
-        uniqueCategorizedLedgerExecuted > 0 ? 'categorized_ledger' : 'legacy_ledger';
-      executionSource =
-        uniqueCategorizedLedgerExecuted > 0 ? 'categorized_ledger' : 'legacy_fallback';
-      executed = uniqueCategorizedLedgerExecuted + (legacyLedgerExecuted ?? 0);
+    if (uniqueCategorizedLedgerExecuted > 0) {
+      executionOrigin = 'categorized_ledger';
+      executionSource = 'categorized_ledger';
+      executed = uniqueCategorizedLedgerExecuted;
     } else if (categorizedLedgerExecuted != null && taxonomyLineCount > 1) {
       executionOrigin = 'ambiguous_taxonomy';
       executionSource = 'pending_classification';
@@ -1167,7 +1122,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       executionOrigin,
       executionSource,
       categorizedLedgerExecuted,
-      legacyLedgerExecuted,
     };
   }
 
@@ -1211,13 +1165,8 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       .map((entry) => {
         const checkin = incomeCheckinsByEntryId.value[entry.id] ?? null;
         const planned = monthlyPlannedAmountForIncomeEntry(entry, selectedExecutionMonth.value);
-        const {
-          categorizedLedgerExecuted,
-          legacyLedgerExecuted,
-          executed,
-          executionOrigin,
-          executionSource,
-        } = resolveIncomeExecutionForMonth(entry, selectedExecutionMonth.value, checkin);
+        const { categorizedLedgerExecuted, executed, executionOrigin, executionSource } =
+          resolveIncomeExecutionForMonth(entry, selectedExecutionMonth.value, checkin);
         return {
           entry,
           planned,
@@ -1225,7 +1174,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           executed,
           executionOrigin,
           categorizedLedgerExecuted,
-          legacyLedgerExecuted,
           executionSource,
         };
       })
@@ -1560,13 +1508,8 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       .map((entry) => {
         const checkin = expenseCheckinsByEntryId.value[entry.id] ?? null;
         const planned = monthlyPlannedAmountForExpenseEntry(entry, month);
-        const {
-          categorizedLedgerExecuted,
-          legacyLedgerExecuted,
-          executed,
-          executionOrigin,
-          executionSource,
-        } = resolveExpenseExecutionForMonth(entry, month, checkin);
+        const { categorizedLedgerExecuted, executed, executionOrigin, executionSource } =
+          resolveExpenseExecutionForMonth(entry, month, checkin);
         return {
           entry,
           planned,
@@ -1574,7 +1517,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           executed,
           executionOrigin,
           categorizedLedgerExecuted,
-          legacyLedgerExecuted,
           executionSource,
         };
       })
@@ -2785,7 +2727,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   });
 
   function isLockedExecutionRow(row: { executionOrigin: BudgetExecutionOrigin }): boolean {
-    return row.executionOrigin === 'categorized_ledger' || row.executionOrigin === 'legacy_ledger';
+    return row.executionOrigin === 'categorized_ledger';
   }
 
   function resolveCoverageMode(summary: MonthlyCoverageSummary): string {
@@ -2816,7 +2758,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
 
   function executionSourceLabel(origin: BudgetExecutionOrigin): string {
     if (origin === 'categorized_ledger') return 'Movimientos';
-    if (origin === 'legacy_ledger' || origin === 'legacy_checkin') return 'Manual';
+    if (origin === 'legacy_checkin') return 'Manual';
     if (origin === 'user_override') return 'Ajuste manual';
     if (origin === 'ambiguous_taxonomy') return 'Pendiente clasificar';
     return '';

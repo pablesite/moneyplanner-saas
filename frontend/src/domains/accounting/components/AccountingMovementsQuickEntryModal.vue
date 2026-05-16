@@ -225,7 +225,7 @@ const quickMainAccountGroups = computed(() => {
             <option :value="null">Cuenta de inversion</option>
             <optgroup v-for="group in revaluationGroups" :key="group.key" :label="group.label">
               <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                {{ page.accountDisplayName(account) }} / {{ account.currency }}
+                {{ accountLabel(account) }} / {{ account.currency }}
               </option>
             </optgroup>
           </select>
@@ -575,47 +575,6 @@ const quickMainAccountGroups = computed(() => {
           </select>
         </label>
       </div>
-
-      <details
-        v-if="page.quickEntryNeedsClassification && page.hasCompatibleAnnualPlanOptions"
-        class="ui-accounting-annual-link"
-        :open="
-          page.quickEntryForm.annual_income_entry_id != null ||
-          page.quickEntryForm.annual_expense_entry_id != null
-        "
-      >
-        <summary>Alinear con una línea del plan (opcional)</summary>
-        <p class="ui-accounting-inline-note">
-          Usa este enlace solo si quieres relacionar el movimiento con una fila concreta del
-          presupuesto anual. La clasificación principal ya queda guardada en el libro contable.
-        </p>
-
-        <select
-          v-if="page.quickEntryForm.movement_type === 'income'"
-          v-model="page.quickEntryForm.annual_income_entry_id"
-          class="select"
-        >
-          <option :value="null">Sin vincular al plan anual</option>
-          <option
-            v-for="entry in page.annualIncomeOptionsCompatible"
-            :key="entry.id"
-            :value="entry.id"
-          >
-            {{ entry.name }}
-          </option>
-        </select>
-
-        <select v-else v-model="page.quickEntryForm.annual_expense_entry_id" class="select">
-          <option :value="null">Sin vincular al plan anual</option>
-          <option
-            v-for="entry in page.annualExpenseOptionsCompatible"
-            :key="entry.id"
-            :value="entry.id"
-          >
-            {{ entry.name }}
-          </option>
-        </select>
-      </details>
 
       <textarea
         v-model="page.quickEntryForm.notes"

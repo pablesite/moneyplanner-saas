@@ -42,8 +42,6 @@ export type LedgerEntry = {
   flow_family: '' | 'income' | 'expense';
   category_key: string;
   subcategory_key: string;
-  annual_income_entry_id: number | null;
-  annual_expense_entry_id: number | null;
   asset_id: number | null;
   liability_id: number | null;
   notes: string;
@@ -184,8 +182,6 @@ export type LedgerEntryWritePayload = {
   flow_family?: '' | 'income' | 'expense';
   category_key?: string;
   subcategory_key?: string;
-  annual_income_entry_id?: number | null;
-  annual_expense_entry_id?: number | null;
   asset_id?: number | null;
   liability_id?: number | null;
   notes?: string;
@@ -224,8 +220,6 @@ export type QuickLedgerTransactionWritePayload = {
   interest_amount?: string | null;
   realized_cost_basis?: string | null;
   realized_gain_loss?: string | null;
-  annual_income_entry_id?: number | null;
-  annual_expense_entry_id?: number | null;
   notes?: string;
   status?: LedgerTransactionStatus;
   origin?: LedgerTransactionOrigin;
