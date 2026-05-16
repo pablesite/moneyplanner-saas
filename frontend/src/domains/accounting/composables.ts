@@ -1774,10 +1774,6 @@ export function useAccountingPage() {
   let cuentasAbortController: AbortController | null = null;
   let todosSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   let cuentasSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const hasImportedTransactions = computed(() =>
-    todosTransactions.value.some((transaction) => transaction.origin === 'import'),
-  );
-
   function signedImpact(accountType: string, side: 'debit' | 'credit', amount: string): number {
     const value = toNumber(amount);
     if (value === 0) return 0;
@@ -3537,28 +3533,6 @@ export function useAccountingPage() {
     successMessage.value = 'Movimiento contable eliminado.';
   }
 
-  async function deleteImportedTransactions() {
-    if (!hasImportedTransactions.value) {
-      successMessage.value = 'No hay movimientos importados para eliminar.';
-      return;
-    }
-    successMessage.value = null;
-    if (
-      !confirm(
-        'Eliminar todos los movimientos importados?\n\n' +
-          'Solo se borraran movimientos con origen import. La accion es irreversible.',
-      )
-    ) {
-      return;
-    }
-    const result = await store.deleteImportedTransactions();
-    await reloadMovementPagesAfterMutation();
-    successMessage.value =
-      result.deleted_count > 0
-        ? `Limpieza completada: ${result.deleted_count} movimientos importados eliminados.`
-        : 'No habia movimientos importados para eliminar.';
-  }
-
   async function submitRevaluationEntry() {
     successMessage.value = null;
     const delta = revaluationDelta.value;
@@ -3804,22 +3778,6 @@ export function useAccountingPage() {
     quickEntryForm.revaluation_new_value = '';
   }
 
-  async function previewMoneyWizImport(file?: File | null): Promise<void> {
-    if (!file) {
-      store.error = 'Selecciona antes un CSV exportado desde MoneyWiz.';
-      return;
-    }
-    await store.previewMoneyWizImport(file);
-  }
-
-  async function commitMoneyWizImport(file?: File | null): Promise<void> {
-    if (!file) {
-      store.error = 'Selecciona antes un CSV exportado desde MoneyWiz.';
-      return;
-    }
-    await store.commitMoneyWizImport(file);
-  }
-
   return {
     loading,
     accountCreationLoading,
@@ -3926,7 +3884,6 @@ export function useAccountingPage() {
     setDailyTimelinePreset,
     updateDailyTimelineWindowStart,
     updateDailyTimelineWindowEnd,
-    hasImportedTransactions,
     activeTab,
     cuentasSelectedAccountId,
     cuentasSelectedAccount,
@@ -3967,9 +3924,6 @@ export function useAccountingPage() {
     submitEditedTransaction,
     resetEditTransactionForm,
     deleteTransaction,
-    deleteImportedTransactions,
-    previewMoneyWizImport,
-    commitMoneyWizImport,
     fillQuickEntryFromTransaction,
   };
 }
