@@ -2,7 +2,7 @@
 
 Estado actual de funcionalidades por área. Actualizar cuando cambie el estado de una funcionalidad.
 
-**Última revisión:** 2026-05-14 | **Versión SaaS:** 0.20.41 | **Versión Core:** 0.23.2
+**Última revisión:** 2026-05-17 | **Versión SaaS:** 0.20.41 | **Versión Core:** 0.23.2
 
 ---
 
@@ -21,7 +21,7 @@ Ver `core/docs/project-status.md` para el estado y las próximas tareas de los m
 | Sistema de usuarios trial | Alta | ⚪ | Crear usuario root, flujo de acceso controlado para early adopters. |
 | Admin UI | Media | ⚪ | Las ops de admin son solo backend por ahora; pendiente de crear interfaz. |
 | Capabilities dinámicas (desde backend) | Media | ⚪ | Actualmente hardcoded en frontend; conectar con backend. |
-| Limpieza legacy residual Core/SaaS | Media | 🔄 | Core mantiene inventario vivo en `core/docs/roadmap/product-roadmap.md`. Primer avance espejado: `portable-data` extraído de `data-input`; quedan annual entries/taxonomías, fallback Budget/check-ins, `investment_purchase`, facade `net_worth.services`, portable compatibility y `compat.*`. |
+| Limpieza legacy residual Core/SaaS | Media | 🔄 | Core mantiene inventario vivo en `core/docs/roadmap/product-roadmap.md`. Avance espejado: `portable-data` y `budget/annual-entries` extraídos de `data-input`; quedan taxonomías/filtros legacy, fallback Budget/check-ins, `investment_purchase`, facade `net_worth.services`, portable compatibility y `compat.*`. |
 | Consolidación funcional v1 (módulos espejo Core) | Alta | ✅ | Vista de movimientos cerrada v1. Importador MoneyWiz ad-hoc retirado; trazabilidad de importados conservada en contabilidad. Presupuesto v1 y Cierre mensual espejados y validados manualmente. |
 | Refactor backend SaaS — Phase 1 | Alta | ✅ | Test coverage baseline completado: suite reorganizada por dominio, rollback real en registro si falla bootstrap Core, 138 tests y 96% de coverage sobre `saas` + `saas_access`. Spec: `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` |
 | Refactor backend SaaS — Phase 2 | Media | ✅ | Thin views completado: `auth_views.py` en 122 líneas, `admin_views.py` en 96, lógica extraída a `saas/auth_services.py`, `saas/auth_link_views.py` y `saas_access/rbac_services.py`. Spec: `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` |

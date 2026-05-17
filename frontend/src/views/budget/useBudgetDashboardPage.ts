@@ -23,12 +23,14 @@ import {
   expenseCategories,
   normalizeExpenseTaxonomy,
   expenseSubcategories,
-  effectiveAnnualAmountForEntry,
   incomeCategories,
   incomeSubcategories,
+} from '@/domains/data-input';
+import {
+  effectiveAnnualAmountForEntry,
   useAnnualExpenseStore,
   useAnnualIncomeStore,
-} from '@/domains/data-input';
+} from '@/domains/budget/annual-entries';
 
 export type BudgetDashboardMode = 'budget' | 'monthly-close';
 const EXECUTION_TONE_MONEY_TOLERANCE = 0.5;

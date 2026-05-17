@@ -84,21 +84,38 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 ---
 
-### `data-input` — Dominio compartido de entradas anuales (sin ruta propia)
+### `budget` — Presupuesto
+**Origen:** Core (mirror)
+**Cliente:** `coreApi`
+**Ruta:** `/presupuesto` y `/cierre-mensual`
+
+Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual y las líneas anuales de ingresos/gastos. Las entradas anuales viven en `budget/annual-entries` porque ya se editan desde Presupuesto y Patrimonio, no desde la antigua ruta de Introducción de Datos.
+
+| Archivo | Contenido |
+|---------|-----------|
+| `api.ts` | Llamadas a Core para presupuesto, summaries mensuales y cierre. |
+| `annual-entries/annualIncomeStore.ts` | Pinia store: entradas de ingresos anuales. |
+| `annual-entries/annualExpenseStore.ts` | Pinia store: entradas de gastos anuales. |
+| `annual-entries/annualEntryUtils.ts` | Utilidades para validación y cálculo de entradas anuales. |
+| `annual-entries/components/AnnualEntryModalForm.vue` | Formulario/modal reutilizable para crear y editar líneas anuales. |
+| `components/` | Componentes de dashboard, secciones anuales, cierre mensual y modales de líneas. |
+
+---
+
+### `data-input` — Taxonomías y filtros legacy compartidos
 **Origen:** Core (mirror)
 **Cliente:** `coreApi`
 **Ruta:** _sin ruta de página_
 
-Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. La gestión anual de ingresos y gastos se ejecuta desde `Presupuesto` en flujo contextual por categoría/subcategoría; y la revisión de gasto generado por pasivo está integrada en `Patrimonio`.
+Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. El dominio conserva solo taxonomías y helpers compartidos que aún consumen Presupuesto, Guía y Contabilidad.
 
 | Archivo | Contenido |
 |---------|-----------|
-| `index.ts` | Re-exportaciones del dominio. |
-| `annualIncomeStore.ts` | Pinia store: entradas de ingresos anuales. |
-| `annualExpenseStore.ts` | Pinia store: entradas de gastos anuales. |
-| `annualEntryUtils.ts` | Utilidades para validación y cálculo de entradas. |
+| `index.ts` | Re-exportaciones de taxonomías y filtros vigentes. |
 | `incomeTaxonomy.ts` | Taxonomía de categorías de ingresos (ver `docs/architecture/annual-income-taxonomy.md`). |
 | `expenseTaxonomy.ts` | Taxonomía de categorías de gastos (ver `docs/architecture/annual-expense-taxonomy.md`). |
+| `useDataInputFilters.ts` | Filtros reutilizados por la vista legacy interna de datos anuales. |
+| `pageApi.ts` | Cliente residual de la vista legacy interna `views/data-input/*`; pendiente de sustituir cuando Presupuesto tenga composables propios. |
 
 ---
 

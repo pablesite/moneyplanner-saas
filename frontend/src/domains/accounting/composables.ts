@@ -4,14 +4,16 @@ import { useAccountingStore } from '@/domains/accounting/store';
 import { coreAccountingApi } from '@/domains/accounting/api';
 import { coreNetWorthApi } from '@/domains/net-worth/api';
 import {
-  expenseCategories,
-  expenseSubcategories,
-  incomeCategories,
-  incomeSubcategories,
   useAnnualExpenseStore,
   useAnnualIncomeStore,
   type AnnualExpenseEntry,
   type AnnualIncomeEntry,
+} from '@/domains/budget/annual-entries';
+import {
+  expenseCategories,
+  expenseSubcategories,
+  incomeCategories,
+  incomeSubcategories,
   type ExpenseCategoryKey,
   type IncomeCategoryKey,
 } from '@/domains/data-input';
