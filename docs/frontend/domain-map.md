@@ -100,22 +100,10 @@ Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, l
 | `annual-entries/components/AnnualEntryModalForm.vue` | Formulario/modal reutilizable para crear y editar líneas anuales. |
 | `taxonomy/incomeTaxonomy.ts` | Taxonomía de categorías de ingresos (ver `docs/architecture/annual-income-taxonomy.md`). |
 | `taxonomy/expenseTaxonomy.ts` | Taxonomía de categorías de gastos (ver `docs/architecture/annual-expense-taxonomy.md`). |
+| `BudgetAnnualEntriesContent.vue` | Adaptador visual para renderizar secciones anuales en Presupuesto. |
+| `useBudgetAnnualEntriesPage.ts` | Composable de la gestión anual contextual usada por Presupuesto. |
+| `useBudgetAnnualEntriesFilters.ts` | Filtros de titularidad/visibilidad para entradas anuales. |
 | `components/` | Componentes de dashboard, secciones anuales, cierre mensual y modales de líneas. |
-
----
-
-### `views/data-input` — Vista interna legacy
-**Origen:** Core (mirror)
-**Cliente:** `coreApi`
-**Ruta:** _sin ruta de página_
-
-Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada y ya no existe dominio `domains/data-input`. Esta carpeta conserva componentes/composables internos reutilizados por Presupuesto mientras se termina de absorber el flujo en composables propios de `views/budget`.
-
-| Archivo | Contenido |
-|---------|-----------|
-| `useDataInputFilters.ts` | Filtros reutilizados por la vista legacy interna de datos anuales. |
-| `pageApi.ts` | Cliente residual de la vista interna; pendiente de sustituir cuando Presupuesto tenga composables propios. |
-| `DataInputAnnualSections.vue` | Adaptador visual que Presupuesto usa para renderizar secciones anuales. |
 
 ---
 
