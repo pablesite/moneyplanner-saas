@@ -2216,7 +2216,7 @@ export function useAccountingPage() {
     ) {
       return transaction.investment_direction;
     }
-    const investmentEntry = transaction.entries.find((entry) => entry.asset_id != null);
+    const investmentEntry = (transaction.entries ?? []).find((entry) => entry.asset_id != null);
     if (!investmentEntry) return 'inflow';
     return investmentEntry.side === 'credit' ? 'outflow' : 'inflow';
   }
@@ -3026,7 +3026,7 @@ export function useAccountingPage() {
   }
   function transactionClassificationLabel(transaction: LedgerTransaction): string | null {
     const classifiedEntry =
-      transaction.entries.find(
+      (transaction.entries ?? []).find(
         (entry) =>
           Boolean(entry.flow_family) &&
           Boolean(entry.category_key) &&
@@ -3053,7 +3053,7 @@ export function useAccountingPage() {
     return `${categoryLabel} -> ${subcategoryLabel}`;
   }
   function transactionAccountTrailLabel(transaction: LedgerTransaction): string {
-    const operationalEntries = transaction.entries.filter((entry) => {
+    const operationalEntries = (transaction.entries ?? []).filter((entry) => {
       const account = accountMap.value.get(entry.account_id);
       return account?.account_type === 'asset' || account?.account_type === 'liability';
     });
@@ -3285,8 +3285,8 @@ export function useAccountingPage() {
 
   function findLoadedTransactionById(transactionId: number): LedgerTransaction | undefined {
     return (
-      todosTransactions.value.find((row) => row.id === transactionId) ??
-      cuentasTransactions.value.find((row) => row.id === transactionId)
+      cuentasTransactions.value.find((row) => row.id === transactionId) ??
+      todosTransactions.value.find((row) => row.id === transactionId)
     );
   }
 
