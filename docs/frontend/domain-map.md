@@ -89,7 +89,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 **Cliente:** `coreApi`
 **Ruta:** `/presupuesto` y `/cierre-mensual`
 
-Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual y las líneas anuales de ingresos/gastos. Las entradas anuales viven en `budget/annual-entries` porque ya se editan desde Presupuesto y Patrimonio, no desde la antigua ruta de Introducción de Datos.
+Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, las líneas anuales de ingresos/gastos y sus taxonomías. Las entradas anuales viven en `budget/annual-entries` porque ya se editan desde Presupuesto y Patrimonio, no desde la antigua ruta de Introducción de Datos.
 
 | Archivo | Contenido |
 |---------|-----------|
@@ -98,24 +98,24 @@ Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual y 
 | `annual-entries/annualExpenseStore.ts` | Pinia store: entradas de gastos anuales. |
 | `annual-entries/annualEntryUtils.ts` | Utilidades para validación y cálculo de entradas anuales. |
 | `annual-entries/components/AnnualEntryModalForm.vue` | Formulario/modal reutilizable para crear y editar líneas anuales. |
+| `taxonomy/incomeTaxonomy.ts` | Taxonomía de categorías de ingresos (ver `docs/architecture/annual-income-taxonomy.md`). |
+| `taxonomy/expenseTaxonomy.ts` | Taxonomía de categorías de gastos (ver `docs/architecture/annual-expense-taxonomy.md`). |
 | `components/` | Componentes de dashboard, secciones anuales, cierre mensual y modales de líneas. |
 
 ---
 
-### `data-input` — Taxonomías y filtros legacy compartidos
+### `views/data-input` — Vista interna legacy
 **Origen:** Core (mirror)
 **Cliente:** `coreApi`
 **Ruta:** _sin ruta de página_
 
-Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. El dominio conserva solo taxonomías y helpers compartidos que aún consumen Presupuesto, Guía y Contabilidad.
+Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada y ya no existe dominio `domains/data-input`. Esta carpeta conserva componentes/composables internos reutilizados por Presupuesto mientras se termina de absorber el flujo en composables propios de `views/budget`.
 
 | Archivo | Contenido |
 |---------|-----------|
-| `index.ts` | Re-exportaciones de taxonomías y filtros vigentes. |
-| `incomeTaxonomy.ts` | Taxonomía de categorías de ingresos (ver `docs/architecture/annual-income-taxonomy.md`). |
-| `expenseTaxonomy.ts` | Taxonomía de categorías de gastos (ver `docs/architecture/annual-expense-taxonomy.md`). |
 | `useDataInputFilters.ts` | Filtros reutilizados por la vista legacy interna de datos anuales. |
-| `pageApi.ts` | Cliente residual de la vista legacy interna `views/data-input/*`; pendiente de sustituir cuando Presupuesto tenga composables propios. |
+| `pageApi.ts` | Cliente residual de la vista interna; pendiente de sustituir cuando Presupuesto tenga composables propios. |
+| `DataInputAnnualSections.vue` | Adaptador visual que Presupuesto usa para renderizar secciones anuales. |
 
 ---
 

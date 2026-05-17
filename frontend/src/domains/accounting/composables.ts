@@ -16,7 +16,7 @@ import {
   incomeSubcategories,
   type ExpenseCategoryKey,
   type IncomeCategoryKey,
-} from '@/domains/data-input';
+} from '@/domains/budget/taxonomy';
 import { usePeopleStore, type OwnershipRead } from '@/domains/people/store';
 import type {
   LedgerAccount,

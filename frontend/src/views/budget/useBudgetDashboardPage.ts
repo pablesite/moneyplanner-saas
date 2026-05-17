@@ -25,7 +25,7 @@ import {
   expenseSubcategories,
   incomeCategories,
   incomeSubcategories,
-} from '@/domains/data-input';
+} from '@/domains/budget/taxonomy';
 import {
   effectiveAnnualAmountForEntry,
   useAnnualExpenseStore,
