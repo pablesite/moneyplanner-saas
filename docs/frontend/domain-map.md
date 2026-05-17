@@ -89,7 +89,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 **Cliente:** `coreApi`
 **Ruta:** _sin ruta de página_
 
-Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. La gestión anual de ingresos y gastos se ejecuta desde `Presupuesto` en flujo contextual por categoría/subcategoría; portable data vive en `Account`; y la revisión de gasto generado por pasivo está integrada en `Patrimonio`.
+Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. La gestión anual de ingresos y gastos se ejecuta desde `Presupuesto` en flujo contextual por categoría/subcategoría; y la revisión de gasto generado por pasivo está integrada en `Patrimonio`.
 
 | Archivo | Contenido |
 |---------|-----------|
@@ -99,7 +99,21 @@ Estado actual del flujo: la ruta legacy de Introducción de Datos fue retirada. 
 | `annualEntryUtils.ts` | Utilidades para validación y cálculo de entradas. |
 | `incomeTaxonomy.ts` | Taxonomía de categorías de ingresos (ver `docs/architecture/annual-income-taxonomy.md`). |
 | `expenseTaxonomy.ts` | Taxonomía de categorías de gastos (ver `docs/architecture/annual-expense-taxonomy.md`). |
-| `portableBundle.ts` | Lógica de exportación/importación portable de datos. |
+
+---
+
+### `portable-data` — Exportación/importación portable
+**Origen:** Core (mirror)
+**Cliente:** `coreApi`
+**Ruta:** `/account`
+
+Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo de `data-input` para que la portabilidad deje de depender del nombre legacy de Introducción de Datos.
+
+| Archivo | Contenido |
+|---------|-----------|
+| `api.ts` | Cliente Core y mapeo de errores para endpoints portable data. |
+| `portableBundle.ts` | Tipos, normalización, validación y parsing del bundle portable. |
+| `usePortableDataTransfer.ts` | Composable de export/import/replace usado por `AccountView`. |
 
 ---
 
