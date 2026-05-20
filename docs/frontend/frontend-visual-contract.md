@@ -38,6 +38,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
    - `ui-page-actions`
 2. Section shell:
    - `ui-section-card`
+   - `ui-section-card-padded`
    - `ui-section-head`
    - `ui-section-copy`
    - `ui-section-title`
@@ -62,14 +63,22 @@ Turn the visual guide into a small operational contract for reusable frontend wo
    - `icon-btn`
    - `input`
    - `textarea`
+7. Modal shell:
+   - `ui-modal-backdrop`
+   - `ui-modal-panel`
+   - `ui-modal-head`
+   - `ui-modal-title`
+   - `ui-modal-close`
+   - `ui-modal-body`
 
 ## Usage Guidance
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.
-2. Use `ui-section-card` for grouped content that should read like the same product family.
+2. Use `ui-section-card` for grouped content that should read like the same product family; add `ui-section-card-padded` when the section does not provide its own internal spacing.
 3. Use `ui-action-bar` for filter rows, secondary actions, and header controls.
 4. Use `ui-state-block` variants for non-happy-path states instead of one-off alert cards.
 5. If a view needs a special visual treatment, layer it on top of the contract rather than replacing the base shell.
 6. Treat `card` and `ui-pro-*` as compatibility classes while views migrate to `ui-page-*`, `ui-section-*`, and token-driven controls.
+7. Use the `ui-modal-*` shell for shared modal chrome; domain-specific modal classes should only style the modal content or adjust panel width.
 
 ## Change Policy
 1. Add a new shared pattern only if at least two screens would benefit from it.
