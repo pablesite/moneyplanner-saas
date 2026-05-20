@@ -1,5 +1,5 @@
 import { coreApi } from '@/lib/api';
-import { capabilities } from '@/domains/capabilities';
+import { canUsePeople } from '@/domains/capabilities';
 import type { FamilyMember, OwnershipRead } from '@/domains/people/types';
 
 type MemberCreatePayload = { name: string; role: 'adult' | 'child'; is_active: boolean };
@@ -15,11 +15,13 @@ export type PeopleApiAdapter = {
   ): ReturnType<typeof coreApi.patch<FamilyMember>>;
   deleteMember(id: number): ReturnType<typeof coreApi.delete>;
   getOwnerships(): ReturnType<typeof coreApi.get<OwnershipRead[]>>;
-  createSharedOwnership(payload: OwnershipSplitsPayload): ReturnType<typeof coreApi.post>;
+  createSharedOwnership(
+    payload: OwnershipSplitsPayload,
+  ): ReturnType<typeof coreApi.post<OwnershipRead>>;
   updateSharedOwnership(
     id: number,
     payload: OwnershipSplitsPayload,
-  ): ReturnType<typeof coreApi.patch>;
+  ): ReturnType<typeof coreApi.patch<OwnershipRead>>;
   deleteOwnership(id: number): ReturnType<typeof coreApi.delete>;
 };
 
@@ -62,4 +64,4 @@ export const premiumPeopleApi: PeopleApiAdapter = {
 // use the same endpoint contract as SaaS while the backend domain is ported into Core.
 export const corePeopleApi: PeopleApiAdapter = premiumPeopleApi;
 
-export const peopleApi: PeopleApiAdapter = capabilities.people ? premiumPeopleApi : corePeopleApi;
+export const peopleApi: PeopleApiAdapter = canUsePeople() ? premiumPeopleApi : corePeopleApi;
