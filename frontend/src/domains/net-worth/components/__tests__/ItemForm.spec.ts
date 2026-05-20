@@ -132,7 +132,7 @@ describe('ItemForm (saas)', () => {
 
     const amortizationMethodSelect = wrapper
       .findAll('select')
-      .find((s) => s.text().includes('Sin amortizacion') && s.text().includes('Lineal'))!;
+      .find((s) => s.text().includes('Sin amortización') && s.text().includes('Lineal'))!;
     await amortizationMethodSelect.setValue('straight_line');
     await wrapper.find('input[placeholder="Ej: 10"]').setValue('4');
 
@@ -203,10 +203,10 @@ describe('ItemForm (saas)', () => {
 
     const amortizationMethodSelect = wrapper
       .findAll('select')
-      .find((s) => s.text().includes('Sin amortizacion (joyeria)'))!;
+      .find((s) => s.text().includes('Sin amortización (joyeria)'))!;
     expect(amortizationMethodSelect.text()).not.toContain('Lineal');
     expect(amortizationMethodSelect.text()).not.toContain('Manual');
-    expect(wrapper.text()).toContain("En 'Joyeria' no se aplica amortizacion automatica.");
+    expect(wrapper.text()).toContain("En 'Joyeria' no se aplica amortización automatica.");
   });
 
   it('submits sports equipment without manual term years', async () => {
@@ -235,7 +235,7 @@ describe('ItemForm (saas)', () => {
       .find((s) => s.text().includes('decreciente + residual por subcategoria'))!;
     await amortizationMethodSelect.setValue('straight_line');
 
-    expect(wrapper.text()).not.toContain('Plazo de amortizacion (anos) obligatorio');
+    expect(wrapper.text()).not.toContain('Plazo de amortización (anos) obligatorio');
     await wrapper.find('button.btn-primary').trigger('click');
     await flushPromises();
 
@@ -432,7 +432,7 @@ describe('ItemForm (saas)', () => {
 
     const reformAmortizationSelect = wrapper
       .findAll('select')
-      .find((s) => s.text().includes('Sin amortizacion') && s.text().includes('Lineal'))!;
+      .find((s) => s.text().includes('Sin amortización') && s.text().includes('Lineal'))!;
     await reformAmortizationSelect.setValue('straight_line');
 
     const termInput = wrapper.find('input[placeholder="Ej: 10"]');

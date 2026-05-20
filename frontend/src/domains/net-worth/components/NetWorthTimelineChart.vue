@@ -35,7 +35,7 @@ type Props = {
 };
 
 const props = withDefaults(defineProps<Props>(), {
-  ariaLabel: 'Grafico de evolucion patrimonial',
+  ariaLabel: 'Gráfico de evolución patrimonial',
   seriesColor: '#4cc3ff',
   expanded: false,
   yAxisMinZero: false,
