@@ -28,7 +28,10 @@ export const coreAuxDataApi: AuxDataApiAdapter = {
     return api.get<MarketDataStatus>('/api/core/market-data/status/');
   },
   syncMarketData(payload) {
-    return api.post<{ summary: Record<string, number> }>('/api/core/market-data/sync/', payload ?? {});
+    return api.post<{ summary: Record<string, number> }>(
+      '/api/core/market-data/sync/',
+      payload ?? {},
+    );
   },
 };
 
