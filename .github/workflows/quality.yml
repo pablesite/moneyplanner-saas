@@ -1,49 +1,16 @@
-name: Quality SaaS
+name: Quality
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
+    branches: [main, develop]
 
 jobs:
   backend:
+    name: Backend — lint, types, tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: backend/requirements.txt
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Ruff lint
-        run: ruff check .
-
-      - name: Ruff format check
-        run: ruff format --check .
-
-      - name: Mypy
-        run: mypy .
-
-      - name: Django coverage (memberships)
-        run: |
-          coverage run --rcfile=.coveragerc manage.py test memberships
-          coverage report --fail-under=80
-        env:
-          DB_HOST: localhost
-          DB_PORT: "5432"
-          DB_NAME: saas
-          DB_USER: saas
-          DB_PASSWORD: saas
     services:
       db:
         image: postgres:15
@@ -58,21 +25,51 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format
+        run: ruff format --check .
+
+      - name: Mypy
+        run: mypy .
+
+      - name: Tests
+        run: |
+          coverage run --rcfile=.coveragerc manage.py test saas_access memberships
+          coverage report --fail-under=80
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: saas
+          DB_USER: saas
+          DB_PASSWORD: saas
 
   frontend:
+    name: Frontend — lint, types, tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -81,11 +78,11 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-      - name: Prettier check
+      - name: Prettier
         run: npm run format:check
 
       - name: Type check
         run: npm run typecheck
 
-      - name: Unit tests coverage
+      - name: Unit tests
         run: npm run test:coverage
