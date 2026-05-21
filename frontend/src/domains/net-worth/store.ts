@@ -367,6 +367,12 @@ export const useNetWorthStore = defineStore('netWorth', {
         });
         // refreshAll re-fetches settings, summary, assets, liabilities from the server
         await this.refreshAll();
+        if (this.positionTimeline?.position_id && this.positionTimeline?.position_type) {
+          void this.fetchPositionTimeline(
+            this.positionTimeline.position_type,
+            this.positionTimeline.position_id,
+          );
+        }
       } catch (e: unknown) {
         this.error = toApiErrorMessage(e);
       } finally {

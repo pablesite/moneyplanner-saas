@@ -6,6 +6,10 @@ import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
 const {
   loading,
   error,
+  syncError,
+  syncSuccess,
+  syncingInflation,
+  syncingFx,
   fxRates,
   inflation,
   fxStates,
@@ -13,6 +17,8 @@ const {
   supportedInflationRegions,
   formatInflationIndex,
   formatFxRate,
+  syncInflationNow,
+  syncFxHistoryNow,
 } = useAuxDataPage();
 
 const regionLabelMap = computed(
@@ -94,6 +100,14 @@ function formatTimestamp(value: string | null): string {
         </span>
       </button>
       <div v-if="sections.ipc" class="ui-settings-content">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <button class="btn" type="button" :disabled="syncingInflation" @click="syncInflationNow">
+            {{ syncingInflation ? 'Sincronizando IPC...' : 'Actualizar IPC ahora' }}
+          </button>
+          <span v-if="syncSuccess" class="ui-form-help ui-form-help-success">{{ syncSuccess }}</span>
+          <span v-if="syncError" class="ui-form-help ui-form-help-error">{{ syncError }}</span>
+        </div>
+
         <div class="ui-data-status-grid">
           <article v-for="state in inflationStates" :key="state.scope" class="ui-data-status-card">
             <div class="ui-data-status-card-head">
@@ -146,6 +160,12 @@ function formatTimestamp(value: string | null): string {
         </span>
       </button>
       <div v-if="sections.fx" class="ui-settings-content">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <button class="btn" type="button" :disabled="syncingFx" @click="syncFxHistoryNow">
+            {{ syncingFx ? 'Sincronizando FX...' : 'Actualizar FX histórico' }}
+          </button>
+        </div>
+
         <div class="ui-data-status-grid">
           <article v-for="state in fxStates" :key="state.scope" class="ui-data-status-card">
             <div class="ui-data-status-card-head">

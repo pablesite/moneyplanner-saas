@@ -11,6 +11,10 @@ import type {
 export function useAuxData() {
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const syncError = ref<string | null>(null);
+  const syncSuccess = ref<string | null>(null);
+  const syncingInflation = ref(false);
+  const syncingFx = ref(false);
   const status = ref<MarketDataStatus | null>(null);
 
   const fxRates = computed<FxRate[]>(() => status.value?.datasets.fx.latest_rows ?? []);
@@ -36,6 +40,42 @@ export function useAuxData() {
     }
   }
 
+  async function syncInflationNow() {
+    syncingInflation.value = true;
+    syncError.value = null;
+    syncSuccess.value = null;
+    try {
+      const response = await auxDataApi.syncMarketData({ datasets: ['inflation'], mode: 'reconcile' });
+      const rows = response.data?.summary?.inflation ?? 0;
+      syncSuccess.value = `Sincronizacion IPC completada (${rows} filas actualizadas).`;
+      await loadAll();
+    } catch (e: unknown) {
+      syncError.value = toApiErrorMessage(e);
+    } finally {
+      syncingInflation.value = false;
+    }
+  }
+
+  async function syncFxHistoryNow() {
+    syncingFx.value = true;
+    syncError.value = null;
+    syncSuccess.value = null;
+    try {
+      const response = await auxDataApi.syncMarketData({
+        datasets: ['fx'],
+        mode: 'reconcile',
+        fx_full_history: true,
+      });
+      const rows = response.data?.summary?.fx ?? 0;
+      syncSuccess.value = `Sincronizacion FX completada (${rows} filas actualizadas).`;
+      await loadAll();
+    } catch (e: unknown) {
+      syncError.value = toApiErrorMessage(e);
+    } finally {
+      syncingFx.value = false;
+    }
+  }
+
   function formatFxRate(rate: string, from: string, to: string) {
     const n = Number(String(rate ?? '').replace(',', '.'));
     if (!Number.isFinite(n)) return rate;
@@ -54,6 +94,10 @@ export function useAuxData() {
   return {
     loading,
     error,
+    syncError,
+    syncSuccess,
+    syncingInflation,
+    syncingFx,
     status,
     fxRates,
     inflation,
@@ -61,6 +105,8 @@ export function useAuxData() {
     inflationStates,
     supportedInflationRegions,
     loadAll,
+    syncInflationNow,
+    syncFxHistoryNow,
     formatFxRate,
     formatInflationIndex,
   };
