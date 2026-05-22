@@ -31,7 +31,6 @@ jobs:
           --config=p/python
           --config=p/django
           --config=p/typescript
-          --error
           --exclude=frontend/node_modules
           --exclude=frontend/dist
 

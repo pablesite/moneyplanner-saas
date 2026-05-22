@@ -62,6 +62,19 @@ No compartibles: `auth`, `capabilities`, `lib/api.ts`
 La Fase 5 de Core preparo los dominios; la Fase 6 documento la extracción en
 `core/docs/architecture/shared-package-candidates.md`.
 
+### Línea de trabajo estratégica: Opción C — core como librería Vue
+
+**Decisión vigente (2026-05-22):** se mantienen dos frontends espejo (Opción A) para
+salir a producción en el corto plazo. Es una decisión temporal y consciente.
+
+**Arquitectura objetivo:** Core exporta sus dominios como `@moneyplanner/core-ui`.
+SaaS importa ese paquete y solo mantiene sus capas específicas (auth, billing, capabilities).
+Esto elimina la replicación manual y espeja el modelo ya vigente en el backend
+(SaaS usa Core como submódulo Python).
+
+Ver especificación completa, condiciones de extracción y hoja de ruta en:
+`core/docs/architecture/shared-package-candidates.md` — sección "Arquitectura objetivo".
+
 ## Fases SaaS (espejo de Core)
 
 Cada fase se ejecuta después de que la fase equivalente de Core haya cerrado con éxito.
