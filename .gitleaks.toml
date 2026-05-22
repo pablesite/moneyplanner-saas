@@ -1,0 +1,19 @@
+title = "MoneyPlanner gitleaks config"
+
+[extend]
+# Keep all default detection rules; only add suppressions below.
+useDefault = true
+
+[allowlist]
+description = "Global false-positive suppressions"
+paths = [
+  # Backup JSON exports: 'crowdlending_p2p' subcategory key triggers the
+  # generic-api-key heuristic. These are budget taxonomy strings, not credentials.
+  '''backups/''',
+
+  # Gitleaks report output files (contain echoed secrets from the scan itself).
+  '''gitleaks-report.*\.json''',
+
+  # Test fixtures: hardcoded dummy keys used only in Django unit tests.
+  '''accounts/tests\.py''',
+]

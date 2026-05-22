@@ -73,7 +73,7 @@ void [
     />
 
     <section v-if="!phase" class="card ui-pro-panel">
-      <p class="subtle">La fase seleccionada no existe en la guia actual.</p>
+      <p class="subtle">La fase seleccionada no existe en la guía actual.</p>
     </section>
 
     <section v-else-if="!hasDiagnosticPhase" class="card ui-pro-panel">

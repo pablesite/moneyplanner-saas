@@ -2115,7 +2115,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
                   />
                 </label>
                 <label class="ui-item-form-field">
-                  <span class="ui-item-form-label">TAE financiacion (%)</span>
+                  <span class="ui-item-form-label">TAE financiación (%)</span>
                   <input
                     v-model="improvement.annual_interest_tae"
                     inputmode="decimal"
@@ -2133,7 +2133,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
                 <span>Capitalizar TAE en valor de reforma</span>
               </label>
               <div v-if="!canCapitalizeImprovementInterest(improvement)" class="ui-form-help">
-                Disponible solo cuando la TAE de financiacion es mayor que 0.
+                Disponible solo cuando la TAE de financiación es mayor que 0.
               </div>
               <label class="ui-item-form-field mt-1">
                 <span class="ui-item-form-label">Notas</span>
@@ -2386,7 +2386,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           {{ assetAmortizationModelHint }}
         </div>
         <div v-if="defaultDegressiveTermYearsForFurnishings != null" class="ui-form-help">
-          Plazo configurado automaticamente para esta subcategoria:
+          Plazo configurado automáticamente para esta subcategoría:
           {{ defaultDegressiveTermYearsForFurnishings }} años.
         </div>
       </div>
