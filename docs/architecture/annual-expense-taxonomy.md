@@ -20,7 +20,7 @@ This document describes the `category` and `subcategory` layer of the contract. 
 2. `financial_investments`: Inversion financiera
 3. `real_estate_assets`: Activos inmobiliarios
 4. `tangible_assets`: Activos mobiliarios
-5. `consumption_expenses`: Gastos de consumo
+5. `consumption_expenses`: Consumer spending
 
 ## Subcategories
 ### `savings_allocation`

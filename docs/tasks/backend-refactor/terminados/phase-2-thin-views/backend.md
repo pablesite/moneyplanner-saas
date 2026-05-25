@@ -1,13 +1,13 @@
 # SaaS backend — Phase 2: Thin views
 
 ## Title
-SaaS backend — extracción de lógica de negocio a services (thin views)
+SaaS backend — extraction of business logic to services (thin views)
 
 ## Context
-`saas/auth_views.py` tiene 319 líneas y mezcla lógica de HTTP (validación de input,
-dispatch, respuesta) con lógica de negocio (orquestación del flujo de registro, linking
-de cuenta Core, construcción del payload de `/me`). Esta mezcla hace que los services sean
-difíciles de probar de forma aislada y que los views sean difíciles de leer. El objetivo
+`saas/auth_views.py` has 319 lines and mixes HTTP logic (input validation,
+dispatch, response) with business logic (registration flow orchestration, linking
+Core account, construction of the `/me` payload). This mix makes the services
+difficult to test in isolation and the views are difficult to read. The goal
 es que cada view sea un adaptador de HTTP puro: valida la request, delega al service, y
 retorna la respuesta serializada.
 
@@ -22,31 +22,31 @@ retorna la respuesta serializada.
 ## Scope
 
 ### En scope
-1. Extraer lógica de negocio de `auth_views.py` a `auth_services.py`.
-2. Extraer lógica de negocio de `admin_views.py` a `rbac_services.py` donde corresponda.
-3. `auth_views.py` ≤ 150 líneas al finalizar.
-4. `admin_views.py` ≤ 100 líneas al finalizar.
-5. Añadir unit tests para las funciones extraídas a services.
+1. Extract business logic from `auth_views.py` to `auth_services.py`.
+2. Extract business logic from `admin_views.py` to `rbac_services.py` where appropriate.
+3. `auth_views.py` ≤ 150 lines upon completion.
+4. `admin_views.py` ≤ 100 lines upon completion.
+5. Add unit tests for functions extracted to services.
 6. Verificar que todos los tests de API siguen pasando sin cambios.
 
 ### Fuera de scope
-1. Cambios de contrato API (endpoints, shapes de respuesta, códigos de error).
+1. API contract changes (endpoints, response shapes, error codes).
 2. Cambios en models, serializers o URLs.
-3. Lógica de Phase 3 (exception handler).
+3. Phase 3 logic (exception handler).
 
 ## Plan
 
-### 1. Diagnóstico: mapear lógica a extraer de `auth_views.py`
+### 1. Diagnosis: map logic to extract from `auth_views.py`
 
-Revisar cada clase/función en `auth_views.py` e identificar qué lógica no es HTTP:
+Review each class/function in `auth_views.py` and identify which logic is not HTTP:
 
-| View / método | Lógica a extraer | Destino |
+| View / method | Logic to extract | Destination |
 |---------------|-----------------|---------|
-| `SaasRegisterAPIView.post` | Creación de usuario + bootstrap + creación de suscripción + creación de perfil RBAC | `auth_services.register_saas_user()` |
+| `SaasRegisterAPIView.post` | User creation + bootstrap + subscription creation + RBAC profile creation | `auth_services.register_saas_user()` |
 | `SaasMeAPIView.get` | Construcción del payload (user + role + subscription + link status) | `auth_services.build_me_payload()` |
-| `SaasCoreAccountLinkAPIView.post` | Validación + linking + manejo de replay | `auth_services.link_core_account()` (ya existe `SaasCoreAccountLink`; ampliar) |
+| `SaasCoreAccountLinkAPIView.post` | Validation + linking + replay management | `auth_services.link_core_account()` (`SaasCoreAccountLink` already exists; expand) |
 | `SaasCoreAccountUnlinkAPIView.post` | Unlink + audit | `auth_services.unlink_core_account()` |
-| `SaasCoreLinkByTokenAPIView.post` | Verificación de token + linking | `auth_services.link_core_account_by_token()` |
+| `SaasCoreLinkByTokenAPIView.post` | Token verification + linking | `auth_services.link_core_account_by_token()` |
 
 ### 2. Extraer a `auth_services.py`
 
@@ -91,14 +91,14 @@ class SaasRegisterAPIView(APIView):
 
 ### 4. Revisar `admin_views.py`
 
-`admin_views.py` (164 líneas) ya delega bastante a `rbac_services.py`. Verificar que:
+`admin_views.py` (164 lines) already delegates enough to `rbac_services.py`. Verify that:
 - No hay queries directas al ORM en las views
-- Toda validación de negocio (last-admin check) está en `rbac_services.py`
-- Si hay lógica de negocio residual, moverla a `rbac_services.py`
+- All business validation (last-admin check) is in `rbac_services.py`
+- If there is residual business logic, move it to `rbac_services.py`
 
-Target: `admin_views.py` ≤ 100 líneas.
+Target: `admin_views.py` ≤ 100 lines.
 
-### 5. Añadir unit tests para services extraídos
+### 5. Add unit tests for extracted services
 
 En `saas_access/tests/test_auth.py` o nuevo `saas_access/tests/test_auth_services.py`:
 
@@ -140,25 +140,25 @@ docker compose exec saas_backend mypy .
 Resultados esperados:
 - Todos los tests pasan sin cambios en comportamiento externo
 - `ruff` y `mypy` en verde
-- `auth_views.py` ≤ 150 líneas
-- `admin_views.py` ≤ 100 líneas
+- `auth_views.py` ≤ 150 lines
+- `admin_views.py` ≤ 100 lines
 
 ## Required Documentation Updates
 
 - [x] `docs/roadmap/saas-backend-refactor-roadmap.md` — marcar Phase 2 completada
-- [x] `docs/project-status.md` — actualizar estado de la tarea
+- [x] `docs/project-status.md` — update task status
 
 ## Risks
 
 1. **`register_saas_user` orquesta 3 operaciones** (crear user, bootstrap Core, crear subscription): asegurarse de que la atomicidad es correcta — si bootstrap falla, no debe quedar el user creado en SaaS sin un Core account.
-2. **mypy puede detectar tipos implícitos** en services que estaban ocultos dentro de las views: corregirlos en esta fase.
-3. **`build_me_payload` puede tener lógica de lazy creation** (crear SaasAccessProfile si no existe): verificar que sigue funcionando al moverla al service.
+2. **mypy can detect implicit types** in services that were hidden inside views: fix them at this stage.
+3. **`build_me_payload` can have lazy creation logic** (create SaasAccessProfile if it does not exist): verify that it still works by moving it to the service.
 
 ## Completion Criteria
 
-- [x] `auth_views.py` ≤ 150 líneas, sin lógica de negocio relevante
-- [x] `admin_views.py` ≤ 100 líneas, sin lógica de negocio relevante
-- [x] `auth_services.py` tiene las funciones extraídas con type annotations
+- [x] `auth_views.py` ≤ 150 lines, no relevant business logic
+- [x] `admin_views.py` ≤ 100 lines, no relevant business logic
+- [x] `auth_services.py` has the functions extracted with type annotations
 - [x] Unit tests para `register_saas_user` y `build_me_payload` existen
 - [x] `python manage.py test saas_access --keepdb --noinput` pasa sin errores
 - [x] `ruff check .`, `ruff format --check .` y `mypy .` limpios
@@ -167,7 +167,7 @@ Resultados esperados:
 
 ## Resultado real
 
- - `auth_views.py` quedó en 122 líneas y `admin_views.py` en 96 líneas.
+- `auth_views.py` remained at 122 lines and `admin_views.py` at 96 lines.
 - Las views de linking se separaron en `saas/auth_link_views.py` para mantener `auth_views.py` enfocado.
 - Se extrajeron payloads y operaciones de auth a `saas/auth_services.py`:
   `register_saas_user`, `build_auth_mode_payload`, `build_me_payload`,
@@ -176,4 +176,4 @@ Resultados esperados:
 - Se extrajeron operaciones admin a `saas_access/rbac_services.py`:
   `list_admin_users_with_roles`, `create_admin_user`, `update_admin_user_role`,
   `update_admin_user_status`, `delete_admin_user`.
-- Se añadieron tests unitarios para las funciones extraídas y se mantuvieron verdes los tests de API.
+- Added unit tests for extracted functions and kept API tests green.

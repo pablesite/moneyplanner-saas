@@ -1,12 +1,12 @@
-# Flujo de Integración SaaS ↔ Core
+# SaaS ↔ Core Integration Flow
 
 ## Principio fundamental
 
-SaaS y Core comparten la misma `JWT_SIGNING_KEY`. Esto permite que un token emitido por SaaS sea aceptado por Core sin ninguna negociación adicional. Es el mecanismo que hace posible tanto el bootstrap servidor-a-servidor como el acceso del frontend SaaS a las APIs de Core.
+SaaS and Core share the same `JWT_SIGNING_KEY`. This allows a SaaS-issued token to be accepted by Core without any additional negotiation. It is the mechanism that makes possible both server-to-server bootstrap and SaaS frontend access to Core APIs.
 
 ---
 
-## 1. Flujo de login
+## 1. Flow of login
 
 ```
 Browser
@@ -24,11 +24,11 @@ Browser
              (mismo token, aceptado por Core porque comparten JWT_SIGNING_KEY)
 ```
 
-**Gestión de expiración** (`lib/api.ts`): cuando cualquier petición devuelve 401, el frontend intenta refresh automático via `/api/auth/refresh/`. Si el refresh falla, limpia tokens y redirige a `/login?reason=session_expired`. Las peticiones pendientes durante el refresh se encolan y se reintentan con el nuevo token.
+**Expiry Management** (`lib/api.ts`): When any request returns 401, the frontend tries to automatically refresh via `/api/auth/refresh/`. If the refresh fails, clear tokens and redirect to `/login?reason=session_expired`. Requests pending during the refresh are queued and retried with the new token.
 
 ---
 
-## 2. Flujo de registro (bootstrap automático)
+## 2. Registration flow (automatic bootstrap)
 
 ```
 Browser
@@ -54,17 +54,17 @@ Browser
                             Si Core no responde     → DRFValidationError (registro falla)
 ```
 
-> **Riesgo conocido:** el bootstrap es síncrono y sin reintentos. Si Core no está disponible, el registro falla completamente. No hay estado "usuario SaaS sin bootstrap pendiente". Es una decisión deliberada: la consistencia se prioriza sobre la disponibilidad en el registro.
+> **Known risk:** the bootstrap is synchronous and retry-free. If Core is not available, registration fails completely. There is no "pending non-bootstrap SaaS user" status. It's a deliberate decision: consistency is prioritized over availability in the registry.
 
-El mismo bootstrap se ejecuta también cuando:
-- Un admin crea un usuario con `POST /api/admin/users/` (si rol = `saas_member`)
+The same bootstrap is also executed when:
+- An admin creates a user with `POST /api/admin/users/` (si rol = `saas_member`)
 - Un admin cambia el rol a `saas_member` con `PATCH /api/admin/users/{id}/role/`
 
-La operación es idempotente en Core: si el `FamilyMember` primario ya existe, no falla ni duplica.
+The operation is idempotent in Core: if the parent `FamilyMember` already exists, it does not fail or duplicate.
 
 ---
 
-## 3. Vinculación de cuentas (Core Link)
+## 3. Linking accounts (Core Link)
 
 Existen dos mecanismos de linking. Ambos requieren `ACCOUNT_LINKING_ENABLED=True`.
 
@@ -79,7 +79,7 @@ POST /api/auth/core-link/  {core_user_ref, core_username, core_email}
 ```
 
 ### 3b. Linking via token firmado
-Para flujos donde Core inicia el linking (p.ej., migración self-hosted → cloud):
+For flows where Core initiates linking (e.g. self-hosted → cloud migration):
 
 ```
 Core genera: signing.dumps({jti, core_user_ref, core_username, core_email}, key=CORE_LINKING_SHARED_SECRET, salt="core-link-token")
@@ -115,7 +115,7 @@ Ambos clientes tienen instalados los mismos interceptores de auth (request: inye
 
 ## 5. Variables de entorno relevantes
 
-| Variable | Dónde | Descripción |
+| Variable | Where | Description |
 |----------|-------|-------------|
 | `JWT_SIGNING_KEY` | SaaS backend + Core backend | **Debe ser igual** en ambos stacks |
 | `CORE_API_BASE_URL` | SaaS backend | URL del Core backend (server-to-server, ej: `http://core-backend:8000`) |
@@ -127,11 +127,11 @@ Ambos clientes tienen instalados los mismos interceptores de auth (request: inye
 
 ---
 
-## 6. Diagnóstico rápido de problemas de integración
+## 6. Quick diagnosis of integration problems
 
-| Síntoma | Causa probable | Acción |
+| Symptom | Probable cause | Action |
 |---------|---------------|--------|
-| Registro falla con "No se pudo conectar con Core" | `CORE_API_BASE_URL` mal configurado o Core caído | Verificar `docker compose ps` en Core, revisar `CORE_API_BASE_URL` |
-| Frontend no carga datos de patrimonio/movimientos | `VITE_CORE_API_BASE_URL` incorrecto o CORS | Revisar `.env` del frontend SaaS, revisar CORS en Core |
+| Registration fails with "Could not connect to Core" | `CORE_API_BASE_URL` misconfigured or Core down | Check `docker compose ps` in Core, check `CORE_API_BASE_URL` |
+| Frontend does not load asset/movement data | `VITE_CORE_API_BASE_URL` wrong or CORS | Review `.env` of the SaaS frontend, review CORS in Core |
 | 401 en llamadas a Core desde frontend | Tokens distintos (`JWT_SIGNING_KEY` diferente) | Verificar que ambos stacks usen el mismo `JWT_SIGNING_KEY` |
 | Token de linking rechazado | `CORE_LINKING_SHARED_SECRET` no coincide o token expirado | Verificar secret, generar nuevo token |

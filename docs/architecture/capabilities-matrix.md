@@ -1,7 +1,7 @@
 # Matriz de capabilities (actual)
 
-## Objetivo
-Separar packaging comercial de capacidades técnicas.
+## Aim
+Separar packaging comercial de capacidades tï¿½cnicas.
 
 ## Regla
 1. Backend define capabilities efectivas.
@@ -10,10 +10,10 @@ Separar packaging comercial de capacidades técnicas.
 
 ## Baseline Core (sin bloqueo artificial)
 1. `core.netWorth` -> patrimonio
-2. `core.budget` -> presupuesto y cierre mensual
-3. `core.coachV1` -> guía/coach v1
-4. `core.familyLogicalModel` -> familia/titularidad base
-5. `core.simulatorBasic` -> simulación base (evolutiva)
+2. `core.budget` -> budget and monthly closing
+3. `core.coachV1` -> guï¿½a/coach v1
+4. `core.familyLogicalModel` -> base family/ownership
+5. `core.simulatorBasic` -> simulaciï¿½n base (evolutiva)
 
 ## Capacidades SaaS (infra / extra)
 1. `platform.cloudHosting`
@@ -28,12 +28,12 @@ Separar packaging comercial de capacidades técnicas.
 10. `central.heavyCompute`
 11. `central.llmCloud`
 
-## Estado piloto SaaS (gratis)
-1. `trial` como estado por defecto para testers.
-2. Se expone baseline Core + operación SaaS necesaria.
+## SaaS pilot status (free)
+1. `trial` as default state for testers.
+2. Se expone baseline Core + operaciï¿½n SaaS necesaria.
 3. `saas.adminUsers` se mantiene para uso interno.
-4. Sin billing visible al usuario final (mientras dure el piloto).
+4. No billing visible to the end user (while the pilot lasts).
 
-## Nota de migración
+## Nota de migraciï¿½n
 1. Mantener `compat.isPremium`, `compat.people`, `compat.ownership` hasta terminar limpieza de checks legacy.
 

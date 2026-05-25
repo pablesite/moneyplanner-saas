@@ -1,6 +1,6 @@
 # Roadmap: refactor integral del frontend SaaS — plan ejecutable
 
-## Objetivo
+## Objective
 Mantener el frontend SaaS alineado con el refactor del frontend Core, eliminando la deuda
 técnica acumulada y preparando el terreno para un futuro shared package Core/SaaS.
 
@@ -10,10 +10,10 @@ Este roadmap espeja `core/docs/roadmap/terminados/frontend-refactor-roadmap.md`.
 en SaaS al cerrarla. Las specs de task están en `core/docs/tasks/frontend-refactor/` e
 incluyen una sección **SaaS Replication** con las instrucciones específicas para este frontend.
 
-## Estado de este documento
+## Document status
 Creado el 2026-03-18. Baseline inicial documentada en esta fecha.
 
-## Estado real (2026-03-19)
+## Current status (2026-03-19)
 
 ### Validación actual en Docker
 - `docker compose exec saas_frontend npm run lint`: verde

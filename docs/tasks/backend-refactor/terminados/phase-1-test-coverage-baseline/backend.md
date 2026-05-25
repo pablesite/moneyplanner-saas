@@ -87,39 +87,39 @@ Añadir tests para:
 
 Tests existentes a migrar: `SaasRbacServicesTests`.
 
-Añadir tests para:
-- **`assign_role` a usuario que ya tiene ese rol** → idempotente
-- **`has_admin_role` con perfil no creado** → debe retornar False sin excepción
+Add tests for:
+- **`assign_role` to user who already has that role** → idempotent
+- **`has_admin_role` with profile not created** → must return False without exception
 - **`get_or_create_access_profile` para superuser** → crea perfil ADMIN
 - **`get_or_create_access_profile` para user normal** → crea perfil MEMBER
-- **Número de admins: exactamente 1** → downgrade bloqueado
-- **Número de admins: 2** → downgrade permitido
-- **Número de admins: 0** (caso límite) → verificar que no puede ocurrir
+- **Number of admins: exactly 1** → downgrade blocked
+- **Number of admins: 2** → downgrade allowed
+- **Number of admins: 0** (limiting case) → verify that it cannot occur
 
 ### 5. `test_bootstrap.py` — ampliar cobertura
 
 Tests existentes a migrar: `SaasAuthRoadmap03ApiTests` (subset Core integration).
 
-Añadir tests para:
+Add tests for:
 - **Bootstrap en registro — Core no disponible** → registro falla con error 503 o similar
-- **Bootstrap en creación de admin — Core no disponible** → rollback en SaaS
+- **Bootstrap in admin creation — Core not available** → rollback in SaaS
 - **Core Link manual con `ACCOUNT_LINKING_ENABLED=False`** → 403 con error descriptivo
 - **Core Link via token — token ya consumido** → 400, replay protection
-- **Core Link via token — token de otro usuario** → 400
-- **Unlink — usuario sin link previo** → error o no-op consistente
-- **`/me` — usuario con Core link muestra `core_linked: true`**
-- **`/me` — usuario sin Core link muestra `core_linked: false`**
+- **Core Link via token — another user's token** → 400
+- **Unlink — user without previous link** → error or consistent no-op
+- **`/me` — user with Core link shows `core_linked: true`**
+- **`/me` — user without Core link shows `core_linked: false`**
 
-### 6. `test_audit.py` — añadir verificaciones de contenido
+### 6. `test_audit.py` — add content checks
 
 Tests existentes a migrar: `SaasAuthAuditAndThrottleTests`.
 
-Añadir tests para:
+Add tests for:
 - **Login exitoso** → evento `LOGIN_SUCCESS` con actor correcto
-- **Registro exitoso** → evento `REGISTER_SUCCESS` con metadata de usuario
+- **Successful registration** → event `REGISTER_SUCCESS` with user metadata
 - **Cambio de rol exitoso** → evento `ROLE_CHANGE` con old_role y new_role en metadata
-- **Eliminación de usuario** → evento `USER_DELETE`
-- **Verificar que los eventos no tienen datos sensibles** (no passwords en metadata)
+- **User deletion** → event `USER_DELETE`
+- **Verify that the events do not have sensitive data** (no passwords in metadata)
 
 ### 7. Medir cobertura
 
@@ -147,24 +147,24 @@ Resultados esperados:
 - `ruff check` → sin errores
 - `mypy` → sin errores
 - Cobertura ≥80%
-- Todos los endpoints críticos cubiertos con happy path + auth failure + validation/error path relevante
+- All critical endpoints covered with relevant happy path + auth failure + validation/error path
 
 ## Required Documentation Updates
 
 - [x] `docs/roadmap/saas-backend-refactor-roadmap.md` — marcar Phase 1 completada
-- [x] `docs/project-status.md` — actualizar estado de la tarea
+- [x] `docs/project-status.md` — update task status
 
 ## Risks
 
-1. **`saas_access/tests.py` existe como módulo y como directorio a la vez**: eliminar el fichero original una vez que el directorio con `__init__.py` existe, o Django no reconocerá los tests del paquete.
+1. **`saas_access/tests.py` exists as a module and as a directory at the same time**: delete the original file once the directory with `__init__.py` exists, or Django will not recognize the package tests.
 2. **Tests de bootstrap con mock de Core**: verificar que `@patch('saas_access.core_bootstrap.requests.post')` sigue funcionando correctamente con la nueva estructura de ficheros.
-3. **Tests de throttling**: los tests de declaración de scope son suficientes; no intentar saturar el servidor en tests automatizados.
+3. **Throttling tests**: scope declaration tests are sufficient; Do not try to overwhelm the server with automated tests.
 
 ## Completion Criteria
 
 - [x] `saas_access/tests.py` eliminado; reemplazado por `saas_access/tests/` con 5 ficheros
-- [x] Cobertura ≥80% en módulos afectados (`saas` + `saas_access`)
-- [x] Todos los endpoints críticos tienen happy path + auth failure + validation/error path relevante
+- [x] Coverage ≥80% in affected modules (`saas` + `saas_access`)
+- [x] All critical endpoints have relevant happy path + auth failure + validation/error path
 - [x] Bootstrap failure path cubierto con mock
 - [x] `python manage.py test saas_access --keepdb --noinput` pasa sin errores
 - [x] `ruff check .`, `ruff format --check .` y `mypy .` limpios
@@ -175,5 +175,5 @@ Resultados esperados:
 
 - Suite reorganizada en `backend/saas_access/tests/` por dominios: auth, admin, RBAC, bootstrap y audit.
 - Cobertura medida en Docker con `coverage.py`: 138 tests y 96% total sobre `saas` + `saas_access`.
-- Se añadió protección explícita para rollback real en el registro SaaS cuando falla el bootstrap Core.
+- Added explicit protection for actual rollback in SaaS registration when bootstrap Core fails.
 - Se cubrieron helpers de bootstrap, permissions, settings helpers, audit persistence, linking y contratos de error.

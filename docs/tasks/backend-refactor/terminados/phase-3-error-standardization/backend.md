@@ -151,20 +151,20 @@ Resultados esperados:
 ## Required Documentation Updates
 
 - [ ] `docs/roadmap/saas-backend-refactor-roadmap.md` — marcar Phase 3 completada y refactor como cerrado
-- [ ] `docs/project-status.md` — actualizar estado de la tarea
+- [ ] `docs/project-status.md` — update task status
 
 ## Risks
 
-1. **Tests existentes que verifican el shape de error antiguo**: si algún test anterior hacía `assertEqual(resp.data, {'detail': '...'})`, fallará al cambiar el handler. Actualizar esos tests para usar el contrato nuevo.
-2. **El handler de Core usa `ErrorDetail`**: verificar que la conversión de `ErrorDetail` a string funciona igual en SaaS (misma versión de DRF).
+1. **Existing tests that check the old error shape**: if any previous test did `assertEqual(resp.data, {'detail': '...'})`, it will fail when changing the handler. Update those tests to use the new contract.
+2. **Core handler uses `ErrorDetail`**: verify that the conversion of `ErrorDetail` to string works the same in SaaS (same version of DRF).
 3. **Throttle responses**: DRF retorna un `Retry-After` header en 429. Asegurarse de que el handler lo preserva.
 
 ## Completion Criteria
 
-- [ ] `saas/exception_handler.py` existe y está registrado en settings
+- [ ] `saas/exception_handler.py` exists and is registered in settings
 - [ ] Todos los endpoints retornan `{code, message, details}` en error paths
 - [ ] Contract tests de error shape existen (≥7 casos cubiertos)
-- [ ] Ningún test existente roto (o actualizado si usaban shape antiguo)
+- [ ] No existing test broken (or updated if they used old shape)
 - [ ] `python manage.py test saas_access` pasa sin errores
 - [ ] `ruff check .` y `mypy .` limpios
 - [ ] Spec movida a `terminados/`
