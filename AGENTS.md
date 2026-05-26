@@ -8,7 +8,7 @@ Este repo contiene dos stacks coordinados:
 Core y SaaS tienen ciclos de validación independientes pero comparten boundaries: cambios en Core pueden requerir réplica en el frontend SaaS.
 
 ## Skills disponibles
-Verificar si aplica alguna de estas skills antes de arrancar o cerrar una tarea:
+Usar obligatoriamente cuando aplique. No son opcionales:
 
 | Cuándo usarla | Skill |
 |---------------|-------|
@@ -36,9 +36,10 @@ Leer al inicio de cualquier tarea, antes de tocar código o documentación:
    - No duplicar logica entre Core y SaaS.
    - **Regla de espejado Core→SaaS:** cuando se actualice funcionalidad en `core/frontend/`, replicar el cambio equivalente en `frontend/` salvo que el alcance sea explicitamente Core-only. Verificar siempre al cerrar una tarea que afecte al frontend Core.
    - No proponer ni ejecutar refactors de frontend o backend salvo peticion explicita. La prioridad actual es completar funcionalidad. Los roadmaps de refactor (frontend-refactor-roadmap.md, backend-refactor-roadmap.md) estan deliberadamente aparcados.
-3. Validar dentro de Docker.
-   - Ejecutar calidad, typecheck y tests en contenedores del stack afectado.
-   - Si el cambio toca integracion Core/SaaS, validar ambos lados.
+3. Validar dentro de Docker **antes de cada commit**.
+   - Ejecutar la skill `validate` para el stack afectado antes de commitear cualquier cambio de código.
+   - Si el cambio toca integración Core/SaaS, validar ambos lados (`/validate all`).
+   - No crear commits ni PRs sin que lint, format, typecheck y tests pasen en verde.
    - No dar por bueno un cambio sin validacion suficiente para su alcance.
 4. Actualizar documentacion y version cuando aplique.
    - Actualizar solo la documentacion canonica afectada por el cambio.
