@@ -1,14 +1,14 @@
-# Roadmap: backend refactor (SaaS) - cobertura profesional y arquitectura limpia
+# Roadmap: backend refactor (SaaS) - professional coverage and clean architecture
 
-## Objetivo
+## Aim
 Llevar el backend SaaS a un nivel profesional de mantenibilidad y cobertura de tests,
-preparándolo para producción. Sin cambios de comportamiento funcional ni de contrato API.
+preparing it for production. No functional behavior or API contract changes.
 
-## Estado real (2026-03-18)
+## Actual status (2026-03-18)
 
-### Inventario por módulo
+### Inventory by module
 
-| Módulo | Superficie principal | Líneas código | Líneas tests | Cobertura est. |
+| Module | Main surface | Code lines | Test lines | Est coverage |
 |--------|---------------------|---------------|--------------|----------------|
 | `saas/` | Auth views, admin views, services, settings, URLs | ~1,070 | — | Baja |
 | `saas_access/` | Models, permissions, services, bootstrap, tests | ~779 | 447 | ~24% |
@@ -16,77 +16,77 @@ preparándolo para producción. Sin cambios de comportamiento funcional ni de co
 
 ### Hotspots detectados
 
-| Archivo | Líneas | Riesgo | Motivo |
+| Archive | Lines | Risk | Reason |
 |---------|--------|--------|--------|
-| `saas/auth_views.py` | 319 | Medio | Lógica de negocio mezclada con HTTP |
-| `saas_access/tests.py` | 447 | Alto | Único fichero, cobertura ~24%, sin separación por dominio |
-| `saas/auth_services.py` | 95 | Medio | Incompleto; parte de la lógica sigue en views |
+| `saas/auth_views.py` | 319 | Medium | Business logic mixed with HTTP |
+| `saas_access/tests.py` | 447 | High | Single file, ~24% coverage, no separation by domain |
+| `saas/auth_services.py` | 95 | Medium | Incomplete; part of the logic follows in views |
 
-### Funcionalidad ya estable
+### Feature ya estable
 - Login JWT, token refresh, registro, `/me`, `/mode`
 - Throttling por scope
 - Audit log de eventos auth
 - Suscripciones (trial por defecto)
-- RBAC: `saas_admin` / `saas_member`, protección de último admin
-- Admin CRUD: usuarios, roles, status, métricas
-- Integración Core: bootstrap automático, linking manual, linking por token
+- RBAC: `saas_admin` / `saas_member`, last admin protection
+- Admin CRUD: users, roles, status, metrics
+- Core integration: automatic bootstrap, manual linking, token linking
 
 ## Principios de trabajo
-1. PRs pequeñas, reversibles y con alcance claro.
+1. Small, reversible PRs with clear scope.
 2. Sin cambios de comportamiento no intencionales.
 3. Primero cobertura de tests; luego refactor estructural.
 4. Cada fase deja el backend ejecutable y con todos los tests en verde.
-5. Validación dentro de Docker.
+5. Validation within Docker.
 
 ## Alcance
 1. `saas/` — auth views, admin views, services, settings
 2. `saas_access/` — models, permissions, services, bootstrap, tests
 
 ## Fuera de alcance
-1. Cambios de producto (nuevos endpoints, billing, capabilities dinámicas).
+1. Product changes (new endpoints, billing, dynamic capabilities).
 2. Frontend SaaS.
 3. Infraestructura y deployment.
 
 ## Fases activas
 
-| Fase | Título | Spec | Estado |
+| Phase | Title | Spec | State |
 |------|--------|------|--------|
 | 1 | Test coverage baseline (≥80%) | `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md` | ✅ |
-| 2 | Thin views (extracción de negocio a services) | `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` | ✅ |
-| 3 | Exception handler canónico | `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` | ✅ |
+| 2 | Thin views (extraction from business to services) | `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` | ✅ |
+| 3 | Canonical exception handler | `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` | ✅ |
 
 ## Detalle de fases
 
 ### Fase 1 — Test coverage baseline
-**Objetivo:** Pasar de ~24% a ≥80% de cobertura. Red de seguridad antes de mover código.
+**Goal:** Go from ~24% to ≥80% coverage. Safety net before moving code.
 
 Trabajo:
 - Reorganizar `saas_access/tests.py` en paquete `saas_access/tests/` con ficheros por dominio:
   - `test_auth.py`, `test_admin.py`, `test_rbac.py`, `test_bootstrap.py`, `test_audit.py`
 - Añadir error paths: bootstrap failure, duplicate register, invalid tokens
 - Añadir edge cases: last-admin protection, subscription state, throttle scopes
-- Target: ≥80% statement coverage por módulo afectado y todos los endpoints críticos cubiertos con happy path, auth failure y validation/error path.
+- Target: ≥80% statement coverage per affected module and all critical endpoints covered with happy path, auth failure and validation/error path.
 
-Estado real 2026-03-18:
+Actual status 2026-03-18:
 - Completada
 - `saas_access/tests.py` reemplazado por paquete `saas_access/tests/`
 - `create_saas_user()` ahora hace rollback real cuando falla el bootstrap Core
-- Validación en Docker: `python manage.py test saas_access --keepdb --noinput`, `ruff check .`, `ruff format --check .`, `mypy .`
-- Medición de cobertura: 138 tests, 96% total sobre `saas` + `saas_access`
+- Validation in Docker: `python manage.py test saas_access --keepdb --noinput`, `ruff check .`, `ruff format --check .`, `mypy .`
+- Coverage measurement: 138 tests, 96% total on `saas` + `saas_access`
 
 ### Fase 2 — Thin views
-**Objetivo:** Views como adaptadores HTTP puros; negocio en services.
+**Purpose:** Views as pure HTTP adapters; business in services.
 
 Trabajo:
-- `auth_views.py` (319 → ≤150 líneas): extraer a `auth_services.py`:
+- `auth_views.py` (319 → ≤150 lines): extract to `auth_services.py`:
   - `register_saas_user()`
   - `build_me_payload()`
   - `link_core_account()` / `unlink_core_account()`
   - `link_core_account_by_token()`
-- `admin_views.py` (164 → ≤100 líneas): delegar completamente a `rbac_services.py`
+- `admin_views.py` (164 → ≤100 lines): delegate completely to `rbac_services.py`
 - Añadir unit tests para funciones extraídas
 
-Estado real 2026-03-18:
+Status real 2026-03-18:
 - Completada
 - `auth_views.py` reducido a 122 líneas y `admin_views.py` a 96 líneas
 - Views de account linking separadas en `saas/auth_link_views.py`
@@ -102,7 +102,7 @@ Trabajo:
 - Añadir contract tests para shapes de error en todos los endpoints críticos
 - Eliminar respuestas ad-hoc que no usen el contrato canónico
 
-Estado real 2026-03-18:
+Status real 2026-03-18:
 - Completada
 - Handler canónico movido a `saas/exception_handler.py` y registrado en `REST_FRAMEWORK.EXCEPTION_HANDLER`
 - Todos los error paths del backend SaaS responden con `{code, message, details}`

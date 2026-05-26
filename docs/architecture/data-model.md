@@ -1,101 +1,101 @@
-# Modelo de Datos SaaS
+# SaaS Data Model
 
-Este documento describe los modelos de datos del backend SaaS (`backend/saas_access/models.py`) y sus relaciones. No incluye los modelos de Core, que son canónicos en `core/docs/`.
+This document describes the SaaS backend data models (`backend/saas_access/models.py`) and their relationships. Does not include Core models, which are canonical in `core/docs/`.
 
 ## Entidades
 
 ### Django User (built-in)
-Modelo de usuario estándar de Django. Es el ancla de todo el resto de entidades SaaS. Cada usuario SaaS tiene asociados exactamente un `SaasAccessProfile`, una `SaasSubscription`, y opcionalmente un `SaasCoreAccountLink`.
+Django standard user model. It is the anchor for all other SaaS entities. Each SaaS user is associated with exactly one `SaasAccessProfile`, one `SaasSubscription`, and optionally one `SaasCoreAccountLink`.
 
 ### SaasAccessProfile
-Define el rol del usuario dentro de la plataforma SaaS.
+Defines the user's role within the SaaS platform.
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |-------|------|-------------|
 | `user` | OneToOne → User | Propietario del perfil |
 | `role` | CharField | `saas_admin` o `saas_member` (default: `saas_member`) |
-| `created_at` | DateTimeField | Creación automática |
-| `updated_at` | DateTimeField | Última modificación |
+| `created_at` | DateTimeField | Automatic creation |
+| `updated_at` | DateTimeField | Last modified |
 
 **Roles:**
-- `saas_admin`: gestor de la plataforma. Solo para operaciones de administración (CRUD de usuarios, métricas, etc.). **No es un usuario del producto** — no debería tener acceso a las vistas de Core ni `FamilyMember` en Core.
-- `saas_member`: usuario del producto. Puede usar la app. Recibe bootstrap en Core al crearse.
+- `saas_admin`: platform manager. For administration operations only (user CRUD, metrics, etc.). **You are not a product user** — you should not have access to Core views or `FamilyMember` in Core.
+- `saas_member`: product user. You can use the app. Receives bootstrap in Core upon creation.
 
-**Invariante crítica:** siempre debe existir al menos un `saas_admin` activo. `rbac_services.ensure_user_can_lose_admin_role` lo garantiza antes de cualquier degradación o desactivación.
+**Critical invariant:** There must always be at least one active `saas_admin`. `rbac_services.ensure_user_can_lose_admin_role` guarantees this before any downgrade or deactivation.
 
-**Deuda conocida:** la restricción que impide a un `saas_admin` acceder a las vistas de producto no está implementada. Técnicamente puede llamar a las APIs de Core con su JWT.
+**Known Debt:** The restriction that prevents a `saas_admin` from accessing product views is not implemented. Technically you can call the Core APIs with your JWT.
 
 ---
 
 ### SaasSubscription
-Estado de la suscripción del usuario.
+User subscription status.
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |-------|------|-------------|
 | `user` | OneToOne → User | Propietario |
 | `status` | CharField | `trial`, `active`, `past_due`, `canceled` (default: `trial`) |
-| `started_at` | DateTimeField | Creación automática |
-| `updated_at` | DateTimeField | Última modificación |
+| `started_at` | DateTimeField | Automatic creation |
+| `updated_at` | DateTimeField | Last modified |
 
 **`is_premium_enabled()`** devuelve `True` si `status` es `trial` o `active`. Durante el piloto, todos los usuarios son `trial`.
 
 ---
 
 ### SaasCoreAccountLink
-Registro del vínculo entre un usuario SaaS y su correspondiente usuario en Core.
+Registration of the link between a SaaS user and its corresponding user in Core.
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |-------|------|-------------|
-| `user` | OneToOne → User | Usuario SaaS vinculado |
-| `core_user_ref` | CharField(128) | Identificador único del usuario en Core (unique) |
+| `user` | OneToOne → User | Linked SaaS User |
+| `core_user_ref` | CharField(128) | Unique identifier of the user in Core (unique) |
 | `core_username` | CharField(150) | Username en Core (informativo) |
 | `core_email` | EmailField | Email en Core (informativo) |
-| `is_active` | BooleanField | Si el vínculo está activo |
-| `linked_at` | DateTimeField | Creación automática |
-| `updated_at` | DateTimeField | Última modificación |
+| `is_active` | BooleanField | If the link is active |
+| `linked_at` | DateTimeField | Automatic creation |
+| `updated_at` | DateTimeField | Last modified |
 
-Un `core_user_ref` solo puede estar vinculado a un usuario SaaS a la vez (unique constraint).
+A `core_user_ref` can only be linked to one SaaS user at a time (unique constraint).
 
 ---
 
 ### SaasConsumedCoreLinkToken
-Registro de tokens de vinculación ya utilizados. Implementa idempotencia: un token de linking solo puede usarse una vez.
+Record of binding tokens already used. Implements idempotence: a linking token can only be used once.
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |-------|------|-------------|
-| `user` | FK → User | Usuario que consumió el token |
+| `user` | FK → User | User who consumed the token |
 | `jti` | CharField(64) | JWT ID del token consumido (unique) |
-| `consumed_at` | DateTimeField | Creación automática |
+| `consumed_at` | DateTimeField | Automatic creation |
 
 ---
 
 ### SaasAuthAuditEvent
-Log de eventos de autenticación y operaciones administrativas.
+Log of authentication events and administrative operations.
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |-------|------|-------------|
-| `event` | CharField(64) | Tipo de evento (ver tabla de eventos más abajo) |
+| `event` | CharField(64) | Event type (see events table below) |
 | `outcome` | CharField(16) | `success` o `failed` |
-| `actor_user` | FK → User (nullable) | Usuario que ejecutó la acción |
-| `metadata` | JSONField | Datos adicionales del evento |
-| `created_at` | DateTimeField | Creación automática |
+| `actor_user` | FK → User (nullable) | User who executed the action |
+| `metadata` | JSONField | Additional event information |
+| `created_at` | DateTimeField | Automatic creation |
 
 **Eventos auditados:**
 
-| `event` | Descripción |
+| `event` | Description |
 |---------|-------------|
 | `login` | Intento de login |
-| `core_account_link` | Vinculación manual de cuenta Core |
-| `core_account_unlink` | Desvinculación de cuenta Core |
-| `core_account_link_from_token` | Vinculación via token compartido |
-| `saas_admin_user_create` | Admin crea un usuario |
-| `saas_admin_role_change` | Admin cambia el rol de un usuario |
-| `saas_admin_status_change` | Admin activa/desactiva un usuario |
-| `saas_admin_user_delete` | Admin elimina un usuario |
+| `core_account_link` | Manual Core Account Linking |
+| `core_account_unlink` | Core account unlinking |
+| `core_account_link_from_token` | Linking via shared token |
+| `saas_admin_user_create` | Admin creates a user |
+| `saas_admin_role_change` | Admin changes a user's role |
+| `saas_admin_status_change` | Admin activates/deactivates a user |
+| `saas_admin_user_delete` | Admin deletes a user |
 
 ---
 
-## Ciclo de vida de un usuario
+## Lifecycle of a user
 
 ```
 Registro (POST /api/auth/register/)
@@ -107,7 +107,7 @@ Registro (POST /api/auth/register/)
                                             → POST Core /api/family-members/ensure-primary/
                                             → (falla si Core no está disponible)
 
-Estado normal (piloto)
+Status normal (piloto)
     │
     ├─ role: saas_member
     ├─ subscription: trial
@@ -130,4 +130,4 @@ Operaciones admin
 | SaasConsumedCoreLinkToken | `memberships_saasconsumedcorelinktoken` |
 | SaasAuthAuditEvent | `memberships_saasauthauditevent` |
 
-> Nota: los nombres de tabla tienen prefijo `memberships_` por razones históricas aunque el app ahora se llame `saas_access`. No renombrar sin una migración cuidadosa.
+> Note: table names are prefixed with `memberships_` for historical reasons even though the app is now called `saas_access`. Do not rename without careful migration.

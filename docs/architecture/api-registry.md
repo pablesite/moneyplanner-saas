@@ -1,155 +1,155 @@
-# Registro de APIs
+# API Registry
 
-## APIs del Backend SaaS (`http://localhost:8001`)
+## SaaS Backend APIs (`http://localhost:8001`)
 
 ### Auth — `/api/auth/`
 
-| Método | Ruta | Vista | Auth | Throttle | Descripción |
-|--------|------|-------|------|----------|-------------|
-| `POST` | `/api/auth/token/` | `SaasTokenObtainPairView` | Ninguna | `auth_login` | Login. Devuelve `access` y `refresh` JWT. |
-| `POST` | `/api/auth/refresh/` | `SaasTokenRefreshView` | Ninguna | `auth_refresh` | Refresca el `access` token usando el `refresh`. |
-| `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | Ninguna | `auth_register` | Registra un usuario nuevo. Crea subscription (trial), perfil (saas_member) y dispara bootstrap en Core. |
-| `GET` | `/api/auth/me/` | `SaasMeAPIView` | Bearer | `auth_me` | Devuelve datos del usuario autenticado: id, username, email, role, subscription_status, premium_enabled, account_link. |
-| `GET` | `/api/auth/subscription/` | `SaasSubscriptionAPIView` | Bearer | `auth_subscription` | Devuelve el estado de suscripción del usuario. |
-| `GET` | `/api/auth/mode/` | `SaasAuthModeAPIView` | Ninguna | — | Devuelve configuración de auth mode (saas_local, account_linking_enabled, transition_mode). |
-| `GET` | `/api/auth/ops/metrics/` | `SaasAuthOpsMetricsAPIView` | Bearer + Admin | `auth_ops_metrics` | Métricas de operaciones: totales de usuarios, subscripciones, links, RBAC. Solo `saas_admin`. |
-| `GET` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Devuelve el vínculo Core activo del usuario. 204 si no existe. Requiere `ACCOUNT_LINKING_ENABLED=True`. |
-| `POST` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Crea o actualiza manualmente un vínculo Core (`core_user_ref`, `core_username`, `core_email`). |
-| `DELETE` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Elimina el vínculo Core del usuario. |
-| `POST` | `/api/auth/core-link/from-token/` | `SaasCoreAccountLinkFromTokenAPIView` | Bearer | `auth_core_link_token` | Vincula cuenta Core usando un token firmado con `CORE_LINKING_SHARED_SECRET`. Token de un solo uso. |
+| Method | Route | View | Auth | Throttle | Description |
+|--------|-------|------|------|----------|-------------|
+| `POST` | `/api/auth/token/` | `SaasTokenObtainPairView` | None | `auth_login` | Login. Returns `access` and `refresh` JWT tokens. |
+| `POST` | `/api/auth/refresh/` | `SaasTokenRefreshView` | None | `auth_refresh` | Refreshes the `access` token using `refresh`. |
+| `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | None | `auth_register` | Registers a new user. Creates subscription (trial), profile (`saas_member`), and triggers Core bootstrap. |
+| `GET` | `/api/auth/me/` | `SaasMeAPIView` | Bearer | `auth_me` | Returns authenticated user data: id, username, email, role, subscription_status, premium_enabled, account_link. |
+| `GET` | `/api/auth/subscription/` | `SaasSubscriptionAPIView` | Bearer | `auth_subscription` | Returns user subscription status. |
+| `GET` | `/api/auth/mode/` | `SaasAuthModeAPIView` | None | — | Returns auth mode config (`saas_local`, `account_linking_enabled`, `transition_mode`). |
+| `GET` | `/api/auth/ops/metrics/` | `SaasAuthOpsMetricsAPIView` | Bearer + Admin | `auth_ops_metrics` | Ops metrics: user totals, subscriptions, links, RBAC. `saas_admin` only. |
+| `GET` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Returns active Core link for the user. 204 if missing. Requires `ACCOUNT_LINKING_ENABLED=True`. |
+| `POST` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Creates or updates manual Core link (`core_user_ref`, `core_username`, `core_email`). |
+| `DELETE` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Removes the user's Core link. |
+| `POST` | `/api/auth/core-link/from-token/` | `SaasCoreAccountLinkFromTokenAPIView` | Bearer | `auth_core_link_token` | Links a Core account using a token signed with `CORE_LINKING_SHARED_SECRET`. Single-use token. |
 
 ### Admin — `/api/admin/`
-Todos los endpoints requieren `Bearer` + rol `saas_admin`. Throttle: `saas_admin_api`.
+All endpoints require `Bearer` + `saas_admin` role. Throttle: `saas_admin_api`.
 
-| Método | Ruta | Vista | Descripción |
-|--------|------|-------|-------------|
-| `GET` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Lista todos los usuarios con sus roles. |
-| `POST` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Crea un usuario. Si es `saas_member`, dispara bootstrap en Core. |
-| `PATCH` | `/api/admin/users/{id}/role/` | `SaasAdminUserRoleAPIView` | Cambia el rol. Si pasa a `saas_member`, dispara bootstrap en Core. |
-| `PATCH` | `/api/admin/users/{id}/status/` | `SaasAdminUserStatusAPIView` | Activa o desactiva un usuario. |
-| `DELETE` | `/api/admin/users/{id}/` | `SaasAdminUserDeleteAPIView` | Elimina un usuario. No permite dejar la plataforma sin admins activos. |
+| Method | Route | View | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Lists all users and roles. |
+| `POST` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Creates a user. If role is `saas_member`, triggers Core bootstrap. |
+| `PATCH` | `/api/admin/users/{id}/role/` | `SaasAdminUserRoleAPIView` | Changes user role. If upgraded to `saas_member`, triggers Core bootstrap. |
+| `PATCH` | `/api/admin/users/{id}/status/` | `SaasAdminUserStatusAPIView` | Activates or deactivates a user. |
+| `DELETE` | `/api/admin/users/{id}/` | `SaasAdminUserDeleteAPIView` | Deletes a user. Prevents leaving the platform without active admins. |
 
-### Utilidades
+### Utilities
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
+| Method | Route | Description |
+|--------|-------|-------------|
 | `GET` | `/api/schema/` | OpenAPI schema (drf-spectacular) |
-| `GET` | `/api/docs/` | Swagger UI interactivo |
+| `GET` | `/api/docs/` | Interactive Swagger UI |
 
 ---
 
-## APIs del Backend Core (`http://localhost:8000`)
+## Core Backend APIs (`http://localhost:8000`)
 
-El Core backend expone su propia API completa. El frontend SaaS la consume directamente con el mismo JWT.
+Core exposes its own complete API. The SaaS frontend consumes it directly using the same JWT.
 
 ### Auth — `/api/auth/`
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `POST` | `/api/auth/token/` | Login Core (no usado en SaaS — SaaS usa su propio token) |
-| `POST` | `/api/auth/refresh/` | Refresh token Core |
-| `GET` | `/api/auth/me/` | Perfil del usuario Core: `base_currency`, settings |
-| `GET/PATCH` | `/api/auth/settings/` | Configuración del usuario (misma vista que `/me/`) |
-| `GET` | `/api/auth/mode/` | Auth mode Core |
-| `GET` | `/api/auth/ops/metrics/` | Métricas de operaciones (admin) |
-| `POST` | `/api/auth/link-token/` | Genera un token firmado para vincular cuenta con SaaS |
+| Method | Route | Description |
+|--------|-------|-------------|
+| `POST` | `/api/auth/token/` | Core login (unused in SaaS; SaaS uses its own token) |
+| `POST` | `/api/auth/refresh/` | Core token refresh |
+| `GET` | `/api/auth/me/` | Core user profile: `base_currency`, settings |
+| `GET/PATCH` | `/api/auth/settings/` | User settings (same view as `/me/`) |
+| `GET` | `/api/auth/mode/` | Core auth mode |
+| `GET` | `/api/auth/ops/metrics/` | Ops metrics (admin) |
+| `POST` | `/api/auth/link-token/` | Generates a signed token to link account with SaaS |
 
-### Memberships (familia y propiedad) — `/api/`
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET/POST` | `/api/family-members/` | Lista y crea miembros familiares |
-| `GET/PATCH/DELETE` | `/api/family-members/{id}/` | Detalle de miembro |
-| `POST` | `/api/family-members/ensure-primary/` | **Usado por SaaS bootstrap.** Crea el miembro primario si no existe. Idempotente. |
-| `GET/POST` | `/api/ownerships/` | Lista y crea relaciones de propiedad |
-| `GET/PATCH/DELETE` | `/api/ownerships/{id}/` | Detalle de propiedad |
-| `GET/POST` | `/api/ownership-links/` | Vínculos de ownership (activo↔persona) |
-| `GET/PATCH/DELETE` | `/api/ownership-links/{id}/` | Detalle de vínculo |
+### Memberships (family and ownership) — `/api/`
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/POST` | `/api/family-members/` | List and create family members |
+| `GET/PATCH/DELETE` | `/api/family-members/{id}/` | Family member detail |
+| `POST` | `/api/family-members/ensure-primary/` | **Used by SaaS bootstrap.** Creates primary family member if missing. Idempotent. |
+| `GET/POST` | `/api/ownerships/` | List and create ownership relationships |
+| `GET/PATCH/DELETE` | `/api/ownerships/{id}/` | Ownership detail |
+| `GET/POST` | `/api/ownership-links/` | Ownership links (asset <-> person) |
+| `GET/PATCH/DELETE` | `/api/ownership-links/{id}/` | Ownership link detail |
 
 ### Net Worth — `/api/net-worth/`
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET/POST` | `/api/net-worth/assets/` | Activos |
-| `GET/POST` | `/api/net-worth/liabilities/` | Pasivos |
-| `GET/POST` | `/api/net-worth/asset-valuations/` | Valoraciones de activos |
-| `GET/POST` | `/api/net-worth/liability-valuations/` | Valoraciones de pasivos |
-| `GET/POST` | `/api/net-worth/investment-events/` | Eventos de inversión |
-| `GET/POST` | `/api/net-worth/liability-events/` | Eventos de pasivo (amortizaciones, etc.) |
-| `GET/POST` | `/api/net-worth/liquidity-events/` | Eventos de liquidez |
-| `GET/POST` | `/api/net-worth/liquidity-checkins/` | Check-ins mensuales de liquidez |
-| `GET/POST` | `/api/net-worth/snapshots/` | Snapshots patrimoniales |
-| `GET` | `/api/net-worth/summary/` | Resumen agregado de patrimonio |
-| `GET` | `/api/net-worth/timeline/` | Línea de tiempo patrimonial |
-| `GET` | `/api/net-worth/liquidity/monthly-summary/` | Resumen mensual de liquidez; incluye caja, tarjetas e inversiones que devengan intereses; las filas de activos incluyen `annual_interest_tae` para separar liquidez remunerada |
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/POST` | `/api/net-worth/assets/` | Assets |
+| `GET/POST` | `/api/net-worth/liabilities/` | Liabilities |
+| `GET/POST` | `/api/net-worth/asset-valuations/` | Asset valuations |
+| `GET/POST` | `/api/net-worth/liability-valuations/` | Liability valuations |
+| `GET/POST` | `/api/net-worth/investment-events/` | Investment events |
+| `GET/POST` | `/api/net-worth/liability-events/` | Liability events (amortizations, etc.) |
+| `GET/POST` | `/api/net-worth/liquidity-events/` | Liquidity events |
+| `GET/POST` | `/api/net-worth/liquidity-checkins/` | Monthly liquidity check-ins |
+| `GET/POST` | `/api/net-worth/snapshots/` | Net worth snapshots |
+| `GET` | `/api/net-worth/summary/` | Aggregated net worth summary |
+| `GET` | `/api/net-worth/timeline/` | Net worth timeline |
+| `GET` | `/api/net-worth/liquidity/monthly-summary/` | Monthly liquidity summary; includes cash, cards, and interest-bearing investments. Asset rows include `annual_interest_tae` to identify remunerated liquidity. |
 
 ### Budget — `/api/budget/`
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET/POST` | `/api/budget/annual-income/` | Entradas anuales de ingresos |
-| `GET/POST` | `/api/budget/annual-expense/` | Entradas anuales de gastos |
-| `GET` | `/api/budget/annual-income/monthly-summary/` | Resumen mensual ingreso previsto vs ejecutado + cobertura presupuestaria (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) y `income_execution_breakdown` por categoria/subcategoria |
-| `GET` | `/api/budget/annual-expense/monthly-summary/` | Resumen mensual gasto previsto vs ejecutado + cobertura presupuestaria (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) y `expense_execution_breakdown` por categorÃ­a/subcategorÃ­a |
-| `GET/POST` | `/api/budget/annual-income-checkins/` | Check-ins mensuales de ingresos |
-| `GET/POST` | `/api/budget/annual-expense-checkins/` | Check-ins mensuales de gastos |
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/POST` | `/api/budget/annual-income/` | Annual income entries |
+| `GET/POST` | `/api/budget/annual-expense/` | Annual expense entries |
+| `GET` | `/api/budget/annual-income/monthly-summary/` | Monthly planned vs executed income + budget coverage (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) and category/subcategory `income_execution_breakdown`. |
+| `GET` | `/api/budget/annual-expense/monthly-summary/` | Monthly planned vs executed expense + budget coverage (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) and category/subcategory `expense_execution_breakdown`. |
+| `GET/POST` | `/api/budget/annual-income-checkins/` | Monthly income check-ins |
+| `GET/POST` | `/api/budget/annual-expense-checkins/` | Monthly expense check-ins |
 
 ### Accounting — `/api/accounting/`
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET/POST` | `/api/accounting/accounts/` | Cuentas contables (LedgerAccount) |
-| `GET/PATCH/DELETE` | `/api/accounting/accounts/{id}/` | Detalle de cuenta |
-| `GET/POST` | `/api/accounting/transactions/` | Transacciones (LedgerTransaction) |
-| `GET/PATCH/DELETE` | `/api/accounting/transactions/{id}/` | Detalle de transacción |
-| `GET/POST` | `/api/accounting/entries/` | Entradas de movimiento (LedgerEntry) |
-| `GET/PATCH/DELETE` | `/api/accounting/entries/{id}/` | Detalle de entrada |
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/POST` | `/api/accounting/accounts/` | Ledger accounts (`LedgerAccount`) |
+| `GET/PATCH/DELETE` | `/api/accounting/accounts/{id}/` | Account detail |
+| `GET/POST` | `/api/accounting/transactions/` | Transactions (`LedgerTransaction`) |
+| `GET/PATCH/DELETE` | `/api/accounting/transactions/{id}/` | Transaction detail |
+| `GET/POST` | `/api/accounting/entries/` | Ledger entries (`LedgerEntry`) |
+| `GET/PATCH/DELETE` | `/api/accounting/entries/{id}/` | Entry detail |
 
-### Core (datos auxiliares, portabilidad) — `/api/core/`
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/api/core/fx-rates/` | Tipos de cambio FX |
-| `GET` | `/api/core/inflation/` | Índices IPC (nacional + CCAA) |
-| `GET` | `/api/core/market-data/status/` | Estado de sincronización de datos de mercado |
-| `GET` | `/api/core/portable-data/meta/` | Metadatos del bundle portable (versión, etc.) |
-| `POST` | `/api/core/portable-data/import/` | Importación de datos portables |
-
----
-
-## APIs de Core que consume el backend SaaS (server-to-server)
-
-El SaaS llama a Core directamente servidor-a-servidor usando un JWT generado en nombre del usuario (`AccessToken.for_user(user)`). Solo es posible si Core y SaaS comparten la misma `JWT_SIGNING_KEY`.
-
-| Método | Ruta Core | Llamado desde | Cuándo | Descripción |
-|--------|-----------|---------------|--------|-------------|
-| `POST` | `/api/family-members/ensure-primary/` | `core_bootstrap.ensure_primary_family_member_in_core_for_saas_user()` | Registro de usuario / creación admin / asignación de rol `saas_member` | Garantiza que el usuario tenga un `FamilyMember` primario en Core. Idempotente. |
-
-> **Nota:** si `CORE_API_BASE_URL` no está configurado o Core no responde, el registro de usuario falla con error 400. Ver [flujo de integración](./saas-core-integration-flow.md) para detalles.
+### Core (auxiliary data, portability) — `/api/core/`
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/core/fx-rates/` | FX rates |
+| `GET` | `/api/core/inflation/` | CPI indexes (national + autonomous regions) |
+| `GET` | `/api/core/market-data/status/` | Market-data synchronization status |
+| `GET` | `/api/core/portable-data/meta/` | Portable bundle metadata (version, etc.) |
+| `POST` | `/api/core/portable-data/import/` | Portable data import |
 
 ---
 
-## APIs de Core que consume el frontend SaaS
+## Core APIs consumed by SaaS backend (server-to-server)
 
-El frontend SaaS accede directamente a Core a través de `coreApi` (Axios con `VITE_CORE_API_BASE_URL`). El mismo JWT de sesión SaaS se usa para autenticarse en Core.
+SaaS calls Core directly server-to-server using a user-scoped JWT (`AccessToken.for_user(user)`). This only works if Core and SaaS share `JWT_SIGNING_KEY`.
 
-Estos endpoints son canónicos en `core/docs/`. Los dominios frontend que los consumen:
+| Method | Core Route | Called from | When | Description |
+|--------|------------|-------------|------|-------------|
+| `POST` | `/api/family-members/ensure-primary/` | `core_bootstrap.ensure_primary_family_member_in_core_for_saas_user()` | User registration / admin user creation / role assignment to `saas_member` | Ensures the user has a primary `FamilyMember` in Core. Idempotent. |
 
-| Dominio | Cliente Axios | APIs Core consumidas |
-|---------|--------------|---------------------|
-| `net-worth` | `coreApi` | Net worth items, grupos, subgrupos |
+> **Note:** if `CORE_API_BASE_URL` is not configured or Core is unavailable, user registration fails with HTTP 400. See [integration flow](./saas-core-integration-flow.md) for details.
+
+---
+
+## Core APIs consumed by SaaS frontend
+
+SaaS frontend accesses Core directly via `coreApi` (Axios with `VITE_CORE_API_BASE_URL`). The same SaaS session JWT is used to authenticate against Core.
+
+These endpoints are canonically defined in `core/docs/`. Frontend domains that consume them:
+
+| Domain | Axios client | Core APIs consumed |
+|--------|--------------|-------------------|
+| `net-worth` | `coreApi` | Net worth items, groups, subgroups |
 | `people` | `coreApi` | Family members, ownership |
 | `data-input` | `coreApi` | Annual income/expense entries |
 | `accounting` | `coreApi` | Accounting movements |
-| `aux-data` | `coreApi` | FX rates, IPC data |
+| `aux-data` | `coreApi` | FX rates, CPI data |
 | `guide` | `coreApi` | Financial phases, scoring |
 | `auth` | `api` (SaaS) | Login, me, refresh |
 
-> El dominio `auth` usa el cliente `api` (SaaS backend), no `coreApi`.
+> The `auth` domain uses the SaaS `api` client, not `coreApi`.
 
 ---
 
-## Configuración requerida
+## Required configuration
 
-| Variable | Backend SaaS | Frontend SaaS | Descripción |
-|----------|-------------|---------------|-------------|
-| `CORE_API_BASE_URL` | ✓ | — | URL del backend Core (server-to-server) |
-| `JWT_SIGNING_KEY` | ✓ | — | Debe coincidir con el de Core |
-| `ACCOUNT_LINKING_ENABLED` | ✓ | — | Habilita endpoints de core-link manual |
-| `CORE_LINKING_SHARED_SECRET` | ✓ | — | Secreto para tokens de linking |
-| `VITE_API_BASE_URL` | — | ✓ | URL del backend SaaS (default: `http://localhost:8001`) |
-| `VITE_CORE_API_BASE_URL` | — | ✓ | URL del backend Core desde el navegador (default: `http://localhost:8000`) |
+| Variable | SaaS Backend | SaaS Frontend | Description |
+|----------|--------------|---------------|-------------|
+| `CORE_API_BASE_URL` | ✓ | — | Core backend URL (server-to-server) |
+| `JWT_SIGNING_KEY` | ✓ | — | Must match Core value |
+| `ACCOUNT_LINKING_ENABLED` | ✓ | — | Enables manual core-link endpoints |
+| `CORE_LINKING_SHARED_SECRET` | ✓ | — | Secret for linking tokens |
+| `VITE_API_BASE_URL` | — | ✓ | SaaS backend URL (default: `http://localhost:8001`) |
+| `VITE_CORE_API_BASE_URL` | — | ✓ | Browser Core backend URL (default: `http://localhost:8000`) |

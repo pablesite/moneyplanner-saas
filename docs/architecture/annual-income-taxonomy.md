@@ -18,11 +18,11 @@ This document describes the `category` and `subcategory` layer of the contract. 
 ## Categories
 1. `salary`: Salarios y trabajo
 2. `business`: Actividad profesional/negocio
-3. `passive_income`: Ingresos pasivos
+3. `passive_income`: Passive income
 4. `capital_gains`: Ganancias de capital
 5. `transfers_support`: Transferencias y apoyo recibido
 6. `public_benefits`: Prestaciones y ayudas
-7. `other_income`: Otros ingresos
+7. `other_income`: Other income
 
 ## Subcategories
 ### `salary`

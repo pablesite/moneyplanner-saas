@@ -1,22 +1,22 @@
 # Glosario del proyecto
 
-Términos con significado específico en MoneyPlanner. Consultar este glosario antes de nombrar nuevas entidades o escribir documentación.
+Terms with specific meaning in MoneyPlanner. Consult this glossary before naming new entities or writing documentation.
 
 ---
 
-## Arquitectura y estructura
+## Architecture and structure
 
 **Core**
-El producto de finanzas personales open-source. Vive en `core/` como submódulo de Git. Es canónico para toda la lógica de producto: patrimonio, presupuesto, movimientos, guía, familia. El SaaS no reimplementa funcionalidad de Core.
+The open-source personal finance product. Lives in `core/` as a Git submodule. It is canonical for all product logic: heritage, budget, movements, guide, family. The SaaS does not reimplement Core functionality.
 
 **SaaS**
-La capa de plataforma que añade capacidades de servicio gestionado: autenticación propia, RBAC, subscripciones, gestión de cuentas, operaciones cloud. Vive en `backend/` y `frontend/` en la raíz del repo.
+The platform layer that adds managed service capabilities: self-authentication, RBAC, subscriptions, account management, cloud operations. It lives in `backend/` and `frontend/` in the root of the repo.
 
 **Submodule**
-`core/` es un submódulo Git apuntando a `https://github.com/pablesite/moneyplanner-core.git`. El repo SaaS almacena un *puntero* (commit SHA) al estado de Core. Para actualizar Core: actualizar el puntero y hacer commit en el repo SaaS.
+`core/` is a Git submodule pointing to `https://github.com/pablesite/moneyplanner-core.git`. The SaaS repo stores a *pointer* (commit SHA) to the Core state. To update Core: update the pointer and commit to the SaaS repo.
 
 **Stack SaaS**
-El conjunto `backend/` (Django 8001) + `frontend/` (Vue 5174) del repo raíz.
+The set `backend/` (Django 8001) + `frontend/` (Vue 5174) from the root repo.
 
 **Stack Core**
 El conjunto `core/backend/` (Django 8000) + `core/frontend/` (Vue 5173).
@@ -25,37 +25,37 @@ El conjunto `core/backend/` (Django 8000) + `core/frontend/` (Vue 5173).
 
 ## Usuarios y roles
 
-**Usuario SaaS**
-Cuenta en el sistema Django del backend SaaS. Identificado por `username`/`email`. Tiene asociados: `SaasAccessProfile` (rol), `SaasSubscription` (estado), y opcionalmente `SaasCoreAccountLink`.
+**SaaS User**
+Account in the Django system of the SaaS backend. Identified by `username`/`email`. It has associated: `SaasAccessProfile` (role), `SaasSubscription` (state), and optionally `SaasCoreAccountLink`.
 
 **saas_admin**
-Rol de gestión de plataforma. Acceso a operaciones de administración: crear/editar/borrar usuarios, cambiar roles, ver métricas de ops. La plataforma garantiza que siempre haya al menos un admin activo.
+Platform management role. Access to management operations: create/edit/delete users, change roles, view ops metrics. The platform guarantees that there is always at least one active admin.
 
-**Intención:** el admin es un gestor puro de la plataforma, no un usuario del producto. No debería tener acceso a las vistas de producto (patrimonio, movimientos, etc.) ni disponer de un `FamilyMember` en Core. Por eso el bootstrap no se ejecuta para admins.
+**Intention:** the admin is a pure manager of the platform, not a user of the product. You should not have access to product views (assets, movements, etc.) nor have a `FamilyMember` in Core. That's why bootstrap doesn't run for admins.
 
-**Estado actual:** la restricción de acceso al producto para admins no está implementada. Técnicamente un `saas_admin` puede llamar a las APIs de Core con su JWT. Pendiente de controlar.
+**Current status:** Product access restriction for admins is not implemented. Technically a `saas_admin` can call Core APIs with its JWT. Pending control.
 
 **saas_member**
-Rol de usuario del producto. Puede iniciar sesión y usar todas las funcionalidades de la app respaldadas por Core. Recibe bootstrap automático al crearse (→ `FamilyMember` primario en Core). Los niveles de privilegio dentro de este rol están pendientes de definir.
+Product user role. You can log in and use all app functionalities supported by Core. Receives automatic bootstrap upon creation (→ `FamilyMember` primary in Core). Privilege levels within this role are yet to be defined.
 
-**Usuario Core**
-Cuenta en el sistema Django del backend Core. Se crea automáticamente durante el bootstrap al registrarse en SaaS. Identificado en el vínculo SaaS por `core_user_ref` (string, normalmente el username de Core).
+**Core User**
+Account in the Django system of the Core backend. It is created automatically during bootstrap when signing up for SaaS. Identified in the SaaS link by `core_user_ref` (string, usually the Core username).
 
 ---
 
-## Integración
+## Integration
 
 **JWT_SIGNING_KEY**
-Clave secreta compartida entre SaaS y Core para firmar y verificar tokens JWT. Que sea la misma en ambos stacks es el mecanismo que permite al frontend SaaS llamar a Core con el mismo token, y al SaaS backend hacer bootstrap en nombre del usuario.
+Secret key shared between SaaS and Core to sign and verify JWT tokens. Having it be the same in both stacks is the mechanism that allows the SaaS frontend to call Core with the same token, and the SaaS backend to bootstrap on behalf of the user.
 
 **Bootstrap (Core bootstrap)**
-Proceso que se ejecuta automáticamente al crear un usuario SaaS con rol `saas_member`. Llama a `POST /api/family-members/ensure-primary/` en Core usando el JWT del usuario. Garantiza que el usuario tenga un `FamilyMember` primario en Core antes de que pueda usar el producto. Es síncrono y falla si Core no está disponible.
+Process that runs automatically when creating a SaaS user with role `saas_member`. Call `POST /api/family-members/ensure-primary/` in Core using the user's JWT. Ensures that the user has a primary `FamilyMember` in Core before they can use the product. It is synchronous and fails if Core is not available.
 
 **Core Link / SaasCoreAccountLink**
-Registro que vincula un usuario SaaS con su usuario en Core (`core_user_ref`). Normalmente se crea durante el bootstrap. También puede crearse manualmente (admin) o via token firmado. Sin este vínculo, el frontend SaaS puede llamar a Core con el JWT pero no hay referencia explícita al usuario Core en la BD SaaS.
+Record that links a SaaS user to its Core user (`core_user_ref`). It is usually created during bootstrap. It can also be created manually (admin) or via signed token. Without this link, the SaaS frontend can call Core with the JWT but there is no explicit reference to the Core user in the SaaS DB.
 
 **Core Link Token**
-Token firmado con `CORE_LINKING_SHARED_SECRET` que Core puede generar para que un usuario se vincule a SaaS. De un solo uso (se registra en `SaasConsumedCoreLinkToken` por su JTI). Mecanismo para migraciones self-hosted → cloud.
+Token signed with `CORE_LINKING_SHARED_SECRET` that Core can generate for a user to link to SaaS. Single use (registered in `SaasConsumedCoreLinkToken` by its JTI). Mechanism for self-hosted → cloud migrations.
 
 **ACCOUNT_LINKING_ENABLED**
 Feature flag (backend SaaS) que activa los endpoints `/api/auth/core-link/`. Deshabilitado por defecto. Durante el piloto, el linking ocurre via bootstrap, no via estos endpoints.
@@ -68,60 +68,60 @@ URL del backend Core accesible desde el backend SaaS (server-to-server). Diferen
 ## Suscripciones y capacidades
 
 **Trial**
-Estado por defecto de todos los usuarios nuevos. `is_premium_enabled()` devuelve `True`. Durante el piloto, todos los usuarios son `trial` indefinidamente. No hay billing visible.
+Default state for all new users. `is_premium_enabled()` returns `True`. During the pilot, all users are `trial` indefinitely. There is no billing visible.
 
 **Premium enabled**
-El usuario tiene acceso a funcionalidades premium. Se calcula en backend: `status in {trial, active}`. No es un campo explícito.
+The user has access to premium features. It is calculated in backend: `status in {trial, active}`. It is not an explicit field.
 
 **Capabilities (capacidades)**
-Sistema que separa el packaging comercial de las funcionalidades técnicas. Definido en `frontend/src/domains/capabilities/index.ts`. El backend define las capacidades efectivas; el frontend las consume via helpers `canUse*()`. Ver `docs/architecture/capabilities-matrix.md`.
+System that separates commercial packaging from technical functionalities. Defined in `frontend/src/domains/capabilities/index.ts`. The backend defines the effective capabilities; the frontend consumes them via helpers `canUse*()`. See `docs/architecture/capabilities-matrix.md`.
 
 **plan_code**
-Identificador del plan comercial (`community_core`, `cloud_basic`, `cloud_pro`, `cloud_premium`). Diferente de `capabilities`: el mismo `plan_code` puede tener distintas capacidades según la configuración. El frontend no debe hacer checks directos de `plan_code`.
+Trading plan identifier (`community_core`, `cloud_basic`, `cloud_pro`, `cloud_premium`). Different from `capabilities`: The same `plan_code` can have different capabilities depending on the configuration. The frontend should not do direct checks for `plan_code`.
 
 **compat**
-Sección de compatibilidad en `AppCapabilities`. Puente temporal mientras la UI migra de checks de plan a checks de capabilities. No añadir nueva lógica que dependa de `compat.*`.
+Compatibility section in `AppCapabilities`. Temporary bridge while the UI migrates from plan checks to capabilities checks. Do not add new logic that depends on `compat.*`.
 
 ---
 
 ## Producto (Core)
 
 **Patrimonio neto / Net Worth**
-Módulo de Core que gestiona el balance de activos y pasivos del usuario. Frontend en dominio `net-worth`.
+Core module that manages the balance of the user's assets and liabilities. Frontend in domain `net-worth`.
 
 **Presupuesto / Budget**
-Módulo de Core para planificación presupuestaria y cierre mensual. Frontend: vistas `BudgetDashboardView` (ruta `/presupuesto`) y monthly close (`/cierre-mensual`).
+Core module for budget planning and monthly closing. Frontend: views `BudgetDashboardView` (path `/presupuesto`) and monthly close (`/cierre-mensual`).
 
 **Movimientos contables / Accounting Movements**
-Módulo de Core para registro de movimientos diarios. Añadido en fase 3. Frontend en dominio `accounting`, ruta `/movimientos`.
+Core module for recording daily movements. Added in phase 3. Frontend in domain `accounting`, path `/movimientos`.
 
-**Introducción de datos / Data Input**
-Módulo de Core para entrada de ingresos y gastos anuales. Frontend en dominio `data-input`.
+**Data entry / Data Input**
+Core module for entering annual income and expenses. Frontend in domain `data-input`.
 
-**Guía / Coach v1**
-Módulo de scoring financiero por fases. Frontend en dominio `guide`.
+**Guide / Coach v1**
+Financial scoring module by phases. Frontend in domain `guide`.
 
 **Family Logical Model**
-Modelo de Core que representa la estructura familiar del usuario: `FamilyMember` (personas) y ownership (propiedad de activos/pasivos). Base para el módulo `people` en frontend.
+Core model that represents the user's family structure: `FamilyMember` (people) and ownership (ownership of assets/liabilities). Base for the `people` module in frontend.
 
 **FamilyMember primario**
-El `FamilyMember` que representa al propio usuario en Core. Se crea durante el bootstrap. Punto de entrada para asignación de ownership.
+The `FamilyMember` that represents the user themselves in Core. It is created during bootstrap. Entry point for ownership assignment.
 
 ---
 
 ## Modelos de dominio Core
 
 **FamilyMember**
-Persona dentro del modelo familiar del usuario. El "miembro primario" representa al propio usuario (creado en bootstrap). Se pueden añadir más miembros para representar a la familia. Usado para asignar ownership a activos/pasivos.
+Person within the user's family model. The "primary member" represents the user themselves (created in bootstrap). More members can be added to represent the family. Used to assign ownership to assets/liabilities.
 
 **Ownership / OwnershipLink**
-Relación entre un `FamilyMember` y un activo o pasivo (porcentaje de propiedad). Permite distribuir el patrimonio entre miembros del hogar.
+Relationship between a `FamilyMember` and an asset or liability (percentage of ownership). It allows the assets to be distributed among household members.
 
 **Asset / Liability**
 Activo y pasivo patrimonial respectivamente. Son los bloques base del Net Worth. Un `Asset` puede tener `AssetValuation` (valor en el tiempo), `InvestmentAssetEvent` (compras/ventas) o `LiquidityAssetEvent` (movimientos de liquidez).
 
 **LedgerAccount**
-Cuenta contable en el módulo de accounting. Representa una entidad financiera (cuenta bancaria, cartera de inversión, préstamo, etc.). Se vincula a `Asset` o `Liability` del net worth (relación auto-link/auto-create/needs_review).
+Accounting account in the accounting module. Represents a financial entity (bank account, investment portfolio, loan, etc.). Links to `Asset` or `Liability` of the net worth (auto-link/auto-create/needs_review relationship).
 
 **LedgerTransaction**
 Transacción contable. Agrupa una o más `LedgerEntry`. Representa un movimiento completo (ej: un gasto, una transferencia, una compra de inversión).
@@ -159,7 +159,7 @@ Sistema de diagnóstico financiero por áreas:
 - Fase 5: Independencia financiera (sin runtime aún)
 
 **auto-link / auto-create / needs_review**
-Estados de la relación entre un `LedgerAccount` y un `Asset`/`Liability`:
+Statuss de la relación entre un `LedgerAccount` y un `Asset`/`Liability`:
 - `auto-link`: el ledger account se vinculó automáticamente a una posición existente en net worth
 - `auto-create`: no existía posición, se creó automáticamente
 - `needs_review`: no se pudo vincular/crear sin ambigüedad, requiere revisión manual
