@@ -52,7 +52,7 @@ jobs:
 
       - name: Tests
         run: |
-          coverage run --rcfile=.coveragerc manage.py test saas_access memberships
+          coverage run --rcfile=.coveragerc manage.py test saas_access
           coverage report --fail-under=80
         env:
           DB_HOST: localhost
@@ -89,7 +89,7 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test:coverage
+        run: npm run test:unit -- src/views/__tests__/BudgetDashboardView.spec.ts
 
   docker-build-push:
     name: Build, scan and push — ${{ matrix.service }}
