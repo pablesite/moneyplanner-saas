@@ -2,7 +2,7 @@
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 
-**Last review:** 2026-05-20 | **SaaS Version:** 0.20.41 | **Core Version:** 0.23.5
+**Last review:** 2026-05-20 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
 
 ---
 
