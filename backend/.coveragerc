@@ -1,7 +1,8 @@
 [run]
 branch = True
 source =
-    memberships
+    saas
+    saas_access
 
 [report]
 skip_covered = True
