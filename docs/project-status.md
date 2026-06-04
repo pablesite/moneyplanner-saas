@@ -39,7 +39,7 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 
 | Phase | Type | Status | Description | Spec |
 |-------|------|--------|-------------|------|
-| 1 | Agent | ⚪ | Create SaaS production backend/frontend images. | `docs/tasks/production-deployment/phase-1-prod-images/backend.md` + `docs/tasks/production-deployment/phase-1-prod-images/frontend.md` |
+| 1 | Agent | ✅ | SaaS production backend/frontend images created and locally validated (`Dockerfile.prod`, Gunicorn entrypoint, nginx SPA image with same-origin API build args). | `docs/tasks/production-deployment/terminados/phase-1-prod-images/backend.md` + `docs/tasks/production-deployment/terminados/phase-1-prod-images/frontend.md` |
 | 2 | Agent | ⚪ | Create unified production compose with Traefik routing and no Core frontend. | `docs/tasks/production-deployment/phase-2-prod-compose-traefik/qa.md` |
 | 3 | Agent | ⚪ | Apply Django hardening and disable public registration for the private pilot. | `docs/tasks/production-deployment/phase-3-security-private-access/backend.md` |
 | 4 | Agent | ⚪ | Professionalize GitHub CI/CD for production image build, scan, push and SSH deploy. | `docs/tasks/production-deployment/phase-4-github-ci-cd/qa.md` |

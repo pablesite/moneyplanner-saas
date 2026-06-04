@@ -4,6 +4,8 @@ django-cors-headers==4.8.0
 drf-spectacular==0.28.0
 djangorestframework-simplejwt==5.5.1
 psycopg2-binary==2.9.10
+gunicorn==23.0.0
+whitenoise==6.11.0
 ruff==0.9.10
 mypy==1.15.0
 coverage==7.8.2

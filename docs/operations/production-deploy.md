@@ -23,6 +23,20 @@ Production services:
 Not deployed:
 1. `core_frontend` - reserved for the public/self-hosted Core product.
 
+## Phase 1 Production Images
+Phase 1 leaves the production image artifacts in-repo, ready for the unified compose of phase 2:
+
+1. SaaS backend image:
+   - `backend/Dockerfile.prod`
+   - `backend/entrypoint.prod.sh`
+   - Startup flow: `python manage.py migrate --noinput` -> `python manage.py collectstatic --noinput` -> `gunicorn saas.wsgi:application --bind 0.0.0.0:8000`
+   - The entrypoint does not run `seed`; first-deploy seeding stays controlled by production env/compose.
+2. SaaS frontend image:
+   - `frontend/Dockerfile.prod`
+   - `frontend/nginx.prod.conf`
+   - Multi-stage build: Node build stage -> nginx runtime stage
+   - Runtime serves only the static `dist/` bundle with SPA fallback and basic response headers.
+
 ## Routing Contract
 Public origin: `https://moneyplanner.codinglab.es`.
 
@@ -32,6 +46,8 @@ The SaaS frontend should be built with same-origin API bases:
 VITE_API_BASE_URL=""
 VITE_CORE_API_BASE_URL=""
 ```
+
+The SaaS frontend production bundle is expected to preserve empty-string base URLs, so both API clients resolve against the same public origin instead of falling back to localhost defaults.
 
 Traefik owns path routing:
 1. SaaS backend: `/api/auth`, `/api/admin`, `/api/schema`, `/api/docs`, `/admin`.
