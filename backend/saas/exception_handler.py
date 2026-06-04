@@ -20,6 +20,19 @@ class FeatureDisabled(APIException):
         self.detail = payload
 
 
+class RegistrationDisabled(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = "registration_disabled"
+    default_detail = "El registro publico esta deshabilitado."
+
+    def __init__(self, *, message: str, details: dict[str, object] | None = None) -> None:
+        super().__init__(detail=message)
+        payload: dict[str, object] = {"detail": message}
+        if details:
+            payload.update(details)
+        self.detail = payload
+
+
 def _normalize_error_details(detail):
     if isinstance(detail, dict):
         return {key: _normalize_error_details(value) for key, value in detail.items()}
@@ -32,7 +45,12 @@ def _normalize_error_details(detail):
 
 def _infer_error_code(status_code: int, exc) -> str:
     explicit_code = getattr(exc, "default_code", None)
-    if explicit_code in {"feature_disabled", "permission_denied", "subscription_blocked"}:
+    if explicit_code in {
+        "feature_disabled",
+        "permission_denied",
+        "registration_disabled",
+        "subscription_blocked",
+    }:
         return explicit_code
     if isinstance(exc, ValidationError) or status_code == status.HTTP_400_BAD_REQUEST:
         return "validation_error"

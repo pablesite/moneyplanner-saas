@@ -133,7 +133,24 @@ Production Django defaults:
 1. `DJANGO_DEBUG=0`
 2. `DJANGO_ALLOWED_HOSTS=moneyplanner.codinglab.es`
 3. `CORS_ALLOWED_ORIGINS=https://moneyplanner.codinglab.es`
-4. Secure cookie and proxy SSL settings must be enabled in the production hardening phase.
+4. `CSRF_TRUSTED_ORIGINS=https://moneyplanner.codinglab.es`
+5. `USE_X_FORWARDED_HOST=1`
+6. `SECURE_PROXY_SSL_HEADER_ENABLED=1`
+7. `SECURE_PROXY_SSL_HEADER_NAME=HTTP_X_FORWARDED_PROTO`
+8. `SECURE_PROXY_SSL_HEADER_VALUE=https`
+9. `SECURE_SSL_REDIRECT=1`
+10. `SESSION_COOKIE_SECURE=1`
+11. `CSRF_COOKIE_SECURE=1`
+12. `SECURE_HSTS_SECONDS=31536000`
+13. `SECURE_HSTS_INCLUDE_SUBDOMAINS=1`
+14. `SECURE_HSTS_PRELOAD=1`
+15. `SECURE_REFERRER_POLICY=strict-origin-when-cross-origin`
+
+Private access policy:
+1. Initial production access is admin-controlled only.
+2. `POST /api/auth/register/` must return `registration_disabled` while the private pilot lasts.
+3. New member onboarding must happen through `POST /api/admin/users/` or the controlled seed admin flow.
+4. Keep `SEED_CREATE_ADMIN=1` only for the first deploy or an explicit recovery operation.
 
 ## GitHub Deployment Contract
 GitHub Actions should:

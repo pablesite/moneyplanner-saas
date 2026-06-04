@@ -27,7 +27,7 @@ INSECURE_SECRET_VALUES = {
 }
 
 
-def validate_secret(name: str, value: str, *, min_length: int = 32) -> None:
+def validate_secret(name: str, value: str, *, min_length: int = 50) -> None:
     if DEBUG:
         return
     if value in INSECURE_SECRET_VALUES:
@@ -39,6 +39,27 @@ def validate_secret(name: str, value: str, *, min_length: int = 32) -> None:
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", DEFAULT_DEV_SECRET_KEY).strip()
 DEBUG = env_bool("DJANGO_DEBUG", "0")
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
+USE_X_FORWARDED_HOST = env_bool("USE_X_FORWARDED_HOST", "0" if DEBUG else "1")
+
+SECURE_PROXY_SSL_HEADER = None
+if env_bool("SECURE_PROXY_SSL_HEADER_ENABLED", "0" if DEBUG else "1"):
+    SECURE_PROXY_SSL_HEADER = (
+        os.getenv("SECURE_PROXY_SSL_HEADER_NAME", "HTTP_X_FORWARDED_PROTO").strip(),
+        os.getenv("SECURE_PROXY_SSL_HEADER_VALUE", "https").strip(),
+    )
+
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", "0" if DEBUG else "1")
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", "0" if DEBUG else "1")
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", "0" if DEBUG else "1")
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0" if DEBUG else "31536000"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", "0" if DEBUG else "1")
+SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", "0" if DEBUG else "1")
+SECURE_CONTENT_TYPE_NOSNIFF = env_bool("SECURE_CONTENT_TYPE_NOSNIFF", "1")
+SECURE_REFERRER_POLICY = os.getenv(
+    "SECURE_REFERRER_POLICY",
+    "same-origin" if DEBUG else "strict-origin-when-cross-origin",
+).strip()
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -158,6 +179,9 @@ SIMPLE_JWT["SIGNING_KEY"] = JWT_SIGNING_KEY
 
 # Roadmap 03 flags: auth autonomy + optional account linking.
 AUTH_MODE_SAAS_LOCAL = env_bool("AUTH_MODE_SAAS_LOCAL", "1")
+SAAS_PUBLIC_REGISTRATION_ENABLED = env_bool(
+    "SAAS_PUBLIC_REGISTRATION_ENABLED", "1" if DEBUG else "0"
+)
 ACCOUNT_LINKING_ENABLED = env_bool("ACCOUNT_LINKING_ENABLED", "0")
 CORE_LINKING_SHARED_SECRET = os.getenv("CORE_LINKING_SHARED_SECRET", "").strip()
 CORE_LINKING_TOKEN_MAX_AGE_SECONDS = int(os.getenv("CORE_LINKING_TOKEN_MAX_AGE_SECONDS", "300"))

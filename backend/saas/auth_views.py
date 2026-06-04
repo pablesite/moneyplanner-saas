@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -26,6 +27,7 @@ from .auth_services import (
     build_me_payload,
     register_saas_user,
 )
+from .exception_handler import RegistrationDisabled
 
 __all__ = [
     "SaasCoreAccountLinkAPIView",
@@ -77,6 +79,11 @@ class SaasRegisterAPIView(APIView):
     throttle_scope = "auth_register"
 
     def post(self, request):
+        if not settings.SAAS_PUBLIC_REGISTRATION_ENABLED:
+            raise RegistrationDisabled(
+                message="El registro publico esta deshabilitado para este despliegue.",
+                details={"public_registration_enabled": False},
+            )
         serializer = SaasRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = register_saas_user(**serializer.validated_data)

@@ -41,7 +41,7 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 |-------|------|--------|-------------|------|
 | 1 | Agent | ✅ | SaaS production backend/frontend images created and locally validated (`Dockerfile.prod`, Gunicorn entrypoint, nginx SPA image with same-origin API build args). | `docs/tasks/production-deployment/terminados/phase-1-prod-images/backend.md` + `docs/tasks/production-deployment/terminados/phase-1-prod-images/frontend.md` |
 | 2 | Agent | 🔄 | Root `docker-compose.prod.yml` implemented and locally validated with Traefik labels, shared same-origin routing, and no Core frontend. External DNS/tunnel validation for `moneyplanner.codinglab.es` is still pending. | `docs/tasks/production-deployment/phase-2-prod-compose-traefik/qa.md` |
-| 3 | Agent | ⚪ | Apply Django hardening and disable public registration for the private pilot. | `docs/tasks/production-deployment/phase-3-security-private-access/backend.md` |
+| 3 | Agent | 🔄 | Django hardening and private-access controls are implemented and locally validated in SaaS/Core backends; external production smoke is still pending. | `docs/tasks/production-deployment/phase-3-security-private-access/backend.md` |
 | 4 | Agent | ⚪ | Professionalize GitHub CI/CD for production image build, scan, push and SSH deploy. | `docs/tasks/production-deployment/phase-4-github-ci-cd/qa.md` |
 | 5 | Agent | ⚪ | Complete production runbook and external smoke validation. | `docs/tasks/production-deployment/phase-5-production-runbook-smoke/qa.md` |
 

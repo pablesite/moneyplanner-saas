@@ -51,6 +51,9 @@ def build_auth_mode_payload() -> dict[str, object]:
         "auth_mode": "saas_local",
         "auth_mode_enabled": bool(getattr(settings, "AUTH_MODE_SAAS_LOCAL", True)),
         "account_linking_enabled": bool(getattr(settings, "ACCOUNT_LINKING_ENABLED", False)),
+        "public_registration_enabled": bool(
+            getattr(settings, "SAAS_PUBLIC_REGISTRATION_ENABLED", True)
+        ),
         "transition_mode": transition_mode,
         "session_compat_enabled": session_compat,
         "exit_criteria": exit_criteria,

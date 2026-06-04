@@ -147,11 +147,28 @@ class SaasAuthApiTests(APITestCase):
         self.assertEqual(response.data["code"], "validation_error")
         self.assertIn("password", response.data["details"])
 
+    @override_settings(SAAS_PUBLIC_REGISTRATION_ENABLED=False)
+    def test_register_returns_controlled_error_when_public_registration_disabled(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "blocked_user",
+                "password": "pass12345",
+                "email": "blocked@example.com",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["code"], "registration_disabled")
+        self.assertEqual(response.data["details"]["public_registration_enabled"], False)
+        self.assertFalse(get_user_model().objects.filter(username="blocked_user").exists())
+
     def test_auth_mode_endpoint_reports_saas_local_mode(self):
         response = self.client.get("/api/auth/mode/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["auth_mode"], "saas_local")
         self.assertIn("account_linking_enabled", response.data)
+        self.assertIn("public_registration_enabled", response.data)
         self.assertIn("exit_ready", response.data)
 
     def test_mode_endpoint_is_public(self):
@@ -324,6 +341,24 @@ class SaasAuthErrorShapeContractTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assert_canonical_error(response, code="validation_error", detail_keys={"email"})
+
+    @override_settings(SAAS_PUBLIC_REGISTRATION_ENABLED=False)
+    def test_register_disabled_returns_canonical_shape(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "blocked-contract-user",
+                "password": "pass12345",
+                "email": "blocked-contract@example.com",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assert_canonical_error(
+            response,
+            code="registration_disabled",
+            detail_keys={"public_registration_enabled"},
+        )
 
     def test_unauthenticated_me_returns_canonical_shape(self):
         response = self.client.get("/api/auth/me/")

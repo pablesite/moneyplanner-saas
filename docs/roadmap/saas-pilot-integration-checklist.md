@@ -12,6 +12,7 @@ Track the minimum integration and operational readiness needed to run the SaaS p
 6. Production target is `https://moneyplanner.codinglab.es`.
 7. Network path is Cloudflare Tunnel -> Traefik -> Docker services attached to external `proxy`.
 8. Initial production access is private: public registration is intentionally disabled and users are created by SaaS admins.
+9. Disabled public registration is an expected behavior in the pilot: `/api/auth/register/` should return a controlled `registration_disabled` error instead of onboarding a user.
 
 ## Pilot Readiness Checklist
 1. SaaS admin-created onboarding and login work in the real deployment [ ]

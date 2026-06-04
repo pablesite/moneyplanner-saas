@@ -10,10 +10,10 @@ Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik r
 |--------|-------|------|------|----------|-------------|
 | `POST` | `/api/auth/token/` | `SaasTokenObtainPairView` | None | `auth_login` | Login. Returns `access` and `refresh` JWT tokens. |
 | `POST` | `/api/auth/refresh/` | `SaasTokenRefreshView` | None | `auth_refresh` | Refreshes the `access` token using `refresh`. |
-| `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | None | `auth_register` | Registers a new user when public registration is enabled. Initial private production must set `SAAS_PUBLIC_REGISTRATION_ENABLED=0`; admin-created users are the onboarding path. |
+| `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | None | `auth_register` | Registers a new user when public registration is enabled. Initial private production must set `SAAS_PUBLIC_REGISTRATION_ENABLED=0`; in that mode the endpoint returns canonical error `{code: "registration_disabled", ...}` and admin-created users are the onboarding path. |
 | `GET` | `/api/auth/me/` | `SaasMeAPIView` | Bearer | `auth_me` | Returns authenticated user data: id, username, email, role, subscription_status, premium_enabled, account_link. |
 | `GET` | `/api/auth/subscription/` | `SaasSubscriptionAPIView` | Bearer | `auth_subscription` | Returns user subscription status. |
-| `GET` | `/api/auth/mode/` | `SaasAuthModeAPIView` | None | — | Returns auth mode config (`saas_local`, `account_linking_enabled`, `transition_mode`). |
+| `GET` | `/api/auth/mode/` | `SaasAuthModeAPIView` | None | — | Returns auth mode config (`saas_local`, `account_linking_enabled`, `public_registration_enabled`, `transition_mode`). |
 | `GET` | `/api/auth/ops/metrics/` | `SaasAuthOpsMetricsAPIView` | Bearer + Admin | `auth_ops_metrics` | Ops metrics: user totals, subscriptions, links, RBAC. `saas_admin` only. |
 | `GET` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Returns active Core link for the user. 204 if missing. Requires `ACCOUNT_LINKING_ENABLED=True`. |
 | `POST` | `/api/auth/core-link/` | `SaasCoreAccountLinkAPIView` | Bearer | `auth_core_link` | Creates or updates manual Core link (`core_user_ref`, `core_username`, `core_email`). |
