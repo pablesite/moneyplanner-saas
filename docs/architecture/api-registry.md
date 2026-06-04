@@ -2,7 +2,7 @@
 
 ## SaaS Backend APIs (`http://localhost:8001`)
 
-Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik routes SaaS backend paths from the same origin to the SaaS backend service.
+Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik routes SaaS backend paths from the same origin to the SaaS backend service, except the Core-owned auth exceptions documented below.
 
 ### Auth — `/api/auth/`
 
@@ -167,6 +167,7 @@ These endpoints are canonically defined in `core/docs/`. Frontend domains that c
 |-------------|-----------|-------|
 | `/` and app routes | SaaS frontend | SPA fallback. |
 | `/api/auth/` | SaaS backend | Login, refresh, `/me`, subscription, registration policy. |
+| `/api/auth/settings/`, `/api/auth/link-token/` | Core backend | Higher-priority Core auth exceptions needed by product flows and account-linking support. |
 | `/api/admin/` | SaaS backend | SaaS admin operations. |
 | `/api/schema/`, `/api/docs/` | SaaS backend | SaaS API schema/docs. |
 | `/admin/` | SaaS backend | Django admin for SaaS. |

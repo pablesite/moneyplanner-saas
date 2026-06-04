@@ -1,0 +1,187 @@
+name: moneyplanner-prod
+
+services:
+  saas_db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SAAS_POSTGRES_DB:-saas}
+      POSTGRES_USER: ${SAAS_POSTGRES_USER:-saas}
+      POSTGRES_PASSWORD: ${SAAS_POSTGRES_PASSWORD:?SAAS_POSTGRES_PASSWORD is required}
+    volumes:
+      - ${MONEYPLANNER_DATA_ROOT:-/datos/docker/data/moneyplanner}/saas-db:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${SAAS_POSTGRES_USER:-saas} -d ${SAAS_POSTGRES_DB:-saas}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - moneyplanner-internal
+
+  saas_backend:
+    image: ${SAAS_BACKEND_IMAGE:-ghcr.io/pablesite/moneyplanner-saas-backend:latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${SAAS_DJANGO_SECRET_KEY:?SAAS_DJANGO_SECRET_KEY is required}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-${MONEYPLANNER_DOMAIN}}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://${MONEYPLANNER_DOMAIN}}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+      JWT_ISSUER: ${SAAS_JWT_ISSUER:-moneyplanner-saas}
+      JWT_AUDIENCE: ${SAAS_JWT_AUDIENCE:-moneyplanner-saas-api}
+      DB_NAME: ${SAAS_POSTGRES_DB:-saas}
+      DB_USER: ${SAAS_POSTGRES_USER:-saas}
+      DB_PASSWORD: ${SAAS_POSTGRES_PASSWORD:?SAAS_POSTGRES_PASSWORD is required}
+      DB_HOST: saas_db
+      DB_PORT: "5432"
+      CORE_API_BASE_URL: http://core_backend:8000
+      CORE_BOOTSTRAP_TIMEOUT_SECONDS: ${CORE_BOOTSTRAP_TIMEOUT_SECONDS:-5}
+      SAAS_PUBLIC_REGISTRATION_ENABLED: ${SAAS_PUBLIC_REGISTRATION_ENABLED:-0}
+      ACCOUNT_LINKING_ENABLED: ${ACCOUNT_LINKING_ENABLED:-0}
+      CORE_LINKING_SHARED_SECRET: ${CORE_LINKING_SHARED_SECRET:-}
+      CORE_LINKING_TOKEN_MAX_AGE_SECONDS: ${CORE_LINKING_TOKEN_MAX_AGE_SECONDS:-300}
+      SEED_CREATE_ADMIN: ${SEED_CREATE_ADMIN:-0}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin}
+      SEED_FORCE_ADMIN_PASSWORD: ${SEED_FORCE_ADMIN_PASSWORD:-0}
+      GUNICORN_WORKERS: ${SAAS_GUNICORN_WORKERS:-2}
+      GUNICORN_TIMEOUT: ${SAAS_GUNICORN_TIMEOUT:-120}
+    depends_on:
+      saas_db:
+        condition: service_healthy
+      core_db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.moneyplanner-saas-backend.loadbalancer.server.port=8000
+      - traefik.http.routers.moneyplanner-saas-backend.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/auth`) || PathPrefix(`/api/admin`) || PathPrefix(`/api/schema`) || PathPrefix(`/api/docs`) || PathPrefix(`/admin`))
+      - traefik.http.routers.moneyplanner-saas-backend.priority=100
+    networks:
+      - moneyplanner-internal
+      - proxy
+
+  saas_frontend:
+    image: ${SAAS_FRONTEND_IMAGE:-ghcr.io/pablesite/moneyplanner-saas-frontend:latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: ""
+        VITE_CORE_API_BASE_URL: ""
+    restart: unless-stopped
+    depends_on:
+      - saas_backend
+      - core_backend
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.moneyplanner-saas-frontend.loadbalancer.server.port=80
+      - traefik.http.routers.moneyplanner-saas-frontend.rule=Host(`${MONEYPLANNER_DOMAIN}`)
+      - traefik.http.routers.moneyplanner-saas-frontend.priority=1
+    networks:
+      - moneyplanner-internal
+      - proxy
+
+  core_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${CORE_POSTGRES_DB:-core}
+      POSTGRES_USER: ${CORE_POSTGRES_USER:-core}
+      POSTGRES_PASSWORD: ${CORE_POSTGRES_PASSWORD:?CORE_POSTGRES_PASSWORD is required}
+    volumes:
+      - ${MONEYPLANNER_DATA_ROOT:-/datos/docker/data/moneyplanner}/core-db:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${CORE_POSTGRES_USER:-core} -d ${CORE_POSTGRES_DB:-core}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - moneyplanner-internal
+
+  core_backend:
+    image: ${CORE_BACKEND_IMAGE:-ghcr.io/pablesite/moneyplanner-core-backend:latest}
+    build:
+      context: ./core/backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${CORE_DJANGO_SECRET_KEY:?CORE_DJANGO_SECRET_KEY is required}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-${MONEYPLANNER_DOMAIN}}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://${MONEYPLANNER_DOMAIN}}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+      DB_NAME: ${CORE_POSTGRES_DB:-core}
+      DB_USER: ${CORE_POSTGRES_USER:-core}
+      DB_PASSWORD: ${CORE_POSTGRES_PASSWORD:?CORE_POSTGRES_PASSWORD is required}
+      DB_HOST: core_db
+      DB_PORT: "5432"
+      AUTH_ACCEPT_EXTERNAL_TOKENS: ${AUTH_ACCEPT_EXTERNAL_TOKENS:-1}
+      EXTERNAL_JWT_ISSUER: ${SAAS_JWT_ISSUER:-moneyplanner-saas}
+      EXTERNAL_JWT_AUDIENCE: ${SAAS_JWT_AUDIENCE:-moneyplanner-saas-api}
+      EXTERNAL_JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+      GUNICORN_WORKERS: ${CORE_GUNICORN_WORKERS:-2}
+      GUNICORN_TIMEOUT: ${CORE_GUNICORN_TIMEOUT:-120}
+    depends_on:
+      core_db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.moneyplanner-core-backend.loadbalancer.server.port=8000
+      - traefik.http.routers.moneyplanner-core-backend-auth.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/auth/settings`) || PathPrefix(`/api/auth/link-token`))
+      - traefik.http.routers.moneyplanner-core-backend-auth.priority=120
+      - traefik.http.routers.moneyplanner-core-backend.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/net-worth`) || PathPrefix(`/api/budget`) || PathPrefix(`/api/accounting`) || PathPrefix(`/api/core`) || PathPrefix(`/api/family-members`) || PathPrefix(`/api/ownerships`) || PathPrefix(`/api/ownership-links`))
+      - traefik.http.routers.moneyplanner-core-backend.priority=110
+    networks:
+      - moneyplanner-internal
+      - proxy
+
+  core_market_data_sync:
+    image: ${CORE_BACKEND_IMAGE:-ghcr.io/pablesite/moneyplanner-core-backend:latest}
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${CORE_DJANGO_SECRET_KEY:?CORE_DJANGO_SECRET_KEY is required}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
+      DB_NAME: ${CORE_POSTGRES_DB:-core}
+      DB_USER: ${CORE_POSTGRES_USER:-core}
+      DB_PASSWORD: ${CORE_POSTGRES_PASSWORD:?CORE_POSTGRES_PASSWORD is required}
+      DB_HOST: core_db
+      DB_PORT: "5432"
+      FX_SYNC_ENABLED: ${FX_SYNC_ENABLED:-1}
+      FX_SYNC_INTERVAL_SECONDS: ${FX_SYNC_INTERVAL_SECONDS:-86400}
+    depends_on:
+      core_db:
+        condition: service_healthy
+    entrypoint: []
+    command: >
+      sh -c "
+      python manage.py migrate --noinput &&
+      while true; do
+        if [ \"$${FX_SYNC_ENABLED:-1}\" = \"1\" ]; then
+          python manage.py sync_market_data --datasets fx inflation --mode reconcile || true;
+        fi;
+        sleep $${FX_SYNC_INTERVAL_SECONDS:-86400};
+      done
+      "
+    networks:
+      - moneyplanner-internal
+
+networks:
+  moneyplanner-internal:
+    name: moneyplanner-internal
+  proxy:
+    external: true

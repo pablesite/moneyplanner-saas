@@ -37,6 +37,27 @@ Phase 1 leaves the production image artifacts in-repo, ready for the unified com
    - Multi-stage build: Node build stage -> nginx runtime stage
    - Runtime serves only the static `dist/` bundle with SPA fallback and basic response headers.
 
+## Phase 2 Unified Production Compose
+Root production orchestration now lives in `docker-compose.prod.yml`.
+
+Networks:
+1. `moneyplanner-internal` - private network for app-to-app and DB traffic.
+2. `proxy` - external Traefik network shared with the reverse proxy on the server.
+
+Persistent bind mounts:
+1. `${MONEYPLANNER_DATA_ROOT:-/datos/docker/data/moneyplanner}/saas-db`
+2. `${MONEYPLANNER_DATA_ROOT:-/datos/docker/data/moneyplanner}/core-db`
+
+Compose services:
+1. `saas_frontend` - SaaS nginx static app, attached to `proxy`.
+2. `saas_backend` - SaaS Django/Gunicorn API, attached to `proxy` and `moneyplanner-internal`.
+3. `saas_db` - PostgreSQL for SaaS data.
+4. `core_backend` - Core Django/Gunicorn API, attached to `proxy` and `moneyplanner-internal`.
+5. `core_db` - PostgreSQL for Core data.
+6. `core_market_data_sync` - Core market-data worker.
+
+The compose file intentionally excludes `core_frontend`.
+
 ## Routing Contract
 Public origin: `https://moneyplanner.codinglab.es`.
 
@@ -51,8 +72,9 @@ The SaaS frontend production bundle is expected to preserve empty-string base UR
 
 Traefik owns path routing:
 1. SaaS backend: `/api/auth`, `/api/admin`, `/api/schema`, `/api/docs`, `/admin`.
-2. Core backend: `/api/net-worth`, `/api/budget`, `/api/accounting`, `/api/core`, `/api/family-members`, `/api/ownerships`, `/api/ownership-links`.
-3. SaaS frontend: all remaining paths for SPA fallback.
+2. Core backend auth subpaths with higher priority: `/api/auth/settings`, `/api/auth/link-token`.
+3. Core backend product paths: `/api/net-worth`, `/api/budget`, `/api/accounting`, `/api/core`, `/api/family-members`, `/api/ownerships`, `/api/ownership-links`.
+4. SaaS frontend: all remaining paths for SPA fallback.
 
 Use explicit Traefik router priorities so API routes win over the frontend fallback.
 
@@ -101,6 +123,12 @@ Optional linking:
 1. `ACCOUNT_LINKING_ENABLED=0` for initial private pilot unless self-hosted-to-cloud linking is actively tested.
 2. `CORE_LINKING_SHARED_SECRET` only when account linking is enabled.
 
+Core acceptance of SaaS JWTs:
+1. `AUTH_ACCEPT_EXTERNAL_TOKENS=1`
+2. `EXTERNAL_JWT_ISSUER=moneyplanner-saas`
+3. `EXTERNAL_JWT_AUDIENCE=moneyplanner-saas-api`
+4. `EXTERNAL_JWT_SIGNING_KEY=${JWT_SIGNING_KEY}`
+
 Production Django defaults:
 1. `DJANGO_DEBUG=0`
 2. `DJANGO_ALLOWED_HOSTS=moneyplanner.codinglab.es`
@@ -137,6 +165,13 @@ Use this before CI/CD is trusted:
 ```bash
 cd /datos/docker/apps/moneyplanner
 docker compose -f docker-compose.prod.yml --env-file .env.prod config
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+```
+
+Once GHCR publishing is available in phase 4, the same file should also support pull-based deploys:
+
+```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod pull
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps

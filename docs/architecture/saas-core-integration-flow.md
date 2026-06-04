@@ -124,8 +124,9 @@ The public URL is `https://moneyplanner.codinglab.es`. Traffic reaches the serve
 
 Traefik path routing owns the split:
 1. SaaS backend: `/api/auth`, `/api/admin`, `/api/schema`, `/api/docs`, `/admin`.
-2. Core backend: `/api/net-worth`, `/api/budget`, `/api/accounting`, `/api/core`, `/api/family-members`, `/api/ownerships`, `/api/ownership-links`.
-3. SaaS frontend: all remaining paths.
+2. Core backend auth exceptions with higher priority: `/api/auth/settings`, `/api/auth/link-token`.
+3. Core backend product paths: `/api/net-worth`, `/api/budget`, `/api/accounting`, `/api/core`, `/api/family-members`, `/api/ownerships`, `/api/ownership-links`.
+4. SaaS frontend: all remaining paths.
 
 The Core frontend is not deployed as part of SaaS production.
 
@@ -137,6 +138,10 @@ The Core frontend is not deployed as part of SaaS production.
 |----------|-------|-------------|
 | `JWT_SIGNING_KEY` | SaaS backend + Core backend | **Debe ser igual** en ambos stacks |
 | `CORE_API_BASE_URL` | SaaS backend | URL del Core backend (server-to-server, ej: `http://core-backend:8000`) |
+| `AUTH_ACCEPT_EXTERNAL_TOKENS` | Core backend | Must be `1` in SaaS production so Core accepts SaaS-issued JWTs |
+| `EXTERNAL_JWT_ISSUER` | Core backend | Must match SaaS JWT issuer (`moneyplanner-saas` by default) |
+| `EXTERNAL_JWT_AUDIENCE` | Core backend | Must match SaaS JWT audience (`moneyplanner-saas-api` by default) |
+| `EXTERNAL_JWT_SIGNING_KEY` | Core backend | Should match `JWT_SIGNING_KEY` for SaaS-issued JWT validation |
 | `CORE_BOOTSTRAP_TIMEOUT_SECONDS` | SaaS backend | Timeout de la llamada de bootstrap (default: 5s) |
 | `ACCOUNT_LINKING_ENABLED` | SaaS backend | Habilita endpoints de core-link (default: False) |
 | `CORE_LINKING_SHARED_SECRET` | SaaS backend | Secreto para tokens de linking via token |
@@ -155,3 +160,4 @@ The Core frontend is not deployed as part of SaaS production.
 | 401 en llamadas a Core desde frontend | Tokens distintos (`JWT_SIGNING_KEY` diferente) | Verificar que ambos stacks usen el mismo `JWT_SIGNING_KEY` |
 | Token de linking rechazado | `CORE_LINKING_SHARED_SECRET` no coincide o token expirado | Verificar secret, generar nuevo token |
 | Root URL works but API returns the SPA | Traefik path rule or priority mismatch | Review production labels and route priorities |
+| Net Worth or portable-data settings fail only in production | `/api/auth/settings/` routed to SaaS instead of Core | Review the higher-priority Core auth exception router |
