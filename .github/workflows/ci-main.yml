@@ -158,6 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [gitleaks, deps, backend-quality, frontend-quality]
     permissions:
+      actions: read
       contents: read
       packages: write
       security-events: write
@@ -228,7 +229,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-${{ matrix.service }}.sarif
           category: trivy-${{ matrix.service }}
