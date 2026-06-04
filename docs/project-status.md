@@ -2,7 +2,7 @@
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 
-**Last review:** 2026-05-20 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
+**Last review:** 2026-06-04 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
 
 ---
 
@@ -16,8 +16,8 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 
 | Area | Priority | Status | Description |
 |------|----------|--------|-------------|
-| Production deployment | High | 🔄 | Define final deployment strategy and environment. Not started: design first, then implement. |
-| Production secrets management | High | ⚪ | Sensitive production variables (secret manager, cloud provider variables). Decide together with deployment design. |
+| Production deployment | High | 🔄 | Planned as phased module `docs/tasks/production-deployment/`: prod images, unified compose, hardening, CI/CD, runbook and smoke. Target: Cloudflare Tunnel -> Traefik -> Docker services on `proxy`, `https://moneyplanner.codinglab.es`. |
+| Production secrets management | High | 🔄 | Production `.env.prod` stays on the server, outside git. Secrets and required variables are documented in `docs/operations/production-deploy.md`; implementation remains pending. |
 | Trial user system | High | ⚪ | Create root user and controlled access flow for early adopters. |
 | Admin UI | Medium | ⚪ | Admin operations are backend-only for now; UI is still pending. |
 | Dynamic capabilities (from backend) | Medium | ⚪ | Currently hardcoded in frontend; connect to backend capability source. |
@@ -28,10 +28,22 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 | SaaS backend refactor — Phase 3 | Medium | ✅ | Canonical exception handler complete: `{code, message, details}` contract in all endpoints with error-shape contract tests. Spec: `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md` |
 | SaaS auth review | High | ⚪ | Review login, permissions, RBAC, and real flows (register, session, expiration). |
 | Security audit | High | ⚪ | SaaS backend vulnerabilities, dependency CVEs, auth/permissions/input validation. |
-| CI/CD deployment | High | ⚪ | Automatic production deployment pipeline (build, test, deploy). Complements cloud infrastructure; design together with deployment. |
+| CI/CD deployment | High | 🔄 | Planned in `docs/tasks/production-deployment/phase-4-github-ci-cd/qa.md`: quality, security scans, production image push to GHCR and SSH deploy. |
 | PWA-ready frontend | Medium | ⚪ | Adapt frontend to Progressive Web App as a first step toward mobile. Prerequisite before native apps. |
 | Pre-launch validation | High | ⚪ | Early-adopter testing after v1 consolidation; gather UX clarity and value feedback before MVP. |
 | Open source readiness (Core repo) | Medium | ⚪ | License (EUPL or alternative), contribution guide, technical docs, deployment guide. |
+
+---
+
+## SaaS Production Deployment Tasks
+
+| Phase | Type | Status | Description | Spec |
+|-------|------|--------|-------------|------|
+| 1 | Agent | ⚪ | Create SaaS production backend/frontend images. | `docs/tasks/production-deployment/phase-1-prod-images/backend.md` + `docs/tasks/production-deployment/phase-1-prod-images/frontend.md` |
+| 2 | Agent | ⚪ | Create unified production compose with Traefik routing and no Core frontend. | `docs/tasks/production-deployment/phase-2-prod-compose-traefik/qa.md` |
+| 3 | Agent | ⚪ | Apply Django hardening and disable public registration for the private pilot. | `docs/tasks/production-deployment/phase-3-security-private-access/backend.md` |
+| 4 | Agent | ⚪ | Professionalize GitHub CI/CD for production image build, scan, push and SSH deploy. | `docs/tasks/production-deployment/phase-4-github-ci-cd/qa.md` |
+| 5 | Agent | ⚪ | Complete production runbook and external smoke validation. | `docs/tasks/production-deployment/phase-5-production-runbook-smoke/qa.md` |
 
 ---
 
@@ -129,10 +141,10 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 | Local Docker Compose (SaaS) | ✅ Implemented | Root `docker-compose.yml` |
 | Local Docker Compose (Core) | ✅ Implemented | `core/docker-compose.yml` |
 | Pre-commit hooks (ruff, eslint, prettier) | ✅ Implemented | `.pre-commit-config.yaml` |
-| SaaS CI quality checks | ✅ Implemented | `.github/workflows/quality-saas.yml` |
-| Cloud deployment | 🔄 In progress | Pilot goal |
-| Support runbook | 🔄 In progress | Pending completion for pilot |
-| End-to-end smoke test | 🔄 In progress | See `docs/roadmap/saas-pilot-integration-checklist.md` |
+| SaaS CI quality checks | ✅ Implemented | `.github/workflows/quality.yml` |
+| Cloud deployment | 🔄 In progress | Planned for private SaaS at `https://moneyplanner.codinglab.es`; see `docs/operations/production-deploy.md` and production deployment task specs. |
+| Support runbook | 🔄 In progress | Draft runbook created at `docs/operations/production-deploy.md`; finalization tracked in phase 5. |
+| End-to-end smoke test | 🔄 In progress | Production smoke planned in `docs/tasks/production-deployment/phase-5-production-runbook-smoke/qa.md`; see `docs/roadmap/saas-pilot-integration-checklist.md`. |
 
 ---
 

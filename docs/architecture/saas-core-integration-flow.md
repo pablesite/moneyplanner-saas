@@ -111,6 +111,24 @@ El frontend mantiene dos clientes Axios (`lib/api.ts`):
 
 Ambos clientes tienen instalados los mismos interceptores de auth (request: inyecta Bearer, response: gestiona 401 y refresh). El mismo token sirve para ambos porque comparten `JWT_SIGNING_KEY`.
 
+### Production routing
+
+In the private SaaS production deployment, both frontend clients use the same public origin:
+
+```bash
+VITE_API_BASE_URL=""
+VITE_CORE_API_BASE_URL=""
+```
+
+The public URL is `https://moneyplanner.codinglab.es`. Traffic reaches the server through Cloudflare Tunnel, then Traefik, then Docker services attached to the external `proxy` network.
+
+Traefik path routing owns the split:
+1. SaaS backend: `/api/auth`, `/api/admin`, `/api/schema`, `/api/docs`, `/admin`.
+2. Core backend: `/api/net-worth`, `/api/budget`, `/api/accounting`, `/api/core`, `/api/family-members`, `/api/ownerships`, `/api/ownership-links`.
+3. SaaS frontend: all remaining paths.
+
+The Core frontend is not deployed as part of SaaS production.
+
 ---
 
 ## 5. Variables de entorno relevantes
@@ -124,6 +142,7 @@ Ambos clientes tienen instalados los mismos interceptores de auth (request: inye
 | `CORE_LINKING_SHARED_SECRET` | SaaS backend | Secreto para tokens de linking via token |
 | `CORE_LINKING_TOKEN_MAX_AGE_SECONDS` | SaaS backend | TTL de los tokens de linking (default: 300s) |
 | `VITE_CORE_API_BASE_URL` | SaaS frontend | URL del Core backend desde el navegador |
+| `SAAS_PUBLIC_REGISTRATION_ENABLED` | SaaS backend | Must be `0` for the initial private production pilot |
 
 ---
 
@@ -135,3 +154,4 @@ Ambos clientes tienen instalados los mismos interceptores de auth (request: inye
 | Frontend does not load asset/movement data | `VITE_CORE_API_BASE_URL` wrong or CORS | Review `.env` of the SaaS frontend, review CORS in Core |
 | 401 en llamadas a Core desde frontend | Tokens distintos (`JWT_SIGNING_KEY` diferente) | Verificar que ambos stacks usen el mismo `JWT_SIGNING_KEY` |
 | Token de linking rechazado | `CORE_LINKING_SHARED_SECRET` no coincide o token expirado | Verificar secret, generar nuevo token |
+| Root URL works but API returns the SPA | Traefik path rule or priority mismatch | Review production labels and route priorities |

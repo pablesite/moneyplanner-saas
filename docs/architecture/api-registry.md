@@ -2,13 +2,15 @@
 
 ## SaaS Backend APIs (`http://localhost:8001`)
 
+Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik routes SaaS backend paths from the same origin to the SaaS backend service.
+
 ### Auth — `/api/auth/`
 
 | Method | Route | View | Auth | Throttle | Description |
 |--------|-------|------|------|----------|-------------|
 | `POST` | `/api/auth/token/` | `SaasTokenObtainPairView` | None | `auth_login` | Login. Returns `access` and `refresh` JWT tokens. |
 | `POST` | `/api/auth/refresh/` | `SaasTokenRefreshView` | None | `auth_refresh` | Refreshes the `access` token using `refresh`. |
-| `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | None | `auth_register` | Registers a new user. Creates subscription (trial), profile (`saas_member`), and triggers Core bootstrap. |
+| `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | None | `auth_register` | Registers a new user when public registration is enabled. Initial private production must set `SAAS_PUBLIC_REGISTRATION_ENABLED=0`; admin-created users are the onboarding path. |
 | `GET` | `/api/auth/me/` | `SaasMeAPIView` | Bearer | `auth_me` | Returns authenticated user data: id, username, email, role, subscription_status, premium_enabled, account_link. |
 | `GET` | `/api/auth/subscription/` | `SaasSubscriptionAPIView` | Bearer | `auth_subscription` | Returns user subscription status. |
 | `GET` | `/api/auth/mode/` | `SaasAuthModeAPIView` | None | — | Returns auth mode config (`saas_local`, `account_linking_enabled`, `transition_mode`). |
@@ -41,6 +43,8 @@ All endpoints require `Bearer` + `saas_admin` role. Throttle: `saas_admin_api`.
 ## Core Backend APIs (`http://localhost:8000`)
 
 Core exposes its own complete API. The SaaS frontend consumes it directly using the same JWT.
+
+Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik routes Core product API paths from the same origin to the Core backend service. The Core frontend is not deployed for the SaaS product.
 
 ### Auth — `/api/auth/`
 | Method | Route | Description |
@@ -127,6 +131,8 @@ SaaS calls Core directly server-to-server using a user-scoped JWT (`AccessToken.
 
 SaaS frontend accesses Core directly via `coreApi` (Axios with `VITE_CORE_API_BASE_URL`). The same SaaS session JWT is used to authenticate against Core.
 
+In production, `VITE_CORE_API_BASE_URL` is empty so `coreApi` uses the same browser origin and Traefik handles the path split.
+
 These endpoints are canonically defined in `core/docs/`. Frontend domains that consume them:
 
 | Domain | Axios client | Core APIs consumed |
@@ -153,3 +159,19 @@ These endpoints are canonically defined in `core/docs/`. Frontend domains that c
 | `CORE_LINKING_SHARED_SECRET` | ✓ | — | Secret for linking tokens |
 | `VITE_API_BASE_URL` | — | ✓ | SaaS backend URL (default: `http://localhost:8001`) |
 | `VITE_CORE_API_BASE_URL` | — | ✓ | Browser Core backend URL (default: `http://localhost:8000`) |
+| `SAAS_PUBLIC_REGISTRATION_ENABLED` | ✓ | — | Disable public registration for private production (`0`) |
+
+## Production route ownership
+
+| Public path | Routed to | Notes |
+|-------------|-----------|-------|
+| `/` and app routes | SaaS frontend | SPA fallback. |
+| `/api/auth/` | SaaS backend | Login, refresh, `/me`, subscription, registration policy. |
+| `/api/admin/` | SaaS backend | SaaS admin operations. |
+| `/api/schema/`, `/api/docs/` | SaaS backend | SaaS API schema/docs. |
+| `/admin/` | SaaS backend | Django admin for SaaS. |
+| `/api/net-worth/` | Core backend | Core product API. |
+| `/api/budget/` | Core backend | Core product API. |
+| `/api/accounting/` | Core backend | Core product API. |
+| `/api/core/` | Core backend | Auxiliary Core APIs. |
+| `/api/family-members/`, `/api/ownerships/`, `/api/ownership-links/` | Core backend | Membership and ownership APIs. |

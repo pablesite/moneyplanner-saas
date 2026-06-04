@@ -22,8 +22,9 @@ Core product functionality is documented in `core/README.md` and `core/docs/READ
 6. `architecture/api-registry.md` -> all SaaS API endpoints and Core APIs consumed
 7. `architecture/glossary.md` -> canonical definitions for project terminology
 8. `operations/dev-setup.md` -> local setup, diagnostics, and validation
-9. `roadmap/roadmap.md` -> current SaaS roadmap
-10. `project-status.md` -> current implementation status by feature area
+9. `operations/production-deploy.md` -> private production deployment runbook
+10. `roadmap/roadmap.md` -> current SaaS roadmap
+11. `project-status.md` -> current implementation status by feature area
 
 ## Active Documents
 1. `architecture/`
@@ -36,6 +37,7 @@ Core product functionality is documented in `core/README.md` and `core/docs/READ
    - **glossary** (`glossary.md`)
 2. `operations/`
    - local development and SaaS operations
+   - private production deployment runbook
 3. `roadmap/`
    - SaaS roadmap
    - pilot integration checklist
