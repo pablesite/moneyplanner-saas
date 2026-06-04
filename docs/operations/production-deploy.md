@@ -167,14 +167,34 @@ Required GitHub secrets:
 4. `DEPLOY_PATH`
 5. `RELEASE_PLEASE_TOKEN` if release-please remains enabled.
 
+Required GitHub variable:
+1. `ENABLE_PRODUCTION_DEPLOY=1` only when the production server, tunnel, and DNS are ready to receive automatic deploys. Keep it unset or `0` while phases 2 and 5 are still being validated.
+
+Published GHCR images on `main`:
+1. `ghcr.io/pablesite/moneyplanner-saas-backend`
+2. `ghcr.io/pablesite/moneyplanner-saas-frontend`
+3. `ghcr.io/pablesite/moneyplanner-core-backend`
+
+Tag policy:
+1. Every `main` push publishes `sha-${GITHUB_SHA}` and `latest`.
+2. Deploys must use the SHA tag, not only `latest`.
+3. The workflow uploads a server-side `.env.release` file with the exact image refs used by the last deploy.
+
 Remote deploy command:
 
 ```bash
 cd "$DEPLOY_PATH"
-docker compose -f docker-compose.prod.yml --env-file .env.prod pull
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
-docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release pull
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release up -d --remove-orphans
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release ps
 ```
+
+Workflow flow on `main`:
+1. Run secret scan, dependency audit, backend quality, and frontend quality.
+2. Build production images from `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, and `core/backend/Dockerfile.prod`.
+3. Scan built images with Trivy and upload SARIF results.
+4. Push GHCR images tagged as `sha-${GITHUB_SHA}` and `latest`.
+5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, run pull/up over SSH, and execute smoke checks against `https://moneyplanner.codinglab.es`.
 
 ## Manual Deploy
 Use this before CI/CD is trusted:
@@ -189,9 +209,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 Once GHCR publishing is available in phase 4, the same file should also support pull-based deploys:
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env.prod pull
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
-docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release pull
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release up -d --remove-orphans
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release ps
 ```
 
 ## Logs and Diagnosis
@@ -218,13 +238,13 @@ If APIs work internally but not externally, check Cloudflare CNAME and tunnel ho
 Rollback should use the previous GHCR SHA tag, not only `latest`.
 
 1. Identify the previous known-good image tags from GitHub Actions logs.
-2. Update `.env.prod` or compose image tags to those SHAs.
+2. Update `.env.release` to those SHA-tagged image refs.
 3. Run:
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env.prod pull
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
-docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release pull
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release up -d --remove-orphans
+docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release ps
 ```
 
 Database migrations are the main rollback risk. If a deployment includes migrations, document the forward-only recovery path before applying it.
@@ -235,6 +255,7 @@ Restic is the authoritative backup mechanism on the server. Before production la
 2. `/datos/docker/data/moneyplanner/core-db` is included.
 3. `/datos/docker/apps/moneyplanner/docker-compose.prod.yml` is included.
 4. `/datos/docker/apps/moneyplanner/.env.prod` handling is understood and secure.
+5. `/datos/docker/apps/moneyplanner/.env.release` is included or can be reconstructed from GitHub Actions logs.
 
 Perform a restore drill before treating production as durable.
 
