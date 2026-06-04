@@ -110,6 +110,8 @@ SaaS backend:
 7. `SEED_ADMIN_USERNAME`
 8. `SEED_ADMIN_EMAIL`
 9. `SEED_ADMIN_PASSWORD`
+10. `CORE_API_HOST_HEADER=moneyplanner.codinglab.es` so SaaS-to-Core internal bootstrap requests still satisfy Core `ALLOWED_HOSTS` behind Docker networking.
+11. `CORE_API_X_FORWARDED_PROTO=https` so those internal requests are treated as secure and do not trigger Django SSL redirects.
 
 Core backend:
 1. `CORE_DJANGO_SECRET_KEY`
@@ -165,10 +167,13 @@ Required GitHub secrets:
 2. `DEPLOY_USER`
 3. `DEPLOY_SSH_KEY`
 4. `DEPLOY_PATH`
-5. `RELEASE_PLEASE_TOKEN` if release-please remains enabled.
+5. `GHCR_PUSH_USERNAME`
+6. `GHCR_PUSH_TOKEN`
+7. `RELEASE_PLEASE_TOKEN` if release-please remains enabled.
 
 Required GitHub variable:
 1. `ENABLE_PRODUCTION_DEPLOY=1` only when the production server, tunnel, and DNS are ready to receive automatic deploys. Keep it unset or `0` while phases 2 and 5 are still being validated.
+2. `DEPLOY_ENV_FILE=.env` when the server keeps production secrets in `.env` instead of `.env.prod`.
 
 Published GHCR images on `main`:
 1. `ghcr.io/pablesite/moneyplanner-saas-backend`
@@ -184,9 +189,10 @@ Remote deploy command:
 
 ```bash
 cd "$DEPLOY_PATH"
-docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release pull
-docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release up -d --remove-orphans
-docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release ps
+echo "$GHCR_PUSH_TOKEN" | docker login ghcr.io -u "$GHCR_PUSH_USERNAME" --password-stdin
+docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.release pull
+docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.release up -d --remove-orphans
+docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.release ps
 ```
 
 Workflow flow on `main`:
@@ -194,32 +200,32 @@ Workflow flow on `main`:
 2. Build production images from `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, and `core/backend/Dockerfile.prod`.
 3. Scan built images with Trivy and upload SARIF results.
 4. Push GHCR images tagged as `sha-${GITHUB_SHA}` and `latest`.
-5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, run pull/up over SSH, and execute smoke checks against `https://moneyplanner.codinglab.es`.
+5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, authenticate the server against GHCR, run pull/up over SSH, and execute smoke checks against `https://moneyplanner.codinglab.es`.
 
 ## Manual Deploy
 Use this before CI/CD is trusted:
 
 ```bash
 cd /datos/docker/apps/moneyplanner
-docker compose -f docker-compose.prod.yml --env-file .env.prod config
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
-docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+docker compose -f docker-compose.prod.yml --env-file .env config
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env ps
 ```
 
 Once GHCR publishing is available in phase 4, the same file should also support pull-based deploys:
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release pull
-docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release up -d --remove-orphans
-docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release ps
+docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.release pull
+docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.release up -d --remove-orphans
+docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.release ps
 ```
 
 ## Logs and Diagnosis
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env.prod logs --tail 100 saas_backend
-docker compose -f docker-compose.prod.yml --env-file .env.prod logs --tail 100 core_backend
-docker compose -f docker-compose.prod.yml --env-file .env.prod logs --tail 100 saas_frontend
-docker compose -f docker-compose.prod.yml --env-file .env.prod ps -a
+docker compose -f docker-compose.prod.yml --env-file .env logs --tail 100 saas_backend
+docker compose -f docker-compose.prod.yml --env-file .env logs --tail 100 core_backend
+docker compose -f docker-compose.prod.yml --env-file .env logs --tail 100 saas_frontend
+docker compose -f docker-compose.prod.yml --env-file .env ps -a
 ```
 
 Routing checks:

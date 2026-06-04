@@ -27,11 +27,20 @@ def _core_bootstrap_timeout_seconds() -> float:
 
 def _auth_headers_for_user(*, user) -> dict[str, str]:
     token = str(AccessToken.for_user(user))
-    return {
+    headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
+    core_api_host_header = getattr(settings, "CORE_API_HOST_HEADER", "").strip()
+    if core_api_host_header:
+        headers["Host"] = core_api_host_header
+
+    core_api_forwarded_proto = getattr(settings, "CORE_API_X_FORWARDED_PROTO", "").strip()
+    if core_api_forwarded_proto:
+        headers["X-Forwarded-Proto"] = core_api_forwarded_proto
+
+    return headers
 
 
 def _http_json_request(

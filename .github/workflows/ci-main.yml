@@ -303,14 +303,18 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_ENV_FILE: ${{ vars.DEPLOY_ENV_FILE != '' && vars.DEPLOY_ENV_FILE || '.env' }}
+          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PUSH_USERNAME != '' && secrets.GHCR_PUSH_USERNAME || github.actor }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PUSH_TOKEN != '' && secrets.GHCR_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           # shellcheck disable=SC2029
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "
             set -euo pipefail
             cd '${DEPLOY_PATH}'
-            docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release pull
-            docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release up -d --remove-orphans
-            docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.release ps
+            echo '${GHCR_PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_PULL_USERNAME}' --password-stdin
+            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release pull
+            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release ps
           "
 
   smoke-production:

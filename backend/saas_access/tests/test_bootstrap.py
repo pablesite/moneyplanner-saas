@@ -264,12 +264,18 @@ class CoreBootstrapHelperTests(APITestCase):
         with self.assertRaises(DRFValidationError):
             core_bootstrap._core_bootstrap_timeout_seconds()
 
+    @override_settings(
+        CORE_API_HOST_HEADER="moneyplanner.codinglab.es",
+        CORE_API_X_FORWARDED_PROTO="https",
+    )
     @patch("saas_access.core_bootstrap.AccessToken.for_user", return_value="abc123")
     def test_auth_headers_for_user_builds_bearer_headers(self, _token):
         headers = core_bootstrap._auth_headers_for_user(user=self.user)
         self.assertEqual(headers["Authorization"], "Bearer abc123")
         self.assertEqual(headers["Accept"], "application/json")
         self.assertEqual(headers["Content-Type"], "application/json")
+        self.assertEqual(headers["Host"], "moneyplanner.codinglab.es")
+        self.assertEqual(headers["X-Forwarded-Proto"], "https")
 
     @override_settings(CORE_BOOTSTRAP_TIMEOUT_SECONDS=3)
     @patch("saas_access.core_bootstrap.request.urlopen")
