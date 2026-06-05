@@ -319,7 +319,7 @@ jobs:
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PUSH_TOKEN != '' && secrets.GHCR_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           # shellcheck disable=SC2029
-          ssh -p '${DEPLOY_PORT}' "${DEPLOY_USER}@${DEPLOY_HOST}" "
+          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
             set -euo pipefail
             cd '${DEPLOY_PATH}'
             echo '${GHCR_PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_PULL_USERNAME}' --password-stdin
