@@ -275,6 +275,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT != '' && vars.DEPLOY_PORT || '2621' }}
         run: |
           test -n "$DEPLOY_HOST"
           test -n "$DEPLOY_USER"
@@ -282,40 +283,43 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload production compose
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT != '' && vars.DEPLOY_PORT || '2621' }}
         run: |
-          scp docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/docker-compose.prod.yml"
+          scp -P "$DEPLOY_PORT" docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/docker-compose.prod.yml"
 
       - name: Upload release image pins
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT != '' && vars.DEPLOY_PORT || '2621' }}
         run: |
           cat > .env.release <<EOF
           SAAS_BACKEND_IMAGE=${SAAS_BACKEND_IMAGE}:${IMAGE_TAG}
           SAAS_FRONTEND_IMAGE=${SAAS_FRONTEND_IMAGE}:${IMAGE_TAG}
           CORE_BACKEND_IMAGE=${CORE_BACKEND_IMAGE}:${IMAGE_TAG}
           EOF
-          scp .env.release "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/.env.release"
+          scp -P "$DEPLOY_PORT" .env.release "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/.env.release"
 
       - name: Deploy stack
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT != '' && vars.DEPLOY_PORT || '2621' }}
           DEPLOY_ENV_FILE: ${{ vars.DEPLOY_ENV_FILE != '' && vars.DEPLOY_ENV_FILE || '.env' }}
           GHCR_PULL_USERNAME: ${{ secrets.GHCR_PUSH_USERNAME != '' && secrets.GHCR_PUSH_USERNAME || github.actor }}
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PUSH_TOKEN != '' && secrets.GHCR_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           # shellcheck disable=SC2029
-          ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "
+          ssh -p '${DEPLOY_PORT}' "${DEPLOY_USER}@${DEPLOY_HOST}" "
             set -euo pipefail
             cd '${DEPLOY_PATH}'
             echo '${GHCR_PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_PULL_USERNAME}' --password-stdin
