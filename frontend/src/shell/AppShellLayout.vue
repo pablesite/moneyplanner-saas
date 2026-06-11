@@ -12,6 +12,7 @@ const {
   closeAccountMenu,
   closeSidebar,
   hasToken,
+  isSaasAdmin,
   isNavItemActive,
   logout,
   navItems,
@@ -27,9 +28,13 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
 
 <template>
   <div class="ui-shell">
-    <div v-if="sidebarOpen" class="ui-shell-backdrop" @click="closeSidebar" />
+    <div v-if="sidebarOpen && !isSaasAdmin" class="ui-shell-backdrop" @click="closeSidebar" />
 
-    <aside class="ui-shell-sidebar" :class="{ 'ui-shell-sidebar-open': sidebarOpen }">
+    <aside
+      v-if="!isSaasAdmin"
+      class="ui-shell-sidebar"
+      :class="{ 'ui-shell-sidebar-open': sidebarOpen }"
+    >
       <div class="ui-shell-sidebar-top">
         <div class="ui-shell-brand">
           <div class="ui-shell-brand-mark">MP</div>
@@ -71,6 +76,7 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
     <div class="ui-shell-main">
       <header class="ui-shell-header">
         <button
+          v-if="!isSaasAdmin"
           class="icon-btn ui-shell-icon-btn"
           type="button"
           aria-label="Abrir menu"
@@ -78,7 +84,7 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
         >
           <span aria-hidden="true">&#9776;</span>
         </button>
-        <RouterLink class="ui-shell-header-title-link" to="/">
+        <RouterLink class="ui-shell-header-title-link" :to="isSaasAdmin ? '/account' : '/'">
           <div class="ui-shell-header-title">{{ pageTitle }}</div>
         </RouterLink>
         <div v-if="hasToken" :ref="assignAccountMenuRef" class="ui-shell-account-menu">
@@ -107,15 +113,16 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
               role="menuitem"
               @click="closeAccountMenu"
             >
-              Perfil
+              {{ isSaasAdmin ? 'Admin SaaS' : 'Perfil' }}
             </RouterLink>
             <RouterLink
+              v-if="!isSaasAdmin"
               class="ui-shell-account-item"
               to="/data"
               role="menuitem"
               @click="closeAccountMenu"
             >
-              Settings
+              Datos auxiliares
             </RouterLink>
             <button
               class="ui-shell-account-item ui-shell-account-item-btn"

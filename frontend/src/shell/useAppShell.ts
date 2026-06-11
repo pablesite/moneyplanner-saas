@@ -1,5 +1,6 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { authApi, type CurrentUser } from '@/domains/auth';
 import { clearAuthTokens, hasAccessToken } from '@/domains/auth/session';
 import { appShellNavItems, type NavItem } from './appShellNav';
 
@@ -11,12 +12,14 @@ export function useAppShell() {
   const accountMenuRef = ref<HTMLElement | null>(null);
   const accountLabel = ref('Mi cuenta');
   const accountRole = ref('');
+  const accountRoleKey = ref<CurrentUser['role'] | ''>('');
   const accountPlan = ref('');
 
-  const pageTitle = 'moneyplanner';
+  const pageTitle = computed(() => (isSaasAdmin.value ? 'admin saas' : 'moneyplanner'));
   const hasToken = computed(() => hasAccessToken.value);
   const isLoginRoute = computed(() => route.name === 'login');
-  const navItems = computed<NavItem[]>(() => appShellNavItems);
+  const isSaasAdmin = computed(() => accountRoleKey.value === 'saas_admin');
+  const navItems = computed<NavItem[]>(() => (isSaasAdmin.value ? [] : appShellNavItems));
 
   const accountInitials = computed(() => {
     const text = accountLabel.value.trim();
@@ -27,6 +30,34 @@ export function useAppShell() {
     if (!second) return first.slice(0, 2).toUpperCase();
     return `${first[0] ?? ''}${second[0] ?? ''}`.toUpperCase();
   });
+
+  function roleLabel(role: CurrentUser['role']): string {
+    return role === 'saas_admin' ? 'Admin SaaS' : 'Miembro SaaS';
+  }
+
+  function subscriptionLabel(status: CurrentUser['subscription_status']): string {
+    if (status === 'active') return 'Activa';
+    if (status === 'past_due') return 'Pendiente';
+    if (status === 'canceled') return 'Cancelada';
+    return 'Trial';
+  }
+
+  async function hydrateAccountSummary(): Promise<void> {
+    try {
+      const response = await authApi.validateSession();
+      const user = response.data;
+      accountLabel.value = user.username || 'Mi cuenta';
+      accountRoleKey.value = user.role;
+      accountRole.value = roleLabel(user.role);
+      accountPlan.value =
+        user.role === 'saas_admin' ? '' : subscriptionLabel(user.subscription_status);
+    } catch {
+      accountLabel.value = 'Mi cuenta';
+      accountRoleKey.value = '';
+      accountRole.value = '';
+      accountPlan.value = '';
+    }
+  }
 
   function isNavItemActive(item: NavItem): boolean {
     if (item.id === 'home') {
@@ -91,13 +122,12 @@ export function useAppShell() {
     (tokenPresent) => {
       if (!tokenPresent) {
         accountLabel.value = 'Mi cuenta';
+        accountRoleKey.value = '';
         accountRole.value = '';
         accountPlan.value = '';
         return;
       }
-      accountLabel.value = 'Mi cuenta';
-      accountRole.value = '';
-      accountPlan.value = '';
+      void hydrateAccountSummary();
     },
     { immediate: true },
   );
@@ -118,11 +148,13 @@ export function useAppShell() {
     accountMenuRef,
     accountPlan,
     accountRole,
+    accountRoleKey,
     closeAccountMenu,
     closeSidebar,
     hasToken,
     isLoginRoute,
     isNavItemActive,
+    isSaasAdmin,
     logout,
     navItems,
     pageTitle,

@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { coreApi } from '@/lib/api';
 import type { MarketDataStatus } from '@/domains/aux-data/types';
 
 export type CreateFxRatePayload = {
@@ -15,20 +15,20 @@ export type CreateInflationPayload = {
 };
 
 export type AuxDataApiAdapter = {
-  getStatus(): ReturnType<typeof api.get<MarketDataStatus>>;
+  getStatus(): ReturnType<typeof coreApi.get<MarketDataStatus>>;
   syncMarketData(payload?: {
     datasets?: string[];
     mode?: 'reconcile' | 'refresh';
     fx_full_history?: boolean;
-  }): ReturnType<typeof api.post<{ summary: Record<string, number> }>>;
+  }): ReturnType<typeof coreApi.post<{ summary: Record<string, number> }>>;
 };
 
 export const coreAuxDataApi: AuxDataApiAdapter = {
   getStatus() {
-    return api.get<MarketDataStatus>('/api/core/market-data/status/');
+    return coreApi.get<MarketDataStatus>('/api/core/market-data/status/');
   },
   syncMarketData(payload) {
-    return api.post<{ summary: Record<string, number> }>(
+    return coreApi.post<{ summary: Record<string, number> }>(
       '/api/core/market-data/sync/',
       payload ?? {},
     );

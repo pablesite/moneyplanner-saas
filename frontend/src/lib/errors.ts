@@ -49,12 +49,21 @@ function humanMessageForAuthFailure(error: unknown): string | null {
   return null;
 }
 
-function firstValidationMessage(data: unknown, path: string[] = []): string | null {
+function messageFromStringValue(value: unknown, path: string[], trim = true): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = trim ? value.trim() : value;
+  if (!normalized) return null;
   const label = path.length > 0 ? `${path.join('.')}: ` : '';
+  return `${label}${normalized}`;
+}
 
-  if (typeof data === 'string' && data.trim()) {
-    return `${label}${data}`;
-  }
+function isReservedValidationKey(field: string): boolean {
+  return field === 'error' || field === 'code' || field === 'message' || field === 'details';
+}
+
+function firstValidationMessage(data: unknown, path: string[] = []): string | null {
+  const stringMessage = messageFromStringValue(data, path);
+  if (stringMessage) return stringMessage;
 
   if (Array.isArray(data)) {
     for (const item of data) {
@@ -66,17 +75,22 @@ function firstValidationMessage(data: unknown, path: string[] = []): string | nu
 
   if (!isRecord(data)) return null;
 
+  if ('details' in data) {
+    const detailsMessage = firstValidationMessage(data.details, path);
+    if (detailsMessage) return detailsMessage;
+  }
+
+  const directMessage = messageFromStringValue(data.message, path);
+  if (directMessage) return directMessage;
+
   for (const [field, raw] of Object.entries(data)) {
-    if (field === 'error') continue;
+    if (isReservedValidationKey(field)) continue;
     const nextPath = field === 'detail' ? path : [...path, field];
     const nested = firstValidationMessage(raw, nextPath);
     if (nested) return nested;
   }
 
-  if (typeof data.detail === 'string' && data.detail.trim()) {
-    return `${label}${data.detail}`;
-  }
-  return null;
+  return messageFromStringValue(data.detail, path);
 }
 
 export function toApiErrorMessage(error: unknown): string {

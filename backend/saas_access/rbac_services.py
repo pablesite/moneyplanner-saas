@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
+from saas.core_admin_client import list_core_admin_users
 from saas.auth_audit import log_auth_event
 
 from .core_bootstrap import ensure_primary_family_member_in_core_for_saas_user
-from .models import SaasAccessProfile
+from .models import SaasAccessProfile, SaasCoreAccountLink
 
 
 def get_or_create_access_profile(*, user) -> SaasAccessProfile:
@@ -56,13 +59,85 @@ def assign_role(*, user, role: str) -> SaasAccessProfile:
     return profile
 
 
-def list_admin_users_with_roles() -> tuple[list[object], dict[int, str]]:
+def list_admin_users_with_roles() -> tuple[
+    list[Any], dict[int, str], dict[int, SaasCoreAccountLink]
+]:
     user_model = get_user_model()
     users = list(user_model.objects.all().order_by("id"))
     roles = SaasAccessProfile.objects.filter(user_id__in=[u.id for u in users]).values_list(
         "user_id", "role"
     )
-    return users, dict(roles)
+    links = {
+        link.user_id: link
+        for link in SaasCoreAccountLink.objects.filter(user_id__in=[u.id for u in users])
+    }
+    return users, dict(roles), links
+
+
+def list_core_users_with_saas_links(
+    *,
+    role_by_user_id: dict[int, str] | None = None,
+    link_by_user_id: dict[int, SaasCoreAccountLink] | None = None,
+) -> list[dict[str, object]]:
+    users, resolved_role_by_user_id, resolved_link_by_user_id = list_admin_users_with_roles()
+    role_by_user_id = role_by_user_id or resolved_role_by_user_id
+    link_by_user_id = link_by_user_id or resolved_link_by_user_id
+
+    saas_by_id: dict[int, Any] = {user.id: user for user in users}
+    saas_user_by_core_ref = {
+        link.core_user_ref: saas_by_id[link.user_id]
+        for link in link_by_user_id.values()
+        if link.user_id in saas_by_id
+    }
+    core_users = list_core_admin_users()
+    enriched: list[dict[str, object]] = []
+
+    for core_user in core_users:
+        external_identities = cast(
+            list[dict[str, object]],
+            core_user.get("external_identities") or [],
+        )
+        linked_saas_user: Any | None = None
+        connection_kind = "unlinked"
+
+        core_ref = f"core_user:{core_user['id']}"
+        manual_match = saas_user_by_core_ref.get(core_ref)
+        if manual_match is not None:
+            linked_saas_user = manual_match
+            connection_kind = "manual_link"
+        else:
+            for identity in external_identities:
+                external_user_id = str(identity.get("external_user_id", "")).strip()
+                if not external_user_id.isdigit():
+                    continue
+                bootstrap_match = saas_by_id.get(int(external_user_id))
+                if bootstrap_match is not None:
+                    linked_saas_user = bootstrap_match
+                    connection_kind = "bootstrap"
+                    break
+
+        enriched.append(
+            {
+                **core_user,
+                "connection_kind": connection_kind,
+                "linked_saas_user": (
+                    None
+                    if linked_saas_user is None
+                    else {
+                        "id": linked_saas_user.id,
+                        "username": linked_saas_user.username,
+                        "email": linked_saas_user.email,
+                        "is_active": linked_saas_user.is_active,
+                        "role": role_by_user_id.get(
+                            linked_saas_user.id,
+                            get_or_create_access_profile(user=linked_saas_user).role,
+                        ),
+                    }
+                ),
+            }
+        )
+
+    return enriched
 
 
 @transaction.atomic

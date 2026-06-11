@@ -11,11 +11,13 @@ from saas_access.rbac_services import (
     create_admin_user,
     delete_admin_user,
     list_admin_users_with_roles,
+    list_core_users_with_saas_links,
     update_admin_user_role,
     update_admin_user_status,
 )
 
 from .admin_serializers import (
+    SaasAdminCoreUserSerializer,
     SaasAdminUserCreateSerializer,
     SaasAdminUserRoleSerializer,
     SaasAdminUserSerializer,
@@ -29,13 +31,22 @@ class SaasAdminUserListCreateAPIView(APIView):
     throttle_scope = "saas_admin_api"
 
     def get(self, request):
-        users, role_by_user_id = list_admin_users_with_roles()
-        serializer = SaasAdminUserSerializer(
+        users, role_by_user_id, link_by_user_id = list_admin_users_with_roles()
+        saas_users = SaasAdminUserSerializer(
             users,
             many=True,
-            context={"role_by_user_id": role_by_user_id},
+            context={"role_by_user_id": role_by_user_id, "link_by_user_id": link_by_user_id},
         )
-        return Response(serializer.data)
+        core_users = list_core_users_with_saas_links(
+            role_by_user_id=role_by_user_id,
+            link_by_user_id=link_by_user_id,
+        )
+        return Response(
+            {
+                "saas_users": saas_users.data,
+                "core_users": SaasAdminCoreUserSerializer(core_users, many=True).data,
+            }
+        )
 
     def post(self, request):
         serializer = SaasAdminUserCreateSerializer(data=request.data)

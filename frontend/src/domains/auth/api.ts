@@ -11,9 +11,25 @@ export type LoginResponse = {
   refresh?: string;
 };
 
+export type CurrentUser = {
+  id: number;
+  username: string;
+  email: string;
+  role: 'saas_admin' | 'saas_member';
+  subscription_status: 'trial' | 'active' | 'past_due' | 'canceled';
+  premium_enabled: boolean;
+  account_link: {
+    core_user_ref: string;
+    core_username: string;
+    core_email: string;
+    is_active: boolean;
+    linked_at: string;
+  } | null;
+};
+
 export type AuthApiAdapter = {
   login(payload: LoginPayload): Promise<AxiosResponse<LoginResponse>>;
-  validateSession(): Promise<AxiosResponse<{ base_currency?: string }>>;
+  validateSession(): Promise<AxiosResponse<CurrentUser>>;
 };
 
 export const coreAuthApi: AuthApiAdapter = {
@@ -21,7 +37,7 @@ export const coreAuthApi: AuthApiAdapter = {
     return api.post<LoginResponse>('/api/auth/token/', payload);
   },
   validateSession() {
-    return api.get<{ base_currency?: string }>('/api/auth/me/');
+    return api.get<CurrentUser>('/api/auth/me/');
   },
 };
 

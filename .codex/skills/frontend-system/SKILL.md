@@ -9,7 +9,7 @@ Use this skill when working on `core/frontend/` or `frontend/`.
 
 ## Goal
 
-Keep the UI coherent across screens and across `core` and `saas`.
+Keep the SaaS UI coherent across screens while respecting the current separation between `core` and `saas`.
 
 ## Required Read Order
 
@@ -21,14 +21,14 @@ Keep the UI coherent across screens and across `core` and `saas`.
 
 ## Source Of Truth
 
-1. Base visual patterns live in `core/frontend/src/styles/app.css`.
-2. **Siempre empezar por `core/frontend/`.** Buscar primero el equivalente en Core antes de tocar `frontend/` (SaaS).
-3. Después de implementar en Core, replicar el cambio equivalente en `frontend/` salvo que el scope sea explícitamente Core-only.
-4. Si la vista solo existe en SaaS y no tiene equivalente en Core, documentarlo explícitamente antes de continuar.
+1. Base visual patterns currently reused by SaaS live in `frontend/src/styles/app.css`.
+2. Trabajar directamente en `frontend/` cuando el scope sea SaaS.
+3. Consultar `core/frontend/` solo como referencia visual o funcional cuando ayude a entender un flujo que consume APIs de Core.
+4. No asumir espejo obligatorio con Core: cualquier adaptación del frontend SaaS se decide por producto SaaS, no por sincronización automática.
 
 ## Workflow
 
-1. Antes de tocar cualquier fichero, localizar el equivalente en `core/frontend/` de la vista o componente en scope. Si existe, ese es el punto de partida.
+1. Antes de tocar cualquier fichero, localizar la vista o componente equivalente dentro de `frontend/` y revisar el shell y las primitivas compartidas del SaaS.
 2. Define the UX problem in terms of:
    - page structure,
    - interaction model,
@@ -52,5 +52,5 @@ Keep the UI coherent across screens and across `core` and `saas`.
 1. Does the page use the shared page shell and section patterns when applicable?
 2. Is the layout rhythm consistent with surrounding screens?
 3. Are typography and spacing driven by shared classes or tokens?
-4. Is the same behavior mirrored in `frontend/` when the change belongs to shared UI?
+4. ¿La solución respeta los patrones compartidos del SaaS sin depender de un espejo manual con Core?
 5. Are Docker validations run for the affected frontend stack?

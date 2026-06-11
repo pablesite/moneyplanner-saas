@@ -40,11 +40,92 @@ class SaasAdminUsersApiTests(APITestCase):
 
     def test_admin_users_list_returns_roles(self):
         self.client.force_authenticate(user=self.admin)
-        response = self.client.get("/api/admin/users/")
+        with patch("saas_access.rbac_services.list_core_admin_users", return_value=[]):
+            response = self.client.get("/api/admin/users/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        by_username = {item["username"]: item for item in response.data}
+        by_username = {item["username"]: item for item in response.data["saas_users"]}
         self.assertEqual(by_username["rbac_admin"]["role"], SaasAccessProfile.Role.ADMIN)
         self.assertEqual(by_username["rbac_member_user"]["role"], SaasAccessProfile.Role.MEMBER)
+
+    def test_admin_users_list_returns_manual_core_link_metadata(self):
+        SaasCoreAccountLink.objects.create(
+            user=self.member,
+            core_user_ref="core_user:42",
+            core_username="core_member",
+            core_email="core_member@example.com",
+        )
+        self.client.force_authenticate(user=self.admin)
+        with patch("saas_access.rbac_services.list_core_admin_users", return_value=[]):
+            response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_username = {item["username"]: item for item in response.data["saas_users"]}
+        self.assertEqual(
+            by_username["rbac_member_user"]["account_link"]["core_user_ref"], "core_user:42"
+        )
+        self.assertEqual(by_username["rbac_member_user"]["core_user_origin"], "core_native")
+        self.assertEqual(
+            by_username["rbac_member_user"]["core_connection"]["label"], "Usuario Core"
+        )
+
+    def test_admin_users_list_derives_core_bootstrap_summary_for_members_without_manual_link(self):
+        self.client.force_authenticate(user=self.admin)
+        with patch("saas_access.rbac_services.list_core_admin_users", return_value=[]):
+            response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_username = {item["username"]: item for item in response.data["saas_users"]}
+        self.assertEqual(
+            by_username["rbac_member_user"]["core_connection"]["status"], "member_bootstrap"
+        )
+        self.assertEqual(
+            by_username["rbac_member_user"]["core_connection"]["core_username"],
+            f"external_user_{self.member.id}",
+        )
+
+    def test_admin_users_list_includes_standalone_core_users(self):
+        self.client.force_authenticate(user=self.admin)
+        with patch(
+            "saas_access.rbac_services.list_core_admin_users",
+            return_value=[
+                {
+                    "id": 42,
+                    "username": "core_native_user",
+                    "email": "core@example.com",
+                    "is_active": True,
+                    "is_staff": True,
+                    "origin": "core_native",
+                    "external_identities": [],
+                }
+            ],
+        ):
+            response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["core_users"][0]["username"], "core_native_user")
+        self.assertEqual(response.data["core_users"][0]["connection_kind"], "unlinked")
+
+    def test_admin_users_list_matches_core_bootstrap_user_back_to_saas_user(self):
+        self.client.force_authenticate(user=self.admin)
+        with patch(
+            "saas_access.rbac_services.list_core_admin_users",
+            return_value=[
+                {
+                    "id": 99,
+                    "username": f"external_user_{self.member.id}",
+                    "email": "",
+                    "is_active": True,
+                    "is_staff": False,
+                    "origin": "saas_bootstrap",
+                    "external_identities": [
+                        {"provider": "external", "external_user_id": str(self.member.id)}
+                    ],
+                }
+            ],
+        ):
+            response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["core_users"][0]["linked_saas_user"]["username"], self.member.username
+        )
+        self.assertEqual(response.data["core_users"][0]["connection_kind"], "bootstrap")
 
     def test_admin_can_create_user_with_initial_admin_role(self):
         self.client.force_authenticate(user=self.admin)
@@ -275,10 +356,11 @@ class SaasAdminServicesTests(TestCase):
         get_or_create_access_profile(user=self.member)
 
     def test_list_admin_users_with_roles_returns_role_map(self):
-        users, role_map = list_admin_users_with_roles()
+        users, role_map, link_map = list_admin_users_with_roles()
         self.assertEqual(len(users), 2)
         self.assertEqual(role_map[self.admin.id], SaasAccessProfile.Role.ADMIN)
         self.assertEqual(role_map[self.member.id], SaasAccessProfile.Role.MEMBER)
+        self.assertEqual(link_map, {})
 
     def test_create_admin_user_returns_user_and_role(self):
         with patch(

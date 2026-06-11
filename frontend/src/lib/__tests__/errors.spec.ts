@@ -17,6 +17,24 @@ describe('core api error helper', () => {
     spy.mockRestore();
   });
 
+  it('reads canonical top-level error details before falling back to code', () => {
+    const err = {
+      response: {
+        data: {
+          code: 'validation_error',
+          message: 'Request failed.',
+          details: {
+            detail: 'No se pudo conectar con Core para bootstrap de familia.',
+          },
+        },
+      },
+      message: 'fallback',
+    };
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(toApiErrorMessage(err)).toBe('No se pudo conectar con Core para bootstrap de familia.');
+    spy.mockRestore();
+  });
+
   it('prioritizes validation details from API envelope', () => {
     const err = {
       response: {

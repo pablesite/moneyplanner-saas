@@ -46,7 +46,7 @@ function formatTimestamp(value: string | null): string {
 
 <template>
   <div class="container ui-pro-page">
-    <h1 class="h1 ui-settings-page-title">Settings</h1>
+    <h1 class="h1 ui-settings-page-title">Datos auxiliares</h1>
 
     <div v-if="error" class="alert mt-3">{{ error }}</div>
 

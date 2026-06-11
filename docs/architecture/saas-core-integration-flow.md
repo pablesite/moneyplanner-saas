@@ -100,7 +100,38 @@ Requiere adicionalmente `CORE_LINKING_SHARED_SECRET` en el backend SaaS.
 
 ---
 
-## 4. Acceso del frontend a Core
+## 4. Lectura administrativa de usuarios Core desde SaaS
+
+El panel de admin del SaaS tambien consulta todos los usuarios existentes en Core. Esto permite distinguir:
+
+1. usuarios creados nativamente en Core,
+2. usuarios provisionados automaticamente desde SaaS via `ExternalIdentity`,
+3. usuarios enlazados manualmente mediante `SaasCoreAccountLink`.
+
+```
+SaaS Backend
+  │
+  └─ GET {CORE_API_BASE_URL}/api/auth/admin/users/
+       X-SaaS-Bridge-Secret: {CORE_LINKING_SHARED_SECRET}
+          │
+          └─ Core Backend
+               ├─ valida el header compartido
+               └─ devuelve usuarios Core + external_identities
+```
+
+Con esa respuesta, el backend SaaS cruza:
+
+1. `ExternalIdentity.external_user_id` -> `auth.User.id` del SaaS para detectar bootstrap
+2. `SaasCoreAccountLink.core_user_ref=core_user:{id}` para detectar vinculos manuales
+
+Y expone en `GET /api/admin/users/` dos colecciones:
+
+1. `saas_users`
+2. `core_users`
+
+---
+
+## 5. Acceso del frontend a Core
 
 El frontend mantiene dos clientes Axios (`lib/api.ts`):
 
@@ -132,26 +163,54 @@ The Core frontend is not deployed as part of SaaS production.
 
 ---
 
-## 5. Variables de entorno relevantes
+## 6. Variables de entorno relevantes
 
 | Variable | Where | Description |
 |----------|-------|-------------|
 | `JWT_SIGNING_KEY` | SaaS backend + Core backend | **Debe ser igual** en ambos stacks |
 | `CORE_API_BASE_URL` | SaaS backend | URL del Core backend (server-to-server, ej: `http://core-backend:8000`) |
+| `CORE_API_HOST_HEADER` | SaaS backend | Host header opcional para llamadas SaaS -> Core. En dev local suele ser `localhost`; en produccion normalmente vacio. |
 | `AUTH_ACCEPT_EXTERNAL_TOKENS` | Core backend | Must be `1` in SaaS production so Core accepts SaaS-issued JWTs |
 | `EXTERNAL_JWT_ISSUER` | Core backend | Must match SaaS JWT issuer (`moneyplanner-saas` by default) |
 | `EXTERNAL_JWT_AUDIENCE` | Core backend | Must match SaaS JWT audience (`moneyplanner-saas-api` by default) |
 | `EXTERNAL_JWT_SIGNING_KEY` | Core backend | Should match `JWT_SIGNING_KEY` for SaaS-issued JWT validation |
 | `CORE_BOOTSTRAP_TIMEOUT_SECONDS` | SaaS backend | Timeout de la llamada de bootstrap (default: 5s) |
 | `ACCOUNT_LINKING_ENABLED` | SaaS backend | Habilita endpoints de core-link (default: False) |
-| `CORE_LINKING_SHARED_SECRET` | SaaS backend | Secreto para tokens de linking via token |
+| `CORE_LINKING_SHARED_SECRET` | SaaS backend + Core backend | Secreto compartido para tokens de linking y para el bridge administrativo SaaS -> Core |
 | `CORE_LINKING_TOKEN_MAX_AGE_SECONDS` | SaaS backend | TTL de los tokens de linking (default: 300s) |
 | `VITE_CORE_API_BASE_URL` | SaaS frontend | URL del Core backend desde el navegador |
 | `SAAS_PUBLIC_REGISTRATION_ENABLED` | SaaS backend | Must be `0` for the initial private production pilot |
 
 ---
 
-## 6. Quick diagnosis of integration problems
+## 6.1 Configuracion recomendada por entorno
+
+### Desarrollo local
+
+Si SaaS corre en Docker y Core expone `8000` en el host:
+
+1. SaaS backend:
+   - `CORE_API_BASE_URL=http://host.docker.internal:8000`
+   - `CORE_API_HOST_HEADER=localhost`
+2. Core backend:
+   - `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,host.docker.internal`
+   - `AUTH_ACCEPT_EXTERNAL_TOKENS=1`
+   - issuer/audience/signing key alineados con SaaS
+
+### Produccion
+
+1. `CORE_API_BASE_URL` debe apuntar a la URL real alcanzable desde SaaS
+2. `CORE_API_HOST_HEADER` debe quedarse vacio salvo necesidad explicita de proxy
+3. Core debe aceptar el host publico real en `ALLOWED_HOSTS`
+4. Core debe aceptar JWTs emitidos por SaaS con issuer/audience/signing key alineados
+
+## 6.2 Regla operativa
+
+Si cambia cualquier `.env` usado por Docker, hay que recrear el contenedor correspondiente. `docker restart` no recarga variables.
+
+---
+
+## 7. Quick diagnosis of integration problems
 
 | Symptom | Probable cause | Action |
 |---------|---------------|--------|
@@ -159,5 +218,6 @@ The Core frontend is not deployed as part of SaaS production.
 | Frontend does not load asset/movement data | `VITE_CORE_API_BASE_URL` wrong or CORS | Review `.env` of the SaaS frontend, review CORS in Core |
 | 401 en llamadas a Core desde frontend | Tokens distintos (`JWT_SIGNING_KEY` diferente) | Verificar que ambos stacks usen el mismo `JWT_SIGNING_KEY` |
 | Token de linking rechazado | `CORE_LINKING_SHARED_SECRET` no coincide o token expirado | Verificar secret, generar nuevo token |
+| Admin SaaS no puede ver usuarios Core | `CORE_LINKING_SHARED_SECRET` ausente o distinto entre SaaS y Core | Verificar el secret compartido y recrear contenedores si cambió `.env` |
 | Root URL works but API returns the SPA | Traefik path rule or priority mismatch | Review production labels and route priorities |
 | Net Worth or portable-data settings fail only in production | `/api/auth/settings/` routed to SaaS instead of Core | Review the higher-priority Core auth exception router |

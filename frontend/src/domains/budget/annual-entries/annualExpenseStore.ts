@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { api } from '@/lib/api';
+import { coreApi as api } from '@/lib/api';
 import { toApiErrorMessage } from '@/lib/errors';
 import {
   expenseSubcategories,

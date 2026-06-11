@@ -6,6 +6,7 @@ import { useAppShell } from '@/shell/useAppShell';
 const mocks = vi.hoisted(() => ({
   clearAuthTokens: vi.fn(),
   hasAccessToken: { value: false },
+  validateSession: vi.fn(),
   route: {
     name: 'home',
     path: '/',
@@ -26,9 +27,16 @@ vi.mock('@/domains/auth/session', () => ({
   hasAccessToken: mocks.hasAccessToken,
 }));
 
+vi.mock('@/domains/auth', () => ({
+  authApi: {
+    validateSession: mocks.validateSession,
+  },
+}));
+
 describe('useAppShell', () => {
   beforeEach(() => {
     mocks.clearAuthTokens.mockReset();
+    mocks.validateSession.mockReset();
     mocks.router.push.mockReset();
     mocks.hasAccessToken.value = false;
     mocks.route.name = 'home';
@@ -57,11 +65,20 @@ describe('useAppShell', () => {
 
   it('computes account initials and clears session on logout', async () => {
     mocks.hasAccessToken.value = true;
+    mocks.validateSession.mockResolvedValue({
+      data: {
+        username: 'Pablo Perez',
+        role: 'saas_admin',
+        subscription_status: 'trial',
+      },
+    });
     const { shell, unmount } = mountShell();
 
     await nextTick();
     expect(shell.hasToken.value).toBe(true);
-    expect(shell.accountInitials.value).toBe('MC');
+    expect(mocks.validateSession).toHaveBeenCalledTimes(1);
+    expect(shell.accountInitials.value).toBe('PP');
+    expect(shell.isSaasAdmin.value).toBe(true);
 
     shell.accountLabel.value = 'Pablo Perez';
     expect(shell.accountInitials.value).toBe('PP');

@@ -25,7 +25,7 @@ All endpoints require `Bearer` + `saas_admin` role. Throttle: `saas_admin_api`.
 
 | Method | Route | View | Description |
 |--------|-------|------|-------------|
-| `GET` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Lists all users and roles. |
+| `GET` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Returns `{saas_users, core_users}`. `saas_users` includes roles, `account_link`, `core_user_origin` and derived `core_connection`; `core_users` includes all Core users plus their external identities and any detected SaaS connection. |
 | `POST` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Creates a user. If role is `saas_member`, triggers Core bootstrap. |
 | `PATCH` | `/api/admin/users/{id}/role/` | `SaasAdminUserRoleAPIView` | Changes user role. If upgraded to `saas_member`, triggers Core bootstrap. |
 | `PATCH` | `/api/admin/users/{id}/status/` | `SaasAdminUserStatusAPIView` | Activates or deactivates a user. |
@@ -55,6 +55,7 @@ Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik r
 | `GET/PATCH` | `/api/auth/settings/` | User settings (same view as `/me/`) |
 | `GET` | `/api/auth/mode/` | Core auth mode |
 | `GET` | `/api/auth/ops/metrics/` | Ops metrics (admin) |
+| `GET` | `/api/auth/admin/users/` | Internal bridge endpoint for the SaaS admin panel. Returns all Core users plus `external_identities`. Protected with `X-SaaS-Bridge-Secret` using `CORE_LINKING_SHARED_SECRET`. |
 | `POST` | `/api/auth/link-token/` | Generates a signed token to link account with SaaS |
 
 ### Memberships (family and ownership) — `/api/`
@@ -117,11 +118,15 @@ Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik r
 
 ## Core APIs consumed by SaaS backend (server-to-server)
 
-SaaS calls Core directly server-to-server using a user-scoped JWT (`AccessToken.for_user(user)`). This only works if Core and SaaS share `JWT_SIGNING_KEY`.
+SaaS calls Core directly server-to-server in two ways:
+
+1. user-scoped JWT (`AccessToken.for_user(user)`) for member bootstrap flows,
+2. shared-secret bridge (`X-SaaS-Bridge-Secret`) for SaaS admin visibility over Core users.
 
 | Method | Core Route | Called from | When | Description |
 |--------|------------|-------------|------|-------------|
 | `POST` | `/api/family-members/ensure-primary/` | `core_bootstrap.ensure_primary_family_member_in_core_for_saas_user()` | User registration / admin user creation / role assignment to `saas_member` | Ensures the user has a primary `FamilyMember` in Core. Idempotent. |
+| `GET` | `/api/auth/admin/users/` | `core_admin_client.list_core_admin_users()` | SaaS admin panel refresh | Returns all Core users and external identities so SaaS can cross-reference native Core users, bootstrap users, and manual links. |
 
 > **Note:** if `CORE_API_BASE_URL` is not configured or Core is unavailable, user registration fails with HTTP 400. See [integration flow](./saas-core-integration-flow.md) for details.
 
