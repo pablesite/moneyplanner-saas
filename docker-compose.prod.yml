@@ -98,7 +98,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=proxy
-      - traefik.http.services.moneyplanner-saas-frontend.loadbalancer.server.port=80
+      - traefik.http.services.moneyplanner-saas-frontend.loadbalancer.server.port=8080
       - traefik.http.routers.moneyplanner-saas-frontend.rule=Host(`${MONEYPLANNER_DOMAIN}`)
       - traefik.http.routers.moneyplanner-saas-frontend.priority=1
     networks:
