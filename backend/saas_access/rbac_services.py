@@ -93,6 +93,7 @@ def list_core_users_with_saas_links(
     enriched: list[dict[str, object]] = []
 
     for core_user in core_users:
+        # Cross-reference Core identities with SaaS users via manual links or bootstrap identities.
         external_identities = cast(
             list[dict[str, object]],
             core_user.get("external_identities") or [],

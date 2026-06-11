@@ -31,6 +31,7 @@ class SaasAdminUserListCreateAPIView(APIView):
     throttle_scope = "saas_admin_api"
 
     def get(self, request):
+        # Keep SaaS and Core identities in one response for the unified admin view.
         users, role_by_user_id, link_by_user_id = list_admin_users_with_roles()
         saas_users = SaasAdminUserSerializer(
             users,
