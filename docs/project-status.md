@@ -147,8 +147,8 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 
 | Area                                      | Status         | Notes                                                                                                                                                          |
 | ----------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local Docker Compose (SaaS)               | ✅ Implemented | Root `docker-compose.yml`                                                                                                                                      |
-| Local Docker Compose (Core)               | ✅ Implemented | `core/docker-compose.yml`                                                                                                                                      |
+| Local Docker Compose (integrated root)    | ✅ Implemented | Root `docker-compose.dev.yml` with shared `moneyplanner-dev` network and reused standalone data volumes                                                      |
+| Local Docker Compose (Core standalone)    | ✅ Implemented | `core/docker-compose.yml` remains available for open-core standalone/community work                                                                            |
 | Pre-commit hooks (ruff, eslint, prettier) | ✅ Implemented | `.pre-commit-config.yaml`                                                                                                                                      |
 | SaaS CI quality checks                    | ✅ Implemented | `.github/workflows/quality.yml`                                                                                                                                |
 | Cloud deployment                          | 🔄 In progress | Planned for private SaaS at `https://moneyplanner.codinglab.es`; see `docs/operations/production-deploy.md` and production deployment task specs.              |
@@ -171,7 +171,6 @@ See `core/docs/project-status.md`.
 | 🔄     | In progress                             |
 | ⚪     | Not started (future scope)              |
 | ⛔     | Explicitly out of scope (decision made) |
-
 
 
 

@@ -18,7 +18,7 @@ Production should be operable from one root compose file. The deployed product n
 
 ## Plan
 1. Diagnosis
-   - Review current root `docker-compose.yml` and `core/docker-compose.prod.yml`.
+   - Review current root `docker-compose.dev.yml`, root `docker-compose.prod.yml`, and `core/docker-compose.prod.yml`.
    - Confirm Traefik server pattern: Cloudflare Tunnel -> `localhost:80` -> Traefik -> Docker services on external `proxy` network.
 2. Change implementation
    - Add `docker-compose.prod.yml` at repo root.

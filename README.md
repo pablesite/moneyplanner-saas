@@ -20,12 +20,15 @@ Private SaaS repository for MoneyPlanner.
 2. Core documentation is maintained in `core/docs/`.
 3. SaaS documentation should reference Core docs instead of duplicating Core product behavior.
 
-## Local Startup Order
-1. `cd core`
-2. `docker compose up --build -d`
-3. Verificar en `core/` que `backend`, `frontend`, `db` y `fx_sync` estan `Up` con `docker compose ps`
-4. `cd ..`
-5. `docker compose up --build -d`
+## Integrated Local Startup
+1. `cp .env.dev.example .env.dev`
+2. `docker compose -f docker-compose.dev.yml --env-file .env.dev up --build -d`
+3. Verificar estado con:
+   `docker compose -f docker-compose.dev.yml --env-file .env.dev ps`
+
+This root repository now uses the integrated WSL flow only.
+The standalone Core workflow for community contributors remains documented in
+`core/docs/operations/dev-setup.md`.
 
 ## Local Endpoints
 1. Core frontend: `http://localhost:5173`
@@ -38,6 +41,7 @@ Private SaaS repository for MoneyPlanner.
 1. `docs/README.md`
 2. `core/README.md`
 3. `core/docs/README.md`
+4. `docs/operations/dev-setup.md`
 
 ## Version
 1. SaaS: `VERSION`

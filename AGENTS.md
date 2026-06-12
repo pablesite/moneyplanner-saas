@@ -60,14 +60,29 @@ Leer al inicio de cualquier tarea, antes de tocar código o documentación:
 
 ## Arranque estandar
 
-Solo ejecutar si los contenedores no están ya corriendo (verificar con `docker compose ps` primero).
+Solo ejecutar si los contenedores no están ya corriendo.
+
+### Repo raiz `moneyplanner-saas` (flujo canonico integrado)
+
+1. `cp .env.dev.example .env.dev`
+2. `docker compose -f docker-compose.dev.yml --env-file .env.dev up --build -d`
+
+### Core standalone (`./core`)
+
+Mantener disponible para la comunidad open core:
 
 1. `cd core`
 2. `docker compose up --build -d`
-3. `cd ..`
-4. `docker compose up --build -d`
 
 ## Diagnostico estandar
+
+### Repo raiz `moneyplanner-saas`
+
+1. `docker compose -f docker-compose.dev.yml --env-file .env.dev ps`
+2. `docker compose -f docker-compose.dev.yml --env-file .env.dev logs --tail 100 <service>`
+3. Opcional: `docker compose -f docker-compose.dev.yml --env-file .env.dev ps -a`, `docker compose -f docker-compose.dev.yml --env-file .env.dev logs --tail 200 <service>`
+
+### Core standalone (`./core`)
 
 1. `docker compose ps`
 2. `docker compose logs --tail 100 <service>`
@@ -96,14 +111,14 @@ Solo ejecutar si los contenedores no están ya corriendo (verificar con `docker 
 
 ## Calidad (estado actual)
 
-1. SaaS backend: `docker compose exec saas_backend ruff check .`, `ruff format --check .`, `mypy .`
+1. SaaS backend: `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend ruff check .`, `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend ruff format --check .`, `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend mypy .`
 2. Core backend: `docker compose -f core/docker-compose.yml exec backend ruff check .`, `ruff format --check .`, `mypy .`
-3. SaaS frontend: `docker compose exec saas_frontend npm run lint`, `npm run format:check`, `npm run typecheck`
+3. SaaS frontend: `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint`, `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check`, `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck`
 4. Core frontend: `docker compose -f core/docker-compose.yml exec frontend npm run lint`, `npm run format:check`, `npm run typecheck`
 
 ## Tests minimos actuales
 
-1. SaaS backend: `docker compose exec saas_backend python manage.py test saas_access`
+1. SaaS backend: `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend python manage.py test saas_access`
 2. Core backend: `docker compose -f core/docker-compose.yml exec backend python manage.py test accounting accounts budget memberships net_worth core`
 
 ## Documentos canonicos (SaaS)
@@ -167,9 +182,9 @@ Solo ejecutar si los contenedores no están ya corriendo (verificar con `docker 
 ### Cambiar un modelo de datos SaaS
 
 1. Modificar `backend/saas_access/models.py`
-2. `docker compose exec saas_backend python manage.py makemigrations`
-3. `docker compose exec saas_backend python manage.py migrate`
-4. `docker compose exec saas_backend python manage.py showmigrations saas_access`
+2. `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend python manage.py makemigrations`
+3. `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend python manage.py migrate`
+4. `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend python manage.py showmigrations saas_access`
 5. Actualizar `docs/architecture/data-model.md`
 
 ### Planificar un módulo

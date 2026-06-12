@@ -1,156 +1,210 @@
-﻿# Desarrollo y operacion local (SaaS + Core)
+# Desarrollo local integrado en WSL
 
-## Primer arranque: configurar .env
+## Objetivo
 
-Antes del primer `docker compose up`, crear los archivos `.env` copiando los ejemplos:
+Este documento describe el flujo canonico de desarrollo local para este repo `moneyplanner-saas`
+cuando `./core` se usa como submodulo Git y ambos stacks se levantan juntos desde la raiz.
 
-```bash
-# SaaS backend
-cp backend/.env.example backend/.env
+Para el modo standalone del producto open core, ver
+`core/docs/operations/dev-setup.md`. Ese documento sigue siendo valido para la comunidad que
+trabaja solo sobre `./core`, pero no describe el entorno integrado SaaS + Core de este repo.
 
-# SaaS frontend
-cp frontend/.env.example frontend/.env
+## Flujo recomendado
 
-# Core backend
-cp core/backend/.env.example core/backend/.env
-```
-
-Para desarrollo local no es necesario cambiar ningun valor si levantas ambos stacks con los ejemplos tal cual. La unica condicion es que el Core que este realmente arrancado tenga estos valores efectivos:
-
-1. `DJANGO_ALLOWED_HOSTS` incluye `host.docker.internal` si SaaS lo alcanza por `http://host.docker.internal:8000`
-2. `AUTH_ACCEPT_EXTERNAL_TOKENS=1`
-3. `EXTERNAL_JWT_ISSUER`, `EXTERNAL_JWT_AUDIENCE` y `EXTERNAL_JWT_SIGNING_KEY` alineados con el backend SaaS
-
-## Fuente de verdad del entorno Docker
-
-El contenedor usa el `.env` del checkout desde el que fue creado, no el del repo que tengas abierto en el editor.
-
-Ejemplo real de confusion habitual:
-1. `moneyplanner-saas/core/` puede existir como submodulo
-2. `C:\Users\pablo\Proyectos\moneyplanner-core` puede existir como checkout independiente
-3. Si `core_backend` fue creado desde el checkout independiente, cambiar `moneyplanner-saas/core/backend/.env` no cambia nada en el contenedor ya existente
-
-Compruebalo siempre con:
+1. Copiar el archivo de ejemplo:
 
 ```bash
-docker inspect core_backend --format '{{json .Mounts}}'
-docker exec core_backend sh -c "env | grep DJANGO_ALLOWED_HOSTS"
+cp .env.dev.example .env.dev
 ```
 
-## Arranque local
-1. `cd core`
-2. `docker compose up --build -d`
-3. Verificar en `core/` que `backend`, `frontend`, `db` y `fx_sync` estan `Up` con `docker compose ps`
-4. `cd ..`
-5. `docker compose up --build -d`
-
-## Cuando cambias un .env
-
-Un simple `docker restart` no recarga variables de entorno. Hay que recrear el contenedor sin borrar volumenes:
+2. Levantar todo el entorno integrado desde la raiz:
 
 ```bash
-# Core
-cd core
-docker compose up -d --force-recreate backend market_data_sync frontend
-
-# SaaS
-cd ..
-docker compose up -d --force-recreate saas_backend saas_frontend
+docker compose -f docker-compose.dev.yml --env-file .env.dev up --build -d
 ```
 
-Esto no toca las bases de datos mientras no uses `down -v`.
+3. Verificar estado:
+
+```bash
+docker compose -f docker-compose.dev.yml --env-file .env.dev ps
+```
+
+## Servicios levantados
+
+1. `core_db`
+2. `core_backend`
+3. `core_market_data_sync`
+4. `core_frontend`
+5. `saas_db`
+6. `saas_backend`
+7. `saas_frontend`
 
 ## Endpoints locales
+
 1. Core frontend: `http://localhost:5173`
 2. Core backend: `http://localhost:8000`
 3. SaaS frontend: `http://localhost:5174`
 4. SaaS backend: `http://localhost:8001`
 
-## Variables importantes (SaaS backend)
-1. `CORE_API_BASE_URL` -> URL publica/interna del backend Core
-2. `CORE_API_HOST_HEADER` -> host que SaaS fuerza en la llamada server-to-server hacia Core para satisfacer `ALLOWED_HOSTS` en desarrollo local
-3. `JWT_*` -> issuer, audience y signing key SaaS
-4. `ACCOUNT_LINKING_*` -> configuracion de linking, si aplica
+## Variables de desarrollo
 
-Valores recomendados:
+La unica fuente principal de configuracion para este entorno integrado es `.env.dev`.
 
-1. Desarrollo local con Core publicado en `localhost:8000`
-   - `CORE_API_BASE_URL=http://host.docker.internal:8000`
-   - `CORE_API_HOST_HEADER=localhost`
-2. Produccion con Core detras del mismo proxy/origen final
-   - `CORE_API_BASE_URL=https://tu-dominio-core-o-public-origin`
-   - `CORE_API_HOST_HEADER=` (vacio, salvo necesidad explicita del proxy)
+| Variable | Uso | Valor dev recomendado |
+| --- | --- | --- |
+| `JWT_SIGNING_KEY` | Firma JWT compartida entre SaaS y Core | `dev-only-not-for-production-change-me-please-32b` |
+| `CORE_LINKING_SHARED_SECRET` | Secret compartido para linking SaaS/Core | `dev-only-shared-linking-secret-32b-minimum` |
+| `CORE_LINKING_TOKEN_MAX_AGE_SECONDS` | Validez del token de linking | `300` |
+| `JWT_ISSUER` | Issuer del backend SaaS | `moneyplanner-saas` |
+| `JWT_AUDIENCE` | Audience del backend SaaS | `moneyplanner-saas-api` |
+| `AUTH_ACCEPT_EXTERNAL_TOKENS` | Permite a Core aceptar JWTs emitidos por SaaS | `1` |
+| `EXTERNAL_JWT_ISSUER` | Issuer externo aceptado por Core | `moneyplanner-saas` |
+| `EXTERNAL_JWT_AUDIENCE` | Audience externa aceptada por Core | `moneyplanner-saas-api` |
+| `EXTERNAL_JWT_SIGNING_KEY` | Clave usada por Core para validar JWTs SaaS | Igual que `JWT_SIGNING_KEY` |
+| `CORE_DJANGO_SECRET_KEY` | Secret key de Core backend | `dev-only-not-for-production-change-me-please-32b` |
+| `CORE_DJANGO_DEBUG` | Debug Core | `1` |
+| `CORE_DJANGO_ALLOWED_HOSTS` | Hosts permitidos por Core | `localhost,127.0.0.1,core_backend` |
+| `CORE_CORS_ALLOWED_ORIGINS` | Origins permitidos por Core | `http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174` |
+| `CORE_POSTGRES_DB` | Nombre de la BD Core | `core` |
+| `CORE_POSTGRES_USER` | Usuario BD Core | `core` |
+| `CORE_POSTGRES_PASSWORD` | Password BD Core | `core` |
+| `CORE_SEED_CREATE_ADMIN` | Crear admin Core en arranque | `1` |
+| `CORE_SEED_ADMIN_USERNAME` | Usuario admin Core | `admin` |
+| `CORE_SEED_ADMIN_EMAIL` | Email admin Core | `admin@example.com` |
+| `CORE_SEED_ADMIN_PASSWORD` | Password admin Core | `admin` |
+| `CORE_SEED_FORCE_ADMIN_PASSWORD` | Forzar password admin Core | `0` |
+| `CORE_SEED_CREATE_DEMO` | Cargar demo data Core | `1` |
+| `FX_PIVOT` | Divisa pivote market data | `USD` |
+| `FX_SYNC_ENABLED` | Worker de market data | `1` |
+| `FX_SYNC_QUOTE_CURRENCY` | Divisa cotizada del sync FX | `EUR` |
+| `FX_SYNC_INTERVAL_SECONDS` | Intervalo de sync market data | `86400` |
+| `SAAS_DJANGO_SECRET_KEY` | Secret key de SaaS backend | `dev-only-not-for-production-change-me-please-32b` |
+| `SAAS_DJANGO_DEBUG` | Debug SaaS | `1` |
+| `SAAS_DJANGO_ALLOWED_HOSTS` | Hosts permitidos por SaaS | `localhost,127.0.0.1,saas_backend` |
+| `SAAS_CORS_ALLOWED_ORIGINS` | Origins permitidos por SaaS | `http://localhost:5174,http://127.0.0.1:5174` |
+| `SAAS_CORS_ALLOW_CREDENTIALS` | Credenciales CORS SaaS | `0` |
+| `SAAS_CORS_ALLOW_ALL_ORIGINS` | Origins abiertos en SaaS | `0` |
+| `CORE_API_BASE_URL` | URL interna Core usada por SaaS backend | `http://core_backend:8000` |
+| `CORE_API_HOST_HEADER` | Host header forzado hacia Core | vacio |
+| `CORE_API_X_FORWARDED_PROTO` | `X-Forwarded-Proto` forzado hacia Core | vacio |
+| `CORE_BOOTSTRAP_TIMEOUT_SECONDS` | Timeout SaaS -> Core | `5` |
+| `SAAS_PUBLIC_REGISTRATION_ENABLED` | Registro publico SaaS | `1` |
+| `ACCOUNT_LINKING_ENABLED` | Linking SaaS/Core | `1` |
+| `SAAS_POSTGRES_DB` | Nombre de la BD SaaS | `saas` |
+| `SAAS_POSTGRES_USER` | Usuario BD SaaS | `saas` |
+| `SAAS_POSTGRES_PASSWORD` | Password BD SaaS | `saas` |
+| `SAAS_SEED_CREATE_ADMIN` | Crear admin SaaS en arranque | `1` |
+| `SAAS_SEED_ADMIN_USERNAME` | Usuario admin SaaS | `admin` |
+| `SAAS_SEED_ADMIN_EMAIL` | Email admin SaaS | `admin@example.com` |
+| `SAAS_SEED_ADMIN_PASSWORD` | Password admin SaaS | `admin` |
+| `SAAS_SEED_FORCE_ADMIN_PASSWORD` | Forzar password admin SaaS | `0` |
+| `CORE_FRONTEND_VITE_API_BASE_URL` | API usada por frontend Core | `http://127.0.0.1:8000` |
+| `CORE_FRONTEND_VITE_CORE_API_BASE_URL` | Override API Core frontend | `http://127.0.0.1:8000` |
+| `SAAS_FRONTEND_VITE_API_BASE_URL` | API usada por frontend SaaS | `http://127.0.0.1:8001` |
+| `SAAS_FRONTEND_VITE_CORE_API_BASE_URL` | API Core usada por frontend SaaS | `http://127.0.0.1:8000` |
+| `FRONTEND_USE_POLLING` | Polling para hot reload en WSL si hace falta | `false` |
+| `FRONTEND_POLLING_INTERVAL` | Intervalo de polling frontend | `300` |
+| `PIONEX_API_KEY` | Integracion broker Core | vacio |
+| `PIONEX_API_SECRET` | Integracion broker Core | vacio |
+| `BINANCE_API_KEY` | Integracion broker Core | vacio |
+| `BINANCE_API_SECRET` | Integracion broker Core | vacio |
+| `BROKER_ENCRYPTION_KEY` | Cifrado credenciales broker Core | vacio |
+
+## Volumenes reutilizados
+
+El entorno integrado reutiliza explicitamente los volumenes existentes del flujo standalone
+anterior. No crea nuevas bases de datos por defecto.
+
+1. Core DB: `moneyplanner-core_core_postgres_data`
+2. SaaS DB: `moneyplanner-saas_saas_postgres_data`
+
+Esto preserva historico local, movimientos reales, sincronizacion FX e indices ya persistidos.
+
+## Comunicacion interna
+
+En este modo integrado no se usa `host.docker.internal`.
+
+La comunicacion backend a backend queda asi:
+
+1. `saas_backend` -> `CORE_API_BASE_URL=http://core_backend:8000`
+2. `CORE_API_HOST_HEADER=localhost`
+3. `CORE_API_X_FORWARDED_PROTO=`
+
+## Cuando cambias `.env.dev`
+
+Un `docker restart` no recarga variables. Hay que recrear los servicios sin borrar volumenes:
+
+```bash
+docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --force-recreate
+```
 
 ## Diagnostico estandar
-1. `docker compose ps`
-2. `docker compose logs --tail 100 <service>`
-3. Diagnostico profundo:
-   - `docker compose ps -a`
-   - `docker compose logs --tail 200 <service>`
 
-En `core/`, `fx_sync` debe aparecer levantado porque mantiene el historico de FX usado por patrimonio.
-
-## Backup/restore DB Core (comandos simples en cmder)
-1. Exportar DB completa:
-   - `.\scripts\db-export.cmd`
-2. Importar el ultimo dump de `.\backups`:
-   - `.\scripts\db-import.cmd`
-3. Importar un dump concreto:
-   - `.\scripts\db-import.cmd -DumpFile .\backups\core_db_YYYYMMDD_HHMMSS.dump`
-
-Notas:
-1. El import crea backup automatico antes de reemplazar (`core_db_pre_import_*.dump`).
-2. El import valida el dump con `pg_restore -l` antes de hacer operaciones destructivas.
-3. Formato oficial: `.dump` (PostgreSQL custom format).
-
-## Problemas frecuentes
-1. Frontend no refresca -> recarga dura y revisar logs del frontend.
-2. Error CORS -> revisar `CORS_ALLOWED_ORIGINS`.
-3. Error SaaS al crear usuario/member -> revisar `CORE_API_BASE_URL`, `CORE_API_HOST_HEADER` y conectividad SaaS -> Core.
-   - En local, si `CORE_API_BASE_URL=http://host.docker.internal:8000`, Core debe incluir `host.docker.internal` en `DJANGO_ALLOWED_HOSTS`.
-   - Si acabas de cambiar `.env`, recrea el contenedor: `docker compose up -d --force-recreate ...`
-4. Auth/admin SaaS -> revisar `backend/logs/auth_audit.log`.
+1. `docker compose -f docker-compose.dev.yml --env-file .env.dev ps`
+2. `docker compose -f docker-compose.dev.yml --env-file .env.dev logs --tail 100 <service>`
+3. Diagnostico mas profundo:
+   - `docker compose -f docker-compose.dev.yml --env-file .env.dev ps -a`
+   - `docker compose -f docker-compose.dev.yml --env-file .env.dev logs --tail 200 <service>`
 
 ## Operacion segura
+
 1. No borrar volumenes.
 2. No usar `docker compose down -v` salvo peticion explicita.
-3. Ejecutar tests y calidad siempre dentro de Docker.
-4. En piloto SaaS:
-   - usuarios testers en `trial`
-   - alta manual desde Admin SaaS si hace falta
-   - `family/ownership` se crea en Core automaticamente durante alta/registro
+3. No eliminar contenedores ni volumenes antiguos sin validarlo antes.
+4. Ejecutar calidad y tests dentro de Docker.
 
-## Calidad (siempre en Docker)
+## Calidad en Docker
+
 ### SaaS backend
+
 ```bash
-docker compose exec saas_backend ruff check .
-docker compose exec saas_backend ruff format --check .
-docker compose exec saas_backend mypy .
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend ruff check .
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend ruff format --check .
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend mypy .
 ```
 
 ### SaaS frontend
+
 ```bash
-docker compose exec saas_frontend npm run lint
-docker compose exec saas_frontend npm run format:check
-docker compose exec saas_frontend npm run typecheck
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck
 ```
 
 ### Core backend
+
 ```bash
-cd core
-docker compose exec backend ruff check .
-docker compose exec backend ruff format --check .
-docker compose exec backend mypy .
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_backend ruff check .
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_backend ruff format --check .
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_backend mypy .
 ```
 
 ### Core frontend
+
 ```bash
-cd core
-docker compose exec frontend npm run lint
-docker compose exec frontend npm run format:check
-docker compose exec frontend npm run typecheck
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_frontend npm run lint
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_frontend npm run format:check
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_frontend npm run typecheck
 ```
 
 ## Tests minimos actuales
-1. SaaS backend: `docker compose exec saas_backend python manage.py test saas_access`
-2. Core backend: tests por dominio (segun avance)
+
+1. SaaS backend:
+   `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_backend python manage.py test saas_access`
+2. Core backend:
+   `docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_backend python manage.py test accounting accounts budget memberships net_worth core`
+
+## Problemas frecuentes
+
+1. SaaS no puede bootstrapear Core:
+   - revisar `CORE_API_BASE_URL`
+   - revisar que `core_backend` este `Up`
+   - revisar logs de `saas_backend` y `core_backend`
+2. Error CORS:
+   - revisar `CORE_CORS_ALLOWED_ORIGINS` o `SAAS_CORS_ALLOWED_ORIGINS`
+3. Frontend no refresca en WSL:
+   - poner `FRONTEND_USE_POLLING=true` en `.env.dev`
+   - recrear `core_frontend` y `saas_frontend`
+4. Auth/linking falla:
+   - revisar que `JWT_SIGNING_KEY`, `EXTERNAL_JWT_*` y `CORE_LINKING_SHARED_SECRET`
+     esten alineados

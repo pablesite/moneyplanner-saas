@@ -1,10 +1,9 @@
 backups/
 scripts/.env
-backend/.env
+.env.dev
 backend/__pycache__/
 backend/saas/__pycache__/
 backend/*.sqlite3
 backend/logs/
-frontend/.env
 frontend/node_modules/
 frontend/dist/

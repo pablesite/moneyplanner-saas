@@ -15,9 +15,8 @@ export default defineConfig({
     url: process.env.PW_BASE_URL || 'http://localhost:5174',
     reuseExistingServer: false,
     env: {
-      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://host.docker.internal:8001',
-      VITE_CORE_API_BASE_URL:
-        process.env.VITE_CORE_API_BASE_URL || 'http://host.docker.internal:8000',
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:8001',
+      VITE_CORE_API_BASE_URL: process.env.VITE_CORE_API_BASE_URL || 'http://localhost:8000',
     },
   },
   projects: [

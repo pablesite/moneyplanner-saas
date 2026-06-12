@@ -168,8 +168,8 @@ The Core frontend is not deployed as part of SaaS production.
 | Variable | Where | Description |
 |----------|-------|-------------|
 | `JWT_SIGNING_KEY` | SaaS backend + Core backend | **Debe ser igual** en ambos stacks |
-| `CORE_API_BASE_URL` | SaaS backend | URL del Core backend (server-to-server, ej: `http://core-backend:8000`) |
-| `CORE_API_HOST_HEADER` | SaaS backend | Host header opcional para llamadas SaaS -> Core. En dev local suele ser `localhost`; en produccion normalmente vacio. |
+| `CORE_API_BASE_URL` | SaaS backend | URL del Core backend (server-to-server, ej: `http://core_backend:8000`) |
+| `CORE_API_HOST_HEADER` | SaaS backend | Host header opcional para llamadas SaaS -> Core. En el dev integrado de este repo debe ir vacio; en produccion normalmente vacio tambien. |
 | `AUTH_ACCEPT_EXTERNAL_TOKENS` | Core backend | Must be `1` in SaaS production so Core accepts SaaS-issued JWTs |
 | `EXTERNAL_JWT_ISSUER` | Core backend | Must match SaaS JWT issuer (`moneyplanner-saas` by default) |
 | `EXTERNAL_JWT_AUDIENCE` | Core backend | Must match SaaS JWT audience (`moneyplanner-saas-api` by default) |
@@ -187,13 +187,14 @@ The Core frontend is not deployed as part of SaaS production.
 
 ### Desarrollo local
 
-Si SaaS corre en Docker y Core expone `8000` en el host:
+En el entorno integrado de este repo raiz, SaaS y Core corren en la misma red Docker:
 
 1. SaaS backend:
-   - `CORE_API_BASE_URL=http://host.docker.internal:8000`
+   - `CORE_API_BASE_URL=http://core_backend:8000`
    - `CORE_API_HOST_HEADER=localhost`
+   - `CORE_API_X_FORWARDED_PROTO=`
 2. Core backend:
-   - `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,host.docker.internal`
+   - `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,core_backend`
    - `AUTH_ACCEPT_EXTERNAL_TOKENS=1`
    - issuer/audience/signing key alineados con SaaS
 
@@ -215,9 +216,9 @@ Si cambia cualquier `.env` usado por Docker, hay que recrear el contenedor corre
 | Symptom | Probable cause | Action |
 |---------|---------------|--------|
 | Registration fails with "Could not connect to Core" | `CORE_API_BASE_URL` misconfigured or Core down | Check `docker compose ps` in Core, check `CORE_API_BASE_URL` |
-| Frontend does not load asset/movement data | `VITE_CORE_API_BASE_URL` wrong or CORS | Review `.env` of the SaaS frontend, review CORS in Core |
+| Frontend does not load asset/movement data | `VITE_CORE_API_BASE_URL` wrong or CORS | Review `.env.dev`, review CORS in Core |
 | 401 en llamadas a Core desde frontend | Tokens distintos (`JWT_SIGNING_KEY` diferente) | Verificar que ambos stacks usen el mismo `JWT_SIGNING_KEY` |
 | Token de linking rechazado | `CORE_LINKING_SHARED_SECRET` no coincide o token expirado | Verificar secret, generar nuevo token |
-| Admin SaaS no puede ver usuarios Core | `CORE_LINKING_SHARED_SECRET` ausente o distinto entre SaaS y Core | Verificar el secret compartido y recrear contenedores si cambió `.env` |
+| Admin SaaS no puede ver usuarios Core | `CORE_LINKING_SHARED_SECRET` ausente o distinto entre SaaS y Core | Verificar el secret compartido y recrear contenedores si cambió `.env.dev` |
 | Root URL works but API returns the SPA | Traefik path rule or priority mismatch | Review production labels and route priorities |
 | Net Worth or portable-data settings fail only in production | `/api/auth/settings/` routed to SaaS instead of Core | Review the higher-priority Core auth exception router |
