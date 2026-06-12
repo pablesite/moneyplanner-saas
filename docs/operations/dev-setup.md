@@ -194,6 +194,27 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_frontend 
 2. Core backend:
    `docker compose -f docker-compose.dev.yml --env-file .env.dev exec core_backend python manage.py test accounting accounts budget memberships net_worth core`
 
+## Validacion antes de push
+
+Antes de subir cambios a GitHub, usa el gate canonico del repo:
+
+```bash
+./scripts/pre-push-check.sh
+```
+
+Que valida:
+
+1. Que el stack integrado este levantado desde `docker-compose.dev.yml`
+2. Calidad completa de SaaS y Core dentro de Docker
+3. Tests backend con flags tipo CI para evitar falsos fallos por tener el linking integrado activado en `.env.dev`
+4. Tests frontend equivalentes a los que hoy protegen los pipelines principales
+
+Notas:
+
+1. El script asume que existe `.env.dev`
+2. No levanta ni recrea contenedores por su cuenta
+3. Si falla, no conviene hacer `push` hasta entender el motivo
+
 ## Problemas frecuentes
 
 1. SaaS no puede bootstrapear Core:
