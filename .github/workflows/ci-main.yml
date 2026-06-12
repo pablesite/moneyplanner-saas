@@ -338,7 +338,7 @@ jobs:
         run: |
           echo "Polling for app readiness (max 120s)..."
           for i in $(seq 1 24); do
-            if curl --silent --fail --location https://moneyplanner.codinglab.es/ > /dev/null 2>&1; then
+            if curl --silent --fail --location https://moneyplanner.codinglab.es/api/auth/mode/ > /dev/null 2>&1; then
               echo "App ready after $((i * 5))s"
               exit 0
             fi
@@ -350,10 +350,6 @@ jobs:
 
       - name: Smoke checks
         run: |
-          curl --fail --silent --show-error --location \
-            --retry 3 --retry-delay 5 --retry-connrefused \
-            https://moneyplanner.codinglab.es/ > /dev/null
-
           curl --fail --silent --show-error --location \
             --retry 3 --retry-delay 5 --retry-connrefused \
             https://moneyplanner.codinglab.es/api/auth/mode/ > /dev/null
