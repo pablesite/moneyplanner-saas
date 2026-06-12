@@ -17,6 +17,7 @@ Usar obligatoriamente cuando aplique. No son opcionales:
 | ------------------------------------------------------------------- | ----------------- |
 | Cualquier cambio en frontend: layouts, vistas, componentes, CSS, UX | `frontend-system` |
 | Antes de commitear cualquier cambio de código                       | `validate`        |
+| Antes de cualquier push a GitHub o preparación de deploy            | `pre-push-gate`   |
 | Inicio de sesión sin contexto claro del estado del proyecto         | `status`          |
 
 Las skills están en `.codex/skills/`. Leer el `SKILL.md` correspondiente antes de ejecutar.
@@ -46,13 +47,18 @@ Leer al inicio de cualquier tarea, antes de tocar código o documentación:
    - Si el cambio toca integración Core/SaaS, validar ambos lados (`/validate all`).
    - No crear commits ni PRs sin que lint, format, typecheck y tests pasen en verde.
    - No dar por bueno un cambio sin validacion suficiente para su alcance.
-4. Actualizar documentacion y version cuando aplique.
+4. Validar obligatoriamente **antes de cualquier push o preparación de producción**.
+   - Ejecutar `./scripts/pre-push-check.sh` antes de cualquier `git push`, propuesta de `git push`, o preparación de despliegue a producción.
+   - Usar obligatoriamente la skill `pre-push-gate` cuando la tarea implique subir cambios a GitHub, revisar readiness de CI, o preparar deploy productivo.
+   - Si `./scripts/pre-push-check.sh` falla, detener el flujo: no proponer push, no proponer deploy y no dar por listo el release hasta resolver la causa.
+   - La validación pre-push debe ejecutarse sobre el stack integrado de la raíz, salvo que el usuario pida explícitamente auditar solo el repo Core standalone.
+5. Actualizar documentacion y version cuando aplique.
    - Actualizar solo la documentacion canonica afectada por el cambio.
    - Si cambia arquitectura, boundaries o capabilities, reflejarlo antes de cerrar la tarea.
    - El versionado es automatico via release-please: NO tocar VERSION ni package.json manualmente.
    - El tipo de Conventional Commit determina el bump: `fix:` → PATCH, `feat:` → MINOR, `feat!:` / `BREAKING CHANGE:` → MAJOR. `chore:`, `docs:`, `refactor:` no generan release.
    - Al hacer push a main, release-please abre un PR "Release vX.Y.Z" con el CHANGELOG generado. Al mergear ese PR se crea el tag y se actualiza VERSION + frontend/package.json.
-5. Cerrar con trazabilidad.
+6. Cerrar con trazabilidad.
    - Dejar claro que se cambio, que se valido y que queda pendiente si aplica.
    - Al terminar cada feature o bloque funcional validado, crear un commit.
    - Usar Conventional Commits.
@@ -95,6 +101,7 @@ Mantener disponible para la comunidad open core:
 3. Ejecutar calidad/tests dentro de contenedores (`docker compose exec ...`).
 4. En PowerShell no usar `&&`.
 5. No ejecutar `git push` sin confirmacion explicita del usuario.
+6. No preparar ni recomendar un despliegue a producción sin haber ejecutado antes `./scripts/pre-push-check.sh` en verde en la copia de trabajo actual.
 
 ## Migraciones (obligatorio cuando cambia modelo de datos)
 
