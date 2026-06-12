@@ -17,7 +17,7 @@ Usar obligatoriamente cuando aplique. No son opcionales:
 | ------------------------------------------------------------------- | ----------------- |
 | Cualquier cambio en frontend: layouts, vistas, componentes, CSS, UX | `frontend-system` |
 | Antes de commitear cualquier cambio de código                       | `validate`        |
-| Antes de cualquier push a GitHub o preparación de deploy            | `pre-push-gate`   |
+| Antes de cualquier push a GitHub o preparación de deploy            | `publish-flow`    |
 | Inicio de sesión sin contexto claro del estado del proyecto         | `status`          |
 
 Las skills están en `.codex/skills/`. Leer el `SKILL.md` correspondiente antes de ejecutar.
@@ -49,7 +49,7 @@ Leer al inicio de cualquier tarea, antes de tocar código o documentación:
    - No dar por bueno un cambio sin validacion suficiente para su alcance.
 4. Validar obligatoriamente **antes de cualquier push o preparación de producción**.
    - Ejecutar `./scripts/pre-push-check.sh` antes de cualquier `git push`, propuesta de `git push`, o preparación de despliegue a producción.
-   - Usar obligatoriamente la skill `pre-push-gate` cuando la tarea implique subir cambios a GitHub, revisar readiness de CI, o preparar deploy productivo.
+   - Usar obligatoriamente la skill `publish-flow` cuando la tarea implique subir cambios a GitHub, revisar readiness de CI, o preparar deploy productivo.
    - Si `./scripts/pre-push-check.sh` falla, detener el flujo: no proponer push, no proponer deploy y no dar por listo el release hasta resolver la causa.
    - La validación pre-push debe ejecutarse sobre el stack integrado de la raíz, salvo que el usuario pida explícitamente auditar solo el repo Core standalone.
 5. Actualizar documentacion y version cuando aplique.
