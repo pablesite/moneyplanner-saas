@@ -336,7 +336,7 @@ jobs:
             cd '${DEPLOY_PATH}'
             echo '${GHCR_PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_PULL_USERNAME}' --password-stdin
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release pull
-            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release up -d --wait --wait-timeout 120 --remove-orphans
+            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release up -d --wait --wait-timeout 300 --remove-orphans
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release ps
           "
 
