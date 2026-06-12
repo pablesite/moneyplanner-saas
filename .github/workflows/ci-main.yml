@@ -338,11 +338,13 @@ jobs:
         run: |
           echo "Polling for app readiness (max 120s)..."
           for i in $(seq 1 24); do
-            if curl --silent --fail --location https://moneyplanner.codinglab.es/api/auth/mode/ > /dev/null 2>&1; then
-              echo "App ready after $((i * 5))s"
+            code=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+              --location https://moneyplanner.codinglab.es/api/auth/mode/ 2>/dev/null || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "App ready after $((i * 5))s (HTTP 200)"
               exit 0
             fi
-            echo "  attempt $i/24 — retrying in 5s"
+            echo "  attempt $i/24 — HTTP $code, retrying in 5s"
             sleep 5
           done
           echo "Timed out after 120s waiting for app readiness" >&2
@@ -351,11 +353,11 @@ jobs:
       - name: Smoke checks
         run: |
           curl --fail --silent --show-error --location \
-            --retry 3 --retry-delay 5 --retry-connrefused \
+            --retry 5 --retry-delay 3 --retry-all-errors \
             https://moneyplanner.codinglab.es/api/auth/mode/ > /dev/null
 
           curl --fail --silent --show-error --location \
-            --retry 3 --retry-delay 5 --retry-connrefused \
+            --retry 5 --retry-delay 3 --retry-all-errors \
             https://moneyplanner.codinglab.es/api/core/market-data/status/ > /dev/null
 
   release-please:
