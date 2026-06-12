@@ -70,8 +70,12 @@ services:
       GUNICORN_TIMEOUT: ${SAAS_GUNICORN_TIMEOUT:-120}
     healthcheck:
       test:
-        - CMD-SHELL
-        - "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/auth/mode/')\" 2>/dev/null || exit 1"
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; req = urllib.request.Request('http://localhost:8000/api/auth/mode/', headers={'Host': '${MONEYPLANNER_DOMAIN}', 'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(req)",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -171,8 +175,12 @@ services:
       GUNICORN_TIMEOUT: ${CORE_GUNICORN_TIMEOUT:-120}
     healthcheck:
       test:
-        - CMD-SHELL
-        - "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/auth/mode/')\" 2>/dev/null || exit 1"
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; req = urllib.request.Request('http://localhost:8000/api/auth/mode/', headers={'Host': '${MONEYPLANNER_DOMAIN}', 'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(req)",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
