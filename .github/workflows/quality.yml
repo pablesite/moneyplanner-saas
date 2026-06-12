@@ -91,7 +91,7 @@ jobs:
         run: mypy .
 
       - name: Migration consistency check
-        run: python manage.py migrate --check
+        run: python manage.py makemigrations --check --dry-run
         env:
           DB_HOST: localhost
           DB_PORT: "5432"

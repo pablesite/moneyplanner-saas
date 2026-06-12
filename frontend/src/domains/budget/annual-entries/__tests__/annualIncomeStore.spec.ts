@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/lib/api', () => ({
   api: mocks.api,
+  coreApi: mocks.api,
 }));
 
 vi.mock('@/lib/errors', () => ({
