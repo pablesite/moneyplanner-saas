@@ -68,6 +68,14 @@ services:
       SEED_FORCE_ADMIN_PASSWORD: ${SEED_FORCE_ADMIN_PASSWORD:-0}
       GUNICORN_WORKERS: ${SAAS_GUNICORN_WORKERS:-2}
       GUNICORN_TIMEOUT: ${SAAS_GUNICORN_TIMEOUT:-120}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/auth/mode/')\" 2>/dev/null || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     depends_on:
       saas_db:
         condition: service_healthy
@@ -161,6 +169,14 @@ services:
       SECURE_REFERRER_POLICY: ${SECURE_REFERRER_POLICY:-strict-origin-when-cross-origin}
       GUNICORN_WORKERS: ${CORE_GUNICORN_WORKERS:-2}
       GUNICORN_TIMEOUT: ${CORE_GUNICORN_TIMEOUT:-120}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/auth/mode/')\" 2>/dev/null || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     depends_on:
       core_db:
         condition: service_healthy

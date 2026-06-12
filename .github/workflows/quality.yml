@@ -90,6 +90,18 @@ jobs:
       - name: Mypy
         run: mypy .
 
+      - name: Migration consistency check
+        run: python manage.py migrate --check
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: saas
+          DB_USER: saas
+          DB_PASSWORD: saas
+          DJANGO_DEBUG: "1"
+          DJANGO_SECRET_KEY: "ci-only-insecure-key-not-used-in-production-xK9mP2nQ8rT5vW3yZ7aB4dF6hJ1lN0oR"
+          JWT_SIGNING_KEY: "ci-only-insecure-key-not-used-in-production-xK9mP2nQ8rT5vW3yZ7aB4dF6hJ1lN0oR"
+
       - name: Tests
         run: |
           coverage run --rcfile=.coveragerc manage.py test saas_access
@@ -132,4 +144,4 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test:unit -- src/views/__tests__/BudgetDashboardView.spec.ts
+        run: npm run test:unit

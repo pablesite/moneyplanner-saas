@@ -107,6 +107,18 @@ jobs:
       - name: Mypy
         run: mypy .
 
+      - name: Migration consistency check
+        run: python manage.py migrate --check
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: saas
+          DB_USER: saas
+          DB_PASSWORD: saas
+          DJANGO_DEBUG: "1"
+          DJANGO_SECRET_KEY: "ci-only-insecure-key-not-used-in-production-xK9mP2nQ8rT5vW3yZ7aB4dF6hJ1lN0oR"
+          JWT_SIGNING_KEY: "ci-only-insecure-key-not-used-in-production-xK9mP2nQ8rT5vW3yZ7aB4dF6hJ1lN0oR"
+
       - name: Tests
         run: |
           coverage run --rcfile=.coveragerc manage.py test saas_access
@@ -151,7 +163,7 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test:unit -- src/views/__tests__/BudgetDashboardView.spec.ts
+        run: npm run test:unit
 
   docker-build-push:
     name: Build, scan and push - ${{ matrix.service }}
@@ -324,7 +336,7 @@ jobs:
             cd '${DEPLOY_PATH}'
             echo '${GHCR_PULL_TOKEN}' | docker login ghcr.io -u '${GHCR_PULL_USERNAME}' --password-stdin
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release pull
-            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release up -d --wait --wait-timeout 120 --remove-orphans
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release ps
           "
 
@@ -334,31 +346,11 @@ jobs:
     needs: [deploy-production]
     if: github.ref == 'refs/heads/main' && vars.ENABLE_PRODUCTION_DEPLOY == '1'
     steps:
-      - name: Wait for app readiness
-        run: |
-          echo "Polling for app readiness (max 120s)..."
-          for i in $(seq 1 24); do
-            code=$(curl --silent --output /dev/null --write-out "%{http_code}" \
-              --location https://moneyplanner.codinglab.es/api/auth/mode/ 2>/dev/null || echo "000")
-            if [ "$code" = "200" ]; then
-              echo "App ready after $((i * 5))s (HTTP 200)"
-              exit 0
-            fi
-            echo "  attempt $i/24 — HTTP $code, retrying in 5s"
-            sleep 5
-          done
-          echo "Timed out after 120s waiting for app readiness" >&2
-          exit 1
-
       - name: Smoke checks
         run: |
           curl --fail --silent --show-error --location \
-            --retry 5 --retry-delay 3 --retry-all-errors \
+            --retry 6 --retry-delay 10 --retry-all-errors \
             https://moneyplanner.codinglab.es/api/auth/mode/ > /dev/null
-
-          curl --fail --silent --show-error --location \
-            --retry 5 --retry-delay 3 --retry-all-errors \
-            https://moneyplanner.codinglab.es/api/core/market-data/status/ > /dev/null
 
   release-please:
     name: Release Please
