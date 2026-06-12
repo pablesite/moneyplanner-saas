@@ -99,7 +99,7 @@ describe('useNetWorthViewState (core)', () => {
   it('reacts to mode changes, computes labels, edit payloads and error messages', async () => {
     const store = reactive({
       loading: false,
-      error: '{"detail":"boom"}',
+      error: '{"detail":"boom"}' as string | null,
       baseCurrency: 'EUR',
       summary: {
         ...makeSummary(),
@@ -173,6 +173,7 @@ describe('useNetWorthViewState (core)', () => {
     expect(state.editInitial?.land_value_share_percent).toBe('42.3');
     expect(state.editInitial?.land_annual_appreciation_percent).toBe('3');
     expect(state.editInitial?.building_annual_depreciation_percent).toBe('1');
+    store.error = null;
     await state.submitEdit({ name: 'edited', financed_asset_id: 99 });
     expect(store.updateAsset).toHaveBeenCalledWith(1, { name: 'edited' });
     expect(state.showEditModal).toBe(false);

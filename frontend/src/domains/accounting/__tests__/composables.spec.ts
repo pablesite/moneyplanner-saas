@@ -10,6 +10,7 @@ import { coreNetWorthApi } from '@/domains/net-worth/api';
 
 const loadAnnualIncome = vi.fn();
 const loadAnnualExpense = vi.fn();
+const fetchOwnerships = vi.fn();
 
 vi.mock('../api', () => ({
   coreAccountingApi: {
@@ -17,6 +18,7 @@ vi.mock('../api', () => ({
     getTransactions: vi.fn(),
     getMonthlySummary: vi.fn(),
     getAccountBalances: vi.fn(),
+    getDailyBalanceSeries: vi.fn(),
     createAccount: vi.fn(),
     deleteAccount: vi.fn(),
     createTransaction: vi.fn(),
@@ -53,6 +55,13 @@ vi.mock('@/domains/budget/annual-entries', () => ({
   }),
 }));
 
+vi.mock('@/domains/people/store', () => ({
+  usePeopleStore: () => ({
+    ownerships: [],
+    fetchOwnerships,
+  }),
+}));
+
 function seedRefreshResponses() {
   vi.mocked(coreAccountingApi.getAccounts).mockResolvedValue({
     data: [
@@ -85,6 +94,9 @@ function seedRefreshResponses() {
       accounts: [],
     },
   } as never);
+  vi.mocked(coreAccountingApi.getDailyBalanceSeries).mockResolvedValue({
+    data: { base_currency: 'EUR', rows: [] },
+  } as never);
 }
 
 function seedNetWorthResponses() {
@@ -98,6 +110,7 @@ describe('useAccountingPage', () => {
     vi.clearAllMocks();
     seedRefreshResponses();
     seedNetWorthResponses();
+    fetchOwnerships.mockResolvedValue(undefined);
   });
 
   it('sends taxonomy in quick-entry payload', async () => {
@@ -132,5 +145,7 @@ describe('useAccountingPage', () => {
       }),
     );
     expect(store.transactionCreationLoading).toBe(false);
+
+    wrapper.unmount();
   });
 });
