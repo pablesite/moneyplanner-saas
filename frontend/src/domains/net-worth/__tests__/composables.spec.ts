@@ -129,6 +129,8 @@ describe('useNetWorthViewState (core)', () => {
       deleteSnapshot: vi.fn(async () => undefined),
       updateAsset: vi.fn(async () => undefined),
       updateLiability: vi.fn(async () => undefined),
+      assets: [] as Asset[],
+      liabilities: [] as Liability[],
     });
     mocks.useNetWorthStore.mockReturnValue(store);
 

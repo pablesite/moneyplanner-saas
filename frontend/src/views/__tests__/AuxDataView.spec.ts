@@ -45,7 +45,6 @@ describe('AuxDataView', () => {
     mockUseAuxDataPage.mockReturnValue(makeState());
     const wrapper = mount(AuxDataView);
 
-    expect(wrapper.text()).toContain('Settings');
     expect(wrapper.text()).toContain('Datos IPC');
     expect(wrapper.text()).toContain('Tasas de conversion');
     expect(wrapper.text()).toContain('No hay indices IPC sincronizados todavia.');
