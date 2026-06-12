@@ -153,7 +153,7 @@ describe('useNetWorthViewState (core)', () => {
     expect(state.summaryAssetBackedLiabilities).toBe('80');
     expect(state.summaryUnbackedLiabilities).toBe('40');
     expect(state.byCategoryKeys).toEqual(['cash', 'mortgage']);
-    expect(state.byCategoryLabels).toEqual(['Liquidez', 'Hipoteca']);
+    expect(state.byCategoryLabels).toEqual(['Liquidez', 'Hipotecas']);
     expect(state.byCategoryAssets).toEqual([9, 0]);
     expect(state.byCategoryLiabilities).toEqual([0, 4]);
 
