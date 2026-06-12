@@ -27,6 +27,7 @@ vi.mock('@/domains/net-worth', () => ({
   ItemList: makeStub('ItemList'),
   NetWorthByCategoryBar: makeStub('NetWorthByCategoryBar'),
   NetWorthTimelineChart: makeStub('NetWorthTimelineChart'),
+  NetWorthDeltaChart: makeStub('NetWorthDeltaChart'),
   NetWorthDonut: defineComponent({
     name: 'NetWorthDonut',
     props: {
@@ -792,7 +793,7 @@ describe('NetWorthView', () => {
     expect(wrapper.get('button[aria-label="Nuevo activo"]').text()).toContain('+');
 
     const buttons = wrapper.findAll('.ui-nw-category-item-actions button');
-    expect(buttons).toHaveLength(2);
+    expect(buttons).toHaveLength(3);
 
     await buttons[0]!.trigger('click');
     expect(state.openEdit).toHaveBeenCalled();
