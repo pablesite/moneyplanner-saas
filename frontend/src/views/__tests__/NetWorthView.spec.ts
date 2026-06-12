@@ -63,7 +63,12 @@ vi.mock('@/domains/net-worth', () => ({
       </div>
     `,
   }),
-  SettingsPopover: makeStub('SettingsPopover'),
+  SettingsPopover: defineComponent({
+    name: 'SettingsPopover',
+    emits: ['refresh'],
+    template:
+      '<div data-test="SettingsPopover"><button aria-label="Refrescar" type="button" @click="$emit(\'refresh\')">Refrescar</button><slot /></div>',
+  }),
   coreNetWorthApi: mockCoreNetWorthApi,
   useNetWorthViewState: () => mockUseNetWorthViewState(),
   useNetWorthViewExtensions: () => mockUseNetWorthViewExtensions(),
@@ -215,7 +220,6 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Pasivos');
     expect(wrapper.text()).not.toContain('Ratio deuda / activos');
     expect(wrapper.find('[data-test="NetWorthDonut"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain('No hay snapshots');
   });
 
   it('filters current net worth metrics by ownership from the header selector', async () => {
@@ -322,23 +326,8 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).not.toContain('Ultimo patrimonio neto');
   });
 
-  it('wires header actions and snapshot deletion callback', async () => {
-    const state = makeState({
-      store: {
-        ...makeState().store,
-        snapshots: [
-          {
-            id: 5,
-            snapshot_date: '2026-01-01',
-            net_worth: '750',
-            total_assets: '1000',
-            total_liabilities: '250',
-            base_currency: 'EUR',
-          },
-        ],
-      },
-      confirmDeleteSnapshot: vi.fn(),
-    });
+  it('wires the refresh action through the settings popover', async () => {
+    const state = makeState();
     mockUseNetWorthViewState.mockReturnValue(state);
     mockUseNetWorthViewExtensions.mockReturnValue({
       HeaderActions: null,
@@ -355,12 +344,8 @@ describe('NetWorthView', () => {
     });
 
     await wrapper.get('button[aria-label="Refrescar"]').trigger('click');
-    await wrapper.get('button[aria-label="Guardar snapshot"]').trigger('click');
-    await wrapper.get('button[aria-label="Eliminar snapshot"]').trigger('click');
 
     expect(state.store.refreshAll).toHaveBeenCalled();
-    expect(state.store.createTodaySnapshot).toHaveBeenCalled();
-    expect(state.confirmDeleteSnapshot).toHaveBeenCalledWith(5);
   });
 
   it('requests timeline when selecting an asset category from composition', async () => {
@@ -563,52 +548,57 @@ describe('NetWorthView', () => {
 
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
     expect(state.store.fetchPositionActivity).toHaveBeenCalledWith('asset', 11, 'cash');
-    expect(mockCoreAccountingApi.getTransactions).toHaveBeenCalledWith({ year: 2026 });
+    expect(mockCoreAccountingApi.getTransactions).toHaveBeenCalledWith(
+      expect.objectContaining({ year: 2026 }),
+    );
   });
 
   it('shows accounting activity for positions tracked through accounting', async () => {
     mockCoreAccountingApi.getTransactions.mockResolvedValue({
-      data: [
-        {
-          id: 91,
-          booking_date: '2026-03-14',
-          value_date: '2026-03-14',
-          description: 'Transferencia a broker',
-          status: 'posted',
-          origin: 'manual',
-          notes: 'Aportacion mensual',
-          created_at: '',
-          updated_at: '',
-          entries: [
-            {
-              id: 501,
-              account_id: 81,
-              account_name: 'Broker',
-              side: 'debit',
-              amount: '250.00',
-              currency: 'EUR',
-              asset_id: null,
-              liability_id: null,
-              notes: '',
-              created_at: '',
-              updated_at: '',
-            },
-            {
-              id: 502,
-              account_id: 12,
-              account_name: 'Cuenta corriente',
-              side: 'credit',
-              amount: '250.00',
-              currency: 'EUR',
-              asset_id: null,
-              liability_id: null,
-              notes: '',
-              created_at: '',
-              updated_at: '',
-            },
-          ],
-        },
-      ],
+      data: {
+        results: [
+          {
+            id: 91,
+            booking_date: '2026-03-14',
+            value_date: '2026-03-14',
+            description: 'Transferencia a broker',
+            status: 'posted',
+            origin: 'manual',
+            notes: 'Aportacion mensual',
+            created_at: '',
+            updated_at: '',
+            entries: [
+              {
+                id: 501,
+                account_id: 81,
+                account_name: 'Broker',
+                side: 'debit',
+                amount: '250.00',
+                currency: 'EUR',
+                asset_id: null,
+                liability_id: null,
+                notes: '',
+                created_at: '',
+                updated_at: '',
+              },
+              {
+                id: 502,
+                account_id: 12,
+                account_name: 'Cuenta corriente',
+                side: 'credit',
+                amount: '250.00',
+                currency: 'EUR',
+                asset_id: null,
+                liability_id: null,
+                notes: '',
+                created_at: '',
+                updated_at: '',
+              },
+            ],
+          },
+        ],
+        next_cursor: null,
+      },
     } as never);
 
     const state = makeState({
@@ -702,7 +692,7 @@ describe('NetWorthView', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Actividad contable');
-    expect(wrapper.text()).toContain('aun no tiene una cuenta enlazada');
+    expect(wrapper.text()).toContain('aún no tiene una cuenta enlazada');
     expect(mockCoreAccountingApi.getTransactions).not.toHaveBeenCalled();
   });
 
@@ -798,7 +788,7 @@ describe('NetWorthView', () => {
     await buttons[0]!.trigger('click');
     expect(state.openEdit).toHaveBeenCalled();
 
-    await buttons[1]!.trigger('click');
+    await buttons[2]!.trigger('click');
     expect(confirmSpy).toHaveBeenCalled();
     expect(state.store.deleteAsset).toHaveBeenCalledWith(11);
 

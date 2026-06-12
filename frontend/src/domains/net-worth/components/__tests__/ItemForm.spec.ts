@@ -206,7 +206,7 @@ describe('ItemForm (saas)', () => {
       .find((s) => s.text().includes('Sin amortización (joyería)'))!;
     expect(amortizationMethodSelect.text()).not.toContain('Lineal');
     expect(amortizationMethodSelect.text()).not.toContain('Manual');
-    expect(wrapper.text()).toContain("En 'Joyeria' no se aplica amortización automatica.");
+    expect(wrapper.text()).toContain("En 'Joyería' no se aplica amortización automática.");
   });
 
   it('submits sports equipment without manual term years', async () => {
@@ -439,7 +439,7 @@ describe('ItemForm (saas)', () => {
     expect((termInput.element as HTMLInputElement).value).toBe('10');
 
     expect(wrapper.text()).toContain(
-      'Disponible solo cuando la TAE de financiacion es mayor que 0.',
+      'Disponible solo cuando la TAE de financiación es mayor que 0.',
     );
     expect(wrapper.text()).toContain('Descartar reforma');
   });
@@ -775,7 +775,7 @@ describe('ItemForm (saas)', () => {
 
     const profileSelect = wrapper
       .findAll('select')
-      .find((s) => s.text().includes('Dinamico') && s.text().includes('Personalizado'))!;
+      .find((s) => s.text().includes('Dinámico') && s.text().includes('Personalizado'))!;
     expect((profileSelect.element as HTMLSelectElement).value).toBe('dynamic');
     expect((wrapper.find('input[placeholder="Ej: 3"]').element as HTMLInputElement).value).toBe(
       '8',
