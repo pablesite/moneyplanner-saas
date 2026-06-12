@@ -1843,6 +1843,17 @@ export function useAccountingPage() {
   const todosHasMore = computed(() => todosNextCursor.value !== null);
   const cuentasHasMore = computed(() => cuentasNextCursor.value !== null);
 
+  function runBackgroundTask(task: Promise<void>) {
+    void task.catch((error: unknown) => {
+      if (isCanceledRequestError(error)) return;
+      if (typeof globalThis.reportError === 'function') {
+        globalThis.reportError(error);
+        return;
+      }
+      console.error('Background accounting task failed.', error);
+    });
+  }
+
   async function fetchTodosPage(reset: boolean): Promise<void> {
     if (reset) {
       todosAbortController?.abort();
@@ -1941,12 +1952,12 @@ export function useAccountingPage() {
   }
 
   watch(cuentasSelectedAccountId, () => {
-    void fetchCuentasPage(true);
+    runBackgroundTask(fetchCuentasPage(true));
   });
 
   watch([cuentasDateFrom, cuentasDateTo], () => {
     if (cuentasSelectedAccountId.value != null) {
-      void fetchCuentasPage(true);
+      runBackgroundTask(fetchCuentasPage(true));
     }
   });
   watch(
@@ -1957,7 +1968,7 @@ export function useAccountingPage() {
     ],
     () => {
       if (cuentasSelectedAccountId.value != null) {
-        void fetchCuentasPage(true);
+        runBackgroundTask(fetchCuentasPage(true));
       }
     },
   );
@@ -1972,7 +1983,7 @@ export function useAccountingPage() {
       todosDateTo,
     ],
     () => {
-      void fetchTodosPage(true);
+      runBackgroundTask(fetchTodosPage(true));
     },
   );
 
@@ -2011,7 +2022,7 @@ export function useAccountingPage() {
     () => {
       if (todosSearchDebounceTimer) clearTimeout(todosSearchDebounceTimer);
       todosSearchDebounceTimer = setTimeout(() => {
-        void fetchTodosPage(true);
+        runBackgroundTask(fetchTodosPage(true));
       }, 300);
     },
   );
@@ -2021,7 +2032,7 @@ export function useAccountingPage() {
       if (cuentasSearchDebounceTimer) clearTimeout(cuentasSearchDebounceTimer);
       cuentasSearchDebounceTimer = setTimeout(() => {
         if (cuentasSelectedAccountId.value != null) {
-          void fetchCuentasPage(true);
+          runBackgroundTask(fetchCuentasPage(true));
         }
       }, 300);
     },
@@ -3661,20 +3672,22 @@ export function useAccountingPage() {
   }
 
   onMounted(() => {
-    void (async () => {
-      await Promise.all([
-        store.refreshAll(),
-        incomeStore.loadAll(selectedYear.value),
-        expenseStore.loadAll(selectedYear.value),
-        peopleStore.fetchOwnerships(),
-        refreshManualPositionOptions(),
-        reloadDailyBalanceSeries(),
-      ]);
-      await fetchTodosPage(true);
-      if (cuentasSelectedAccountId.value != null) {
-        await fetchCuentasPage(true);
-      }
-    })();
+    runBackgroundTask(
+      (async () => {
+        await Promise.all([
+          store.refreshAll(),
+          incomeStore.loadAll(selectedYear.value),
+          expenseStore.loadAll(selectedYear.value),
+          peopleStore.fetchOwnerships(),
+          refreshManualPositionOptions(),
+          reloadDailyBalanceSeries(),
+        ]);
+        await fetchTodosPage(true);
+        if (cuentasSelectedAccountId.value != null) {
+          await fetchCuentasPage(true);
+        }
+      })(),
+    );
   });
   onBeforeUnmount(() => {
     todosAbortController?.abort();
