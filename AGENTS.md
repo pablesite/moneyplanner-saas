@@ -19,8 +19,15 @@ Usar obligatoriamente cuando aplique. No son opcionales:
 | Antes de commitear cualquier cambio de código                       | `validate`        |
 | Antes de cualquier push a GitHub o preparación de deploy            | `publish-flow`    |
 | Inicio de sesión sin contexto claro del estado del proyecto         | `status`          |
+| Refresh de datos reales de producción hacia WSL/local               | `prod-dev-refresh` |
 
 Las skills están en `.codex/skills/`. Leer el `SKILL.md` correspondiente antes de ejecutar.
+
+Usar obligatoriamente `prod-dev-refresh` cuando la tarea implique:
+
+1. sacar dumps desde producción para desarrollo
+2. restaurar datos reales de producción sobre `docker-compose.dev.yml`
+3. revisar o ejecutar el workflow canónico `producción -> local`
 
 ## Read First
 

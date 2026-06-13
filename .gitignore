@@ -1,4 +1,5 @@
 backups/
+/*.dump
 scripts/.env
 .env.dev
 backend/__pycache__/

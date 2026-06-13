@@ -215,6 +215,16 @@ Notas:
 2. No levanta ni recrea contenedores por su cuenta
 3. Si falla, no conviene hacer `push` hasta entender el motivo
 
+## Refresh desde producción
+
+Si necesitas traer datos reales actualizados desde producción a tu entorno WSL integrado, usa el
+runbook específico:
+
+1. `./scripts/pull-prod-dumps.sh`
+2. `./scripts/dev-restore-prod-refresh.sh`
+
+La guía completa está en `prod-to-dev-refresh.md`.
+
 ## Problemas frecuentes
 
 1. SaaS no puede bootstrapear Core:

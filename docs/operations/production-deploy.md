@@ -265,6 +265,18 @@ Restic is the authoritative backup mechanism on the server. Before production la
 
 Perform a restore drill before treating production as durable.
 
+## Production As Source Of Truth For Real Data
+
+For day-to-day work, production is the source of truth for real user and finance data.
+
+Normal refresh direction:
+
+1. `production -> local`
+2. not `local -> production`
+
+When local development needs up-to-date real data, use the controlled refresh workflow documented
+in `prod-to-dev-refresh.md`.
+
 ## Production Smoke Checklist
 Run after the first deployment and after each deploy until CI/CD smoke is trusted.
 
