@@ -15,6 +15,7 @@ env:
   SAAS_FRONTEND_IMAGE: ghcr.io/pablesite/moneyplanner-saas-frontend
   CORE_BACKEND_IMAGE: ghcr.io/pablesite/moneyplanner-core-backend
   IMAGE_TAG: sha-${{ github.sha }}
+  PRODUCTION_URL: ${{ vars.PRODUCTION_URL != '' && vars.PRODUCTION_URL || 'https://moneyplanner.codinglab.es' }}
 
 jobs:
   gitleaks:
@@ -266,7 +267,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && vars.ENABLE_PRODUCTION_DEPLOY == '1'
     environment:
       name: production
-      url: https://moneyplanner.codinglab.es
+      url: ${{ env.PRODUCTION_URL }}
     permissions:
       contents: read
       packages: read
@@ -347,7 +348,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && vars.ENABLE_PRODUCTION_DEPLOY == '1'
     steps:
       - name: Smoke checks
+        env:
+          PRODUCTION_URL: ${{ env.PRODUCTION_URL }}
         run: |
           curl --fail --silent --show-error --location \
             --retry 6 --retry-delay 10 --retry-all-errors \
-            https://moneyplanner.codinglab.es/api/auth/mode/ > /dev/null
+            "${PRODUCTION_URL}/api/auth/mode/" > /dev/null

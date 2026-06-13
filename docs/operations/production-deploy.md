@@ -178,6 +178,7 @@ Required GitHub secrets:
 Required GitHub variable:
 1. `ENABLE_PRODUCTION_DEPLOY=1` only when the production server, tunnel, and DNS are ready to receive automatic deploys. Keep it unset or `0` while phases 2 and 5 are still being validated.
 2. `DEPLOY_ENV_FILE=.env` when the server keeps production secrets in `.env` instead of `.env.prod`.
+3. `PRODUCTION_URL=https://arkenstone.app` or the current public production URL. GitHub Actions uses this for the deployment environment link and post-deploy smoke checks.
 
 Published GHCR images on `main`:
 1. `ghcr.io/pablesite/moneyplanner-saas-backend`
@@ -204,7 +205,7 @@ Workflow flow on `main`:
 2. Build production images from `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, and `core/backend/Dockerfile.prod`.
 3. Scan built images with Trivy and upload SARIF results.
 4. Push GHCR images tagged as `sha-${GITHUB_SHA}` and `latest`.
-5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, authenticate the server against GHCR, run pull/up over SSH, and execute smoke checks against `https://arkenstone.app`.
+5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, authenticate the server against GHCR, run pull/up over SSH, and execute smoke checks against `PRODUCTION_URL`.
 
 ## Manual Deploy
 Use this before CI/CD is trusted:
