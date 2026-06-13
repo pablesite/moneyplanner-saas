@@ -1,6 +1,6 @@
 # Glosario del proyecto
 
-Terms with specific meaning in MoneyPlanner. Consult this glossary before naming new entities or writing documentation.
+Terms with specific meaning in The Arkenstone. Consult this glossary before naming new entities or writing documentation.
 
 ---
 

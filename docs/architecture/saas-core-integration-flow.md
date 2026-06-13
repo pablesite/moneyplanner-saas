@@ -151,7 +151,7 @@ VITE_API_BASE_URL=""
 VITE_CORE_API_BASE_URL=""
 ```
 
-The public URL is `https://moneyplanner.codinglab.es`. Traffic reaches the server through Cloudflare Tunnel, then Traefik, then Docker services attached to the external `proxy` network.
+The public URL is `https://arkenstone.app`. Traffic reaches the server through Cloudflare Tunnel, then Traefik, then Docker services attached to the external `proxy` network.
 
 Traefik path routing owns the split:
 1. SaaS backend: `/api/auth`, `/api/admin`, `/api/schema`, `/api/docs`, `/admin`.

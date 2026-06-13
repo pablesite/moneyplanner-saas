@@ -1,7 +1,7 @@
 ﻿# SaaS Pilot Integration Checklist
 
 ## Objective
-Track the minimum integration and operational readiness needed to run the SaaS pilot on top of MoneyPlanner Core.
+Track the minimum integration and operational readiness needed to run the SaaS pilot on top of The Arkenstone Core.
 
 ## Current Baseline
 1. Core remains the source of truth for product functionality.
@@ -9,7 +9,7 @@ Track the minimum integration and operational readiness needed to run the SaaS p
 3. SaaS backend integrates with Core for Core-owned bootstrap and domain access flows.
 4. Trial is the default state for pilot testers.
 5. Billing is not exposed during the pilot stage.
-6. Production target is `https://moneyplanner.codinglab.es`.
+6. Production target is `https://arkenstone.app`.
 7. Network path is Cloudflare Tunnel -> Traefik -> Docker services attached to external `proxy`.
 8. Initial production access is private: public registration is intentionally disabled and users are created by SaaS admins.
 9. Disabled public registration is an expected behavior in the pilot: `/api/auth/register/` should return a controlled `registration_disabled` error instead of onboarding a user.
@@ -23,7 +23,7 @@ Track the minimum integration and operational readiness needed to run the SaaS p
 6. No billing UI is exposed to end users [ ]
 7. A minimal support runbook exists for pilot incidents [ ]
 8. End-to-end smoke validation has been completed in the deployed environment [ ]
-9. Cloudflare CNAME `moneyplanner.codinglab.es` points to the tunnel [ ]
+9. Cloudflare CNAME `arkenstone.app` points to the tunnel [ ]
 10. Traefik routes SaaS and Core API paths correctly [ ]
 
 ## Minimum Smoke Coverage

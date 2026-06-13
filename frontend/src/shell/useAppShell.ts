@@ -15,7 +15,7 @@ export function useAppShell() {
   const accountRoleKey = ref<CurrentUser['role'] | ''>('');
   const accountPlan = ref('');
 
-  const pageTitle = computed(() => (isSaasAdmin.value ? 'admin saas' : 'moneyplanner'));
+  const pageTitle = computed(() => (isSaasAdmin.value ? 'The Arkenstone Admin' : 'The Arkenstone'));
   const hasToken = computed(() => hasAccessToken.value);
   const isLoginRoute = computed(() => route.name === 'login');
   const isSaasAdmin = computed(() => accountRoleKey.value === 'saas_admin');

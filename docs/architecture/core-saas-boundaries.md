@@ -2,7 +2,7 @@
 
 ## Objective
 
-Define the integration boundaries between `MoneyPlanner Core` and the SaaS stack.
+Define the integration boundaries between `The Arkenstone Core` and the SaaS stack.
 
 ## Boundary Rule
 

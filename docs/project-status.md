@@ -2,7 +2,7 @@
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 
-**Last review:** 2026-06-04 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
+**Last review:** 2026-06-13 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
 
 ---
 
@@ -16,7 +16,7 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 
 | Area                                              | Priority | Status | Description                                                                                                                                                                                                                                                              |
 | ------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Production deployment                             | High     | 🔄     | Planned as phased module `docs/tasks/production-deployment/`: prod images, unified compose, hardening, CI/CD, runbook and smoke. Target: Cloudflare Tunnel -> Traefik -> Docker services on `proxy`, `https://moneyplanner.codinglab.es`.                                |
+| Production deployment                             | High     | 🔄     | Planned as phased module `docs/tasks/production-deployment/`: prod images, unified compose, hardening, CI/CD, runbook and smoke. Product target domain is `https://arkenstone.app`; technical infra rename remains tracked separately for phase 2.                      |
 | Production secrets management                     | High     | 🔄     | Production `.env.prod` stays on the server, outside git. Secrets and required variables are documented in `docs/operations/production-deploy.md`; implementation remains pending.                                                                                        |
 | Trial user system                                 | High     | ⚪     | Create root user and controlled access flow for early adopters.                                                                                                                                                                                                          |
 | Admin UI                                          | Medium   | 🔄     | `/account` for `saas_admin` already soporta CRUD basico de usuarios SaaS y ahora cruza tambien todos los usuarios Core; broader internal tooling is still pending.                                                                                                                                           |
@@ -40,7 +40,7 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 | Phase | Type  | Status | Description                                                                                                                                                                                                              | Spec                                                                                                                                                         |
 | ----- | ----- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1     | Agent | ✅     | SaaS production backend/frontend images created and locally validated (`Dockerfile.prod`, Gunicorn entrypoint, nginx SPA image with same-origin API build args).                                                         | `docs/tasks/production-deployment/terminados/phase-1-prod-images/backend.md` + `docs/tasks/production-deployment/terminados/phase-1-prod-images/frontend.md` |
-| 2     | Agent | 🔄     | Root `docker-compose.prod.yml` implemented and locally validated with Traefik labels, shared same-origin routing, and no Core frontend. External DNS/tunnel validation for `moneyplanner.codinglab.es` is still pending. | `docs/tasks/production-deployment/phase-2-prod-compose-traefik/qa.md`                                                                                        |
+| 2     | Agent | 🔄     | Root `docker-compose.prod.yml` implemented and locally validated with Traefik labels, shared same-origin routing, and no Core frontend. External DNS/tunnel validation for `arkenstone.app` is still pending, plus the phase 2 technical rename checklist. | `docs/tasks/production-deployment/phase-2-prod-compose-traefik/qa.md`                                                                                        |
 | 3     | Agent | 🔄     | Django hardening and private-access controls are implemented and locally validated in SaaS/Core backends; external production smoke is still pending.                                                                    | `docs/tasks/production-deployment/phase-3-security-private-access/backend.md`                                                                                |
 | 4     | Agent | 🔄     | GitHub Actions are being aligned with production images, GHCR publish, gated SSH deploy, and post-deploy smoke checks; real server validation is still pending.                                                          | `docs/tasks/production-deployment/phase-4-github-ci-cd/qa.md`                                                                                                |
 | 5     | Agent | ⚪     | Complete production runbook and external smoke validation.                                                                                                                                                               | `docs/tasks/production-deployment/phase-5-production-runbook-smoke/qa.md`                                                                                    |
@@ -151,7 +151,7 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 | Local Docker Compose (Core standalone)    | ✅ Implemented | `core/docker-compose.yml` remains available for open-core standalone/community work                                                                            |
 | Pre-commit hooks (ruff, eslint, prettier) | ✅ Implemented | `.pre-commit-config.yaml`                                                                                                                                      |
 | SaaS CI quality checks                    | ✅ Implemented | `.github/workflows/quality.yml`                                                                                                                                |
-| Cloud deployment                          | 🔄 In progress | Planned for private SaaS at `https://moneyplanner.codinglab.es`; see `docs/operations/production-deploy.md` and production deployment task specs.              |
+| Cloud deployment                          | 🔄 In progress | Planned for private SaaS at `https://arkenstone.app`; see `docs/operations/production-deploy.md` and production deployment task specs.                           |
 | Support runbook                           | 🔄 In progress | Draft runbook created at `docs/operations/production-deploy.md`; finalization tracked in phase 5.                                                              |
 | End-to-end smoke test                     | 🔄 In progress | Production smoke planned in `docs/tasks/production-deployment/phase-5-production-runbook-smoke/qa.md`; see `docs/roadmap/saas-pilot-integration-checklist.md`. |
 
@@ -171,6 +171,5 @@ See `core/docs/project-status.md`.
 | 🔄     | In progress                             |
 | ⚪     | Not started (future scope)              |
 | ⛔     | Explicitly out of scope (decision made) |
-
 
 

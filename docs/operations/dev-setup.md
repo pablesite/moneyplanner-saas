@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Este documento describe el flujo canonico de desarrollo local para este repo `moneyplanner-saas`
+Este documento describe el flujo canonico de desarrollo local para este repo de The Arkenstone
 cuando `./core` se usa como submodulo Git y ambos stacks se levantan juntos desde la raiz.
 
 Para el modo standalone del producto open core, ver

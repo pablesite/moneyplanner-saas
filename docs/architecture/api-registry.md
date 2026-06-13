@@ -2,7 +2,7 @@
 
 ## SaaS Backend APIs (`http://localhost:8001`)
 
-Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik routes SaaS backend paths from the same origin to the SaaS backend service, except the Core-owned auth exceptions documented below.
+Production origin: `https://arkenstone.app`. In production, Traefik routes SaaS backend paths from the same origin to the SaaS backend service, except the Core-owned auth exceptions documented below.
 
 ### Auth — `/api/auth/`
 
@@ -44,7 +44,7 @@ All endpoints require `Bearer` + `saas_admin` role. Throttle: `saas_admin_api`.
 
 Core exposes its own complete API. The SaaS frontend consumes it directly using the same JWT.
 
-Production origin: `https://moneyplanner.codinglab.es`. In production, Traefik routes Core product API paths from the same origin to the Core backend service. The Core frontend is not deployed for the SaaS product.
+Production origin: `https://arkenstone.app`. In production, Traefik routes Core product API paths from the same origin to the Core backend service. The Core frontend is not deployed for the SaaS product.
 
 ### Auth — `/api/auth/`
 | Method | Route | Description |

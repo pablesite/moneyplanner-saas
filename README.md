@@ -1,6 +1,10 @@
-# MoneyPlanner SaaS
+# The Arkenstone SaaS
 
-Private SaaS repository for MoneyPlanner.
+Private SaaS repository for The Arkenstone.
+
+Current public brand:
+1. Product brand: `The Arkenstone`
+2. Primary domain: `https://arkenstone.app`
 
 ## What Lives Here
 1. `core/`: open-source Core repository as submodule

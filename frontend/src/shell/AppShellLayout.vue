@@ -37,10 +37,10 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
     >
       <div class="ui-shell-sidebar-top">
         <div class="ui-shell-brand">
-          <div class="ui-shell-brand-mark">MP</div>
+          <div class="ui-shell-brand-mark">TA</div>
           <div class="ui-shell-brand-text">
-            <strong>Moneyplanner</strong>
-            <span>Coach financiero</span>
+            <strong>The Arkenstone</strong>
+            <span>SaaS financiero</span>
           </div>
         </div>
         <button

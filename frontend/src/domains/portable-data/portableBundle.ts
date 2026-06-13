@@ -460,7 +460,7 @@ export function buildImportPreviewMessageWithVersion(
 
 export function buildPortableFilename(): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `moneyplanner-saas-data-${timestamp}.json`;
+  return `the-arkenstone-saas-data-${timestamp}.json`;
 }
 
 export function toPortableAnnualIncomeRecord(

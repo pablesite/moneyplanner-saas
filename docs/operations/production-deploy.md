@@ -1,16 +1,16 @@
 # Production Deployment (SaaS)
 
 ## Objective
-Run the private MoneyPlanner SaaS production deployment at `https://moneyplanner.codinglab.es`.
+Run the private The Arkenstone SaaS production deployment at `https://arkenstone.app`.
 
 Production serves the SaaS frontend as the only public UI. The SaaS backend handles access, admin, subscription state, and platform operations. The Core backend remains the source of truth for product APIs consumed by the SaaS frontend and by SaaS backend bootstrap flows. The Core frontend is not deployed for the SaaS product.
 
 ## Target Topology
-1. Cloudflare DNS exposes `moneyplanner.codinglab.es`.
+1. Cloudflare DNS exposes `arkenstone.app`.
 2. Cloudflare Tunnel forwards traffic to `localhost:80` on the server.
 3. Traefik receives traffic on `localhost:80`.
 4. Traefik routes to Docker services attached to the external `proxy` network.
-5. MoneyPlanner services communicate through an internal Docker network.
+5. The Arkenstone services communicate through an internal Docker network.
 
 Production services:
 1. `saas_frontend` - nginx static build for the private SaaS UI.
@@ -40,6 +40,10 @@ Phase 1 leaves the production image artifacts in-repo, ready for the unified com
 ## Phase 2 Unified Production Compose
 Root production orchestration now lives in `docker-compose.prod.yml`.
 
+Technical note:
+1. The public brand/domain is already `The Arkenstone` on `arkenstone.app`.
+2. Some infrastructure identifiers below still keep the legacy `moneyplanner*` naming until phase 2 migration is executed. See `brand-migration-phase-2.md`.
+
 Networks:
 1. `moneyplanner-internal` - private network for app-to-app and DB traffic.
 2. `proxy` - external Traefik network shared with the reverse proxy on the server.
@@ -59,7 +63,7 @@ Compose services:
 The compose file intentionally excludes `core_frontend`.
 
 ## Routing Contract
-Public origin: `https://moneyplanner.codinglab.es`.
+Public origin: `https://arkenstone.app`.
 
 The SaaS frontend should be built with same-origin API bases:
 
@@ -93,11 +97,11 @@ Expected server layout:
 
 The `.env.prod` file must stay outside git. It contains production secrets and deployment-specific values.
 
-Restic already backs up Docker volumes and compose files on the server at 03:00 daily. Keep MoneyPlanner database data under `/datos/docker/data/moneyplanner/...` so it remains covered by that policy.
+Restic already backs up Docker volumes and compose files on the server at 03:00 daily. Keep The Arkenstone database data under `/datos/docker/data/moneyplanner/...` so it remains covered by that policy.
 
 ## Required Production Variables
 Shared:
-1. `MONEYPLANNER_DOMAIN=moneyplanner.codinglab.es`
+1. `MONEYPLANNER_DOMAIN=arkenstone.app`
 2. `JWT_SIGNING_KEY` - long random value, identical for SaaS and Core.
 
 SaaS backend:
@@ -110,7 +114,7 @@ SaaS backend:
 7. `SEED_ADMIN_USERNAME`
 8. `SEED_ADMIN_EMAIL`
 9. `SEED_ADMIN_PASSWORD`
-10. `CORE_API_HOST_HEADER=moneyplanner.codinglab.es` so SaaS-to-Core internal bootstrap requests still satisfy Core `ALLOWED_HOSTS` behind Docker networking.
+10. `CORE_API_HOST_HEADER=arkenstone.app` so SaaS-to-Core internal bootstrap requests still satisfy Core `ALLOWED_HOSTS` behind Docker networking.
 11. `CORE_API_X_FORWARDED_PROTO=https` so those internal requests are treated as secure and do not trigger Django SSL redirects.
 
 Core backend:
@@ -133,9 +137,9 @@ Core acceptance of SaaS JWTs:
 
 Production Django defaults:
 1. `DJANGO_DEBUG=0`
-2. `DJANGO_ALLOWED_HOSTS=moneyplanner.codinglab.es`
-3. `CORS_ALLOWED_ORIGINS=https://moneyplanner.codinglab.es`
-4. `CSRF_TRUSTED_ORIGINS=https://moneyplanner.codinglab.es`
+2. `DJANGO_ALLOWED_HOSTS=arkenstone.app`
+3. `CORS_ALLOWED_ORIGINS=https://arkenstone.app`
+4. `CSRF_TRUSTED_ORIGINS=https://arkenstone.app`
 5. `USE_X_FORWARDED_HOST=1`
 6. `SECURE_PROXY_SSL_HEADER_ENABLED=1`
 7. `SECURE_PROXY_SSL_HEADER_NAME=HTTP_X_FORWARDED_PROTO`
@@ -200,7 +204,7 @@ Workflow flow on `main`:
 2. Build production images from `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, and `core/backend/Dockerfile.prod`.
 3. Scan built images with Trivy and upload SARIF results.
 4. Push GHCR images tagged as `sha-${GITHUB_SHA}` and `latest`.
-5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, authenticate the server against GHCR, run pull/up over SSH, and execute smoke checks against `https://moneyplanner.codinglab.es`.
+5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, authenticate the server against GHCR, run pull/up over SSH, and execute smoke checks against `https://arkenstone.app`.
 
 ## Manual Deploy
 Use this before CI/CD is trusted:
@@ -231,9 +235,9 @@ docker compose -f docker-compose.prod.yml --env-file .env ps -a
 Routing checks:
 
 ```bash
-curl -I https://moneyplanner.codinglab.es/
-curl -I https://moneyplanner.codinglab.es/api/auth/mode/
-curl -I https://moneyplanner.codinglab.es/api/core/market-data/status/
+curl -I https://arkenstone.app/
+curl -I https://arkenstone.app/api/auth/mode/
+curl -I https://arkenstone.app/api/core/market-data/status/
 ```
 
 If root works but API paths return the SPA, check Traefik priorities and path rules.
@@ -280,7 +284,7 @@ in `prod-to-dev-refresh.md`.
 ## Production Smoke Checklist
 Run after the first deployment and after each deploy until CI/CD smoke is trusted.
 
-1. Open `https://moneyplanner.codinglab.es`.
+1. Open `https://arkenstone.app`.
 2. Log in as SaaS admin.
 3. Create a `saas_member` from admin operations.
 4. Confirm Core bootstrap succeeds.
@@ -294,8 +298,8 @@ Run after the first deployment and after each deploy until CI/CD smoke is truste
 API checks:
 
 ```bash
-curl -I https://moneyplanner.codinglab.es/api/auth/mode/
-curl -I https://moneyplanner.codinglab.es/api/core/market-data/status/
+curl -I https://arkenstone.app/api/auth/mode/
+curl -I https://arkenstone.app/api/core/market-data/status/
 ```
 
 ## Phase Specs

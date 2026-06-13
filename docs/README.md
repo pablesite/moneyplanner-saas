@@ -1,6 +1,6 @@
 # SaaS Documentation
 
-Canonical documentation for the MoneyPlanner SaaS stack.
+Canonical documentation for The Arkenstone SaaS stack.
 
 ## Scope
 This documentation covers only SaaS-specific concerns:
@@ -24,8 +24,9 @@ Core product functionality is documented in `core/README.md` and `core/docs/READ
 8. `operations/dev-setup.md` -> local setup, diagnostics, and validation
 9. `operations/production-deploy.md` -> private production deployment runbook
 10. `operations/prod-to-dev-refresh.md` -> refresh controlled data from production into local WSL
-11. `roadmap/roadmap.md` -> current SaaS roadmap
-12. `project-status.md` -> current implementation status by feature area
+11. `operations/brand-migration-phase-2.md` -> pending technical rename checklist after phase 1 branding
+12. `roadmap/roadmap.md` -> current SaaS roadmap
+13. `project-status.md` -> current implementation status by feature area
 
 ## Active Documents
 1. `architecture/`

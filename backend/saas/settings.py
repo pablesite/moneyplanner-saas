@@ -162,8 +162,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "MoneyPlanner SaaS API",
-    "DESCRIPTION": "API del SaaS (features premium).",
+    "TITLE": "The Arkenstone SaaS API",
+    "DESCRIPTION": "API del SaaS de The Arkenstone.",
     "VERSION": "0.1.0",
 }
 

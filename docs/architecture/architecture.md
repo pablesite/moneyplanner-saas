@@ -2,11 +2,11 @@
 
 ## Objective
 
-Describe the current architecture of the MoneyPlanner SaaS stack.
+Describe the current architecture of The Arkenstone SaaS stack.
 
 ## Summary
 
-1. The SaaS layer adds platform capabilities on top of `MoneyPlanner Core`.
+1. The SaaS layer adds platform capabilities on top of `The Arkenstone Core`.
 2. Core product functionality lives in the `core/` submodule.
 3. The SaaS stack is responsible for access, administration, subscription state, and cloud operation.
 
