@@ -15,7 +15,7 @@ env:
   SAAS_FRONTEND_IMAGE: ghcr.io/pablesite/moneyplanner-saas-frontend
   CORE_BACKEND_IMAGE: ghcr.io/pablesite/moneyplanner-core-backend
   IMAGE_TAG: sha-${{ github.sha }}
-  PRODUCTION_URL: ${{ vars.PRODUCTION_URL != '' && vars.PRODUCTION_URL || 'https://moneyplanner.codinglab.es' }}
+  PRODUCTION_URL: ${{ vars.PRODUCTION_URL != '' && vars.PRODUCTION_URL || 'https://arkenstone.codinglab.es' }}
 
 jobs:
   gitleaks:
