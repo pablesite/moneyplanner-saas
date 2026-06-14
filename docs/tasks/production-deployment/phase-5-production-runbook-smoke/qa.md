@@ -19,7 +19,7 @@ After images, compose, hardening, and CI/CD exist, production still needs an ope
 ## Plan
 1. Diagnosis
    - Confirm server-side files: `docker-compose.prod.yml`, `.env.prod`, GHCR auth, external `proxy` network, and Restic coverage.
-   - Confirm Cloudflare CNAME `moneyplanner.codinglab.es` points to the tunnel.
+   - Confirm Cloudflare CNAME `arkenstone.codinglab.es` points to the tunnel.
 2. Change implementation
    - Finalize the production runbook with deploy, rollback, logs, diagnostics, and restore notes.
    - Update the pilot checklist with what is validated and what remains pending.
@@ -29,9 +29,9 @@ After images, compose, hardening, and CI/CD exist, production still needs an ope
 
 ## Validation
 ```bash
-curl -I https://moneyplanner.codinglab.es/
-curl -I https://moneyplanner.codinglab.es/api/auth/mode/
-curl -I https://moneyplanner.codinglab.es/api/core/market-data/status/
+curl -I https://arkenstone.codinglab.es/
+curl -I https://arkenstone.codinglab.es/api/auth/mode/
+curl -I https://arkenstone.codinglab.es/api/core/market-data/status/
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 docker compose -f docker-compose.prod.yml --env-file .env.prod logs --tail 100 saas_backend
 docker compose -f docker-compose.prod.yml --env-file .env.prod logs --tail 100 core_backend

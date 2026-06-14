@@ -26,7 +26,7 @@ The SaaS repo already has quality, security, image build, GHCR push, and release
    - On `main`, build and push SHA-tagged and `latest` images to GHCR.
    - Add deploy job using `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, and `DEPLOY_PATH`.
    - Remote deploy command: `docker compose -f docker-compose.prod.yml --env-file .env.prod pull && docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans`.
-   - Add post-deploy smoke checks against `https://moneyplanner.codinglab.es`.
+   - Add post-deploy smoke checks against `https://arkenstone.codinglab.es`.
 3. Validation
    - Validate workflow syntax through PR.
    - Run the workflow on a branch or manual dispatch before relying on automatic deploy.

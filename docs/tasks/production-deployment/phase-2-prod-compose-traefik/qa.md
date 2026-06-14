@@ -12,7 +12,7 @@ Production should be operable from one root compose file. The deployed product n
 ## Scope
 1. In scope: create root `docker-compose.prod.yml`.
 2. In scope: define internal networking and external Traefik `proxy` network.
-3. In scope: add labels for `moneyplanner.codinglab.es`.
+3. In scope: add labels for `arkenstone.codinglab.es`.
 4. In scope: use persistent data paths under `/datos/docker/data/moneyplanner/...`.
 5. Out of scope: writing GitHub Actions deploy logic and application hardening flags beyond what compose needs to boot.
 
@@ -31,16 +31,16 @@ Production should be operable from one root compose file. The deployed product n
 3. Validation
    - Validate compose syntax.
    - Start locally or on the server with a production env file.
-   - Verify routing from outside through `https://moneyplanner.codinglab.es`.
+   - Verify routing from outside through `https://arkenstone.codinglab.es`.
 
 ## Validation
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod config
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps
-curl -I https://moneyplanner.codinglab.es/
-curl -I https://moneyplanner.codinglab.es/api/auth/mode/
-curl -I https://moneyplanner.codinglab.es/api/core/market-data/status/
+curl -I https://arkenstone.codinglab.es/
+curl -I https://arkenstone.codinglab.es/api/auth/mode/
+curl -I https://arkenstone.codinglab.es/api/core/market-data/status/
 ```
 
 Expected outcome:
@@ -64,7 +64,7 @@ Expected outcome:
 ## Completion Criteria
 - [ ] `docker-compose.prod.yml` exists and excludes Core frontend.
 - [ ] Traefik labels route SaaS and Core paths correctly.
-- [ ] Cloudflare CNAME for `moneyplanner.codinglab.es` points to the tunnel.
+- [ ] Cloudflare CNAME for `arkenstone.codinglab.es` points to the tunnel.
 - [ ] Validation commands pass from outside the LAN.
 - [ ] Required documentation updates done.
 - [ ] Spec moved to `terminados/`.

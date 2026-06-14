@@ -265,7 +265,7 @@ class CoreBootstrapHelperTests(APITestCase):
             core_bootstrap._core_bootstrap_timeout_seconds()
 
     @override_settings(
-        CORE_API_HOST_HEADER="moneyplanner.codinglab.es",
+        CORE_API_HOST_HEADER="arkenstone.codinglab.es",
         CORE_API_X_FORWARDED_PROTO="https",
     )
     @patch("saas_access.core_bootstrap.AccessToken.for_user", return_value="abc123")
@@ -274,7 +274,7 @@ class CoreBootstrapHelperTests(APITestCase):
         self.assertEqual(headers["Authorization"], "Bearer abc123")
         self.assertEqual(headers["Accept"], "application/json")
         self.assertEqual(headers["Content-Type"], "application/json")
-        self.assertEqual(headers["Host"], "moneyplanner.codinglab.es")
+        self.assertEqual(headers["Host"], "arkenstone.codinglab.es")
         self.assertEqual(headers["X-Forwarded-Proto"], "https")
 
     @override_settings(CORE_BOOTSTRAP_TIMEOUT_SECONDS=3)

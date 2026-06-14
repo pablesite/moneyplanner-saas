@@ -35,7 +35,7 @@ The first production deployment is private. Users must be created by SaaS admins
 docker compose exec saas_backend python manage.py test saas_access.tests.test_auth saas_access.tests.test_admin saas_access.tests.test_bootstrap
 docker compose exec saas_backend python manage.py check --deploy
 docker compose -f core/docker-compose.yml exec backend python manage.py check --deploy
-curl -i -X POST https://moneyplanner.codinglab.es/api/auth/register/ \
+curl -i -X POST https://arkenstone.codinglab.es/api/auth/register/ \
   -H "Content-Type: application/json" \
   -d '{"username":"blocked","password":"blocked1234","email":"blocked@example.com"}'
 ```
