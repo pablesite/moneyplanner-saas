@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.22.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.21.0...moneyplanner-saas-v0.22.0) (2026-06-14)
+
+
+### Features
+
+* **brand:** rename saas app to the arkenstone ([e8c92f6](https://github.com/pablesite/moneyplanner-saas/commit/e8c92f6740fddfb99f77c35d6e832e79ed2230c9))
+
+
+### Bug Fixes
+
+* **ci:** align production host references ([cc09d76](https://github.com/pablesite/moneyplanner-saas/commit/cc09d76ecc8634f769b71e6ac6bfb6ada7c35cea))
+* **ci:** parameterize production url ([124dcd1](https://github.com/pablesite/moneyplanner-saas/commit/124dcd19b509d35eb4a77201a062d937a347816e))
+* **ci:** parse release please pr output ([756c191](https://github.com/pablesite/moneyplanner-saas/commit/756c1914428eb639c298d12d7eb7db710532a50e))
+* **ci:** pass repository to release pr commands ([53fbf47](https://github.com/pablesite/moneyplanner-saas/commit/53fbf47eb921d3585df1938c65abfd6886609ade))
+* **ci:** stabilize release and smoke workflows ([4b15346](https://github.com/pablesite/moneyplanner-saas/commit/4b153469c59b4607937a7222598724c21f6dff13))
+
 ## [0.21.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.20.40...moneyplanner-saas-v0.21.0) (2026-06-12)
 
 
