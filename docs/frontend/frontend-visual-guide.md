@@ -52,10 +52,11 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 
 ## Typography and Spacing
 1. Use shared typography and spacing tokens from app styles.
-2. Keep heading hierarchy clear and predictable.
-3. Avoid ad-hoc spacing in single components.
-4. Use typography to mark importance, not just size differences.
-5. Long screens should still feel scannable in a few seconds.
+2. Direction A foundation uses `Geist` / `Geist Mono` with `system-ui` fallback via the SaaS shell.
+3. Keep heading hierarchy clear and predictable.
+4. Avoid ad-hoc spacing in single components.
+5. Use typography to mark importance, not just size differences.
+6. Long screens should still feel scannable in a few seconds.
 
 ## Components
 1. Reuse shared UI primitives where available.
@@ -63,6 +64,7 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 3. Prefer simple cards, clean tables, and charts without unnecessary visual noise.
 4. Avoid introducing new component variants unless they solve a clear UX problem.
 5. Do not duplicate components when composition or extension is enough.
+6. The shell navigation for Direction A should favor a horizontal topbar with brand, primary nav, and account actions before introducing view-level redesigns.
 
 ## Styling Rules
 1. Do not introduce inline styles unless there is a clear, temporary reason.
@@ -91,3 +93,5 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
    - `docs/frontend/frontend-ux-iteration-playbook.md`
 2. For the minimum shared pattern contract, use:
    - `docs/frontend/frontend-visual-contract.md`
+3. For the SaaS-only Direction A foundation, use:
+   - `frontend/src/styles/design-system.css`

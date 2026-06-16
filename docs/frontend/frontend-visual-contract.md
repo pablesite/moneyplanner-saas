@@ -6,10 +6,11 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 ## Rules
 1. Shared patterns and design tokens are defined in `core/frontend/src/styles/app.css`.
 2. `core/frontend/src/styles/app.css` is the canonical source; SaaS synchronization is explicit and should only happen when the scope includes SaaS.
-3. New page-level layout patterns must use shared classes before introducing local CSS.
-4. Inline `style=` is not allowed in Vue templates.
-5. New `<style scoped>` blocks require explicit justification; default to shared styles.
-6. Loading, empty, error, and success states must use the shared state pattern when possible.
+3. Direction A SaaS experimentation can live in `frontend/src/styles/design-system.css` as long as it remains namespaced under `.dir-a`.
+4. New page-level layout patterns must use shared classes before introducing local CSS.
+5. Inline `style=` is not allowed in Vue templates.
+6. New `<style scoped>` blocks require explicit justification; default to shared styles.
+7. Loading, empty, error, and success states must use the shared state pattern when possible.
 
 ## Design Tokens
 1. Semantic color tokens:
@@ -84,3 +85,4 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 1. Add a new shared pattern only if at least two screens would benefit from it.
 2. Update this document when shared visual behavior changes.
 3. Keep the contract small; it is a guardrail, not a full design system specification.
+4. Direction A phase 0 introduces these shell-level reusable classes: `.topbar`, `.topnav-brand`, `.topnav-list`, `.topnav-item`, `.topnav-right`, and `.avatar`.

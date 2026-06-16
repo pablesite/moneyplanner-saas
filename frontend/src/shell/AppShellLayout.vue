@@ -30,114 +30,145 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
   <div class="ui-shell">
     <div v-if="sidebarOpen && !isSaasAdmin" class="ui-shell-backdrop" @click="closeSidebar" />
 
-    <aside
-      v-if="!isSaasAdmin"
-      class="ui-shell-sidebar"
-      :class="{ 'ui-shell-sidebar-open': sidebarOpen }"
-    >
-      <div class="ui-shell-sidebar-top">
-        <div class="ui-shell-brand">
-          <div class="ui-shell-brand-mark">TA</div>
-          <div class="ui-shell-brand-text">
-            <strong>The Arkenstone</strong>
-            <span>SaaS financiero</span>
-          </div>
-        </div>
-        <button
-          class="icon-btn ui-shell-icon-btn"
-          type="button"
-          aria-label="Cerrar menu"
-          @click="closeSidebar"
-        >
-          <span aria-hidden="true">X</span>
-        </button>
-      </div>
-
-      <nav class="ui-shell-nav" aria-label="Navegacion principal">
-        <div class="ui-shell-nav-section">Navegacion</div>
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.id"
-          :to="item.to"
-          class="ui-shell-link"
-          :class="{ 'ui-shell-link-active': isNavItemActive(item) }"
-          :title="`${item.label}: ${item.hint}`"
-          @click="closeSidebar"
-        >
-          <span class="ui-shell-link-icon" aria-hidden="true">{{ item.icon }}</span>
-          <span class="ui-shell-link-copy">
-            <span class="ui-shell-link-label">{{ item.label }}</span>
-            <span class="ui-shell-link-hint">{{ item.hint }}</span>
-          </span>
-        </RouterLink>
-      </nav>
-    </aside>
-
     <div class="ui-shell-main">
-      <header class="ui-shell-header">
-        <button
-          v-if="!isSaasAdmin"
-          class="icon-btn ui-shell-icon-btn"
-          type="button"
-          aria-label="Abrir menu"
-          @click="toggleSidebar"
-        >
-          <span aria-hidden="true">&#9776;</span>
-        </button>
-        <RouterLink class="ui-shell-header-title-link" :to="isSaasAdmin ? '/account' : '/'">
-          <div class="ui-shell-header-title">{{ pageTitle }}</div>
-        </RouterLink>
-        <div v-if="hasToken" :ref="assignAccountMenuRef" class="ui-shell-account-menu">
-          <button
-            class="ui-shell-account-link"
-            type="button"
-            :aria-expanded="accountMenuOpen"
-            aria-haspopup="menu"
-            @click="toggleAccountMenu"
-          >
-            <span class="ui-shell-account-avatar">{{ accountInitials }}</span>
-            <span class="ui-shell-account-info">
-              <span class="ui-shell-account-name">{{ accountLabel }}</span>
-              <span class="ui-shell-account-meta">
-                <span v-if="accountRole">{{ accountRole }}</span>
-                <span v-if="accountRole && accountPlan"> | </span>
-                <span v-if="accountPlan">{{ accountPlan }}</span>
-              </span>
-            </span>
-          </button>
-
-          <div v-if="accountMenuOpen" class="ui-shell-account-dropdown" role="menu">
-            <RouterLink
-              class="ui-shell-account-item"
-              to="/account"
-              role="menuitem"
-              @click="closeAccountMenu"
-            >
-              {{ isSaasAdmin ? 'Admin SaaS' : 'Perfil' }}
-            </RouterLink>
-            <RouterLink
-              v-if="!isSaasAdmin"
-              class="ui-shell-account-item"
-              to="/data"
-              role="menuitem"
-              @click="closeAccountMenu"
-            >
-              Datos auxiliares
-            </RouterLink>
+      <header class="ui-shell-header dir-a">
+        <div class="topbar">
+          <div class="ui-shell-header-left">
             <button
-              class="ui-shell-account-item ui-shell-account-item-btn"
+              v-if="!isSaasAdmin"
+              class="icon-btn ui-shell-icon-btn ui-shell-nav-toggle"
               type="button"
-              role="menuitem"
-              @click="logout"
+              aria-label="Abrir menu"
+              @click="toggleSidebar"
             >
-              Cerrar sesión
+              <span aria-hidden="true">=</span>
             </button>
+
+            <RouterLink
+              class="topnav-brand ui-shell-brand-link"
+              :to="isSaasAdmin ? '/account' : '/'"
+            >
+              <span class="topnav-brand-mark">TA</span>
+              <span class="topnav-brand-text">
+                <span class="topnav-brand-title">The Arkenstone</span>
+                <span class="topnav-brand-sub">SaaS financiero</span>
+              </span>
+            </RouterLink>
+
+            <div v-if="!isSaasAdmin" class="topnav-divider ui-shell-nav-divider" />
+          </div>
+
+          <nav
+            v-if="!isSaasAdmin"
+            class="topnav-list ui-shell-desktop-nav"
+            aria-label="Navegacion principal"
+          >
+            <RouterLink
+              v-for="item in navItems"
+              :key="item.id"
+              :to="item.to"
+              class="topnav-item"
+              :class="{ on: isNavItemActive(item) }"
+              :title="`${item.label}: ${item.hint}`"
+            >
+              {{ item.label }}
+            </RouterLink>
+          </nav>
+
+          <div class="topnav-right">
+            <div v-if="!isSaasAdmin" class="ui-shell-utility-actions">
+              <button class="icon-btn ui-shell-utility-btn" type="button" aria-label="Buscar">
+                <span aria-hidden="true">/</span>
+              </button>
+              <button
+                class="icon-btn ui-shell-utility-btn"
+                type="button"
+                aria-label="Notificaciones"
+              >
+                <span aria-hidden="true">o</span>
+              </button>
+            </div>
+
+            <div v-if="isSaasAdmin" class="ui-shell-page-chip">
+              {{ pageTitle }}
+            </div>
+
+            <div v-if="hasToken" :ref="assignAccountMenuRef" class="ui-shell-account-menu">
+              <button
+                class="ui-shell-account-link"
+                type="button"
+                :aria-expanded="accountMenuOpen"
+                aria-haspopup="menu"
+                @click="toggleAccountMenu"
+              >
+                <span class="ui-shell-account-avatar avatar">{{ accountInitials }}</span>
+                <span class="ui-shell-account-info">
+                  <span class="ui-shell-account-name">{{ accountLabel }}</span>
+                  <span class="ui-shell-account-meta">
+                    <span v-if="accountRole">{{ accountRole }}</span>
+                    <span v-if="accountRole && accountPlan"> | </span>
+                    <span v-if="accountPlan">{{ accountPlan }}</span>
+                  </span>
+                </span>
+              </button>
+
+              <div v-if="accountMenuOpen" class="ui-shell-account-dropdown" role="menu">
+                <RouterLink
+                  class="ui-shell-account-item"
+                  to="/account"
+                  role="menuitem"
+                  @click="closeAccountMenu"
+                >
+                  {{ isSaasAdmin ? 'Admin SaaS' : 'Perfil' }}
+                </RouterLink>
+                <RouterLink
+                  v-if="!isSaasAdmin"
+                  class="ui-shell-account-item"
+                  to="/data"
+                  role="menuitem"
+                  @click="closeAccountMenu"
+                >
+                  Datos auxiliares
+                </RouterLink>
+                <button
+                  class="ui-shell-account-item ui-shell-account-item-btn"
+                  type="button"
+                  role="menuitem"
+                  @click="logout"
+                >
+                  Cerrar sesion
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
+      <div v-if="sidebarOpen && !isSaasAdmin" class="ui-shell-mobile-nav dir-a">
+        <nav class="ui-shell-mobile-nav-list" aria-label="Navegacion principal movil">
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.id"
+            :to="item.to"
+            class="ui-shell-mobile-nav-item"
+            :class="{ on: isNavItemActive(item) }"
+            :title="`${item.label}: ${item.hint}`"
+            @click="closeSidebar"
+          >
+            <span class="ui-shell-mobile-nav-label">
+              {{ item.label }}
+            </span>
+            <span class="ui-shell-mobile-nav-hint">
+              {{ item.hint }}
+            </span>
+          </RouterLink>
+        </nav>
+      </div>
+
       <main class="ui-shell-content">
-        <router-view />
+        <div class="dir-a ui-shell-content-stage">
+          <router-view />
+        </div>
       </main>
     </div>
   </div>
