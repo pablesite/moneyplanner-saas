@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.22.0...moneyplanner-saas-v0.22.1) (2026-06-16)
+
+
+### Bug Fixes
+
+* **deploy:** avoid core startup race ([be93635](https://github.com/pablesite/moneyplanner-saas/commit/be9363535cb0c6a3dd6caae3b56d62b073529c81))
+
 ## [0.22.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.21.0...moneyplanner-saas-v0.22.0) (2026-06-14)
 
 
