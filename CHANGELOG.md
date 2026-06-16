@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.22.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.22.1...moneyplanner-saas-v0.22.2) (2026-06-16)
+
+
+### Bug Fixes
+
+* **frontend:** refresh audited lockfile ([b9b499b](https://github.com/pablesite/moneyplanner-saas/commit/b9b499b78ef7ad553aee3f3054c38f16fc899b0b))
+* **submodule:** update core deploy fix ([dc8b4ad](https://github.com/pablesite/moneyplanner-saas/commit/dc8b4add29efa476d3c27edf53c7973d4b8de693))
+
 ## [0.22.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.22.0...moneyplanner-saas-v0.22.1) (2026-06-16)
 
 
