@@ -43,7 +43,14 @@ defineProps<{
 </script>
 
 <template>
-  <BaseModal :open="showAssetModal" title="Nuevo activo" @close="onCloseAssetModal">
+  <BaseModal
+    :open="showAssetModal"
+    title="Nuevo activo"
+    variant="sheet"
+    panel-class="ui-sheet-panel dir-a a-nw-sheet"
+    body-class="ui-sheet-body"
+    @close="onCloseAssetModal"
+  >
     <ItemForm
       title="Nuevo activo"
       :categories="assetCategories"
@@ -56,7 +63,14 @@ defineProps<{
     />
   </BaseModal>
 
-  <BaseModal :open="showLiabilityModal" title="Nuevo pasivo" @close="onCloseLiabilityModal">
+  <BaseModal
+    :open="showLiabilityModal"
+    title="Nuevo pasivo"
+    variant="sheet"
+    panel-class="ui-sheet-panel dir-a a-nw-sheet"
+    body-class="ui-sheet-body"
+    @close="onCloseLiabilityModal"
+  >
     <ItemForm
       title="Nuevo pasivo"
       :categories="liabilityCategories"
@@ -69,7 +83,14 @@ defineProps<{
     />
   </BaseModal>
 
-  <BaseModal :open="showEditModal" :title="editTitle" @close="closeEdit">
+  <BaseModal
+    :open="showEditModal"
+    :title="editTitle"
+    variant="sheet"
+    panel-class="ui-sheet-panel dir-a a-nw-sheet"
+    body-class="ui-sheet-body"
+    @close="closeEdit"
+  >
     <ItemForm
       v-if="editInitial"
       :title="editTitle"

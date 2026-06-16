@@ -11,6 +11,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 5. Inline `style=` is not allowed in Vue templates.
 6. New `<style scoped>` blocks require explicit justification; default to shared styles.
 7. Loading, empty, error, and success states must use the shared state pattern when possible.
+8. Direction A views may define local reusable page patterns in `frontend/src/domains/*/*.css` when they are still stabilizing, but those patterns must stay namespaced and documented here once reused.
 
 ## Design Tokens
 1. Semantic color tokens:
@@ -71,6 +72,14 @@ Turn the visual guide into a small operational contract for reusable frontend wo
    - `ui-modal-title`
    - `ui-modal-close`
    - `ui-modal-body`
+8. Direction A balance table pattern:
+   - grouped rows with semantic kind labels (`ACTIVOS` / `PASIVOS`); liability group totals shown negative (`−`)
+   - first column with vertical swatch + primary name only; subcategory lives in its own column (no duplicated secondary line)
+   - foreign-currency hint rendered before the base-currency amount
+   - rows are clickable to filter the timeline; row edit/archive/delete via `ARowMenu` (no inline editing)
+   - active/filter state expressed by row background and section-level filter copy, not nested cards
+9. Direction A net-worth donut: bespoke SVG (`size 200`, `thickness 14`, background ring, structural slices capital/backed/unbacked) with center text that the hovered slice overrides; no chart library, no legend (the two hero comp columns act as legend).
+10. Direction A net-worth evolution chart: bespoke SVG (smooth Catmull-Rom line + area, 8-tick Y axis with compact labels, integrated monthly-delta bars sharing the X axis, hover crosshair + marker + floating tooltip). Scales via a fixed `viewBox` at `width:100%`. The Chart.js `NetWorthTimelineChart`/`NetWorthDeltaChart` remain only for `AccountingMovementsView` until Phase 3.
 
 ## Usage Guidance
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.

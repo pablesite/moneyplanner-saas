@@ -1,28 +1,22 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
-  NetWorthDeltaChart,
-  NetWorthTimelineChart,
+  NetWorthDonut,
+  NetWorthEvolutionChart,
   useNetWorthViewExtensions,
   useNetWorthViewState,
 } from '@/domains/net-worth';
-import NetWorthCategoryWorkspace from '@/domains/net-worth/components/NetWorthCategoryWorkspace.vue';
-import NetWorthHeroSection from '@/domains/net-worth/components/NetWorthHeroSection.vue';
 import NetWorthItemModals from '@/domains/net-worth/components/NetWorthItemModals.vue';
-import NetWorthTimelineMain from '@/domains/net-worth/components/NetWorthTimelineMain.vue';
 import type { NetWorthWritePayload } from '@/domains/net-worth/models';
 import '@/domains/net-worth/net-worth-view.css';
-import { useNetWorthAccountingActivity } from '@/domains/net-worth/useNetWorthAccountingActivity';
 import { useNetWorthOwnership } from '@/domains/net-worth/useNetWorthOwnership';
 import {
   useNetWorthPageMetrics,
   type PositionRow,
 } from '@/domains/net-worth/useNetWorthPageMetrics';
-import { useNetWorthPositionActivity } from '@/domains/net-worth/useNetWorthPositionActivity';
 import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActions';
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
-import { useNetWorthTimelineLayout } from '@/domains/net-worth/useNetWorthTimelineLayout';
-import { BaseModal } from '@/domains/ui';
+import { AContextBar, APageHead, ARowMenu, ASectHead, BaseModal } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
 import { toApiErrorMessage } from '@/lib/errors';
 
@@ -63,29 +57,6 @@ const {
 const annualExpenseStore = useAnnualExpenseStore('core');
 
 const { itemFormProps } = useNetWorthViewExtensions(store);
-
-const inflationRegions = [
-  { code: 'ES', label: 'Espana' },
-  { code: 'ES-AN', label: 'Andalucia' },
-  { code: 'ES-AR', label: 'Aragon' },
-  { code: 'ES-AS', label: 'Asturias' },
-  { code: 'ES-IB', label: 'Illes Balears' },
-  { code: 'ES-CN', label: 'Canarias' },
-  { code: 'ES-CB', label: 'Cantabria' },
-  { code: 'ES-CL', label: 'Castilla y Leon' },
-  { code: 'ES-CM', label: 'Castilla-La Mancha' },
-  { code: 'ES-CT', label: 'Cataluna' },
-  { code: 'ES-VC', label: 'Comunitat Valenciana' },
-  { code: 'ES-EX', label: 'Extremadura' },
-  { code: 'ES-GA', label: 'Galicia' },
-  { code: 'ES-MD', label: 'Comunidad de Madrid' },
-  { code: 'ES-MC', label: 'Region de Murcia' },
-  { code: 'ES-NC', label: 'Comunidad Foral de Navarra' },
-  { code: 'ES-PV', label: 'Pais Vasco' },
-  { code: 'ES-RI', label: 'La Rioja' },
-  { code: 'ES-CE', label: 'Ceuta' },
-  { code: 'ES-ML', label: 'Melilla' },
-];
 
 function toNumber(raw: unknown): number {
   const normalized = String(raw ?? '')
@@ -283,7 +254,6 @@ async function submitEditWithExpenseReview(
 const {
   ownershipFilter,
   ownershipOptions,
-  selectedOwnershipFilterLabel,
   ownershipFilterDisabled,
   allocationFractionForNetWorthOwner,
   matchesOwnershipFilter,
@@ -295,6 +265,42 @@ const {
   valueMode,
 });
 const heroUnitLabel = computed(() => displayCurrencyUnit(unitLabel()));
+
+type ArchivedItemRow = {
+  id: number;
+  name: string;
+  type: 'asset' | 'liability';
+  category: string;
+  owner: string;
+};
+
+function formatMetaDate(raw: string): string {
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(raw));
+}
+
+const snapshotEntries = computed(() => {
+  const rawStore = store as unknown as {
+    snapshots?: Array<{ id: number; snapshot_date: string }>;
+  };
+  return [...(rawStore.snapshots ?? [])].sort((a, b) =>
+    b.snapshot_date.localeCompare(a.snapshot_date),
+  );
+});
+const asOfLabel = computed(() =>
+  snapshotEntries.value[0]?.snapshot_date
+    ? `Base ${formatMetaDate(snapshotEntries.value[0].snapshot_date)}`
+    : 'Hoy',
+);
+const showArchivedModal = ref(false);
+const archivedItemsCount = computed(
+  () =>
+    store.assets.filter((item) => item.is_active === false).length +
+    store.liabilities.filter((item) => item.is_active === false).length,
+);
 
 watch(ownershipFilter, async () => {
   clearPositionSelection();
@@ -374,6 +380,19 @@ const monthlyDelta = computed<{
   return { value, pct, lastLabel: last.label, prevLabel: prev.label };
 });
 
+const ytdDelta = computed<{ value: number; pct: number | null } | null>(() => {
+  const rows = globalTimelineRows.value;
+  const last = rows[rows.length - 1];
+  if (!last) return null;
+  const currentYear = new Date(last.date).getFullYear();
+  // Base YTD: primer punto del año en curso; si no hay, el primer punto disponible.
+  const baseline = rows.find((row) => new Date(row.date).getFullYear() === currentYear) ?? rows[0];
+  if (!baseline || baseline === last) return null;
+  const value = last.netWorth - baseline.netWorth;
+  const pct = baseline.netWorth !== 0 ? value / Math.abs(baseline.netWorth) : null;
+  return { value, pct };
+});
+
 const {
   selectedCategoryLabel,
   allAssetPositionRows,
@@ -387,13 +406,8 @@ const {
   analysis,
   availablePositionRows,
   activeAssets,
-  categoryWorkspaceRows,
-  categoryWorkspaceCount,
-  categoryWorkspaceTotal,
-  showCategoryWorkspace,
   sourceItemForRow,
   selectedPosition,
-  selectedPositionSource,
   positionTimelineRows,
 } = useNetWorthPageMetrics({
   assets: computed(() => store.assets),
@@ -430,14 +444,33 @@ function editRow(row: PositionRow): void {
   openEdit(item, row.type);
 }
 
-const archivedWorkspaceItems = computed(() => {
-  const cat = selectedTimelineCategory.value;
-  if (!cat) return [];
-  const type = selectedTimelineCategoryType.value;
-  const list = type === 'asset' ? store.assets : store.liabilities;
-  return list
-    .filter((it) => it.is_active === false && it.category === cat)
-    .map((it) => ({ id: it.id, name: it.name, type }));
+const archivedItems = computed<ArchivedItemRow[]>(() => {
+  const assets = store.assets
+    .filter((item) => item.is_active === false)
+    .filter((item) => matchesOwnershipFilter(item.ownership_ref))
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      type: 'asset' as const,
+      category:
+        assetCategories.find((category) => category.value === item.category)?.label ??
+        item.category,
+      owner: ownershipBadge(item.ownership_ref) ?? 'Sin asignar',
+    }));
+  const liabilities = store.liabilities
+    .filter((item) => item.is_active === false)
+    .filter((item) => matchesOwnershipFilter(item.ownership_ref))
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      type: 'liability' as const,
+      category:
+        liabilityCategories.find((category) => category.value === item.category)?.label ??
+        item.category,
+      owner: ownershipBadge(item.ownership_ref) ?? 'Sin asignar',
+    }));
+
+  return [...assets, ...liabilities].sort((a, b) => a.name.localeCompare(b.name, 'es'));
 });
 
 async function archiveRow(row: PositionRow): Promise<void> {
@@ -466,47 +499,171 @@ async function deleteRow(row: PositionRow): Promise<void> {
   }
 }
 
-const categoryWorkspaceLabel = computed(() => {
-  if (!selectedTimelineCategory.value) return '';
-  const scope = selectedTimelineCategoryType.value === 'liability' ? 'pasivos' : 'activos';
-  return `${selectedCategoryLabel.value} dentro de ${scope}`;
+type BalanceGroup = {
+  key: string;
+  label: string;
+  kind: 'asset' | 'liability';
+  rows: PositionRow[];
+  total: number;
+};
+
+const balanceGroups = computed<BalanceGroup[]>(() => {
+  const assetLabelMap = new Map(
+    assetCategories.map((category) => [category.value, category.label]),
+  );
+  const liabilityLabelMap = new Map(
+    liabilityCategories.map((category) => [category.value, category.label]),
+  );
+
+  const makeGroups = (
+    rows: PositionRow[],
+    kind: 'asset' | 'liability',
+    labelMap: Map<string, string>,
+    order: string[],
+  ) =>
+    order
+      .map((categoryKey) => {
+        const categoryRows = rows.filter((row) => row.category === categoryKey);
+        if (!categoryRows.length) return null;
+        return {
+          key: categoryKey,
+          label: labelMap.get(categoryKey) ?? categoryKey,
+          kind,
+          rows: categoryRows,
+          total: categoryRows.reduce((sum, row) => sum + row.value, 0),
+        } satisfies BalanceGroup;
+      })
+      .filter((group): group is BalanceGroup => group !== null);
+
+  return [
+    ...makeGroups(
+      allAssetPositionRows.value,
+      'asset',
+      assetLabelMap,
+      assetCategories.map((category) => category.value),
+    ),
+    ...makeGroups(
+      allLiabilityPositionRows.value,
+      'liability',
+      liabilityLabelMap,
+      liabilityCategories.map((category) => category.value),
+    ),
+  ];
 });
 
-const categoryWorkspaceMeta = computed(() => {
-  if (!selectedTimelineCategory.value) return '';
-  return `${categoryWorkspaceCount.value} posiciones - ${formatNumber(categoryWorkspaceTotal.value, 2)} ${heroUnitLabel.value}`;
+type HeroCompositionRow = {
+  key: string;
+  label: string;
+  kind: 'asset' | 'liability';
+  value: number;
+  share: number;
+  count: number;
+};
+
+function buildHeroCompositionRows(kind: 'asset' | 'liability'): HeroCompositionRow[] {
+  const values =
+    kind === 'asset' ? effectiveCategoryAssets.value : effectiveCategoryLiabilities.value;
+  const counts =
+    kind === 'asset' ? effectiveCategoryAssetCounts.value : effectiveCategoryLiabilityCounts.value;
+  const total = values.reduce((sum, value) => sum + Math.max(0, value ?? 0), 0);
+
+  return effectiveCategoryKeys.value
+    .map((key, index) => {
+      const value = Math.max(0, values[index] ?? 0);
+      const count = Math.max(0, counts[index] ?? 0);
+      return {
+        key,
+        label: effectiveCategoryLabels.value[index] ?? key,
+        kind,
+        value,
+        count,
+        share: total > 0 ? value / total : 0,
+      };
+    })
+    .filter((row) => row.value > 0 || row.count > 0);
+}
+
+const heroAssetRows = computed(() => buildHeroCompositionRows('asset'));
+const heroLiabilityRows = computed(() => buildHeroCompositionRows('liability'));
+
+const assetCompositionHues = [148, 178, 210, 24, 80];
+const liabilityCompositionHues = [24, 345, 12, 45, 80];
+
+function heroCompositionColor(row: HeroCompositionRow, index: number): string {
+  const hue =
+    row.kind === 'asset'
+      ? assetCompositionHues[index % assetCompositionHues.length]
+      : liabilityCompositionHues[index % liabilityCompositionHues.length];
+  return `oklch(0.72 0.12 ${hue})`;
+}
+
+const timelineFilterLabel = computed(() => {
+  if (selectedPosition.value) return selectedPosition.value.name;
+  return selectedTimelineCategory.value ? selectedCategoryLabel.value : null;
 });
 
-const showPositionSelector = computed(
-  () => !!selectedTimelineCategory.value && availablePositionRows.value.length > 0,
-);
-const timelineColumnRef = ref<HTMLElement | null>(null);
+function openPrimaryCreateModal(): void {
+  openCreateModal('asset', null);
+}
 
-const {
-  accountingActivityLoading,
-  accountingActivityError,
-  accountingActivityRows,
-  accountingActivityYear,
-  showAccountingActivitySetupGap,
-  showAccountingActivityNeedsReview,
-  showAccountingActivityBlock,
-  resetAccountingActivity,
-  loadAccountingActivity,
-} = useNetWorthAccountingActivity({
-  selectedPositionSource,
-  sourceItemForRow,
-  toNumber,
-});
+function isBalanceGroupActive(group: BalanceGroup): boolean {
+  return (
+    selectedTimelineCategory.value === group.key &&
+    selectedTimelineCategoryType.value === group.kind
+  );
+}
 
-const { positionActivityRows } = useNetWorthPositionActivity({
-  selectedPositionType,
-  assetValuations: computed(() => store.assetValuations),
-  investmentEvents: computed(() => store.investmentEvents),
-  liquidityEvents: computed(() => store.liquidityEvents),
-  liabilityValuations: computed(() => store.liabilityValuations),
-  liabilityEvents: computed(() => store.liabilityEvents),
-  toNumber,
-});
+function isBalanceRowActive(row: PositionRow): boolean {
+  return selectedPositionType.value === row.type && selectedPositionId.value === row.id;
+}
+
+function isHeroCategoryActive(row: HeroCompositionRow): boolean {
+  return (
+    selectedTimelineCategory.value === row.key && selectedTimelineCategoryType.value === row.kind
+  );
+}
+
+function foreignAmountLabel(row: PositionRow): string | null {
+  const source = sourceItemForRow(row);
+  if (!source) return null;
+  const baseCurrency = store.baseCurrency ?? 'EUR';
+  const sourceCurrency = String(source.currency ?? row.currency ?? '').trim();
+  if (!sourceCurrency || sourceCurrency === baseCurrency) return null;
+  const rawAmount = source.effective_amount ?? source.estimated_outstanding_amount ?? source.amount;
+  if (rawAmount == null || String(rawAmount).trim() === '') return null;
+  return `(${formatNumber(toNumber(rawAmount), 2)} ${sourceCurrency})`;
+}
+
+function rowMenuItems(row: PositionRow) {
+  return [
+    { id: 'focus', label: 'Ver evolucion' },
+    { id: 'edit', label: 'Editar' },
+    { id: 'archive', label: row.type === 'asset' ? 'Archivar activo' : 'Archivar pasivo' },
+    { id: 'delete', label: 'Eliminar', danger: true },
+  ];
+}
+
+async function handleRowMenuAction(row: PositionRow, actionId: string): Promise<void> {
+  if (actionId === 'focus') {
+    await selectPosition(row);
+    return;
+  }
+  if (actionId === 'edit') {
+    editRow(row);
+    return;
+  }
+  if (actionId === 'archive') {
+    await archiveRow(row);
+    return;
+  }
+  if (actionId === 'delete') {
+    await deleteRow(row);
+  }
+}
+
+function resetAccountingActivity(): void {}
+
+async function loadAccountingActivity(): Promise<void> {}
 
 function clearPositionSelection(): void {
   selectedPositionType.value = null;
@@ -534,7 +691,6 @@ const {
   displayedTimelineLoading,
   visibleTimelineRows,
   timelineWindow,
-  timelineChartRows,
   timelineChartPoints,
   timelineRangeCaption,
   latestTimelineChartPoint,
@@ -563,12 +719,6 @@ const {
   resetPositionSelection: clearPositionSelection,
   getTimelineMetricValue,
 });
-const { timelineSidebarPanelStyle } = useNetWorthTimelineLayout({
-  showCategoryWorkspace,
-  visibleTimelineRows,
-  selectedPosition,
-  timelineColumnRef,
-});
 
 const {
   openCreateModal,
@@ -576,12 +726,10 @@ const {
   submitLiabilityFromView,
   resetTimelineSelection,
   applyCompositionCategoryFilter,
-  handleCompositionAddType,
   selectPosition,
   setTimelinePreset,
   updateTimelineWindowStart,
   updateTimelineWindowEnd,
-  onPositionSelection,
   assetCreateInitial,
   liabilityCreateInitial,
 } = useNetWorthPageActions({
@@ -606,179 +754,453 @@ const {
 </script>
 
 <template>
-  <div class="container ui-pro-page relative">
-    <NetWorthHeroSection
-      :store="store"
-      :currencies="currencies"
-      :inflation-regions="inflationRegions"
-      :value-mode="valueMode"
-      :set-value-mode="setValueMode"
-      :can-show-real="canShowReal()"
-      :mode-label="modeLabel()"
-      :real-base-label="realBaseLabel"
-      :hero-unit-label="heroUnitLabel"
-      :analysis="analysis"
-      :ownership-filter="ownershipFilter"
-      :set-ownership-filter="setOwnershipFilter"
-      :ownership-options="ownershipOptions"
-      :ownership-filter-disabled="ownershipFilterDisabled"
-      :selected-ownership-filter-label="selectedOwnershipFilterLabel"
-      :format-number="formatNumber"
-      :format-pct="formatPct"
-      :reset-timeline-selection="resetTimelineSelection"
-      :category-keys="effectiveCategoryKeys"
-      :category-labels="effectiveCategoryLabels"
-      :category-assets="effectiveCategoryAssets"
-      :category-liabilities="effectiveCategoryLiabilities"
-      :category-asset-counts="effectiveCategoryAssetCounts"
-      :category-liability-counts="effectiveCategoryLiabilityCounts"
-      :monthly-delta="monthlyDelta"
-    />
+  <div class="page a-nw-page">
+    <APageHead title="Patrimonio">
+      <template #meta>
+        <span class="a-nw-meta-pill">{{ asOfLabel }}</span>
+        <span class="dot"></span>
+        <span>Base {{ store.baseCurrency ?? 'EUR' }}</span>
+        <span v-if="valueMode === 'real' || archivedItemsCount" class="dot"></span>
+        <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
+        <button
+          v-if="archivedItemsCount"
+          class="btn btn-ghost a-nw-archived-trigger"
+          type="button"
+          @click="showArchivedModal = true"
+        >
+          Archivadas {{ archivedItemsCount }}
+        </button>
+      </template>
+      <template #actions>
+        <button class="btn btn-primary" type="button" @click="openPrimaryCreateModal">
+          + Añadir cuenta
+        </button>
+      </template>
+    </APageHead>
 
-    <section class="card ui-pro-panel ui-nw-hero-shell grid gap-2.5 mb-2">
-      <div class="ui-nw-hero-timeline">
-        <div class="ui-nw-timeline-layout">
-          <div ref="timelineColumnRef" class="ui-nw-timeline-column">
-            <NetWorthTimelineMain
-              :analysis="analysis"
-              :hero-unit-label="heroUnitLabel"
-              :effective-category-keys="effectiveCategoryKeys"
-              :effective-category-labels="effectiveCategoryLabels"
-              :effective-category-assets="effectiveCategoryAssets"
-              :effective-category-liabilities="effectiveCategoryLiabilities"
-              :effective-category-asset-counts="effectiveCategoryAssetCounts"
-              :effective-category-liability-counts="effectiveCategoryLiabilityCounts"
-              :selected-timeline-category="selectedTimelineCategory"
-              :selected-timeline-category-type="selectedTimelineCategoryType"
-              :apply-composition-category-filter="applyCompositionCategoryFilter"
-              :handle-composition-add-type="handleCompositionAddType"
-              :displayed-timeline-loading="displayedTimelineLoading"
-              :visible-timeline-rows="visibleTimelineRows"
-              :selected-position="selectedPosition"
-              :timeline-preset-options="timelinePresetOptions"
-              :custom-timeline-window="customTimelineWindow"
-              :selected-timeline-preset="selectedTimelinePreset"
-              :set-timeline-preset="setTimelinePreset"
-              :timeline-range-caption="timelineRangeCaption"
-              :set-timeline-expanded="(value) => (timelineExpanded = value)"
-              :timeline-chart-points="timelineChartPoints"
-              :displayed-timeline-unit="
-                displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())
-              "
-              :timeline-summary-label="timelineSummaryLabel"
-              :displayed-timeline-series-color="displayedTimelineSeriesColor"
-              :timeline-y-axis-starts-at-zero="timelineYAxisStartsAtZero"
-              :format-number="formatNumber"
-              :timeline-chart-rows="timelineChartRows"
-              :show-accounting-activity-block="showAccountingActivityBlock"
-              :accounting-activity-loading="accountingActivityLoading"
-              :accounting-activity-year="accountingActivityYear"
-              :show-accounting-activity-needs-review="showAccountingActivityNeedsReview"
-              :show-accounting-activity-setup-gap="showAccountingActivitySetupGap"
-              :accounting-activity-error="accountingActivityError"
-              :accounting-activity-rows="accountingActivityRows"
-              :position-activity-loading="store.positionActivityLoading"
-              :position-activity-rows="positionActivityRows"
+    <AContextBar>
+      <label class="context-field" data-test="ownership-filter">
+        <span class="context-field-label">Titularidad</span>
+        <select
+          class="filter-ctrl"
+          :value="String(ownershipFilter)"
+          :disabled="ownershipFilterDisabled"
+          @change="
+            setOwnershipFilter(
+              ($event.target as HTMLSelectElement).value === 'all'
+                ? 'all'
+                : Number(($event.target as HTMLSelectElement).value),
+            )
+          "
+        >
+          <option value="all">Todos</option>
+          <option
+            v-for="option in ownershipOptions"
+            :key="String(option.value)"
+            :value="String(option.value)"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+
+      <div class="context-divider"></div>
+
+      <label class="context-field">
+        <span class="context-field-label">Moneda</span>
+        <select
+          class="filter-ctrl"
+          :value="store.baseCurrency ?? 'EUR'"
+          @change="store.updateBaseCurrency(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-for="currency in currencies" :key="currency.value" :value="currency.value">
+            {{ currency.label }}
+          </option>
+        </select>
+      </label>
+
+      <div class="context-divider"></div>
+
+      <div class="context-field">
+        <span class="context-field-label">Valoración</span>
+        <div class="seg">
+          <button
+            type="button"
+            :class="{ on: valueMode === 'nominal' }"
+            @click="setValueMode('nominal')"
+          >
+            Nominal
+          </button>
+          <button
+            v-if="canShowReal()"
+            type="button"
+            :class="{ on: valueMode === 'real' }"
+            @click="setValueMode('real')"
+          >
+            Real
+          </button>
+        </div>
+        <span v-if="valueMode === 'real' && realBaseLabel" class="a-nw-context-note">
+          {{ realBaseLabel }}
+        </span>
+      </div>
+    </AContextBar>
+
+    <section class="sect">
+      <div class="hero">
+        <div class="hero-top">
+          <div class="hero-headline">
+            <p class="eyebrow hero-eyebrow">Patrimonio neto</p>
+            <button class="hero-value-button" type="button" @click="resetTimelineSelection">
+              <div class="hero-value">
+                {{ formatNumber(analysis.netWorth, 2)
+                }}<span class="hero-value-unit">{{ heroUnitLabel }}</span>
+              </div>
+            </button>
+            <div class="hero-delta">
+              <template v-if="monthlyDelta">
+                <span>
+                  <span :class="monthlyDelta.value >= 0 ? 'pos mono' : 'neg mono'">
+                    {{ monthlyDelta.value > 0 ? '+' : '' }}{{ formatNumber(monthlyDelta.value, 0) }}
+                    {{ heroUnitLabel }}
+                  </span>
+                  <span
+                    v-if="monthlyDelta.pct !== null"
+                    :class="
+                      monthlyDelta.value >= 0
+                        ? 'pos mono hero-delta-pct'
+                        : 'neg mono hero-delta-pct'
+                    "
+                  >
+                    ({{ monthlyDelta.value > 0 ? '+' : '' }}{{ formatPct(monthlyDelta.pct, 1) }})
+                  </span>
+                  <span class="hero-delta-copy">este mes</span>
+                </span>
+              </template>
+              <template v-else>
+                <span>Sin comparativa mensual todavía</span>
+              </template>
+              <template v-if="ytdDelta">
+                <span class="hero-delta-sep">·</span>
+                <span>
+                  <span :class="ytdDelta.value >= 0 ? 'pos mono' : 'neg mono'">
+                    {{ ytdDelta.value > 0 ? '+' : '' }}{{ formatNumber(ytdDelta.value, 0) }}
+                    {{ heroUnitLabel }}
+                  </span>
+                  <span
+                    v-if="ytdDelta.pct !== null"
+                    :class="
+                      ytdDelta.value >= 0 ? 'pos mono hero-delta-pct' : 'neg mono hero-delta-pct'
+                    "
+                  >
+                    ({{ ytdDelta.value > 0 ? '+' : '' }}{{ formatPct(ytdDelta.pct, 1) }})
+                  </span>
+                  <span class="hero-delta-copy">YTD</span>
+                </span>
+              </template>
+            </div>
+          </div>
+
+          <div class="hero-donut">
+            <NetWorthDonut
+              :total-assets="analysis.assets"
+              :total-liabilities="analysis.liabilities"
+              :asset-backed-liabilities="analysis.backedDebt"
+              :unbacked-liabilities="analysis.unbackedDebt"
+              :net-worth="analysis.netWorth"
+              :unit="heroUnitLabel"
+              :show-composition="false"
+              center-label="Capital propio"
+              :center-value="formatPct(analysis.equityRatio, 0)"
             />
           </div>
 
-          <BaseModal
-            :open="timelineExpanded"
-            title="Evolución temporal"
-            panel-class="max-w-[1080px]"
-            @close="timelineExpanded = false"
-          >
-            <div class="ui-nw-timeline-modal">
-              <div class="ui-nw-timeline-modal-head">
-                <div>
-                  <div class="ui-nw-timeline-modal-title">{{ timelineSummaryLabel }}</div>
-                  <div class="ui-nw-timeline-modal-copy">{{ timelineRangeCaption }}</div>
-                </div>
-                <div class="ui-nw-timeline-modal-value">
-                  {{ formatNumber(latestTimelineChartPoint?.value ?? 0, 2) }}
-                  {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-                </div>
+          <div class="hero-breakdown">
+            <div class="hero-comp-side">
+              <div class="hero-comp-title">
+                <span>Activos</span>
+                <b>{{ formatNumber(analysis.assets, 2) }} {{ heroUnitLabel }}</b>
               </div>
-
-              <div class="ui-nw-timeline-modal-ranges">
-                <label class="ui-nw-timeline-slider-group">
-                  <span>Inicio</span>
-                  <input
-                    class="ui-nw-timeline-slider"
-                    type="range"
-                    min="0"
-                    :max="Math.max(0, visibleTimelineRows.length - 1)"
-                    :value="timelineWindow.start"
-                    @input="updateTimelineWindowStart(($event.target as HTMLInputElement).value)"
+              <div class="comp-list">
+                <button
+                  v-for="(row, index) in heroAssetRows"
+                  :key="`asset-${row.key}`"
+                  type="button"
+                  class="comp-row"
+                  :class="{ 'row-active': isHeroCategoryActive(row) }"
+                  @click="applyCompositionCategoryFilter({ key: row.key, type: row.kind })"
+                >
+                  <span
+                    class="comp-dot"
+                    :style="{ background: heroCompositionColor(row, index) }"
                   />
-                  <strong>{{ timelineChartPoints[0]?.fullLabel ?? '-' }}</strong>
-                </label>
-
-                <label class="ui-nw-timeline-slider-group">
-                  <span>Fin</span>
-                  <input
-                    class="ui-nw-timeline-slider"
-                    type="range"
-                    min="0"
-                    :max="Math.max(0, visibleTimelineRows.length - 1)"
-                    :value="timelineWindow.end"
-                    @input="updateTimelineWindowEnd(($event.target as HTMLInputElement).value)"
-                  />
-                  <strong>{{ latestTimelineChartPoint?.fullLabel ?? '-' }}</strong>
-                </label>
+                  <span class="comp-label">{{ row.label }}</span>
+                  <span class="comp-val mono">
+                    {{ formatNumber(row.value, 2) }} {{ heroUnitLabel }}
+                    <span class="comp-val-share">· {{ Math.round(row.share * 100) }}%</span>
+                  </span>
+                </button>
               </div>
-
-              <div class="ui-nw-timeline-chart-shell">
-                <NetWorthTimelineChart
-                  :points="timelineChartPoints"
-                  :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-                  :series-label="timelineSummaryLabel"
-                  :series-color="displayedTimelineSeriesColor"
-                  :y-axis-min-zero="timelineYAxisStartsAtZero"
-                  expanded
-                />
-                <NetWorthDeltaChart
-                  :rows="timelineChartRows"
-                  :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-                />
-              </div>
+              <p v-if="!heroAssetRows.length" class="comp-empty">
+                Sin activos para el filtro actual.
+              </p>
             </div>
-          </BaseModal>
 
-          <aside class="ui-nw-timeline-sidebar">
-            <NetWorthCategoryWorkspace
-              :show-category-workspace="showCategoryWorkspace"
-              :timeline-sidebar-panel-style="timelineSidebarPanelStyle"
-              :selected-timeline-category-type="selectedTimelineCategoryType"
-              :selected-timeline-category="selectedTimelineCategory"
-              :category-workspace-label="categoryWorkspaceLabel"
-              :category-workspace-meta="categoryWorkspaceMeta"
-              :open-create-modal="openCreateModal"
-              :show-position-selector="showPositionSelector"
-              :selected-position-id="selectedPositionId"
-              :on-position-selection="onPositionSelection"
-              :available-position-rows="availablePositionRows"
-              :category-workspace-rows="categoryWorkspaceRows"
-              :selected-position-type="selectedPositionType"
-              :format-number="formatNumber"
-              :format-pct="formatPct"
-              :display-currency-unit="displayCurrencyUnit"
-              :ownership-badge-for-row="ownershipBadgeForRow"
-              :select-position="selectPosition"
-              :edit-row="editRow"
-              :archive-row="archiveRow"
-              :delete-row="deleteRow"
-              :archived-workspace-items="archivedWorkspaceItems"
-              :unarchive-item="unarchiveItem"
-            />
-          </aside>
+            <div class="hero-comp-side">
+              <div class="hero-comp-title">
+                <span>Pasivos</span>
+                <b>{{ formatNumber(analysis.liabilities, 2) }} {{ heroUnitLabel }}</b>
+              </div>
+              <div class="comp-list">
+                <button
+                  v-for="(row, index) in heroLiabilityRows"
+                  :key="`liability-${row.key}`"
+                  type="button"
+                  class="comp-row"
+                  :class="{ 'row-active': isHeroCategoryActive(row) }"
+                  @click="applyCompositionCategoryFilter({ key: row.key, type: row.kind })"
+                >
+                  <span
+                    class="comp-dot"
+                    :style="{ background: heroCompositionColor(row, index) }"
+                  />
+                  <span class="comp-label">{{ row.label }}</span>
+                  <span class="comp-val mono">
+                    {{ formatNumber(row.value, 2) }} {{ heroUnitLabel }}
+                    <span class="comp-val-share">· {{ Math.round(row.share * 100) }}%</span>
+                  </span>
+                </button>
+              </div>
+              <p v-if="!heroLiabilityRows.length" class="comp-empty">
+                Sin pasivos para el filtro actual.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <div v-if="store.error" class="alert mt-3">
+    <section class="sect">
+      <ASectHead
+        title="Evolución"
+        :subtitle="
+          timelineFilterLabel
+            ? `Filtrando: ${timelineFilterLabel}`
+            : 'Patrimonio neto en el tiempo.'
+        "
+      >
+        <template #actions>
+          <div class="actions">
+            <button
+              v-if="timelineFilterLabel"
+              class="btn btn-ghost"
+              type="button"
+              @click="resetTimelineSelection"
+            >
+              Quitar filtro
+            </button>
+            <div class="seg">
+              <button
+                v-for="preset in timelinePresetOptions"
+                :key="preset"
+                type="button"
+                :class="{ on: selectedTimelinePreset === preset }"
+                @click="setTimelinePreset(preset)"
+              >
+                {{ preset }}
+              </button>
+            </div>
+            <button
+              v-if="timelineChartPoints.length > 1"
+              class="btn btn-ghost"
+              type="button"
+              @click="timelineExpanded = true"
+            >
+              Ampliar
+            </button>
+          </div>
+        </template>
+      </ASectHead>
+
+      <div
+        v-if="displayedTimelineLoading && timelineChartPoints.length === 0"
+        class="a-nw-state a-nw-state-loading"
+      >
+        Cargando evolución...
+      </div>
+      <div v-else-if="timelineChartPoints.length === 0" class="a-nw-state a-nw-state-empty">
+        No hay historial suficiente para la selección actual.
+      </div>
+      <div v-else class="a-nw-chart-stack">
+        <div class="a-nw-chart-summary">
+          <div>
+            <span class="a-nw-chart-label">{{ timelineSummaryLabel }}</span>
+            <strong>
+              {{ formatNumber(latestTimelineChartPoint?.value ?? 0, 2) }}
+              {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
+            </strong>
+          </div>
+          <span>{{ timelineRangeCaption }}</span>
+        </div>
+        <div class="a-nw-chart-shell">
+          <NetWorthEvolutionChart
+            :points="timelineChartPoints"
+            :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
+            :series-label="timelineSummaryLabel"
+            :series-color="displayedTimelineSeriesColor"
+            :y-axis-min-zero="timelineYAxisStartsAtZero"
+          />
+        </div>
+      </div>
+
+      <BaseModal
+        :open="timelineExpanded"
+        title="Evolución temporal"
+        variant="sheet"
+        panel-class="a-nw-modal-panel dir-a"
+        @close="timelineExpanded = false"
+      >
+        <div class="a-nw-modal-stack">
+          <div class="a-nw-chart-summary">
+            <div>
+              <span class="a-nw-chart-label">{{ timelineSummaryLabel }}</span>
+              <strong>
+                {{ formatNumber(latestTimelineChartPoint?.value ?? 0, 2) }}
+                {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
+              </strong>
+            </div>
+            <span>{{ timelineRangeCaption }}</span>
+          </div>
+
+          <div class="a-nw-range-grid">
+            <label class="a-nw-range-field">
+              <span>Inicio</span>
+              <input
+                class="a-nw-range-input"
+                type="range"
+                min="0"
+                :max="Math.max(0, visibleTimelineRows.length - 1)"
+                :value="timelineWindow.start"
+                @input="updateTimelineWindowStart(($event.target as HTMLInputElement).value)"
+              />
+              <strong>{{ timelineChartPoints[0]?.fullLabel ?? '-' }}</strong>
+            </label>
+            <label class="a-nw-range-field">
+              <span>Fin</span>
+              <input
+                class="a-nw-range-input"
+                type="range"
+                min="0"
+                :max="Math.max(0, visibleTimelineRows.length - 1)"
+                :value="timelineWindow.end"
+                @input="updateTimelineWindowEnd(($event.target as HTMLInputElement).value)"
+              />
+              <strong>{{ latestTimelineChartPoint?.fullLabel ?? '-' }}</strong>
+            </label>
+          </div>
+
+          <div class="a-nw-chart-shell a-nw-chart-shell-expanded">
+            <NetWorthEvolutionChart
+              :points="timelineChartPoints"
+              :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
+              :series-label="timelineSummaryLabel"
+              :series-color="displayedTimelineSeriesColor"
+              :y-axis-min-zero="timelineYAxisStartsAtZero"
+              expanded
+            />
+          </div>
+        </div>
+      </BaseModal>
+    </section>
+
+    <section class="sect">
+      <ASectHead
+        title="Balance"
+        subtitle="Activos y pasivos por categoría con filtrado cruzado hacia la evolución."
+      />
+
+      <div v-if="balanceGroups.length === 0" class="a-nw-state a-nw-state-empty">
+        No hay posiciones para el filtro actual.
+      </div>
+
+      <div v-else class="a-nw-balance-wrap">
+        <table class="tbl a-nw-balance-table">
+          <thead>
+            <tr>
+              <th>Cuenta</th>
+              <th>Subcategoria</th>
+              <th>Titular</th>
+              <th class="num">Valor</th>
+              <th class="a-nw-actions-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="group in balanceGroups" :key="`${group.kind}-${group.key}`">
+              <tr
+                class="grp-row clickable"
+                :class="{ 'row-active': isBalanceGroupActive(group) }"
+                @click="applyCompositionCategoryFilter({ key: group.key, type: group.kind })"
+              >
+                <td colspan="3">
+                  <div class="grp-name">
+                    <span
+                      class="grp-kind"
+                      :class="group.kind === 'asset' ? 'grp-kind-asset' : 'grp-kind-liability'"
+                    >
+                      {{ group.kind === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
+                    </span>
+                    <span>{{ group.label }}</span>
+                  </div>
+                </td>
+                <td class="num">
+                  <span class="grp-total">
+                    {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 2) }}
+                    {{ heroUnitLabel }}
+                  </span>
+                </td>
+                <td></td>
+              </tr>
+
+              <tr
+                v-for="row in group.rows"
+                :key="`${row.type}-${row.id}`"
+                class="clickable"
+                :class="{ 'row-active': isBalanceRowActive(row) }"
+                @click="selectPosition(row)"
+              >
+                <td>
+                  <div class="name">
+                    <span class="swatch" :class="{ lia: row.type === 'liability' }" />
+                    <div class="nameMain">{{ row.name }}</div>
+                  </div>
+                </td>
+                <td class="tbl-cell-muted">{{ row.subtitle }}</td>
+                <td class="tbl-cell-muted">{{ ownershipBadgeForRow(row) ?? 'Sin asignar' }}</td>
+                <td class="num">
+                  <span v-if="foreignAmountLabel(row)" class="foreign-amount">
+                    {{ foreignAmountLabel(row) }}
+                  </span>
+                  <span
+                    class="account-value mono"
+                    :class="{ 'account-value-neg': row.type === 'liability' }"
+                  >
+                    {{ formatNumber(row.value, 2) }} {{ displayCurrencyUnit(row.currency) }}
+                  </span>
+                </td>
+                <td class="a-nw-actions-col" @click.stop>
+                  <ARowMenu :items="rowMenuItems(row)" @select="handleRowMenuAction(row, $event)" />
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div v-if="store.error" class="a-nw-state a-nw-state-error">
       {{ prettyError() }}
     </div>
+
     <NetWorthItemModals
       :show-asset-modal="showAssetModal"
       :show-liability-modal="showLiabilityModal"
@@ -804,42 +1226,74 @@ const {
     />
 
     <BaseModal
+      :open="showArchivedModal"
+      title="Cuentas archivadas"
+      variant="sheet"
+      panel-class="a-nw-modal-panel dir-a"
+      @close="showArchivedModal = false"
+    >
+      <div class="a-nw-modal-stack">
+        <div v-if="archivedItems.length === 0" class="a-nw-state a-nw-state-empty">
+          No hay cuentas archivadas para el filtro actual.
+        </div>
+        <div v-else class="a-nw-archived-list">
+          <article
+            v-for="item in archivedItems"
+            :key="`${item.type}-${item.id}`"
+            class="a-nw-archived-card"
+          >
+            <div>
+              <div class="a-nw-archived-title">{{ item.name }}</div>
+              <div class="a-nw-archived-meta">
+                {{ item.type === 'asset' ? 'Activo' : 'Pasivo' }} · {{ item.category }} ·
+                {{ item.owner }}
+              </div>
+            </div>
+            <button class="btn btn-ghost" type="button" @click="unarchiveItem(item)">
+              Restaurar
+            </button>
+          </article>
+        </div>
+      </div>
+    </BaseModal>
+
+    <BaseModal
       :open="showGeneratedLiabilityExpenseModal"
       :title="generatedLiabilityExpenseReviewTitle"
+      variant="sheet"
+      panel-class="a-nw-modal-panel dir-a"
       @close="closeGeneratedLiabilityExpenseModal"
     >
-      <div v-if="generatedLiabilityExpenseReview" class="grid gap-3">
+      <div v-if="generatedLiabilityExpenseReview" class="a-nw-modal-stack">
         <div
           v-if="generatedLiabilityExpenseReviewChangeMessage"
-          class="rounded-xl border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-sm text-white/90"
+          class="a-nw-info-card a-nw-info-card-warn"
         >
           {{ generatedLiabilityExpenseReviewChangeMessage }}
         </div>
-        <div
-          class="rounded-xl border border-teal-300/20 bg-teal-400/10 px-3 py-2 text-sm text-white/90"
-        >
+        <div class="a-nw-info-card a-nw-info-card-accent">
           Este pasivo generó gastos recurrentes en
           {{ generatedLiabilityExpenseReview.entries.length }}
           anualidades. Revisa su clasificación desde Presupuesto.
         </div>
-        <div class="grid gap-2">
+        <div class="a-nw-generated-list">
           <div
             v-for="entry in generatedLiabilityExpenseReview.entries"
             :key="entry.id"
-            class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"
+            class="a-nw-generated-card"
           >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="text-sm font-medium">Ejercicio {{ entry.fiscalYear }}</div>
-              <div class="text-sm text-white/90">
+            <div class="a-nw-generated-head">
+              <div class="a-nw-generated-title">Ejercicio {{ entry.fiscalYear }}</div>
+              <div class="a-nw-generated-amount">
                 {{ formatNumber(entry.amountAnnual, 2) }} {{ entry.currency }}
               </div>
             </div>
-            <div class="mt-1 text-xs text-white/70">
+            <div class="a-nw-generated-meta">
               {{ entry.name }} · {{ entry.category }} / {{ entry.subcategory }}
             </div>
           </div>
         </div>
-        <div class="actions justify-end">
+        <div class="actions a-nw-modal-actions">
           <button class="btn btn-ghost" type="button" @click="closeGeneratedLiabilityExpenseModal">
             Cerrar
           </button>
@@ -850,6 +1304,6 @@ const {
       </div>
     </BaseModal>
 
-    <div v-if="store.loading" class="ui-status-line">Cargando...</div>
+    <div v-if="store.loading" class="a-nw-page-status">Actualizando patrimonio...</div>
   </div>
 </template>

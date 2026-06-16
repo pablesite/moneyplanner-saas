@@ -65,6 +65,7 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 4. Avoid introducing new component variants unless they solve a clear UX problem.
 5. Do not duplicate components when composition or extension is enough.
 6. The shell navigation for Direction A should favor a horizontal topbar with brand, primary nav, and account actions before introducing view-level redesigns.
+7. In Patrimonio, Direction A should read as one continuous surface: page head, context bar, hero, timeline, and balance table without lateral workspaces or nested analytics cards. The hero is a single row: big net-worth figure + delta (este mes / YTD) on the left, the structural SVG donut centered (hover updates its center), and two columns Activos / Pasivos on the right that cross-filter the timeline.
 
 ## Styling Rules
 1. Do not introduce inline styles unless there is a clear, temporary reason.

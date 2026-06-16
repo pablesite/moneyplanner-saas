@@ -408,6 +408,71 @@ body {
   background: rgba(56, 189, 248, 0.08);
 }
 
+.ui-modal-backdrop {
+  background: rgba(8, 8, 10, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.ui-modal-panel {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 13, 16, 0.98);
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.55);
+}
+
+.ui-modal-head {
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ui-modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ui-modal-close {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.ui-modal-close:hover {
+  color: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.ui-modal-body {
+  padding: 8px 24px 20px;
+}
+
+.ui-a-kind-chip {
+  white-space: nowrap;
+}
+
+.ui-a-kind-chip-asset {
+  color: rgba(90, 201, 133, 0.92);
+  border-color: rgba(90, 201, 133, 0.2);
+  background: rgba(90, 201, 133, 0.1);
+}
+
+.ui-a-kind-chip-liability {
+  color: rgba(223, 110, 87, 0.92);
+  border-color: rgba(223, 110, 87, 0.2);
+  background: rgba(223, 110, 87, 0.1);
+}
+
+.ui-a-kind-chip-muted {
+  color: rgba(255, 255, 255, 0.58);
+}
+
 .ui-balance-air {
   padding: 2px 2px 0;
 }
@@ -527,23 +592,6 @@ body {
 .ui-flow-air-total {
   font-size: 24px;
   font-weight: 700;
-}
-
-.ui-nw-list-panel {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
-    rgba(11, 13, 18, 0.72);
-}
-
-.ui-nw-snapshot-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.02);
 }
 
 .nw-donut-comp-block-head {
@@ -713,16 +761,33 @@ body {
   height: auto;
 }
 
-.ui-nw-timeline-chart-card {
+/* Charts Chart.js reutilizados por net-worth (Evolución legacy) y accounting. */
+.a-nw-line-chart {
   position: relative;
 }
 
-.ui-nw-timeline-chart-canvas {
+.a-nw-line-chart-canvas {
   height: 240px;
 }
 
-.ui-nw-timeline-chart-canvas-expanded {
+.a-nw-line-chart-canvas-expanded {
   height: 420px;
+}
+
+.a-nw-delta-chart {
+  display: grid;
+  gap: 8px;
+}
+
+.a-nw-delta-chart-label {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.a-nw-delta-chart-canvas {
+  height: 96px;
 }
 
 .card-title {
@@ -1863,5 +1928,16 @@ body {
 
   .ui-shell-account-meta {
     display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .topnav-brand-sub,
+  .ui-shell-account-info {
+    display: none;
+  }
+
+  .ui-shell-account-link {
+    padding: 4px;
   }
 }

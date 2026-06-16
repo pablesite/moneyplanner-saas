@@ -77,7 +77,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 | `ownership.ts`   | Lógica de propiedad (ownership) de items patrimoniales.                                            |
 | `charts.ts`      | Datos y configuración para gráficos de patrimonio.                                                 |
 | `extensions.ts`  | Extensiones del modelo base.                                                                       |
-| `components/`    | Componentes: `ItemCategoryHeader`, `ItemSubgroupHeader`, `ItemDisplayRow`, `ItemList`, `ItemForm`. |
+| `components/`    | Componentes: `ItemForm`, `NetWorthItemModals` (sheet Direction A, campos underline), `NetWorthDonut` (SVG), `NetWorthEvolutionChart` (SVG: línea + 8 ticks + delta + hover), `NetWorthTimelineChart`/`NetWorthDeltaChart` (Chart.js, reutilizados por `AccountingMovementsView`). La tabla Balance y el hero se construyen inline en `NetWorthView` sobre `useNetWorthPageMetrics`; los componentes heredados (`ItemList`/`Item*Row`/`*Workspace`/`*TimelineMain`/`*HeroSection`/`*Bar`/`SettingsPopover`) se eliminaron en el redesign Direction A. |
 
 ---
 

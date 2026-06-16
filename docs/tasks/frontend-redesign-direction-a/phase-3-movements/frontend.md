@@ -1,21 +1,22 @@
 # Fase 3 — Movimientos (AccountingMovementsView) con Design System "Direction A"
 
+> Aplicar la **metodología obligatoria** de `docs/tasks/frontend-redesign-direction-a/README.md`.
+> **PRIORIDAD: fidelidad literal al prototipo (Regla 0)** — el resultado debe **coincidir** con
+> `handoff/Moneyplanner Refinement.html` / el `.jsx`, no "ser equivalente". Reconstruir ≠ rediseñar.
+> Además: separar lógica/presentación, contrato de composición primero, clasificar componentes,
+> reconciliar funcionalidad, cero híbridos, gate de fidelidad visual. No injertar sobre el markup viejo.
+
 ## Title
 
-Portar `AccountingMovementsView` al sistema "Direction A" preservando el 100% de la funcionalidad.
+Reimplementación visual íntegra de `AccountingMovementsView` sobre "Direction A", preservando la
+lógica y toda la funcionalidad.
 
 ## Context
 
-Vista de referencia del handoff (`handoff/README.md` sección "Movimientos";
-`handoff/direction-a-more.jsx` → `AMovementsView`). Depende de la Fase 0 (tokens/fuentes/topbar) y
-reutiliza las primitivas de fases anteriores (`APageHead`, `ASectHead`, `AContextBar`, `AKindChip`,
-`ARowMenu`). Los charts de evolución diaria ya se construyen con `NetWorthTimelineChart` /
-`NetWorthDeltaChart` (Chart.js), que la Fase 1 dejó recoloreados a la paleta oklch — aquí solo se
-reutilizan.
-
-**Restricción dura:** no perder funcionalidad. **Solo se tocan `<template>` y CSS, nunca
-composables/stores/api/lógica.** Cualquier control del prototipo sin estado equivalente se confirma
-antes de inventar lógica.
+Referencia: `handoff/README.md` sección "Movimientos"; `handoff/direction-a-more.jsx` →
+`AMovementsView`. Depende de la Fase 0 y reutiliza las primitivas de fases anteriores. Los charts de
+evolución diaria reutilizan `NetWorthTimelineChart`/`NetWorthDeltaChart` tal como la Fase 1 los deje
+(ya con la estética del prototipo, no solo recoloreados).
 
 ## Area
 
@@ -27,79 +28,86 @@ antes de inventar lógica.
 
 ## Scope
 
-1. In scope (solo `<template>` + CSS, sin cambiar bindings/lógica):
-   - `frontend/src/views/AccountingMovementsView.vue` (261 líneas).
-   - Componentes de dominio: `AccountingMovementsHero`, `AccountingAccountCatalog`,
-     `AccountingMovementsAllTransactions`, `AccountingBalances`,
-     `AccountingMovementsActivationModal`, `AccountingMovementsEditTransactionModal`,
-     `AccountingMovementsQuickEntryModal`.
-   - `frontend/src/domains/accounting/styles/movements.css` (1622 líneas) → reescribir hacia las
-     clases del sistema (`.page`, `.page-head`, `.tabs`, `.filter-bar`, `.filter-ctrl`, `.tbl`,
-     `.kpis`), todo bajo `.dir-a`.
-   - Aplicar CSS del sistema (header DSL, `.sheet`, campos underline) a los 3 modales sobre
-     `BaseModal` existente. NO reescribir su lógica.
-2. Out of scope:
-   - Tocar lógica de `useAccountingMovementsPage` o sus stores/api.
-   - Reimplementar los charts (se reutilizan `NetWorthTimelineChart` / `NetWorthDeltaChart`).
-   - Otras vistas (Guía) — fase posterior.
+1. In scope: reconstrucción íntegra de la presentación de `AccountingMovementsView.vue` (261 líneas)
+   y de sus componentes de dominio (`AccountingMovementsHero`, `AccountingAccountCatalog`,
+   `AccountingMovementsAllTransactions`, `AccountingBalances`, y los 3 modales:
+   `Activation`/`EditTransaction`/`QuickEntry`); reescritura de
+   `domains/accounting/styles/movements.css` (1622 líneas) a clases del sistema.
+2. Out of scope: cambiar comportamiento de `useAccountingMovementsPage`/stores/api; reimplementar
+   charts; otras vistas.
+
+## Contrato de composición (de arriba abajo)
+
+```
+.page → APageHead "Movimientos" (meta mes·asientos·partida doble; actions: Catálogo · Importar bancario · "+ Asiento rápido")
+      → sección Evolución diaria: toolbar presets + caption + Expandir(modal con sliders); charts (estética prototipo) a ancho completo
+      → tabs: Cuentas / Todos los movimientos / Estadísticas
+      → tab Cuentas: table.tbl (Cuenta+nº asientos / Tipo chip / Cobros / Pagos / Saldo); fila expandible inline + "Ver todos →"
+      → tab Todos: filter-bar (búsqueda · kind · category · subcategory · período popover presets+custom)
+                   + contador "X de Y · ±neto" + table.tbl (Fecha/Concepto/Tipo/Debe/Haber/Importe ±/Saldo/ARowMenu) + empty state
+      → tab Estadísticas: selector FY + KPI strip Activos/Pasivos + cashflow 12 col (residual ±) + contrapartidas en <details>
+      → modales: Activación · Edición de asiento · Asiento rápido (.sheet + underline + header DSL)
+```
+
+## Clasificación de componentes
+
+| Componente | Cat. | Acción |
+| ---------- | ---- | ------ |
+| `NetWorthTimelineChart`, `NetWorthDeltaChart` | A | Reusar tal como la Fase 1 los deje (estética del prototipo). |
+| `AccountingMovementsHero` | B | Remaquetar a page-head + sección Evolución diaria (toolbar/presets/expandir). |
+| `AccountingAccountCatalog` | B | Remaquetar tab Cuentas a `.tbl` + expansión inline de fila. |
+| `AccountingMovementsAllTransactions` | B | Remaquetar tab Todos a `.filter-bar` + `.tbl` + contador + empty state. |
+| `AccountingBalances` | B | Remaquetar tab Estadísticas a KPI strip + cashflow + `<details>`. |
+| `AccountingMovements{Activation,EditTransaction,QuickEntry}Modal` | B | Aplicar `.sheet`/underline; conservar lógica. |
+
+## Reconciliación de funcionalidad (anti pérdida)
+
+Preservar: deep-link por query (`tab`, `date_from/to`, `kind`, `category_key`, `subcategory_key`)
+con el **orden de `nextTick`** intacto (kind → categoryKey → subcategoryKey); las 3 tabs y su
+contenido; filtros encadenados (kind condiciona category/subcategory); expansión inline de cuenta +
+"Ver todos →" con filtro; evolución diaria (presets, caption, modal expandido con sliders
+`updateDailyTimelineWindowStart/End`); los 3 modales (alta/edición/guardado); estados loading/empty/
+error de cada bloque. **CONFIRMAR** cualquier control del prototipo sin estado equivalente.
 
 ## Plan
 
-1. Diagnosis: mapear cada bloque al estado de `useAccountingMovementsPage` (`page.*`).
-2. Change implementation por bloques:
-   - **Page head:** title "Movimientos"; meta = mes + asientos + partida doble; actions = Catálogo de
-     cuentas + Importar bancario + `+ Asiento rápido` (`page.showQuickEntryModal`).
-   - **Evolución diaria:** mantener toolbar de presets (`dailyTimelinePresetOptions`,
-     `setDailyTimelinePreset`), caption de rango, expandir a modal con sliders de ventana
-     (`updateDailyTimelineWindowStart/End`), reutilizando los charts recoloreados.
-   - **Tabs** (`page.activeTab`): Cuentas / Todos los movimientos / Estadísticas con clase `.tab.on`.
-   - **Tab Cuentas:** tabla (Cuenta + n asientos / Tipo chip / Cobros mes / Pagos mes / Saldo); click
-     en fila expande inline los últimos movimientos; "Ver todos →" salta a la tab con filtro.
-   - **Tab Todos los movimientos:** filter bar (búsqueda, `activityFilters.kind`,
-     `activityFilters.categoryKey`, `activityFilters.subcategoryKey`, selector de período con popover
-     presets + rango custom `todosDatePreset/From/To`); contador "X de Y · ±neto"; tabla (Fecha /
-     Concepto / Tipo chip / Debe / Haber / Importe ±color / Saldo running / `ARowMenu`); empty state.
-   - **Tab Estadísticas:** selector de año fiscal; KPI strip Activos/Pasivos contables; cashflow
-     mensual (12 columnas, residual ±color); contrapartidas técnicas en `<details>` colapsable.
-3. Validation: checklist de NO pérdida + lint/format/typecheck + tests.
+1. Contrato de composición + mapeo a `page.*` de `useAccountingMovementsPage`.
+2. Resolver puntos CONFIRMAR.
+3. Reconstruir presentación por tab, de arriba abajo; eliminar `ui-accounting-*`/`ui-section-card`/tailwind de layout.
+4. Validación visual (gate del README) + lint/typecheck/tests, cuidando el deep-link/watchers.
 
 ## Validation
 
-List exact commands and expected outcomes.
-
 - `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint` → sin errores
-- `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check` → sin errores
-- `docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck` → sin errores
-- Tests: suites del dominio accounting si existen, en verde.
-- Manual en `/movimientos` (checklist NO pérdida):
-  - Deep-link por query params (`tab`, `date_from/to`, `kind`, `category_key`, `subcategory_key`)
-    con el orden de `nextTick` preservado (kind → categoryKey → subcategoryKey).
-  - Las 3 tabs y su contenido.
-  - Filtros encadenados (kind condiciona category/subcategory).
-  - Expansión inline de cuenta + "Ver todos →" con filtro aplicado.
-  - Evolución diaria: presets, caption, modal expandido con sliders.
-  - Modales: activación de cuenta, edición de asiento, asiento rápido (alta/edición/guardado).
-  - Estados loading / empty / error de cada bloque.
+- `... npm run format:check` → sin errores
+- `... npm run typecheck` → sin errores
+- Tests de accounting si existen, en verde.
+- **Gate de fidelidad visual (obligatorio, Regla 0 + Regla 6):** `/movimientos` (las 3 tabs + modales
+  + evolución) comparado **junto al prototipo**, elemento por elemento (filter-bar, tablas, KPI strip,
+  cashflow); cada desviación es un defecto a corregir. Validar deep-link y orden de filtros; capturas
+  pantalla+prototipo adjuntas.
+- **Grep anti-híbrido:** sin `ui-accounting-*`/`ui-section-card`/tailwind de layout en el render final.
 
 ## Required Documentation Updates
 
-List every canonical doc that MUST be updated before closing this task.
-
-- [ ] `docs/frontend/frontend-visual-contract.md` — patrón filter bar y tabla de movimientos
-- [ ] `docs/frontend/frontend-visual-guide.md` — patrón de la vista Movimientos
-- [ ] `docs/frontend/domain-map.md` — si cambian primitivas UI compartidas
-- [ ] `docs/project-status.md` — actualizar estado de la tarea
+- [ ] `docs/frontend/frontend-visual-contract.md` — patrón filter-bar y tabla de movimientos
+- [ ] `docs/frontend/frontend-visual-guide.md` — patrón Movimientos
+- [ ] `docs/frontend/domain-map.md` — si cambian primitivas/fronteras de componentes
+- [ ] `docs/project-status.md` — estado de la tarea
+- [ ] `docs/tasks/frontend-redesign-direction-a/README.md` — marcar Fase 3 ✅
 
 ## Risks
 
-- Vista con deep-linking y watchers encadenados: validar el orden de aplicación de filtros tras el
-  reescribir el template (no romper los `nextTick`).
-- CSS extenso (1622 líneas): regresión al migrar; mitigar con porte por tab y checklist.
-- Controles del prototipo sin backing real: confirmar antes de inventar lógica; no simular datos.
+- Deep-linking + watchers encadenados: no romper el orden de aplicación de filtros al reescribir el template.
+- CSS extenso (1622 líneas): regresión; porte por tab + checklist.
+- Controles del prototipo sin backing: confirmar antes de inventar lógica.
 
 ## Completion Criteria
 
-- [ ] All validation commands pass
+- [ ] All validation commands pass (lint/format/typecheck/tests)
+- [ ] **Gate de fidelidad visual en verde:** coincide con el prototipo, cero desviaciones sin aprobar; capturas pantalla+prototipo adjuntas
+- [ ] **Grep anti-híbrido limpio**
+- [ ] Puntos CONFIRMAR resueltos con el usuario
 - [ ] All required documentation updates done
 - [ ] Spec moved to `terminados/`
 - [ ] Commit created (Conventional Commits)
