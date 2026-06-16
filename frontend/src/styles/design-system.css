@@ -169,6 +169,75 @@
   margin: 0;
 }
 
+.dir-a .stepper {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), 1fr);
+  gap: 8px;
+}
+
+.dir-a .stepper-step {
+  font: inherit;
+  text-align: left;
+  padding: 14px 0 14px;
+  border: 0;
+  border-top: 2px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
+.dir-a .stepper-step.is-active,
+.dir-a .stepper-step.is-done {
+  border-top-color: var(--accent);
+  opacity: 1;
+}
+
+.dir-a .stepper-step-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.dir-a .stepper-eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.dir-a .stepper-step.is-active .stepper-eyebrow {
+  color: var(--accent);
+}
+
+.dir-a .stepper-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.dir-a .stepper-label {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.dir-a .stepper-step.is-active .stepper-label {
+  font-weight: 600;
+}
+
+.dir-a .stepper-meta {
+  font-size: 11px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
 .dir-a .actions {
   display: flex;
   gap: 8px;
