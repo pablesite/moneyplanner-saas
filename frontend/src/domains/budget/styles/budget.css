@@ -1,0 +1,173 @@
+/* Presupuesto (/presupuesto) — Direction A. Vista desacoplada de Cierre mensual. */
+
+.a-budget-page {
+  position: relative;
+}
+
+.a-budget-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.a-budget-page .filter-ctrl {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.budget-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.budget-hero-eyebrow {
+  color: var(--muted);
+}
+
+.budget-hero .hero-value {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-hero .hero-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.budget-hero .hero-delta .pos {
+  color: var(--pos);
+}
+
+.budget-hero .hero-delta .neg {
+  color: var(--neg);
+}
+
+.budget-hero .hero-delta-sep {
+  color: var(--faint);
+}
+
+.budget-hero-delta-copy {
+  margin-left: 4px;
+}
+
+.budget-hero-rate {
+  color: var(--text);
+}
+
+.budget-hero-kpis {
+  margin-top: 24px;
+}
+
+/* KPIs reutilizables del sistema dir-a. */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.kpi-label {
+  margin: 0 0 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.kpi-value {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ── Year strip ───────────────────────────────────────────────────── */
+.budget-hero-strip {
+  min-width: 0;
+}
+
+.budget-year-strip {
+  display: block;
+  overflow: visible;
+  margin-top: 12px;
+  color: var(--text);
+}
+
+.budget-year-strip-label {
+  font-size: 10px;
+  fill: currentColor;
+}
+
+.budget-hero-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.budget-hero-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.budget-hero-legend-dot-income {
+  background: var(--pos);
+}
+
+.budget-hero-legend-dot-expense {
+  background: var(--neg);
+}
+
+.budget-hero-legend-spacer {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 11px;
+}
+
+@container page (max-width: 900px) {
+  .budget-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .budget-hero .hero-value {
+    font-size: 44px;
+  }
+}
+
+@container page (max-width: 560px) {
+  .budget-hero-kpis {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

@@ -17,10 +17,22 @@ Referencia: `handoff/README.md` secciones "Presupuesto" y "Cierre mensual";
 `handoff/direction-a-more.jsx` → `ABudgetView`, `AMonthlyCloseView`. Depende de la Fase 0 y de las
 primitivas de la Fase 1; añade `AStepper`.
 
-**Acoplamiento crítico:** `/presupuesto` (`mode='budget'`) y `/cierre-mensual`
-(`mode='monthly-close'`) son **dos modos del mismo `BudgetDashboardView.vue`** (vía
-`useBudgetDashboardPage`) y comparten componentes de dominio y `dashboard.css`. Se portan **juntos**;
-validar **ambos modos** tras cada cambio en ficheros compartidos.
+**Acoplamiento (decisión acordada — DESACOPLAR presentación):** `/presupuesto` y `/cierre-mensual`
+eran **dos modos del mismo `BudgetDashboardView.vue`** (vía `useBudgetDashboardPage`) compartiendo
+componentes y `dashboard.css`. Aprovechando el rewrite se **desacopla por completo la capa de
+presentación**:
+
+- `BudgetView.vue` y `MonthlyCloseView.vue` pasan a ser las vistas **reales** (cada una con su propia
+  composición Direction A); se **retira** `BudgetDashboardView.vue` y las ramas `isMonthlyCloseView`.
+- Componentes por vista: `BudgetAnnualSection` (+ `BudgetHero` nuevo) para presupuesto; los 4
+  `BudgetMonthlyClose*Section` (+ `MonthlyCloseHero` nuevo, extraído de `BudgetHeroSection`) para
+  cierre. CSS por vista (`budget.css` / `monthly-close.css`) en vez del `dashboard.css` único.
+- **Motor de lógica compartido**: `useBudgetDashboardPage(mode)` se conserva intacto; cada vista lo
+  consume vía un composable fino (`useBudgetView` / `useMonthlyCloseView`) que fija el `mode`. Partir
+  el motor en dos queda como **refactor futuro fuera de alcance** (sin cambio de UX).
+
+Ya no hay "ficheros compartidos de presentación", por lo que desaparece la obligación de validar
+ambos modos tras cada cambio; aun así, validar que ambas rutas compilan y funcionan al cerrar.
 
 ## Area
 
