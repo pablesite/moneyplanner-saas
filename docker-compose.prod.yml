@@ -215,12 +215,14 @@ services:
       FX_SYNC_ENABLED: ${FX_SYNC_ENABLED:-1}
       FX_SYNC_INTERVAL_SECONDS: ${FX_SYNC_INTERVAL_SECONDS:-86400}
     depends_on:
-      core_db:
-        condition: service_healthy
+      core_backend:
+        condition: service_started
     entrypoint: []
     command: >
       sh -c "
-      python manage.py migrate --noinput &&
+      until python -c \"import sys, urllib.request; req = urllib.request.Request('http://core_backend:8000/api/auth/mode/', headers={'Host': '${MONEYPLANNER_DOMAIN}', 'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(req, timeout=5); sys.exit(0)\"; do
+        sleep 2;
+      done;
       while true; do
         if [ \"$${FX_SYNC_ENABLED:-1}\" = \"1\" ]; then
           python manage.py sync_market_data --datasets fx inflation --mode reconcile || true;
