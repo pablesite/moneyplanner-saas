@@ -3,8 +3,6 @@ import type { ComponentPublicInstance } from 'vue';
 import { version as appVersion } from '../../package.json';
 import { useAppShell } from './useAppShell';
 
-const currentYear = new Date().getFullYear();
-
 const {
   accountInitials,
   accountLabel,
@@ -163,16 +161,7 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
 
       <footer class="ui-shell-footer dir-a">
         <div class="ui-shell-footer-inner">
-          <div class="ui-shell-footer-brand">
-            <span class="topnav-brand-mark">TA</span>
-            <span>The Arkenstone</span>
-          </div>
-          <span class="ui-shell-footer-tagline">Patrimonio · Presupuesto · Cierre mensual</span>
-          <div class="ui-shell-footer-meta">
-            <span>© {{ currentYear }} The Arkenstone</span>
-            <span class="ui-shell-footer-dot" aria-hidden="true">·</span>
-            <span class="ui-shell-footer-version">v{{ appVersion }}</span>
-          </div>
+          <span class="ui-shell-footer-version">v{{ appVersion }}</span>
         </div>
       </footer>
     </div>
