@@ -10,7 +10,6 @@ import {
   MonthlyCloseHero,
 } from '@/domains/budget';
 import '@/domains/budget/styles/monthly-close.css';
-import '@/domains/budget/styles/dashboard.css';
 import { useMonthlyCloseView } from './budget/useMonthlyCloseView';
 
 const router = useRouter();

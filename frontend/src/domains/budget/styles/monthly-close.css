@@ -370,6 +370,368 @@
   cursor: pointer;
 }
 
+/* ── Paso Resultado ──────────────────────────────────────────────────── */
+.mc-danger-btn {
+  color: oklch(0.72 0.16 24);
+  border-color: oklch(0.72 0.16 24 / 0.4);
+}
+
+.mc-danger-btn:hover {
+  border-color: oklch(0.72 0.16 24);
+  background: var(--neg-soft);
+}
+
+.mc-sev {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-sev-ok {
+  color: var(--pos);
+  border-color: var(--pos-soft);
+  background: var(--pos-soft);
+}
+
+.mc-sev-watch {
+  color: oklch(0.82 0.13 80);
+  border-color: oklch(0.78 0.13 80 / 0.4);
+  background: oklch(0.78 0.13 80 / 0.12);
+}
+
+.mc-sev-alert {
+  color: var(--neg);
+  border-color: var(--neg-soft);
+  background: var(--neg-soft);
+}
+
+.mc-result-hero {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mc-result-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.mc-result-card > span {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.mc-result-card > strong {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-result-card > small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.mc-result-card-primary {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.mc-result-card-danger {
+  border-color: var(--neg-soft);
+}
+
+.mc-result-card-danger > strong {
+  color: var(--neg);
+}
+
+.mc-result-card-good > strong {
+  color: var(--pos);
+}
+
+.mc-result-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mc-result-cols {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+
+.mc-result-cols-detail {
+  grid-template-columns: 1fr 1fr;
+}
+
+.mc-result-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.mc-result-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mc-result-panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mc-result-panel-meta {
+  font-size: 11.5px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+/* Bridge de conciliación */
+.mc-bridge {
+  display: grid;
+  gap: 8px;
+}
+
+.mc-bridge-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.mc-bridge-label {
+  display: grid;
+  gap: 1px;
+}
+
+.mc-bridge-label span {
+  font-size: 12.5px;
+}
+
+.mc-bridge-label small {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.mc-bridge-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.mc-bridge-fill {
+  height: 100%;
+  background: var(--muted);
+  border-radius: inherit;
+}
+
+.mc-bridge-row-positive .mc-bridge-fill {
+  background: var(--pos);
+}
+
+.mc-bridge-row-warning .mc-bridge-fill {
+  background: oklch(0.78 0.13 80);
+}
+
+.mc-bridge-row-negative .mc-bridge-fill {
+  background: var(--neg);
+}
+
+.mc-bridge-row > strong {
+  font-size: 12.5px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  text-align: right;
+}
+
+.mc-bridge-row-result {
+  padding-top: 8px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.mc-bridge-row-result span,
+.mc-bridge-row-result > strong {
+  font-weight: 600;
+}
+
+/* Escala de diagnóstico */
+.mc-diag {
+  display: grid;
+  gap: 8px;
+}
+
+.mc-diag-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mc-diag-head span {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.mc-diag-head strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-diag-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mc-diag-zone-ok {
+  background: var(--pos-soft);
+}
+
+.mc-diag-zone-watch {
+  background: oklch(0.78 0.13 80 / 0.22);
+}
+
+.mc-diag-zone-alert {
+  background: var(--neg-soft);
+}
+
+.mc-diag-marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--text);
+}
+
+.mc-diag-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-result-mini-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.mc-result-mini-kpi {
+  display: grid;
+  gap: 2px;
+}
+
+.mc-result-mini-kpi span {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-result-mini-kpi strong {
+  font-size: 13px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-result-footnote {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+/* Listas de detalle ejecutado */
+.mc-breakdown-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mc-breakdown-group {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.mc-breakdown-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-breakdown-head strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mc-breakdown-submeta {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.mc-breakdown-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  justify-content: flex-end;
+}
+
+.mc-breakdown-rows {
+  display: grid;
+  gap: 2px;
+}
+
+.mc-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 56px 90px;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  padding: 3px 0;
+  border-top: 1px solid var(--line);
+}
+
+.mc-breakdown-row > span:not(.mc-breakdown-name) {
+  text-align: right;
+}
+
+.mc-breakdown-name {
+  color: var(--text);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.mc-breakdown-more {
+  font-size: 11px;
+  color: var(--faint);
+}
+
 @container page (max-width: 900px) {
   .mc-hero .hero-value {
     font-size: 44px;
@@ -382,6 +744,15 @@
 
   .mc-row-actions {
     justify-content: flex-start;
+  }
+
+  .mc-result-hero {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mc-result-cols,
+  .mc-result-cols-detail {
+    grid-template-columns: 1fr;
   }
 }
 

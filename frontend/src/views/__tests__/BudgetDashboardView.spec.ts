@@ -696,10 +696,10 @@ describe('BudgetDashboardView', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Residual contable');
-    expect(wrapper.text()).toContain('Conciliacion de cierre');
+    expect(wrapper.text()).toContain('Conciliación de cierre');
     expect(wrapper.text()).toContain('Diagnóstico del residual');
-    expect(wrapper.find('.ui-budget-result-bridge').exists()).toBe(true);
-    expect(wrapper.find('.ui-budget-result-diagnostic-scale').exists()).toBe(true);
+    expect(wrapper.find('.mc-bridge').exists()).toBe(true);
+    expect(wrapper.find('.mc-diag').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('Composición del movimiento');
     expect(wrapper.text()).not.toContain('Variación perímetro');
   });
