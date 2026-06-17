@@ -8,6 +8,7 @@ import {
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
+import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
 
@@ -56,6 +57,7 @@ type BudgetActualExecution = BudgetExecutionPreview & {
 
 const props = defineProps<{
   isMonthlyCloseView: boolean;
+  showMonthBar?: boolean;
   hasAnyPlannedData: boolean;
   isLoading: boolean;
   fiscalYear: number;
@@ -193,27 +195,105 @@ function toggleContext(sectionId: 'income' | 'expense', row: BudgetRow): void {
   activeContext.value = { sectionId, row };
 }
 
-const OVERFLOW_FILL_COLORS: Record<BudgetExecutionTone, [string, string]> = {
-  good: ['hsl(142 71% 48%)', 'hsl(142 50% 65%)'],
-  warn: ['hsl(56 92% 49%)', 'hsl(56 70% 65%)'],
-  danger: ['hsl(0 82% 52%)', 'hsl(0 60% 68%)'],
-  neutral: ['rgba(255,255,255,0.34)', 'rgba(255,255,255,0.15)'],
-};
+// Modelo normalizado de barra de ejecución para `BudgetBarCell` (columna Ejecución).
+type BudgetBarModel = {
+  tone: BudgetExecutionTone;
+  widthPct: number;
+  overflow: boolean;
+  ratio: number;
+  deviation: number;
+  executed: number;
+  planned: number;
+  hasData: boolean;
+} | null;
 
-function overflowFillStyle(
-  exec:
-    | { tone: BudgetExecutionTone; ratio: number; overflow: boolean; widthPct: number }
-    | null
-    | undefined,
-  fallbackWidthPct = 8,
-): Record<string, string> {
-  if (!exec?.overflow) return { width: `${exec?.widthPct ?? fallbackWidthPct}%` };
-  const threshold = (1 / exec.ratio) * 100;
-  const [base, over] = OVERFLOW_FILL_COLORS[exec.tone];
+function sectionBar(sectionId: 'income' | 'expense'): BudgetBarModel {
+  const exec = props.budgetSectionActualExecution(sectionId);
+  if (!exec) return null;
   return {
-    width: '100%',
-    background: `linear-gradient(to right, ${base} ${threshold}%, ${over} ${threshold}%)`,
+    tone: exec.tone,
+    widthPct: exec.widthPct,
+    overflow: exec.overflow,
+    ratio: exec.ratio,
+    deviation: exec.deviation,
+    executed: exec.executed,
+    planned: exec.planned,
+    hasData: true,
   };
+}
+
+function categoryBar(
+  sectionId: 'income' | 'expense',
+  group: { categoryKey: string; plannedAnnual: number; rows: any[] },
+): BudgetBarModel {
+  const exec = props.budgetCategoryActualExecution(sectionId, group.categoryKey);
+  if (exec) {
+    return {
+      tone: exec.tone,
+      widthPct: exec.widthPct,
+      overflow: exec.overflow,
+      ratio: exec.ratio,
+      deviation: exec.deviation,
+      executed: exec.executed,
+      planned: exec.planned,
+      hasData: true,
+    };
+  }
+  if (group.plannedAnnual > 0 || group.rows.some((r: any) => r.detectedUnbudgeted)) {
+    const preview = groupExecutionPreview(sectionId, group);
+    return {
+      tone: preview.tone,
+      widthPct: preview.widthPct,
+      overflow: preview.overflow,
+      ratio: preview.ratio,
+      deviation: 0,
+      executed: 0,
+      planned: group.plannedAnnual,
+      hasData: false,
+    };
+  }
+  return null;
+}
+
+function subcategoryBar(sectionId: 'income' | 'expense', row: BudgetRow): BudgetBarModel {
+  const exec = props.budgetSubcategoryActualExecution(sectionId, row.key);
+  if (exec) {
+    return {
+      tone: exec.tone,
+      widthPct: exec.widthPct,
+      overflow: exec.overflow,
+      ratio: exec.ratio,
+      deviation: exec.deviation,
+      executed: exec.executed,
+      planned: exec.planned,
+      hasData: true,
+    };
+  }
+  if (row.itemsCount > 0) {
+    return {
+      tone: 'neutral',
+      widthPct: 0,
+      overflow: false,
+      ratio: 0,
+      deviation: 0,
+      executed: 0,
+      planned: row.plannedAnnual,
+      hasData: false,
+    };
+  }
+  return null;
+}
+
+function openCreateForSection(sectionId: 'income' | 'expense'): void {
+  if (!props.annualEntriesPage) return;
+  const owner = props.ownershipFilter === 'all' ? '' : props.selectedOwnershipFilterLabel;
+  if (sectionId === 'income') {
+    props.annualEntriesPage.openIncomeModal();
+    props.annualEntriesPage.patchAnnualIncomeForm({ owner });
+    return;
+  }
+  props.annualEntriesPage.openExpenseModal();
+  props.annualEntriesPage.patchAnnualExpenseForm({ owner });
 }
 
 function openCreateForCategory(sectionId: 'income' | 'expense', categoryKey: string): void {
@@ -363,19 +443,19 @@ function sectionYtdTotals(sectionId: 'income' | 'expense') {
 }
 
 function execBarClass(point: any, sectionId: 'income' | 'expense'): string {
-  if (!('hasExecuted' in point) || !point.hasExecuted) return 'ui-budget-month-exec-pending';
+  if (!('hasExecuted' in point) || !point.hasExecuted) return 'bdg-evo-exec-pending';
   const planned = Number(point.planned ?? 0);
   const executed = Number(point.executed ?? 0);
-  if (planned <= 0) return 'ui-budget-month-exec-good';
+  if (planned <= 0) return 'bdg-evo-exec-good';
   const ratio = executed / planned;
   if (sectionId === 'income') {
-    if (ratio >= 1) return 'ui-budget-month-exec-good';
-    if (ratio >= 0.85) return 'ui-budget-month-exec-warn';
-    return 'ui-budget-month-exec-danger';
+    if (ratio >= 1) return 'bdg-evo-exec-good';
+    if (ratio >= 0.85) return 'bdg-evo-exec-warn';
+    return 'bdg-evo-exec-danger';
   } else {
-    if (ratio > 1.05) return 'ui-budget-month-exec-danger';
-    if (ratio >= 0.95) return 'ui-budget-month-exec-warn';
-    return 'ui-budget-month-exec-good';
+    if (ratio > 1.05) return 'bdg-evo-exec-danger';
+    if (ratio >= 0.95) return 'bdg-evo-exec-warn';
+    return 'bdg-evo-exec-good';
   }
 }
 
@@ -424,28 +504,20 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
 </script>
 
 <template>
-  <section
-    v-if="!isMonthlyCloseView && !hasAnyPlannedData && !isLoading"
-    class="card ui-pro-panel ui-budget-empty mt-3"
-  >
-    <h2 class="mt-0">Sin presupuesto anual para {{ fiscalYear }}</h2>
-    <p class="subtle mb-0">
-      Usa el bloque `Balance anual` de esta misma vista para añadir ingresos y gastos previstos.
-    </p>
-  </section>
+  <div v-if="!hasAnyPlannedData && !isLoading" class="bdg-empty">
+    <p class="eyebrow">Presupuesto anual</p>
+    <h2>Sin presupuesto anual para {{ fiscalYear }}</h2>
+    <p>Usa «+ Nueva partida» para añadir ingresos y gastos previstos para {{ fiscalYear }}.</p>
+  </div>
 
-  <div
-    v-show="!isMonthlyCloseView && sections.some((s) => s.groups.length > 0)"
-    class="ui-budget-detail-month-bar mt-3"
-  >
-    <span class="ui-budget-detail-month-bar-label">Ver acumulado hasta:</span>
-    <div class="ui-budget-filter-segment" role="group" aria-label="Mes de detalle">
+  <div v-show="showMonthBar && sections.some((s) => s.groups.length > 0)" class="bdg-month-bar">
+    <span class="bdg-month-bar-label">Ver acumulado hasta</span>
+    <div class="seg" role="group" aria-label="Mes de detalle">
       <button
         v-for="(label, i) in monthLabels"
         :key="i"
         type="button"
-        class="ui-budget-filter-btn"
-        :class="{ 'ui-budget-filter-btn-active': budgetDetailMonth === i + 1 }"
+        :class="{ on: budgetDetailMonth === i + 1 }"
         @click="updateBudgetDetailMonth(i + 1)"
       >
         {{ label }}
@@ -453,597 +525,462 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     </div>
   </div>
 
-  <div v-show="!isMonthlyCloseView" class="ui-budget-sections-grid mt-2">
-    <section
-      v-for="section in sections"
-      :key="section.id"
-      class="card ui-pro-panel ui-budget-section"
-      :class="section.toneClass"
-    >
-      <div class="ui-budget-section-header">
-        <div>
-          <h2 class="ui-budget-section-title">{{ section.title }}</h2>
-          <p class="ui-budget-section-subtitle">{{ section.subtitle }}</p>
-        </div>
-        <div class="ui-budget-section-header-side">
-          <div class="ui-budget-section-controls">
-            <span
-              v-if="section.groups.length && !isSectionExpanded(section.id)"
-              class="ui-budget-compact-badge"
-            >
-              Vista compacta activa
-            </span>
-          </div>
-
-          <div class="ui-budget-section-total">
-            <strong>{{ formatMoney(section.totalAnnual) }} EUR</strong>
-            <small>{{ formatMoney(section.totalAnnual / 12) }} EUR/mes</small>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="section.id === 'expense'" class="ui-budget-expense-coverage-kpis">
-        <div class="ui-budget-expense-coverage-kpi">
-          <span class="ui-budget-expense-coverage-kpi-label">Ejecutado real (YTD)</span>
-          <strong>{{ formatMoney(expenseExecutionYtdTotals.executedTotal) }} EUR</strong>
-        </div>
-        <div class="ui-budget-expense-coverage-kpi">
-          <span class="ui-budget-expense-coverage-kpi-label">Presupuesto previsto (YTD)</span>
-          <strong>{{ formatMoney(expenseExecutionYtdTotals.planned) }} EUR</strong>
-        </div>
-        <div class="ui-budget-expense-coverage-kpi ui-budget-expense-coverage-kpi-alert">
-          <span class="ui-budget-expense-coverage-kpi-label">Fuera de presupuesto (YTD)</span>
-          <strong>{{ formatMoney(expenseExecutionYtdTotals.executedUnbudgeted) }} EUR</strong>
-        </div>
-      </div>
-      <div v-else class="ui-budget-expense-coverage-kpis">
-        <div class="ui-budget-expense-coverage-kpi">
-          <span class="ui-budget-expense-coverage-kpi-label">Ejecutado real (YTD)</span>
-          <strong>{{ formatMoney(incomeExecutionYtdTotals.executedTotal) }} EUR</strong>
-        </div>
-        <div class="ui-budget-expense-coverage-kpi">
-          <span class="ui-budget-expense-coverage-kpi-label">Presupuesto previsto (YTD)</span>
-          <strong>{{ formatMoney(incomeExecutionYtdTotals.planned) }} EUR</strong>
-        </div>
-        <div class="ui-budget-expense-coverage-kpi ui-budget-expense-coverage-kpi-alert">
-          <span class="ui-budget-expense-coverage-kpi-label">Fuera de presupuesto (YTD)</span>
-          <strong>{{ formatMoney(incomeExecutionYtdTotals.executedUnbudgeted) }} EUR</strong>
-        </div>
-      </div>
-
-      <div class="ui-budget-evolution-card">
-        <div class="ui-budget-evolution-head">
-          <div>
-            <h3>Evolución ejecutada (barras)</h3>
-            <p v-if="section.id === 'income'">
-              Compara `Previsto` vs `Ejecutado` por mes usando los check-ins del cierre mensual
-              {{
-                section.filterMode === 'recurrent'
-                  ? '(ingresos recurrentes).'
-                  : section.filterMode === 'one_off'
-                    ? '(ingresos puntuales).'
-                    : '(todos los ingresos).'
-              }}
-            </p>
-            <p v-else>
-              Compara `Previsto` vs `Ejecutado` por mes usando los check-ins del cierre mensual
-              {{
-                section.filterMode === 'recurrent'
-                  ? '(gastos recurrentes).'
-                  : section.filterMode === 'one_off'
-                    ? '(gastos puntuales).'
-                    : '(todos los gastos).'
-              }}
-            </p>
-          </div>
-          <span class="ui-budget-pill">Cierre mensual activo</span>
-        </div>
-
-        <div
-          class="ui-budget-evolution-bars"
-          :style="{ gridTemplateColumns: `repeat(${budgetDetailMonth}, minmax(0, 1fr))` }"
-          :aria-label="
-            section.id === 'income'
-              ? 'Barras de evolucion de ingresos previsto vs ejecutado por mes'
-              : 'Barras de evolucion de gastos previsto vs ejecutado por mes'
-          "
-        >
-          <div
-            v-for="point in visibleEvolutionMonths(section.id)"
-            :key="`${section.id}-${point.label}`"
-            class="ui-budget-month-col"
-          >
-            <div class="ui-budget-month-rail">
-              <div
-                class="ui-budget-month-plan"
-                :style="
-                  'planHeightPct' in point ? { height: `${point.planHeightPct}%` } : undefined
-                "
-                :title="
-                  'planned' in point
-                    ? `Previsto ${point.label}: ${formatMoney(Number(point.planned))} EUR`
-                    : undefined
-                "
-              />
-              <div
-                :class="execBarClass(point, section.id)"
-                :style="
-                  'execHeightPct' in point ? { height: `${point.execHeightPct}%` } : undefined
-                "
-                :title="
-                  'executed' in point
-                    ? `Ejecutado ${point.label}: ${formatMoney(Number(point.executed))} EUR`
-                    : undefined
-                "
-              />
-            </div>
-            <span class="ui-budget-month-label">{{ point.label }}</span>
-          </div>
-        </div>
-
-        <div class="ui-budget-evolution-legend">
-          <span><i class="ui-budget-legend-dot ui-budget-legend-plan" /> Previsto</span>
-          <span> <i class="ui-budget-legend-dot ui-budget-legend-exec-solid" /> Ejecutado </span>
-          <span>
-            {{ section.id === 'income' ? 'Base recurrente mensual:' : 'Base mensual orientativa:' }}
-            <strong>
-              {{
-                formatCompactMoney(
-                  section.id === 'income'
-                    ? incomeEvolutionBaseMonthly
-                    : expenseEvolutionBaseMonthly,
-                )
-              }}
-              EUR
-            </strong>
+  <section
+    v-for="section in sections"
+    :key="section.id"
+    class="sect"
+    :class="`bdg-sect-${section.id}`"
+  >
+    <div class="sect-head">
+      <div>
+        <h2 class="sect-title">
+          {{ section.title }}
+          <span class="sect-count">
+            {{ section.categoryCount }} categorías · {{ formatMoney(section.totalAnnual) }} EUR
+            previsto · {{ formatMoney(section.totalAnnual / 12) }} EUR/mes
           </span>
-        </div>
+        </h2>
+        <p class="sect-sub">{{ section.subtitle }}</p>
       </div>
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn-ghost bdg-sect-action"
+          @click="openCreateForSection(section.id)"
+        >
+          + Añadir partida
+        </button>
+      </div>
+    </div>
 
-      <div v-if="section.groups.length" class="ui-budget-detail-toggle-bar">
-        <div class="ui-budget-section-rollup" :aria-label="`Resumen YTD ${section.title}`">
-          <div v-if="budgetSectionActualExecution(section.id)" class="ui-budget-rich-bar-wrap">
-            <div class="ui-budget-rich-bar-track">
-              <div
-                class="ui-budget-rich-bar-fill"
-                :class="`ui-budget-inline-progress-fill-${budgetSectionActualExecution(section.id)?.tone}`"
-                :style="overflowFillStyle(budgetSectionActualExecution(section.id))"
-              />
-              <span
-                v-if="budgetSectionActualExecution(section.id)?.overflow"
-                class="ui-budget-inline-progress-overflow-marker"
-                :style="{ left: `${(1 / budgetSectionActualExecution(section.id)!.ratio) * 100}%` }"
-                aria-hidden="true"
-              />
-              <span class="ui-budget-rich-bar-exec-label">
-                {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR
-              </span>
-              <span class="ui-budget-rich-bar-plan-label">
-                {{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR
-              </span>
-            </div>
-            <span
-              class="ui-budget-rich-bar-deviation"
-              :class="`ui-budget-pending-text-${budgetSectionActualExecution(section.id)?.tone}`"
-            >
-              {{ formatSignedMoney(budgetSectionActualExecution(section.id)?.deviation ?? 0) }} EUR
-            </span>
-          </div>
+    <div class="bdg-coverage">
+      <div class="bdg-coverage-kpi">
+        <span class="bdg-coverage-label">Ejecutado real (YTD)</span>
+        <strong>{{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR</strong>
+      </div>
+      <div class="bdg-coverage-kpi">
+        <span class="bdg-coverage-label">Previsto (YTD)</span>
+        <strong>{{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR</strong>
+      </div>
+      <div class="bdg-coverage-kpi bdg-coverage-kpi-alert">
+        <span class="bdg-coverage-label">Fuera de presupuesto (YTD)</span>
+        <strong>{{ formatMoney(sectionYtdTotals(section.id).executedUnbudgeted) }} EUR</strong>
+      </div>
+    </div>
 
-          <div class="ui-budget-section-rollup-controls">
-            <button
-              type="button"
-              class="ui-budget-expand-link"
-              :aria-expanded="isSectionExpanded(section.id)"
-              @click="toggleSectionExpanded(section.id)"
-            >
-              {{ isSectionExpanded(section.id) ? 'Ocultar ↑' : 'Ver desglose ↓' }}
-            </button>
-          </div>
+    <div class="bdg-evolution">
+      <div class="bdg-evolution-head">
+        <div>
+          <h3>Evolución previsto vs ejecutado</h3>
+          <p v-if="section.id === 'income'">
+            Por mes, según los check-ins del cierre mensual
+            {{
+              section.filterMode === 'recurrent'
+                ? '(ingresos recurrentes).'
+                : section.filterMode === 'one_off'
+                  ? '(ingresos puntuales).'
+                  : '(todos los ingresos).'
+            }}
+          </p>
+          <p v-else>
+            Por mes, según los check-ins del cierre mensual
+            {{
+              section.filterMode === 'recurrent'
+                ? '(gastos recurrentes).'
+                : section.filterMode === 'one_off'
+                  ? '(gastos puntuales).'
+                  : '(todos los gastos).'
+            }}
+          </p>
         </div>
       </div>
 
       <div
-        v-if="section.groups.length && isSectionExpanded(section.id)"
-        class="ui-budget-detail-area"
+        class="bdg-evolution-bars"
+        :style="{ gridTemplateColumns: `repeat(${budgetDetailMonth}, minmax(0, 1fr))` }"
+        :aria-label="
+          section.id === 'income'
+            ? 'Barras de evolución de ingresos previsto vs ejecutado por mes'
+            : 'Barras de evolución de gastos previsto vs ejecutado por mes'
+        "
       >
-        <div class="ui-budget-groups">
-          <article
-            v-for="group in section.groups"
-            :key="`${section.id}-${group.categoryKey}`"
-            class="ui-budget-group"
-            :class="{
-              'ui-budget-group-catalog':
-                group.plannedAnnual === 0 && !group.rows.some((r: any) => r.detectedUnbudgeted),
+        <div
+          v-for="point in visibleEvolutionMonths(section.id)"
+          :key="`${section.id}-${point.label}`"
+          class="bdg-evo-col"
+        >
+          <div class="bdg-evo-rail">
+            <div
+              class="bdg-evo-plan"
+              :style="'planHeightPct' in point ? { height: `${point.planHeightPct}%` } : undefined"
+              :title="
+                'planned' in point
+                  ? `Previsto ${point.label}: ${formatMoney(Number(point.planned))} EUR`
+                  : undefined
+              "
+            />
+            <div
+              class="bdg-evo-exec"
+              :class="execBarClass(point, section.id)"
+              :style="'execHeightPct' in point ? { height: `${point.execHeightPct}%` } : undefined"
+              :title="
+                'executed' in point
+                  ? `Ejecutado ${point.label}: ${formatMoney(Number(point.executed))} EUR`
+                  : undefined
+              "
+            />
+          </div>
+          <span class="bdg-evo-label">{{ point.label }}</span>
+        </div>
+      </div>
+
+      <div class="bdg-evolution-legend">
+        <span><i class="dot dot-plan" /> Previsto</span>
+        <span><i class="dot dot-exec" /> Ejecutado</span>
+        <span>
+          {{ section.id === 'income' ? 'Base recurrente mensual:' : 'Base mensual orientativa:' }}
+          <strong>
+            {{
+              formatCompactMoney(
+                section.id === 'income' ? incomeEvolutionBaseMonthly : expenseEvolutionBaseMonthly,
+              )
+            }}
+            EUR
+          </strong>
+        </span>
+      </div>
+    </div>
+
+    <div
+      v-if="section.groups.length"
+      class="bdg-rollup"
+      :aria-label="`Resumen YTD ${section.title}`"
+    >
+      <div v-if="sectionBar(section.id)" class="bdg-richbar">
+        <div class="bdg-richbar-track">
+          <div
+            class="bdg-richbar-fill"
+            :class="`bdg-fill-${sectionBar(section.id)!.tone}`"
+            :style="{
+              width: `${sectionBar(section.id)!.overflow ? 100 : sectionBar(section.id)!.widthPct}%`,
             }"
-          >
-            <header
-              class="ui-budget-group-header"
-              role="button"
-              tabindex="0"
+          />
+          <span
+            v-if="sectionBar(section.id)!.overflow"
+            class="bdg-richbar-overflow"
+            :style="{ left: `${(1 / sectionBar(section.id)!.ratio) * 100}%` }"
+            aria-hidden="true"
+          />
+          <span class="bdg-richbar-exec">
+            {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR
+          </span>
+          <span class="bdg-richbar-plan">
+            {{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR previsto
+          </span>
+        </div>
+        <span class="bdg-richbar-dev" :class="`bdg-dev-${sectionBar(section.id)!.tone}`">
+          {{ formatSignedMoney(sectionBar(section.id)!.deviation) }} EUR
+        </span>
+      </div>
+      <button
+        type="button"
+        class="bdg-expand-link"
+        :aria-expanded="isSectionExpanded(section.id)"
+        @click="toggleSectionExpanded(section.id)"
+      >
+        {{ isSectionExpanded(section.id) ? 'Ocultar ↑' : 'Ver desglose ↓' }}
+      </button>
+    </div>
+
+    <div v-if="section.groups.length && isSectionExpanded(section.id)">
+      <div class="bdg-colhead">
+        <span>Partida</span>
+        <span class="num">Previsto</span>
+        <span>Ejecución (YTD)</span>
+        <span class="num">Ejecutado (YTD)</span>
+        <span />
+      </div>
+
+      <template v-for="group in section.groups" :key="`${section.id}-${group.categoryKey}`">
+        <div class="bdg-row bdg-row-cat">
+          <div class="bdg-row-lead">
+            <button
+              type="button"
+              class="bdg-chev bdg-chev-cat"
               :aria-expanded="isGroupExpanded(group.categoryKey)"
+              :title="isGroupExpanded(group.categoryKey) ? 'Contraer' : 'Expandir'"
               @click="toggleGroup(group.categoryKey)"
-              @keydown.enter.prevent="toggleGroup(group.categoryKey)"
-              @keydown.space.prevent="toggleGroup(group.categoryKey)"
             >
-              <div class="ui-budget-group-title-wrap">
-                <div class="ui-budget-group-kicker">Categoría</div>
-                <div class="ui-budget-group-name-row">
-                  <h3 class="ui-budget-name-link" @click.stop="goToMovements(group.categoryKey)">
-                    {{ group.categoryLabel }}
-                  </h3>
+              {{ isGroupExpanded(group.categoryKey) ? '▾' : '▸' }}
+            </button>
+            <div class="bdg-row-lead-body">
+              <div>
+                <span
+                  class="bdg-kind"
+                  :class="section.id === 'income' ? 'bdg-kind-asset' : 'bdg-kind-liability'"
+                >
+                  {{ section.id === 'income' ? 'Ingresos' : 'Gastos' }}
+                </span>
+                <button
+                  type="button"
+                  class="bdg-name bdg-name-link"
+                  @click="goToMovements(group.categoryKey)"
+                >
+                  {{ group.categoryLabel }}
+                </button>
+                <button
+                  type="button"
+                  class="bdg-add-btn"
+                  :title="`Añadir en ${group.categoryLabel}`"
+                  @click="openCreateForCategory(section.id, group.categoryKey)"
+                >
+                  +
+                </button>
+              </div>
+              <p
+                v-if="
+                  (incomeInvestmentRotationCategoryAdjustment?.(section.id, group.categoryKey) ??
+                    0) > 0
+                "
+                class="bdg-note"
+              >
+                Cambio neto en depósitos aplicado (YTD): -{{
+                  formatMoney(
+                    incomeInvestmentRotationCategoryAdjustment?.(section.id, group.categoryKey) ??
+                      0,
+                  )
+                }}
+                EUR
+              </p>
+            </div>
+          </div>
+          <div class="bdg-num bdg-num-strong">
+            <template v-if="categoryBar(section.id, group)">
+              {{ formatMoney(categoryBar(section.id, group)!.planned) }} EUR
+            </template>
+            <span v-else class="bdg-faint">—</span>
+          </div>
+          <BudgetBarCell
+            :bar="categoryBar(section.id, group)"
+            :kind="section.id"
+            :format-signed-money="formatSignedMoney"
+          />
+          <div class="bdg-num bdg-num-strong">
+            <template v-if="categoryBar(section.id, group)?.hasData">
+              {{ formatMoney(categoryBar(section.id, group)!.executed) }} EUR
+            </template>
+            <span v-else class="bdg-faint">—</span>
+          </div>
+          <div />
+        </div>
+
+        <template v-for="row in group.rows" :key="row.key">
+          <div
+            v-show="isGroupExpanded(group.categoryKey)"
+            class="bdg-row bdg-row-sub"
+            :class="{ 'bdg-row-clickable': !row.detectedUnbudgeted && row.itemsCount > 0 }"
+            :aria-expanded="
+              !row.detectedUnbudgeted && row.itemsCount > 0
+                ? isContextOpen(section.id, row.key)
+                : undefined
+            "
+            @click="!row.detectedUnbudgeted && row.itemsCount > 0 && toggleContext(section.id, row)"
+          >
+            <div class="bdg-row-lead">
+              <span class="bdg-chev">
+                {{
+                  !row.detectedUnbudgeted && row.itemsCount > 0
+                    ? isContextOpen(section.id, row.key)
+                      ? '▾'
+                      : '▸'
+                    : ''
+                }}
+              </span>
+              <div class="bdg-row-lead-body">
+                <div>
                   <button
                     type="button"
-                    class="ui-budget-group-add-btn"
-                    :title="`Añadir en ${group.categoryLabel}`"
-                    @click.stop="openCreateForCategory(section.id, group.categoryKey)"
+                    class="bdg-name bdg-name-link"
+                    @click.stop="goToMovements(group.categoryKey, row.subcategoryKey)"
+                  >
+                    {{ row.subcategoryLabel }}
+                  </button>
+                  <button
+                    type="button"
+                    class="bdg-add-btn"
+                    :title="`Añadir en ${row.subcategoryLabel}`"
+                    @click.stop="openCreateDirect(section.id, row)"
                   >
                     +
                   </button>
+                  <span
+                    v-if="row.detectedUnbudgeted"
+                    class="pill-unbudgeted"
+                    :title="`${formatMoney(row.detectedExecutedYtd ?? 0)} EUR ejecutado sin presupuestar`"
+                  >
+                    +{{ formatMoney(row.detectedExecutedYtd ?? 0) }} fuera
+                  </span>
                 </div>
+                <div class="bdg-sub">
+                  <template v-if="row.detectedUnbudgeted">
+                    Detectado en movimientos · fuera de presupuesto (YTD)
+                  </template>
+                  <template v-else>{{ rowPlannedMeta(section.id, row) }}</template>
+                </div>
+                <button
+                  v-if="row.detectedUnbudgeted"
+                  type="button"
+                  class="bdg-detected-add"
+                  @click.stop="openCreateDirect(section.id, row)"
+                >
+                  Añadir al presupuesto
+                </button>
                 <p
                   v-if="
-                    (incomeInvestmentRotationCategoryAdjustment?.(section.id, group.categoryKey) ??
-                      0) > 0
+                    (incomeInvestmentRotationSubcategoryAdjustment?.(section.id, row.key) ?? 0) > 0
                   "
-                  class="subtle mb-0"
+                  class="bdg-note"
                 >
                   Cambio neto en depósitos aplicado (YTD): -{{
                     formatMoney(
-                      incomeInvestmentRotationCategoryAdjustment?.(section.id, group.categoryKey) ??
-                        0,
+                      incomeInvestmentRotationSubcategoryAdjustment?.(section.id, row.key) ?? 0,
                     )
                   }}
                   EUR
                 </p>
-
-                <div
-                  v-if="budgetCategoryActualExecution(section.id, group.categoryKey)"
-                  class="ui-budget-rich-bar-wrap"
-                  :aria-label="`Ejecución YTD categoría ${group.categoryLabel}`"
-                >
-                  <div class="ui-budget-rich-bar-track">
-                    <div
-                      class="ui-budget-rich-bar-fill"
-                      :class="`ui-budget-inline-progress-fill-${budgetCategoryActualExecution(section.id, group.categoryKey)?.tone}`"
-                      :style="
-                        overflowFillStyle(
-                          budgetCategoryActualExecution(section.id, group.categoryKey),
-                        )
-                      "
-                    />
-                    <span
-                      v-if="budgetCategoryActualExecution(section.id, group.categoryKey)?.overflow"
-                      class="ui-budget-inline-progress-overflow-marker"
-                      :style="{
-                        left: `${(1 / budgetCategoryActualExecution(section.id, group.categoryKey)!.ratio) * 100}%`,
-                      }"
-                      aria-hidden="true"
-                    />
-                    <span class="ui-budget-rich-bar-exec-label">
-                      {{
-                        formatMoney(
-                          budgetCategoryActualExecution(section.id, group.categoryKey)?.executed ??
-                            0,
-                        )
-                      }}
-                      EUR
-                    </span>
-                    <span class="ui-budget-rich-bar-plan-label">
-                      {{
-                        formatMoney(
-                          budgetCategoryActualExecution(section.id, group.categoryKey)?.planned ??
-                            0,
-                        )
-                      }}
-                      EUR
-                    </span>
-                  </div>
-                  <span
-                    class="ui-budget-rich-bar-deviation"
-                    :class="`ui-budget-pending-text-${budgetCategoryActualExecution(section.id, group.categoryKey)?.tone}`"
-                  >
-                    {{
-                      formatSignedMoney(
-                        budgetCategoryActualExecution(section.id, group.categoryKey)?.deviation ??
-                          0,
-                      )
-                    }}
-                    EUR
-                  </span>
-                </div>
-
-                <div
-                  v-else-if="
-                    group.plannedAnnual > 0 || group.rows.some((r: any) => r.detectedUnbudgeted)
-                  "
-                  class="ui-budget-rich-bar-wrap"
-                  aria-label="Placeholder ejecución categoría"
-                >
-                  <div class="ui-budget-rich-bar-track">
-                    <div
-                      class="ui-budget-rich-bar-fill"
-                      :class="`ui-budget-inline-progress-fill-${groupExecutionPreview(section.id, group).tone}`"
-                      :style="overflowFillStyle(groupExecutionPreview(section.id, group))"
-                    />
-                    <span
-                      v-if="groupExecutionPreview(section.id, group).overflow"
-                      class="ui-budget-inline-progress-overflow-marker"
-                      :style="{
-                        left: `${(1 / groupExecutionPreview(section.id, group).ratio) * 100}%`,
-                      }"
-                      aria-hidden="true"
-                    />
-                    <span
-                      class="ui-budget-rich-bar-exec-label ui-budget-rich-bar-exec-label-pending"
-                    >
-                      Pendiente contabilidad
-                    </span>
-                    <span class="ui-budget-rich-bar-plan-label">
-                      {{ formatMoney(group.plannedAnnual) }} EUR
-                    </span>
-                  </div>
-                </div>
               </div>
+            </div>
+            <div class="bdg-num bdg-num-muted">
+              <template v-if="subcategoryBar(section.id, row)">
+                {{ formatMoney(subcategoryBar(section.id, row)!.planned) }} EUR
+              </template>
+              <template v-else-if="row.plannedAnnual > 0">
+                {{ formatMoney(row.plannedAnnual) }} EUR
+              </template>
+              <span v-else class="bdg-faint">—</span>
+            </div>
+            <BudgetBarCell
+              :bar="subcategoryBar(section.id, row)"
+              :kind="section.id"
+              :format-signed-money="formatSignedMoney"
+            />
+            <div class="bdg-num">
+              <template v-if="subcategoryBar(section.id, row)?.hasData">
+                {{ formatMoney(subcategoryBar(section.id, row)!.executed) }} EUR
+              </template>
+              <template v-else-if="row.detectedUnbudgeted">
+                {{ formatMoney(row.detectedExecutedYtd ?? 0) }} EUR
+              </template>
+              <span v-else class="bdg-faint">—</span>
+            </div>
+            <div />
 
-              <div class="ui-budget-group-header-right">
-                <span class="ui-budget-group-chevron" aria-hidden="true" />
-              </div>
-            </header>
-
-            <ul v-show="isGroupExpanded(group.categoryKey)" class="ui-budget-rows">
-              <li
-                v-for="row in group.rows"
-                :key="row.key"
-                class="ui-budget-row"
-                :class="{
-                  'ui-budget-row-expandable': !row.detectedUnbudgeted && row.itemsCount > 0,
-                }"
-                :aria-expanded="
-                  !row.detectedUnbudgeted && row.itemsCount > 0
-                    ? isContextOpen(section.id, row.key)
-                    : undefined
-                "
-                @click="
-                  !row.detectedUnbudgeted && row.itemsCount > 0 && toggleContext(section.id, row)
-                "
+            <div
+              v-if="isContextOpen(section.id, row.key) && !row.detectedUnbudgeted"
+              class="bdg-context"
+              @click.stop
+            >
+              <ul
+                v-if="section.id === 'income' && contextIncomeEntries.length"
+                class="bdg-context-list"
               >
-                <div class="ui-budget-row-main">
-                  <div class="ui-budget-row-kicker">Subcategoría</div>
-                  <div class="ui-budget-row-title">
-                    <span
-                      class="ui-budget-name-link"
-                      @click.stop="goToMovements(group.categoryKey, row.subcategoryKey)"
-                      >{{ row.subcategoryLabel }}</span
-                    >
-                    <button
-                      type="button"
-                      class="ui-budget-row-inline-add"
-                      :title="`Añadir en ${row.subcategoryLabel}`"
-                      @click.stop="openCreateDirect(section.id, row)"
-                    >
-                      <svg
-                        width="8"
-                        height="8"
-                        viewBox="0 0 8 8"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <rect x="3.5" y="0" width="1" height="8" />
-                        <rect x="0" y="3.5" width="8" height="1" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="ui-budget-row-meta">
-                    <template v-if="row.detectedUnbudgeted">
-                      Detectado en movimientos -
-                      {{ formatMoney(row.detectedExecutedYtd ?? 0) }} EUR fuera de presupuesto (YTD)
-                    </template>
-                    <template v-else>
-                      {{ rowPlannedMeta(section.id, row) }}
-                    </template>
-                  </div>
-                  <button
-                    v-if="row.detectedUnbudgeted"
-                    type="button"
-                    class="ui-budget-detected-add-btn"
-                    @click.stop="openCreateDirect(section.id, row)"
-                  >
-                    Añadir al presupuesto
-                  </button>
-                  <div
-                    v-if="
-                      (incomeInvestmentRotationSubcategoryAdjustment?.(section.id, row.key) ?? 0) >
-                      0
-                    "
-                    class="ui-budget-row-meta"
-                  >
-                    Cambio neto en depósitos aplicado (YTD): -{{
-                      formatMoney(
-                        incomeInvestmentRotationSubcategoryAdjustment?.(section.id, row.key) ?? 0,
-                      )
-                    }}
-                    EUR
-                  </div>
-
-                  <div
-                    v-if="budgetSubcategoryActualExecution(section.id, row.key)"
-                    class="ui-budget-rich-bar-wrap"
-                    :aria-label="`Ejecución YTD subcategoría ${row.subcategoryLabel}`"
-                  >
-                    <div class="ui-budget-rich-bar-track">
-                      <div
-                        class="ui-budget-rich-bar-fill"
-                        :class="`ui-budget-inline-progress-fill-${budgetSubcategoryActualExecution(section.id, row.key)?.tone}`"
-                        :style="
-                          overflowFillStyle(budgetSubcategoryActualExecution(section.id, row.key))
-                        "
-                      />
-                      <span
-                        v-if="budgetSubcategoryActualExecution(section.id, row.key)?.overflow"
-                        class="ui-budget-inline-progress-overflow-marker"
-                        :style="{
-                          left: `${(1 / budgetSubcategoryActualExecution(section.id, row.key)!.ratio) * 100}%`,
-                        }"
-                        aria-hidden="true"
-                      />
-                      <span class="ui-budget-rich-bar-exec-label">
-                        {{
-                          formatMoney(
-                            budgetSubcategoryActualExecution(section.id, row.key)?.executed ?? 0,
-                          )
-                        }}
-                        EUR
-                      </span>
-                      <span class="ui-budget-rich-bar-plan-label">
-                        {{
-                          formatMoney(
-                            budgetSubcategoryActualExecution(section.id, row.key)?.planned ?? 0,
-                          )
-                        }}
-                        EUR
-                      </span>
-                    </div>
-                    <span
-                      class="ui-budget-rich-bar-deviation"
-                      :class="`ui-budget-pending-text-${budgetSubcategoryActualExecution(section.id, row.key)?.tone}`"
-                    >
-                      {{
-                        formatSignedMoney(
-                          budgetSubcategoryActualExecution(section.id, row.key)?.deviation ?? 0,
-                        )
-                      }}
-                      EUR
-                    </span>
-                  </div>
-
-                  <div
-                    v-else-if="row.itemsCount > 0 || row.detectedUnbudgeted"
-                    class="ui-budget-rich-bar-wrap"
-                    aria-label="Placeholder ejecución subcategoría"
-                  >
-                    <div class="ui-budget-rich-bar-track">
-                      <div
-                        class="ui-budget-rich-bar-fill ui-budget-inline-progress-fill-neutral"
-                        :style="{ width: '0%' }"
-                      />
-                      <span
-                        class="ui-budget-rich-bar-exec-label ui-budget-rich-bar-exec-label-pending"
-                      >
-                        Ejecución pendiente
-                      </span>
-                      <span class="ui-budget-rich-bar-plan-label">
-                        {{ formatMoney(row.plannedAnnual) }} EUR
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <span
-                  v-if="!row.detectedUnbudgeted && row.itemsCount > 0"
-                  class="ui-budget-group-chevron ui-budget-row-chevron"
-                  aria-hidden="true"
-                />
-
-                <div
-                  v-if="isContextOpen(section.id, row.key) && !row.detectedUnbudgeted"
-                  class="ui-budget-context-panel"
+                <li
+                  v-for="entry in contextIncomeEntries"
+                  :key="`income-${entry.id}`"
+                  class="bdg-context-item"
                 >
-                  <ul
-                    v-if="section.id === 'income' && contextIncomeEntries.length"
-                    class="ui-budget-context-list"
-                  >
-                    <li v-for="entry in contextIncomeEntries" :key="`income-${entry.id}`">
-                      <div class="ui-budget-context-item">
-                        <div class="ui-budget-context-main">
-                          <strong>{{ entry.name }}</strong>
-                          <small>
-                            {{ entry.incomeType === 'recurrent' ? 'Recurrente' : 'Puntual' }}
-                            <template v-if="entry.owner"> - {{ entry.owner }}</template>
-                          </small>
-                        </div>
-                        <div class="ui-budget-context-actions">
-                          <span class="ui-budget-context-amount"
-                            >{{ formatMoney(entry.amountAnnual) }} {{ entry.currency }}</span
-                          >
-                          <button
-                            type="button"
-                            class="icon-btn"
-                            title="Editar"
-                            @click="openEditIncome(entry)"
-                          >
-                            &#9998;
-                          </button>
-                          <button
-                            type="button"
-                            class="icon-btn"
-                            title="Eliminar"
-                            @click="removeIncome(entry)"
-                          >
-                            &#128465;
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
+                  <div class="bdg-context-main">
+                    <strong>{{ entry.name }}</strong>
+                    <small>
+                      {{ entry.incomeType === 'recurrent' ? 'Recurrente' : 'Puntual' }}
+                      <template v-if="entry.owner"> · {{ entry.owner }}</template>
+                    </small>
+                  </div>
+                  <div class="bdg-context-actions">
+                    <span class="bdg-context-amount">
+                      {{ formatMoney(entry.amountAnnual) }} {{ entry.currency }}
+                    </span>
+                    <div class="bdg-rowmenu">
+                      <button type="button" title="Editar" @click="openEditIncome(entry)">
+                        &#9998;
+                      </button>
+                      <button type="button" title="Eliminar" @click="removeIncome(entry)">
+                        &#128465;
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
 
-                  <ul
-                    v-else-if="section.id === 'expense' && contextExpenseEntries.length"
-                    class="ui-budget-context-list"
-                  >
-                    <li v-for="entry in contextExpenseEntries" :key="`expense-${entry.id}`">
-                      <div class="ui-budget-context-item">
-                        <div class="ui-budget-context-main">
-                          <strong>{{ entry.name }}</strong>
-                          <small>
-                            {{ entry.expenseType === 'recurrent' ? 'Recurrente' : 'Puntual' }}
-                            <template v-if="entry.owner"> - {{ entry.owner }}</template>
-                          </small>
-                        </div>
-                        <div class="ui-budget-context-actions">
-                          <span class="ui-budget-context-amount"
-                            >{{ formatMoney(entry.amountAnnual) }} {{ entry.currency }}</span
-                          >
-                          <button
-                            type="button"
-                            class="icon-btn"
-                            title="Editar"
-                            @click="openEditExpense(entry)"
-                          >
-                            &#9998;
-                          </button>
-                          <button
-                            type="button"
-                            class="icon-btn"
-                            title="Eliminar"
-                            @click="removeExpense(entry)"
-                          >
-                            &#128465;
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
+              <ul
+                v-else-if="section.id === 'expense' && contextExpenseEntries.length"
+                class="bdg-context-list"
+              >
+                <li
+                  v-for="entry in contextExpenseEntries"
+                  :key="`expense-${entry.id}`"
+                  class="bdg-context-item"
+                >
+                  <div class="bdg-context-main">
+                    <strong>{{ entry.name }}</strong>
+                    <small>
+                      {{ entry.expenseType === 'recurrent' ? 'Recurrente' : 'Puntual' }}
+                      <template v-if="entry.owner"> · {{ entry.owner }}</template>
+                    </small>
+                  </div>
+                  <div class="bdg-context-actions">
+                    <span class="bdg-context-amount">
+                      {{ formatMoney(entry.amountAnnual) }} {{ entry.currency }}
+                    </span>
+                    <div class="bdg-rowmenu">
+                      <button type="button" title="Editar" @click="openEditExpense(entry)">
+                        &#9998;
+                      </button>
+                      <button type="button" title="Eliminar" @click="removeExpense(entry)">
+                        &#128465;
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
 
-                  <p v-else class="subtle mb-0">
-                    No hay registros con los filtros actuales para esta subcategoría.
-                  </p>
-                </div>
-              </li>
-            </ul>
-          </article>
-        </div>
-      </div>
-
-      <div v-if="!section.groups.length" class="subtle">
-        {{ section.emptyMessage }}
-        <template v-if="section.filterMode !== 'all'">
-          Prueba con la vista `Todos` si quieres incluir movimientos puntuales.
+              <p v-else class="bdg-context-empty">
+                No hay registros con los filtros actuales para esta subcategoría.
+              </p>
+            </div>
+          </div>
         </template>
-      </div>
-    </section>
-  </div>
+      </template>
 
-  <div v-if="isLoading" class="ui-status-line">Cargando presupuesto...</div>
+      <div class="bdg-row bdg-row-cat bdg-row-total">
+        <div class="bdg-row-lead">
+          <span class="bdg-chev" />
+          <span class="bdg-name bdg-num-strong">Total {{ section.title.toLowerCase() }}</span>
+        </div>
+        <div class="bdg-num bdg-num-strong">
+          {{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR
+        </div>
+        <BudgetBarCell
+          :bar="sectionBar(section.id)"
+          :kind="section.id"
+          :format-signed-money="formatSignedMoney"
+        />
+        <div class="bdg-num bdg-num-strong">
+          {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR
+        </div>
+        <div />
+      </div>
+    </div>
+
+    <p v-if="!section.groups.length" class="sect-sub">
+      {{ section.emptyMessage }}
+      <template v-if="section.filterMode !== 'all'">
+        Prueba con la vista «Todos» si quieres incluir movimientos puntuales.
+      </template>
+    </p>
+  </section>
+
+  <div v-if="isLoading" class="bdg-loading">Cargando presupuesto…</div>
 
   <AnnualEntryModalForm
     v-if="annualEntriesPage"

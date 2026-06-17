@@ -1268,8 +1268,8 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const expenseSection = wrapper.find('.ui-budget-section-expense');
-    expect(expenseSection.text()).toContain('Evolución ejecutada');
+    const expenseSection = wrapper.find('.bdg-sect-expense');
+    expect(expenseSection.text()).toContain('Evolución previsto');
     expect(expenseSection.text()).toContain('Ejecutado real (YTD)');
 
     const toggleDetail = wrapper
@@ -1278,7 +1278,7 @@ describe('BudgetDashboardView', () => {
     await toggleDetail?.trigger('click');
     await flushPromises();
 
-    const firstRow = wrapper.find('.ui-budget-row');
+    const firstRow = wrapper.find('.bdg-row-sub');
     await firstRow.trigger('click');
     await flushPromises();
 
@@ -1400,7 +1400,7 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const expenseSection = wrapper.find('.ui-budget-section-expense');
+    const expenseSection = wrapper.find('.bdg-sect-expense');
     const toggleDetail = expenseSection
       .findAll('button')
       .find((candidate) => candidate.text().includes('Ver desglose'));
@@ -1491,7 +1491,7 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const expenseSection = wrapper.find('.ui-budget-section-expense');
+    const expenseSection = wrapper.find('.bdg-sect-expense');
     const toggleDetail = expenseSection
       .findAll('button')
       .find((candidate) => candidate.text().includes('Ver desglose'));
@@ -1590,10 +1590,10 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const incomeSection = wrapper.find('.ui-budget-section-income');
-    expect(incomeSection.text()).toContain('Evolución ejecutada');
+    const incomeSection = wrapper.find('.bdg-sect-income');
+    expect(incomeSection.text()).toContain('Evolución previsto');
     expect(incomeSection.text()).toContain('Ejecutado real (YTD)');
-    expect(incomeSection.text()).toContain('Presupuesto previsto (YTD)');
+    expect(incomeSection.text()).toContain('Previsto (YTD)');
     expect(incomeSection.text()).toContain('Fuera de presupuesto (YTD)');
     expect(incomeSection.text()).toContain('45,00 EUR');
 
@@ -1841,7 +1841,7 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const incomeSection = wrapper.find('.ui-budget-section-income');
+    const incomeSection = wrapper.find('.bdg-sect-income');
     const toggleDetail = incomeSection
       .findAll('button')
       .find((candidate) => candidate.text().includes('Ver desglose'));
@@ -1992,7 +1992,7 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const incomeSection = wrapper.find('.ui-budget-section-income');
+    const incomeSection = wrapper.find('.bdg-sect-income');
     expect(incomeSection.text()).not.toContain('Cambio neto en depósitos aplicado');
     expect(incomeSection.text()).not.toContain('Cambio neto dep. YTD');
     expect(incomeSection.text()).toContain('1.000,00 EUR');
@@ -2116,26 +2116,26 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const incomeSection = wrapper.find('.ui-budget-section-income');
+    const incomeSection = wrapper.find('.bdg-sect-income');
     const incomeFilterButtons = () => incomeSection.findAll('.ui-budget-filter-segment button');
     const januaryExec = () => {
-      const monthCols = incomeSection.findAll('.ui-budget-month-col');
+      const monthCols = incomeSection.findAll('.bdg-evo-col');
       const januaryCol = monthCols[0];
       if (!januaryCol) throw new Error('Income January column not found');
-      return januaryCol.find('div[class^="ui-budget-month-exec"]');
+      return januaryCol.find('.bdg-evo-exec');
     };
 
     await incomeFilterButtons()
       .find((candidate) => candidate.text().includes('Recurrentes'))
       ?.trigger('click');
     await flushPromises();
-    expect(januaryExec().classes()).toContain('ui-budget-month-exec-pending');
+    expect(januaryExec().classes()).toContain('bdg-evo-exec-pending');
 
     await incomeFilterButtons()
       .find((candidate) => candidate.text().includes('Puntuales'))
       ?.trigger('click');
     await flushPromises();
-    expect(januaryExec().classes()).toContain('ui-budget-month-exec-pending');
+    expect(januaryExec().classes()).toContain('bdg-evo-exec-pending');
   });
 
   it('updates expense YTD totals and evolution when switching recurrent/one-off filter', async () => {
@@ -2243,11 +2243,11 @@ describe('BudgetDashboardView', () => {
     await flushPromises();
 
     const filterButtons = () => wrapper.findAll('.ui-budget-filter-segment-hero button');
-    const expenseSection = () => wrapper.find('.ui-budget-section-expense');
+    const expenseSection = () => wrapper.find('.bdg-sect-expense');
     const selectedMonthExecTitle = () => {
-      const monthCol = expenseSection().findAll('.ui-budget-month-col')[currentMonth - 1];
+      const monthCol = expenseSection().findAll('.bdg-evo-col')[currentMonth - 1];
       if (!monthCol) throw new Error('Expense selected month column not found');
-      return monthCol.find('div[class^="ui-budget-month-exec"]').attributes('title');
+      return monthCol.find('.bdg-evo-exec').attributes('title');
     };
 
     await filterButtons()

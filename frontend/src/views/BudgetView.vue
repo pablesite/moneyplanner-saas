@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { APageHead, AContextBar } from '@/domains/ui';
 import { BudgetAnnualSection, BudgetHero } from '@/domains/budget';
 import '@/domains/budget/styles/budget.css';
-import '@/domains/budget/styles/dashboard.css';
 import { useBudgetView } from './budget/useBudgetView';
 import { useBudgetAnnualEntriesPage } from './budget/useBudgetAnnualEntriesPage';
+
+// Estado de presentación local (no toca el motor): controla la vista activa y la
+// etiqueta de escala de importes del prototipo Direction A.
+type BudgetPresentationView = 'annual' | 'exec' | 'sugg';
+type BudgetAmountScope = 'month' | 'ytd';
+const presentationView = ref<BudgetPresentationView>('annual');
+const amountScope = ref<BudgetAmountScope>('ytd');
 
 const {
   fiscalYear,
@@ -54,12 +60,20 @@ const {
   formatCompactMoney,
   formatPercent,
   formatSignedMoney,
+  incomeBudgetSuggestions,
+  expenseBudgetSuggestions,
+  budgetSuggestionsLoading,
+  budgetSuggestionsError,
   refreshBudgetData,
   refreshBudgetSuggestionData,
   refreshAccountingExecutionData,
   refreshIncomeExecutionData,
   refreshExpenseExecutionData,
 } = useBudgetView();
+
+const suggestionsCount = computed(
+  () => incomeBudgetSuggestions.value.length + expenseBudgetSuggestions.value.length,
+);
 
 const annualEntriesPage = useBudgetAnnualEntriesPage();
 
@@ -138,6 +152,13 @@ function openNewEntry(): void {
         <span>Base EUR</span>
       </template>
       <template #actions>
+        <button
+          class="btn btn-ghost bdg-sect-action"
+          type="button"
+          @click="presentationView = 'sugg'"
+        >
+          {{ suggestionsCount }} sugerencias
+        </button>
         <button class="btn btn-primary" type="button" @click="openNewEntry">+ Nueva partida</button>
       </template>
     </APageHead>
@@ -211,6 +232,53 @@ function openNewEntry(): void {
           </button>
         </div>
       </div>
+
+      <div class="context-divider"></div>
+
+      <div class="context-field">
+        <span class="context-field-label">Vista</span>
+        <div class="seg">
+          <button
+            type="button"
+            :class="{ on: presentationView === 'annual' }"
+            @click="presentationView = 'annual'"
+          >
+            Anual
+          </button>
+          <button
+            type="button"
+            :class="{ on: presentationView === 'exec' }"
+            @click="presentationView = 'exec'"
+          >
+            Ejecución
+          </button>
+          <button
+            type="button"
+            :class="{ on: presentationView === 'sugg' }"
+            @click="presentationView = 'sugg'"
+          >
+            Sugerencias
+          </button>
+        </div>
+      </div>
+
+      <div class="context-divider"></div>
+
+      <div class="context-field">
+        <span class="context-field-label">Importes</span>
+        <div class="seg">
+          <button
+            type="button"
+            :class="{ on: amountScope === 'month' }"
+            @click="amountScope = 'month'"
+          >
+            Por mes
+          </button>
+          <button type="button" :class="{ on: amountScope === 'ytd' }" @click="amountScope = 'ytd'">
+            YTD
+          </button>
+        </div>
+      </div>
     </AContextBar>
 
     <BudgetHero
@@ -231,9 +299,74 @@ function openNewEntry(): void {
     <div v-if="firstError" class="alert mt-3">{{ firstError }}</div>
     <div v-if="expenseExecutionError" class="alert mt-3">{{ expenseExecutionError }}</div>
 
-    <!-- WIP: tablas legacy reutilizadas (reskin a bdg-row pendiente). -->
+    <!-- Tab Sugerencias (acciones deshabilitadas — sin backing en el motor). -->
+    <section v-if="presentationView === 'sugg'" class="sect">
+      <div class="sect-head">
+        <div>
+          <h2 class="sect-title">
+            Sugerencias
+            <span class="sect-count">a partir de tu ejecución reciente</span>
+          </h2>
+          <p class="sect-sub">
+            Generadas con la media mensual ejecutada por subcategoría. Las acciones llegarán
+            próximamente.
+          </p>
+        </div>
+      </div>
+
+      <div v-if="budgetSuggestionsError" class="alert">{{ budgetSuggestionsError }}</div>
+      <div v-else-if="budgetSuggestionsLoading" class="bdg-loading">Calculando sugerencias…</div>
+      <p v-else-if="suggestionsCount === 0" class="sect-sub">
+        No hay sugerencias con desviación relevante para el periodo seleccionado.
+      </p>
+      <template v-else>
+        <div
+          v-for="row in [
+            ...incomeBudgetSuggestions.map((r) => ({ ...r, kind: 'income' as const })),
+            ...expenseBudgetSuggestions.map((r) => ({ ...r, kind: 'expense' as const })),
+          ]"
+          :key="`${row.kind}-${row.key}`"
+          class="bdg-sugg-row"
+        >
+          <div>
+            <div>{{ row.subcategoryLabel }}</div>
+            <div class="bdg-sugg-kind">{{ row.kind === 'income' ? 'Ingreso' : 'Gasto' }}</div>
+          </div>
+          <div class="bdg-sugg-reason">
+            Media de {{ row.observedMonths }} {{ row.observedMonths === 1 ? 'mes' : 'meses' }} de
+            ejecución
+          </div>
+          <div class="bdg-num">
+            <div class="bdg-num-muted">{{ formatMoney(row.plannedAnnual) }} EUR</div>
+            <div class="bdg-pct">previsto</div>
+          </div>
+          <div class="bdg-num">
+            <div class="bdg-num-strong">{{ formatMoney(row.suggestedAnnual) }} EUR</div>
+            <div
+              class="bdg-pct"
+              :class="
+                row.suggestedAnnual - row.plannedAnnual >= 0 ? 'bdg-diff-pos' : 'bdg-diff-neg'
+              "
+            >
+              {{ formatSignedMoney(row.suggestedAnnual - row.plannedAnnual) }}
+            </div>
+          </div>
+          <div class="bdg-sugg-actions">
+            <button type="button" class="btn btn-ghost" disabled title="Próximamente">
+              Ignorar
+            </button>
+            <button type="button" class="btn btn-primary" disabled title="Próximamente">
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </template>
+    </section>
+
     <BudgetAnnualSection
+      v-else
       :is-monthly-close-view="false"
+      :show-month-bar="amountScope === 'month'"
       :has-any-planned-data="hasAnyPlannedData"
       :is-loading="isLoading"
       :fiscal-year="fiscalYear"
