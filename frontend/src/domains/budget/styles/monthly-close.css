@@ -69,9 +69,281 @@
   color: var(--neg);
 }
 
+/* ── Contenido del paso activo ───────────────────────────────────────── */
+.mc-step-kpis {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 2px 0 4px;
+}
+
+.mc-step-kpis .kpi {
+  padding-bottom: 14px;
+}
+
+.mc-kpi-dev-good .kpi-value {
+  color: var(--pos);
+}
+
+.mc-kpi-dev-danger .kpi-value {
+  color: var(--neg);
+}
+
+.mc-locked {
+  padding: 10px 14px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.mc-empty {
+  padding: 16px 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Bloques de categoría colapsables */
+.mc-blocks {
+  display: grid;
+  gap: 0;
+}
+
+.mc-block {
+  border-bottom: 1px solid var(--line);
+}
+
+.mc-block > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 6px;
+}
+
+.mc-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mc-block > summary::before {
+  content: '▸';
+  color: var(--faint);
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.mc-block[open] > summary::before {
+  content: '▾';
+  color: var(--text);
+}
+
+.mc-block-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-block-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mc-block-meta {
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+}
+
+.mc-block-kpis {
+  display: flex;
+  gap: 16px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.mc-dev-pos {
+  color: var(--neg);
+}
+
+.mc-dev-neg {
+  color: var(--pos);
+}
+
+/* Filas de subcategoría */
+.mc-rows {
+  display: grid;
+  gap: 0;
+  padding: 0 6px 8px;
+}
+
+.mc-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  padding-left: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.mc-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.mc-row-title {
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-row-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.mc-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mc-metrics {
+  display: flex;
+  gap: 16px;
+}
+
+.mc-metrics > span {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+
+.mc-metrics small {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-metrics strong {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-adjust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mc-ledger-readout {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+
+.mc-ledger-readout span {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-ledger-readout strong {
+  font-size: 12.5px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-input {
+  font: inherit;
+  font-size: 13px;
+  width: 130px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.mc-input:disabled {
+  opacity: 0.5;
+}
+
+.mc-quick-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.mc-mini-btn {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mc-mini-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--line-strong);
+  background: var(--hover);
+}
+
+.mc-mini-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mc-confirm {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mc-confirm input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 @container page (max-width: 900px) {
   .mc-hero .hero-value {
     font-size: 44px;
+  }
+
+  .mc-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mc-row-actions {
+    justify-content: flex-start;
   }
 }
 
