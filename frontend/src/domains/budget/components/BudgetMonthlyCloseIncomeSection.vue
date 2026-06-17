@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AKindChip } from '@/domains/ui';
+import { AInfoHint, AKindChip } from '@/domains/ui';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
@@ -155,12 +155,12 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'income'" class="sect mc-step">
     <div class="sect-head">
-      <div>
+      <div class="mc-title-wrap">
         <h2 class="sect-title">Paso 2 · Check-in mensual de ingresos</h2>
-        <p class="sect-sub">
+        <AInfoHint label="Sobre este paso">
           Confirma los ingresos previstos del mes; el cierre usa movimientos y deja pendientes solo
           las líneas a revisar.
-        </p>
+        </AInfoHint>
       </div>
       <div class="actions">
         <button type="button" class="btn btn-ghost" @click="goToPreviousMonthlyCloseStep()">

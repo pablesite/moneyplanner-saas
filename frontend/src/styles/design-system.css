@@ -260,6 +260,41 @@
   font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
+/* Título + icono de ayuda en línea (sustituye subtítulos descriptivos). */
+.dir-a .title-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* KPIs reutilizables del sistema dir-a (hero presupuesto, hero y pasos de cierre). */
+.dir-a .kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.dir-a .kpi-label {
+  margin: 0 0 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.dir-a .kpi-value {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dir-a .kpi-meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
 .dir-a .info-hint {
   position: relative;
   display: inline-flex;

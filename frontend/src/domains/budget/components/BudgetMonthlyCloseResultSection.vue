@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
+import { AInfoHint } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type MonthlyCloseStatus = 'draft' | 'finalized' | 'locked';
@@ -117,12 +118,12 @@ const resultBridgeRows = computed(() =>
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'result'" class="sect mc-step">
     <div class="sect-head">
-      <div>
+      <div class="mc-title-wrap">
         <h2 class="sect-title">Paso 4 · Resultado</h2>
-        <p class="sect-sub">
+        <AInfoHint label="Sobre este paso">
           Residual contable provisional a partir del perímetro real y de ingresos/gastos confirmados
           del mes.
-        </p>
+        </AInfoHint>
       </div>
       <div v-if="closeStatus" class="actions">
         <template v-if="closeStatus === 'locked'">

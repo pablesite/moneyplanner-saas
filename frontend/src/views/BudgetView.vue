@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { APageHead, AContextBar } from '@/domains/ui';
+import { APageHead, AContextBar, AInfoHint } from '@/domains/ui';
 import { BudgetAnnualSection, BudgetHero } from '@/domains/budget';
 import '@/domains/budget/styles/budget.css';
 import { useBudgetView } from './budget/useBudgetView';
@@ -284,13 +284,13 @@ function openNewEntry(): void {
     <!-- Tab Sugerencias (acciones deshabilitadas — sin backing en el motor). -->
     <section v-if="presentationView === 'sugg'" class="sect">
       <div class="sect-head">
-        <div>
+        <div class="title-hint">
           <h2 class="sect-title">Sugerencias de presupuesto</h2>
-          <p class="sect-sub">
+          <AInfoHint label="Qué son las sugerencias">
             Importes recomendados para tus partidas a partir de la media de lo que has ejecutado en
             los últimos meses. Te ayudan a ajustar el presupuesto a tu gasto real. Aplicar/Ignorar
             llegará próximamente.
-          </p>
+          </AInfoHint>
         </div>
         <div class="actions">
           <button type="button" class="btn btn-ghost" @click="presentationView = 'annual'">

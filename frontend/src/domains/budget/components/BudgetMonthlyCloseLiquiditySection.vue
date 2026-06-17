@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
+import { AInfoHint } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type LiquidityResetMode = 'zero' | 'planned';
@@ -164,11 +165,11 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'liq'" class="sect mc-step">
     <div class="sect-head">
-      <div>
+      <div class="mc-title-wrap">
         <h2 class="sect-title">Paso 1 · Cierre de liquidez</h2>
-        <p class="sect-sub">
+        <AInfoHint label="Sobre este paso">
           Ajusta el perímetro de cierre: caja, activos incluidos y tarjetas de crédito.
-        </p>
+        </AInfoHint>
       </div>
       <div class="actions">
         <button
