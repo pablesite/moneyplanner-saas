@@ -8,7 +8,7 @@ import {
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
-import { ASparkline } from '@/domains/ui';
+import { AInfoHint, ASparkline } from '@/domains/ui';
 import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
@@ -575,28 +575,25 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
 
       <div class="bdg-evolution">
         <div class="bdg-evolution-head">
-          <div>
+          <div class="bdg-evolution-title">
             <h3>Evolución previsto vs ejecutado</h3>
-            <p v-if="section.id === 'income'">
-              Por mes, según los check-ins del cierre mensual
+            <AInfoHint label="Cómo se calcula la evolución">
+              Comparativa por mes de lo previsto frente a lo ejecutado, según los check-ins del
+              cierre mensual
               {{
-                section.filterMode === 'recurrent'
-                  ? '(ingresos recurrentes).'
-                  : section.filterMode === 'one_off'
-                    ? '(ingresos puntuales).'
-                    : '(todos los ingresos).'
+                section.id === 'income'
+                  ? section.filterMode === 'recurrent'
+                    ? '(ingresos recurrentes).'
+                    : section.filterMode === 'one_off'
+                      ? '(ingresos puntuales).'
+                      : '(todos los ingresos).'
+                  : section.filterMode === 'recurrent'
+                    ? '(gastos recurrentes).'
+                    : section.filterMode === 'one_off'
+                      ? '(gastos puntuales).'
+                      : '(todos los gastos).'
               }}
-            </p>
-            <p v-else>
-              Por mes, según los check-ins del cierre mensual
-              {{
-                section.filterMode === 'recurrent'
-                  ? '(gastos recurrentes).'
-                  : section.filterMode === 'one_off'
-                    ? '(gastos puntuales).'
-                    : '(todos los gastos).'
-              }}
-            </p>
+            </AInfoHint>
           </div>
         </div>
 
