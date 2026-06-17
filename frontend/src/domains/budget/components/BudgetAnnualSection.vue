@@ -8,6 +8,7 @@ import {
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
+import { ASparkline } from '@/domains/ui';
 import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
@@ -283,6 +284,17 @@ function subcategoryBar(sectionId: 'income' | 'expense', row: BudgetRow): Budget
   }
   return null;
 }
+
+// Serie mensual ejecutada (1-12) para el sparkline de la fila de total de sección.
+// El motor no expone histórico por categoría/subcategoría, por lo que esas filas
+// muestran la línea base (placeholder), aprobado como excepción de fidelidad.
+function sectionExecutedSeries(sectionId: 'income' | 'expense'): number[] {
+  const months =
+    sectionId === 'income' ? props.incomeEvolutionMonths : props.expenseEvolutionMonths;
+  return months.map((m: any) => Number(m.executed ?? 0));
+}
+
+const sparklineActiveIdx = computed(() => Math.max(0, props.budgetDetailMonth - 1));
 
 function openCreateForSection(sectionId: 'income' | 'expense'): void {
   if (!props.annualEntriesPage) return;
@@ -697,6 +709,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
         <span>Partida</span>
         <span class="num">Previsto</span>
         <span>Ejecución (YTD)</span>
+        <span class="ctr">Evol.</span>
         <span class="num">Ejecutado (YTD)</span>
         <span />
       </div>
@@ -765,6 +778,9 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
             :kind="section.id"
             :format-signed-money="formatSignedMoney"
           />
+          <div class="bdg-spark-cell">
+            <ASparkline :data="[]" :active-idx="-1" />
+          </div>
           <div class="bdg-num bdg-num-strong">
             <template v-if="categoryBar(section.id, group)?.hasData">
               {{ formatMoney(categoryBar(section.id, group)!.executed) }} EUR
@@ -864,6 +880,9 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
               :kind="section.id"
               :format-signed-money="formatSignedMoney"
             />
+            <div class="bdg-spark-cell">
+              <ASparkline :data="[]" :active-idx="-1" />
+            </div>
             <div class="bdg-num">
               <template v-if="subcategoryBar(section.id, row)?.hasData">
                 {{ formatMoney(subcategoryBar(section.id, row)!.executed) }} EUR
@@ -965,6 +984,9 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
           :kind="section.id"
           :format-signed-money="formatSignedMoney"
         />
+        <div class="bdg-spark-cell">
+          <ASparkline :data="sectionExecutedSeries(section.id)" :active-idx="sparklineActiveIdx" />
+        </div>
         <div class="bdg-num bdg-num-strong">
           {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR
         </div>
