@@ -299,6 +299,9 @@ function openNewEntry(): void {
     <div v-if="firstError" class="alert mt-3">{{ firstError }}</div>
     <div v-if="expenseExecutionError" class="alert mt-3">{{ expenseExecutionError }}</div>
 
+    <!-- Divisor de zona: separa el hero del detalle (tabla / sugerencias). -->
+    <div class="bdg-zone-divider"></div>
+
     <!-- Tab Sugerencias (acciones deshabilitadas — sin backing en el motor). -->
     <section v-if="presentationView === 'sugg'" class="sect">
       <div class="sect-head">

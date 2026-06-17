@@ -172,6 +172,13 @@
   }
 }
 
+/* Divisor de zona hero → detalle. */
+.dir-a .bdg-zone-divider {
+  height: 0;
+  border-top: 1px solid var(--line-strong);
+  margin: 4px 0;
+}
+
 /* ── Tablas de presupuesto (bdg-row, fiel al prototipo) ───────────────── */
 .dir-a .bdg-sections {
   display: grid;
