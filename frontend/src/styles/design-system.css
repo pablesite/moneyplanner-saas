@@ -49,6 +49,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Selects nativos en tema oscuro: fuerza el popup y las opciones oscuras
+   (color-scheme solo no basta en algunos navegadores). */
+.dir-a select {
+  color-scheme: dark;
+}
+
+.dir-a select option {
+  background-color: #15171c;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.dir-a.theme-light select {
+  color-scheme: light;
+}
+
+.dir-a.theme-light select option {
+  background-color: #ffffff;
+  color: #18181b;
+}
+
 .dir-a .page {
   padding: var(--pad-y) var(--pad-x);
   display: grid;

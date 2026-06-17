@@ -76,19 +76,6 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
           </nav>
 
           <div class="topnav-right">
-            <div v-if="!isSaasAdmin" class="ui-shell-utility-actions">
-              <button class="icon-btn ui-shell-utility-btn" type="button" aria-label="Buscar">
-                <span aria-hidden="true">/</span>
-              </button>
-              <button
-                class="icon-btn ui-shell-utility-btn"
-                type="button"
-                aria-label="Notificaciones"
-              >
-                <span aria-hidden="true">o</span>
-              </button>
-            </div>
-
             <div v-if="isSaasAdmin" class="ui-shell-page-chip">
               {{ pageTitle }}
             </div>

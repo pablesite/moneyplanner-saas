@@ -1920,8 +1920,13 @@ body {
     display: inline-flex;
   }
 
+  /* Especificidad alta: el menú superior debe desaparecer al pasar a hamburguesa
+     (gana al `.dir-a .topnav-list { display: flex }` del design system). */
+  .dir-a .topnav-list.ui-shell-desktop-nav {
+    display: none;
+  }
+
   .ui-shell-nav-divider,
-  .ui-shell-desktop-nav,
   .ui-shell-utility-actions {
     display: none;
   }

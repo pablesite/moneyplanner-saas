@@ -189,6 +189,17 @@
 
 .dir-a .bdg-section {
   min-width: 0;
+  border-top: 2px solid var(--line-strong);
+  padding-top: 16px;
+}
+
+/* Identidad cromática por columna: verde ingresos / rojo gastos. */
+.dir-a .bdg-sect-income {
+  border-top-color: var(--pos);
+}
+
+.dir-a .bdg-sect-expense {
+  border-top-color: var(--neg);
 }
 
 /* Cabecera de sección sin filete (reduce líneas) y título con más peso. */
@@ -200,6 +211,25 @@
 .dir-a .bdg-section-title {
   font-size: 16px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dir-a .bdg-section-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--muted);
+}
+
+.dir-a .bdg-sect-income .bdg-section-title::before {
+  background: var(--pos);
+}
+
+.dir-a .bdg-sect-expense .bdg-section-title::before {
+  background: var(--neg);
 }
 
 @container page (max-width: 1180px) {
