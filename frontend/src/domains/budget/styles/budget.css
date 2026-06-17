@@ -191,6 +191,17 @@
   min-width: 0;
 }
 
+/* Cabecera de sección sin filete (reduce líneas) y título con más peso. */
+.dir-a .bdg-section .sect-head {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.dir-a .bdg-section-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
 @container page (max-width: 1180px) {
   .dir-a .bdg-sections {
     grid-template-columns: 1fr;
@@ -590,9 +601,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
-  border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  margin: 4px 0 6px;
+  margin: 2px 0 6px;
 }
 
 .dir-a .bdg-coverage-kpi {
@@ -672,19 +682,24 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   height: 76px;
+  padding: 0 8%;
 }
 
 .dir-a .bdg-evo-plan {
-  width: 6px;
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 18px;
   border-radius: 2px 2px 0 0;
   background: var(--line-strong);
   min-height: 2px;
 }
 
 .dir-a .bdg-evo-exec {
-  width: 6px;
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 18px;
   border-radius: 2px 2px 0 0;
   min-height: 2px;
 }
@@ -837,8 +852,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 6px 0 12px;
-  border-bottom: 1px solid var(--line);
+  padding: 10px 0 12px;
 }
 
 .dir-a .bdg-rollup .bdg-richbar {
@@ -962,6 +976,10 @@
   padding-bottom: 6px;
 }
 
+.dir-a .bdg-month-bar .seg {
+  flex-wrap: wrap;
+}
+
 .dir-a .bdg-month-bar-label {
   font-size: 10.5px;
   letter-spacing: 0.12em;
@@ -1042,5 +1060,33 @@
   .dir-a .bdg-sugg-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
+  }
+}
+
+@container page (max-width: 600px) {
+  .dir-a .bdg-coverage {
+    grid-template-columns: 1fr;
+  }
+
+  .dir-a .bdg-coverage-kpi {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 10px 0;
+  }
+
+  .dir-a .bdg-coverage-kpi:not(:first-child) {
+    padding-left: 0;
+  }
+
+  .dir-a .bdg-coverage-kpi:last-child {
+    border-bottom: 0;
+  }
+
+  .dir-a .bdg-richbar {
+    flex-wrap: wrap;
+  }
+
+  .dir-a .bdg-richbar-track {
+    flex-basis: 100%;
   }
 }

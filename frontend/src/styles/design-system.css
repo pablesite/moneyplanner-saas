@@ -20,6 +20,7 @@
   --pad-x: calc(40px * var(--density-scale, 1));
   --pad-y: calc(28px * var(--density-scale, 1));
   --row-y: calc(14px * var(--density-scale, 1));
+  color-scheme: dark;
   background: var(--bg);
   color: var(--text);
   font-family: 'Geist', 'Segoe UI', system-ui, sans-serif;
@@ -32,6 +33,7 @@
 }
 
 .dir-a.theme-light {
+  color-scheme: light;
   --bg: #faf9f7;
   --surface: #faf9f7;
   --text: #18181b;

@@ -1293,7 +1293,7 @@ describe('Budget & Monthly close views', () => {
     await flushPromises();
 
     // Antes de abrir la pestaña, el contenido de sugerencias no está visible.
-    expect(wrapper.text()).not.toContain('Generadas con la media mensual ejecutada');
+    expect(wrapper.text()).not.toContain('Importes recomendados para tus partidas');
 
     const toggleSuggestions = wrapper
       .findAll('button')
@@ -1301,7 +1301,7 @@ describe('Budget & Monthly close views', () => {
     await toggleSuggestions?.trigger('click');
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Generadas con la media mensual ejecutada');
+    expect(wrapper.text()).toContain('Importes recomendados para tus partidas');
   });
 
   it('shows ledger-backed YTD execution in annual expense detail', async () => {

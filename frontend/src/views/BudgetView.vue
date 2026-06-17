@@ -6,12 +6,9 @@ import '@/domains/budget/styles/budget.css';
 import { useBudgetView } from './budget/useBudgetView';
 import { useBudgetAnnualEntriesPage } from './budget/useBudgetAnnualEntriesPage';
 
-// Estado de presentación local (no toca el motor): controla la vista activa y la
-// etiqueta de escala de importes del prototipo Direction A.
+// Estado de presentación local (no toca el motor): controla la vista activa.
 type BudgetPresentationView = 'annual' | 'exec' | 'sugg';
-type BudgetAmountScope = 'month' | 'ytd';
 const presentationView = ref<BudgetPresentationView>('annual');
-const amountScope = ref<BudgetAmountScope>('ytd');
 
 const {
   fiscalYear,
@@ -261,24 +258,6 @@ function openNewEntry(): void {
           </button>
         </div>
       </div>
-
-      <div class="context-divider"></div>
-
-      <div class="context-field">
-        <span class="context-field-label">Importes</span>
-        <div class="seg">
-          <button
-            type="button"
-            :class="{ on: amountScope === 'month' }"
-            @click="amountScope = 'month'"
-          >
-            Por mes
-          </button>
-          <button type="button" :class="{ on: amountScope === 'ytd' }" @click="amountScope = 'ytd'">
-            YTD
-          </button>
-        </div>
-      </div>
     </AContextBar>
 
     <BudgetHero
@@ -306,14 +285,17 @@ function openNewEntry(): void {
     <section v-if="presentationView === 'sugg'" class="sect">
       <div class="sect-head">
         <div>
-          <h2 class="sect-title">
-            Sugerencias
-            <span class="sect-count">a partir de tu ejecución reciente</span>
-          </h2>
+          <h2 class="sect-title">Sugerencias de presupuesto</h2>
           <p class="sect-sub">
-            Generadas con la media mensual ejecutada por subcategoría. Las acciones llegarán
-            próximamente.
+            Importes recomendados para tus partidas a partir de la media de lo que has ejecutado en
+            los últimos meses. Te ayudan a ajustar el presupuesto a tu gasto real. Aplicar/Ignorar
+            llegará próximamente.
           </p>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" @click="presentationView = 'annual'">
+            ← Volver al detalle
+          </button>
         </div>
       </div>
 
@@ -369,7 +351,6 @@ function openNewEntry(): void {
     <BudgetAnnualSection
       v-else
       :is-monthly-close-view="false"
-      :show-month-bar="amountScope === 'month'"
       :has-any-planned-data="hasAnyPlannedData"
       :is-loading="isLoading"
       :fiscal-year="fiscalYear"

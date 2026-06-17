@@ -58,7 +58,6 @@ type BudgetActualExecution = BudgetExecutionPreview & {
 
 const props = defineProps<{
   isMonthlyCloseView: boolean;
-  showMonthBar?: boolean;
   hasAnyPlannedData: boolean;
   isLoading: boolean;
   fiscalYear: number;
@@ -522,7 +521,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     <p>Usa «+ Nueva partida» para añadir ingresos y gastos previstos para {{ fiscalYear }}.</p>
   </div>
 
-  <div v-show="showMonthBar && sections.some((s) => s.groups.length > 0)" class="bdg-month-bar">
+  <div v-show="sections.some((s) => s.groups.length > 0)" class="bdg-month-bar">
     <span class="bdg-month-bar-label">Ver acumulado hasta</span>
     <div class="seg" role="group" aria-label="Mes de detalle">
       <button
@@ -546,14 +545,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     >
       <div class="sect-head">
         <div>
-          <h2 class="sect-title">
-            {{ section.title }}
-            <span class="sect-count">
-              {{ section.categoryCount }} categorías · {{ formatMoney(section.totalAnnual) }} EUR
-              previsto · {{ formatMoney(section.totalAnnual / 12) }} EUR/mes
-            </span>
-          </h2>
-          <p class="sect-sub">{{ section.subtitle }}</p>
+          <h2 class="sect-title bdg-section-title">{{ section.title }}</h2>
         </div>
         <div class="actions">
           <button
