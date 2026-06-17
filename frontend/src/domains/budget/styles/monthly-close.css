@@ -103,6 +103,27 @@
   font-size: 13px;
 }
 
+.mc-warn {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid oklch(0.78 0.13 80 / 0.42);
+  background: oklch(0.78 0.13 80 / 0.12);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.mc-warn strong {
+  font-size: 12.5px;
+  color: oklch(0.82 0.13 80);
+}
+
+.mc-warn span,
+.mc-warn small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 /* Bloques de categoría colapsables */
 .mc-blocks {
   display: grid;
