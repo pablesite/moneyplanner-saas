@@ -233,6 +233,23 @@
   color: var(--faint);
 }
 
+.mc-row-state strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.mc-row-ref {
+  font-size: 11px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-row-note {
+  width: 100%;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
 .mc-row-actions {
   display: flex;
   align-items: center;

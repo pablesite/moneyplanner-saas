@@ -162,298 +162,253 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
 </script>
 
 <template>
-  <section
-    v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'liq'"
-    class="card ui-pro-panel ui-budget-checkin mt-3"
-  >
-    <div class="ui-budget-checkin-header">
+  <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'liq'" class="sect mc-step">
+    <div class="sect-head">
       <div>
-        <div v-if="isMonthlyCloseView" class="ui-monthly-close-step-headline">
-          <button
-            type="button"
-            class="btn ui-monthly-close-step-nav-btn"
-            :disabled="!previousMonthlyCloseStep"
-            @click="goToPreviousMonthlyCloseStep()"
-          >
-            &lt;
-          </button>
-          <h2 class="ui-budget-checkin-title">Paso 1 - Cierre de liquidez</h2>
-          <button
-            type="button"
-            class="btn ui-monthly-close-step-nav-btn"
-            @click="goToNextMonthlyCloseStep()"
-          >
-            &gt;
-          </button>
-        </div>
-        <h2 v-else class="ui-budget-checkin-title">Cierre de liquidez</h2>
-        <p class="ui-budget-checkin-subtitle">
+        <h2 class="sect-title">Paso 1 · Cierre de liquidez</h2>
+        <p class="sect-sub">
           Ajusta el perímetro de cierre: caja, activos incluidos y tarjetas de crédito.
         </p>
       </div>
-      <div v-if="!isMonthlyCloseView" class="ui-budget-checkin-controls">
-        <label>
-          <span>Mes</span>
-          <select
-            :value="selectedExecutionMonth"
-            class="select ui-data-field"
-            :disabled="liquidityExecutionLoading"
-            @change="
-              updateSelectedExecutionMonth(Number(($event.target as HTMLSelectElement).value))
-            "
-          >
-            <option v-for="(label, index) in monthLabels" :key="`liq-${label}`" :value="index + 1">
-              {{ label }}
-            </option>
-          </select>
-        </label>
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          :disabled="!previousMonthlyCloseStep"
+          @click="goToPreviousMonthlyCloseStep()"
+        >
+          ← Paso anterior
+        </button>
+        <button type="button" class="btn btn-primary" @click="goToNextMonthlyCloseStep()">
+          Paso siguiente →
+        </button>
       </div>
     </div>
 
-    <div v-if="liquidityMonthlySummary" class="ui-budget-checkin-summary-grid">
-      <article class="ui-budget-checkin-kpi">
-        <span>Perimetro anterior</span>
-        <strong>{{ formatMoney(selectedLiquidityMonthPlanned) }} EUR</strong>
-      </article>
-      <article class="ui-budget-checkin-kpi">
-        <span>Perimetro real cierre</span>
-        <strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} EUR</strong>
-      </article>
-      <article
-        class="ui-budget-checkin-kpi"
+    <div v-if="liquidityMonthlySummary" class="kpis mc-step-kpis">
+      <div class="kpi">
+        <p class="kpi-label">Perímetro anterior</p>
+        <div class="kpi-value mono">{{ formatMoney(selectedLiquidityMonthPlanned) }} EUR</div>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Perímetro real cierre</p>
+        <div class="kpi-value mono">{{ formatMoney(selectedLiquidityMonthExecuted) }} EUR</div>
+      </div>
+      <div
+        class="kpi"
         :class="{
-          'ui-budget-checkin-kpi-danger': selectedLiquidityMonthDeviation < 0,
-          'ui-budget-checkin-kpi-good': selectedLiquidityMonthDeviation > 0,
+          'mc-kpi-dev-danger': selectedLiquidityMonthDeviation < 0,
+          'mc-kpi-dev-good': selectedLiquidityMonthDeviation > 0,
         }"
       >
-        <span>Variación perímetro</span>
-        <strong>
+        <p class="kpi-label">Variación perímetro</p>
+        <div class="kpi-value mono">
           {{ selectedLiquidityMonthDeviation > 0 ? '+' : ''
           }}{{ formatMoney(selectedLiquidityMonthDeviation) }} EUR
-        </strong>
-      </article>
-      <article class="ui-budget-checkin-kpi">
-        <span>Completitud</span>
-        <strong>{{ formatPercent(liquidityMonthlySummary.completion_ratio ?? null, 0) }}</strong>
-      </article>
+        </div>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Completitud</p>
+        <div class="kpi-value mono">
+          {{ formatPercent(liquidityMonthlySummary.completion_ratio ?? null, 0) }}
+        </div>
+      </div>
     </div>
 
-    <div v-if="isCloseLocked" class="ui-monthly-close-locked-banner">
+    <div v-if="isCloseLocked" class="mc-locked">
       Este mes está finalizado. Reabre el cierre para editar.
     </div>
 
-    <div class="ui-budget-checkin-list">
-      <div v-if="liquidityExecutionLoading" class="subtle">Cargando cierre de liquidez...</div>
-      <div v-else-if="!monthlyLiquidityExecutionRows.length" class="subtle">
-        No hay activos o pasivos liquidos activos para este mes.
-      </div>
-      <div v-else class="ui-budget-checkin-groups-box">
-        <details
-          v-for="block in liquidityCategoryBlocks"
-          :key="`liquidity-checkin-category-${block.key}`"
-          class="ui-budget-checkin-group"
-          :open="block.completionRatio < 1 || block.deviation !== 0"
-        >
-          <summary class="ui-budget-checkin-group-summary">
-            <div class="ui-budget-checkin-group-title-wrap">
-              <strong class="ui-budget-checkin-group-title">{{ block.label }}</strong>
-              <span class="ui-budget-checkin-group-meta">
-                {{ block.rows.length }} posiciones - {{ Math.round(block.completionRatio * 100) }} %
-                revision
-              </span>
-            </div>
-            <div class="ui-budget-checkin-group-kpis">
-              <span>P {{ formatMoney(block.plannedTotal) }} EUR</span>
-              <span>E {{ formatMoney(block.executedTotal) }} EUR</span>
-              <span
-                :class="{
-                  'ui-budget-checkin-group-dev-pos': block.deviation > 0,
-                  'ui-budget-checkin-group-dev-neg': block.deviation < 0,
-                }"
-              >
-                D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} EUR
-              </span>
-            </div>
-          </summary>
-
-          <div class="ui-budget-checkin-group-rows">
-            <article
-              v-for="row in block.rows"
-              :key="`liquidity-checkin-${row.row_type ?? 'asset'}-${row.asset_id}`"
-              class="ui-budget-checkin-row"
+    <div v-if="liquidityExecutionLoading" class="mc-empty">Cargando cierre de liquidez…</div>
+    <p v-else-if="!monthlyLiquidityExecutionRows.length" class="mc-empty">
+      No hay activos o pasivos líquidos activos para este mes.
+    </p>
+    <div v-else class="mc-blocks">
+      <details
+        v-for="block in liquidityCategoryBlocks"
+        :key="`liquidity-checkin-category-${block.key}`"
+        class="mc-block"
+        :open="block.completionRatio < 1 || block.deviation !== 0"
+      >
+        <summary>
+          <div class="mc-block-title-wrap">
+            <strong class="mc-block-title">{{ block.label }}</strong>
+            <span class="mc-block-meta">
+              {{ block.rows.length }} posiciones · {{ Math.round(block.completionRatio * 100) }} %
+              revisión
+            </span>
+          </div>
+          <div class="mc-block-kpis">
+            <span>P {{ formatMoney(block.plannedTotal) }} EUR</span>
+            <span>E {{ formatMoney(block.executedTotal) }} EUR</span>
+            <span
+              :class="block.deviation > 0 ? 'mc-dev-neg' : block.deviation < 0 ? 'mc-dev-pos' : ''"
             >
-              <div class="ui-budget-checkin-row-main">
-                <div class="ui-budget-checkin-row-title" :title="liquidityCheckinRowSummary(row)">
-                  {{ liquidityCheckinRowSummary(row) }}
-                  <span class="ui-budget-checkin-row-planned">
-                    (Referencia {{ formatMoney(row.planned) }}
-                    {{ row.currency === 'EUR' ? 'EUR' : row.currency }})
-                  </span>
-                </div>
-                <div
-                  v-if="
-                    row.ledger_available &&
-                    (row.coverage_source === 'ledger' ||
-                      !row.checkin ||
-                      isLiquidityLedgerRowUnlocked(row.asset_id))
-                  "
-                  class="ui-budget-checkin-row-state"
+              D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} EUR
+            </span>
+          </div>
+        </summary>
+
+        <div class="mc-rows">
+          <article
+            v-for="row in block.rows"
+            :key="`liquidity-checkin-${row.row_type ?? 'asset'}-${row.asset_id}`"
+            class="mc-row"
+          >
+            <div class="mc-row-main">
+              <div class="mc-row-title" :title="liquidityCheckinRowSummary(row)">
+                {{ liquidityCheckinRowSummary(row) }}
+                <span class="mc-row-ref">
+                  (Ref. {{ formatMoney(row.planned) }}
+                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }})
+                </span>
+              </div>
+              <div
+                v-if="
+                  row.ledger_available &&
+                  (row.coverage_source === 'ledger' ||
+                    !row.checkin ||
+                    isLiquidityLedgerRowUnlocked(row.asset_id))
+                "
+                class="mc-row-state"
+              >
+                <strong>Libro contable activo</strong>
+                <span
+                  v-if="row.executed != null && row.executed !== row.planned"
+                  :class="row.executed > row.planned ? 'mc-dev-neg' : 'mc-dev-pos'"
                 >
-                  <strong>Libro contable activo</strong>
-                  <span
-                    v-if="row.executed != null && row.executed !== row.planned"
-                    class="ui-budget-checkin-row-balance"
-                    :class="{
-                      'ui-budget-checkin-group-dev-pos': row.executed > row.planned,
-                      'ui-budget-checkin-group-dev-neg': row.executed < row.planned,
-                    }"
-                  >
-                    Desviación {{ row.executed > row.planned ? '+' : ''
-                    }}{{ formatMoney(row.executed - row.planned) }}
-                    {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
-                  </span>
-                  <span
-                    v-if="isLiquidityLedgerRowUnlocked(row.asset_id)"
-                    class="ui-budget-checkin-row-lock-note"
-                  >
-                    Ajuste manual abierto. Guarda el saldo o vuelve al libro contable.
-                  </span>
-                </div>
-                <div
-                  v-else-if="row.ledger_available && row.checkin"
-                  class="ui-budget-checkin-row-state"
-                >
-                  <strong>Ajuste manual sobre libro contable:</strong>
-                  <template v-if="row.executed != null">
+                  Desviación {{ row.executed > row.planned ? '+' : ''
+                  }}{{ formatMoney(row.executed - row.planned) }}
+                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
+                </span>
+                <span v-if="isLiquidityLedgerRowUnlocked(row.asset_id)" class="mc-row-note">
+                  Ajuste manual abierto. Guarda el saldo o vuelve al libro contable.
+                </span>
+              </div>
+              <div v-else-if="row.ledger_available && row.checkin" class="mc-row-state">
+                <strong>Ajuste manual sobre libro contable:</strong>
+                <template v-if="row.executed != null">
+                  {{ formatMoney(row.executed) }}
+                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
+                </template>
+              </div>
+              <div v-else-if="row.checkin" class="mc-row-state">
+                <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
+                <template v-if="row.executed != null">
+                  ({{ formatMoney(row.executed) }}
+                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }})
+                </template>
+              </div>
+            </div>
+
+            <div class="mc-row-actions">
+              <div
+                v-if="
+                  (row.ledger_available || (!row.ledger_available && row.checkin)) &&
+                  !isLiquidityLedgerRowUnlocked(row.asset_id)
+                "
+                class="mc-adjust"
+              >
+                <div v-if="row.executed != null" class="mc-ledger-readout">
+                  <span>Saldo cierre</span>
+                  <strong>
                     {{ formatMoney(row.executed) }}
                     {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
-                  </template>
+                  </strong>
                 </div>
-                <div v-else-if="row.checkin" class="ui-budget-checkin-row-state">
-                  <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
-                  <template v-if="row.executed != null">
-                    ({{ formatMoney(row.executed) }}
-                    {{ row.currency === 'EUR' ? 'EUR' : row.currency }})
-                  </template>
-                </div>
+                <button
+                  type="button"
+                  class="mc-mini-btn"
+                  :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
+                  title="Abrir un ajuste manual sin modificar todavía el libro contable"
+                  @click="unlockLiquidityLedgerRow(row)"
+                >
+                  Ajustar manualmente
+                </button>
               </div>
-
-              <div class="ui-budget-checkin-row-actions">
-                <div
-                  v-if="
-                    (row.ledger_available || (!row.ledger_available && row.checkin)) &&
-                    !isLiquidityLedgerRowUnlocked(row.asset_id)
-                  "
-                  class="ui-budget-checkin-adjust"
-                >
-                  <div v-if="row.executed != null" class="ui-budget-checkin-ledger-readout">
-                    <span>Saldo cierre</span>
-                    <strong>
-                      {{ formatMoney(row.executed) }}
-                      {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
-                    </strong>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn ui-budget-checkin-mini-btn"
-                    :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
-                    title="Abrir un ajuste manual sin modificar todavia el libro contable"
-                    @click="unlockLiquidityLedgerRow(row)"
-                  >
-                    Ajustar manualmente
-                  </button>
-                </div>
-                <div
-                  v-else
-                  class="ui-budget-checkin-adjust"
-                  :class="{ 'ui-budget-checkin-adjust-ledger-manual': row.ledger_available }"
-                >
-                  <input
-                    :value="liquidityAdjustAmounts[row.asset_id] ?? ''"
-                    inputmode="decimal"
-                    class="input ui-data-field"
-                    :disabled="isCloseLocked"
-                    placeholder="Saldo real"
-                    @input="
-                      setLiquidityAdjustAmount(
-                        row.asset_id,
-                        ($event.target as HTMLInputElement).value,
-                      )
-                    "
-                    @focus="ensureLiquidityAdjustAmountPrefilled(row)"
-                    @blur="onLiquidityAdjustAmountBlur(row)"
-                    @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
-                  />
-                  <div
-                    class="ui-budget-checkin-quick-actions"
-                    :class="{ 'ui-budget-checkin-quick-actions-inline': row.ledger_available }"
-                  >
-                    <button
-                      type="button"
-                      class="btn ui-budget-checkin-mini-btn"
-                      :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
-                      title="Poner saldo real a 0"
-                      @click="resetLiquidityCheckinDraftValue(row, 'zero')"
-                    >
-                      Borrar
-                    </button>
-                    <button
-                      type="button"
-                      class="btn ui-budget-checkin-mini-btn"
-                      :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
-                      title="Restaurar saldo de referencia"
-                      @click="resetLiquidityCheckinDraftValue(row, 'planned')"
-                    >
-                      Referencia
-                    </button>
-                    <button
-                      v-if="row.ledger_available"
-                      type="button"
-                      class="btn ui-budget-checkin-mini-btn ui-budget-checkin-link-btn"
-                      :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
-                      title="Volver a usar el saldo del libro contable"
-                      @click="relockLiquidityLedgerRow(row)"
-                    >
-                      Usar libro
-                    </button>
-                  </div>
-                </div>
-                <label
-                  v-if="
-                    !(
-                      row.ledger_available ||
-                      (!row.ledger_available && row.checkin) ||
-                      (row.coverage_source === 'ledger' &&
-                        !isLiquidityLedgerRowUnlocked(row.asset_id))
+              <div v-else class="mc-adjust">
+                <input
+                  :value="liquidityAdjustAmounts[row.asset_id] ?? ''"
+                  inputmode="decimal"
+                  class="mc-input"
+                  :disabled="isCloseLocked"
+                  placeholder="Saldo real"
+                  @input="
+                    setLiquidityAdjustAmount(
+                      row.asset_id,
+                      ($event.target as HTMLInputElement).value,
                     )
                   "
-                  class="ui-budget-checkin-confirm"
-                  title="Confirmar cierre de liquidez"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="!!row.checkin"
-                    :disabled="
-                      isCloseLocked ||
-                      (row.ledger_available &&
-                        row.coverage_source === 'ledger' &&
-                        !isLiquidityLedgerRowUnlocked(row.asset_id)) ||
-                      liquidityExecutionBusyAssetId === row.asset_id
-                    "
-                    aria-label="Confirmar cierre de liquidez"
-                    @change="
-                      onLiquidityCheckinCheckboxToggle(
-                        row,
-                        Boolean(($event.target as HTMLInputElement).checked),
-                      )
-                    "
-                  />
-                </label>
+                  @focus="ensureLiquidityAdjustAmountPrefilled(row)"
+                  @blur="onLiquidityAdjustAmountBlur(row)"
+                  @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
+                />
+                <div class="mc-quick-actions">
+                  <button
+                    type="button"
+                    class="mc-mini-btn"
+                    :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
+                    title="Poner saldo real a 0"
+                    @click="resetLiquidityCheckinDraftValue(row, 'zero')"
+                  >
+                    Borrar
+                  </button>
+                  <button
+                    type="button"
+                    class="mc-mini-btn"
+                    :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
+                    title="Restaurar saldo de referencia"
+                    @click="resetLiquidityCheckinDraftValue(row, 'planned')"
+                  >
+                    Referencia
+                  </button>
+                  <button
+                    v-if="row.ledger_available"
+                    type="button"
+                    class="mc-mini-btn"
+                    :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
+                    title="Volver a usar el saldo del libro contable"
+                    @click="relockLiquidityLedgerRow(row)"
+                  >
+                    Usar libro
+                  </button>
+                </div>
               </div>
-            </article>
-          </div>
-        </details>
-      </div>
+              <label
+                v-if="
+                  !(
+                    row.ledger_available ||
+                    (!row.ledger_available && row.checkin) ||
+                    (row.coverage_source === 'ledger' &&
+                      !isLiquidityLedgerRowUnlocked(row.asset_id))
+                  )
+                "
+                class="mc-confirm"
+                title="Confirmar cierre de liquidez"
+              >
+                <input
+                  type="checkbox"
+                  :checked="!!row.checkin"
+                  :disabled="
+                    isCloseLocked ||
+                    (row.ledger_available &&
+                      row.coverage_source === 'ledger' &&
+                      !isLiquidityLedgerRowUnlocked(row.asset_id)) ||
+                    liquidityExecutionBusyAssetId === row.asset_id
+                  "
+                  aria-label="Confirmar cierre de liquidez"
+                  @change="
+                    onLiquidityCheckinCheckboxToggle(
+                      row,
+                      Boolean(($event.target as HTMLInputElement).checked),
+                    )
+                  "
+                />
+              </label>
+            </div>
+          </article>
+        </div>
+      </details>
     </div>
   </section>
 </template>

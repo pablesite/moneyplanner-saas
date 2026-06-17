@@ -686,7 +686,7 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountMonthlyCloseView();
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Perimetro anterior900,00 EUR');
+    expect(wrapper.text()).toContain('Perímetro anterior900,00 EUR');
     expect(wrapper.text()).toContain('Variación perímetro+300,00 EUR');
 
     const resultStep = wrapper
