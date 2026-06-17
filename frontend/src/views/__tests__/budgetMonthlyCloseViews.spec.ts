@@ -2,7 +2,8 @@
 import { defineComponent } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import BudgetDashboardView from '../BudgetDashboardView.vue';
+import BudgetView from '../BudgetView.vue';
+import MonthlyCloseView from '../MonthlyCloseView.vue';
 
 vi.mock('vue-chartjs', () => ({
   Bar: { name: 'BarChartStub', template: '<div data-test="chart-stub" />' },
@@ -308,8 +309,7 @@ async function openMonthlyStep(wrapper: ReturnType<typeof mount>, label: string)
 }
 
 function mountMonthlyCloseView() {
-  return mount(BudgetDashboardView, {
-    props: { mode: 'monthly-close' },
+  return mount(MonthlyCloseView, {
     global: {
       stubs: {
         RouterLink: defineComponent({
@@ -322,7 +322,7 @@ function mountMonthlyCloseView() {
 }
 
 function mountBudgetView() {
-  return mount(BudgetDashboardView, {
+  return mount(BudgetView, {
     global: {
       stubs: {
         RouterLink: defineComponent({
@@ -334,7 +334,7 @@ function mountBudgetView() {
   });
 }
 
-describe('BudgetDashboardView', () => {
+describe('Budget & Monthly close views', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     mockCoreApiGet.mockReset();
@@ -689,11 +689,7 @@ describe('BudgetDashboardView', () => {
     expect(wrapper.text()).toContain('Perímetro anterior900,00 EUR');
     expect(wrapper.text()).toContain('Variación perímetro+300,00 EUR');
 
-    const resultStep = wrapper
-      .findAll('button.ui-monthly-close-step-chip')
-      .find((button) => button.text().includes('Resultado'));
-    await resultStep?.trigger('click');
-    await flushPromises();
+    await openMonthlyStep(wrapper, 'Resultado');
 
     expect(wrapper.text()).toContain('Residual contable');
     expect(wrapper.text()).toContain('Conciliación de cierre');
@@ -1286,7 +1282,7 @@ describe('BudgetDashboardView', () => {
     expect(wrapper.text()).toContain('✎');
   });
 
-  it('opens budget suggestions inside a modal when user asks for them', async () => {
+  it('opens the budget suggestions tab when user asks for them', async () => {
     configureCoreApi();
     mockAccountingApi.getMonthlySummary.mockResolvedValue({
       data: { fiscal_year: currentYear, months: [] },
@@ -1296,27 +1292,16 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    expect(
-      wrapper
-        .findAll('button')
-        .some((candidate) => candidate.attributes('aria-label') === 'Ver sugerencias'),
-    ).toBe(true);
-    expect(wrapper.text()).not.toContain('Sugerencias desde histórico del libro contable');
-    expect(wrapper.text()).not.toContain(
-      'Sin cobertura del libro contable por subcategoría para sugerir ajustes todavía.',
-    );
+    // Antes de abrir la pestaña, el contenido de sugerencias no está visible.
+    expect(wrapper.text()).not.toContain('Generadas con la media mensual ejecutada');
 
     const toggleSuggestions = wrapper
       .findAll('button')
-      .find((candidate) => candidate.attributes('aria-label') === 'Ver sugerencias');
+      .find((candidate) => candidate.text().includes('sugerencias'));
     await toggleSuggestions?.trigger('click');
     await flushPromises();
 
-    const modalText = document.body.textContent ?? '';
-
-    expect(modalText).toContain('Sugerencias desde histórico del libro contable');
-    expect(modalText).toContain('Cerrar');
-    expect(modalText).toContain('Sin cobertura del libro contable por subcategoría');
+    expect(wrapper.text()).toContain('Generadas con la media mensual ejecutada');
   });
 
   it('shows ledger-backed YTD execution in annual expense detail', async () => {
@@ -2242,7 +2227,7 @@ describe('BudgetDashboardView', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const filterButtons = () => wrapper.findAll('.ui-budget-filter-segment-hero button');
+    const filterButtons = () => wrapper.findAll('button');
     const expenseSection = () => wrapper.find('.bdg-sect-expense');
     const selectedMonthExecTitle = () => {
       const monthCol = expenseSection().findAll('.bdg-evo-col')[currentMonth - 1];
