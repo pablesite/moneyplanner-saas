@@ -173,6 +173,23 @@
 }
 
 /* ── Tablas de presupuesto (bdg-row, fiel al prototipo) ───────────────── */
+.dir-a .bdg-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.dir-a .bdg-section {
+  min-width: 0;
+}
+
+@container page (max-width: 1180px) {
+  .dir-a .bdg-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dir-a .bdg-sect-action {
   font-size: 12px;
 }
