@@ -161,6 +161,7 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
 
       <footer class="ui-shell-footer dir-a">
         <div class="ui-shell-footer-inner">
+          <span class="ui-shell-footer-name">The Arkenstone</span>
           <span class="ui-shell-footer-version">v{{ appVersion }}</span>
         </div>
       </footer>
