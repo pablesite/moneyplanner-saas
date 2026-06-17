@@ -112,6 +112,8 @@ onMounted(async () => {
     <BaseModal
       :open="showModal"
       :title="editId != null ? 'Editar titularidad compartida' : 'Nueva titularidad compartida'"
+      variant="sheet"
+      panel-class="dir-a"
       @close="resetModal"
     >
       <div class="form-grid">

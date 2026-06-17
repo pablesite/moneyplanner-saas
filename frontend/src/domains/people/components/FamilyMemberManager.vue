@@ -128,7 +128,13 @@ onMounted(async () => {
     <div v-if="store.loading" class="ui-status-line">Cargando miembros...</div>
 
     <!-- Modal crear -->
-    <BaseModal :open="createOpen" title="Nuevo miembro" @close="closeCreate">
+    <BaseModal
+      :open="createOpen"
+      title="Nuevo miembro"
+      variant="sheet"
+      panel-class="dir-a"
+      @close="closeCreate"
+    >
       <div class="form-grid">
         <div class="subtle ui-people-card-subtitle">
           Crea miembros de la familia. Al crear un adulto, se generará automáticamente su
@@ -165,7 +171,13 @@ onMounted(async () => {
     </BaseModal>
 
     <!-- Modal editar -->
-    <BaseModal :open="editOpen" title="Editar miembro" @close="closeEdit">
+    <BaseModal
+      :open="editOpen"
+      title="Editar miembro"
+      variant="sheet"
+      panel-class="dir-a"
+      @close="closeEdit"
+    >
       <div class="form-grid">
         <div>
           <div class="subtle ui-people-field-label">Nombre</div>

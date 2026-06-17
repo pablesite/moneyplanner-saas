@@ -15,6 +15,8 @@ defineProps({
   <BaseModal
     :open="page.showActivationModal"
     title="Añadir cuenta al libro contable"
+    variant="sheet"
+    panel-class="dir-a"
     @close="page.showActivationModal = false"
   >
     <form

@@ -209,7 +209,8 @@ const editMainAccountGroups = computed(() => {
   <BaseModal
     :open="page.showEditTransactionModal"
     title="Editar movimiento"
-    panel-class="max-w-[920px]"
+    variant="sheet"
+    panel-class="max-w-[920px] dir-a"
     @close="page.showEditTransactionModal = false"
   >
     <form

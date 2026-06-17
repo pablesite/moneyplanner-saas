@@ -587,7 +587,13 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
     </div>
   </div>
 
-  <BaseModal :open="showCreateUserModal" title="Crear usuario SaaS" @close="closeCreateUserModal">
+  <BaseModal
+    :open="showCreateUserModal"
+    title="Crear usuario SaaS"
+    variant="sheet"
+    panel-class="dir-a"
+    @close="closeCreateUserModal"
+  >
     <form class="form-grid" @submit.prevent="createAdminUser">
       <div class="grid-2">
         <label class="form-grid">

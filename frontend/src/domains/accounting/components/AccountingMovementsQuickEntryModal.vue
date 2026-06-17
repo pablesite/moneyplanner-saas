@@ -124,7 +124,8 @@ const quickMainAccountGroups = computed(() => {
   <BaseModal
     :open="page.showQuickEntryModal"
     title="Registrar movimiento diario"
-    panel-class="max-w-[920px]"
+    variant="sheet"
+    panel-class="max-w-[920px] dir-a"
     @close="page.showQuickEntryModal = false"
   >
     <div v-if="!page.liquidityAccounts.length" class="ui-accounting-inline-note">

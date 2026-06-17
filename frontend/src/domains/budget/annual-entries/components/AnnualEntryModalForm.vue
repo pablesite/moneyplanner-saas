@@ -89,8 +89,8 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <BaseModal :open="open" :title="title" @close="emit('close')">
-    <div class="grid gap-2.5 md:grid-cols-2">
+  <BaseModal :open="open" :title="title" variant="sheet" panel-class="dir-a" @close="emit('close')">
+    <div class="ui-item-form-grid">
       <select
         :value="form.category"
         class="select ui-data-field"

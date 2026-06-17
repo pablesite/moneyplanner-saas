@@ -135,7 +135,8 @@ onBeforeUnmount(() => {
       <BaseModal
         :open="dailyTimelineExpanded"
         title="Evolución contable diaria"
-        panel-class="max-w-[1080px]"
+        variant="sheet"
+        panel-class="max-w-[1080px] dir-a"
         :close-on-backdrop="true"
         @close="dailyTimelineExpanded = false"
       >
