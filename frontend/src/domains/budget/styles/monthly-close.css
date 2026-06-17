@@ -1,0 +1,83 @@
+/* Cierre mensual (/cierre-mensual) — Direction A. Vista desacoplada de Presupuesto. */
+
+.mc-page {
+  position: relative;
+}
+
+.mc-page .filter-ctrl {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.mc-loading {
+  padding: 16px 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mc-hero-eyebrow {
+  color: var(--muted);
+}
+
+.mc-hero .hero-value {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-hero .hero-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.mc-hero .hero-delta .pos {
+  color: var(--pos);
+}
+
+.mc-hero .hero-delta .neg {
+  color: var(--neg);
+}
+
+.mc-hero-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--faint);
+  display: inline-block;
+}
+
+.mc-hero .kpi-meta .pos {
+  color: var(--pos);
+}
+
+.mc-hero .kpi-meta .neg {
+  color: var(--neg);
+}
+
+@container page (max-width: 900px) {
+  .mc-hero .hero-value {
+    font-size: 44px;
+  }
+}
+
+@container page (max-width: 560px) {
+  .mc-hero .kpis {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
