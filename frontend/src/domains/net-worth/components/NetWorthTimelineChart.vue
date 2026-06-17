@@ -57,10 +57,18 @@ function formatCompact(value: number): string {
   return formatNumber(value, 0);
 }
 
-const xTickStep = computed(() => {
-  if (props.points.length <= 6) return 1;
-  return Math.ceil(props.points.length / 6);
-});
+const isYearMode = computed(() => props.points.length > 14);
+
+function xTickLabel(index: number): string {
+  if (!isYearMode.value) return props.points[index]?.shortLabel ?? '';
+  const date = props.points[index]?.date ?? '';
+  const year = date.slice(0, 4);
+  if (!year) return '';
+  // Solo mostrar el año en el primer punto de cada año.
+  const prevDate = props.points[index - 1]?.date ?? '';
+  const prevYear = prevDate.slice(0, 4);
+  return index === 0 || year !== prevYear ? year : '';
+}
 
 const hasNegativePoints = computed(() => props.points.some((point) => point.value < 0));
 
@@ -146,12 +154,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         color: 'rgba(255, 255, 255, 0.54)',
         maxRotation: 0,
         autoSkip: false,
-        callback: (_value, index) => {
-          if (index === 0 || index === props.points.length - 1) {
-            return props.points[index]?.shortLabel ?? '';
-          }
-          return index % xTickStep.value === 0 ? (props.points[index]?.shortLabel ?? '') : '';
-        },
+        callback: (_value, index) => xTickLabel(index),
       },
     },
     y: {

@@ -16,7 +16,7 @@ import {
 } from '@/domains/net-worth/useNetWorthPageMetrics';
 import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActions';
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
-import { AContextBar, APageHead, ARowMenu, ASectHead, BaseModal } from '@/domains/ui';
+import { AContextBar, AInfoHint, APageHead, ARowMenu, ASectHead, BaseModal } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
 import { toApiErrorMessage } from '@/lib/errors';
 
@@ -324,6 +324,7 @@ const timelineExpanded = ref(false);
 const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | '5a' | 'all'>('5a');
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
 const timelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
+const activeTimelinePreset = computed(() => selectedTimelinePreset.value);
 
 type TimelinePoint = {
   date: string;
@@ -983,12 +984,11 @@ const {
     <section class="sect">
       <ASectHead
         title="Evolución"
-        :subtitle="
-          timelineFilterLabel
-            ? `Filtrando: ${timelineFilterLabel}`
-            : 'Patrimonio neto en el tiempo.'
-        "
+        :subtitle="timelineFilterLabel ? `Filtrando: ${timelineFilterLabel}` : undefined"
       >
+        <template #hint>
+          <AInfoHint label="Sobre la evolución">Patrimonio neto en el tiempo.</AInfoHint>
+        </template>
         <template #actions>
           <div class="actions">
             <button
@@ -1004,7 +1004,7 @@ const {
                 v-for="preset in timelinePresetOptions"
                 :key="preset"
                 type="button"
-                :class="{ on: selectedTimelinePreset === preset }"
+                :class="{ on: activeTimelinePreset === preset }"
                 @click="setTimelinePreset(preset)"
               >
                 {{ preset }}
@@ -1114,10 +1114,13 @@ const {
     </section>
 
     <section class="sect">
-      <ASectHead
-        title="Balance"
-        subtitle="Activos y pasivos por categoría con filtrado cruzado hacia la evolución."
-      />
+      <ASectHead title="Balance">
+        <template #hint>
+          <AInfoHint label="Sobre el balance">
+            Activos y pasivos por categoría con filtrado cruzado hacia la evolución.
+          </AInfoHint>
+        </template>
+      </ASectHead>
 
       <div v-if="balanceGroups.length === 0" class="a-nw-state a-nw-state-empty">
         No hay posiciones para el filtro actual.
@@ -1128,7 +1131,7 @@ const {
           <thead>
             <tr>
               <th>Cuenta</th>
-              <th>Subcategoria</th>
+              <th>Categoría / Subcategoría</th>
               <th>Titular</th>
               <th class="num">Valor</th>
               <th class="a-nw-actions-col"></th>
@@ -1289,7 +1292,13 @@ const {
               </div>
             </div>
             <div class="a-nw-generated-meta">
-              {{ entry.name }} · {{ entry.category }} / {{ entry.subcategory }}
+              {{ entry.name }} ·
+              {{ assetCategories.find((c) => c.value === entry.category)?.label ?? entry.category }}
+              /
+              {{
+                assetSubcategories.find((s) => s.value === entry.subcategory)?.label ??
+                entry.subcategory
+              }}
             </div>
           </div>
         </div>

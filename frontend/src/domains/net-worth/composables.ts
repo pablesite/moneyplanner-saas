@@ -19,7 +19,7 @@ const currencies = [
   { value: 'ETH', label: 'ETH' },
 ];
 
-const assetCategories = [
+export const assetCategories = [
   { value: 'cash', label: 'Liquidez' },
   { value: 'real_estate', label: 'Inmuebles' },
   { value: 'investments', label: 'Inversiones' },
@@ -27,7 +27,7 @@ const assetCategories = [
   { value: 'other', label: 'Otros' },
 ];
 
-const assetSubcategories = [
+export const assetSubcategories = [
   { category: 'cash', value: 'bank_account', label: 'Cuenta bancaria' },
   { category: 'cash', value: 'short_term_deposit', label: 'Depósito a corto plazo' },
   { category: 'cash', value: 'wallet', label: 'Monedero' },
@@ -60,7 +60,7 @@ const assetSubcategories = [
   { category: 'other', value: 'other', label: 'Otros' },
 ];
 
-const liabilityCategories = [
+export const liabilityCategories = [
   { value: 'mortgage', label: 'Hipotecas' },
   { value: 'personal_loan', label: 'Préstamos personales' },
   { value: 'credit_card', label: 'Tarjetas de crédito' },

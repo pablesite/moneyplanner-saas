@@ -136,16 +136,23 @@ function deltaOffset(delta: number): number {
 
 const barWidth = computed(() => ((W - padL - padR) / Math.max(1, props.points.length)) * 0.4);
 
-// Limita el número de etiquetas X para que no se amontonen.
-const xLabelStep = computed(() => {
+// Calcula etiquetas del eje X. En períodos cortos (≤14 puntos) usa el mes; en períodos
+// largos muestra solo la primera aparición de cada año.
+// ≤12 puntos (hasta 1a): todos los meses. >12 puntos (5a, all): una etiqueta por año.
+const xAxisLabels = computed<{ label: string; show: boolean }[]>(() => {
   const n = props.points.length;
-  if (n <= 8) return 1;
-  return Math.ceil(n / 8);
+  if (n <= 12) {
+    return props.points.map((p) => ({ label: p.shortLabel, show: true }));
+  }
+  const seenYears = new Set<string>();
+  return props.points.map((p) => {
+    const year = /^\d{4}/.test(p.date) ? p.date.slice(0, 4) : '';
+    if (!year) return { label: '', show: false };
+    const show = !seenYears.has(year);
+    seenYears.add(year);
+    return { label: year, show };
+  });
 });
-
-function showXLabel(index: number): boolean {
-  return index === 0 || index === props.points.length - 1 || index % xLabelStep.value === 0;
-}
 
 const hoverPoint = computed(() =>
   hoverIndex.value != null ? (props.points[hoverIndex.value] ?? null) : null,
@@ -278,18 +285,19 @@ function handleLeave(): void {
         />
       </template>
 
-      <!-- Etiquetas eje X -->
-      <text
-        v-for="(p, i) in props.points"
-        :key="`x-${i}`"
-        :x="px(i)"
-        :y="totalH - 2"
-        text-anchor="middle"
-        class="a-nw-evo-axis"
-        :fill-opacity="hoverIndex === i ? 0.95 : showXLabel(i) ? 0.5 : 0"
-      >
-        {{ p.shortLabel }}
-      </text>
+      <!-- Etiquetas eje X: solo se renderizan los nodos visibles -->
+      <template v-for="(entry, i) in xAxisLabels" :key="`x-${i}`">
+        <text
+          v-if="entry.show || hoverIndex === i"
+          :x="px(i)"
+          :y="totalH - 2"
+          text-anchor="middle"
+          class="a-nw-evo-axis"
+          :fill-opacity="hoverIndex === i ? 0.95 : 0.5"
+        >
+          {{ hoverIndex === i ? (props.points[i]?.shortLabel ?? entry.label) : entry.label }}
+        </text>
+      </template>
     </svg>
 
     <!-- Tooltip: patrimonio neto + variación -->

@@ -172,6 +172,12 @@
   border-bottom: 1px solid var(--line);
 }
 
+.dir-a .sect-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .dir-a .sect-title {
   margin: 0;
   font-size: 14px;
