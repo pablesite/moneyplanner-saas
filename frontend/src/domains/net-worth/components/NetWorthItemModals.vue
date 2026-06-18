@@ -47,7 +47,7 @@ defineProps<{
     :open="showAssetModal"
     title="Nuevo activo"
     variant="sheet"
-    panel-class="ui-sheet-panel dir-a a-nw-sheet"
+    panel-class="ui-sheet-panel dir-a dir-a-sheet"
     body-class="ui-sheet-body"
     @close="onCloseAssetModal"
   >
@@ -67,7 +67,7 @@ defineProps<{
     :open="showLiabilityModal"
     title="Nuevo pasivo"
     variant="sheet"
-    panel-class="ui-sheet-panel dir-a a-nw-sheet"
+    panel-class="ui-sheet-panel dir-a dir-a-sheet"
     body-class="ui-sheet-body"
     @close="onCloseLiabilityModal"
   >
@@ -87,7 +87,7 @@ defineProps<{
     :open="showEditModal"
     :title="editTitle"
     variant="sheet"
-    panel-class="ui-sheet-panel dir-a a-nw-sheet"
+    panel-class="ui-sheet-panel dir-a dir-a-sheet"
     body-class="ui-sheet-body"
     @close="closeEdit"
   >

@@ -554,67 +554,6 @@
   max-width: 1080px;
 }
 
-/* Modal "Añadir/Editar cuenta" — patrón sheet Direction A: campos underline,
-   sin cajas internas. Acotado a `.a-nw-sheet` para no afectar a otros formularios
-   que comparten las clases `ui-item-form-*`/`ui-data-field`. */
-.a-nw-sheet .ui-modal-title {
-  font-size: 22px;
-  letter-spacing: -0.01em;
-}
-
-.a-nw-sheet .ui-item-form-grid {
-  gap: 0 32px;
-}
-
-.a-nw-sheet .ui-item-form-field {
-  gap: 6px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.a-nw-sheet .ui-item-form-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
-
-.a-nw-sheet .ui-item-form-field .input,
-.a-nw-sheet .ui-item-form-field .select {
-  height: auto;
-  padding: 4px 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text);
-  font-size: 15px;
-  outline: none;
-}
-
-.a-nw-sheet .ui-item-form-field .input:focus,
-.a-nw-sheet .ui-item-form-field .select:focus {
-  box-shadow: 0 1px 0 0 var(--accent);
-}
-
-/* Sin tarjetas internas: las secciones (inversiones, financiación…) se aplanan. */
-.a-nw-sheet .ui-item-form-section {
-  padding: 8px 0 0;
-  border: 0;
-  background: transparent;
-}
-
-.a-nw-sheet .ui-item-form-footer {
-  border-top: 1px solid var(--line);
-  margin-top: 8px;
-  padding-top: 16px;
-}
-
-.a-nw-sheet .ui-form-actions {
-  justify-content: flex-end;
-}
-
 .a-nw-range-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -824,7 +763,7 @@
   }
 
   /* Modal sheet: respiración compacta. */
-  .a-nw-sheet .ui-item-form-grid {
+  .dir-a-sheet .ui-item-form-grid {
     gap: 0;
   }
 }

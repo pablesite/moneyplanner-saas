@@ -7,7 +7,7 @@ export type NavItem = {
 };
 
 export const appShellNavItems: NavItem[] = [
-  { id: 'home', icon: 'GU', label: 'Guía', hint: 'Plan paso a paso', to: '/' },
+  { id: 'home', icon: 'GU', label: 'Guía', hint: 'Plan paso a paso', to: '/guia' },
   {
     id: 'net-worth',
     icon: 'PT',
@@ -23,17 +23,17 @@ export const appShellNavItems: NavItem[] = [
     to: '/presupuesto',
   },
   {
-    id: 'monthly-close',
-    icon: 'CM',
-    label: 'Cierre mensual',
-    hint: 'Liquidez, ingresos, gastos y residual',
-    to: '/cierre-mensual',
-  },
-  {
     id: 'accounting-movements',
     icon: 'LD',
     label: 'Contabilidad',
     hint: 'Libro diario y cuentas contables',
     to: '/movimientos',
+  },
+  {
+    id: 'monthly-close',
+    icon: 'CM',
+    label: 'Cierre mensual',
+    hint: 'Liquidez, ingresos, gastos y residual',
+    to: '/cierre-mensual',
   },
 ];

@@ -210,7 +210,7 @@ const editMainAccountGroups = computed(() => {
     :open="page.showEditTransactionModal"
     title="Editar movimiento"
     variant="sheet"
-    panel-class="max-w-[920px] dir-a"
+    panel-class="max-w-[920px] dir-a dir-a-sheet"
     @close="page.showEditTransactionModal = false"
   >
     <form
