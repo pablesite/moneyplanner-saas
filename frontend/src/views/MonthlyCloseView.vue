@@ -29,6 +29,7 @@ const {
   monthlyCloseFlowSteps,
   activeMonthlyCloseStep,
   previousMonthlyCloseStep,
+  nextMonthlyCloseStep,
   setActiveMonthlyCloseStep,
   goToPreviousMonthlyCloseStep,
   goToNextMonthlyCloseStep,
@@ -171,7 +172,7 @@ function goToCloseStep(): void {
   <div class="page mc-page">
     <APageHead :title="`Cierre · ${selectedExecutionMonthLabel}`">
       <template #meta>
-        <span>FY {{ fiscalYear }}</span>
+        <span class="mc-meta-pill">FY {{ fiscalYear }}</span>
         <span class="dot"></span>
         <span>{{ isCloseLocked ? 'Cerrado' : 'Borrador' }}</span>
       </template>
@@ -212,15 +213,6 @@ function goToCloseStep(): void {
       </label>
     </AContextBar>
 
-    <section class="sect">
-      <AStepper
-        :steps="stepperSteps"
-        :active-id="activeMonthlyCloseStep"
-        eyebrow-prefix="Paso"
-        @change="onStepChange"
-      />
-    </section>
-
     <MonthlyCloseHero
       :month-label="selectedExecutionMonthLabel"
       :residual="selectedMonthlyCloseResidual"
@@ -234,6 +226,35 @@ function goToCloseStep(): void {
       :format-signed-money="formatSignedMoney"
     />
 
+    <section class="sect">
+      <div class="mc-stepper-row">
+        <AStepper
+          :steps="stepperSteps"
+          :active-id="activeMonthlyCloseStep"
+          eyebrow-prefix="Paso"
+          @change="onStepChange"
+        />
+        <div class="mc-stepper-nav">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            :disabled="!previousMonthlyCloseStep"
+            @click="goToPreviousMonthlyCloseStep()"
+          >
+            ← Anterior
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="!nextMonthlyCloseStep"
+            @click="goToNextMonthlyCloseStep()"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </div>
+    </section>
+
     <div v-if="liquidityExecutionError" class="alert">{{ liquidityExecutionError }}</div>
     <div v-if="monthlyCloseError" class="alert">{{ monthlyCloseError }}</div>
 
@@ -241,7 +262,6 @@ function goToCloseStep(): void {
       :is-monthly-close-view="isMonthlyCloseView"
       :active-monthly-close-step="activeMonthlyCloseStep"
       :is-close-locked="isCloseLocked"
-      :previous-monthly-close-step="previousMonthlyCloseStep"
       :month-labels="monthLabels"
       :selected-execution-month="selectedExecutionMonth"
       :liquidity-monthly-summary="liquidityMonthlySummary"
@@ -258,8 +278,6 @@ function goToCloseStep(): void {
       :format-percent="formatPercent"
       :checkin-status-label="checkinStatusLabel"
       :liquidity-checkin-row-summary="liquidityCheckinRowSummary"
-      :go-to-previous-monthly-close-step="goToPreviousMonthlyCloseStep"
-      :go-to-next-monthly-close-step="goToNextMonthlyCloseStep"
       :update-selected-execution-month="updateSelectedExecutionMonth"
       :reset-liquidity-checkin-draft-value="resetLiquidityCheckinDraftValue"
       :ensure-liquidity-adjust-amount-prefilled="ensureLiquidityAdjustAmountPrefilled"
@@ -292,8 +310,6 @@ function goToCloseStep(): void {
       :format-percent="formatPercent"
       :checkin-status-label="checkinStatusLabel"
       :is-income-group-unlocked="isIncomeGroupUnlocked"
-      :go-to-previous-monthly-close-step="goToPreviousMonthlyCloseStep"
-      :go-to-next-monthly-close-step="goToNextMonthlyCloseStep"
       :reset-income-group-checkin-draft-value="resetIncomeGroupCheckinDraftValue"
       :ensure-income-group-adjust-amount-prefilled="ensureIncomeGroupAdjustAmountPrefilled"
       :save-income-group-checkin-from-input="saveIncomeGroupCheckinFromInput"
@@ -326,8 +342,6 @@ function goToCloseStep(): void {
       :checkin-status-label="checkinStatusLabel"
       :is-locked-execution-row="isLockedExecutionRow"
       :is-expense-group-unlocked="isExpenseGroupUnlocked"
-      :go-to-previous-monthly-close-step="goToPreviousMonthlyCloseStep"
-      :go-to-next-monthly-close-step="goToNextMonthlyCloseStep"
       :reset-expense-checkin-draft-value="resetExpenseCheckinDraftValue"
       :reset-expense-group-checkin-draft-value="resetExpenseGroupCheckinDraftValue"
       :ensure-expense-adjust-amount-prefilled="ensureExpenseAdjustAmountPrefilled"
@@ -369,7 +383,6 @@ function goToCloseStep(): void {
       :format-money="formatMoney"
       :format-percent="formatPercent"
       :format-signed-money="formatSignedMoney"
-      :go-to-previous-monthly-close-step="goToPreviousMonthlyCloseStep"
       :close-status="closeStatus ?? undefined"
       :is-close-locked="isCloseLocked"
       :monthly-close-action-busy="monthlyCloseActionBusy"

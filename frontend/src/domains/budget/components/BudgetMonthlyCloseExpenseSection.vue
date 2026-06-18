@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, AKindChip } from '@/domains/ui';
+import { AInfoHint, AKindChip, ASectHead } from '@/domains/ui';
 import type { AnnualExpenseEntry } from '@/domains/budget/annual-entries';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
@@ -117,8 +117,6 @@ const props = defineProps<{
   checkinStatusLabel: (status: 'confirmed' | 'adjusted' | 'skipped' | 'estimated') => string;
   isLockedExecutionRow: (row: ExpenseRow) => boolean;
   isExpenseGroupUnlocked: (groupKey: string) => boolean;
-  goToPreviousMonthlyCloseStep: () => void;
-  goToNextMonthlyCloseStep: () => void;
   resetExpenseCheckinDraftValue: (row: ExpenseRow, mode: ExpenseResetMode) => void | Promise<void>;
   resetExpenseGroupCheckinDraftValue: (
     group: ExpenseGroup,
@@ -170,23 +168,14 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
 
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'expense'" class="sect mc-step">
-    <div class="sect-head">
-      <div class="mc-title-wrap">
-        <h2 class="sect-title">Paso 3 · Check-in mensual de gastos</h2>
+    <ASectHead title="Check-in mensual de gastos">
+      <template #hint>
         <AInfoHint label="Sobre este paso">
           Confirma los gastos previstos del mes; el cierre usa movimientos y deja pendientes solo
           las líneas a revisar.
         </AInfoHint>
-      </div>
-      <div class="actions">
-        <button type="button" class="btn btn-ghost" @click="goToPreviousMonthlyCloseStep()">
-          ← Paso anterior
-        </button>
-        <button type="button" class="btn btn-primary" @click="goToNextMonthlyCloseStep()">
-          Paso siguiente →
-        </button>
-      </div>
-    </div>
+      </template>
+    </ASectHead>
 
     <div v-if="expenseMonthlySummary" class="kpis mc-step-kpis">
       <div class="kpi">

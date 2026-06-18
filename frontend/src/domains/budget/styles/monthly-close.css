@@ -4,6 +4,15 @@
   position: relative;
 }
 
+.mc-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
 .mc-page .filter-ctrl {
   min-height: 32px;
   padding: 6px 10px;
@@ -19,6 +28,19 @@
   padding: 16px 6px;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* Dos columnas: residual + variación de liquidez a la izquierda; KPIs del mes
+   a la derecha (mismo patrón que el hero de Presupuesto). */
+.mc-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+  gap: 40px;
+  align-items: center;
+}
+
+.mc-hero-main {
+  min-width: 0;
 }
 
 .mc-hero-eyebrow {
@@ -69,17 +91,32 @@
   color: var(--neg);
 }
 
-/* ── Contenido del paso activo ───────────────────────────────────────── */
-.mc-title-wrap {
+/* Fila del stepper: pasos a la izquierda + navegación lineal única a la
+   derecha (antes se repetía Anterior/Siguiente en cada paso). */
+.mc-stepper-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
+.mc-stepper-row .stepper {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mc-stepper-nav {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Contenido del paso activo ───────────────────────────────────────── */
 .mc-step-kpis {
-  border-top: 1px solid var(--line);
+  /* El sect-head de la cabecera ya aporta el divisor superior. */
   border-bottom: 1px solid var(--line);
-  margin: 2px 0 4px;
+  margin: 0 0 4px;
 }
 
 .mc-step-kpis .kpi {
@@ -145,7 +182,9 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* flex-start + margin-left:auto en los KPIs: el triángulo (::before) y el
+     título quedan agrupados a la izquierda en vez de centrarse. */
+  justify-content: flex-start;
   gap: 16px;
   padding: 14px 6px;
 }
@@ -185,6 +224,7 @@
 }
 
 .mc-block-kpis {
+  margin-left: auto;
   display: flex;
   gap: 16px;
   font-family: 'Geist Mono', ui-monospace, monospace;
@@ -739,6 +779,11 @@
 }
 
 @container page (max-width: 900px) {
+  .mc-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
   .mc-hero .hero-value {
     font-size: 44px;
   }

@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint } from '@/domains/ui';
+import { AInfoHint, ASectHead } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type MonthlyCloseStatus = 'draft' | 'finalized' | 'locked';
@@ -76,7 +76,6 @@ const props = defineProps<{
   formatMoney: (value: number, decimals?: number) => string;
   formatPercent: (value: number | null, decimals?: number) => string;
   formatSignedMoney: (value: number, decimals?: number) => string;
-  goToPreviousMonthlyCloseStep: () => void;
   onFinalizeClose?: () => void | Promise<void>;
   onReopenClose?: () => void | Promise<void>;
   onLockClose?: () => void | Promise<void>;
@@ -117,15 +116,14 @@ const resultBridgeRows = computed(() =>
 
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'result'" class="sect mc-step">
-    <div class="sect-head">
-      <div class="mc-title-wrap">
-        <h2 class="sect-title">Paso 4 · Resultado</h2>
+    <ASectHead title="Resultado">
+      <template #hint>
         <AInfoHint label="Sobre este paso">
           Residual contable provisional a partir del perímetro real y de ingresos/gastos confirmados
           del mes.
         </AInfoHint>
-      </div>
-      <div v-if="closeStatus" class="actions">
+      </template>
+      <template v-if="closeStatus" #actions>
         <template v-if="closeStatus === 'locked'">
           <span class="mc-locked">Este mes está bloqueado.</span>
         </template>
@@ -166,8 +164,8 @@ const resultBridgeRows = computed(() =>
             Aplicar distribución
           </button>
         </template>
-      </div>
-    </div>
+      </template>
+    </ASectHead>
 
     <div class="mc-result-hero">
       <article

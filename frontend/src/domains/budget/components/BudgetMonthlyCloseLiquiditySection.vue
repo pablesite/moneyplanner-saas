@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint } from '@/domains/ui';
+import { AInfoHint, ASectHead } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type LiquidityResetMode = 'zero' | 'planned';
@@ -53,7 +53,6 @@ const props = defineProps<{
   isMonthlyCloseView: boolean;
   activeMonthlyCloseStep: MonthlyCloseStepId;
   isCloseLocked?: boolean;
-  previousMonthlyCloseStep: MonthlyCloseStepId | null;
   monthLabels: string[];
   selectedExecutionMonth: number;
   liquidityMonthlySummary: { completion_ratio?: number | null } | null;
@@ -70,8 +69,6 @@ const props = defineProps<{
   formatPercent: (value: number | null, decimals?: number) => string;
   checkinStatusLabel: (status: 'confirmed' | 'adjusted' | 'skipped') => string;
   liquidityCheckinRowSummary: (row: LiquidityRow) => string;
-  goToPreviousMonthlyCloseStep: () => void;
-  goToNextMonthlyCloseStep: () => void;
   updateSelectedExecutionMonth: (value: number) => void;
   resetLiquidityCheckinDraftValue: (
     row: LiquidityRow,
@@ -164,27 +161,13 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
 
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'liq'" class="sect mc-step">
-    <div class="sect-head">
-      <div class="mc-title-wrap">
-        <h2 class="sect-title">Paso 1 · Cierre de liquidez</h2>
+    <ASectHead title="Cierre de liquidez">
+      <template #hint>
         <AInfoHint label="Sobre este paso">
           Ajusta el perímetro de cierre: caja, activos incluidos y tarjetas de crédito.
         </AInfoHint>
-      </div>
-      <div class="actions">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          :disabled="!previousMonthlyCloseStep"
-          @click="goToPreviousMonthlyCloseStep()"
-        >
-          ← Paso anterior
-        </button>
-        <button type="button" class="btn btn-primary" @click="goToNextMonthlyCloseStep()">
-          Paso siguiente →
-        </button>
-      </div>
-    </div>
+      </template>
+    </ASectHead>
 
     <div v-if="liquidityMonthlySummary" class="kpis mc-step-kpis">
       <div class="kpi">

@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, AKindChip } from '@/domains/ui';
+import { AInfoHint, AKindChip, ASectHead } from '@/domains/ui';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
@@ -106,8 +106,6 @@ const props = defineProps<{
   isCloseLocked?: boolean;
   checkinStatusLabel: (status: 'confirmed' | 'adjusted' | 'skipped' | 'estimated') => string;
   isIncomeGroupUnlocked: (groupKey: string) => boolean;
-  goToPreviousMonthlyCloseStep: () => void;
-  goToNextMonthlyCloseStep: () => void;
   resetIncomeGroupCheckinDraftValue: (
     group: IncomeGroup,
     mode: IncomeResetMode,
@@ -154,23 +152,14 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
 
 <template>
   <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'income'" class="sect mc-step">
-    <div class="sect-head">
-      <div class="mc-title-wrap">
-        <h2 class="sect-title">Paso 2 · Check-in mensual de ingresos</h2>
+    <ASectHead title="Check-in mensual de ingresos">
+      <template #hint>
         <AInfoHint label="Sobre este paso">
           Confirma los ingresos previstos del mes; el cierre usa movimientos y deja pendientes solo
           las líneas a revisar.
         </AInfoHint>
-      </div>
-      <div class="actions">
-        <button type="button" class="btn btn-ghost" @click="goToPreviousMonthlyCloseStep()">
-          ← Paso anterior
-        </button>
-        <button type="button" class="btn btn-primary" @click="goToNextMonthlyCloseStep()">
-          Paso siguiente →
-        </button>
-      </div>
-    </div>
+      </template>
+    </ASectHead>
 
     <div class="kpis mc-step-kpis">
       <div class="kpi">
