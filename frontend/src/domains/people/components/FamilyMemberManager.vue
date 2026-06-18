@@ -132,29 +132,29 @@ onMounted(async () => {
       :open="createOpen"
       title="Nuevo miembro"
       variant="sheet"
-      panel-class="dir-a"
+      panel-class="dir-a dir-a-sheet"
       @close="closeCreate"
     >
-      <div class="form-grid">
-        <div class="subtle ui-people-card-subtitle">
+      <div class="ui-item-form-grid">
+        <p class="subtle md:col-span-2" style="margin: 0; padding-bottom: 4px">
           Crea miembros de la familia. Al crear un adulto, se generará automáticamente su
           titularidad individual.
-        </div>
+        </p>
 
-        <div>
-          <div class="subtle ui-people-field-label">Nombre</div>
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Nombre</span>
           <input v-model="form.name" placeholder="Nombre (ej. Pablo)" class="input" />
-        </div>
+        </label>
 
-        <div>
-          <div class="subtle ui-people-field-label">Rol</div>
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Rol</span>
           <select v-model="form.role" class="select">
             <option value="adult">Adulto</option>
             <option value="child">Niño</option>
           </select>
-        </div>
+        </label>
 
-        <div class="ui-form-actions">
+        <div class="ui-form-actions md:col-span-2">
           <button class="btn ui-form-action-btn" type="button" @click="closeCreate">
             Cancelar
           </button>
@@ -175,24 +175,24 @@ onMounted(async () => {
       :open="editOpen"
       title="Editar miembro"
       variant="sheet"
-      panel-class="dir-a"
+      panel-class="dir-a dir-a-sheet"
       @close="closeEdit"
     >
-      <div class="form-grid">
-        <div>
-          <div class="subtle ui-people-field-label">Nombre</div>
+      <div class="ui-item-form-grid">
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Nombre</span>
           <input v-model="editForm.name" class="input" />
-        </div>
+        </label>
 
-        <div>
-          <div class="subtle ui-people-field-label">Rol</div>
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Rol</span>
           <select v-model="editForm.role" class="select">
             <option value="adult">Adulto</option>
             <option value="child">Niño</option>
           </select>
-        </div>
+        </label>
 
-        <div class="ui-form-actions">
+        <div class="ui-form-actions md:col-span-2">
           <button class="btn ui-form-action-btn" type="button" @click="closeEdit">Cancelar</button>
           <button
             class="btn ui-form-action-btn"

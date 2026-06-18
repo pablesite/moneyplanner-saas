@@ -82,8 +82,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
 }
 
 .dir-a .eyebrow {
@@ -482,16 +481,11 @@
   align-items: center;
   gap: 18px;
   flex-wrap: wrap;
-  /* Franja de controles de ámbito: superficie sutil para que se lea como una
-     barra de herramientas definida en vez de campos flotando bajo el header.
-     El contenedor .page es un grid con gap de 28px entre hijos; con un
-     margin-top negativo cancelamos casi todo ese gap para que la barra quede
-     pegada bajo el header (subcabecera) en vez de flotar a 28px. */
   margin: calc(6px - 28px * var(--density-scale, 1)) 0 4px;
-  padding: 10px 14px;
-  background: var(--hover);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
 }
 
 .dir-a .context-field {
@@ -641,6 +635,106 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
+}
+
+/* Direction A — sheet modal global: campos underline sin cajas.
+   Usar panel-class="dir-a dir-a-sheet" en BaseModal. */
+.dir-a-sheet .ui-modal-title {
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+.dir-a-sheet .ui-item-form-grid {
+  gap: 0 32px;
+}
+
+.dir-a-sheet .ui-item-form-field {
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dir-a-sheet .ui-item-form-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.dir-a-sheet .input,
+.dir-a-sheet .select {
+  height: auto;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.dir-a-sheet .input:focus,
+.dir-a-sheet .select:focus {
+  box-shadow: 0 1px 0 0 var(--accent);
+}
+
+.dir-a-sheet .ui-data-field {
+  min-height: auto;
+}
+
+.dir-a-sheet .ui-item-form-section {
+  padding: 8px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+.dir-a-sheet .ui-item-form-footer {
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+  padding-top: 16px;
+}
+
+.dir-a-sheet .ui-form-actions,
+.dir-a-sheet .actions {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Separadores para form-grid genérico (People, AccountView) */
+.dir-a-sheet .form-grid > div:not(.ui-form-actions):not(.actions),
+.dir-a-sheet .form-grid > label:not(.checkbox-row) {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Accounting modals: ui-accounting-field adopta el mismo patrón que ui-item-form-field */
+.dir-a-sheet .ui-accounting-field {
+  display: grid;
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dir-a-sheet .ui-accounting-field > span {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.dir-a-sheet .ui-accounting-form-grid {
+  gap: 0 24px;
+}
+
+.dir-a-sheet .ui-accounting-submit-row {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
 }
 
 @container page (max-width: 1280px) {

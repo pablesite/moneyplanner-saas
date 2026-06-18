@@ -113,15 +113,16 @@ onMounted(async () => {
       :open="showModal"
       :title="editId != null ? 'Editar titularidad compartida' : 'Nueva titularidad compartida'"
       variant="sheet"
-      panel-class="dir-a"
+      panel-class="dir-a dir-a-sheet"
       @close="resetModal"
     >
-      <div class="form-grid">
-        <div class="subtle">
+      <div class="ui-item-form-grid">
+        <p class="subtle md:col-span-2" style="margin: 0; padding-bottom: 4px">
           Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).
-        </div>
+        </p>
 
-        <div class="card ui-people-splits-card">
+        <div class="ui-item-form-field md:col-span-2">
+          <span class="ui-item-form-label">Miembros</span>
           <div class="ui-people-member-list">
             <button
               v-for="m in adults"
@@ -134,18 +135,18 @@ onMounted(async () => {
               {{ m.name }}
             </button>
           </div>
+        </div>
 
-          <div v-if="form.memberIds.length" class="ui-people-splits">
-            <div class="ui-people-splits-header">
-              <div class="subtle">Porcentajes</div>
-              <button class="btn" type="button" @click="setEqualSplit">Reparto igual</button>
-            </div>
-
+        <div v-if="form.memberIds.length" class="ui-item-form-field md:col-span-2">
+          <div class="ui-people-splits-header">
+            <span class="ui-item-form-label">Porcentajes</span>
+            <button class="btn" type="button" @click="setEqualSplit">Reparto igual</button>
+          </div>
+          <div class="ui-people-splits">
             <div v-for="id in form.memberIds" :key="id" class="ui-people-split-row">
               <div class="ui-people-split-name">
                 {{ adults.find((a) => a.id === id)?.name ?? 'ID ' + id }}
               </div>
-
               <input
                 v-model="form.percents[id]"
                 inputmode="decimal"
@@ -157,7 +158,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="ui-form-actions">
+        <div class="ui-form-actions md:col-span-2">
           <button class="btn ui-form-action-btn" type="button" @click="resetModal">Cancelar</button>
           <button
             class="btn ui-form-action-btn"
