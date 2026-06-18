@@ -482,7 +482,16 @@
   align-items: center;
   gap: 18px;
   flex-wrap: wrap;
-  padding: 12px 0 4px;
+  /* Franja de controles de ámbito: superficie sutil para que se lea como una
+     barra de herramientas definida en vez de campos flotando bajo el header.
+     El contenedor .page es un grid con gap de 28px entre hijos; con un
+     margin-top negativo cancelamos casi todo ese gap para que la barra quede
+     pegada bajo el header (subcabecera) en vez de flotar a 28px. */
+  margin: calc(6px - 28px * var(--density-scale, 1)) 0 4px;
+  padding: 10px 14px;
+  background: var(--hover);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .dir-a .context-field {
