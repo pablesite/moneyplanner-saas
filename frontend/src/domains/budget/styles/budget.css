@@ -749,7 +749,7 @@
 .dir-a .bdg-richbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin-top: 8px;
 }
 
@@ -757,8 +757,8 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 22px;
-  border-radius: 6px;
+  height: 40px;
+  border-radius: 8px;
   background: var(--line);
   overflow: hidden;
   display: flex;
@@ -798,9 +798,9 @@
 
 .dir-a .bdg-richbar-exec {
   position: relative;
-  padding-left: 10px;
-  font-size: 11.5px;
-  font-weight: 500;
+  padding-left: 14px;
+  font-size: 14px;
+  font-weight: 600;
   font-family: 'Geist Mono', ui-monospace, monospace;
   color: var(--text);
 }
@@ -813,15 +813,16 @@
 .dir-a .bdg-richbar-plan {
   position: relative;
   margin-left: auto;
-  padding-right: 10px;
-  font-size: 11px;
+  padding-right: 14px;
+  font-size: 12.5px;
   color: var(--faint);
   font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
 .dir-a .bdg-richbar-dev {
   flex-shrink: 0;
-  font-size: 11.5px;
+  font-size: 14px;
+  font-weight: 500;
   font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
@@ -846,7 +847,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 0 12px;
+  padding: 14px 0 16px;
 }
 
 .dir-a .bdg-rollup .bdg-richbar {

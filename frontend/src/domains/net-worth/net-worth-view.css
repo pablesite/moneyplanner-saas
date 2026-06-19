@@ -36,7 +36,7 @@
 
 .hero-top {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: 40px;
   flex-wrap: wrap;
   row-gap: 28px;
@@ -45,7 +45,7 @@
 
 .hero-headline {
   display: grid;
-  gap: 14px;
+  gap: 0;
   flex: 0 1 auto;
   min-width: 0;
 }
@@ -61,17 +61,17 @@
 
 .hero-value {
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 72px;
-  line-height: 0.96;
-  letter-spacing: -0.035em;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.03em;
   font-weight: 600;
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-variant-numeric: tabular-nums;
 }
 
 .hero-value-unit {
   color: var(--muted);
-  font-size: 18px;
+  font-size: 22px;
   margin-left: 8px;
 }
 
@@ -80,6 +80,7 @@
   flex-wrap: wrap;
   gap: 10px 16px;
   align-items: baseline;
+  margin-top: 12px;
   color: var(--muted);
   font-size: 13.5px;
 }

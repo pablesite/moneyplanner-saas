@@ -1,125 +1,105 @@
 <script setup lang="ts">
+import { ASectHead, ASelect } from '@/domains/ui';
+import { computed } from 'vue';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
 const state = props.page;
+
+const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, label: String(y) })));
 </script>
 
 <template>
-  <section class="ui-section-card">
-    <div class="ui-section-head">
-      <div class="ui-section-copy">
-        <h2 class="ui-section-title">Estad�sticas</h2>
-      </div>
-      <div class="ui-period-bar">
-        <label class="ui-period-field">
-          <span>Ejercicio</span>
-          <select
-            v-model="state.selectedYear"
-            class="select ui-period-select"
-            @change="state.reloadPeriod"
-          >
-            <option v-for="year in state.yearOptions" :key="year" :value="year">{{ year }}</option>
-          </select>
-        </label>
-      </div>
-    </div>
+  <div>
+    <ASectHead title="Estadísticas" subtitle="Balance contable del año">
+      <template #actions>
+        <ASelect
+          v-model="state.selectedYear"
+          :options="yearOptions"
+          class="filter-ctrl"
+          :searchable="false"
+          @update:model-value="state.reloadPeriod"
+        />
+      </template>
+    </ASectHead>
 
-    <div class="ui-kpi-strip ui-kpi-strip-2col">
-      <div class="ui-kpi-card">
-        <span class="ui-kpi-label">Activos</span>
-        <strong class="ui-kpi-value">{{ state.formatMoney(state.accountingAssetsTotal) }}</strong>
-        <p class="ui-kpi-meta">{{ (state.accountsByType.get('asset') ?? []).length }} cuentas</p>
+    <div
+      class="kpis"
+      style="grid-template-columns: 1fr 1fr; padding-top: 16px; border-top: 1px solid var(--line)"
+    >
+      <div class="kpi" style="padding-left: 0">
+        <p class="kpi-label">Activos contables</p>
+        <div class="kpi-value mono">{{ state.formatMoney(state.accountingAssetsTotal) }}</div>
+        <div class="kpi-meta">{{ (state.accountsByType.get('asset') ?? []).length }} cuentas</div>
       </div>
-      <div class="ui-kpi-card">
-        <span class="ui-kpi-label">Pasivos</span>
-        <strong class="ui-kpi-value">{{
-          state.formatMoney(state.accountingLiabilitiesTotal)
-        }}</strong>
-        <p class="ui-kpi-meta">
+      <div class="kpi">
+        <p class="kpi-label">Pasivos contables</p>
+        <div class="kpi-value mono">{{ state.formatMoney(state.accountingLiabilitiesTotal) }}</div>
+        <div class="kpi-meta">
           {{ (state.accountsByType.get('liability') ?? []).length }} cuentas
-        </p>
-      </div>
-    </div>
-
-    <div v-if="state.summaryRows.length" class="ui-cashflow-strip">
-      <div v-for="row in state.summaryRows" :key="row.month" class="ui-cashflow-month">
-        <span class="ui-cashflow-month-label">{{ state.monthLabel(row.month) }}</span>
-        <strong
-          class="ui-cashflow-month-value"
-          :class="
-            row.incomeValue - row.expenseValue >= 0
-              ? 'ui-cashflow-positive'
-              : 'ui-cashflow-negative'
-          "
-        >
-          {{ state.formatMoney(row.incomeValue - row.expenseValue) }}
-        </strong>
-        <small class="ui-cashflow-month-meta">
-          I {{ state.formatMoney(row.incomeValue) }} / G {{ state.formatMoney(row.expenseValue) }}
-        </small>
-      </div>
-    </div>
-
-    <p class="ui-page-lead">
-      Este saldo solo incluye cuentas contables activas en esta vista. No incluye vivienda,
-      mobiliario u otros activos fuera del libro contable.
-    </p>
-
-    <details v-if="state.hasTechnicalAccounts" class="ui-ledger-technical">
-      <summary>Contrapartidas tecnicas del sistema</summary>
-      <p class="ui-page-lead">
-        Estas cuentas siguen existiendo por compatibilidad interna, pero no forman parte del
-        catalogo operativo que se gestiona manualmente.
-      </p>
-      <section
-        v-for="type in state.technicalAccountTypeOptions"
-        :key="type.value"
-        class="ui-ledger-technical-group"
-      >
-        <div class="ui-section-head ui-ledger-technical-head">
-          <strong>{{ type.label }}</strong>
-          <span class="ui-pro-chip">{{ state.accountsByType.get(type.value)?.length ?? 0 }}</span>
         </div>
-        <ul v-if="(state.accountsByType.get(type.value)?.length ?? 0) > 0" class="ui-entry-list">
-          <li
-            v-for="account in state.accountsByType.get(type.value)"
-            :key="account.id"
-            class="ui-entry-row"
+      </div>
+    </div>
+
+    <div v-if="state.summaryRows.length" style="margin-top: 20px">
+      <div class="a-mov-cashflow-label">Flujo mensual · {{ state.selectedYear }}</div>
+      <div class="a-mov-cashflow-grid">
+        <div v-for="row in state.summaryRows" :key="row.month" class="a-mov-cashflow-col">
+          <div class="a-mov-cashflow-mon">{{ state.monthLabel(row.month) }}</div>
+          <div
+            class="mono a-mov-cashflow-val"
+            :style="{
+              color: row.incomeValue - row.expenseValue >= 0 ? 'var(--pos)' : 'var(--neg)',
+            }"
           >
-            <div class="ui-ledger-account-meta ui-ledger-account-meta-stretch">
-              <strong>{{ account.name }}</strong>
-              <div class="ui-action-bar ui-ledger-account-chips">
-                <span class="ui-pro-chip">{{ account.currency }}</span>
-                <span class="ui-pro-chip">{{ account.origin }}</span>
-              </div>
+            {{ row.incomeValue - row.expenseValue >= 0 ? '+' : '−'
+            }}{{ state.formatMoney(Math.abs(row.incomeValue - row.expenseValue)) }}
+          </div>
+          <div class="a-mov-cashflow-meta">
+            <span style="color: var(--pos)">↑{{ state.formatMoney(row.incomeValue) }}</span>
+            <span style="color: var(--faint)"> / </span>
+            <span style="color: var(--neg)">↓{{ state.formatMoney(row.expenseValue) }}</span>
+          </div>
+        </div>
+      </div>
+      <p class="a-mov-cashflow-note">
+        Solo incluye cuentas contables activas. No incluye vivienda, mobiliario u otros activos
+        fuera del libro contable.
+      </p>
+    </div>
+
+    <details v-if="state.hasTechnicalAccounts" class="a-mov-technical">
+      <summary>
+        <span style="font-size: 11px">▸</span>
+        Contrapartidas técnicas del sistema
+        <span class="chip" style="margin-left: 4px; font-size: 11px">{{
+          state.technicalAccountTypeOptions.length
+        }}</span>
+      </summary>
+      <p class="a-mov-technical-note">
+        Estas cuentas siguen existiendo por compatibilidad interna, pero no forman parte del
+        catálogo operativo que se gestiona manualmente.
+      </p>
+      <template v-for="type in state.technicalAccountTypeOptions" :key="type.value">
+        <div
+          v-for="account in state.accountsByType.get(type.value)"
+          :key="account.id"
+          class="a-mov-technical-row"
+        >
+          <div>
+            <div style="font-size: 13px">{{ account.name }}</div>
+            <div
+              style="font-size: 11px; color: var(--faint); margin-top: 2px; display: flex; gap: 6px"
+            >
+              <span class="chip" style="font-size: 10px">{{ account.currency }}</span>
+              <span class="chip" style="font-size: 10px">{{ account.origin }}</span>
             </div>
-            <div class="ui-ledger-account-info">
-              <span>{{ state.formatCompact(account.current_balance, account.currency) }}</span>
-              <button
-                v-if="account.asset_id != null || account.liability_id != null"
-                class="icon-btn"
-                type="button"
-                title="Quitar tracking"
-                :disabled="state.accountActivationLoading || state.accountCreationLoading"
-                @click="state.removeNetWorthTracking(account)"
-              >
-                ??
-              </button>
-              <button
-                v-if="account.origin === 'user'"
-                class="icon-btn"
-                type="button"
-                title="Eliminar cuenta"
-                :disabled="state.accountCreationLoading"
-                @click="state.deleteAccount(account.id, account.name)"
-              >
-                ???
-              </button>
-            </div>
-          </li>
-        </ul>
-      </section>
+          </div>
+          <div class="mono" style="font-size: 13px; color: var(--muted)">
+            {{ state.formatCompact(account.current_balance, account.currency) }}
+          </div>
+        </div>
+      </template>
     </details>
-  </section>
+  </div>
 </template>

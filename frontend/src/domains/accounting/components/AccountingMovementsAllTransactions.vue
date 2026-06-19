@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount } from 'vue';
+import { AKindChip, ARowMenu, ASelect } from '@/domains/ui';
+import type { ASelectItem } from '@/domains/ui';
 import type { LedgerTransaction } from '@/domains/accounting/models';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
@@ -21,7 +23,7 @@ function selectDatePreset(preset: (typeof state.datePresetOptions)[number]['valu
 
 function closeDateDropdown(e: MouseEvent) {
   const target = e.target as HTMLElement;
-  if (!target.closest('.ui-accounting-date-dropdown')) {
+  if (!target.closest('.a-mov-date-wrap')) {
     dateDropdownOpen.value = false;
   }
 }
@@ -34,20 +36,10 @@ const activeDateLabel = () => {
   return opt?.label ?? 'Período';
 };
 
-function typeBadgeVariant(transaction: LedgerTransaction): string {
-  if (transaction.activity_kind === 'income') return 'income';
-  if (transaction.activity_kind === 'expense') return 'expense';
-  if (transaction.activity_kind === 'transfer') return 'transfer';
-  if (transaction.activity_kind === 'adjustment') return 'transfer';
-  if (transaction.activity_kind === 'investment') {
-    return transaction.investment_direction === 'outflow'
-      ? 'investment-outflow'
-      : 'investment-inflow';
-  }
-  if (transaction.activity_kind === 'debt_payment') return 'debt-payment';
-  if (transaction.activity_kind === 'opening_balance') return 'transfer';
-  if (transaction.activity_kind === 'revaluation') return 'revaluation';
-  return 'other';
+function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'muted' {
+  if (tx.activity_kind === 'income') return 'asset';
+  if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
+  return 'muted';
 }
 
 function signedImpactForRow(transaction: LedgerTransaction): number {
@@ -56,9 +48,7 @@ function signedImpactForRow(transaction: LedgerTransaction): number {
   if (transaction.activity_kind === 'expense' || transaction.activity_kind === 'debt_payment') {
     return -baseAmount;
   }
-  if (transaction.activity_kind === 'investment') {
-    return 0;
-  }
+  if (transaction.activity_kind === 'investment') return 0;
   if (
     transaction.activity_kind === 'revaluation' ||
     transaction.activity_kind === 'opening_balance'
@@ -66,276 +56,215 @@ function signedImpactForRow(transaction: LedgerTransaction): number {
     const linkedEntry = transaction.entries.find(
       (entry) => entry.asset_id != null || entry.liability_id != null,
     );
-    if (linkedEntry) {
-      return linkedEntry.side === 'debit' ? baseAmount : -baseAmount;
-    }
-    // Fallback: use the income/expense entry direction.
-    // A positive revaluation credits an income account; a negative one debits an expense account.
+    if (linkedEntry) return linkedEntry.side === 'debit' ? baseAmount : -baseAmount;
     const flowEntry = transaction.entries.find((e) => e.flow_family !== '');
-    if (flowEntry) {
-      return flowEntry.side === 'credit' ? baseAmount : -baseAmount;
-    }
-    // Last resort for legacy entries without flow_family: entries are ordered by id,
-    // so entries[0] is always the asset account (debit = gain, credit = loss).
+    if (flowEntry) return flowEntry.side === 'credit' ? baseAmount : -baseAmount;
     const firstEntry = transaction.entries[0];
-    if (firstEntry) {
-      return firstEntry.side === 'debit' ? baseAmount : -baseAmount;
-    }
+    if (firstEntry) return firstEntry.side === 'debit' ? baseAmount : -baseAmount;
     return 0;
   }
   return 0;
 }
 
-function amountTone(transaction: LedgerTransaction): 'positive' | 'negative' | 'neutral' {
-  const impact = signedImpactForRow(transaction);
-  if (impact > 0) return 'positive';
-  if (impact < 0) return 'negative';
-  return 'neutral';
+function amountColor(tx: LedgerTransaction): string {
+  const v = signedImpactForRow(tx);
+  if (v > 0) return 'var(--pos)';
+  if (v < 0) return 'var(--neg)';
+  return 'var(--muted)';
 }
 
-function originLabel(origin: LedgerTransaction['origin']): string {
-  if (origin === 'import') return 'Importado';
-  return origin;
+function debitAccount(tx: LedgerTransaction): string {
+  return tx.entries.find((e) => e.side === 'debit')?.account_name ?? '—';
+}
+
+function creditAccount(tx: LedgerTransaction): string {
+  return tx.entries.find((e) => e.side === 'credit')?.account_name ?? '—';
+}
+
+const netDelta = computed(() =>
+  state.todosTransactions.reduce((sum, tx) => sum + signedImpactForRow(tx), 0),
+);
+
+const showCategory = computed(() =>
+  ['income', 'expense', 'investment', 'debt_payment'].includes(state.activityFilters.kind),
+);
+
+const accountOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Cuenta' },
+  ...state.groupedCuentasAccounts.map((group) => ({
+    group: `${group.positionType === 'asset' ? 'Activos' : 'Pasivos'} · ${group.label}`,
+    options: group.accounts.map((a) => ({
+      value: String(a.id),
+      label: state.accountDisplayName(a),
+    })),
+  })),
+]);
+
+const kindOptions: ASelectItem[] = [
+  { value: 'all', label: 'Tipo' },
+  { value: 'income', label: 'Ingresos' },
+  { value: 'expense', label: 'Gastos' },
+  { value: 'transfer', label: 'Transferencias' },
+  { value: 'adjustment', label: 'Ajustes' },
+  { value: 'investment', label: 'Inversión' },
+  { value: 'debt_payment', label: 'Pago deuda' },
+  { value: 'opening_balance', label: 'Saldo inicial' },
+  { value: 'revaluation', label: 'Revalorizaciones' },
+];
+
+const categoryOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Categoría' },
+  ...state.filterCategoryOptions.map((c) => ({ value: c.value, label: c.label })),
+]);
+
+const subcategoryOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Subcategoría' },
+  ...state.filterSubcategoryOptions.map((s) => ({ value: s.value, label: s.label })),
+]);
+
+function rowMenuItems(tx: LedgerTransaction) {
+  if (tx.origin === 'system') return [];
+  return [
+    { id: 'edit', label: 'Editar' },
+    { id: 'duplicate', label: 'Duplicar' },
+    { id: 'delete', label: 'Eliminar', danger: true },
+  ];
+}
+
+function handleMenuSelect(id: string, tx: LedgerTransaction) {
+  if (id === 'edit') state.openEditTransactionModal(tx.id);
+  else if (id === 'duplicate') state.openDuplicateFromTransaction(tx);
+  else if (id === 'delete') state.deleteTransactionFromTimeline(tx.id, tx.description);
 }
 </script>
 
 <template>
-  <section class="ui-section-card">
-    <div class="ui-accounting-filters-floating">
-      <div class="ui-accounting-filters-row">
-        <input v-model="state.activityFilters.query" class="input" placeholder="Buscar..." />
-        <select v-model="state.activityFilters.kind" class="select">
-          <option value="all">Tipo</option>
-          <option value="income">Ingresos</option>
-          <option value="expense">Gastos</option>
-          <option value="transfer">Transferencias</option>
-          <option value="adjustment">Ajustes</option>
-          <option value="investment">Inversion</option>
-          <option value="debt_payment">Pago deuda</option>
-          <option value="opening_balance">Saldo inicial</option>
-          <option value="revaluation">Revalorizaciones</option>
-        </select>
-        <select
-          v-if="
-            ['income', 'expense', 'investment', 'debt_payment'].includes(state.activityFilters.kind)
-          "
-          v-model="state.activityFilters.categoryKey"
-          class="select"
-        >
-          <option value="">Categoría</option>
-          <option v-for="cat in state.filterCategoryOptions" :key="cat.value" :value="cat.value">
-            {{ cat.label }}
-          </option>
-        </select>
-        <select
-          v-if="state.filterSubcategoryOptions.length"
-          v-model="state.activityFilters.subcategoryKey"
-          class="select"
-        >
-          <option value="">Subcategoría</option>
-          <option v-for="sub in state.filterSubcategoryOptions" :key="sub.value" :value="sub.value">
-            {{ sub.label }}
-          </option>
-        </select>
-        <div class="ui-accounting-date-dropdown">
-          <button type="button" class="ui-accounting-date-trigger" @click="toggleDateDropdown">
-            {{ activeDateLabel() }}
-            <span class="ui-accounting-date-trigger-arrow">▾</span>
+  <div>
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <input
+        v-model="state.activityFilters.query"
+        class="filter-ctrl"
+        style="min-width: 200px; flex: 0 1 240px"
+        placeholder="Buscar…"
+      />
+      <!-- Cuenta -->
+      <ASelect
+        v-model="state.activityFilters.accountId"
+        :options="accountOptions"
+        class="filter-ctrl"
+      />
+      <ASelect v-model="state.activityFilters.kind" :options="kindOptions" class="filter-ctrl" />
+      <ASelect
+        v-if="showCategory"
+        v-model="state.activityFilters.categoryKey"
+        :options="categoryOptions"
+        class="filter-ctrl"
+      />
+      <ASelect
+        v-if="state.filterSubcategoryOptions.length"
+        v-model="state.activityFilters.subcategoryKey"
+        :options="subcategoryOptions"
+        class="filter-ctrl"
+      />
+      <!-- Date popover -->
+      <div class="a-mov-date-wrap">
+        <button class="filter-ctrl" type="button" @click="toggleDateDropdown">
+          {{ activeDateLabel() }} ▾
+        </button>
+        <div v-if="dateDropdownOpen" class="filter-popover">
+          <button
+            v-for="preset in state.datePresetOptions"
+            :key="preset.value"
+            :class="{ on: state.todosDatePreset === preset.value }"
+            type="button"
+            @click="selectDatePreset(preset.value)"
+          >
+            {{ preset.label }}
           </button>
-          <div v-if="dateDropdownOpen" class="ui-accounting-date-menu">
-            <button
-              v-for="preset in state.datePresetOptions"
-              :key="preset.value"
-              type="button"
-              class="ui-accounting-date-menu-item"
-              :class="{
-                'ui-accounting-date-menu-item-active': state.todosDatePreset === preset.value,
-              }"
-              @click="selectDatePreset(preset.value)"
-            >
-              {{ preset.label }}
-            </button>
-            <template v-if="state.todosDatePreset === 'custom'">
-              <div class="ui-accounting-date-menu-custom">
-                <input v-model="state.todosDateFrom" type="date" class="input" title="Desde" />
-                <input v-model="state.todosDateTo" type="date" class="input" title="Hasta" />
-              </div>
-            </template>
-          </div>
+          <template v-if="state.todosDatePreset === 'custom'">
+            <hr />
+            <div class="a-mov-popover-custom">
+              <input v-model="state.todosDateFrom" class="filter-ctrl" type="date" title="Desde" />
+              <input v-model="state.todosDateTo" class="filter-ctrl" type="date" title="Hasta" />
+            </div>
+          </template>
         </div>
-        <span class="ui-accounting-filters-count">
-          {{ state.todosTransactions.length }} de {{ state.todosTotalCount }}
-        </span>
       </div>
+      <!-- Count + net -->
+      <span class="filter-count">
+        <strong>{{ state.todosTransactions.length }}</strong>
+        <span style="color: var(--faint)"> de </span>
+        {{ state.todosTotalCount }}
+        <span class="dot" />
+        <span class="mono" :style="{ color: netDelta >= 0 ? 'var(--pos)' : 'var(--neg)' }">
+          {{ state.formatSignedMoney(netDelta) }}
+        </span>
+        neto
+      </span>
     </div>
 
-    <div v-if="state.todosLoading && !state.todosTransactions.length" class="ui-section-loading">
+    <!-- Loading -->
+    <div v-if="state.todosLoading && !state.todosTransactions.length" class="a-mov-loading-state">
       <div class="ui-import-spinner"></div>
       <span>Cargando movimientos...</span>
     </div>
-    <div
-      v-else-if="!state.todosTransactions.length"
-      class="ui-state-block ui-state-empty ui-accounting-empty-state"
-    >
-      <p class="ui-state-title">Sin movimientos para estos filtros</p>
-      <p class="ui-state-hint">Prueba otro periodo o ajusta la búsqueda para ver actividad.</p>
-    </div>
-    <ul v-else class="ui-entry-list">
-      <li v-for="transaction in state.todosTransactions" :key="transaction.id" class="ui-entry-row">
-        <span class="ui-entry-date">{{ state.formatDate(transaction.booking_date) }}</span>
-        <div class="ui-entry-body">
-          <strong class="ui-entry-desc">{{ transaction.description }}</strong>
-          <div class="ui-action-bar ui-entry-meta">
-            <span :class="`ui-type-badge ui-type-badge-${typeBadgeVariant(transaction)}`">
-              {{ state.activityKindLabel(transaction) }}
-            </span>
-            <span class="ui-pro-chip ui-entry-chip">
-              {{ state.transactionAccountTrailLabel(transaction) }}
-            </span>
-            <span
-              v-if="state.transactionOwnershipLabel(transaction)"
-              class="ui-pro-chip ui-entry-chip"
-            >
-              {{ state.transactionOwnershipLabel(transaction) }}
-            </span>
-            <span v-if="transaction.origin === 'import'" class="ui-pro-chip ui-entry-chip">
-              {{ originLabel(transaction.origin) }}
-            </span>
-          </div>
-          <span v-if="state.transactionClassificationLabel(transaction)" class="ui-entry-accounts">
-            {{ state.transactionClassificationLabel(transaction) }}
-          </span>
-        </div>
-        <span
-          class="ui-accounting-balance-delta"
-          :class="`ui-accounting-balance-delta-${amountTone(transaction)}`"
-        >
-          {{
-            state.formatMoney(
-              state.transactionMainAmount(transaction),
-              transaction.entries[0]?.currency ?? 'EUR',
-            )
-          }}
-        </span>
-        <div class="ui-entry-actions">
-          <button
-            v-if="transaction.origin !== 'system'"
-            class="icon-btn ui-accounting-entry-action-btn"
-            type="button"
-            title="Duplicar movimiento"
-            aria-label="Duplicar movimiento"
-            :disabled="state.transactionCreationLoading"
-            @click="state.openDuplicateFromTransaction(transaction)"
-          >
-            <svg
-              class="ui-entry-action-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <rect
-                x="9"
-                y="9"
-                width="13"
-                height="13"
-                rx="2"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            v-if="transaction.origin !== 'system'"
-            class="icon-btn ui-accounting-entry-action-btn ui-entry-action-edit"
-            type="button"
-            title="Editar movimiento"
-            aria-label="Editar movimiento"
-            :disabled="state.transactionCreationLoading"
-            @click="state.openEditTransactionModal(transaction.id)"
-          >
-            <svg
-              class="ui-entry-action-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 20h9"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            v-if="transaction.origin !== 'system'"
-            class="icon-btn ui-accounting-entry-action-btn ui-entry-action-delete"
-            type="button"
-            title="Eliminar movimiento"
-            aria-label="Eliminar movimiento"
-            :disabled="state.transactionCreationLoading"
-            @click="state.deleteTransactionFromTimeline(transaction.id, transaction.description)"
-          >
-            <svg
-              class="ui-entry-action-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M3 6h18"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M19 6l-1 14a1 1 0 0 1-1 .93H7a1 1 0 0 1-1-.93L5 6"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M10 11v6M14 11v6"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </li>
-    </ul>
 
-    <div v-if="state.todosHasMore" class="ui-load-more">
+    <!-- Empty state -->
+    <div v-else-if="!state.todosTransactions.length" class="a-mov-todos-empty">
+      <div class="a-mov-todos-empty-title">Sin movimientos para estos filtros</div>
+      <div>Prueba otro periodo o ajusta la búsqueda para ver actividad.</div>
+    </div>
+
+    <!-- Movements table -->
+    <table v-else class="a-mov-todos-table">
+      <thead>
+        <tr>
+          <th style="width: 90px">Fecha</th>
+          <th style="width: 30%">Concepto</th>
+          <th>Tipo</th>
+          <th>Debe</th>
+          <th>Haber</th>
+          <th class="num">Importe</th>
+          <th style="width: 36px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="transaction in state.todosTransactions"
+          :key="transaction.id"
+          class="clickable"
+          @click="transaction.origin !== 'system' && state.openEditTransactionModal(transaction.id)"
+        >
+          <td class="mono" style="color: var(--muted); font-size: 12.5px">
+            {{ state.formatDate(transaction.booking_date) }}
+          </td>
+          <td>
+            <div style="font-size: 14px">{{ transaction.description }}</div>
+          </td>
+          <td>
+            <AKindChip :tone="kindTone(transaction)">
+              {{ state.activityKindLabel(transaction) }}
+            </AKindChip>
+          </td>
+          <td style="color: var(--muted); font-size: 12.5px">{{ debitAccount(transaction) }}</td>
+          <td style="color: var(--muted); font-size: 12.5px">{{ creditAccount(transaction) }}</td>
+          <td class="num mono" :style="{ color: amountColor(transaction) }">
+            {{ state.formatSignedMoney(signedImpactForRow(transaction)) }}
+          </td>
+          <td @click.stop>
+            <ARowMenu
+              v-if="transaction.origin !== 'system'"
+              :items="rowMenuItems(transaction)"
+              label="Acciones del movimiento"
+              @select="handleMenuSelect($event, transaction)"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div v-if="state.todosHasMore" class="a-mov-load-more">
       <button
         class="btn"
         type="button"
@@ -345,8 +274,8 @@ function originLabel(origin: LedgerTransaction['origin']): string {
         {{ state.todosLoadingMore ? 'Cargando...' : 'Cargar más' }}
       </button>
     </div>
-    <p v-else-if="state.todosTransactions.length" class="ui-load-more-hint">
+    <p v-else-if="state.todosTransactions.length" class="a-mov-load-hint">
       Todos los movimientos cargados
     </p>
-  </section>
+  </div>
 </template>
