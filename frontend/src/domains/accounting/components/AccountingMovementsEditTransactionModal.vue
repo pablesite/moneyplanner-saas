@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { computed, ref, watch, type PropType } from 'vue';
-import BaseModal from '@/domains/ui/components/BaseModal.vue';
+import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 
 const props = defineProps({
   page: {
@@ -64,6 +64,23 @@ function groupAndSortAccounts(accounts: AccountOption[]): AccountGroup[] {
           accountLabel(left).localeCompare(accountLabel(right), 'es', { sensitivity: 'base' }),
         ),
     }));
+}
+
+function accountSelectItems(
+  groups: AccountGroup[],
+  placeholder: string,
+  placeholderDisabled = true,
+): ASelectItem[] {
+  return [
+    { value: null, label: placeholder, disabled: placeholderDisabled },
+    ...groups.map((group) => ({
+      group: group.label,
+      options: group.accounts.map((account) => ({
+        value: account.id,
+        label: `${accountLabel(account)} / ${account.currency}`,
+      })),
+    })),
+  ];
 }
 
 const editLiquidityGroups = computed(() => groupAndSortAccounts(props.page.liquidityAccounts));
@@ -203,13 +220,57 @@ const editMainAccountGroups = computed(() => {
   }
   return editLiquidityGroups.value;
 });
+
+const editRevaluationSelectOptions = computed(() =>
+  accountSelectItems(editRevaluationGroups.value, 'Cuenta de inversión'),
+);
+const editInvestmentOriginSelectOptions = computed(() =>
+  accountSelectItems(
+    isInvestmentReinvestment.value
+      ? groupAndSortAccounts(props.page.editInvestmentOriginOptions)
+      : editLiquidityGroups.value,
+    'Seleccionar',
+  ),
+);
+const editCounterpartySelectOptions = computed(() =>
+  accountSelectItems(editCounterpartyGroups.value, 'Seleccionar'),
+);
+const editLiquiditySelectOptions = computed(() =>
+  accountSelectItems(editLiquidityGroups.value, 'Seleccionar'),
+);
+const editMainAccountPlaceholder = computed(() => {
+  const kind = props.page.editTransactionForm.kind;
+  if (kind === 'balance_adjustment') return 'Cuenta a conciliar';
+  if (kind === 'income' || kind === 'expense') return 'Cuenta contable';
+  return 'Cuenta de liquidez';
+});
+const editMainAccountSelectOptions = computed(() =>
+  accountSelectItems(
+    props.page.editTransactionForm.kind === 'balance_adjustment'
+      ? editAdjustmentGroups.value
+      : editMainAccountGroups.value,
+    editMainAccountPlaceholder.value,
+  ),
+);
+const editTransferSelectOptions = computed(() =>
+  accountSelectItems(editCounterpartyGroups.value, 'Cuenta destino'),
+);
+const editCategorySelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Seleccionar' },
+  ...props.page.editCategoryOptions,
+]);
+const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Seleccionar' },
+  ...props.page.editSubcategoryOptions,
+]);
 </script>
 
 <template>
   <BaseModal
     :open="page.showEditTransactionModal"
     title="Editar movimiento"
-    panel-class="max-w-[920px]"
+    variant="sheet"
+    panel-class="max-w-[920px] dir-a dir-a-sheet"
     @close="page.showEditTransactionModal = false"
   >
     <form
@@ -257,15 +318,12 @@ const editMainAccountGroups = computed(() => {
 
         <label class="ui-accounting-field">
           <span>Titularidad</span>
-          <select v-model="page.editTransactionForm.ownership_id" class="select">
-            <option
-              v-for="option in page.ownershipOptions"
-              :key="option.value == null ? 'none' : option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
+          <ASelect
+            v-model="page.editTransactionForm.ownership_id"
+            class="select"
+            :options="page.ownershipOptions"
+            :searchable="false"
+          />
         </label>
 
         <label class="ui-accounting-field">
@@ -310,14 +368,11 @@ const editMainAccountGroups = computed(() => {
 
       <template v-if="page.editTransactionForm.kind === 'revaluation'">
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
-          <select v-model="page.editTransactionForm.account_id" class="select" required>
-            <option :value="null">Cuenta de inversion</option>
-            <optgroup v-for="group in editRevaluationGroups" :key="group.key" :label="group.label">
-              <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                {{ accountLabel(account) }} / {{ account.currency }}
-              </option>
-            </optgroup>
-          </select>
+          <ASelect
+            v-model="page.editTransactionForm.account_id"
+            class="select"
+            :options="editRevaluationSelectOptions"
+          />
 
           <input
             v-model="page.editTransactionForm.amount"
@@ -399,39 +454,19 @@ const editMainAccountGroups = computed(() => {
                   : `Cuenta de liquidez ${isInvestmentOutflow ? '(destino)' : '(origen)'}`
               }}
             </span>
-            <select v-model="page.editTransactionForm.account_id" class="select" required>
-              <option :value="null">Seleccionar</option>
-              <optgroup
-                v-for="group in isInvestmentReinvestment
-                  ? groupAndSortAccounts(page.editInvestmentOriginOptions)
-                  : editLiquidityGroups"
-                :key="group.key"
-                :label="group.label"
-              >
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+            <ASelect
+              v-model="page.editTransactionForm.account_id"
+              class="select"
+              :options="editInvestmentOriginSelectOptions"
+            />
           </label>
           <label class="ui-accounting-field">
             <span>Cuenta de inversion {{ isInvestmentOutflow ? '(origen)' : '(destino)' }}</span>
-            <select
+            <ASelect
               v-model="page.editTransactionForm.counterparty_account_id"
               class="select"
-              required
-            >
-              <option :value="null">Seleccionar</option>
-              <optgroup
-                v-for="group in editCounterpartyGroups"
-                :key="group.key"
-                :label="group.label"
-              >
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+              :options="editCounterpartySelectOptions"
+            />
           </label>
         </div>
 
@@ -458,33 +493,19 @@ const editMainAccountGroups = computed(() => {
         <div class="ui-accounting-form-grid ui-accounting-form-grid-2col">
           <label class="ui-accounting-field">
             <span>Cuenta de liquidez</span>
-            <select v-model="page.editTransactionForm.account_id" class="select" required>
-              <option :value="null" disabled>Seleccionar</option>
-              <optgroup v-for="group in editLiquidityGroups" :key="group.key" :label="group.label">
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+            <ASelect
+              v-model="page.editTransactionForm.account_id"
+              class="select"
+              :options="editLiquiditySelectOptions"
+            />
           </label>
           <label class="ui-accounting-field">
             <span>Cuenta de pasivo</span>
-            <select
+            <ASelect
               v-model="page.editTransactionForm.counterparty_account_id"
               class="select"
-              required
-            >
-              <option :value="null" disabled>Seleccionar</option>
-              <optgroup
-                v-for="group in editCounterpartyGroups"
-                :key="group.key"
-                :label="group.label"
-              >
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+              :options="editCounterpartySelectOptions"
+            />
           </label>
         </div>
 
@@ -553,26 +574,11 @@ const editMainAccountGroups = computed(() => {
             : 'ui-accounting-form-grid-edit-simple'
         "
       >
-        <select v-model="page.editTransactionForm.account_id" class="select" required>
-          <option :value="null" disabled>
-            {{
-              page.editTransactionForm.kind === 'balance_adjustment'
-                ? 'Cuenta a conciliar'
-                : 'Cuenta de liquidez'
-            }}
-          </option>
-          <optgroup
-            v-for="group in page.editTransactionForm.kind === 'balance_adjustment'
-              ? editAdjustmentGroups
-              : editMainAccountGroups"
-            :key="group.key"
-            :label="group.label"
-          >
-            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-              {{ accountLabel(account) }} / {{ account.currency }}
-            </option>
-          </optgroup>
-        </select>
+        <ASelect
+          v-model="page.editTransactionForm.account_id"
+          class="select"
+          :options="editMainAccountSelectOptions"
+        />
 
         <input
           v-model="page.editTransactionForm.amount"
@@ -590,19 +596,12 @@ const editMainAccountGroups = computed(() => {
           required
         />
 
-        <select
+        <ASelect
           v-if="page.editTransactionForm.kind === 'transfer'"
           v-model="page.editTransactionForm.counterparty_account_id"
           class="select"
-          required
-        >
-          <option :value="null">Cuenta destino</option>
-          <optgroup v-for="group in editCounterpartyGroups" :key="group.key" :label="group.label">
-            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-              {{ accountLabel(account) }} / {{ account.currency }}
-            </option>
-          </optgroup>
-        </select>
+          :options="editTransferSelectOptions"
+        />
       </div>
 
       <input
@@ -655,39 +654,22 @@ const editMainAccountGroups = computed(() => {
       >
         <label class="ui-accounting-field">
           <span>Categoría</span>
-          <select
+          <ASelect
             v-model="page.editTransactionForm.category_key"
             class="select"
+            :options="editCategorySelectOptions"
             :disabled="page.editCategoryLocked"
-            required
-          >
-            <option value="">Seleccionar</option>
-            <option
-              v-for="option in page.editCategoryOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
+            :searchable="false"
+          />
         </label>
         <label class="ui-accounting-field">
           <span>Subcategoría</span>
-          <select
+          <ASelect
             v-model="page.editTransactionForm.subcategory_key"
             class="select"
+            :options="editSubcategorySelectOptions"
             :disabled="page.editSubcategoryLocked"
-            required
-          >
-            <option value="">Seleccionar</option>
-            <option
-              v-for="option in page.editSubcategoryOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
+          />
         </label>
       </div>
 

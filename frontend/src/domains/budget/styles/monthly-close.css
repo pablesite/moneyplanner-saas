@@ -1,0 +1,815 @@
+/* Cierre mensual (/cierre-mensual) — Direction A. Vista desacoplada de Presupuesto. */
+
+.mc-page {
+  position: relative;
+}
+
+.mc-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.mc-page .filter-ctrl {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.mc-loading {
+  padding: 16px 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Dos columnas: residual + variación de liquidez a la izquierda; KPIs del mes
+   a la derecha (mismo patrón que el hero de Presupuesto). */
+.mc-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+  gap: 40px;
+  align-items: center;
+}
+
+.mc-hero-main {
+  min-width: 0;
+}
+
+.mc-hero-eyebrow {
+  color: var(--muted);
+}
+
+.mc-hero .hero-value {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-hero .hero-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.mc-hero .hero-delta .pos {
+  color: var(--pos);
+}
+
+.mc-hero .hero-delta .neg {
+  color: var(--neg);
+}
+
+.mc-hero-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--faint);
+  display: inline-block;
+}
+
+.mc-hero .kpi-meta .pos {
+  color: var(--pos);
+}
+
+.mc-hero .kpi-meta .neg {
+  color: var(--neg);
+}
+
+/* Fila del stepper: pasos a la izquierda + navegación lineal única a la
+   derecha (antes se repetía Anterior/Siguiente en cada paso). */
+.mc-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mc-stepper-row .stepper {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mc-stepper-nav {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Contenido del paso activo ───────────────────────────────────────── */
+.mc-step-kpis {
+  /* El sect-head de la cabecera ya aporta el divisor superior. */
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 4px;
+}
+
+.mc-step-kpis .kpi {
+  padding-bottom: 14px;
+}
+
+.mc-kpi-dev-good .kpi-value {
+  color: var(--pos);
+}
+
+.mc-kpi-dev-danger .kpi-value {
+  color: var(--neg);
+}
+
+.mc-locked {
+  padding: 10px 14px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.mc-empty {
+  padding: 16px 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mc-warn {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid oklch(0.78 0.13 80 / 0.42);
+  background: oklch(0.78 0.13 80 / 0.12);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.mc-warn strong {
+  font-size: 12.5px;
+  color: oklch(0.82 0.13 80);
+}
+
+.mc-warn span,
+.mc-warn small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Bloques de categoría colapsables */
+.mc-blocks {
+  display: grid;
+  gap: 0;
+}
+
+.mc-block {
+  border-bottom: 1px solid var(--line);
+}
+
+.mc-block > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  /* flex-start + margin-left:auto en los KPIs: el triángulo (::before) y el
+     título quedan agrupados a la izquierda en vez de centrarse. */
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 14px 6px;
+}
+
+.mc-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mc-block > summary::before {
+  content: '▸';
+  color: var(--faint);
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.mc-block[open] > summary::before {
+  content: '▾';
+  color: var(--text);
+}
+
+.mc-block-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-block-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mc-block-meta {
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+}
+
+.mc-block-kpis {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.mc-dev-pos {
+  color: var(--neg);
+}
+
+.mc-dev-neg {
+  color: var(--pos);
+}
+
+/* Filas de subcategoría */
+.mc-rows {
+  display: grid;
+  gap: 0;
+  padding: 0 6px 8px;
+}
+
+.mc-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  padding-left: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.mc-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.mc-row-title {
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-row-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.mc-row-state strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.mc-row-ref {
+  font-size: 11px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-row-note {
+  width: 100%;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.mc-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mc-metrics {
+  display: flex;
+  gap: 16px;
+}
+
+.mc-metrics > span {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+
+.mc-metrics small {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-metrics strong {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-adjust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mc-ledger-readout {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+
+.mc-ledger-readout span {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-ledger-readout strong {
+  font-size: 12.5px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-input {
+  font: inherit;
+  font-size: 13px;
+  width: 130px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.mc-input:disabled {
+  opacity: 0.5;
+}
+
+.mc-quick-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.mc-mini-btn {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mc-mini-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--line-strong);
+  background: var(--hover);
+}
+
+.mc-mini-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mc-confirm {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mc-confirm input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ── Paso Resultado ──────────────────────────────────────────────────── */
+.mc-danger-btn {
+  color: oklch(0.72 0.16 24);
+  border-color: oklch(0.72 0.16 24 / 0.4);
+}
+
+.mc-danger-btn:hover {
+  border-color: oklch(0.72 0.16 24);
+  background: var(--neg-soft);
+}
+
+.mc-sev {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-sev-ok {
+  color: var(--pos);
+  border-color: var(--pos-soft);
+  background: var(--pos-soft);
+}
+
+.mc-sev-watch {
+  color: oklch(0.82 0.13 80);
+  border-color: oklch(0.78 0.13 80 / 0.4);
+  background: oklch(0.78 0.13 80 / 0.12);
+}
+
+.mc-sev-alert {
+  color: var(--neg);
+  border-color: var(--neg-soft);
+  background: var(--neg-soft);
+}
+
+.mc-result-hero {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mc-result-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.mc-result-card > span {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.mc-result-card > strong {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-result-card > small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.mc-result-card-primary {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.mc-result-card-danger {
+  border-color: var(--neg-soft);
+}
+
+.mc-result-card-danger > strong {
+  color: var(--neg);
+}
+
+.mc-result-card-good > strong {
+  color: var(--pos);
+}
+
+.mc-result-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mc-result-cols {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+
+.mc-result-cols-detail {
+  grid-template-columns: 1fr 1fr;
+}
+
+.mc-result-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.mc-result-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mc-result-panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mc-result-panel-meta {
+  font-size: 11.5px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+/* Bridge de conciliación */
+.mc-bridge {
+  display: grid;
+  gap: 8px;
+}
+
+.mc-bridge-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.mc-bridge-label {
+  display: grid;
+  gap: 1px;
+}
+
+.mc-bridge-label span {
+  font-size: 12.5px;
+}
+
+.mc-bridge-label small {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.mc-bridge-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.mc-bridge-fill {
+  height: 100%;
+  background: var(--muted);
+  border-radius: inherit;
+}
+
+.mc-bridge-row-positive .mc-bridge-fill {
+  background: var(--pos);
+}
+
+.mc-bridge-row-warning .mc-bridge-fill {
+  background: oklch(0.78 0.13 80);
+}
+
+.mc-bridge-row-negative .mc-bridge-fill {
+  background: var(--neg);
+}
+
+.mc-bridge-row > strong {
+  font-size: 12.5px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  text-align: right;
+}
+
+.mc-bridge-row-result {
+  padding-top: 8px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.mc-bridge-row-result span,
+.mc-bridge-row-result > strong {
+  font-weight: 600;
+}
+
+/* Escala de diagnóstico */
+.mc-diag {
+  display: grid;
+  gap: 8px;
+}
+
+.mc-diag-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mc-diag-head span {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.mc-diag-head strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-diag-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mc-diag-zone-ok {
+  background: var(--pos-soft);
+}
+
+.mc-diag-zone-watch {
+  background: oklch(0.78 0.13 80 / 0.22);
+}
+
+.mc-diag-zone-alert {
+  background: var(--neg-soft);
+}
+
+.mc-diag-marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--text);
+}
+
+.mc-diag-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-result-mini-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.mc-result-mini-kpi {
+  display: grid;
+  gap: 2px;
+}
+
+.mc-result-mini-kpi span {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-result-mini-kpi strong {
+  font-size: 13px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-result-footnote {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+/* Listas de detalle ejecutado */
+.mc-breakdown-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mc-breakdown-group {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.mc-breakdown-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-breakdown-head strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mc-breakdown-submeta {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.mc-breakdown-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  justify-content: flex-end;
+}
+
+.mc-breakdown-rows {
+  display: grid;
+  gap: 2px;
+}
+
+.mc-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 56px 90px;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  padding: 3px 0;
+  border-top: 1px solid var(--line);
+}
+
+.mc-breakdown-row > span:not(.mc-breakdown-name) {
+  text-align: right;
+}
+
+.mc-breakdown-name {
+  color: var(--text);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.mc-breakdown-more {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+@container page (max-width: 900px) {
+  .mc-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .mc-hero .hero-value {
+    font-size: 44px;
+  }
+
+  .mc-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mc-row-actions {
+    justify-content: flex-start;
+  }
+
+  .mc-result-hero {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mc-result-cols,
+  .mc-result-cols-detail {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container page (max-width: 560px) {
+  .mc-hero .kpis {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

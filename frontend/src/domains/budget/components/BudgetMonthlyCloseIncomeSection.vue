@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
+import { AInfoHint, AKindChip, ASectHead } from '@/domains/ui';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
@@ -70,6 +71,19 @@ function hasManualIncomeAdjustment(group: IncomeGroup): boolean {
   return Math.abs(group.executedTotal - group.ledgerDetectedTotal) >= 0.005;
 }
 
+// Estado de conciliación de una subcategoría de ingresos (desvío positivo = favorable).
+function groupStatus(group: IncomeGroup): {
+  label: string;
+  tone: 'asset' | 'liability' | 'muted' | 'default';
+} {
+  if (group.checkedCount === 0 && group.ledgerDetectedTotal <= 0) {
+    return { label: 'Pendiente', tone: 'muted' };
+  }
+  if (group.deviation > 0.005) return { label: 'Por encima', tone: 'asset' };
+  if (group.deviation < -0.005) return { label: 'Por debajo', tone: 'liability' };
+  return { label: 'Conciliado', tone: 'default' };
+}
+
 const props = defineProps<{
   isMonthlyCloseView: boolean;
   activeMonthlyCloseStep: MonthlyCloseStepId;
@@ -92,8 +106,6 @@ const props = defineProps<{
   isCloseLocked?: boolean;
   checkinStatusLabel: (status: 'confirmed' | 'adjusted' | 'skipped' | 'estimated') => string;
   isIncomeGroupUnlocked: (groupKey: string) => boolean;
-  goToPreviousMonthlyCloseStep: () => void;
-  goToNextMonthlyCloseStep: () => void;
   resetIncomeGroupCheckinDraftValue: (
     group: IncomeGroup,
     mode: IncomeResetMode,
@@ -139,137 +151,111 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
 </script>
 
 <template>
-  <section
-    v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'income'"
-    class="card ui-pro-panel ui-budget-checkin mt-3"
-  >
-    <div class="ui-budget-checkin-header">
-      <div>
-        <div class="ui-monthly-close-step-headline">
-          <button
-            type="button"
-            class="btn ui-monthly-close-step-nav-btn"
-            @click="goToPreviousMonthlyCloseStep()"
-          >
-            &larr;
-          </button>
-          <h2 class="ui-budget-checkin-title">Paso 2 - Check-in mensual de ingresos</h2>
-          <button
-            type="button"
-            class="btn ui-monthly-close-step-nav-btn"
-            @click="goToNextMonthlyCloseStep()"
-          >
-            &rarr;
-          </button>
-        </div>
-        <p class="ui-budget-checkin-subtitle ui-budget-checkin-subtitle-note">
+  <section v-if="isMonthlyCloseView && activeMonthlyCloseStep === 'income'" class="sect mc-step">
+    <ASectHead title="Check-in mensual de ingresos">
+      <template #hint>
+        <AInfoHint label="Sobre este paso">
           Confirma los ingresos previstos del mes; el cierre usa movimientos y deja pendientes solo
           las líneas a revisar.
-        </p>
+        </AInfoHint>
+      </template>
+    </ASectHead>
+
+    <div class="kpis mc-step-kpis">
+      <div class="kpi">
+        <p class="kpi-label">Previsto mes</p>
+        <div class="kpi-value mono">{{ formatMoney(selectedIncomeMonthPlanned) }} EUR</div>
       </div>
-    </div>
-    <div class="ui-budget-checkin-summary-grid">
-      <article class="ui-budget-checkin-kpi">
-        <span>Previsto mes</span>
-        <strong>{{ formatMoney(selectedIncomeMonthPlanned) }} EUR</strong>
-      </article>
-      <article class="ui-budget-checkin-kpi">
-        <span>Ejecutado mes</span>
-        <strong>{{ formatMoney(selectedIncomeMonthExecuted) }} EUR</strong>
-      </article>
-      <article
-        class="ui-budget-checkin-kpi"
+      <div class="kpi">
+        <p class="kpi-label">Ejecutado mes</p>
+        <div class="kpi-value mono">{{ formatMoney(selectedIncomeMonthExecuted) }} EUR</div>
+      </div>
+      <div
+        class="kpi"
         :class="{
-          'ui-budget-checkin-kpi-good': selectedIncomeMonthDeviation > 0,
-          'ui-budget-checkin-kpi-danger': selectedIncomeMonthDeviation < 0,
+          'mc-kpi-dev-good': selectedIncomeMonthDeviation > 0,
+          'mc-kpi-dev-danger': selectedIncomeMonthDeviation < 0,
         }"
       >
-        <span>Desviación del mes</span>
-        <strong
-          >{{ selectedIncomeMonthDeviation > 0 ? '+' : ''
-          }}{{ formatMoney(selectedIncomeMonthDeviation) }} EUR</strong
-        >
-      </article>
-      <article class="ui-budget-checkin-kpi">
-        <span>Revisión</span>
-        <strong>{{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }}</strong>
-      </article>
+        <p class="kpi-label">Desviación del mes</p>
+        <div class="kpi-value mono">
+          {{ selectedIncomeMonthDeviation > 0 ? '+' : ''
+          }}{{ formatMoney(selectedIncomeMonthDeviation) }} EUR
+        </div>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Revisión</p>
+        <div class="kpi-value mono">{{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }}</div>
+      </div>
     </div>
-    <div v-if="isCloseLocked" class="ui-monthly-close-locked-banner">
+
+    <div v-if="isCloseLocked" class="mc-locked">
       Este mes está finalizado. Reabre el cierre para editar.
     </div>
 
-    <div class="ui-budget-checkin-list">
-      <div v-if="incomeExecutionLoading" class="subtle">Cargando check-ins de ingresos...</div>
-      <div v-else-if="incomeExecutionError" class="subtle text-red-400">
-        {{ incomeExecutionError }}
+    <div v-if="incomeExecutionLoading" class="mc-empty">Cargando check-ins de ingresos…</div>
+    <p v-else-if="incomeExecutionError" class="alert">{{ incomeExecutionError }}</p>
+    <p v-else-if="!groupedMonthlyIncomeExecutionEntries.length" class="mc-empty">
+      No hay ingresos previstos para este mes.
+    </p>
+    <div v-else>
+      <div v-if="monthlyIncomePendingClassification.amount > 0" class="mc-warn">
+        <strong>Sin subcategoría</strong>
+        <span>
+          {{ formatMoney(monthlyIncomePendingClassification.amount) }} EUR del libro contable no
+          tiene subcategoría de presupuesto todavía.
+        </span>
+        <small v-if="monthlyIncomePendingClassification.ambiguousRows > 0">
+          {{ monthlyIncomePendingClassification.ambiguousRows }} líneas comparten la misma
+          subcategoría y requieren revisión manual.
+        </small>
       </div>
-      <div v-else-if="!groupedMonthlyIncomeExecutionEntries.length" class="subtle">
-        No hay ingresos previstos para este mes.
-      </div>
-      <div v-else class="ui-budget-checkin-groups-box">
-        <div
-          v-if="monthlyIncomePendingClassification.amount > 0"
-          class="ui-state-block ui-state-error"
-        >
-          <strong>Sin subcategoría</strong>
-          <span>
-            {{ formatMoney(monthlyIncomePendingClassification.amount) }} EUR del libro contable no
-            tiene subcategoría de presupuesto todavía.
-          </span>
-          <small v-if="monthlyIncomePendingClassification.ambiguousRows > 0">
-            {{ monthlyIncomePendingClassification.ambiguousRows }} líneas comparten la misma
-            subcategoría y requieren revisión manual.
-          </small>
-        </div>
+
+      <div class="mc-blocks">
         <details
           v-for="block in incomeCategoryBlocks"
           :key="`income-checkin-category-${block.key}`"
-          class="ui-budget-checkin-group"
+          class="mc-block"
           :open="block.completionRatio < 1 || block.deviation < 0"
         >
-          <summary class="ui-budget-checkin-group-summary">
-            <div class="ui-budget-checkin-group-title-wrap">
-              <strong class="ui-budget-checkin-group-title">{{ block.label }}</strong>
-              <span class="ui-budget-checkin-group-meta">
-                {{ block.groups.length }} subcategorías -
+          <summary>
+            <div class="mc-block-title-wrap">
+              <strong class="mc-block-title">{{ block.label }}</strong>
+              <span class="mc-block-meta">
+                {{ block.groups.length }} subcategorías ·
                 {{ Math.round(block.completionRatio * 100) }} % revisión
               </span>
             </div>
-            <div class="ui-budget-checkin-group-kpis">
+            <div class="mc-block-kpis">
               <span>P {{ formatMoney(block.plannedTotal) }} EUR</span>
               <span>E {{ formatMoney(block.executedTotal) }} EUR</span>
               <span
-                :class="{
-                  'ui-budget-checkin-income-dev-pos': block.deviation > 0,
-                  'ui-budget-checkin-income-dev-neg': block.deviation < 0,
-                }"
+                :class="
+                  block.deviation > 0 ? 'mc-dev-neg' : block.deviation < 0 ? 'mc-dev-pos' : ''
+                "
               >
                 D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} EUR
               </span>
             </div>
           </summary>
 
-          <div class="ui-budget-checkin-group-rows ui-budget-checkin-subcategory-rows">
+          <div class="mc-rows">
             <article
               v-for="group in block.groups"
               :key="`income-checkin-group-${group.key}`"
-              class="ui-budget-checkin-row"
-              :class="{
-                'ui-budget-checkin-row-estimated':
-                  group.editableRow?.checkin?.status === 'estimated',
-              }"
+              class="mc-row"
             >
-              <div class="ui-budget-checkin-row-main">
-                <div class="ui-budget-checkin-row-title" :title="group.subcategoryLabel">
-                  <span
-                    v-if="group.editableRow?.checkin?.status === 'estimated'"
-                    class="ui-budget-checkin-estimated-badge"
-                    >Estimado</span
-                  >
+              <div class="mc-row-main">
+                <div class="mc-row-title" :title="group.subcategoryLabel">
                   {{ group.subcategoryLabel }}
+                  <AKindChip v-if="group.editableRow?.checkin?.status === 'estimated'" tone="muted">
+                    Estimado
+                  </AKindChip>
+                  <AKindChip :tone="groupStatus(group).tone">
+                    {{ groupStatus(group).label }}
+                  </AKindChip>
                 </div>
-                <div class="ui-budget-checkin-row-state ui-budget-checkin-subcategory-meta">
+                <div class="mc-row-state">
                   <span>{{ group.categoryLabel }}</span>
                   <span v-if="group.rows.length > 1">{{ group.rows.length }} líneas agrupadas</span>
                   <span v-if="group.editableRow?.checkin">
@@ -277,8 +263,8 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                   </span>
                 </div>
               </div>
-              <div class="ui-budget-checkin-row-actions">
-                <div class="ui-budget-checkin-subcategory-metrics">
+              <div class="mc-row-actions">
+                <div class="mc-metrics">
                   <span>
                     <small>Previsto</small>
                     <strong>{{ formatMoney(group.plannedTotal) }} EUR</strong>
@@ -288,10 +274,9 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     <strong>{{ formatMoney(group.executedTotal) }} EUR</strong>
                   </span>
                   <span
-                    :class="{
-                      'ui-budget-checkin-income-dev-neg': group.deviation < 0,
-                      'ui-budget-checkin-income-dev-pos': group.deviation > 0,
-                    }"
+                    :class="
+                      group.deviation > 0 ? 'mc-dev-neg' : group.deviation < 0 ? 'mc-dev-pos' : ''
+                    "
                   >
                     <small>Desv.</small>
                     <strong
@@ -302,18 +287,15 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                 </div>
                 <div
                   v-if="group.editableRow && !isIncomeGroupUnlocked(group.key)"
-                  class="ui-budget-checkin-adjust"
+                  class="mc-adjust"
                 >
-                  <div
-                    v-if="hasManualIncomeAdjustment(group)"
-                    class="ui-budget-checkin-ledger-readout"
-                  >
+                  <div v-if="hasManualIncomeAdjustment(group)" class="mc-ledger-readout">
                     <span>Movimientos</span>
                     <strong>{{ formatMoney(group.ledgerDetectedTotal) }} EUR</strong>
                   </div>
                   <button
                     type="button"
-                    class="btn ui-budget-checkin-mini-btn ui-budget-checkin-add-btn"
+                    class="mc-mini-btn"
                     :disabled="
                       isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
                     "
@@ -322,10 +304,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                   >
                     Añadir ingreso
                   </button>
-                  <label
-                    class="ui-budget-checkin-confirm"
-                    title="Marcar esta subcategoría como revisada"
-                  >
+                  <label class="mc-confirm" title="Marcar esta subcategoría como revisada">
                     <input
                       type="checkbox"
                       :checked="group.checkedCount > 0"
@@ -344,18 +323,15 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     />
                   </label>
                 </div>
-                <div
-                  v-else-if="group.editableRow"
-                  class="ui-budget-checkin-adjust ui-budget-checkin-adjust-ledger-manual"
-                >
-                  <div class="ui-budget-checkin-ledger-readout">
+                <div v-else-if="group.editableRow" class="mc-adjust">
+                  <div class="mc-ledger-readout">
                     <span>Movimientos</span>
                     <strong>{{ formatMoney(group.ledgerDetectedTotal) }} EUR</strong>
                   </div>
                   <input
                     :value="incomeAdjustAmounts[group.editableRow.entry.id] ?? ''"
                     inputmode="decimal"
-                    class="input ui-data-field"
+                    class="mc-input"
                     :disabled="isCloseLocked"
                     placeholder="Ingreso adicional"
                     @input="
@@ -368,12 +344,10 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     @blur="saveIncomeGroupCheckinFromInput(group)"
                     @keydown.enter.prevent="saveIncomeGroupCheckinFromInput(group)"
                   />
-                  <div
-                    class="ui-budget-checkin-quick-actions ui-budget-checkin-quick-actions-inline"
-                  >
+                  <div class="mc-quick-actions">
                     <button
                       type="button"
-                      class="btn ui-budget-checkin-mini-btn"
+                      class="mc-mini-btn"
                       :disabled="
                         isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
                       "
@@ -383,7 +357,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     </button>
                     <button
                       type="button"
-                      class="btn ui-budget-checkin-mini-btn ui-budget-checkin-link-btn"
+                      class="mc-mini-btn"
                       :disabled="
                         isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
                       "
@@ -394,7 +368,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     </button>
                     <button
                       type="button"
-                      class="btn ui-budget-checkin-mini-btn ui-budget-checkin-link-btn"
+                      class="mc-mini-btn"
                       :disabled="
                         isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
                       "

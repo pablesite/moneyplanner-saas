@@ -50,9 +50,9 @@ describe('useAppShell', () => {
 
     expect(shell.isLoginRoute.value).toBe(false);
     expect(shell.navItems.value).toHaveLength(5);
-    expect(shell.isNavItemActive(shell.navItems.value[0]!)).toBe(true);
+    expect(shell.isNavItemActive(shell.navItems.value[1]!)).toBe(true);
 
-    mocks.route.path = '/guia/fases/2';
+    mocks.route.path = '/estado-financiero/ambitos/2';
     expect(shell.isNavItemActive(shell.navItems.value[0]!)).toBe(true);
 
     shell.toggleSidebar();

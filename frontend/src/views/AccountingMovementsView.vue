@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted } from 'vue';
 import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import '@/domains/accounting/styles/movements.css';
+import '@/domains/accounting/styles/accounting-movements-view.css';
+import '@/domains/net-worth/net-worth-view.css';
 import { useAccountingMovementsPage } from '@/domains/accounting/useAccountingMovementsPage';
-import AccountingMovementsHero from '@/domains/accounting/components/AccountingMovementsHero.vue';
 import AccountingAccountCatalog from '@/domains/accounting/components/AccountingAccountCatalog.vue';
 import AccountingMovementsAllTransactions from '@/domains/accounting/components/AccountingMovementsAllTransactions.vue';
 import AccountingBalances from '@/domains/accounting/components/AccountingBalances.vue';
@@ -11,23 +12,33 @@ import AccountingMovementsActivationModal from '@/domains/accounting/components/
 import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import { NetWorthDeltaChart, NetWorthTimelineChart } from '@/domains/net-worth';
-import { BaseModal } from '@/domains/ui';
+import { AContextBar, APageHead, ASectHead, ASelect, BaseModal } from '@/domains/ui';
+import type { ASelectItem } from '@/domains/ui';
 
 const route = useRoute();
 const page = useAccountingMovementsPage();
-const dailyTimelineExpanded = ref(false);
 
-function formatNumber(value: number, decimals = 2): string {
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
-}
+const currentMonthSummary = computed(() => {
+  const month = new Date().getMonth() + 1;
+  return page.summaryRows.find((r) => r.month === month) ?? null;
+});
 
-function closeDailyTimelineModal() {
-  dailyTimelineExpanded.value = false;
-}
+const currentMonthLabel = computed(() =>
+  new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date()),
+);
+
+const assetGroups = computed(() =>
+  page.groupedCuentasAccounts.filter((g) => g.positionType === 'asset'),
+);
+
+const liabilityGroups = computed(() =>
+  page.groupedCuentasAccounts.filter((g) => g.positionType === 'liability'),
+);
+
+const ownershipOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todos' },
+  ...page.ownershipFilterOptions.map((o) => ({ value: String(o.value), label: o.label })),
+]);
 
 onMounted(async () => {
   const { tab, date_from, date_to, kind, category_key, subcategory_key } = route.query;
@@ -41,14 +52,10 @@ onMounted(async () => {
   }
   if (kind && kind !== 'all') {
     page.activityFilters.kind = String(kind) as typeof page.activityFilters.kind;
-    // Wait for the watcher on filterCategoryOptions (triggered by kind change) to fire
-    // before setting categoryKey, otherwise it would be cleared.
     await nextTick();
   }
   if (category_key) {
     page.activityFilters.categoryKey = String(category_key);
-    // Wait for the watcher on categoryKey (which resets subcategoryKey) to fire
-    // before setting subcategoryKey.
     await nextTick();
   }
   if (subcategory_key) {
@@ -57,202 +64,300 @@ onMounted(async () => {
 });
 
 onBeforeRouteLeave(() => {
-  closeDailyTimelineModal();
+  page.dailyTimelineExpanded = false;
 });
 
 onBeforeUnmount(() => {
-  closeDailyTimelineModal();
+  page.dailyTimelineExpanded = false;
 });
 </script>
 
 <template>
-  <div class="container ui-page-shell">
-    <AccountingMovementsHero :page="page" />
+  <div class="page a-mov-page">
+    <APageHead title="Contabilidad">
+      <template #meta>
+        <span>{{ currentMonthLabel }}</span>
+        <span class="dot" />
+        <span>{{ page.accounts.length }} cuentas</span>
+        <span class="dot" />
+        <span>Partida doble</span>
+      </template>
+      <template #actions>
+        <button
+          class="btn btn-ghost"
+          type="button"
+          style="font-size: 12px"
+          @click="page.activeTab = 'cuentas'"
+        >
+          Catálogo de cuentas
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          :disabled="!page.liquidityAccounts.length"
+          @click="page.showQuickEntryModal = true"
+        >
+          + Asiento rápido
+        </button>
+      </template>
+    </APageHead>
 
-    <div class="ui-section-card ui-accounting-unified-card">
-      <div class="ui-accounting-daily-chart">
-        <div v-if="page.dailyBalanceSeriesLoading" class="ui-state-block ui-state-loading">
-          Cargando evolucion diaria...
+    <AContextBar v-if="page.ownershipFilterOptions.length > 1">
+      <label class="context-field">
+        <span class="context-field-label">Titularidad</span>
+        <ASelect
+          class="filter-ctrl"
+          :model-value="String(page.dailyBalanceOwnershipFilter)"
+          :options="ownershipOptions"
+          :searchable="false"
+          @update:model-value="
+            (v) => {
+              page.dailyBalanceOwnershipFilter =
+                v === 'all' ? 'all' : v === 'null' ? null : Number(v);
+            }
+          "
+        />
+      </label>
+    </AContextBar>
+
+    <!-- Hero: saldo neto + delta | breakdown activos / pasivos -->
+    <section class="sect">
+      <div class="hero">
+        <div class="hero-top">
+          <div class="hero-headline">
+            <p class="eyebrow hero-eyebrow">Saldo neto contable</p>
+            <div class="hero-value mono">{{ page.formatMoney(page.accountingNetBalance) }}</div>
+            <div v-if="currentMonthSummary" class="hero-delta">
+              <span>
+                <span class="pos mono">
+                  +{{ page.formatMoney(currentMonthSummary.incomeValue) }}
+                </span>
+                <span class="hero-delta-copy">ingresos del mes</span>
+              </span>
+              <span class="hero-delta-sep">·</span>
+              <span>
+                <span class="neg mono">
+                  −{{ page.formatMoney(currentMonthSummary.expenseValue) }}
+                </span>
+                <span class="hero-delta-copy">gastos del mes</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="hero-breakdown">
+            <!-- Activos -->
+            <div class="hero-comp-side">
+              <div class="hero-comp-title">
+                <span>Activos</span>
+                <b>{{ page.formatMoney(page.accountingAssetsTotal) }}</b>
+              </div>
+              <div class="comp-list">
+                <div v-for="group in assetGroups" :key="group.key" class="comp-row">
+                  <span class="comp-dot" style="background: var(--pos)" />
+                  <span class="comp-label">{{ group.label }}</span>
+                  <span class="comp-val mono">{{ page.formatMoney(group.subtotal) }}</span>
+                </div>
+                <p v-if="!assetGroups.length" class="comp-empty">Sin activos contables.</p>
+              </div>
+            </div>
+
+            <!-- Pasivos -->
+            <div class="hero-comp-side">
+              <div class="hero-comp-title">
+                <span>Pasivos</span>
+                <b>{{ page.formatMoney(page.accountingLiabilitiesTotal) }}</b>
+              </div>
+              <div class="comp-list">
+                <div v-for="group in liabilityGroups" :key="group.key" class="comp-row">
+                  <span class="comp-dot" style="background: var(--neg)" />
+                  <span class="comp-label">{{ group.label }}</span>
+                  <span class="comp-val mono">{{ page.formatMoney(group.subtotal) }}</span>
+                </div>
+                <p v-if="!liabilityGroups.length" class="comp-empty">Sin pasivos contables.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div v-else-if="page.dailyBalanceSeriesError" class="ui-state-block ui-state-error">
-          {{ page.dailyBalanceSeriesError }}
-        </div>
-        <div v-else-if="!page.dailyBalanceSeriesRows.length" class="ui-state-block ui-state-empty">
-          No hay movimientos suficientes para construir la serie diaria.
-        </div>
-        <div v-else class="ui-accounting-timeline-main">
-          <div class="ui-accounting-timeline-toolbar">
-            <div
-              class="ui-accounting-timeline-range-group"
-              role="group"
-              aria-label="Rango temporal"
-            >
+      </div>
+    </section>
+
+    <!-- Evolución: gráfico a ancho completo, igual que patrimonio -->
+    <section class="sect">
+      <ASectHead title="Evolución">
+        <template #actions>
+          <div class="actions">
+            <div class="seg" role="group" aria-label="Rango temporal">
               <button
                 v-for="preset in page.dailyTimelinePresetOptions"
                 :key="preset"
-                class="ui-accounting-timeline-range-button"
+                type="button"
                 :class="{
-                  'ui-accounting-timeline-range-button-active':
+                  on:
                     page.dailyTimelineCustomWindow === null &&
                     page.selectedDailyTimelinePreset === preset,
                 }"
-                type="button"
                 @click="page.setDailyTimelinePreset(preset)"
               >
                 {{ preset }}
               </button>
             </div>
-
-            <div class="ui-accounting-timeline-toolbar-actions">
-              <span class="ui-accounting-timeline-range-caption">{{
-                page.dailyBalanceSeriesRangeLabel
-              }}</span>
-              <button
-                class="ui-accounting-timeline-expand-button"
-                type="button"
-                @click="dailyTimelineExpanded = true"
-              >
-                Expandir
-              </button>
-            </div>
+            <button
+              v-if="page.dailyBalanceSeriesChartPoints.length > 1"
+              class="btn btn-ghost"
+              type="button"
+              style="font-size: 12px"
+              @click="page.dailyTimelineExpanded = true"
+            >
+              Ampliar
+            </button>
           </div>
+        </template>
+      </ASectHead>
 
-          <div class="ui-accounting-timeline-chart-shell">
-            <NetWorthTimelineChart
-              :points="page.dailyBalanceSeriesChartPoints"
-              :unit="page.dailyBalanceSeriesUnit"
-              series-label="Saldo neto contable"
-              aria-label="Evolución diaria del saldo neto contable"
-            />
-            <NetWorthDeltaChart
-              :rows="page.dailyBalanceSeriesMonthlyRows"
-              :unit="page.dailyBalanceSeriesUnit"
-            />
+      <div v-if="page.dailyBalanceSeriesLoading" class="a-mov-state a-mov-state-loading">
+        Cargando evolución diaria...
+      </div>
+      <div v-else-if="page.dailyBalanceSeriesError" class="a-mov-state a-mov-state-error">
+        {{ page.dailyBalanceSeriesError }}
+      </div>
+      <div v-else-if="!page.dailyBalanceSeriesRows.length" class="a-mov-state">
+        No hay movimientos suficientes para construir la serie diaria.
+      </div>
+      <div v-else class="a-nw-chart-stack">
+        <div class="a-nw-chart-summary">
+          <div>
+            <span class="a-nw-chart-label">Saldo neto contable</span>
+            <strong class="mono">{{
+              page.formatMoney(page.dailyBalanceLatestChartPoint?.value ?? 0)
+            }}</strong>
           </div>
+          <span>{{ page.dailyBalanceSeriesRangeLabel }}</span>
+        </div>
+        <div class="a-nw-chart-shell">
+          <NetWorthTimelineChart
+            :points="page.dailyBalanceSeriesChartPoints"
+            :unit="page.dailyBalanceSeriesUnit"
+            series-label="Saldo neto contable"
+            aria-label="Evolución diaria del saldo neto contable"
+          />
+          <NetWorthDeltaChart
+            :rows="page.dailyBalanceSeriesMonthlyRows"
+            :unit="page.dailyBalanceSeriesUnit"
+          />
         </div>
       </div>
+    </section>
 
-      <BaseModal
-        :open="dailyTimelineExpanded"
-        title="Evolución contable diaria"
-        panel-class="max-w-[1080px]"
-        :close-on-backdrop="true"
-        @close="dailyTimelineExpanded = false"
-      >
-        <div class="ui-accounting-timeline-modal">
-          <div class="ui-accounting-timeline-modal-head">
-            <div>
-              <div class="ui-accounting-timeline-modal-title">Saldo neto contable</div>
-              <div class="ui-accounting-timeline-modal-copy">
-                {{ page.dailyBalanceSeriesRangeLabel }}
-              </div>
-            </div>
-            <div class="ui-accounting-timeline-modal-value">
-              {{ formatNumber(page.dailyBalanceLatestChartPoint?.value ?? 0, 2) }}
-              {{ page.dailyBalanceSeriesUnit }}
-            </div>
+    <!-- Modal: gráfico expandido -->
+    <BaseModal
+      :open="page.dailyTimelineExpanded"
+      title="Evolución contable diaria"
+      variant="sheet"
+      panel-class="a-mov-modal-panel dir-a"
+      :close-on-backdrop="true"
+      @close="page.dailyTimelineExpanded = false"
+    >
+      <div class="a-nw-modal-stack">
+        <div class="a-nw-chart-summary">
+          <div>
+            <span class="a-nw-chart-label">Saldo neto contable</span>
+            <strong class="mono">{{
+              page.formatMoney(page.dailyBalanceLatestChartPoint?.value ?? 0)
+            }}</strong>
           </div>
-
-          <div class="ui-accounting-timeline-modal-ranges">
-            <label class="ui-accounting-timeline-slider-group">
-              <span>Inicio</span>
-              <input
-                class="ui-accounting-timeline-slider"
-                type="range"
-                min="0"
-                :max="Math.max(0, page.dailyBalanceSeriesRows.length - 1)"
-                :value="page.dailyTimelineWindow.start"
-                @input="
-                  page.updateDailyTimelineWindowStart(($event.target as HTMLInputElement).value)
-                "
-              />
-              <strong>{{ page.dailyBalanceSeriesChartPoints[0]?.fullLabel ?? '-' }}</strong>
-            </label>
-
-            <label class="ui-accounting-timeline-slider-group">
-              <span>Fin</span>
-              <input
-                class="ui-accounting-timeline-slider"
-                type="range"
-                min="0"
-                :max="Math.max(0, page.dailyBalanceSeriesRows.length - 1)"
-                :value="page.dailyTimelineWindow.end"
-                @input="
-                  page.updateDailyTimelineWindowEnd(($event.target as HTMLInputElement).value)
-                "
-              />
-              <strong>{{ page.dailyBalanceLatestChartPoint?.fullLabel ?? '-' }}</strong>
-            </label>
-          </div>
-
-          <div class="ui-accounting-timeline-chart-shell">
-            <NetWorthTimelineChart
-              :points="page.dailyBalanceSeriesChartPoints"
-              :unit="page.dailyBalanceSeriesUnit"
-              series-label="Saldo neto contable"
-              aria-label="Evolución diaria del saldo neto contable expandida"
-              expanded
-            />
-            <NetWorthDeltaChart
-              :rows="page.dailyBalanceSeriesMonthlyRows"
-              :unit="page.dailyBalanceSeriesUnit"
-            />
-          </div>
+          <span>{{ page.dailyBalanceSeriesRangeLabel }}</span>
         </div>
-      </BaseModal>
 
-      <div class="ui-accounting-incard-tabs">
-        <div class="ui-view-tabs">
+        <div class="a-nw-range-grid">
+          <label class="a-nw-range-field">
+            <span>Inicio</span>
+            <input
+              class="a-nw-range-input"
+              type="range"
+              min="0"
+              :max="Math.max(0, page.dailyBalanceSeriesRows.length - 1)"
+              :value="page.dailyTimelineWindow.start"
+              @input="
+                page.updateDailyTimelineWindowStart(($event.target as HTMLInputElement).value)
+              "
+            />
+            <strong>{{ page.dailyBalanceSeriesChartPoints[0]?.fullLabel ?? '-' }}</strong>
+          </label>
+          <label class="a-nw-range-field">
+            <span>Fin</span>
+            <input
+              class="a-nw-range-input"
+              type="range"
+              min="0"
+              :max="Math.max(0, page.dailyBalanceSeriesRows.length - 1)"
+              :value="page.dailyTimelineWindow.end"
+              @input="page.updateDailyTimelineWindowEnd(($event.target as HTMLInputElement).value)"
+            />
+            <strong>{{ page.dailyBalanceLatestChartPoint?.fullLabel ?? '-' }}</strong>
+          </label>
+        </div>
+
+        <div class="a-nw-chart-shell a-nw-chart-shell-expanded">
+          <NetWorthTimelineChart
+            :points="page.dailyBalanceSeriesChartPoints"
+            :unit="page.dailyBalanceSeriesUnit"
+            series-label="Saldo neto contable"
+            aria-label="Evolución diaria del saldo neto contable expandida"
+            expanded
+          />
+          <NetWorthDeltaChart
+            :rows="page.dailyBalanceSeriesMonthlyRows"
+            :unit="page.dailyBalanceSeriesUnit"
+          />
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Tabs + contenido -->
+    <section class="sect">
+      <div class="a-mov-tabs-bar">
+        <div class="tabs">
           <button
-            class="ui-view-tab"
-            :class="{ 'ui-view-tab-active': page.activeTab === 'cuentas' }"
+            class="tab"
+            :class="{ on: page.activeTab === 'cuentas' }"
             type="button"
             @click="page.activeTab = 'cuentas'"
           >
             Cuentas
           </button>
           <button
-            class="ui-view-tab"
-            :class="{ 'ui-view-tab-active': page.activeTab === 'todos' }"
+            class="tab"
+            :class="{ on: page.activeTab === 'todos' }"
             type="button"
             @click="page.activeTab = 'todos'"
           >
             Todos los movimientos
           </button>
           <button
-            class="ui-view-tab"
-            :class="{ 'ui-view-tab-active': page.activeTab === 'estadisticas' }"
+            class="tab"
+            :class="{ on: page.activeTab === 'estadisticas' }"
             type="button"
             @click="page.activeTab = 'estadisticas'"
           >
-            Estadisticas
+            Estadísticas
           </button>
         </div>
-        <button
-          v-if="page.activeTab === 'cuentas' && page.hasAvailableManualPositions"
-          class="btn ui-accounting-cta-secondary"
-          type="button"
-          aria-label="Añadir cuenta al libro contable"
-          title="Añadir cuenta al libro contable"
-          @click="page.openActivationModal"
-        >
-          ⊕
-        </button>
-        <button
-          class="btn btn-primary ui-accounting-cta"
-          type="button"
-          aria-label="Registrar movimiento diario"
-          title="Registrar movimiento diario"
-          :disabled="!page.liquidityAccounts.length"
-          @click="page.showQuickEntryModal = true"
-        >
-          +
-        </button>
+        <div class="a-mov-tabs-actions">
+          <button
+            v-if="page.activeTab === 'cuentas' && page.hasAvailableManualPositions"
+            class="btn"
+            type="button"
+            @click="page.openActivationModal"
+          >
+            + Activar cuenta
+          </button>
+        </div>
       </div>
+
       <AccountingAccountCatalog v-if="page.activeTab === 'cuentas'" :page="page" />
       <AccountingMovementsAllTransactions v-else-if="page.activeTab === 'todos'" :page="page" />
       <AccountingBalances v-else-if="page.activeTab === 'estadisticas'" :page="page" />
-    </div>
+    </section>
 
     <AccountingMovementsActivationModal :page="page" />
     <AccountingMovementsEditTransactionModal :page="page" />

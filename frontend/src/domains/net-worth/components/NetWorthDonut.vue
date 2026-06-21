@@ -1,59 +1,25 @@
 <script setup lang="ts">
-import { computed, useSlots } from 'vue';
-import { Doughnut } from 'vue-chartjs';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  type ChartData,
-  type ChartOptions,
-  type Plugin,
-} from 'chart.js';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-const CATEGORY_COLORS: string[] = [
-  'rgba(56, 189, 248, 0.92)',
-  'rgba(45, 212, 191, 0.92)',
-  'rgba(251, 146, 60, 0.92)',
-  'rgba(167, 139, 250, 0.92)',
-  'rgba(74, 222, 128, 0.92)',
-];
-const LIABILITY_SLICE_COLOR = 'rgba(244, 63, 94, 0.88)';
+import { computed, ref } from 'vue';
 
 type Props = {
   totalAssets: string | number | null | undefined;
-  totalLiabilities: string | number | null | undefined;
+  totalLiabilities?: string | number | null | undefined;
   netWorth: string | number | null | undefined;
   unit: string;
   assetBackedLiabilities?: string | number | null | undefined;
   unbackedLiabilities?: string | number | null | undefined;
-  categoryKeys?: string[] | null | undefined;
-  categoryLabels?: string[] | null | undefined;
-  categoryAssets?: number[] | null | undefined;
-  categoryLiabilities?: number[] | null | undefined;
-  categoryAssetCounts?: number[] | null | undefined;
-  categoryLiabilityCounts?: number[] | null | undefined;
-  selectedCategoryKey?: string | null | undefined;
-  selectedCategoryType?: 'asset' | 'liability' | null | undefined;
-  showChart?: boolean | undefined;
+  centerLabel?: string | undefined;
+  centerValue?: string | undefined;
+  size?: number | undefined;
+  thickness?: number | undefined;
+  // Aceptado por compatibilidad con la composición previa; ya no se renderiza.
   showComposition?: boolean | undefined;
 };
 
 const props = withDefaults(defineProps<Props>(), {
-  showChart: true,
-  showComposition: true,
+  size: 200,
+  thickness: 14,
 });
-const slots = useSlots();
-const emit = defineEmits<{
-  (e: 'select-category', payload: { key: string; type: 'asset' | 'liability' }): void;
-  (e: 'add-type', payload: { type: 'asset' | 'liability' }): void;
-}>();
-
-const hasChart = computed(() => props.showChart !== false);
-const hasSide = computed(() => props.showComposition !== false || !!slots['side-top']);
-const displayUnit = computed(() => (props.unit === 'EUR' ? '€' : props.unit));
 
 function normalizeNumberInput(raw: unknown) {
   return String(raw ?? '')
@@ -75,289 +41,131 @@ function formatMoney(n: number, decimals = 2) {
   }).format(n);
 }
 
-function formatPercent(n: number, decimals = 0) {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'percent',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
+const displayUnit = computed(() => (props.unit === 'EUR' ? '€' : props.unit));
 
 const assets = computed(() => Math.max(0, toNumber(props.totalAssets)));
-const net = computed(() => toNumber(props.netWorth));
-
 const backedRaw = computed(() => Math.max(0, toNumber(props.assetBackedLiabilities)));
 const unbackedRaw = computed(() => Math.max(0, toNumber(props.unbackedLiabilities)));
 
 const backedSlice = computed(() => Math.min(backedRaw.value, assets.value));
-
 const unbackedSlice = computed(() => {
   const room = Math.max(assets.value - backedSlice.value, 0);
   return Math.min(unbackedRaw.value, room);
 });
-
 const equitySlice = computed(() =>
   Math.max(assets.value - backedSlice.value - unbackedSlice.value, 0),
 );
 
-type CategoryShare = { key: string; label: string; value: number; share: number; count: number };
+type Slice = { key: string; label: string; value: number; color: string };
 
-function buildCategoryShares(
-  keys: string[] | null | undefined,
-  labels: string[] | null | undefined,
-  values: number[] | null | undefined,
-  counts: number[] | null | undefined,
-) {
-  if (!keys?.length || !labels?.length || !values?.length) return [] as CategoryShare[];
-  const items = labels.map((label, index) => {
-    const value = values[index] ?? 0;
-    return {
-      key: keys[index] ?? label,
-      label,
-      value,
-      share: 0,
-      count: Math.max(0, counts?.[index] ?? 0),
-    };
+// Composición estructural: capital propio + deuda respaldada + deuda no respaldada
+// (juntas suman el total de activos). Tonos del handoff (NW_STRUCTURE).
+const slices = computed<Slice[]>(() =>
+  [
+    {
+      key: 'equity',
+      label: 'Capital propio',
+      value: equitySlice.value,
+      color: 'oklch(0.74 0.13 148)',
+    },
+    {
+      key: 'backed',
+      label: 'Deuda respaldada',
+      value: backedSlice.value,
+      color: 'oklch(0.74 0.13 45)',
+    },
+    {
+      key: 'unbacked',
+      label: 'Deuda no respaldada',
+      value: unbackedSlice.value,
+      color: 'oklch(0.74 0.13 24)',
+    },
+  ].filter((s) => s.value > 0),
+);
+
+const sum = computed(() => slices.value.reduce((acc, s) => acc + s.value, 0));
+
+const cx = computed(() => props.size / 2);
+const cy = computed(() => props.size / 2);
+const radius = computed(() => (props.size - props.thickness) / 2);
+const circumference = computed(() => 2 * Math.PI * radius.value);
+
+type Arc = Slice & { dash: number; offset: number };
+
+const arcs = computed<Arc[]>(() => {
+  let off = 0;
+  const total = sum.value || 1;
+  return slices.value.map((s) => {
+    const dash = (s.value / total) * circumference.value;
+    const arc: Arc = { ...s, dash, offset: -off };
+    off += dash;
+    return arc;
   });
-  // La proporción de barra solo usa valores positivos; los negativos muestran barra vacía.
-  const positiveTotal = items.reduce((sum, item) => sum + Math.max(0, item.value), 0);
-  return items
-    .map((item) => ({
-      ...item,
-      share: positiveTotal > 0 ? Math.max(0, item.value) / positiveTotal : 0,
-    }))
-    .filter((item) => item.value !== 0 || item.count > 0)
-    .slice(0, 5);
-}
-
-const assetComposition = computed(() =>
-  buildCategoryShares(
-    props.categoryKeys,
-    props.categoryLabels,
-    props.categoryAssets,
-    props.categoryAssetCounts,
-  ),
-);
-const liabilityComposition = computed(() =>
-  buildCategoryShares(
-    props.categoryKeys,
-    props.categoryLabels,
-    props.categoryLiabilities,
-    props.categoryLiabilityCounts,
-  ),
-);
-
-type ChartSlice = { label: string; value: number; color: string };
-
-const chartSlices = computed<ChartSlice[]>(() => {
-  const categories = assetComposition.value;
-  if (categories.length > 0) {
-    const slices: ChartSlice[] = categories.slice(0, 5).map((cat, i) => ({
-      label: cat.label,
-      value: Math.max(0, cat.value),
-      color: CATEGORY_COLORS[i % CATEGORY_COLORS.length] ?? CATEGORY_COLORS[0] ?? '',
-    }));
-    const liab = toNumber(props.totalLiabilities);
-    if (liab > 0) {
-      slices.push({ label: 'Pasivos', value: liab, color: LIABILITY_SLICE_COLOR });
-    }
-    return slices;
-  }
-  // Fallback: equity / backed / unbacked
-  return [
-    { label: 'Capital propio (neto)', value: equitySlice.value, color: 'rgba(92, 192, 255, 0.9)' },
-    { label: 'Activos con deuda', value: backedSlice.value, color: 'rgba(255, 99, 132, 0.85)' },
-    { label: 'Deuda sin activo', value: unbackedSlice.value, color: 'rgba(255, 140, 110, 0.85)' },
-  ].filter((s) => s.value > 0);
 });
 
-const data = computed<ChartData<'doughnut'>>(() => ({
-  labels: chartSlices.value.map((s) => s.label),
-  datasets: [
-    {
-      data: chartSlices.value.map((s) => s.value),
-      backgroundColor: chartSlices.value.map((s) => s.color),
-      borderColor: 'rgba(0,0,0,0)',
-      borderWidth: 0,
-      hoverOffset: 6,
-      spacing: 2,
-      cutout: '72%',
-    },
-  ],
-}));
+const hoveredIndex = ref(-1);
 
-const options = computed<ChartOptions<'doughnut'>>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx) => {
-          const label = ctx.label ?? '';
-          const v = typeof ctx.raw === 'number' ? ctx.raw : 0;
-          const pct = assets.value > 0 ? ` (${formatPercent(v / assets.value, 0)})` : '';
-          return `${label}: ${formatMoney(v, 2)} ${displayUnit.value}${pct}`;
-        },
-      },
-    },
-  },
-}));
+// El hover sobre un sector manda sobre el valor por defecto del centro.
+const centerEyebrow = computed(() => {
+  if (hoveredIndex.value >= 0) return slices.value[hoveredIndex.value]?.label ?? '';
+  return props.centerLabel ?? 'Patrimonio neto';
+});
 
-const centerTextPlugin = computed<Plugin<'doughnut'>>(() => ({
-  id: 'centerText',
-  afterDraw(chart) {
-    const { ctx, chartArea } = chart;
-    if (!chartArea) return;
-
-    const cx = (chartArea.left + chartArea.right) / 2;
-    const cy = (chartArea.top + chartArea.bottom) / 2;
-
-    const netStr = formatMoney(net.value, 2);
-
-    const isNeg = net.value < 0;
-    const netColor = isNeg ? 'rgba(255, 120, 140, 0.95)' : 'rgba(140, 240, 180, 0.95)';
-
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.font = '700 16px "Plus Jakarta Sans", "Segoe UI", sans-serif';
-    ctx.fillStyle = netColor;
-    ctx.fillText(netStr, cx, cy - 10);
-
-    ctx.font = '12px "Plus Jakarta Sans", "Segoe UI", sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.70)';
-    ctx.fillText('Patrimonio neto', cx, cy + 8);
-
-    ctx.font = '12px "Plus Jakarta Sans", "Segoe UI", sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.60)';
-    ctx.fillText(displayUnit.value, cx, cy + 26);
-
-    ctx.restore();
-  },
-}));
+const centerBig = computed(() => {
+  if (hoveredIndex.value >= 0) {
+    const slice = slices.value[hoveredIndex.value];
+    return slice ? `${formatMoney(slice.value, 0)} ${displayUnit.value}` : '';
+  }
+  if (props.centerValue !== undefined) return props.centerValue;
+  return `${formatMoney(toNumber(props.netWorth), 2)} ${displayUnit.value}`;
+});
 </script>
 
 <template>
-  <div
-    class="nw-donut-wrap"
-    :class="{
-      'nw-donut-wrap-chart-only': hasChart && !hasSide,
-      'nw-donut-wrap-side-only': !hasChart && hasSide,
-    }"
-  >
-    <div v-if="hasChart" class="nw-donut-chart">
-      <Doughnut :data="data" :options="options" :plugins="[centerTextPlugin]" />
-    </div>
-    <div v-if="hasChart && chartSlices.length" class="nw-donut-legend">
-      <span v-for="slice in chartSlices" :key="slice.label" class="nw-donut-legend-item">
-        <span class="nw-donut-legend-dot" :style="{ background: slice.color }" />
-        <span class="nw-donut-legend-label">{{ slice.label }}</span>
-      </span>
-    </div>
-
-    <div v-if="hasSide" class="nw-donut-side">
-      <div v-if="$slots['side-top']" class="nw-donut-side-top">
-        <slot name="side-top" />
-      </div>
-
-      <div v-if="props.showComposition !== false" class="nw-donut-composition">
-        <div class="nw-donut-comp-block">
-          <div class="nw-donut-comp-block-head">
-            <div class="nw-donut-comp-title">Activos</div>
-            <button
-              class="nw-donut-comp-action"
-              type="button"
-              aria-label="Nuevo activo"
-              @click="emit('add-type', { type: 'asset' })"
-            >
-              +
-            </button>
-          </div>
-          <div v-if="assetComposition.length" class="nw-donut-comp-list">
-            <div
-              v-for="row in assetComposition"
-              :key="`asset-${row.key}`"
-              class="nw-donut-comp-row"
-              :class="{
-                'nw-donut-comp-row-active':
-                  props.selectedCategoryType === 'asset' && props.selectedCategoryKey === row.key,
-              }"
-            >
-              <button
-                class="nw-donut-comp-main"
-                type="button"
-                @click="emit('select-category', { key: row.key, type: 'asset' })"
-              >
-                <div class="nw-donut-comp-head">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ formatPercent(row.share, 0) }}</strong>
-                </div>
-                <div class="nw-donut-comp-meta">
-                  <span>{{ formatMoney(row.value, 2) }} {{ displayUnit }}</span>
-                  <span>{{ row.count }} posiciones</span>
-                </div>
-                <div class="nw-donut-comp-bar">
-                  <span
-                    class="nw-donut-comp-fill nw-donut-comp-fill-asset"
-                    :style="{ width: `${row.share * 100}%` }"
-                  ></span>
-                </div>
-              </button>
-            </div>
-          </div>
-          <div v-else class="nw-donut-comp-empty">Sin datos de activos por categoría.</div>
-        </div>
-
-        <div class="nw-donut-comp-block">
-          <div class="nw-donut-comp-block-head">
-            <div class="nw-donut-comp-title">Pasivos</div>
-            <button
-              class="nw-donut-comp-action"
-              type="button"
-              aria-label="Nuevo pasivo"
-              @click="emit('add-type', { type: 'liability' })"
-            >
-              +
-            </button>
-          </div>
-          <div v-if="liabilityComposition.length" class="nw-donut-comp-list">
-            <div
-              v-for="row in liabilityComposition"
-              :key="`liability-${row.key}`"
-              class="nw-donut-comp-row"
-              :class="{
-                'nw-donut-comp-row-active':
-                  props.selectedCategoryType === 'liability' &&
-                  props.selectedCategoryKey === row.key,
-              }"
-            >
-              <button
-                class="nw-donut-comp-main"
-                type="button"
-                @click="emit('select-category', { key: row.key, type: 'liability' })"
-              >
-                <div class="nw-donut-comp-head">
-                  <span>{{ row.label }}</span>
-                  <strong>{{ formatPercent(row.share, 0) }}</strong>
-                </div>
-                <div class="nw-donut-comp-meta">
-                  <span>{{ formatMoney(row.value, 2) }} {{ displayUnit }}</span>
-                  <span>{{ row.count }} posiciones</span>
-                </div>
-                <div class="nw-donut-comp-bar">
-                  <span
-                    class="nw-donut-comp-fill nw-donut-comp-fill-liability"
-                    :style="{ width: `${row.share * 100}%` }"
-                  ></span>
-                </div>
-              </button>
-            </div>
-          </div>
-          <div v-else class="nw-donut-comp-empty">Sin datos de pasivos por categoría.</div>
-        </div>
-      </div>
-    </div>
+  <div class="nw-donut">
+    <svg
+      :width="size"
+      :height="size"
+      :viewBox="`0 0 ${size} ${size}`"
+      class="nw-donut-svg"
+      role="img"
+      aria-label="Composición del patrimonio"
+    >
+      <circle
+        :cx="cx"
+        :cy="cy"
+        :r="radius"
+        fill="none"
+        stroke="currentColor"
+        stroke-opacity="0.1"
+        :stroke-width="thickness"
+      />
+      <circle
+        v-for="(arc, index) in arcs"
+        :key="arc.key"
+        :cx="cx"
+        :cy="cy"
+        :r="radius"
+        fill="none"
+        :stroke="arc.color"
+        :stroke-opacity="hoveredIndex >= 0 && hoveredIndex !== index ? 0.18 : 1"
+        :stroke-width="hoveredIndex === index ? thickness + 4 : thickness"
+        :stroke-dasharray="`${arc.dash} ${circumference - arc.dash}`"
+        :stroke-dashoffset="arc.offset"
+        :transform="`rotate(-90 ${cx} ${cy})`"
+        stroke-linecap="butt"
+        class="nw-donut-arc"
+        @mouseenter="hoveredIndex = index"
+        @mouseleave="hoveredIndex = hoveredIndex === index ? -1 : hoveredIndex"
+      />
+      <g class="nw-donut-center">
+        <text :x="cx" :y="cy - 6" text-anchor="middle" class="nw-donut-center-eyebrow">
+          {{ centerEyebrow }}
+        </text>
+        <text :x="cx" :y="cy + 18" text-anchor="middle" class="nw-donut-center-value">
+          {{ centerBig }}
+        </text>
+      </g>
+    </svg>
   </div>
 </template>

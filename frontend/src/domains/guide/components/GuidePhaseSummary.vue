@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { gradeFromScore } from '@/domains/guide/scoreVisuals';
+import ScoreGradeBadge from './ScoreGradeBadge.vue';
 import ScoreGradeLabel from './ScoreGradeLabel.vue';
-import ScoreHealthBadge from './ScoreHealthBadge.vue';
 import ScoreMeterRow from './ScoreMeterRow.vue';
 
 type ScoreKpi = {
@@ -12,7 +14,6 @@ type ScoreKpi = {
   detailText?: string;
   incomplete?: boolean;
 };
-
 type ScoreCard = {
   id: string;
   title: string;
@@ -20,7 +21,6 @@ type ScoreCard = {
   description: string;
   kpis: ScoreKpi[];
 };
-
 type SummaryCard = {
   id: string;
   label: string;
@@ -30,6 +30,8 @@ type SummaryCard = {
 };
 
 const props = defineProps<{
+  phaseId: number;
+  phaseDiagnosticCopy: string;
   isCashFlowPhase: boolean;
   cashFlowHeroSummaryCards: SummaryCard[];
   summaryCards: SummaryCard[];
@@ -41,92 +43,68 @@ const props = defineProps<{
   formatNumber: (value: number, fractionDigits?: number) => string;
 }>();
 
-void props;
+const grade = computed(() => gradeFromScore(props.globalScoreValue));
+const visibleSummaryCards = computed(() =>
+  props.isCashFlowPhase ? props.cashFlowHeroSummaryCards : props.summaryCards,
+);
 </script>
 
 <template>
-  <div>
-    <template v-if="isCashFlowPhase">
-      <div class="ui-guide-summary-grid ui-guide-summary-grid-cols-4">
-        <article
-          v-for="summaryCard in cashFlowHeroSummaryCards"
-          :key="summaryCard.id"
-          class="ui-guide-summary-card"
-        >
-          <div class="ui-guide-summary-label">{{ summaryCard.label }}</div>
-          <div
-            class="ui-guide-summary-value"
-            :class="summaryCard.valueTone ? `ui-guide-summary-value-${summaryCard.valueTone}` : ''"
-          >
-            {{ summaryCard.valueText }}
-          </div>
-          <div v-if="summaryCard.metaText" class="ui-guide-summary-meta">
-            {{ summaryCard.metaText }}
-          </div>
-        </article>
+  <div class="guide-score-column">
+    <div class="guide-score-hero">
+      <div class="guide-score-heading">
+        <p class="eyebrow">Puntuación del ámbito</p>
+        <ScoreGradeBadge :score="globalScoreValue" />
       </div>
-    </template>
-    <div v-else class="ui-guide-summary-grid">
-      <article
-        v-for="summaryCard in summaryCards"
-        :key="summaryCard.id"
-        class="ui-guide-summary-card"
-      >
-        <div class="ui-guide-summary-label">{{ summaryCard.label }}</div>
-        <div class="ui-guide-summary-value">{{ summaryCard.valueText }}</div>
+      <div class="guide-score-value mono" :class="`grade-${grade.toLowerCase()}`">
+        {{ formatNumber(globalScoreValue, 0) }}<span>/100</span>
+      </div>
+      <strong class="guide-score-label">{{ globalLabelValue }}</strong>
+      <p class="guide-score-copy">{{ phaseDiagnosticCopy }}</p>
+      <ScoreMeterRow :score="globalScoreValue" row-class="guide-score-progress" />
+      <div class="guide-score-progress-meta">
+        <span>Ámbito {{ phaseId }}</span>
+        <span>{{ formatNumber(Math.max(0, 100 - globalScoreValue), 0) }}% restante</span>
+      </div>
+    </div>
+
+    <div v-if="visibleSummaryCards.length" class="guide-summary-band">
+      <article v-for="card in visibleSummaryCards" :key="card.id" class="guide-summary-item">
+        <span>{{ card.label }}</span>
+        <strong :class="card.valueTone ? `tone-${card.valueTone}` : ''">{{
+          card.valueText
+        }}</strong>
+        <small v-if="card.metaText">{{ card.metaText }}</small>
       </article>
     </div>
 
-    <div v-if="cashFlowDistortionWarning" class="ui-status-line">
-      {{ cashFlowDistortionWarning }}
-    </div>
+    <p v-if="cashFlowDistortionWarning" class="guide-warning">{{ cashFlowDistortionWarning }}</p>
 
-    <div class="ui-guide-score-top">
-      <ScoreHealthBadge
-        :label="globalLabelValue"
-        :score="globalScoreValue"
-        :tone="globalToneValue"
-        :formatted-score="`${formatNumber(globalScoreValue, 0)}%`"
-      />
-    </div>
-
-    <ScoreMeterRow :score="globalScoreValue" large-grade />
-
-    <div class="ui-guide-score-grid" :class="`ui-guide-score-grid-cols-${scoreCards.length}`">
-      <article v-for="card in scoreCards" :key="card.id" class="ui-guide-score-card">
-        <div class="ui-guide-score-card-head">
-          <h3 class="ui-guide-score-card-title">{{ card.title }}</h3>
-          <div class="ui-guide-score-card-value-wrap">
-            <ScoreGradeLabel :score="card.score" class="ui-guide-score-card-grade" />
-            <div class="ui-guide-score-card-value">{{ formatNumber(card.score, 0) }}%</div>
+    <div class="guide-score-cards">
+      <article v-for="card in scoreCards" :key="card.id" class="guide-score-card">
+        <header>
+          <div>
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.description }}</p>
           </div>
-        </div>
-        <p class="ui-guide-score-card-copy">{{ card.description }}</p>
-
-        <div class="ui-guide-score-kpi-list">
-          <div v-for="kpi in card.kpis" :key="kpi.id" class="ui-guide-score-kpi">
-            <div class="ui-guide-score-kpi-head">
+          <div class="guide-card-score mono">
+            <ScoreGradeLabel :score="card.score" />
+            <span>{{ formatNumber(card.score, 0) }}/100</span>
+          </div>
+        </header>
+        <div class="guide-score-kpis">
+          <div v-for="kpi in card.kpis" :key="kpi.id" class="guide-score-kpi">
+            <div class="guide-score-kpi-head">
               <span>{{ kpi.label }}</span>
-              <strong class="ui-guide-score-kpi-value">
-                {{ kpi.valueText }}
-                <span
-                  v-if="kpi.incomplete"
-                  class="ui-guide-score-kpi-alert"
-                  title="Faltan cuotas por completar"
-                  aria-label="Faltan cuotas por completar"
-                  >!</span
-                >
-              </strong>
+              <strong
+                >{{ kpi.valueText
+                }}<span v-if="kpi.incomplete" class="guide-kpi-alert">!</span></strong
+              >
             </div>
-            <ScoreMeterRow
-              v-if="kpi.score != null"
-              :score="kpi.score"
-              row-class="ui-guide-meter-row-kpi"
-              track-class="ui-guide-score-kpi-track"
-            />
-            <div v-else class="ui-guide-score-kpi-pending">Indicador informativo (no puntua)</div>
-            <div class="ui-guide-score-kpi-hint">{{ kpi.hint }}</div>
-            <div v-if="kpi.detailText" class="ui-guide-score-kpi-hint">{{ kpi.detailText }}</div>
+            <ScoreMeterRow v-if="kpi.score != null" :score="kpi.score" />
+            <span v-else class="guide-info-label">Indicador informativo · no puntúa</span>
+            <p>{{ kpi.hint }}</p>
+            <p v-if="kpi.detailText">{{ kpi.detailText }}</p>
           </div>
         </div>
       </article>

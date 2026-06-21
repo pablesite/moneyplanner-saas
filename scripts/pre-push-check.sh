@@ -85,9 +85,9 @@ main() {
     saas_backend \
     python manage.py test saas_access
   run_exec \
-    "saas_frontend unit test BudgetDashboardView" \
+    "saas_frontend unit test budget + monthly close views" \
     saas_frontend \
-    npm run test:unit -- src/views/__tests__/BudgetDashboardView.spec.ts
+    npm run test:unit -- src/views/__tests__/budgetMonthlyCloseViews.spec.ts
 
   step CHECK "Core tests (CI-like auth/linking flags)"
   run_exec \

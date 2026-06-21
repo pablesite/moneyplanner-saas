@@ -52,10 +52,11 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 
 ## Typography and Spacing
 1. Use shared typography and spacing tokens from app styles.
-2. Keep heading hierarchy clear and predictable.
-3. Avoid ad-hoc spacing in single components.
-4. Use typography to mark importance, not just size differences.
-5. Long screens should still feel scannable in a few seconds.
+2. Direction A foundation uses `Geist` / `Geist Mono` with `system-ui` fallback via the SaaS shell.
+3. Keep heading hierarchy clear and predictable.
+4. Avoid ad-hoc spacing in single components.
+5. Use typography to mark importance, not just size differences.
+6. Long screens should still feel scannable in a few seconds.
 
 ## Components
 1. Reuse shared UI primitives where available.
@@ -63,6 +64,14 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 3. Prefer simple cards, clean tables, and charts without unnecessary visual noise.
 4. Avoid introducing new component variants unless they solve a clear UX problem.
 5. Do not duplicate components when composition or extension is enough.
+6. The shell navigation for Direction A should favor a horizontal topbar with brand, primary nav, and account actions before introducing view-level redesigns.
+7. In Patrimonio, Direction A should read as one continuous surface: page head, context bar, hero, timeline, and balance table without lateral workspaces or nested analytics cards. The hero is a single row: big net-worth figure + delta (este mes / YTD) on the left, the structural SVG donut centered (hover updates its center), and two columns Activos / Pasivos on the right that cross-filter the timeline.
+8. Presupuesto (`/presupuesto`) y Cierre mensual (`/cierre-mensual`) son **dos vistas independientes** (presentación desacoplada) que comparten el motor `useBudgetDashboardPage` vía composables finos (`useBudgetView` / `useMonthlyCloseView`); no se reintroduce una vista única por modos.
+9. Presupuesto se lee como una sola superficie: page head + context bar (Año fiscal · Titularidad · Tipo de partida · Vista · Importes) + hero (balance previsto + tasa de ahorro + 3 KPIs | year-strip) + tabla jerárquica `bdg-row` (categoría → subcategoría → partidas) con barra de ejecución, columna Evol. (sparkline), cobertura YTD, gráfico de evolución y rollup. La pestaña Sugerencias muestra los ajustes derivados con acciones Aplicar/Ignorar deshabilitadas (aún sin backing en el motor).
+10. Cierre mensual se lee como un flujo de 4 pasos: page head `Cierre · {mes}` + context bar (Mes · Titularidad) + `AStepper` (Liquidez/Ingresos/Gastos/Resultado, clicables) + `MonthlyCloseHero` (residual grande + variación de liquidez + 3 KPIs) + contenido del paso activo (conciliación con chips de estado). Se preserva toda la funcionalidad real del cierre (check-ins, coverage, ajuste manual, lock/reopen/finalize, severidad del residual) reskineada a Direction A.
+11. Contabilidad (`/movimientos`) presenta los asientos con lenguaje operativo: cuenta/origen, destino cuando existe, categoría/subcategoría e impacto monetario. `Debe`/`Haber` queda reservado para el detalle avanzado; al filtrar por cuenta, el importe expresa la variación de esa cuenta.
+12. Estado financiero (`/estado-financiero`) presenta el diagnóstico como un strip de cinco ámbitos con puntuaciones reales y grades A–E; el foco actual y los extremos (mayor tensión / mejor posicionado) preceden al mapa sin convertirlo en un dashboard de tarjetas.
+13. El detalle de Estado financiero (`/estado-financiero/ambitos/:phaseId`) conserva el mismo strip para mantener contexto y se organiza en una superficie a dos columnas: puntuación y palancas a la izquierda, diagnóstico contextual a la derecha. Los colores de grade explican estado y progreso; no son decoración ni sustituyen el texto.
 
 ## Styling Rules
 1. Do not introduce inline styles unless there is a clear, temporary reason.
@@ -91,3 +100,5 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
    - `docs/frontend/frontend-ux-iteration-playbook.md`
 2. For the minimum shared pattern contract, use:
    - `docs/frontend/frontend-visual-contract.md`
+3. For the SaaS-only Direction A foundation, use:
+   - `frontend/src/styles/design-system.css`

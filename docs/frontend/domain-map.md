@@ -77,7 +77,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 | `ownership.ts`   | Lógica de propiedad (ownership) de items patrimoniales.                                            |
 | `charts.ts`      | Datos y configuración para gráficos de patrimonio.                                                 |
 | `extensions.ts`  | Extensiones del modelo base.                                                                       |
-| `components/`    | Componentes: `ItemCategoryHeader`, `ItemSubgroupHeader`, `ItemDisplayRow`, `ItemList`, `ItemForm`. |
+| `components/`    | Componentes: `ItemForm`, `NetWorthItemModals` (sheet Direction A, campos underline), `NetWorthDonut` (SVG), `NetWorthEvolutionChart` (SVG: línea + 8 ticks + delta + hover), `NetWorthTimelineChart`/`NetWorthDeltaChart` (Chart.js, reutilizados por `AccountingMovementsView`). La tabla Balance y el hero se construyen inline en `NetWorthView` sobre `useNetWorthPageMetrics`; los componentes heredados (`ItemList`/`Item*Row`/`*Workspace`/`*TimelineMain`/`*HeroSection`/`*Bar`/`SettingsPopover`) se eliminaron en el redesign Direction A. |
 
 ---
 
@@ -122,7 +122,7 @@ Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, l
 | `BudgetAnnualEntriesContent.vue`                     | Adaptador visual para renderizar secciones anuales en Presupuesto.                       |
 | `useBudgetAnnualEntriesPage.ts`                      | Composable de la gestión anual contextual usada por Presupuesto.                         |
 | `useBudgetAnnualEntriesFilters.ts`                   | Filtros de titularidad/visibilidad para entradas anuales.                                |
-| `components/`                                        | Componentes de dashboard, secciones anuales, cierre mensual y modales de líneas.         |
+| `components/`                                        | Componentes Direction A: `BudgetHero`/`BudgetYearStrip`, `BudgetAnnualSection` + `BudgetBarCell` (tabla `bdg-row`), `MonthlyCloseHero` y las 4 secciones `BudgetMonthlyClose{Liquidity,Income,Expense,Result}Section`, además de los modales de líneas. Estilos por vista en `styles/budget.css` y `styles/monthly-close.css`. |
 
 ---
 
@@ -159,17 +159,17 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 
 ---
 
-### `guide` — Guía financiera / Coach
+### `guide` — Estado financiero
 
 **Origen:** Core-backed
 **Cliente:** `coreApi`
-**Ruta:** `/guia/fases/:phaseId`
+**Ruta:** `/estado-financiero` y `/estado-financiero/ambitos/:phaseId`
 
 | Archivo               | Contenido                               |
 | --------------------- | --------------------------------------- |
-| `phases.ts`           | Definición de fases financieras.        |
-| `scoreVisuals.ts`     | Visualizaciones de puntuación por fase. |
-| `phaseDiagnostics.ts` | Lógica de diagnóstico de fase actual.   |
+| `phases.ts`           | Definición de ámbitos financieros.        |
+| `scoreVisuals.ts`     | Visualizaciones de puntuación por ámbito. |
+| `phaseDiagnostics.ts` | Lógica de diagnóstico del ámbito actual.  |
 
 **Requiere:** `canUseGuide()` → `core.coachV1 || pro.guide`. Actualmente `true`.
 
@@ -205,11 +205,11 @@ Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia.
 | Ruta                   | Nombre                 | Vista                                      | Dominio principal                                                                                                                                                                                                                                                            |
 | ---------------------- | ---------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/login`               | `login`                | `LoginView`                                | `auth`                                                                                                                                                                                                                                                                       |
-| `/`                    | `home`                 | `HomeView`                                 | —                                                                                                                                                                                                                                                                            |
-| `/guia/fases/:phaseId` | `guide-phase`          | `GuidePhaseDetailView`                     | `guide`                                                                                                                                                                                                                                                                      |
+| `/estado-financiero`   | `home`                 | `HomeView`                                 | `guide`                                                                                                                                                                                                                                                                      |
+| `/estado-financiero/ambitos/:phaseId` | `guide-phase`          | `GuidePhaseDetailView`                     | `guide`                                                                                                                                                                                                                                                                      |
 | `/patrimonio`          | `networth`             | `NetWorthView`                             | `net-worth`                                                                                                                                                                                                                                                                  |
-| `/presupuesto`         | `budget-dashboard`     | `BudgetDashboardView`                      | Incluye gestión anual contextual por categoría/subcategoría, modales de líneas con errores backend persistentes, dashboard basado en summaries mensuales canónicos y visibilidad de gasto fuera de presupuesto con CTA `Anadir al presupuesto` para subcategorías detectadas |
-| `/cierre-mensual`      | `monthly-close`        | `BudgetDashboardView` (mode=monthly-close) | —                                                                                                                                                                                                                                                                            |
+| `/presupuesto`         | `budget-dashboard`     | `BudgetView`                               | Vista Direction A independiente sobre `useBudgetView` (fija mode `budget` del motor compartido `useBudgetDashboardPage`). Hero + context-bar + tab Sugerencias + tabla `bdg-row` con gestión anual contextual, modales de líneas, cobertura YTD y CTA para subcategorías detectadas |
+| `/cierre-mensual`      | `monthly-close`        | `MonthlyCloseView`                         | Vista Direction A independiente sobre `useMonthlyCloseView` (fija mode `monthly-close`). `APageHead` + `AStepper` (4 pasos) + `MonthlyCloseHero` + secciones Liquidez/Ingresos/Gastos/Resultado                                                                              |
 | `/data`                | `aux-data`             | `AuxDataView`                              | `aux-data`                                                                                                                                                                                                                                                                   |
 | `/account`             | `account`              | `AccountView`                              | `auth` + `admin` para `saas_admin` + portable data para `saas_member`                                                                                                                                                                                                        |
 | `/people`              | `people`               | `PeopleView`                               | `people`                                                                                                                                                                                                                                                                     |

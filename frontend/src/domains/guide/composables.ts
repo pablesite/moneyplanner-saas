@@ -1297,6 +1297,14 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
     return 0;
   });
 
+  const phaseScores = computed<Record<number, number>>(() => ({
+    1: Math.round(phase1GlobalScoreValue.value),
+    2: Math.round(phase2GlobalScoreValue.value),
+    3: Math.round(phase3GlobalScoreValue.value),
+    4: Math.round(phase4GlobalScoreValue.value),
+    5: guidePhases.find((item) => item.id === 5)?.progress ?? 0,
+  }));
+
   const globalToneValue = computed(() => toneFromScore(globalScoreValue.value));
 
   const globalLabelValue = computed(() => {
@@ -1534,7 +1542,7 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
       title: 'Cobertura del colchón',
       score: phase3CoverageScoreValue.value,
       description:
-        'Cobertura de liquidez útil medida contra gasto base (Fase 2) y carga actual incluyendo compromisos temporales.',
+        'Cobertura de liquidez útil medida contra gasto base (Ámbito 2) y carga actual incluyendo compromisos temporales.',
       kpis: [
         {
           id: 'emergency-months-base',
@@ -1918,7 +1926,7 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
       return 'Diagnóstico de flujo de caja: score compuesto de tensión recurrente (operativo estructural + cargas temporales de caja) y contexto extraordinario separado.';
     }
     if (isEmergencyFundPhase.value) {
-      return 'Diagnóstico de fondo de emergencia: cobertura del colchón usando liquidez útil (baseline Fase 4) contra gasto base y carga actual (semántica Fase 2).';
+      return 'Diagnóstico de fondo de emergencia: cobertura del colchón usando liquidez útil (baseline Ámbito 4) contra gasto base y carga actual (semántica Ámbito 2).';
     }
     return phase.value?.objective ?? '';
   });
@@ -1958,6 +1966,7 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
     phaseQuickActions,
     phaseDiagnosticCopy,
     globalScoreValue,
+    phaseScores,
     globalToneValue,
     globalLabelValue,
     scoreCards,

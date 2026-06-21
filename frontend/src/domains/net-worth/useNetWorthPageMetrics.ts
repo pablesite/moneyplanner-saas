@@ -1,6 +1,23 @@
 import { computed, type Ref } from 'vue';
 import type { Asset, Liability, PositionTimelineRow, Summary } from '@/domains/net-worth/models';
 import type { OwnershipFilterValue } from '@/domains/net-worth/useNetWorthOwnership';
+import {
+  assetCategories,
+  assetSubcategories,
+  liabilityCategories,
+} from '@/domains/net-worth/composables';
+
+function assetSubtitle(category: string, subcategory: string): string {
+  const catLabel = assetCategories.find((c) => c.value === category)?.label ?? category;
+  const subLabel =
+    assetSubcategories.find((s) => s.category === category && s.value === subcategory)?.label ??
+    subcategory;
+  return subLabel ? `${catLabel} / ${subLabel}` : catLabel;
+}
+
+function liabilitySubtitle(category: string): string {
+  return liabilityCategories.find((c) => c.value === category)?.label ?? category;
+}
 
 export type PositionRow = {
   id: number;
@@ -159,7 +176,7 @@ export function useNetWorthPageMetrics(params: {
           type: 'asset' as const,
           category: asset.category,
           name: asset.name,
-          subtitle: [asset.category, asset.subcategory].filter(Boolean).join(' / '),
+          subtitle: assetSubtitle(asset.category, asset.subcategory),
           value: resolved.value * ownershipFraction,
           currency: resolved.currency,
           ownershipFraction,
@@ -193,7 +210,7 @@ export function useNetWorthPageMetrics(params: {
           type: 'liability' as const,
           category: liability.category,
           name: liability.name,
-          subtitle: liability.category || 'liability',
+          subtitle: liabilitySubtitle(liability.category),
           value: resolved.value * ownershipFraction,
           currency: resolved.currency,
           ownershipFraction,

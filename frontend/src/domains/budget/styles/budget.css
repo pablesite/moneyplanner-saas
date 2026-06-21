@@ -1,0 +1,1074 @@
+/* Presupuesto (/presupuesto) — Direction A. Vista desacoplada de Cierre mensual. */
+
+.a-budget-page {
+  position: relative;
+}
+
+.a-budget-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.a-budget-page .filter-ctrl {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.budget-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.budget-hero-eyebrow {
+  color: var(--muted);
+}
+
+.budget-hero .hero-value {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-hero .hero-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.budget-hero .hero-delta .pos {
+  color: var(--pos);
+}
+
+.budget-hero .hero-delta .neg {
+  color: var(--neg);
+}
+
+.budget-hero .hero-delta-sep {
+  color: var(--faint);
+}
+
+.budget-hero-delta-copy {
+  margin-left: 4px;
+}
+
+.budget-hero-rate {
+  color: var(--text);
+}
+
+.budget-hero-kpis {
+  margin-top: 24px;
+}
+
+/* ── Year strip ───────────────────────────────────────────────────── */
+.budget-hero-strip {
+  min-width: 0;
+}
+
+.budget-year-strip {
+  display: block;
+  overflow: visible;
+  margin-top: 12px;
+  color: var(--text);
+}
+
+.budget-year-strip-label {
+  font-size: 10px;
+  fill: currentColor;
+}
+
+.budget-hero-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.budget-hero-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.budget-hero-legend-dot-income {
+  background: var(--pos);
+}
+
+.budget-hero-legend-dot-expense {
+  background: var(--neg);
+}
+
+.budget-hero-legend-spacer {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 11px;
+}
+
+@container page (max-width: 900px) {
+  .budget-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .budget-hero .hero-value {
+    font-size: 44px;
+  }
+}
+
+@container page (max-width: 560px) {
+  .budget-hero-kpis {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Divisor de zona hero → detalle. */
+.dir-a .bdg-zone-divider {
+  height: 0;
+  border-top: 1px solid var(--line-strong);
+  margin: 4px 0;
+}
+
+/* ── Tablas de presupuesto (bdg-row, fiel al prototipo) ───────────────── */
+.dir-a .bdg-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.dir-a .bdg-section {
+  min-width: 0;
+  border-top: 2px solid var(--line-strong);
+  padding-top: 16px;
+}
+
+/* Identidad cromática por columna: verde ingresos / rojo gastos. */
+.dir-a .bdg-sect-income {
+  border-top-color: var(--pos);
+}
+
+.dir-a .bdg-sect-expense {
+  border-top-color: var(--neg);
+}
+
+/* Cabecera de sección sin filete (reduce líneas) y título con más peso. */
+.dir-a .bdg-section .sect-head {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.dir-a .bdg-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dir-a .bdg-section-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--muted);
+}
+
+.dir-a .bdg-sect-income .bdg-section-title::before {
+  background: var(--pos);
+}
+
+.dir-a .bdg-sect-expense .bdg-section-title::before {
+  background: var(--neg);
+}
+
+@container page (max-width: 1180px) {
+  .dir-a .bdg-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dir-a .bdg-sect-action {
+  font-size: 12px;
+}
+
+.dir-a .bdg-empty {
+  padding: 28px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a .bdg-empty h2 {
+  margin: 8px 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dir-a .bdg-empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dir-a .bdg-loading {
+  padding: 16px 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Cabecera de columnas alineada con el grid bdg-row */
+.dir-a .bdg-colhead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px minmax(140px, 1.4fr) 70px 110px 28px;
+  gap: 16px;
+  padding: 6px 6px 10px;
+  border-bottom: 1px solid var(--line-strong);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.dir-a .bdg-colhead .num {
+  text-align: right;
+}
+
+.dir-a .bdg-colhead .ctr {
+  text-align: center;
+  font-size: 10px;
+}
+
+.dir-a .bdg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px minmax(140px, 1.4fr) 70px 110px 28px;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.dir-a .bdg-row:hover {
+  background: var(--hover);
+}
+
+.dir-a .bdg-row.bdg-row-cat {
+  padding: 16px 6px 10px;
+  border-bottom: 1px solid var(--line-strong);
+  cursor: default;
+  background: transparent;
+}
+
+.dir-a .bdg-row.bdg-row-cat:hover {
+  background: transparent;
+}
+
+.dir-a .bdg-row.bdg-row-sub {
+  padding-left: 24px;
+}
+
+.dir-a .bdg-row.bdg-row-item {
+  padding-left: 44px;
+  background: rgba(255, 255, 255, 0.015);
+  cursor: default;
+}
+
+.dir-a.theme-light .bdg-row.bdg-row-item {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.dir-a .bdg-row-clickable {
+  cursor: pointer;
+}
+
+.dir-a .bdg-row-total {
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 0;
+  cursor: default;
+}
+
+.dir-a .bdg-row-total:hover {
+  background: transparent;
+}
+
+.dir-a .bdg-row-lead {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dir-a .bdg-row-lead-body {
+  min-width: 0;
+}
+
+.dir-a .bdg-name {
+  font-size: 13.5px;
+}
+
+.dir-a .bdg-row-item .bdg-name {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dir-a .bdg-row-cat .bdg-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dir-a .bdg-name-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dir-a .bdg-name-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.dir-a .bdg-sub {
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 1px;
+}
+
+.dir-a .bdg-row-cat .bdg-kind {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-right: 10px;
+}
+
+.dir-a .bdg-kind-asset {
+  color: var(--pos);
+}
+
+.dir-a .bdg-kind-liability {
+  color: var(--neg);
+}
+
+.dir-a .bdg-chev {
+  color: var(--faint);
+  font-size: 12px;
+  width: 18px;
+  display: inline-flex;
+  justify-content: center;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.dir-a .bdg-chev-cat {
+  color: var(--text);
+}
+
+.dir-a .bdg-num {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  text-align: right;
+}
+
+.dir-a .bdg-num-strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.dir-a .bdg-num-muted {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.dir-a .bdg-pct {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dir-a .bdg-diff-pos {
+  color: var(--pos);
+}
+
+.dir-a .bdg-diff-neg {
+  color: var(--neg);
+}
+
+.dir-a .bdg-faint {
+  color: var(--faint);
+}
+
+.dir-a .bdg-spark-cell {
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.dir-a .bdg-row-cat .bdg-spark-cell {
+  color: var(--text);
+}
+
+.dir-a .bdg-actions-cell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Progreso (barra de ejecución por fila) */
+.dir-a .prog {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dir-a .prog > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.dir-a .prog-good > i {
+  background: var(--pos);
+}
+
+.dir-a .prog-warn > i {
+  background: oklch(0.78 0.13 80);
+}
+
+.dir-a .prog-danger > i {
+  background: var(--neg);
+}
+
+.dir-a .prog-neutral > i {
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.dir-a .prog-over {
+  box-shadow: inset 0 0 0 1px var(--neg-soft);
+}
+
+.dir-a .prog-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.55;
+}
+
+.dir-a .bdg-bar-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.dir-a .bdg-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--muted);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dir-a .bdg-bar-plan-label {
+  text-align: right;
+  font-size: 10px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+/* Pills */
+.dir-a .pill-unbudgeted {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: oklch(0.78 0.13 80 / 0.14);
+  border: 1px solid oklch(0.78 0.13 80 / 0.42);
+  color: oklch(0.78 0.13 80);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  cursor: help;
+}
+
+/* Editar importe ejecutado en celda */
+.dir-a .bdg-input {
+  font: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed transparent;
+  padding: 2px 0;
+  color: var(--text);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  width: 100%;
+  outline: none;
+}
+
+.dir-a .bdg-input:hover {
+  border-bottom-color: var(--line-strong);
+}
+
+.dir-a .bdg-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* Acciones por fila (editar / eliminar) */
+.dir-a .bdg-rowmenu {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.dir-a .bdg-rowmenu button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.dir-a .bdg-rowmenu button:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* Botón "+" para crear partida en categoría/subcategoría */
+.dir-a .bdg-add-btn {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  margin-left: 6px;
+}
+
+.dir-a .bdg-add-btn:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+/* ── Banda de cobertura (KPIs por sección) ──────────────────────────── */
+.dir-a .bdg-coverage {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  margin: 2px 0 8px;
+  padding: 4px 0 12px;
+}
+
+.dir-a .bdg-coverage-kpi {
+  padding: 0;
+}
+
+.dir-a .bdg-coverage-label {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.dir-a .bdg-coverage-kpi strong {
+  font-size: 18px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dir-a .bdg-coverage-kpi-alert strong {
+  color: oklch(0.78 0.13 80);
+}
+
+/* ── Gráfico de evolución previsto/ejecutado por mes ────────────────── */
+.dir-a .bdg-evolution {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 10px;
+}
+
+.dir-a .bdg-evolution-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dir-a .bdg-evolution-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dir-a .bdg-evolution-head h3 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.dir-a .bdg-evolution-bars {
+  display: grid;
+  gap: 6px;
+  align-items: end;
+  height: 96px;
+}
+
+.dir-a .bdg-evo-col {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dir-a .bdg-evo-rail {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 76px;
+  padding: 0 8%;
+}
+
+.dir-a .bdg-evo-plan {
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 18px;
+  border-radius: 2px 2px 0 0;
+  background: var(--line-strong);
+  min-height: 2px;
+}
+
+.dir-a .bdg-evo-exec {
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 18px;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+}
+
+.dir-a .bdg-evo-exec-good {
+  background: var(--pos);
+}
+
+.dir-a .bdg-evo-exec-warn {
+  background: oklch(0.78 0.13 80);
+}
+
+.dir-a .bdg-evo-exec-danger {
+  background: var(--neg);
+}
+
+.dir-a .bdg-evo-exec-pending {
+  background: var(--muted);
+  opacity: 0.4;
+}
+
+.dir-a .bdg-evo-label {
+  text-align: center;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.dir-a .bdg-evolution-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.dir-a .bdg-evolution-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.dir-a .bdg-evolution-legend .dot-plan {
+  background: var(--line-strong);
+}
+
+.dir-a .bdg-evolution-legend .dot-exec {
+  background: var(--pos);
+}
+
+/* ── Barra rich (rollup de sección, categoría, subcategoría) ────────── */
+.dir-a .bdg-richbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.dir-a .bdg-richbar-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--line);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.dir-a .bdg-richbar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+}
+
+.dir-a .bdg-fill-good {
+  background: var(--pos-soft);
+}
+
+.dir-a .bdg-fill-warn {
+  background: oklch(0.78 0.13 80 / 0.18);
+}
+
+.dir-a .bdg-fill-danger {
+  background: var(--neg-soft);
+}
+
+.dir-a .bdg-fill-neutral {
+  background: var(--hover);
+}
+
+.dir-a .bdg-richbar-overflow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.55;
+}
+
+.dir-a .bdg-richbar-exec {
+  position: relative;
+  padding-left: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  color: var(--text);
+}
+
+.dir-a .bdg-richbar-exec-pending {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.dir-a .bdg-richbar-plan {
+  position: relative;
+  margin-left: auto;
+  padding-right: 14px;
+  font-size: 12.5px;
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dir-a .bdg-richbar-dev {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dir-a .bdg-dev-good {
+  color: var(--pos);
+}
+
+.dir-a .bdg-dev-warn {
+  color: oklch(0.78 0.13 80);
+}
+
+.dir-a .bdg-dev-danger {
+  color: var(--neg);
+}
+
+.dir-a .bdg-dev-neutral {
+  color: var(--muted);
+}
+
+/* Rollup de sección (barra + toggle de desglose) */
+.dir-a .bdg-rollup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0 16px;
+}
+
+.dir-a .bdg-rollup .bdg-richbar {
+  flex: 1;
+  margin-top: 0;
+}
+
+.dir-a .bdg-expand-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dir-a .bdg-expand-link:hover {
+  text-decoration: underline;
+}
+
+/* Notas de rotación de inversión */
+.dir-a .bdg-note {
+  font-size: 11px;
+  color: var(--faint);
+  margin: 4px 0 0;
+}
+
+/* Subcategoría: meta y acciones */
+.dir-a .bdg-row-meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.dir-a .bdg-detected-add {
+  margin-top: 6px;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dir-a .bdg-detected-add:hover {
+  border-color: var(--accent);
+}
+
+/* Panel de contexto (lista de partidas de una subcategoría) */
+.dir-a .bdg-context {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  padding: 8px 0 4px;
+  border-top: 1px dashed var(--line);
+}
+
+.dir-a .bdg-context-empty {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0;
+}
+
+.dir-a .bdg-context-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dir-a .bdg-context-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dir-a .bdg-context-item:last-child {
+  border-bottom: 0;
+}
+
+.dir-a .bdg-context-main {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.dir-a .bdg-context-main strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dir-a .bdg-context-main small {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.dir-a .bdg-context-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dir-a .bdg-context-amount {
+  font-size: 12.5px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  color: var(--muted);
+}
+
+/* Selector de mes de detalle ("Ver acumulado hasta") */
+.dir-a .bdg-month-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+}
+
+.dir-a .bdg-month-bar .seg {
+  flex-wrap: wrap;
+}
+
+.dir-a .bdg-month-bar-label {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+/* Banner / tab de sugerencias */
+.dir-a .bdg-sugg-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.dir-a .bdg-sugg-eyebrow {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.dir-a .bdg-sugg-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dir-a .bdg-sugg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) 140px 140px auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dir-a .bdg-sugg-kind {
+  font-size: 11px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 2px;
+}
+
+.dir-a .bdg-sugg-reason {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dir-a .bdg-sugg-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.dir-a .bdg-sugg-actions .btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@container page (max-width: 820px) {
+  .dir-a .bdg-colhead .ctr,
+  .dir-a .bdg-spark-cell {
+    display: none;
+  }
+
+  .dir-a .bdg-row,
+  .dir-a .bdg-colhead {
+    grid-template-columns: minmax(0, 1fr) 96px minmax(110px, 1.1fr) 96px 28px;
+  }
+
+  .dir-a .bdg-sugg-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+}
+
+@container page (max-width: 600px) {
+  .dir-a .bdg-coverage {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dir-a .bdg-richbar {
+    flex-wrap: wrap;
+  }
+
+  .dir-a .bdg-richbar-track {
+    flex-basis: 100%;
+  }
+}

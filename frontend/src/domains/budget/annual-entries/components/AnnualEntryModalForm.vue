@@ -89,55 +89,75 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <BaseModal :open="open" :title="title" @close="emit('close')">
-    <div class="grid gap-2.5 md:grid-cols-2">
-      <select
-        :value="form.category"
-        class="select ui-data-field"
-        @change="
-          emit('patch', { category: String(($event.target as HTMLSelectElement).value ?? '') })
-        "
-      >
-        <option v-for="category in categoryOptions" :key="category.value" :value="category.value">
-          {{ category.label }}
-        </option>
-      </select>
-
-      <select
-        :value="form.subcategory"
-        class="select ui-data-field"
-        @change="
-          emit('patch', { subcategory: String(($event.target as HTMLSelectElement).value ?? '') })
-        "
-      >
-        <option
-          v-for="subcategory in subcategoryOptions"
-          :key="subcategory.value"
-          :value="subcategory.value"
+  <BaseModal
+    :open="open"
+    :title="title"
+    variant="sheet"
+    panel-class="dir-a dir-a-sheet"
+    @close="emit('close')"
+  >
+    <div class="ui-item-form-grid">
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">Categoría</span>
+        <select
+          :value="form.category"
+          class="select"
+          @change="
+            emit('patch', { category: String(($event.target as HTMLSelectElement).value ?? '') })
+          "
         >
-          {{ subcategory.label }}
-        </option>
-      </select>
+          <option v-for="category in categoryOptions" :key="category.value" :value="category.value">
+            {{ category.label }}
+          </option>
+        </select>
+      </label>
 
-      <input
-        :value="form.name"
-        class="input ui-data-field"
-        :class="{ 'md:col-span-2': !showOwnerField }"
-        :placeholder="namePlaceholder"
-        @input="emit('patch', { name: String(($event.target as HTMLInputElement).value ?? '') })"
-      />
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">Subcategoría</span>
+        <select
+          :value="form.subcategory"
+          class="select"
+          @change="
+            emit('patch', {
+              subcategory: String(($event.target as HTMLSelectElement).value ?? ''),
+            })
+          "
+        >
+          <option
+            v-for="subcategory in subcategoryOptions"
+            :key="subcategory.value"
+            :value="subcategory.value"
+          >
+            {{ subcategory.label }}
+          </option>
+        </select>
+      </label>
 
-      <select
-        v-if="showOwnerField"
-        :value="form.owner"
-        class="select ui-data-field"
-        @change="emit('patch', { owner: String(($event.target as HTMLSelectElement).value ?? '') })"
-      >
-        <option value="">Titular (opcional)</option>
-        <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <label class="ui-item-form-field" :class="{ 'md:col-span-2': !showOwnerField }">
+        <span class="ui-item-form-label">Concepto</span>
+        <input
+          :value="form.name"
+          class="input"
+          :placeholder="namePlaceholder"
+          @input="emit('patch', { name: String(($event.target as HTMLInputElement).value ?? '') })"
+        />
+      </label>
+
+      <label v-if="showOwnerField" class="ui-item-form-field">
+        <span class="ui-item-form-label">Titular</span>
+        <select
+          :value="form.owner"
+          class="select"
+          @change="
+            emit('patch', { owner: String(($event.target as HTMLSelectElement).value ?? '') })
+          "
+        >
+          <option value="">— Opcional —</option>
+          <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
 
       <label class="ui-item-form-field">
         <span v-if="timeProfileFieldLabel" class="ui-item-form-label">{{
@@ -145,7 +165,7 @@ const emit = defineEmits<{
         }}</span>
         <select
           :value="form.timeProfile"
-          class="select ui-data-field"
+          class="select"
           @change="
             emit('patch', { timeProfile: String(($event.target as HTMLSelectElement).value ?? '') })
           "
@@ -156,93 +176,123 @@ const emit = defineEmits<{
         </select>
       </label>
 
-      <select
-        v-if="showCashflowRoleField"
-        :value="form.cashflowRole"
-        class="select ui-data-field"
-        @change="
-          emit('patch', { cashflowRole: String(($event.target as HTMLSelectElement).value ?? '') })
-        "
-      >
-        <option v-for="option in cashflowRoleOptions" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <label v-if="showCashflowRoleField" class="ui-item-form-field">
+        <span class="ui-item-form-label">Rol en flujo de caja</span>
+        <select
+          :value="form.cashflowRole"
+          class="select"
+          @change="
+            emit('patch', {
+              cashflowRole: String(($event.target as HTMLSelectElement).value ?? ''),
+            })
+          "
+        >
+          <option v-for="option in cashflowRoleOptions" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
 
-      <input
-        v-if="showEventGroupField"
-        :value="form.eventGroup"
-        class="input ui-data-field"
-        :list="eventGroupOptions.length ? eventGroupDatalistId : undefined"
-        :placeholder="eventGroupPlaceholder"
-        @input="
-          emit('patch', { eventGroup: String(($event.target as HTMLInputElement).value ?? '') })
-        "
-      />
+      <label v-if="showEventGroupField" class="ui-item-form-field">
+        <span class="ui-item-form-label">Grupo de evento</span>
+        <input
+          :value="form.eventGroup"
+          class="input"
+          :list="eventGroupOptions.length ? eventGroupDatalistId : undefined"
+          :placeholder="eventGroupPlaceholder"
+          @input="
+            emit('patch', { eventGroup: String(($event.target as HTMLInputElement).value ?? '') })
+          "
+        />
+      </label>
       <datalist v-if="showEventGroupField && eventGroupOptions.length" :id="eventGroupDatalistId">
         <option v-for="eventGroup in eventGroupOptions" :key="eventGroup" :value="eventGroup">
           {{ eventGroup }}
         </option>
       </datalist>
 
-      <input
+      <label
         v-if="form.timeProfile === 'one_off' || showRecurringTargetMonthField"
-        :value="form.targetMonth"
-        class="input ui-data-field"
-        inputmode="numeric"
-        :placeholder="
-          form.timeProfile === 'one_off' ? targetMonthPlaceholder : targetMonthRecurringPlaceholder
-        "
-        @input="
-          emit('patch', { targetMonth: String(($event.target as HTMLInputElement).value ?? '') })
-        "
-      />
+        class="ui-item-form-field"
+      >
+        <span class="ui-item-form-label">{{
+          form.timeProfile === 'one_off' ? 'Mes objetivo' : 'Mes previsto'
+        }}</span>
+        <input
+          :value="form.targetMonth"
+          class="input"
+          inputmode="numeric"
+          :placeholder="
+            form.timeProfile === 'one_off'
+              ? targetMonthPlaceholder
+              : targetMonthRecurringPlaceholder
+          "
+          @input="
+            emit('patch', { targetMonth: String(($event.target as HTMLInputElement).value ?? '') })
+          "
+        />
+      </label>
 
-      <input
+      <label
         v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
-        :value="form.termEndMonth"
-        class="input ui-data-field"
-        inputmode="numeric"
-        :placeholder="termEndMonthPlaceholder"
-        @input="
-          emit('patch', { termEndMonth: String(($event.target as HTMLInputElement).value ?? '') })
-        "
-      />
+        class="ui-item-form-field"
+      >
+        <span class="ui-item-form-label">Mes fin compromiso</span>
+        <input
+          :value="form.termEndMonth"
+          class="input"
+          inputmode="numeric"
+          :placeholder="termEndMonthPlaceholder"
+          @input="
+            emit('patch', { termEndMonth: String(($event.target as HTMLInputElement).value ?? '') })
+          "
+        />
+      </label>
 
-      <input
+      <label
         v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
-        :value="form.termEndYear"
-        class="input ui-data-field"
-        inputmode="numeric"
-        :placeholder="termEndYearPlaceholder"
-        @input="
-          emit('patch', { termEndYear: String(($event.target as HTMLInputElement).value ?? '') })
-        "
-      />
+        class="ui-item-form-field"
+      >
+        <span class="ui-item-form-label">Año fin compromiso</span>
+        <input
+          :value="form.termEndYear"
+          class="input"
+          inputmode="numeric"
+          :placeholder="termEndYearPlaceholder"
+          @input="
+            emit('patch', { termEndYear: String(($event.target as HTMLInputElement).value ?? '') })
+          "
+        />
+      </label>
 
-      <AmountPeriodCurrencyRow
-        class="md:col-span-2"
-        :amount-value="form.amountAnnual"
-        :period="form.amountInputPeriod"
-        :currency="form.currency"
-        :placeholder="amountPlaceholder"
-        :period-disabled="form.timeProfile === 'one_off'"
-        :hide-period-toggle="form.timeProfile === 'one_off'"
-        :currency-options="currencyOptions"
-        @update:amount-value="emit('patch', { amountAnnual: $event })"
-        @update:period="emit('patch', { amountInputPeriod: $event })"
-        @update:currency="emit('patch', { currency: $event })"
-      />
+      <div class="ui-item-form-field md:col-span-2">
+        <span class="ui-item-form-label">Importe</span>
+        <AmountPeriodCurrencyRow
+          :amount-value="form.amountAnnual"
+          :period="form.amountInputPeriod"
+          :currency="form.currency"
+          :placeholder="amountPlaceholder"
+          :period-disabled="form.timeProfile === 'one_off'"
+          :hide-period-toggle="form.timeProfile === 'one_off'"
+          :currency-options="currencyOptions"
+          @update:amount-value="emit('patch', { amountAnnual: $event })"
+          @update:period="emit('patch', { amountInputPeriod: $event })"
+          @update:currency="emit('patch', { currency: $event })"
+        />
+      </div>
 
-      <textarea
-        :value="form.notes"
-        class="textarea ui-data-field ui-notes-field md:col-span-2"
-        rows="2"
-        :placeholder="notesPlaceholder"
-        @input="
-          emit('patch', { notes: String(($event.target as HTMLTextAreaElement).value ?? '') })
-        "
-      />
+      <label class="ui-item-form-field md:col-span-2">
+        <span class="ui-item-form-label">Notas</span>
+        <textarea
+          :value="form.notes"
+          class="textarea ui-notes-field"
+          rows="2"
+          :placeholder="notesPlaceholder"
+          @input="
+            emit('patch', { notes: String(($event.target as HTMLTextAreaElement).value ?? '') })
+          "
+        />
+      </label>
 
       <div v-if="error" class="ui-state-block ui-state-error md:col-span-2" role="alert">
         {{ error }}

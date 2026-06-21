@@ -587,45 +587,49 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
     </div>
   </div>
 
-  <BaseModal :open="showCreateUserModal" title="Crear usuario SaaS" @close="closeCreateUserModal">
-    <form class="form-grid" @submit.prevent="createAdminUser">
-      <div class="grid-2">
-        <label class="form-grid">
-          <span class="subtle">Username</span>
-          <input v-model="createUserForm.username" class="input" type="text" required />
-        </label>
-        <label class="form-grid">
-          <span class="subtle">Email</span>
-          <input v-model="createUserForm.email" class="input" type="email" />
-        </label>
-      </div>
+  <BaseModal
+    :open="showCreateUserModal"
+    title="Crear usuario SaaS"
+    variant="sheet"
+    panel-class="dir-a dir-a-sheet"
+    @close="closeCreateUserModal"
+  >
+    <form class="ui-item-form-grid" @submit.prevent="createAdminUser">
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">Username</span>
+        <input v-model="createUserForm.username" class="input" type="text" required />
+      </label>
 
-      <div class="grid-2">
-        <label class="form-grid">
-          <span class="subtle">Password</span>
-          <input
-            v-model="createUserForm.password"
-            class="input"
-            type="password"
-            minlength="8"
-            required
-          />
-        </label>
-        <label class="form-grid">
-          <span class="subtle">Rol inicial</span>
-          <select v-model="createUserForm.role" class="select">
-            <option value="saas_member">Miembro SaaS</option>
-            <option value="saas_admin">Admin SaaS</option>
-          </select>
-        </label>
-      </div>
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">Email</span>
+        <input v-model="createUserForm.email" class="input" type="email" />
+      </label>
 
-      <label class="checkbox-row">
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">Password</span>
+        <input
+          v-model="createUserForm.password"
+          class="input"
+          type="password"
+          minlength="8"
+          required
+        />
+      </label>
+
+      <label class="ui-item-form-field">
+        <span class="ui-item-form-label">Rol inicial</span>
+        <select v-model="createUserForm.role" class="select">
+          <option value="saas_member">Miembro SaaS</option>
+          <option value="saas_admin">Admin SaaS</option>
+        </select>
+      </label>
+
+      <label class="checkbox-row md:col-span-2">
         <input v-model="createUserForm.is_active" type="checkbox" />
         <span>Crear usuario activo</span>
       </label>
 
-      <div class="actions">
+      <div class="actions md:col-span-2">
         <button class="btn btn-primary" type="submit" :disabled="adminActionBusy">
           {{ adminActionBusy ? 'Guardando...' : 'Crear usuario' }}
         </button>
