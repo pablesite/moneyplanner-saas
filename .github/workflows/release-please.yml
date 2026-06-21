@@ -21,10 +21,20 @@ jobs:
           manifest-file: .release-please-manifest.json
 
       - name: Auto-merge release PR
-        if: ${{ steps.release.outputs.pr }}
+        if: ${{ steps.release.outputs.pr != '' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
-          release_pr_number="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state open --label 'autorelease: pending' --json number --jq '.[0].number')"
-          test -n "$release_pr_number"
+          release_pr_number="$(gh pr list \
+            --repo "${GITHUB_REPOSITORY}" \
+            --state open \
+            --label 'autorelease: pending' \
+            --json number \
+            --jq '.[0].number // empty' || true)"
+
+          if [ -z "$release_pr_number" ]; then
+            echo "No open release PR found to auto-merge."
+            exit 0
+          fi
+
           gh pr merge --repo "${GITHUB_REPOSITORY}" --squash --auto "$release_pr_number"
