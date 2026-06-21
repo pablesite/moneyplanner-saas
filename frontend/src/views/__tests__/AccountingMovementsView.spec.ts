@@ -18,6 +18,15 @@ vi.mock('vue-router', () => ({
 function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
   return {
     activeTab: tab,
+    accounts: [],
+    groupedCuentasAccounts: [],
+    ownershipFilterOptions: [],
+    dailyBalanceOwnershipFilter: 'all',
+    accountingAssetsTotal: 0,
+    accountingLiabilitiesTotal: 0,
+    accountingNetBalance: 0,
+    summaryRows: [],
+    formatMoney: vi.fn((value: number) => `${value} EUR`),
     hasAvailableManualPositions: computed(() => true),
     liquidityAccounts: computed(() => [{ id: 1 }]),
     dailyBalanceSeriesRows: computed(() => []),
@@ -26,6 +35,7 @@ function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
     dailyBalanceSeriesUnit: computed(() => 'EUR'),
     dailyBalanceSeriesChartPoints: computed(() => []),
     dailyBalanceSeriesChartRows: computed(() => []),
+    dailyBalanceSeriesMonthlyRows: computed(() => []),
     dailyBalanceSeriesRangeLabel: computed(() => '2025-04-17 - 2026-04-17'),
     dailyBalanceLatestChartPoint: computed(() => null),
     dailyTimelinePresetOptions: computed(() => ['1m', '3m', '6m', '1a', '5a', 'all']),
@@ -37,6 +47,14 @@ function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
     updateDailyTimelineWindowStart: vi.fn(),
     updateDailyTimelineWindowEnd: vi.fn(),
     formatNumber: vi.fn((value: number) => String(value)),
+    activityFilters: {
+      kind: 'all',
+      categoryKey: '',
+      subcategoryKey: '',
+    },
+    todosDatePreset: 'all',
+    todosDateFrom: '',
+    todosDateTo: '',
     showQuickEntryModal: ref(false),
     openActivationModal: vi.fn(),
   };
@@ -50,6 +68,7 @@ describe('AccountingMovementsView', () => {
     expect(wrapper.text()).toContain('Cuentas');
     expect(wrapper.text()).toContain('Todos los movimientos');
     expect(wrapper.text()).toContain('Estad');
+    expect(wrapper.findComponent({ name: 'APageHead' }).attributes('title')).toBe('Contabilidad');
   });
 
   it('switches tab when clicking controls', async () => {
@@ -57,7 +76,7 @@ describe('AccountingMovementsView', () => {
     mockUseAccountingMovementsPage.mockReturnValue(state);
     const wrapper = shallowMount(AccountingMovementsView);
 
-    const buttons = wrapper.findAll('button.ui-view-tab');
+    const buttons = wrapper.findAll('button.tab');
     await buttons[1]!.trigger('click');
     expect(state.activeTab).toBe('todos');
     await buttons[2]!.trigger('click');

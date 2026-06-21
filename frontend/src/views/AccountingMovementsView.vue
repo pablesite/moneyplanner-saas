@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="page a-mov-page">
-    <APageHead title="Movimientos">
+    <APageHead title="Contabilidad">
       <template #meta>
         <span>{{ currentMonthLabel }}</span>
         <span class="dot" />
