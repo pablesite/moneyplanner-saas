@@ -1297,6 +1297,14 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
     return 0;
   });
 
+  const phaseScores = computed<Record<number, number>>(() => ({
+    1: Math.round(phase1GlobalScoreValue.value),
+    2: Math.round(phase2GlobalScoreValue.value),
+    3: Math.round(phase3GlobalScoreValue.value),
+    4: Math.round(phase4GlobalScoreValue.value),
+    5: guidePhases.find((item) => item.id === 5)?.progress ?? 0,
+  }));
+
   const globalToneValue = computed(() => toneFromScore(globalScoreValue.value));
 
   const globalLabelValue = computed(() => {
@@ -1958,6 +1966,7 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
     phaseQuickActions,
     phaseDiagnosticCopy,
     globalScoreValue,
+    phaseScores,
     globalToneValue,
     globalLabelValue,
     scoreCards,

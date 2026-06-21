@@ -1,404 +1,399 @@
-/* ── Guide Phase Progress (nav header, back link, phase switcher) ── */
-
-.ui-guide-phase-head {
+.dir-a .guide-detail-panel {
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+}
+.dir-a .guide-detail-grid {
   display: grid;
-  gap: 10px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  gap: 54px;
+  align-items: start;
 }
-
-.ui-guide-phase-nav-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
+.dir-a .guide-score-column {
+  display: grid;
+  gap: 24px;
 }
-
-.ui-guide-phase-nav-links {
+.dir-a .guide-score-heading {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
-
-.ui-guide-back-link {
-  color: rgba(45, 212, 191, 0.95);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.ui-guide-back-link:hover {
-  text-decoration: underline;
-}
-
-.ui-guide-phase-inline-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.ui-guide-phase-inline-action-link {
+.dir-a .guide-score-heading .eyebrow {
+  margin: 0;
   color: var(--muted);
-  text-decoration: none;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.02);
 }
-
-.ui-guide-phase-inline-action-link:hover {
-  color: rgba(255, 255, 255, 0.95);
-  border-color: rgba(45, 212, 191, 0.35);
-  background: rgba(45, 212, 191, 0.06);
+.dir-a .guide-score-value {
+  font-size: clamp(52px, 6vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.04em;
 }
-
-.ui-guide-phase-switch {
-  display: inline-flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.dir-a .guide-score-value span {
+  color: var(--muted);
+  font-size: 24px;
 }
-
-.ui-guide-phase-switch-link {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  text-decoration: none;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.ui-guide-phase-switch-link-active {
-  border-color: rgba(45, 212, 191, 0.72);
-  background: rgba(45, 212, 191, 0.12);
-}
-
-.ui-guide-phase-title {
-  margin-bottom: 2px;
-}
-
-.ui-guide-phase-title-inline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px;
-  margin: 0 0 2px;
-}
-
-.ui-guide-phase-title-inline-kicker {
-  margin: 0;
-  font-size: 13px;
-}
-
-.ui-guide-phase-title-inline-name {
-  margin: 0;
-  font-size: 13px;
-}
-
-.ui-guide-phase-copy {
-  margin: 0;
-}
-
-/* ── Score panel wrapper ── */
-
-.ui-guide-score-panel {
-  padding: 16px;
-}
-
-/* ── Score top (health badge row) ── */
-
-.ui-guide-score-top {
+.dir-a .guide-score-label {
+  display: block;
   margin-top: 12px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-}
-
-/* ── Score grid + cards ── */
-
-.ui-guide-score-grid {
-  margin-top: 12px;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-}
-
-.ui-guide-score-grid-cols-1 {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.ui-guide-score-grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.ui-guide-score-card {
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 12px;
-  height: 100%;
-}
-
-.ui-guide-score-card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.ui-guide-score-card-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.ui-guide-score-card-value {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
 }
-
-.ui-guide-score-card-value-wrap {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.ui-guide-score-card-grade {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.ui-guide-score-card-copy {
-  margin: 6px 0 0;
-  font-size: 12px;
+.dir-a .guide-score-copy {
+  max-width: 520px;
+  margin: 7px 0 0;
   color: var(--muted);
-}
-
-/* ── KPI rows inside score cards ── */
-
-.ui-guide-score-kpi-list {
-  margin-top: 10px;
-  display: grid;
-  gap: 10px;
-}
-
-.ui-guide-score-kpi-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
   font-size: 13px;
+  line-height: 1.55;
 }
-
-.ui-guide-score-kpi-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.dir-a .guide-score-progress {
+  margin-top: 24px;
 }
-
-.ui-guide-score-kpi-alert {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  color: hsl(34 100% 72%);
-  border: 1px solid hsl(34 100% 68% / 0.45);
-  background: hsl(34 100% 50% / 0.14);
-}
-
-.ui-guide-score-kpi-hint {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.ui-guide-score-kpi-pending {
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-/* ── Summary grid + cards ── */
-
-.ui-guide-summary-grid {
-  margin-top: 0;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.ui-guide-summary-grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.ui-guide-summary-grid-cols-4 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.ui-guide-summary-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  padding: 10px 11px;
-}
-
-.ui-guide-summary-label {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.ui-guide-summary-value {
-  margin-top: 3px;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.ui-guide-summary-value-positive {
-  color: rgba(110, 231, 183, 0.95);
-}
-
-.ui-guide-summary-value-negative {
-  color: rgba(251, 113, 133, 0.96);
-}
-
-.ui-guide-summary-value-warning {
-  color: rgba(253, 224, 71, 0.96);
-}
-
-.ui-guide-summary-value-neutral {
-  color: inherit;
-}
-
-.ui-guide-summary-meta {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-/* ── Context diagnostics accordion (details/summary) ── */
-
-.ui-guide-context-details {
-  margin-top: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.01);
-  overflow: clip;
-}
-
-.ui-guide-context-summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 12px 14px;
-  display: grid;
-  gap: 2px;
-}
-
-.ui-guide-context-summary::-webkit-details-marker {
+.dir-a .guide-score-progress .guide-grade-label {
   display: none;
 }
-
-.ui-guide-context-summary-title {
-  font-size: 13px;
-  font-weight: 700;
+.dir-a .guide-score-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: var(--faint);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.ui-guide-context-summary-copy {
+.dir-a .guide-summary-band {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.dir-a .guide-summary-item {
+  display: grid;
+  gap: 3px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-right: 1px solid var(--line);
+}
+.dir-a .guide-summary-item:nth-child(even) {
+  border-right: 0;
+}
+.dir-a .guide-summary-item > span,
+.dir-a .guide-summary-item small {
+  color: var(--faint);
+  font-size: 10.5px;
+}
+.dir-a .guide-summary-item strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 16px;
+  font-weight: 500;
+}
+.dir-a .tone-positive {
+  color: var(--pos);
+}
+.dir-a .tone-negative {
+  color: var(--neg);
+}
+.dir-a .tone-warning {
+  color: oklch(0.74 0.13 45);
+}
+.dir-a .guide-warning {
+  margin: -8px 0 0;
+  padding: 10px 0;
+  color: oklch(0.8 0.1 45);
+  border-bottom: 1px solid var(--line);
   font-size: 12px;
+}
+
+.dir-a .guide-score-cards {
+  display: grid;
+  gap: 22px;
+}
+.dir-a .guide-score-card {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.dir-a .guide-score-card > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dir-a .guide-score-card h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.dir-a .guide-score-card header p {
+  margin: 4px 0 0;
   color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
-
-.ui-guide-context-details[open] .ui-guide-context-summary {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+.dir-a .guide-card-score {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
 }
-
-.ui-guide-context-details-content {
-  padding: 12px;
-}
-
-.ui-guide-context-score-grid {
-  margin-top: 12px;
-}
-
-/* ── Summary sections inside context details ── */
-
-.ui-guide-summary-sections {
+.dir-a .guide-score-kpis {
   display: grid;
   gap: 14px;
+  margin-top: 16px;
 }
-
-.ui-guide-summary-section {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.008));
+.dir-a .guide-score-kpi {
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
 }
-
-.ui-guide-summary-section-head {
+.dir-a .guide-score-kpi-head {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.dir-a .guide-score-kpi-head strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-weight: 500;
+}
+.dir-a .guide-score-kpi .guide-meter-row {
+  margin-top: 7px;
+}
+.dir-a .guide-score-kpi .guide-grade-label {
+  font-size: 11px;
+}
+.dir-a .guide-score-kpi p,
+.dir-a .guide-info-label {
+  margin: 5px 0 0;
+  color: var(--faint);
+  font-size: 11px;
+}
+.dir-a .guide-kpi-alert {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 5px;
+  color: oklch(0.8 0.1 45);
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 9px;
 }
 
-.ui-guide-summary-section-title {
+.dir-a .guide-diagnostics {
+  display: grid;
+  gap: 16px;
+}
+.dir-a .guide-diagnostics-note {
+  margin: 0;
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.dir-a .guide-context-details {
+  border-bottom: 1px solid var(--line);
+}
+.dir-a .guide-context-details > summary {
+  display: grid;
+  gap: 3px;
+  padding: 15px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+.dir-a .guide-context-details > summary::-webkit-details-marker {
+  display: none;
+}
+.dir-a .guide-context-details > summary small {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.dir-a .guide-context-content {
+  display: grid;
+  gap: 24px;
+  padding-bottom: 20px;
+}
+.dir-a .guide-context-section {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.dir-a .guide-context-section > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dir-a .guide-context-section h3,
+.dir-a .guide-info-card h3 {
   margin: 0;
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 600;
 }
-
-.ui-guide-summary-section-copy {
+.dir-a .guide-context-section header p,
+.dir-a .guide-info-card > p {
   margin: 4px 0 0;
-  font-size: 12px;
   color: var(--muted);
+  font-size: 11.5px;
 }
-
-.ui-guide-section-filter {
+.dir-a .guide-context-grid {
+  display: grid;
+  gap: 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+.dir-a .guide-context-grid.cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.dir-a .guide-context-grid.cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.dir-a .guide-context-grid article {
   display: grid;
   gap: 4px;
-  min-width: min(280px, 100%);
+  padding: 12px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
-
-.ui-guide-section-filter-label {
-  font-size: 11px;
+.dir-a .guide-context-grid span,
+.dir-a .guide-context-grid small {
+  color: var(--faint);
+  font-size: 10px;
+}
+.dir-a .guide-context-grid strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+.dir-a .guide-event-filter {
+  position: relative;
+}
+.dir-a .guide-event-filter > summary {
+  min-width: 150px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
   color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  font-size: 11px;
+}
+.dir-a .guide-event-filter > div {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% + 4px);
+  right: 0;
+  display: grid;
+  min-width: 190px;
+  padding: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #15171c;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+}
+.dir-a .guide-event-filter button {
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+}
+.dir-a .guide-event-filter button:hover,
+.dir-a .guide-event-filter button.on {
+  background: var(--hover);
+  color: var(--text);
+}
+.dir-a .guide-info-card {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.dir-a .guide-info-card dl {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0 0;
+}
+.dir-a .guide-info-card dl div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.dir-a .guide-info-card dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.dir-a .guide-info-card dd {
+  margin: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+}
+.dir-a .guide-info-card small {
+  grid-column: 1 / -1;
+  color: var(--faint);
+  font-size: 10.5px;
 }
 
-@media (max-width: 1024px) {
-  .ui-guide-score-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ui-guide-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ui-guide-summary-grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.dir-a .guide-state {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.dir-a .guide-state h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+}
+.dir-a .guide-state p {
+  margin: 0;
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.dir-a .guide-state-error .eyebrow {
+  color: var(--neg);
+}
+.dir-a .guide-state-facts {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 0;
+}
+.dir-a .guide-state-facts div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+}
+.dir-a .guide-state-facts dt {
+  color: var(--faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.dir-a .guide-state-facts dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
-@media (max-width: 720px) {
-  .ui-guide-score-top {
+@container page (max-width: 980px) {
+  .dir-a .guide-detail-grid {
     grid-template-columns: 1fr;
+    gap: 34px;
   }
-
-  .ui-guide-summary-grid {
-    grid-template-columns: 1fr;
+}
+@container page (max-width: 620px) {
+  .dir-a .guide-context-grid.cols-2,
+  .dir-a .guide-context-grid.cols-4 {
+    grid-template-columns: repeat(2, 1fr);
   }
-
-  .ui-guide-summary-grid-cols-2,
-  .ui-guide-summary-grid-cols-4 {
-    grid-template-columns: 1fr;
+  .dir-a .guide-detail .page-head .actions {
+    overflow-x: auto;
+    flex-wrap: nowrap;
   }
 }

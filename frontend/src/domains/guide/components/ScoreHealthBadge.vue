@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { scoreBadgeStyle } from '@/domains/guide/scoreVisuals';
-
-type ScoreTone = 'solid' | 'medium' | 'watch' | 'risk';
+import { gradeFromScore } from '@/domains/guide/scoreVisuals';
 
 const props = defineProps<{
   label: string;
   score: number;
-  tone: ScoreTone;
+  tone: 'solid' | 'medium' | 'watch' | 'risk';
   formattedScore?: string;
 }>();
-
-const badgeStyle = computed(() => scoreBadgeStyle(props.score));
+const grade = computed(() => gradeFromScore(props.score));
 </script>
 
 <template>
-  <div class="ui-guide-health-score-badge" :class="`ui-guide-health-${tone}`" :style="badgeStyle">
-    <span class="ui-guide-health-score-text">{{ label }}</span>
-    <strong class="ui-guide-health-score-value">{{
-      formattedScore ?? `${Math.round(score)}%`
-    }}</strong>
+  <div class="guide-health" :class="[`grade-${grade.toLowerCase()}`, `tone-${tone}`]">
+    <span>{{ label }}</span>
+    <strong class="mono">{{ formattedScore ?? `${Math.round(score)}%` }}</strong>
   </div>
 </template>
