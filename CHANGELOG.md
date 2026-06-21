@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.23.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.22.2...moneyplanner-saas-v0.23.0) (2026-06-21)
+
+
+### Features
+
+* **frontend:** AContextBar como barra de herramientas contenida ([0d5eea4](https://github.com/pablesite/moneyplanner-saas/commit/0d5eea443d1b381c5b8c304d50da4d0c3e4d76e0))
+* **frontend:** add AStepper Direction A primitive ([5655f11](https://github.com/pablesite/moneyplanner-saas/commit/5655f11d14ec32ccb19df897c13b988e4eeba304))
+* **frontend:** add hero→detail divider in /presupuesto ([1c125a9](https://github.com/pablesite/moneyplanner-saas/commit/1c125a9f808efa0d864119c10d109e2da7dc7876))
+* **frontend:** apply dir-a-sheet label pattern to all remaining modals ([685abfc](https://github.com/pablesite/moneyplanner-saas/commit/685abfc2f8578ca6dae2b464546dc8ef8966feba))
+* **frontend:** budget UX pass — declutter, dark selects, wider evo bars, responsive ([caa2bd5](https://github.com/pablesite/moneyplanner-saas/commit/caa2bd530906860f1b2d364d9ba927a963d46eef))
+* **frontend:** color identity for budget blocks, dark select popups, header cleanup ([94c1357](https://github.com/pablesite/moneyplanner-saas/commit/94c1357ac1e112f94598c09e42a9637170f8fda3))
+* **frontend:** declutter budget coverage + info tooltip for evolution ([103802e](https://github.com/pablesite/moneyplanner-saas/commit/103802ec27e77d2f5d646404fa56ccf00a83c8a6))
+* **frontend:** decouple budget views + Direction A budget hero (WIP) ([2ecccfa](https://github.com/pablesite/moneyplanner-saas/commit/2ecccfa83f24fb6fce0f800b8d8e27911b3a0320))
+* **frontend:** dir-a-sheet en modales pendientes, nav reorder y patrimonio como raíz ([fb8a542](https://github.com/pablesite/moneyplanner-saas/commit/fb8a5420efaa61faa2cdf32d1ce50de41e9386d8))
+* **frontend:** Direction A net-worth fidelity rework + responsive ([c634852](https://github.com/pablesite/moneyplanner-saas/commit/c634852a3bafb9d3fde0b1c4c82287330e0c061c))
+* **frontend:** Direction A shell + hero for /cierre-mensual (WIP) ([30c3cfe](https://github.com/pablesite/moneyplanner-saas/commit/30c3cfe842cecba07372414cc441feeab0d289e6))
+* **frontend:** footer shows app name + version (no copyright) ([0913f7c](https://github.com/pablesite/moneyplanner-saas/commit/0913f7cf1a435de6a0cf31f521e5baae0b1fe535))
+* **frontend:** implement direction a phase 0 shell foundation ([ac29c10](https://github.com/pablesite/moneyplanner-saas/commit/ac29c10f6f960dc95b6783bc5a0bd1ca7c99110f))
+* **frontend:** info tooltips for subtitles across budget + monthly close ([f23479d](https://github.com/pablesite/moneyplanner-saas/commit/f23479d99751976908fef5787f963095cf536c8c))
+* **frontend:** lay out budget Ingresos/Gastos side by side ([bbedfc3](https://github.com/pablesite/moneyplanner-saas/commit/bbedfc3cec1431836de34c93025c55be858bdeb3))
+* **frontend:** mejoras UX en patrimonio y nav ([90a83e0](https://github.com/pablesite/moneyplanner-saas/commit/90a83e01bed558e672a568a4921fa5479eeb99f6))
+* **frontend:** minimal footer (version only) + breathing room before it ([0f913e9](https://github.com/pablesite/moneyplanner-saas/commit/0f913e976a5ed7c0764e0ba8c4aafe27f0e9c48c))
+* **frontend:** port guide to direction a ([8a27866](https://github.com/pablesite/moneyplanner-saas/commit/8a27866e14ba1b45443e2cc362917eda2ccb7f37))
+* **frontend:** pulir consistencia visual entre vistas dir-a ([bd3654e](https://github.com/pablesite/moneyplanner-saas/commit/bd3654e6f771a0573e34bf7b3b22d81959674d89))
+* **frontend:** pulir la vista de cierre mensual ([6ceee91](https://github.com/pablesite/moneyplanner-saas/commit/6ceee91d5d981b8771f4078c639359bff80011b6))
+* **frontend:** rediseño vista contabilidad al sistema dir-a ([cc52f78](https://github.com/pablesite/moneyplanner-saas/commit/cc52f78e6e02056fe59cc198306015ae03de6086))
+* **frontend:** rename guide as financial state ([9ea8839](https://github.com/pablesite/moneyplanner-saas/commit/9ea883904a61caf78364d252f4be2687dc29caca))
+* **frontend:** reskin /presupuesto tables to Direction A bdg-row ([219f855](https://github.com/pablesite/moneyplanner-saas/commit/219f8550051b4981c1c724bc93c2d052fb0b3ec6))
+* **frontend:** reskin monthly-close Gastos step to Direction A ([7614795](https://github.com/pablesite/moneyplanner-saas/commit/761479543762a8af719991c30f4b0ed7f8eae6df))
+* **frontend:** reskin monthly-close Ingresos step to Direction A ([6580453](https://github.com/pablesite/moneyplanner-saas/commit/658045348f52ed133d262d63ed12415aa0d57217))
+* **frontend:** reskin monthly-close Liquidez step to Direction A ([5e7e078](https://github.com/pablesite/moneyplanner-saas/commit/5e7e078083c088f5c7faf4b5e9cbc0c022e9d3a8))
+* **frontend:** reskin monthly-close Resultado step + drop dashboard.css from /cierre-mensual ([2f71a55](https://github.com/pablesite/moneyplanner-saas/commit/2f71a55c14332982579f64c487104d956cb4612c))
+* **frontend:** restore per-row Evol. column with ASparkline in /presupuesto ([ca2cd38](https://github.com/pablesite/moneyplanner-saas/commit/ca2cd382cb3904d35080491f8e32c419de420902))
+* **frontend:** unify modals to Direction A sheet style + add app footer ([6b0d267](https://github.com/pablesite/moneyplanner-saas/commit/6b0d267fb834361723b2625c260ea24ea1f6487a))
+
+
+### Bug Fixes
+
+* **accounting:** clarify movement account impacts ([5f287c7](https://github.com/pablesite/moneyplanner-saas/commit/5f287c78defb5c5ecf59042e23662016867f4077))
+* **accounting:** update modal selectors ([b0bb813](https://github.com/pablesite/moneyplanner-saas/commit/b0bb813ff2b9e800ca28538009aef2ea57bcbf4c))
+* **ci:** tolerate missing release please PR ([aa4f9b2](https://github.com/pablesite/moneyplanner-saas/commit/aa4f9b23994b422f988b463b5c85c069c2e0ce6b))
+
 ## [0.22.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.22.1...moneyplanner-saas-v0.22.2) (2026-06-16)
 
 
