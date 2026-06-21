@@ -1,4 +1,4 @@
-# Fase 3 — Movimientos (AccountingMovementsView) con Design System "Direction A"
+# Fase 3 — Contabilidad (AccountingMovementsView) con Design System "Direction A"
 
 > Aplicar la **metodología obligatoria** de `docs/tasks/frontend-redesign-direction-a/README.md`.
 > **PRIORIDAD: fidelidad literal al prototipo (Regla 0)** — el resultado debe **coincidir** con
@@ -13,7 +13,7 @@ lógica y toda la funcionalidad.
 
 ## Context
 
-Referencia: `handoff/README.md` sección "Movimientos"; `handoff/direction-a-more.jsx` →
+Referencia: `handoff/README.md` sección original "Movimientos"; `handoff/direction-a-more.jsx` →
 `AMovementsView`. Depende de la Fase 0 y reutiliza las primitivas de fases anteriores. Los charts de
 evolución diaria reutilizan `NetWorthTimelineChart`/`NetWorthDeltaChart` tal como la Fase 1 los deje
 (ya con la estética del prototipo, no solo recoloreados).

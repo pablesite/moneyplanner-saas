@@ -8,12 +8,13 @@ Reimplementación del frontend SaaS sobre el sistema visual "Direction A" del ha
 | Fase | Vista(s) | Estado |
 | ---- | -------- | ------ |
 | 0 | Fundación (tokens `.dir-a`, fuentes Geist, shell → topbar) | ✅ hecha (revisar) |
-| 1 | Patrimonio (`NetWorthView`) | 🔄 rework de fidelidad aplicado: hero a 2 columnas sin KPIs extra (delta este mes + YTD), donut reescrito a SVG (hover actualiza centro), tabla balance con total de pasivos en negativo y sin subcategoría duplicada, charts migrados a clases del sistema, componentes heredados eliminados. **Grep anti-híbrido limpio.** Pendiente: gate visual con capturas + visto bueno del usuario |
-| 2 | Presupuesto + Cierre mensual (`BudgetView` + `MonthlyCloseView`) | 🔄 reskin completo aplicado: presentación **desacoplada** (dos vistas independientes), motor `useBudgetDashboardPage` intacto. `/presupuesto` con tabla `bdg-row` (hero + context-bar Vista/Importes + tab Sugerencias + columna Evol. con `ASparkline`). `/cierre-mensual` con `APageHead` + `AStepper` + `MonthlyCloseHero` + 4 pasos reskineados (`.mc-*`). Legacy retirado (`BudgetDashboardView`/`BudgetHeroSection`/`dashboard.css`). **Grep anti-híbrido limpio · 38 tests verdes.** Pendiente: gate visual con capturas + visto bueno del usuario |
-| 3 | Movimientos (`AccountingMovementsView`) | ⚪ pendiente |
-| 4 | Estado financiero (`HomeView` + `GuidePhaseDetailView`) | 🔄 port Direction A implementado en `/estado-financiero` + detalle: strip A–E con scores reales, panel de puntuación/diagnóstico, estados y responsive; lint/format/typecheck + 14 tests verdes. Pendiente gate visual happy-path con Core local disponible y visto bueno del usuario |
+| 1 | Patrimonio (`NetWorthView`) | ✅ cerrada. El rework Direction A queda dado por bueno; los remates de gate visual y consistencia transversal se mueven a la Fase 5 |
+| 2 | Presupuesto + Cierre mensual (`BudgetView` + `MonthlyCloseView`) | ✅ cerrada. La presentación desacoplada y el reskin completo quedan aceptados; los remates de gate visual y consistencia transversal se mueven a la Fase 5 |
+| 3 | Contabilidad (`AccountingMovementsView`) | ✅ cerrada. La antigua fase de Movimientos se considera completada y consolidada como Contabilidad |
+| 4 | Estado financiero (`HomeView` + `GuidePhaseDetailView`) | ✅ cerrada. El port Direction A y el renombrado de la antigua Guía quedan aceptados; los remates de gate visual y happy-path se mueven a la Fase 5 |
+| 5 | Gate visual + consistencia transversal | 🔄 nueva fase de cierre: comparar happy-path contra handoff y unificar detalles básicos compartidos entre vistas (page heads, context bars, tablas, chips, botones, sheets y estados) |
 
-Orden de ejecución: 0 → 1 → 2 → 3 → 4. Cada fase reutiliza primitivas de las anteriores.
+Orden de ejecución: 0 → 1 → 2 → 3 → 4 → 5. La Fase 5 consolida el cierre visual transversal sobre las vistas ya aceptadas en las fases anteriores.
 
 ---
 
