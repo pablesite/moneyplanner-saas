@@ -14,9 +14,18 @@ import { registerAuthGuard } from '@/domains/auth';
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/', name: 'root', component: NetWorthView },
-  { path: '/guia', name: 'home', component: HomeView },
-  { path: '/inicio', redirect: '/guia' },
-  { path: '/guia/fases/:phaseId', name: 'guide-phase', component: GuidePhaseDetailView },
+  { path: '/estado-financiero', name: 'home', component: HomeView },
+  { path: '/guia', redirect: '/estado-financiero' },
+  { path: '/inicio', redirect: '/estado-financiero' },
+  {
+    path: '/estado-financiero/ambitos/:phaseId',
+    name: 'guide-phase',
+    component: GuidePhaseDetailView,
+  },
+  {
+    path: '/guia/fases/:phaseId',
+    redirect: (to) => `/estado-financiero/ambitos/${to.params.phaseId}`,
+  },
   { path: '/patrimonio', redirect: '/' },
   { path: '/presupuesto', name: 'budget-dashboard', component: BudgetView },
   { path: '/cierre-mensual', name: 'monthly-close', component: MonthlyCloseView },

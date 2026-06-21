@@ -1,4 +1,4 @@
-# Fase 4 — Guía (Home + detalle de fase) con Design System "Direction A"
+# Fase 4 — Estado financiero (Home + detalle de ámbito) con Design System "Direction A"
 
 > Aplicar la **metodología obligatoria** de `docs/tasks/frontend-redesign-direction-a/README.md`.
 > **PRIORIDAD: fidelidad literal al prototipo (Regla 0)** — el resultado debe **coincidir** con
@@ -8,14 +8,14 @@
 
 ## Title
 
-Reimplementación visual íntegra de la Guía (`HomeView` + `GuidePhaseDetailView`) sobre "Direction A",
+Reimplementación visual íntegra de la vista de estado financiero (`HomeView` + `GuidePhaseDetailView`) sobre "Direction A",
 preservando la lógica y toda la funcionalidad. Cierra el módulo de rediseño.
 
 ## Context
 
-Referencia: `handoff/README.md` sección "Guía"; `handoff/direction-a-more.jsx` → `AGuideView`.
-Depende de la Fase 0 y reutiliza `AStepper` (creado en Fase 2) para el strip de fases. Dos rutas:
-`/` (`HomeView`, mapa de fases, `useGuideHomeState`) y `/guia/fases/:phaseId`
+Referencia: `handoff/README.md` sección original "Guía"; `handoff/direction-a-more.jsx` → `AGuideView`.
+Depende de la Fase 0 y reutiliza `AStepper` (creado en Fase 2) para el strip de ámbitos. Dos rutas:
+`/estado-financiero` (`HomeView`, mapa de ámbitos, `useGuideHomeState`) y `/estado-financiero/ambitos/:phaseId`
 (`GuidePhaseDetailView`, detalle, `useGuidePhaseDetail`).
 
 ## Area
@@ -38,23 +38,23 @@ Depende de la Fase 0 y reutiliza `AStepper` (creado en Fase 2) para el strip de 
 ## Contrato de composición (de arriba abajo)
 
 ```
-Home (/):
-.page → APageHead "Guía" (intro: foco actual; KPIs Mayor tensión / Mejor posicionada)
-      → strip/grid de 5 fases (AStepper o .phase-strip): hairline coloreada arriba, eyebrow "Fase N",
-        pastilla grade A–E (hue por score), score en mono; cada fase clickable a su detalle
+Home (/estado-financiero):
+.page → APageHead "Estado financiero" (intro: foco actual; KPIs Mayor tensión / Mejor posicionada)
+      → strip/grid de 5 ámbitos (AStepper o .phase-strip): hairline coloreada arriba, eyebrow "Ámbito N",
+        pastilla grade A–E (hue por score), score en mono; cada ámbito clickable a su detalle
 
-Detalle (/guia/fases/:phaseId):
-.page → APageHead "Guía · {fase}" (meta "Fase N de 5 · {hint} · Actualizado hoy")
-      → strip de fases (GuidePhaseProgress)
+Detalle (/estado-financiero/ambitos/:phaseId):
+.page → APageHead "Estado financiero · {ámbito}" (meta "Ámbito N de 5 · {hint} · Actualizado hoy")
+      → strip de ámbitos (GuidePhaseProgress)
       → panel score 2col: score con color del grade + barra de progreso | diagnóstico (Summary + Diagnostics)
-      → estados: "fase inexistente" (!phase) · "detalle en construcción" (!hasDiagnosticPhase) · loading/error
+      → estados: "ámbito inexistente" (!phase) · "detalle en construcción" (!hasDiagnosticPhase) · loading/error
 ```
 
 ## Clasificación de componentes
 
 | Componente | Cat. | Acción |
 | ---------- | ---- | ------ |
-| `GuidePhaseProgress` | B | Remaquetar a strip de fases Direction A (reusar `AStepper` si encaja). |
+| `GuidePhaseProgress` | B | Remaquetar a strip de ámbitos Direction A (reusar `AStepper` si encaja). |
 | `GuidePhaseSummary` | B | Remaquetar a panel de score (color del grade + barra de progreso). |
 | `GuidePhaseDiagnostics` | B | Remaquetar a panel de diagnóstico + selector de grupo de eventos. |
 | `ScoreGradeBadge`/`ScoreGradeLabel`/`ScoreHealthBadge`/`ScoreMeterRow` | B | Remaquetar a `.chip`/pastillas grade A–E con tokens. |
@@ -62,11 +62,11 @@ Detalle (/guia/fases/:phaseId):
 
 ## Reconciliación de funcionalidad (anti pérdida)
 
-Preservar: mapa de fases con grades/scores reales y estado done/active; navegación a cada detalle;
+Preservar: mapa de ámbitos con grades/scores reales y estado done/active; navegación a cada detalle;
 KPIs `mostTensePhase`/`strongestPhase`; detalle con score por color de grade y diagnóstico por tipo
 de fase (deuda / cash-flow / fondo emergencia / salud patrimonial); selector de grupo de eventos
 extraordinarios (`extraordinaryEventGroupOptions`/`selectExtraordinaryEventGroup`); estados
-loading/error (`store.loading`/`store.error`), "fase inexistente" y "en construcción". **CONFIRMAR**
+loading/error (`store.loading`/`store.error`), "ámbito inexistente" y "en construcción". **CONFIRMAR**
 cualquier elemento del prototipo sin estado equivalente. Grades/scores siempre de datos reales, no
 hardcodear.
 
@@ -83,23 +83,23 @@ hardcodear.
 - `... npm run format:check` → sin errores
 - `... npm run typecheck` → sin errores
 - Tests: `frontend/src/domains/guide/__tests__` en verde.
-- **Gate de fidelidad visual (obligatorio, Regla 0 + Regla 6):** `/` y `/guia/fases/:phaseId`
-  comparados **junto al prototipo**, elemento por elemento (strip de fases, pastillas grade A–E,
+- **Gate de fidelidad visual (obligatorio, Regla 0 + Regla 6):** `/estado-financiero` y `/estado-financiero/ambitos/:phaseId`
+  comparados **junto al prototipo**, elemento por elemento (strip de ámbitos, pastillas grade A–E,
   panel de score); cada desviación es un defecto a corregir. Recorrer checklist de reconciliación
-  (incl. estados de construcción / fase inexistente); capturas pantalla+prototipo adjuntas.
+  (incl. estados de construcción / ámbito inexistente); capturas pantalla+prototipo adjuntas.
 - **Grep anti-híbrido:** sin `ui-home-*`/`ui-pro-*`/`ui-section-card`/`card` en el render final.
 
 ## Required Documentation Updates
 
-- [ ] `docs/frontend/frontend-visual-contract.md` — strip de fases y pastillas grade A–E
-- [ ] `docs/frontend/frontend-visual-guide.md` — patrón Guía
+- [ ] `docs/frontend/frontend-visual-contract.md` — strip de ámbitos y pastillas grade A–E
+- [ ] `docs/frontend/frontend-visual-guide.md` — patrón Estado financiero
 - [ ] `docs/project-status.md` — estado de la tarea; marcar el módulo de rediseño como completado
 - [ ] `docs/tasks/frontend-redesign-direction-a/README.md` — marcar Fase 4 ✅ y módulo completo
 
 ## Risks
 
 - Grades con color: si `scoreVisuals.ts` produce estilos inline, mover a clases/tokens sin alterar el cálculo.
-- Dos rutas comparten CSS de guía: validar Home y detalle tras cada cambio compartido.
+- Dos rutas comparten CSS de estado financiero: validar Home y detalle tras cada cambio compartido.
 - Datos mock del prototipo (scores 100/100): enlazar a datos reales, no hardcodear.
 
 ## Completion Criteria

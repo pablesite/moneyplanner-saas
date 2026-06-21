@@ -98,8 +98,8 @@ Core module for recording daily movements. Added in phase 3. Frontend in domain 
 **Data entry / Data Input**
 Core module for entering annual income and expenses. Frontend in domain `data-input`.
 
-**Guide / Coach v1**
-Financial scoring module by phases. Frontend in domain `guide`.
+**Financial State / Coach v1**
+Financial scoring module by scopes. Frontend in internal domain `guide`, user-facing routes `/estado-financiero` y `/estado-financiero/ambitos/:phaseId`.
 
 **Family Logical Model**
 Core model that represents the user's family structure: `FamilyMember` (people) and ownership (ownership of assets/liabilities). Base for the `people` module in frontend.
@@ -150,13 +150,13 @@ Modelo que registra el estado de cobertura de los datasets de mercado (FX, IPC).
 **Portable Data**
 Bundle de exportación/importación de todos los datos del usuario. Incluye versión de la app que exportó. La importación es atómica (todo o nada) y valida la versión antes de proceder. Útil para migración entre instancias (self-hosted → cloud).
 
-**Scoring financiero (fases 1-4)**
+**Scoring financiero (ámbitos 1-5)**
 Sistema de diagnóstico financiero por áreas:
-- Fase 1: Deuda (coste y riesgo estructural)
-- Fase 2: Flujo de caja (salud operativa recurrente)
-- Fase 3: Fondo de emergencia (meses cubiertos, liquidez)
-- Fase 4: Salud patrimonial (respaldo e iliquidez, distribución)
-- Fase 5: Independencia financiera (sin runtime aún)
+- Ámbito 1: Deuda (coste y riesgo estructural)
+- Ámbito 2: Flujo de caja (salud operativa recurrente)
+- Ámbito 3: Fondo de emergencia (meses cubiertos, liquidez)
+- Ámbito 4: Salud patrimonial (respaldo e iliquidez, distribución)
+- Ámbito 5: Independencia financiera (sin runtime aún)
 
 **auto-link / auto-create / needs_review**
 Statuss de la relación entre un `LedgerAccount` y un `Asset`/`Liability`:

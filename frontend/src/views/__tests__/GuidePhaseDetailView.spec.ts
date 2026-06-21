@@ -54,7 +54,7 @@ vi.mock('@/domains/budget/annual-entries', () => ({
   }),
 }));
 
-describe('GuidePhaseDetailView (fase 2)', () => {
+describe('GuidePhaseDetailView (ambito 2)', () => {
   beforeEach(() => {
     mockRoute.params.phaseId = '2';
     mockNetWorthStore.loading = false;
@@ -119,7 +119,7 @@ describe('GuidePhaseDetailView (fase 2)', () => {
   });
 });
 
-describe('GuidePhaseDetailView (fase 3)', () => {
+describe('GuidePhaseDetailView (ambito 3)', () => {
   beforeEach(() => {
     mockRoute.params.phaseId = '3';
     mockNetWorthStore.loading = false;
@@ -178,7 +178,7 @@ describe('GuidePhaseDetailView (fase 3)', () => {
     const wrapper = mount(GuidePhaseDetailView);
     await nextTick();
 
-    expect(wrapper.text()).toContain('Fase 3');
+    expect(wrapper.text()).toContain('Ámbito 3');
     expect(wrapper.text()).toContain('Fondo de emergencia');
     expect(wrapper.text()).toContain('Cobertura del colchón');
     expect(wrapper.text()).toContain('Calidad de liquidez');

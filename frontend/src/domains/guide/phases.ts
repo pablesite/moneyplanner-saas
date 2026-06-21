@@ -53,5 +53,5 @@ export function getActiveGuidePhase(): GuidePhase {
 }
 
 export function guidePhaseDetailTo(phaseId: number): string {
-  return `/guia/fases/${phaseId}`;
+  return `/estado-financiero/ambitos/${phaseId}`;
 }

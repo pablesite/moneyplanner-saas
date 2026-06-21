@@ -12,7 +12,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="sect" aria-label="Progreso por fases">
+  <section class="sect" aria-label="Estado por ámbitos">
     <ol class="guide-phase-strip guide-phase-strip-compact">
       <li v-for="phaseItem in guidePhases" :key="phaseItem.id">
         <RouterLink
@@ -24,7 +24,7 @@ defineProps<{
           :to="phaseDetailTo(phaseItem.id)"
         >
           <div class="guide-phase-head">
-            <span class="guide-phase-eyebrow">Fase {{ phaseItem.id }}</span>
+            <span class="guide-phase-eyebrow">Ámbito {{ phaseItem.id }}</span>
             <ScoreGradeBadge :score="phaseScores[phaseItem.id] ?? phaseItem.progress" />
           </div>
           <strong class="guide-phase-label">{{ phaseItem.title }}</strong>

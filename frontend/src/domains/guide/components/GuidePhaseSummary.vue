@@ -53,7 +53,7 @@ const visibleSummaryCards = computed(() =>
   <div class="guide-score-column">
     <div class="guide-score-hero">
       <div class="guide-score-heading">
-        <p class="eyebrow">Puntuación de fase</p>
+        <p class="eyebrow">Puntuación del ámbito</p>
         <ScoreGradeBadge :score="globalScoreValue" />
       </div>
       <div class="guide-score-value mono" :class="`grade-${grade.toLowerCase()}`">
@@ -63,7 +63,7 @@ const visibleSummaryCards = computed(() =>
       <p class="guide-score-copy">{{ phaseDiagnosticCopy }}</p>
       <ScoreMeterRow :score="globalScoreValue" row-class="guide-score-progress" />
       <div class="guide-score-progress-meta">
-        <span>Fase {{ phaseId }}</span>
+        <span>Ámbito {{ phaseId }}</span>
         <span>{{ formatNumber(Math.max(0, 100 - globalScoreValue), 0) }}% restante</span>
       </div>
     </div>

@@ -34,9 +34,13 @@ const {
 
 <template>
   <main class="page guide-detail">
-    <APageHead :title="phase ? `Guía · ${phase.title}` : 'Guía · Fase no encontrada'">
+    <APageHead
+      :title="
+        phase ? `Estado financiero · ${phase.title}` : 'Estado financiero · Ámbito no encontrado'
+      "
+    >
       <template v-if="phase" #meta>
-        <span>Fase {{ phase.id }} de {{ guidePhases.length }}</span>
+        <span>Ámbito {{ phase.id }} de {{ guidePhases.length }}</span>
         <span class="dot"></span>
         <span>{{ phase.focus }}</span>
         <span class="dot"></span>
@@ -61,18 +65,18 @@ const {
     />
 
     <section v-if="!phase" class="guide-state guide-state-error">
-      <p class="eyebrow">Ruta no disponible</p>
-      <h2>La fase seleccionada no existe</h2>
-      <p>Vuelve al mapa de la Guía para elegir una de las cinco fases actuales.</p>
-      <RouterLink class="btn btn-primary" to="/">Ver ruta completa</RouterLink>
+      <p class="eyebrow">Vista no disponible</p>
+      <h2>El ámbito seleccionado no existe</h2>
+      <p>Vuelve al mapa del estado financiero para elegir uno de los cinco ámbitos actuales.</p>
+      <RouterLink class="btn btn-primary" to="/estado-financiero">Ver estado financiero</RouterLink>
     </section>
 
     <section v-else-if="!hasDiagnosticPhase" class="guide-state">
-      <p class="eyebrow">Próxima fase</p>
+      <p class="eyebrow">Próximo ámbito</p>
       <h2>Detalle en construcción</h2>
       <p>
-        Esta fase ya tiene contexto funcional, pero su diagnóstico detallado llegará en una entrega
-        posterior.
+        Este ámbito ya tiene contexto funcional, pero su diagnóstico detallado llegará en una
+        entrega posterior.
       </p>
       <dl class="guide-state-facts">
         <div>

@@ -17,19 +17,19 @@ const {
 
 <template>
   <main class="page guide-home">
-    <APageHead title="Guía">
+    <APageHead title="Estado financiero">
       <template #meta>
-        <span>Mapa de 5 fases</span><span class="dot"></span><span>Actualizado hoy</span>
+        <span>Mapa de 5 ámbitos</span><span class="dot"></span><span>Actualizado hoy</span>
       </template>
     </APageHead>
 
     <section class="sect guide-home-intro">
       <div class="guide-home-focus">
-        <p class="eyebrow">Tu ruta financiera</p>
+        <p class="eyebrow">Tu estado actual</p>
         <template v-if="mostTensePhase && !isLoading">
           <div class="guide-home-focus-line">
             <ScoreGradeBadge :score="mostTensePhase.score" />
-            <span>Fase {{ mostTensePhase.phase.id }}</span>
+            <span>Ámbito {{ mostTensePhase.phase.id }}</span>
           </div>
           <h2>{{ mostTensePhase.phase.title }}</h2>
           <p>{{ mostTensePhase.phase.focus }}</p>
@@ -43,7 +43,7 @@ const {
           <div v-if="isLoading" class="guide-skeleton guide-skeleton-value"></div>
           <template v-else-if="mostTensePhase">
             <strong class="mono">{{ mostTensePhase.score }}/100</strong>
-            <span>F{{ mostTensePhase.phase.id }} · {{ mostTensePhase.grade }}</span>
+            <span>A{{ mostTensePhase.phase.id }} · {{ mostTensePhase.grade }}</span>
           </template>
           <strong v-else>—</strong>
         </article>
@@ -52,7 +52,7 @@ const {
           <div v-if="isLoading" class="guide-skeleton guide-skeleton-value"></div>
           <template v-else-if="strongestPhase">
             <strong class="mono">{{ strongestPhase.score }}/100</strong>
-            <span>F{{ strongestPhase.phase.id }} · {{ strongestPhase.grade }}</span>
+            <span>A{{ strongestPhase.phase.id }} · {{ strongestPhase.grade }}</span>
           </template>
           <strong v-else>—</strong>
         </article>
@@ -63,10 +63,10 @@ const {
       <div class="sect-head">
         <div>
           <div class="sect-title-row">
-            <h2 class="sect-title">Ruta por fases</h2>
-            <span class="sect-count">5 etapas</span>
+            <h2 class="sect-title">Estado por ámbitos</h2>
+            <span class="sect-count">5 áreas clave</span>
           </div>
-          <p class="sect-sub">Abre una fase para revisar su puntuación y diagnóstico.</p>
+          <p class="sect-sub">Abre un ámbito para revisar su puntuación y diagnóstico.</p>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ const {
             :to="phaseDetailTo(phase.id)"
           >
             <div class="guide-phase-head">
-              <span class="guide-phase-eyebrow">Fase {{ phase.id }}</span>
+              <span class="guide-phase-eyebrow">Ámbito {{ phase.id }}</span>
               <ScoreGradeBadge v-if="!isLoading" :score="phaseDisplayProgress(phase)" />
               <span v-else class="guide-skeleton guide-skeleton-badge"></span>
             </div>

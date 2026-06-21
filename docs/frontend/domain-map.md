@@ -159,17 +159,17 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 
 ---
 
-### `guide` — Guía financiera / Coach
+### `guide` — Estado financiero
 
 **Origen:** Core-backed
 **Cliente:** `coreApi`
-**Ruta:** `/guia/fases/:phaseId`
+**Ruta:** `/estado-financiero` y `/estado-financiero/ambitos/:phaseId`
 
 | Archivo               | Contenido                               |
 | --------------------- | --------------------------------------- |
-| `phases.ts`           | Definición de fases financieras.        |
-| `scoreVisuals.ts`     | Visualizaciones de puntuación por fase. |
-| `phaseDiagnostics.ts` | Lógica de diagnóstico de fase actual.   |
+| `phases.ts`           | Definición de ámbitos financieros.        |
+| `scoreVisuals.ts`     | Visualizaciones de puntuación por ámbito. |
+| `phaseDiagnostics.ts` | Lógica de diagnóstico del ámbito actual.  |
 
 **Requiere:** `canUseGuide()` → `core.coachV1 || pro.guide`. Actualmente `true`.
 
@@ -205,8 +205,8 @@ Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia.
 | Ruta                   | Nombre                 | Vista                                      | Dominio principal                                                                                                                                                                                                                                                            |
 | ---------------------- | ---------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/login`               | `login`                | `LoginView`                                | `auth`                                                                                                                                                                                                                                                                       |
-| `/`                    | `home`                 | `HomeView`                                 | —                                                                                                                                                                                                                                                                            |
-| `/guia/fases/:phaseId` | `guide-phase`          | `GuidePhaseDetailView`                     | `guide`                                                                                                                                                                                                                                                                      |
+| `/estado-financiero`   | `home`                 | `HomeView`                                 | `guide`                                                                                                                                                                                                                                                                      |
+| `/estado-financiero/ambitos/:phaseId` | `guide-phase`          | `GuidePhaseDetailView`                     | `guide`                                                                                                                                                                                                                                                                      |
 | `/patrimonio`          | `networth`             | `NetWorthView`                             | `net-worth`                                                                                                                                                                                                                                                                  |
 | `/presupuesto`         | `budget-dashboard`     | `BudgetView`                               | Vista Direction A independiente sobre `useBudgetView` (fija mode `budget` del motor compartido `useBudgetDashboardPage`). Hero + context-bar + tab Sugerencias + tabla `bdg-row` con gestión anual contextual, modales de líneas, cobertura YTD y CTA para subcategorías detectadas |
 | `/cierre-mensual`      | `monthly-close`        | `MonthlyCloseView`                         | Vista Direction A independiente sobre `useMonthlyCloseView` (fija mode `monthly-close`). `APageHead` + `AStepper` (4 pasos) + `MonthlyCloseHero` + secciones Liquidez/Ingresos/Gastos/Resultado                                                                              |
