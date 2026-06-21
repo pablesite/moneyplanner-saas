@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { type PropType } from 'vue';
-import BaseModal from '@/domains/ui/components/BaseModal.vue';
+import { ASelect, BaseModal } from '@/domains/ui';
 
 defineProps({
   page: {
@@ -29,15 +29,12 @@ defineProps({
       </p>
 
       <div class="ui-accounting-form-grid">
-        <select v-model="page.activationForm.position_type" class="select">
-          <option
-            v-for="type in page.manualPositionTypeOptions"
-            :key="type.value"
-            :value="type.value"
-          >
-            {{ type.label }}
-          </option>
-        </select>
+        <ASelect
+          v-model="page.activationForm.position_type"
+          class="select"
+          :options="page.manualPositionTypeOptions"
+          :searchable="false"
+        />
         <input
           v-model="page.activationQuery"
           class="input"

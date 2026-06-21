@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 export type ASelectOption = {
-  value: string | number;
+  value: string | number | null;
   label: string;
   disabled?: boolean;
 };
@@ -130,7 +130,7 @@ function togglePanel() {
   else openPanel();
 }
 
-function pickOption(value: string | number) {
+function pickOption(value: string | number | null) {
   emit('update:modelValue', value);
   closePanel();
   triggerRef.value?.focus();

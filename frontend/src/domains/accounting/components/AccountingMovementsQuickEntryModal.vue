@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { computed, ref, watch, type PropType } from 'vue';
-import BaseModal from '@/domains/ui/components/BaseModal.vue';
+import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 
 const props = defineProps({
   page: {
@@ -66,6 +66,23 @@ function groupAndSortAccounts(accounts: AccountOption[]): AccountGroup[] {
     }));
 }
 
+function accountSelectItems(
+  groups: AccountGroup[],
+  placeholder: string,
+  placeholderDisabled = true,
+): ASelectItem[] {
+  return [
+    { value: null, label: placeholder, disabled: placeholderDisabled },
+    ...groups.map((group) => ({
+      group: group.label,
+      options: group.accounts.map((account) => ({
+        value: account.id,
+        label: `${accountLabel(account)} / ${account.currency}`,
+      })),
+    })),
+  ];
+}
+
 const liquidityGroups = computed(() => groupAndSortAccounts(props.page.liquidityAccounts));
 const operationalGroups = computed(() => groupAndSortAccounts(props.page.editAccountOptions));
 const revaluationGroups = computed(() =>
@@ -118,6 +135,52 @@ const quickMainAccountGroups = computed(() => {
   }
   return liquidityGroups.value;
 });
+
+const revaluationSelectOptions = computed(() =>
+  accountSelectItems(revaluationGroups.value, 'Cuenta de inversión'),
+);
+const investmentOriginSelectOptions = computed(() =>
+  accountSelectItems(
+    props.page.quickEntryForm.investment_direction === 'reinvestment'
+      ? groupAndSortAccounts(props.page.investmentOriginOptions)
+      : liquidityGroups.value,
+    'Seleccionar',
+  ),
+);
+const investmentSelectOptions = computed(() =>
+  accountSelectItems(investmentGroups.value, 'Seleccionar'),
+);
+const liquiditySelectOptions = computed(() =>
+  accountSelectItems(liquidityGroups.value, 'Seleccionar'),
+);
+const liabilitySelectOptions = computed(() =>
+  accountSelectItems(liabilityGroups.value, 'Seleccionar'),
+);
+const mainAccountPlaceholder = computed(() => {
+  const type = props.page.quickEntryForm.movement_type;
+  if (type === 'adjustment') return 'Cuenta a conciliar';
+  if (type === 'income' || type === 'expense') return 'Cuenta contable';
+  return 'Cuenta de liquidez';
+});
+const mainAccountSelectOptions = computed(() =>
+  accountSelectItems(
+    props.page.quickEntryForm.movement_type === 'adjustment'
+      ? adjustmentGroups.value
+      : quickMainAccountGroups.value,
+    mainAccountPlaceholder.value,
+  ),
+);
+const transferSelectOptions = computed(() =>
+  accountSelectItems(transferGroups.value, 'Cuenta destino'),
+);
+const quickCategorySelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Seleccionar' },
+  ...props.page.quickCategoryOptions,
+]);
+const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Seleccionar' },
+  ...props.page.quickSubcategoryOptions,
+]);
 </script>
 
 <template>
@@ -179,15 +242,12 @@ const quickMainAccountGroups = computed(() => {
 
         <label class="ui-accounting-field">
           <span>Titularidad</span>
-          <select v-model="page.quickEntryForm.ownership_id" class="select">
-            <option
-              v-for="option in page.ownershipOptions"
-              :key="option.value == null ? 'none' : option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
+          <ASelect
+            v-model="page.quickEntryForm.ownership_id"
+            class="select"
+            :options="page.ownershipOptions"
+            :searchable="false"
+          />
         </label>
 
         <label class="ui-accounting-field">
@@ -222,14 +282,11 @@ const quickMainAccountGroups = computed(() => {
 
       <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
-          <select v-model="page.quickEntryForm.account_id" class="select" required>
-            <option :value="null">Cuenta de inversion</option>
-            <optgroup v-for="group in revaluationGroups" :key="group.key" :label="group.label">
-              <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                {{ accountLabel(account) }} / {{ account.currency }}
-              </option>
-            </optgroup>
-          </select>
+          <ASelect
+            v-model="page.quickEntryForm.account_id"
+            class="select"
+            :options="revaluationSelectOptions"
+          />
 
           <input
             v-model="page.quickEntryForm.revaluation_new_value"
@@ -310,20 +367,11 @@ const quickMainAccountGroups = computed(() => {
                   : `Cuenta de liquidez ${page.quickEntryForm.investment_direction === 'inflow' ? '(origen)' : '(destino)'}`
               }}
             </span>
-            <select v-model="page.quickEntryForm.account_id" class="select" required>
-              <option :value="null">Seleccionar</option>
-              <optgroup
-                v-for="group in page.quickEntryForm.investment_direction === 'reinvestment'
-                  ? groupAndSortAccounts(page.investmentOriginOptions)
-                  : liquidityGroups"
-                :key="group.key"
-                :label="group.label"
-              >
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+            <ASelect
+              v-model="page.quickEntryForm.account_id"
+              class="select"
+              :options="investmentOriginSelectOptions"
+            />
           </label>
           <label class="ui-accounting-field">
             <span>
@@ -332,14 +380,11 @@ const quickMainAccountGroups = computed(() => {
                 page.quickEntryForm.investment_direction === 'outflow' ? '(origen)' : '(destino)'
               }}
             </span>
-            <select v-model="page.quickEntryForm.counterparty_account_id" class="select" required>
-              <option :value="null">Seleccionar</option>
-              <optgroup v-for="group in investmentGroups" :key="group.key" :label="group.label">
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+            <ASelect
+              v-model="page.quickEntryForm.counterparty_account_id"
+              class="select"
+              :options="investmentSelectOptions"
+            />
           </label>
         </div>
 
@@ -380,25 +425,19 @@ const quickMainAccountGroups = computed(() => {
         <div class="ui-accounting-form-grid ui-accounting-form-grid-2col">
           <label class="ui-accounting-field">
             <span>Cuenta de liquidez</span>
-            <select v-model="page.quickEntryForm.account_id" class="select" required>
-              <option :value="null" disabled>Seleccionar</option>
-              <optgroup v-for="group in liquidityGroups" :key="group.key" :label="group.label">
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+            <ASelect
+              v-model="page.quickEntryForm.account_id"
+              class="select"
+              :options="liquiditySelectOptions"
+            />
           </label>
           <label class="ui-accounting-field">
             <span>Cuenta de pasivo</span>
-            <select v-model="page.quickEntryForm.liability_account_id" class="select" required>
-              <option :value="null" disabled>Seleccionar</option>
-              <optgroup v-for="group in liabilityGroups" :key="group.key" :label="group.label">
-                <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-                  {{ accountLabel(account) }} / {{ account.currency }}
-                </option>
-              </optgroup>
-            </select>
+            <ASelect
+              v-model="page.quickEntryForm.liability_account_id"
+              class="select"
+              :options="liabilitySelectOptions"
+            />
           </label>
         </div>
 
@@ -448,29 +487,11 @@ const quickMainAccountGroups = computed(() => {
             : 'ui-accounting-form-grid-edit-simple'
         "
       >
-        <select v-model="page.quickEntryForm.account_id" class="select" required>
-          <option :value="null">
-            {{
-              page.quickEntryForm.movement_type === 'adjustment'
-                ? 'Cuenta a conciliar'
-                : page.quickEntryForm.movement_type === 'income' ||
-                    page.quickEntryForm.movement_type === 'expense'
-                  ? 'Cuenta contable'
-                  : 'Cuenta de liquidez'
-            }}
-          </option>
-          <optgroup
-            v-for="group in page.quickEntryForm.movement_type === 'adjustment'
-              ? adjustmentGroups
-              : quickMainAccountGroups"
-            :key="group.key"
-            :label="group.label"
-          >
-            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-              {{ accountLabel(account) }} / {{ account.currency }}
-            </option>
-          </optgroup>
-        </select>
+        <ASelect
+          v-model="page.quickEntryForm.account_id"
+          class="select"
+          :options="mainAccountSelectOptions"
+        />
 
         <input
           v-model="page.quickEntryForm.amount"
@@ -489,19 +510,12 @@ const quickMainAccountGroups = computed(() => {
           :placeholder="`Importe destino (${page.quickTransferDestinationCurrency})`"
         />
 
-        <select
+        <ASelect
           v-if="page.quickEntryForm.movement_type === 'transfer'"
           v-model="page.quickEntryForm.counterparty_account_id"
           class="select"
-          required
-        >
-          <option :value="null">Cuenta destino</option>
-          <optgroup v-for="group in transferGroups" :key="group.key" :label="group.label">
-            <option v-for="account in group.accounts" :key="account.id" :value="account.id">
-              {{ accountLabel(account) }} / {{ account.currency }}
-            </option>
-          </optgroup>
-        </select>
+          :options="transferSelectOptions"
+        />
       </div>
       <p
         v-if="page.quickEntryForm.movement_type === 'adjustment'"
@@ -540,40 +554,23 @@ const quickMainAccountGroups = computed(() => {
       >
         <label class="ui-accounting-field">
           <span>Categoría</span>
-          <select
+          <ASelect
             v-model="page.quickEntryForm.category_key"
             class="select"
+            :options="quickCategorySelectOptions"
             :disabled="page.quickCategoryLocked"
-            required
-          >
-            <option value="">Seleccionar</option>
-            <option
-              v-for="category in page.quickCategoryOptions"
-              :key="category.value"
-              :value="category.value"
-            >
-              {{ category.label }}
-            </option>
-          </select>
+            :searchable="false"
+          />
         </label>
 
         <label class="ui-accounting-field">
           <span>Subcategoría</span>
-          <select
+          <ASelect
             v-model="page.quickEntryForm.subcategory_key"
             class="select"
+            :options="quickSubcategorySelectOptions"
             :disabled="page.quickSubcategoryLocked"
-            required
-          >
-            <option value="">Seleccionar</option>
-            <option
-              v-for="subcategory in page.quickSubcategoryOptions"
-              :key="subcategory.value"
-              :value="subcategory.value"
-            >
-              {{ subcategory.label }}
-            </option>
-          </select>
+          />
         </label>
       </div>
 

@@ -65,6 +65,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
    - `icon-btn`
    - `input`
    - `textarea`
+   - `ASelect` for Direction A filters and modal selects; use grouped/searchable options instead of native `<select>` when the list can grow.
 7. Modal shell:
    - `ui-modal-backdrop`
    - `ui-modal-panel`
