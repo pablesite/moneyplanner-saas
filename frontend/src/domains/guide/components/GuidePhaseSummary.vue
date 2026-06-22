@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { gradeFromScore } from '@/domains/guide/scoreVisuals';
-import ScoreGradeBadge from './ScoreGradeBadge.vue';
-import ScoreGradeLabel from './ScoreGradeLabel.vue';
+import ScoreGrade from './ScoreGrade.vue';
 import ScoreMeterRow from './ScoreMeterRow.vue';
 
 type ScoreKpi = {
@@ -54,7 +53,7 @@ const visibleSummaryCards = computed(() =>
     <div class="guide-score-hero">
       <div class="guide-score-heading">
         <p class="eyebrow">Puntuación del ámbito</p>
-        <ScoreGradeBadge :score="globalScoreValue" />
+        <ScoreGrade :score="globalScoreValue" />
       </div>
       <div class="guide-score-value mono" :class="`grade-${grade.toLowerCase()}`">
         {{ formatNumber(globalScoreValue, 0) }}<span>/100</span>
@@ -88,7 +87,7 @@ const visibleSummaryCards = computed(() =>
             <p>{{ card.description }}</p>
           </div>
           <div class="guide-card-score mono">
-            <ScoreGradeLabel :score="card.score" />
+            <ScoreGrade :score="card.score" variant="label" />
             <span>{{ formatNumber(card.score, 0) }}/100</span>
           </div>
         </header>

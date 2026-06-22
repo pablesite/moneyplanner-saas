@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { gradeFromScore } from '@/domains/guide/scoreVisuals';
-import ScoreGradeLabel from './ScoreGradeLabel.vue';
+import ScoreGrade from './ScoreGrade.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -21,7 +21,7 @@ const grade = computed(() => gradeFromScore(props.score));
 
 <template>
   <div class="guide-meter-row" :class="rowClass">
-    <ScoreGradeLabel :score="score" :large="largeGrade" :class="gradeClass" />
+    <ScoreGrade :score="score" variant="label" :large="largeGrade" :class="gradeClass" />
     <progress
       class="guide-meter"
       :class="[`grade-${grade.toLowerCase()}`, trackClass, fillClass]"

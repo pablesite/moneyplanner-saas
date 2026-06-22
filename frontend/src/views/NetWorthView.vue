@@ -20,6 +20,7 @@ import {
   AContextBar,
   AHero,
   AInfoHint,
+  AMetaPill,
   APageHead,
   ARowMenu,
   ASectHead,
@@ -780,7 +781,7 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
   <div class="page a-nw-page">
     <APageHead title="Patrimonio">
       <template #meta>
-        <span class="a-nw-meta-pill">{{ asOfLabel }}</span>
+        <AMetaPill>{{ asOfLabel }}</AMetaPill>
         <span class="dot"></span>
         <span>Base {{ store.baseCurrency ?? 'EUR' }}</span>
         <span v-if="valueMode === 'real' || archivedItemsCount" class="dot"></span>

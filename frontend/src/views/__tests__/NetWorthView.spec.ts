@@ -57,6 +57,7 @@ vi.mock('@/domains/ui', () => ({
     `,
   }),
   AContextBar: makeStub('AContextBar'),
+  AMetaPill: makeStub('AMetaPill'),
   AHero: defineComponent({
     name: 'AHero',
     props: {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 import APageHead from '@/domains/ui/components/APageHead.vue';
-import ScoreGradeBadge from '@/domains/guide/components/ScoreGradeBadge.vue';
+import ScoreGrade from '@/domains/guide/components/ScoreGrade.vue';
 import { guidePhases, useGuideHomeState } from '@/domains/guide';
 
 const phases = guidePhases;
@@ -28,7 +28,7 @@ const {
         <p class="eyebrow">Tu estado actual</p>
         <template v-if="mostTensePhase && !isLoading">
           <div class="guide-home-focus-line">
-            <ScoreGradeBadge :score="mostTensePhase.score" />
+            <ScoreGrade :score="mostTensePhase.score" />
             <span>Ámbito {{ mostTensePhase.phase.id }}</span>
           </div>
           <h2>{{ mostTensePhase.phase.title }}</h2>
@@ -83,7 +83,7 @@ const {
           >
             <div class="guide-phase-head">
               <span class="guide-phase-eyebrow">Ámbito {{ phase.id }}</span>
-              <ScoreGradeBadge v-if="!isLoading" :score="phaseDisplayProgress(phase)" />
+              <ScoreGrade v-if="!isLoading" :score="phaseDisplayProgress(phase)" />
               <span v-else class="guide-skeleton guide-skeleton-badge"></span>
             </div>
             <strong class="guide-phase-label">{{ phase.title }}</strong>

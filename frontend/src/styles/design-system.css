@@ -350,6 +350,16 @@
   color: var(--muted);
 }
 
+/* Pill de metadato compartido (AMetaPill): unifica los antiguos *-meta-pill. */
+.dir-a .meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
 /* Shell de hero (grid): la figura queda siempre arriba (top-aligned) para que
    caiga en el mismo lugar vertical entre vistas. Cada vista define sus columnas
    y su gap encima. Patrimonio usa un layout flex de 3 partes por su reflow

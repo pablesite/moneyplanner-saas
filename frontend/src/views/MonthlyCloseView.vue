@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { APageHead, AContextBar, AStepper, ASelect, type ASelectItem } from '@/domains/ui';
+import {
+  APageHead,
+  AContextBar,
+  AMetaPill,
+  AStepper,
+  ASelect,
+  type ASelectItem,
+} from '@/domains/ui';
 import {
   BudgetMonthlyCloseExpenseSection,
   BudgetMonthlyCloseIncomeSection,
@@ -184,7 +191,7 @@ function goToCloseStep(): void {
   <div class="page mc-page">
     <APageHead :title="`Cierre · ${selectedExecutionMonthLabel}`">
       <template #meta>
-        <span class="mc-meta-pill">FY {{ fiscalYear }}</span>
+        <AMetaPill>FY {{ fiscalYear }}</AMetaPill>
         <span class="dot"></span>
         <span>{{ isCloseLocked ? 'Cerrado' : 'Borrador' }}</span>
       </template>

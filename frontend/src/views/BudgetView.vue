@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { APageHead, AContextBar, AInfoHint, ASelect, type ASelectItem } from '@/domains/ui';
+import {
+  APageHead,
+  AContextBar,
+  AInfoHint,
+  AMetaPill,
+  ASelect,
+  type ASelectItem,
+} from '@/domains/ui';
 import { BudgetAnnualSection, BudgetHero } from '@/domains/budget';
 import '@/domains/budget/styles/budget.css';
 import { useBudgetView } from './budget/useBudgetView';
@@ -151,7 +158,7 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
   <div class="page a-budget-page">
     <APageHead title="Presupuesto">
       <template #meta>
-        <span class="a-budget-meta-pill">FY {{ fiscalYear }}</span>
+        <AMetaPill>FY {{ fiscalYear }}</AMetaPill>
         <span class="dot"></span>
         <span>Mes activo · {{ selectedExecutionMonthLabel }}</span>
         <span class="dot"></span>

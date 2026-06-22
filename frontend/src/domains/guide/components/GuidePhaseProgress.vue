@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 import type { GuidePhase } from '@/domains/guide';
-import ScoreGradeBadge from './ScoreGradeBadge.vue';
+import ScoreGrade from './ScoreGrade.vue';
 
 defineProps<{
   guidePhases: GuidePhase[];
@@ -25,7 +25,7 @@ defineProps<{
         >
           <div class="guide-phase-head">
             <span class="guide-phase-eyebrow">Ámbito {{ phaseItem.id }}</span>
-            <ScoreGradeBadge :score="phaseScores[phaseItem.id] ?? phaseItem.progress" />
+            <ScoreGrade :score="phaseScores[phaseItem.id] ?? phaseItem.progress" />
           </div>
           <strong class="guide-phase-label">{{ phaseItem.title }}</strong>
           <span class="guide-phase-score mono">

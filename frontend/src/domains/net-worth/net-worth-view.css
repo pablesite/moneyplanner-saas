@@ -2,15 +2,6 @@
   position: relative;
 }
 
-.a-nw-meta-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
-}
-
 .a-nw-archived-trigger {
   padding-inline: 0;
 }
