@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { APageHead, AContextBar, AInfoHint } from '@/domains/ui';
+import { APageHead, AContextBar, AInfoHint, ASelect, type ASelectItem } from '@/domains/ui';
 import { BudgetAnnualSection, BudgetHero } from '@/domains/budget';
 import '@/domains/budget/styles/budget.css';
 import { useBudgetView } from './budget/useBudgetView';
@@ -136,6 +136,15 @@ async function removeAnnualExpenseAndRefresh(entryId: number): Promise<void> {
 function openNewEntry(): void {
   annualEntriesPage.openIncomeModal();
 }
+
+const fiscalYearSelectOptions = computed<ASelectItem[]>(() =>
+  fiscalYearOptions.value.map((year) => ({ value: String(year), label: String(year) })),
+);
+
+const ownershipSelectOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todos' },
+  ...ownershipOptions.value.map((option) => ({ value: option.value, label: option.label })),
+]);
 </script>
 
 <template>
@@ -163,33 +172,26 @@ function openNewEntry(): void {
     <AContextBar>
       <label class="context-field">
         <span class="context-field-label">Año fiscal</span>
-        <select
+        <ASelect
           class="filter-ctrl"
-          :value="String(fiscalYear)"
-          @change="
-            selectFiscalYearOption(Number(($event.target as HTMLSelectElement).value), $event)
-          "
-        >
-          <option v-for="year in fiscalYearOptions" :key="year" :value="String(year)">
-            {{ year }}
-          </option>
-        </select>
+          :model-value="String(fiscalYear)"
+          :options="fiscalYearSelectOptions"
+          :searchable="false"
+          @update:model-value="(v) => selectFiscalYearOption(Number(v))"
+        />
       </label>
 
       <div class="context-divider"></div>
 
       <label class="context-field">
         <span class="context-field-label">Titularidad</span>
-        <select
+        <ASelect
           class="filter-ctrl"
-          :value="ownershipFilter"
-          @change="selectOwnershipFilterOption(($event.target as HTMLSelectElement).value, $event)"
-        >
-          <option value="all">Todos</option>
-          <option v-for="option in ownershipOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+          :model-value="ownershipFilter"
+          :options="ownershipSelectOptions"
+          :searchable="false"
+          @update:model-value="(v) => selectOwnershipFilterOption(String(v))"
+        />
       </label>
 
       <div class="context-divider"></div>

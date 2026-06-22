@@ -509,8 +509,8 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     }
   });
 
-  function closePopoverFromClick(event: Event): void {
-    const target = event.currentTarget as HTMLElement | null;
+  function closePopoverFromClick(event?: Event): void {
+    const target = event?.currentTarget as HTMLElement | null;
     const details = target?.closest('details') as HTMLDetailsElement | null;
     if (details) details.open = false;
   }
@@ -528,12 +528,12 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     if (nextMonthlyCloseStep.value) activeMonthlyCloseStep.value = nextMonthlyCloseStep.value;
   }
 
-  function selectOwnershipFilterOption(value: string, event: Event): void {
+  function selectOwnershipFilterOption(value: string, event?: Event): void {
     ownershipFilter.value = value;
     closePopoverFromClick(event);
   }
 
-  function selectFiscalYearOption(year: number, event: Event): void {
+  function selectFiscalYearOption(year: number, event?: Event): void {
     fiscalYear.value = year;
     closePopoverFromClick(event);
   }

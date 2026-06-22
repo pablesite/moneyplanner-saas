@@ -23,6 +23,8 @@ import {
   APageHead,
   ARowMenu,
   ASectHead,
+  ASelect,
+  type ASelectItem,
   BaseModal,
 } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
@@ -760,6 +762,18 @@ const {
   resetAccountingActivity,
   loadAccountingActivity,
 });
+
+const ownershipSelectOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todos' },
+  ...ownershipOptions.value.map((option) => ({
+    value: String(option.value),
+    label: option.label,
+  })),
+]);
+
+const currencySelectOptions = computed<ASelectItem[]>(() =>
+  currencies.map((currency) => ({ value: currency.value, label: currency.label })),
+);
 </script>
 
 <template>
@@ -790,42 +804,27 @@ const {
     <AContextBar>
       <label class="context-field" data-test="ownership-filter">
         <span class="context-field-label">Titularidad</span>
-        <select
+        <ASelect
           class="filter-ctrl"
-          :value="String(ownershipFilter)"
+          :model-value="String(ownershipFilter)"
+          :options="ownershipSelectOptions"
           :disabled="ownershipFilterDisabled"
-          @change="
-            setOwnershipFilter(
-              ($event.target as HTMLSelectElement).value === 'all'
-                ? 'all'
-                : Number(($event.target as HTMLSelectElement).value),
-            )
-          "
-        >
-          <option value="all">Todos</option>
-          <option
-            v-for="option in ownershipOptions"
-            :key="String(option.value)"
-            :value="String(option.value)"
-          >
-            {{ option.label }}
-          </option>
-        </select>
+          :searchable="false"
+          @update:model-value="(v) => setOwnershipFilter(v === 'all' ? 'all' : Number(v))"
+        />
       </label>
 
       <div class="context-divider"></div>
 
       <label class="context-field">
         <span class="context-field-label">Moneda</span>
-        <select
+        <ASelect
           class="filter-ctrl"
-          :value="store.baseCurrency ?? 'EUR'"
-          @change="store.updateBaseCurrency(($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="currency in currencies" :key="currency.value" :value="currency.value">
-            {{ currency.label }}
-          </option>
-        </select>
+          :model-value="store.baseCurrency ?? 'EUR'"
+          :options="currencySelectOptions"
+          :searchable="false"
+          @update:model-value="(v) => store.updateBaseCurrency(String(v))"
+        />
       </label>
 
       <div class="context-divider"></div>

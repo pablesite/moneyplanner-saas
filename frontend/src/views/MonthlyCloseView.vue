@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { APageHead, AContextBar, AStepper } from '@/domains/ui';
+import { APageHead, AContextBar, AStepper, ASelect, type ASelectItem } from '@/domains/ui';
 import {
   BudgetMonthlyCloseExpenseSection,
   BudgetMonthlyCloseIncomeSection,
@@ -155,6 +155,18 @@ const stepperSteps = computed(() => {
   }));
 });
 
+const monthSelectOptions = computed<ASelectItem[]>(() =>
+  monthLabels.map((label, i) => ({
+    value: String(i + 1),
+    label: `${label} ${fiscalYear.value}`,
+  })),
+);
+
+const ownershipSelectOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todos' },
+  ...ownershipOptions.value.map((option) => ({ value: option.value, label: option.label })),
+]);
+
 function onStepChange(id: string): void {
   setActiveMonthlyCloseStep(id as MonthlyCloseStepId);
 }
@@ -185,31 +197,25 @@ function goToCloseStep(): void {
     <AContextBar>
       <label class="context-field">
         <span class="context-field-label">Mes</span>
-        <select
+        <ASelect
           class="filter-ctrl"
-          :value="String(selectedExecutionMonth)"
-          @change="updateSelectedExecutionMonth(Number(($event.target as HTMLSelectElement).value))"
-        >
-          <option v-for="(label, i) in monthLabels" :key="i" :value="String(i + 1)">
-            {{ label }} {{ fiscalYear }}
-          </option>
-        </select>
+          :model-value="String(selectedExecutionMonth)"
+          :options="monthSelectOptions"
+          @update:model-value="(v) => updateSelectedExecutionMonth(Number(v))"
+        />
       </label>
 
       <div class="context-divider"></div>
 
       <label class="context-field">
         <span class="context-field-label">Titularidad</span>
-        <select
+        <ASelect
           class="filter-ctrl"
-          :value="ownershipFilter"
-          @change="selectOwnershipFilterOption(($event.target as HTMLSelectElement).value, $event)"
-        >
-          <option value="all">Todos</option>
-          <option v-for="option in ownershipOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+          :model-value="ownershipFilter"
+          :options="ownershipSelectOptions"
+          :searchable="false"
+          @update:model-value="(v) => selectOwnershipFilterOption(String(v))"
+        />
       </label>
     </AContextBar>
 

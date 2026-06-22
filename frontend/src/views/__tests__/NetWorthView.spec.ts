@@ -72,6 +72,30 @@ vi.mock('@/domains/ui', () => ({
       </div>
     `,
   }),
+  ASelect: defineComponent({
+    name: 'ASelect',
+    props: {
+      modelValue: { type: [String, Number], required: false, default: null },
+      options: { type: Array, required: true },
+      disabled: { type: Boolean, default: false },
+      searchable: { type: Boolean, default: undefined },
+    },
+    emits: ['update:modelValue'],
+    template: `
+      <select
+        :value="modelValue == null ? '' : String(modelValue)"
+        :disabled="disabled"
+        @change="$emit('update:modelValue', $event.target.value)"
+      >
+        <template v-for="opt in options">
+          <optgroup v-if="opt.group" :key="opt.group" :label="opt.group">
+            <option v-for="o in opt.options" :key="String(o.value)" :value="String(o.value)">{{ o.label }}</option>
+          </optgroup>
+          <option v-else :key="String(opt.value)" :value="String(opt.value)">{{ opt.label }}</option>
+        </template>
+      </select>
+    `,
+  }),
   ASectHead: defineComponent({
     name: 'ASectHead',
     props: {
