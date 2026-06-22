@@ -217,8 +217,8 @@
 }
 
 .a-mov-page .filter-popover button.on {
-  background: rgba(110, 209, 255, 0.12);
-  color: #def6ff;
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  color: var(--accent);
 }
 
 .a-mov-page .filter-popover hr {
