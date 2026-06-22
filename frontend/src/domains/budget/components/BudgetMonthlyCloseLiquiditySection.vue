@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, ASectHead } from '@/domains/ui';
+import { AInfoHint, AKpiBand, ASectHead, AState, type AKpiItem } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type LiquidityResetMode = 'zero' | 'planned';
@@ -81,6 +81,29 @@ const props = defineProps<{
   relockLiquidityLedgerRow: (row: LiquidityRow) => void | Promise<void>;
   onLiquidityCheckinCheckboxToggle: (row: LiquidityRow, checked: boolean) => void | Promise<void>;
 }>();
+
+const kpiItems = computed<AKpiItem[]>(() => [
+  {
+    label: 'Perímetro anterior',
+    value: `${props.formatMoney(props.selectedLiquidityMonthPlanned)} EUR`,
+  },
+  {
+    label: 'Perímetro real cierre',
+    value: `${props.formatMoney(props.selectedLiquidityMonthExecuted)} EUR`,
+  },
+  {
+    label: 'Variación perímetro',
+    value: `${props.selectedLiquidityMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedLiquidityMonthDeviation)} EUR`,
+    cellClass: {
+      'mc-kpi-dev-danger': props.selectedLiquidityMonthDeviation < 0,
+      'mc-kpi-dev-good': props.selectedLiquidityMonthDeviation > 0,
+    },
+  },
+  {
+    label: 'Completitud',
+    value: props.formatPercent(props.liquidityMonthlySummary?.completion_ratio ?? null, 0),
+  },
+]);
 
 function liquidityBlockKey(row: LiquidityRow): string {
   const annualInterestTae = Number(String(row.annual_interest_tae ?? '0').replace(',', '.'));
@@ -169,44 +192,18 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
       </template>
     </ASectHead>
 
-    <div v-if="liquidityMonthlySummary" class="kpis mc-step-kpis">
-      <div class="kpi">
-        <p class="kpi-label">Perímetro anterior</p>
-        <div class="kpi-value mono">{{ formatMoney(selectedLiquidityMonthPlanned) }} EUR</div>
-      </div>
-      <div class="kpi">
-        <p class="kpi-label">Perímetro real cierre</p>
-        <div class="kpi-value mono">{{ formatMoney(selectedLiquidityMonthExecuted) }} EUR</div>
-      </div>
-      <div
-        class="kpi"
-        :class="{
-          'mc-kpi-dev-danger': selectedLiquidityMonthDeviation < 0,
-          'mc-kpi-dev-good': selectedLiquidityMonthDeviation > 0,
-        }"
-      >
-        <p class="kpi-label">Variación perímetro</p>
-        <div class="kpi-value mono">
-          {{ selectedLiquidityMonthDeviation > 0 ? '+' : ''
-          }}{{ formatMoney(selectedLiquidityMonthDeviation) }} EUR
-        </div>
-      </div>
-      <div class="kpi">
-        <p class="kpi-label">Completitud</p>
-        <div class="kpi-value mono">
-          {{ formatPercent(liquidityMonthlySummary.completion_ratio ?? null, 0) }}
-        </div>
-      </div>
-    </div>
+    <AKpiBand v-if="liquidityMonthlySummary" class="mc-step-kpis" :items="kpiItems" />
 
     <div v-if="isCloseLocked" class="mc-locked">
       Este mes está finalizado. Reabre el cierre para editar.
     </div>
 
-    <div v-if="liquidityExecutionLoading" class="mc-empty">Cargando cierre de liquidez…</div>
-    <p v-else-if="!monthlyLiquidityExecutionRows.length" class="mc-empty">
+    <AState v-if="liquidityExecutionLoading" status="loading" layout="inline"
+      >Cargando cierre de liquidez…</AState
+    >
+    <AState v-else-if="!monthlyLiquidityExecutionRows.length" status="empty" layout="inline">
       No hay activos o pasivos líquidos activos para este mes.
-    </p>
+    </AState>
     <div v-else class="mc-blocks">
       <details
         v-for="block in liquidityCategoryBlocks"

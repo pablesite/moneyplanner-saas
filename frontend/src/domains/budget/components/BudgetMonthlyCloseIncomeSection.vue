@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, AKindChip, ASectHead } from '@/domains/ui';
+import { AInfoHint, AKindChip, AKpiBand, ASectHead, AState, type AKpiItem } from '@/domains/ui';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
@@ -117,6 +117,20 @@ const props = defineProps<{
   relockIncomeGroupManualAdjustment: (group: IncomeGroup) => void | Promise<void>;
 }>();
 
+const kpiItems = computed<AKpiItem[]>(() => [
+  { label: 'Previsto mes', value: `${props.formatMoney(props.selectedIncomeMonthPlanned)} EUR` },
+  { label: 'Ejecutado mes', value: `${props.formatMoney(props.selectedIncomeMonthExecuted)} EUR` },
+  {
+    label: 'Desviación del mes',
+    value: `${props.selectedIncomeMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedIncomeMonthDeviation)} EUR`,
+    cellClass: {
+      'mc-kpi-dev-good': props.selectedIncomeMonthDeviation > 0,
+      'mc-kpi-dev-danger': props.selectedIncomeMonthDeviation < 0,
+    },
+  },
+  { label: 'Revisión', value: props.formatPercent(props.selectedIncomeMonthCompletionRatio, 0) },
+]);
+
 const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
   const blocks = new Map<string, IncomeCategoryBlock>();
 
@@ -161,43 +175,19 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
       </template>
     </ASectHead>
 
-    <div class="kpis mc-step-kpis">
-      <div class="kpi">
-        <p class="kpi-label">Previsto mes</p>
-        <div class="kpi-value mono">{{ formatMoney(selectedIncomeMonthPlanned) }} EUR</div>
-      </div>
-      <div class="kpi">
-        <p class="kpi-label">Ejecutado mes</p>
-        <div class="kpi-value mono">{{ formatMoney(selectedIncomeMonthExecuted) }} EUR</div>
-      </div>
-      <div
-        class="kpi"
-        :class="{
-          'mc-kpi-dev-good': selectedIncomeMonthDeviation > 0,
-          'mc-kpi-dev-danger': selectedIncomeMonthDeviation < 0,
-        }"
-      >
-        <p class="kpi-label">Desviación del mes</p>
-        <div class="kpi-value mono">
-          {{ selectedIncomeMonthDeviation > 0 ? '+' : ''
-          }}{{ formatMoney(selectedIncomeMonthDeviation) }} EUR
-        </div>
-      </div>
-      <div class="kpi">
-        <p class="kpi-label">Revisión</p>
-        <div class="kpi-value mono">{{ formatPercent(selectedIncomeMonthCompletionRatio, 0) }}</div>
-      </div>
-    </div>
+    <AKpiBand class="mc-step-kpis" :items="kpiItems" />
 
     <div v-if="isCloseLocked" class="mc-locked">
       Este mes está finalizado. Reabre el cierre para editar.
     </div>
 
-    <div v-if="incomeExecutionLoading" class="mc-empty">Cargando check-ins de ingresos…</div>
+    <AState v-if="incomeExecutionLoading" status="loading" layout="inline"
+      >Cargando check-ins de ingresos…</AState
+    >
     <p v-else-if="incomeExecutionError" class="alert">{{ incomeExecutionError }}</p>
-    <p v-else-if="!groupedMonthlyIncomeExecutionEntries.length" class="mc-empty">
+    <AState v-else-if="!groupedMonthlyIncomeExecutionEntries.length" status="empty" layout="inline">
       No hay ingresos previstos para este mes.
-    </p>
+    </AState>
     <div v-else>
       <div v-if="monthlyIncomePendingClassification.amount > 0" class="mc-warn">
         <strong>Sin subcategoría</strong>

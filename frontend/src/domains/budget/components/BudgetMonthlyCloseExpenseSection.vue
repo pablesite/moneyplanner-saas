@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, AKindChip, ASectHead } from '@/domains/ui';
+import { AInfoHint, AKindChip, AKpiBand, ASectHead, AState, type AKpiItem } from '@/domains/ui';
 import type { AnnualExpenseEntry } from '@/domains/budget/annual-entries';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
@@ -133,6 +133,23 @@ const props = defineProps<{
   relockExpenseGroupManualAdjustment: (group: ExpenseGroup) => void | Promise<void>;
 }>();
 
+const kpiItems = computed<AKpiItem[]>(() => [
+  { label: 'Previsto mes', value: `${props.formatMoney(props.selectedExpenseMonthPlanned)} EUR` },
+  {
+    label: 'Ejecutado mes',
+    value: `${props.formatMoney(props.selectedExpenseMonthExecuted)} EUR`,
+  },
+  {
+    label: 'Desviación del mes',
+    value: `${props.selectedExpenseMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedExpenseMonthDeviation)} EUR`,
+    cellClass: {
+      'mc-kpi-dev-danger': props.selectedExpenseMonthDeviation > 0,
+      'mc-kpi-dev-good': props.selectedExpenseMonthDeviation < 0,
+    },
+  },
+  { label: 'Revisión', value: props.formatPercent(props.monthlyExpenseCoverageSummary.ratio, 0) },
+]);
+
 const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
   const blocks = new Map<string, ExpenseCategoryBlock>();
 
@@ -177,44 +194,22 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
       </template>
     </ASectHead>
 
-    <div v-if="expenseMonthlySummary" class="kpis mc-step-kpis">
-      <div class="kpi">
-        <p class="kpi-label">Previsto mes</p>
-        <div class="kpi-value mono">{{ formatMoney(selectedExpenseMonthPlanned) }} EUR</div>
-      </div>
-      <div class="kpi">
-        <p class="kpi-label">Ejecutado mes</p>
-        <div class="kpi-value mono">{{ formatMoney(selectedExpenseMonthExecuted) }} EUR</div>
-      </div>
-      <div
-        class="kpi"
-        :class="{
-          'mc-kpi-dev-danger': selectedExpenseMonthDeviation > 0,
-          'mc-kpi-dev-good': selectedExpenseMonthDeviation < 0,
-        }"
-      >
-        <p class="kpi-label">Desviación del mes</p>
-        <div class="kpi-value mono">
-          {{ selectedExpenseMonthDeviation > 0 ? '+' : ''
-          }}{{ formatMoney(selectedExpenseMonthDeviation) }} EUR
-        </div>
-      </div>
-      <div class="kpi">
-        <p class="kpi-label">Revisión</p>
-        <div class="kpi-value mono">
-          {{ formatPercent(monthlyExpenseCoverageSummary.ratio, 0) }}
-        </div>
-      </div>
-    </div>
+    <AKpiBand v-if="expenseMonthlySummary" class="mc-step-kpis" :items="kpiItems" />
 
     <div v-if="isCloseLocked" class="mc-locked">
       Este mes está finalizado. Reabre el cierre para editar.
     </div>
 
-    <div v-if="expenseExecutionLoading" class="mc-empty">Cargando check-ins mensuales…</div>
-    <p v-else-if="!groupedMonthlyExpenseExecutionEntries.length" class="mc-empty">
+    <AState v-if="expenseExecutionLoading" status="loading" layout="inline"
+      >Cargando check-ins mensuales…</AState
+    >
+    <AState
+      v-else-if="!groupedMonthlyExpenseExecutionEntries.length"
+      status="empty"
+      layout="inline"
+    >
       No hay gastos previstos para este mes con los filtros actuales.
-    </p>
+    </AState>
     <div v-else class="mc-blocks">
       <details
         v-for="block in expenseCategoryBlocks"

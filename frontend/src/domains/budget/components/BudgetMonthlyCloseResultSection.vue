@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, ASectHead } from '@/domains/ui';
+import { AInfoHint, ASectHead, AState } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type MonthlyCloseStatus = 'draft' | 'finalized' | 'locked';
@@ -301,9 +301,9 @@ const resultBridgeRows = computed(() =>
           <h3 class="mc-result-panel-title">Ingresos ejecutados (detalle del mes)</h3>
           <div class="mc-result-panel-meta">{{ monthlyIncomeExecutionEntries.length }} líneas</div>
         </div>
-        <p v-if="!monthlyIncomeResultBreakdown.length" class="mc-empty">
+        <AState v-if="!monthlyIncomeResultBreakdown.length" status="empty" layout="inline">
           No hay ingresos ejecutables para este mes.
-        </p>
+        </AState>
         <div v-else class="mc-breakdown-list">
           <article
             v-for="group in monthlyIncomeResultBreakdown"
@@ -349,9 +349,9 @@ const resultBridgeRows = computed(() =>
           <h3 class="mc-result-panel-title">Gastos ejecutados (detalle del mes)</h3>
           <div class="mc-result-panel-meta">{{ monthlyExpenseExecutionEntries.length }} líneas</div>
         </div>
-        <p v-if="!monthlyExpenseResultBreakdown.length" class="mc-empty">
+        <AState v-if="!monthlyExpenseResultBreakdown.length" status="empty" layout="inline">
           No hay gastos ejecutables para este mes.
-        </p>
+        </AState>
         <div v-else class="mc-breakdown-list">
           <article
             v-for="group in monthlyExpenseResultBreakdown"

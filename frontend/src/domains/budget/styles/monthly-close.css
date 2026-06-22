@@ -15,11 +15,7 @@
 }
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
-.mc-loading {
-  padding: 16px 6px;
-  color: var(--muted);
-  font-size: 13px;
-}
+/* .mc-loading/.mc-empty migrados a AState (.dir-a .a-state-inline). */
 
 /* Dos columnas: residual + variación de liquidez a la izquierda; KPIs del mes
    a la derecha (mismo patrón que el hero de Presupuesto). */
@@ -88,12 +84,6 @@
   border-radius: 10px;
   font-size: 12.5px;
   color: var(--text);
-}
-
-.mc-empty {
-  padding: 16px 6px;
-  color: var(--muted);
-  font-size: 13px;
 }
 
 .mc-warn {

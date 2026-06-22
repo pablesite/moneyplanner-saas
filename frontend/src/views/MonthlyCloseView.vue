@@ -7,6 +7,7 @@ import {
   AMetaPill,
   AStepper,
   ASelect,
+  AState,
   type ASelectItem,
 } from '@/domains/ui';
 import {
@@ -406,6 +407,6 @@ function goToCloseStep(): void {
       :on-apply-distribution="handleApplyDistribution"
     />
 
-    <div v-if="isLoading" class="mc-loading">Cargando cierre mensual…</div>
+    <AState v-if="isLoading" status="loading" layout="inline">Cargando cierre mensual…</AState>
   </div>
 </template>
