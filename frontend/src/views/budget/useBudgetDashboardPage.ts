@@ -17,8 +17,8 @@ import {
   type LedgerTransaction,
   type MonthlyAccountingSummary,
 } from '@/domains/accounting';
-import { coreNetWorthApi } from '@/domains/net-worth/api';
-import type { Asset } from '@/domains/net-worth/models';
+import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
+import type { Asset, Ownership } from '@/domains/net-worth/models';
 import {
   expenseCategories,
   normalizeExpenseTaxonomy,
@@ -282,6 +282,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     bookingMonth: number;
     transactionId: number;
     transactionMemberTag: string;
+    transactionOwnershipId: number | null;
     transactionQuickEntryKind: string;
     assetSubcategory: string;
   };
@@ -359,6 +360,25 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   const accountingExecutionError = ref<string | null>(null);
   const accountingMonthlySummary = ref<MonthlyAccountingSummary | null>(null);
   const accountingPostedEntries = ref<AccountingPostedEntry[]>([]);
+  // Titularidades (id -> Ownership) para repartir el ejecutado del cierre por el
+  // dueño económico del movimiento (transaction.ownership_id).
+  const accountingOwnerships = ref<Ownership[]>([]);
+  const ownershipById = computed(
+    () =>
+      new Map(accountingOwnerships.value.map((ownership) => [ownership.id, ownership] as const)),
+  );
+  // Etiqueta compatible con allocationFractionForOwnerLabel/parseSharedOwnerShares:
+  // individual -> nombre; compartida -> "Compartido (Ana 50% / Pablo 50%)".
+  function ownershipLabelById(id: number | null | undefined): string {
+    if (id == null) return '';
+    const ownership = ownershipById.value.get(id);
+    if (!ownership) return '';
+    if (ownership.kind === 'individual') return ownership.member?.name ?? '';
+    const parts = ownership.splits
+      .map((split) => `${split.member.name} ${String(split.percent).trim()}%`)
+      .filter((part) => part.trim().length > 1);
+    return parts.length ? `Compartido (${parts.join(' / ')})` : '';
+  }
   const budgetSuggestionsLoading = ref(false);
   const budgetSuggestionsError = ref<string | null>(null);
   const budgetSuggestions = ref<BudgetDerivedSuggestions | null>(null);
@@ -888,10 +908,12 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     const flowFamily = resolveLedgerEntryFlowFamily(entry);
     if (!flowFamily || !isPositiveExecutionLedgerEntry(entry, flowFamily)) return;
 
-    const ownershipFraction = allocationFractionForOwnerLabel(
-      entry.transactionMemberTag ?? '',
-      ownershipFilter.value,
-    );
+    // Titularidad del movimiento (dueño económico) vía transaction.ownership_id;
+    // fallback a member_tag si no hubiera ownership. Reparte proporcionalmente en
+    // cuentas/partidas compartidas, igual que el previsto.
+    const ownerLabel =
+      ownershipLabelById(entry.transactionOwnershipId) || (entry.transactionMemberTag ?? '');
+    const ownershipFraction = allocationFractionForOwnerLabel(ownerLabel, ownershipFilter.value);
     if (ownershipFraction <= 0) return;
     const amount = toNumberOrZero(entry.amount_base ?? entry.amount) * ownershipFraction;
     const bookingMonth = entry.bookingMonth;
@@ -2876,6 +2898,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
                 bookingMonth,
                 transactionId: transaction.id,
                 transactionMemberTag: transaction.member_tag ?? '',
+                transactionOwnershipId: transaction.ownership_id ?? null,
                 transactionQuickEntryKind: transaction.quick_entry_kind ?? '',
                 assetSubcategory: '',
               }));
@@ -2885,14 +2908,17 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
         } while (cursor);
         return allResults;
       };
-      const [summaryResponse, transactionsResponse, assetsResponse] = await Promise.all([
-        coreAccountingApi.getMonthlySummary(fiscalYear.value),
-        fetchAllTransactions({
-          year: fiscalYear.value,
-          status: 'posted',
-        }),
-        coreNetWorthApi.getAssets(),
-      ]);
+      const [summaryResponse, transactionsResponse, assetsResponse, ownershipsResponse] =
+        await Promise.all([
+          coreAccountingApi.getMonthlySummary(fiscalYear.value),
+          fetchAllTransactions({
+            year: fiscalYear.value,
+            status: 'posted',
+          }),
+          coreNetWorthApi.getAssets(),
+          premiumOwnershipApi.getOwnerships(),
+        ]);
+      accountingOwnerships.value = ownershipsResponse.data ?? [];
       const assetSubcategoryById = new Map<number, string>();
       for (const asset of assetsResponse.data ?? []) {
         assetSubcategoryById.set(asset.id, asset.subcategory ?? '');

@@ -114,6 +114,7 @@ vi.mock('@/domains/accounting', () => ({
 
 vi.mock('@/domains/net-worth/api', () => ({
   coreNetWorthApi: mockNetWorthApi,
+  premiumOwnershipApi: { getOwnerships: vi.fn(async () => ({ data: [] })) },
 }));
 
 vi.mock('@/domains/budget/taxonomy', () => ({
