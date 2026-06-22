@@ -313,6 +313,10 @@ watch(query, () => {
 .a-select-panel.dir-a {
   position: fixed;
   z-index: 9999;
+  /* width/height auto para no heredar el 100% que .dir-a aplica a la raíz del
+     shell: el panel debe ajustarse al contenido (acotado por max-width/height). */
+  width: auto;
+  height: auto;
   max-width: min(360px, calc(100vw - 24px));
   max-height: 320px;
   display: flex;
