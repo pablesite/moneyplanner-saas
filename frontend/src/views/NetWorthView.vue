@@ -16,7 +16,15 @@ import {
 } from '@/domains/net-worth/useNetWorthPageMetrics';
 import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActions';
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
-import { AContextBar, AInfoHint, APageHead, ARowMenu, ASectHead, BaseModal } from '@/domains/ui';
+import {
+  AContextBar,
+  AHero,
+  AInfoHint,
+  APageHead,
+  ARowMenu,
+  ASectHead,
+  BaseModal,
+} from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
 import { toApiErrorMessage } from '@/lib/errors';
 
@@ -850,15 +858,16 @@ const {
     <section class="sect">
       <div class="hero">
         <div class="hero-top">
-          <div class="hero-headline">
-            <p class="eyebrow hero-eyebrow">Patrimonio neto</p>
-            <button class="hero-value-button" type="button" @click="resetTimelineSelection">
-              <div class="hero-value">
-                {{ formatNumber(analysis.netWorth, 2)
-                }}<span class="hero-value-unit">{{ heroUnitLabel }}</span>
-              </div>
-            </button>
-            <div class="hero-delta">
+          <AHero class="hero-headline" eyebrow="Patrimonio neto">
+            <template #value>
+              <button class="hero-value-button" type="button" @click="resetTimelineSelection">
+                <div class="hero-value">
+                  {{ formatNumber(analysis.netWorth, 2)
+                  }}<span class="hero-value-unit">{{ heroUnitLabel }}</span>
+                </div>
+              </button>
+            </template>
+            <template #delta>
               <template v-if="monthlyDelta">
                 <span>
                   <span :class="monthlyDelta.value >= 0 ? 'pos mono' : 'neg mono'">
@@ -899,8 +908,8 @@ const {
                   <span class="hero-delta-copy">YTD</span>
                 </span>
               </template>
-            </div>
-          </div>
+            </template>
+          </AHero>
 
           <div class="hero-donut">
             <NetWorthDonut

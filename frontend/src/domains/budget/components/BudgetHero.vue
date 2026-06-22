@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { AHero, AKpiBand, type AKpiItem } from '@/domains/ui';
 import BudgetYearStrip from './BudgetYearStrip.vue';
 
 const props = defineProps<{
@@ -38,15 +39,35 @@ const residualMonth = computed(
     (props.expenseMonthlyExecuted[props.currentMonthIdx] ?? 0),
 );
 const currentMonthLabel = computed(() => props.monthLabels[props.currentMonthIdx] ?? '');
+
+const kpiItems = computed<AKpiItem[]>(() => [
+  {
+    label: 'Ingresos · YTD',
+    value: `${props.formatMoney(props.incomeExecutedYtd)} €`,
+    meta: `${props.formatPercent(incomeYtdRatio.value, 0)} de lo previsto a ${currentMonthLabel.value}`,
+  },
+  {
+    label: 'Gastos · YTD',
+    value: `${props.formatMoney(props.expenseExecutedYtd)} €`,
+    meta: `${props.formatPercent(expenseYtdRatio.value, 0)} de lo previsto a ${currentMonthLabel.value}`,
+  },
+  {
+    label: 'Residual mes',
+    value: `${props.formatMoney(residualMonth.value)} €`,
+    meta: `${currentMonthLabel.value} ${props.fiscalYear}`,
+  },
+]);
 </script>
 
 <template>
   <section class="sect">
     <div class="budget-hero">
-      <div class="budget-hero-main">
-        <p class="eyebrow budget-hero-eyebrow">Balance previsto del año</p>
-        <div class="hero-value mono">{{ formatMoney(plannedBalanceTotal) }} €</div>
-        <div class="hero-delta">
+      <AHero
+        class="budget-hero-main"
+        eyebrow="Balance previsto del año"
+        :value="`${formatMoney(plannedBalanceTotal)} €`"
+      >
+        <template #delta>
           <span>
             <span class="pos mono">{{ formatMoney(plannedIncomeTotal) }} €</span>
             <span class="budget-hero-delta-copy">ingresos</span>
@@ -61,30 +82,10 @@ const currentMonthLabel = computed(() => props.monthLabels[props.currentMonthIdx
             <span class="mono budget-hero-rate">{{ formatPercent(savingsRate, 0) }}</span>
             <span class="budget-hero-delta-copy">tasa de ahorro</span>
           </span>
-        </div>
+        </template>
 
-        <div class="kpis budget-hero-kpis">
-          <div class="kpi">
-            <p class="kpi-label">Ingresos · YTD</p>
-            <div class="kpi-value mono">{{ formatMoney(incomeExecutedYtd) }} €</div>
-            <div class="kpi-meta">
-              {{ formatPercent(incomeYtdRatio, 0) }} de lo previsto a {{ currentMonthLabel }}
-            </div>
-          </div>
-          <div class="kpi">
-            <p class="kpi-label">Gastos · YTD</p>
-            <div class="kpi-value mono">{{ formatMoney(expenseExecutedYtd) }} €</div>
-            <div class="kpi-meta">
-              {{ formatPercent(expenseYtdRatio, 0) }} de lo previsto a {{ currentMonthLabel }}
-            </div>
-          </div>
-          <div class="kpi">
-            <p class="kpi-label">Residual mes</p>
-            <div class="kpi-value mono">{{ formatMoney(residualMonth) }} €</div>
-            <div class="kpi-meta">{{ currentMonthLabel }} {{ fiscalYear }}</div>
-          </div>
-        </div>
-      </div>
+        <AKpiBand class="budget-hero-kpis" :items="kpiItems" />
+      </AHero>
 
       <div class="budget-hero-strip">
         <p class="eyebrow budget-hero-eyebrow">Ejecución mensual · {{ fiscalYear }}</p>

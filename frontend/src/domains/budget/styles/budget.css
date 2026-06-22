@@ -35,38 +35,8 @@
   color: var(--muted);
 }
 
-.budget-hero .hero-value {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 56px;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  font-weight: 600;
-  margin: 6px 0 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.budget-hero .hero-delta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  align-items: baseline;
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 13.5px;
-}
-
-.budget-hero .hero-delta .pos {
-  color: var(--pos);
-}
-
-.budget-hero .hero-delta .neg {
-  color: var(--neg);
-}
-
-.budget-hero .hero-delta-sep {
-  color: var(--faint);
-}
-
+/* hero-value, hero-delta y hero-delta-sep viven ahora en design-system.css
+   (.dir-a .hero-value / .hero-delta / .hero-delta-sep) vía AHero. */
 .budget-hero-delta-copy {
   margin-left: 4px;
 }

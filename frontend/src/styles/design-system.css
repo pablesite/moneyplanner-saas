@@ -301,6 +301,55 @@
   color: var(--muted);
 }
 
+.dir-a .kpi-meta .pos {
+  color: var(--pos);
+}
+
+.dir-a .kpi-meta .neg {
+  color: var(--neg);
+}
+
+/* Hero figure compartido (AHero): cifra grande + delta inline. */
+.dir-a .hero-value {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dir-a .hero-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.dir-a .hero-delta .pos {
+  color: var(--pos);
+}
+
+.dir-a .hero-delta .neg {
+  color: var(--neg);
+}
+
+.dir-a .hero-delta-sep {
+  color: var(--faint);
+}
+
+.dir-a .a-hero-figure {
+  min-width: 0;
+}
+
+.dir-a .a-hero-figure .eyebrow {
+  color: var(--muted);
+}
+
 .dir-a .info-hint {
   position: relative;
   display: inline-flex;
@@ -434,6 +483,41 @@
 
 .dir-a .btn-icon:hover {
   color: var(--text);
+}
+
+.dir-a .btn-sm {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.dir-a .btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.dir-a .btn.is-loading {
+  position: relative;
+  color: transparent;
+  cursor: progress;
+}
+
+.dir-a .btn-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--text);
+  animation: a-btn-spin 0.6s linear infinite;
+}
+
+@keyframes a-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .dir-a .chip {

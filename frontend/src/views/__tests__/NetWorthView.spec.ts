@@ -57,6 +57,21 @@ vi.mock('@/domains/ui', () => ({
     `,
   }),
   AContextBar: makeStub('AContextBar'),
+  AHero: defineComponent({
+    name: 'AHero',
+    props: {
+      eyebrow: { type: String, required: false, default: '' },
+      value: { type: String, required: false, default: '' },
+    },
+    template: `
+      <div>
+        <p v-if="eyebrow">{{ eyebrow }}</p>
+        <slot name="value"><span v-if="value">{{ value }}</span></slot>
+        <div><slot name="delta" /></div>
+        <slot />
+      </div>
+    `,
+  }),
   ASectHead: defineComponent({
     name: 'ASectHead',
     props: {

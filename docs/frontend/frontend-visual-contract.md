@@ -58,6 +58,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
    - `ui-state-success`
    - `ui-state-loading`
 6. Controls:
+   - `AButton` (`domains/ui`) — primitiva de botón Direction A. Props `variant` (`default`/`primary`/`ghost`/`icon`), `size` (`md`/`sm`), `type`, `disabled`, `loading` (spinner + `aria-busy`), `block`. Envuelve las clases `.btn / .btn-primary / .btn-ghost / .btn-icon`; preferirla sobre `<button>` crudos.
    - `btn`
    - `btn-primary`
    - `btn-ghost`
@@ -88,6 +89,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 15. Direction A accounting movement table (`/movimientos`): columns `Cuenta / origen`, `Destino`, `Categoría` and `Importe` replace ledger-side `Debe`/`Haber`. Transfers and investments show their moved amount as neutral without an account filter; with an account filter, every row shows the signed impact and currency of that account. Income, expense, investment and debt rows expose category/subcategory; transfers show classification as not applicable. Below `620px`, each movement becomes a labelled vertical record (without horizontal table scrolling); filters use one or two columns depending on available width, account rows hide the redundant type column, and tabs remain horizontally reachable.
 16. Direction A financial-state strip (`/estado-financiero` and `/estado-financiero/ambitos/:phaseId`): five equal-width steps with a 2px top hairline, eyebrow `Ámbito N`, scope label, mono score (`N/100`) and a compact A–E grade badge. Completed/current scopes are fully opaque; pending scopes stay muted. Grade colors use the unified `oklch(0.74 0.13 H)` scale (`A 148`, `B 115`, `C 80`, `D 45`, `E 24`).
 17. Direction A financial-state detail: page head + scope strip + two-column score/diagnostic surface. The score column uses a large grade-colored `N/100`, a native styled progress element, remaining percentage, summary band and scored indicators. Loading, API error, unknown scope and not-yet-supported scope states keep the same continuous, hairline-led surface instead of legacy cards.
+18. Direction A hero (`AHero` + `AKpiBand`, `domains/ui`): `AHero` renderiza el bloque de figura común (`.a-hero-figure`: eyebrow muted + `.hero-value` grande + slot `#delta` con `.hero-delta`); para valores no triviales usar el slot `#value`. `AKpiBand` renderiza la rejilla `.kpis` de celdas `label`/`value`/`meta` (prop `items`; deltas coloreados vía slots `meta-<i>`). El grid exterior y el contenido lateral (year-strip, donut, columnas) los aporta cada vista. Las clases `.hero-value`, `.hero-delta`, `.hero-delta-sep` y `.kpi-meta .pos/.neg` viven en `design-system.css` bajo `.dir-a`; las vistas solo añaden overrides responsive scoped (`.mc-hero`, `.hero`, etc.). Consumido por `BudgetHero`, `MonthlyCloseHero` y el hero de Patrimonio; el hero de Contabilidad sigue en `ui-pro-*` (legacy) hasta su retirada.
 
 ## Usage Guidance
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.

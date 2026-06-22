@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { AHero, AKpiBand, type AKpiItem } from '@/domains/ui';
 
 // Hero del Cierre mensual (Direction A): residual grande + variación de
 // liquidez + 3 KPIs (Ingresos / Gastos / Tasa de ahorro) vs previsto.
@@ -24,15 +25,23 @@ const savingsRate = computed(() =>
     ? ((props.incomeExecuted - props.expenseExecuted) / props.incomeExecuted) * 100
     : 0,
 );
+
+const kpiItems = computed<AKpiItem[]>(() => [
+  { label: 'Ingresos', value: props.formatMoney(props.incomeExecuted) },
+  { label: 'Gastos', value: props.formatMoney(props.expenseExecuted) },
+  { label: 'Tasa de ahorro', value: `${savingsRate.value.toFixed(0)}%` },
+]);
 </script>
 
 <template>
   <section class="sect mc-hero">
     <div class="mc-hero-grid">
-      <div class="mc-hero-main">
-        <p class="eyebrow mc-hero-eyebrow">Residual del mes · {{ monthLabel }}</p>
-        <div class="hero-value mono">{{ formatMoney(residual) }}</div>
-        <div class="hero-delta">
+      <AHero
+        class="mc-hero-main"
+        :eyebrow="`Residual del mes · ${monthLabel}`"
+        :value="formatMoney(residual)"
+      >
+        <template #delta>
           <span
             >Liquidez inicial · <span class="mono">{{ formatMoney(liquidityStart) }}</span></span
           >
@@ -45,36 +54,24 @@ const savingsRate = computed(() =>
             {{ formatSignedMoney(liquidityDelta) }}
           </span>
           <span>variación</span>
-        </div>
-      </div>
+        </template>
+      </AHero>
 
-      <div class="kpis mc-hero-kpis">
-        <div class="kpi">
-          <p class="kpi-label">Ingresos</p>
-          <div class="kpi-value mono">{{ formatMoney(incomeExecuted) }}</div>
-          <div class="kpi-meta">
-            previsto {{ formatMoney(incomePlanned) }} ·
-            <span :class="incomeDelta >= 0 ? 'pos' : 'neg'">{{
-              formatSignedMoney(incomeDelta)
-            }}</span>
-          </div>
-        </div>
-        <div class="kpi">
-          <p class="kpi-label">Gastos</p>
-          <div class="kpi-value mono">{{ formatMoney(expenseExecuted) }}</div>
-          <div class="kpi-meta">
-            previsto {{ formatMoney(expensePlanned) }} ·
-            <span :class="expenseDelta <= 0 ? 'pos' : 'neg'">{{
-              formatSignedMoney(expenseDelta)
-            }}</span>
-          </div>
-        </div>
-        <div class="kpi">
-          <p class="kpi-label">Tasa de ahorro</p>
-          <div class="kpi-value mono">{{ savingsRate.toFixed(0) }}%</div>
-          <div class="kpi-meta">ingresos − gastos del mes</div>
-        </div>
-      </div>
+      <AKpiBand class="mc-hero-kpis" :items="kpiItems">
+        <template #meta-0>
+          previsto {{ formatMoney(incomePlanned) }} ·
+          <span :class="incomeDelta >= 0 ? 'pos' : 'neg'">{{
+            formatSignedMoney(incomeDelta)
+          }}</span>
+        </template>
+        <template #meta-1>
+          previsto {{ formatMoney(expensePlanned) }} ·
+          <span :class="expenseDelta <= 0 ? 'pos' : 'neg'">{{
+            formatSignedMoney(expenseDelta)
+          }}</span>
+        </template>
+        <template #meta-2> ingresos − gastos del mes </template>
+      </AKpiBand>
     </div>
   </section>
 </template>

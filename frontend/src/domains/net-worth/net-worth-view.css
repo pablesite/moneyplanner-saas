@@ -30,10 +30,6 @@
   color: var(--faint);
 }
 
-.hero-eyebrow {
-  color: var(--muted);
-}
-
 .hero-top {
   display: flex;
   align-items: start;
@@ -59,50 +55,21 @@
   cursor: pointer;
 }
 
-.hero-value {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 56px;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  font-weight: 600;
-  margin: 6px 0 0;
-  font-variant-numeric: tabular-nums;
-}
-
+/* .hero-value vive ahora en design-system.css (.dir-a .hero-value) vía AHero. */
 .hero-value-unit {
   color: var(--muted);
   font-size: 22px;
   margin-left: 8px;
 }
 
-.hero-delta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  align-items: baseline;
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 13.5px;
-}
-
-.hero-delta .pos {
-  color: var(--pos);
-}
-
-.hero-delta .neg {
-  color: var(--neg);
-}
-
+/* hero-delta + .pos/.neg + sep viven ahora en design-system.css
+   (.dir-a .hero-delta ...) vía AHero. El gap del hero se unifica a 8/14. */
 .hero-delta-pct {
   margin-left: 6px;
 }
 
 .hero-delta-copy {
   margin-left: 6px;
-}
-
-.hero-delta-sep {
-  color: var(--faint);
 }
 
 .hero-donut {
@@ -680,11 +647,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .hero-value {
+  .hero .hero-value {
     font-size: 44px;
   }
 
-  .hero-delta {
+  .hero .hero-delta {
     gap: 8px 12px;
     font-size: 12.5px;
   }
@@ -725,7 +692,7 @@
     margin: 0 auto;
   }
 
-  .hero-value {
+  .hero .hero-value {
     font-size: 38px;
   }
 

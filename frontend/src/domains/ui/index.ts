@@ -1,3 +1,7 @@
+export { default as AButton } from './components/AButton.vue';
+export { default as AHero } from './components/AHero.vue';
+export { default as AKpiBand } from './components/AKpiBand.vue';
+export type { AKpiItem } from './components/AKpiBand.vue';
 export { default as BaseModal } from './components/BaseModal.vue';
 export { default as APageHead } from './components/APageHead.vue';
 export { default as ASectHead } from './components/ASectHead.vue';

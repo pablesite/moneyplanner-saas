@@ -196,7 +196,9 @@ Incluye redirecciones: `/data/fx` y `/data/ipc` → `/data`.
 **Origen:** SaaS (shared)
 **Cliente:** ninguno
 
-Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia.
+Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia. Barrel en `domains/ui/index.ts`.
+
+Primitivas Direction A: `APageHead`, `ASectHead`, `AContextBar`, `ASelect`, `ARowMenu`, `AKindChip`, `AInfoHint`, `AStepper`, `ASparkline`, `BaseModal`, y las nuevas `AButton` (botón con variantes/`loading`), `AHero` (bloque de figura del hero) y `AKpiBand` (rejilla de KPIs). `AHero`/`AKpiBand` consolidan los heroes de Presupuesto, Cierre y Patrimonio.
 
 ---
 

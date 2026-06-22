@@ -39,56 +39,15 @@
   align-items: center;
 }
 
-.mc-hero-main {
-  min-width: 0;
-}
-
-.mc-hero-eyebrow {
-  color: var(--muted);
-}
-
-.mc-hero .hero-value {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 56px;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  font-weight: 600;
-  margin: 6px 0 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.mc-hero .hero-delta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  align-items: baseline;
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 13.5px;
-}
-
-.mc-hero .hero-delta .pos {
-  color: var(--pos);
-}
-
-.mc-hero .hero-delta .neg {
-  color: var(--neg);
-}
-
+/* hero-value, hero-delta y kpi-meta pos/neg viven ahora en design-system.css
+   (.dir-a .hero-value / .hero-delta / .kpi-meta) vía AHero/AKpiBand. Aquí solo
+   quedan los detalles específicos del cierre. */
 .mc-hero-dot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
   background: var(--faint);
   display: inline-block;
-}
-
-.mc-hero .kpi-meta .pos {
-  color: var(--pos);
-}
-
-.mc-hero .kpi-meta .neg {
-  color: var(--neg);
 }
 
 /* Fila del stepper: pasos a la izquierda + navegación lineal única a la
