@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { type PropType } from 'vue';
-import { ASelect, BaseModal } from '@/domains/ui';
+import { AButton, ASelect, BaseModal } from '@/domains/ui';
 
 defineProps({
   page: {
@@ -62,9 +62,9 @@ defineProps({
         <p class="ui-accounting-inline-note">
           {{ page.selectedActivationIds.length }} seleccionadas
         </p>
-        <button class="btn" type="button" @click="page.toggleSelectAllFiltered">
+        <AButton @click="page.toggleSelectAllFiltered">
           {{ page.allFilteredSelected ? 'Quitar seleccion visible' : 'Seleccionar visibles' }}
-        </button>
+        </AButton>
       </div>
 
       <div v-if="page.groupedManualPositionOptions.length" class="ui-accounting-activation-list">
@@ -109,8 +109,8 @@ defineProps({
         <p class="ui-accounting-inline-note">
           Solo se muestran posiciones del patrimonio con `tracking_mode=manual`.
         </p>
-        <button
-          class="btn btn-primary"
+        <AButton
+          variant="primary"
           type="submit"
           :disabled="page.accountActivationLoading || !page.selectedActivationIds.length"
         >
@@ -119,7 +119,7 @@ defineProps({
               ? 'Añadiendo...'
               : `Añadir al libro (${page.selectedActivationIds.length})`
           }}
-        </button>
+        </AButton>
       </div>
     </form>
   </BaseModal>

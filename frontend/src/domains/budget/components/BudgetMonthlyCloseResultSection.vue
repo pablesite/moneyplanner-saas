@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, ASectHead, AState } from '@/domains/ui';
+import { AButton, AInfoHint, ASectHead, AState } from '@/domains/ui';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type MonthlyCloseStatus = 'draft' | 'finalized' | 'locked';
@@ -128,41 +128,32 @@ const resultBridgeRows = computed(() =>
           <span class="mc-locked">Este mes está bloqueado.</span>
         </template>
         <template v-else-if="closeStatus === 'finalized'">
-          <button
-            type="button"
-            class="btn"
-            :disabled="monthlyCloseActionBusy"
-            @click="onReopenClose && onReopenClose()"
-          >
+          <AButton :disabled="monthlyCloseActionBusy" @click="onReopenClose && onReopenClose()">
             Reabrir cierre
-          </button>
-          <button
-            type="button"
-            class="btn mc-danger-btn"
+          </AButton>
+          <AButton
+            class="mc-danger-btn"
             :disabled="monthlyCloseActionBusy"
             @click="onLockClose && onLockClose()"
           >
             Bloquear
-          </button>
+          </AButton>
         </template>
         <template v-else>
-          <button
-            type="button"
-            class="btn btn-primary"
+          <AButton
+            variant="primary"
             :disabled="monthlyCloseActionBusy"
             @click="onFinalizeClose && onFinalizeClose()"
           >
             Finalizar cierre
-          </button>
-          <button
+          </AButton>
+          <AButton
             v-if="hasDistributionSuggestion"
-            type="button"
-            class="btn"
             :disabled="monthlyCloseActionBusy"
             @click="onApplyDistribution && onApplyDistribution()"
           >
             Aplicar distribución
-          </button>
+          </AButton>
         </template>
       </template>
     </ASectHead>

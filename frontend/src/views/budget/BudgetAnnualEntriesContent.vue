@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, unref } from 'vue';
-import { ASelect, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
 import { AnnualEntryModalForm } from '@/domains/budget/annual-entries';
 
 const props = defineProps<{
@@ -176,7 +176,7 @@ const annualExpenseForm = computed(() => unref(page.annualExpenseForm) ?? {});
       </div>
     </section>
 
-    <article class="card ui-pro-panel">
+    <article class="card ui-section-card">
       <div class="nw-list-header">
         <div class="nw-list-header-left">
           <h2 class="card-header-title mt-0">Entradas anuales</h2>
@@ -185,15 +185,16 @@ const annualExpenseForm = computed(() => unref(page.annualExpenseForm) ?? {});
           <div class="nw-list-total-inline">
             {{ page.formatMoneyAmount(filteredAnnualIncomeTotal, 'EUR') }}
           </div>
-          <button
-            class="btn btn-primary btn-sm nw-list-add-icon-only"
-            type="button"
+          <AButton
+            variant="primary"
+            size="sm"
+            class="nw-list-add-icon-only"
             aria-label="Añadir ingreso"
             :disabled="annualIncomeLoading"
             @click="() => page.openIncomeModal()"
           >
             <span class="btn-icon">+</span>
-          </button>
+          </AButton>
         </div>
       </div>
 
@@ -332,7 +333,7 @@ const annualExpenseForm = computed(() => unref(page.annualExpenseForm) ?? {});
       <div v-if="annualIncomeLoading" class="ui-status-line mt-2">Cargando ingresos anuales...</div>
     </article>
 
-    <article class="card ui-pro-panel">
+    <article class="card ui-section-card">
       <div class="nw-list-header">
         <div class="nw-list-header-left">
           <h2 class="card-header-title mt-0">Salidas anuales</h2>
@@ -341,15 +342,16 @@ const annualExpenseForm = computed(() => unref(page.annualExpenseForm) ?? {});
           <div class="nw-list-total-inline">
             {{ page.formatMoneyAmount(filteredAnnualExpenseTotal, 'EUR') }}
           </div>
-          <button
-            class="btn btn-primary btn-sm nw-list-add-icon-only"
-            type="button"
+          <AButton
+            variant="primary"
+            size="sm"
+            class="nw-list-add-icon-only"
             aria-label="Añadir salida"
             :disabled="annualExpenseLoading"
             @click="() => page.openExpenseModal()"
           >
             <span class="btn-icon">+</span>
-          </button>
+          </AButton>
         </div>
       </div>
 

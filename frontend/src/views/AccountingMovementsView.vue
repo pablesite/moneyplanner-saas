@@ -3,7 +3,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted } from 'vue';
 import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import '@/domains/accounting/styles/movements.css';
 import '@/domains/accounting/styles/accounting-movements-view.css';
-import '@/domains/net-worth/net-worth-view.css';
 import { useAccountingMovementsPage } from '@/domains/accounting/useAccountingMovementsPage';
 import AccountingAccountCatalog from '@/domains/accounting/components/AccountingAccountCatalog.vue';
 import AccountingMovementsAllTransactions from '@/domains/accounting/components/AccountingMovementsAllTransactions.vue';
@@ -12,7 +11,16 @@ import AccountingMovementsActivationModal from '@/domains/accounting/components/
 import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import { NetWorthDeltaChart, NetWorthTimelineChart } from '@/domains/net-worth';
-import { AContextBar, AHero, APageHead, ASectHead, ASelect, AState, BaseModal } from '@/domains/ui';
+import {
+  AButton,
+  AContextBar,
+  AHero,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  BaseModal,
+} from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 
 const route = useRoute();
@@ -83,21 +91,16 @@ onBeforeUnmount(() => {
         <span>Partida doble</span>
       </template>
       <template #actions>
-        <button
-          class="btn btn-ghost a-mov-compact-action"
-          type="button"
-          @click="page.activeTab = 'cuentas'"
-        >
+        <AButton variant="ghost" class="a-mov-compact-action" @click="page.activeTab = 'cuentas'">
           Catálogo de cuentas
-        </button>
-        <button
-          class="btn btn-primary"
-          type="button"
+        </AButton>
+        <AButton
+          variant="primary"
           :disabled="!page.liquidityAccounts.length"
           @click="page.showQuickEntryModal = true"
         >
           + Asiento rápido
-        </button>
+        </AButton>
       </template>
     </APageHead>
 
@@ -188,10 +191,9 @@ onBeforeUnmount(() => {
         <template #actions>
           <div class="actions">
             <div class="seg" role="group" aria-label="Rango temporal">
-              <button
+              <AButton
                 v-for="preset in page.dailyTimelinePresetOptions"
                 :key="preset"
-                type="button"
                 :class="{
                   on:
                     page.dailyTimelineCustomWindow === null &&
@@ -200,16 +202,16 @@ onBeforeUnmount(() => {
                 @click="page.setDailyTimelinePreset(preset)"
               >
                 {{ preset }}
-              </button>
+              </AButton>
             </div>
-            <button
+            <AButton
               v-if="page.dailyBalanceSeriesChartPoints.length > 1"
-              class="btn btn-ghost a-mov-compact-action"
-              type="button"
+              variant="ghost"
+              class="a-mov-compact-action"
               @click="page.dailyTimelineExpanded = true"
             >
               Ampliar
-            </button>
+            </AButton>
           </div>
         </template>
       </ASectHead>
@@ -343,14 +345,12 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div class="a-mov-tabs-actions">
-          <button
+          <AButton
             v-if="page.activeTab === 'cuentas' && page.hasAvailableManualPositions"
-            class="btn"
-            type="button"
             @click="page.openActivationModal"
           >
             + Activar cuenta
-          </button>
+          </AButton>
         </div>
       </div>
 

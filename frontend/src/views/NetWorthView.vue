@@ -17,6 +17,7 @@ import {
 import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActions';
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
 import {
+  AButton,
   AContextBar,
   AHero,
   AInfoHint,
@@ -787,19 +788,17 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
         <span>Base {{ store.baseCurrency ?? 'EUR' }}</span>
         <span v-if="valueMode === 'real' || archivedItemsCount" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
-        <button
+        <AButton
           v-if="archivedItemsCount"
-          class="btn btn-ghost a-nw-archived-trigger"
-          type="button"
+          variant="ghost"
+          class="a-nw-archived-trigger"
           @click="showArchivedModal = true"
         >
           Archivadas {{ archivedItemsCount }}
-        </button>
+        </AButton>
       </template>
       <template #actions>
-        <button class="btn btn-primary" type="button" @click="openPrimaryCreateModal">
-          + Añadir cuenta
-        </button>
+        <AButton variant="primary" @click="openPrimaryCreateModal"> + Añadir cuenta </AButton>
       </template>
     </APageHead>
 
@@ -834,21 +833,16 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
       <div class="context-field">
         <span class="context-field-label">Valoración</span>
         <div class="seg">
-          <button
-            type="button"
-            :class="{ on: valueMode === 'nominal' }"
-            @click="setValueMode('nominal')"
-          >
+          <AButton :class="{ on: valueMode === 'nominal' }" @click="setValueMode('nominal')">
             Nominal
-          </button>
-          <button
+          </AButton>
+          <AButton
             v-if="canShowReal()"
-            type="button"
             :class="{ on: valueMode === 'real' }"
             @click="setValueMode('real')"
           >
             Real
-          </button>
+          </AButton>
         </div>
         <span v-if="valueMode === 'real' && realBaseLabel" class="a-nw-context-note">
           {{ realBaseLabel }}
@@ -1001,33 +995,26 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
         </template>
         <template #actions>
           <div class="actions">
-            <button
-              v-if="timelineFilterLabel"
-              class="btn btn-ghost"
-              type="button"
-              @click="resetTimelineSelection"
-            >
+            <AButton v-if="timelineFilterLabel" variant="ghost" @click="resetTimelineSelection">
               Quitar filtro
-            </button>
+            </AButton>
             <div class="seg">
-              <button
+              <AButton
                 v-for="preset in timelinePresetOptions"
                 :key="preset"
-                type="button"
                 :class="{ on: activeTimelinePreset === preset }"
                 @click="setTimelinePreset(preset)"
               >
                 {{ preset }}
-              </button>
+              </AButton>
             </div>
-            <button
+            <AButton
               v-if="timelineChartPoints.length > 1"
-              class="btn btn-ghost"
-              type="button"
+              variant="ghost"
               @click="timelineExpanded = true"
             >
               Ampliar
-            </button>
+            </AButton>
           </div>
         </template>
       </ASectHead>
@@ -1259,9 +1246,7 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
                 {{ item.owner }}
               </div>
             </div>
-            <button class="btn btn-ghost" type="button" @click="unarchiveItem(item)">
-              Restaurar
-            </button>
+            <AButton variant="ghost" @click="unarchiveItem(item)"> Restaurar </AButton>
           </article>
         </div>
       </div>
@@ -1310,12 +1295,10 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
           </div>
         </div>
         <div class="actions a-nw-modal-actions">
-          <button class="btn btn-ghost" type="button" @click="closeGeneratedLiabilityExpenseModal">
-            Cerrar
-          </button>
-          <button class="btn btn-primary" type="button" @click="openGeneratedExpensesInBudget">
+          <AButton variant="ghost" @click="closeGeneratedLiabilityExpenseModal"> Cerrar </AButton>
+          <AButton variant="primary" @click="openGeneratedExpensesInBudget">
             Revisar en Presupuesto
-          </button>
+          </AButton>
         </div>
       </div>
     </BaseModal>

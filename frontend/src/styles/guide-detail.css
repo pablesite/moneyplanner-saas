@@ -266,44 +266,8 @@
   font-weight: 500;
 }
 .dir-a .guide-event-filter {
-  position: relative;
-}
-.dir-a .guide-event-filter > summary {
   min-width: 150px;
-  padding: 6px 9px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  color: var(--muted);
-  cursor: pointer;
-  list-style: none;
   font-size: 11px;
-}
-.dir-a .guide-event-filter > div {
-  position: absolute;
-  z-index: 4;
-  top: calc(100% + 4px);
-  right: 0;
-  display: grid;
-  min-width: 190px;
-  padding: 5px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: #15171c;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
-}
-.dir-a .guide-event-filter button {
-  padding: 7px 9px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--muted);
-  text-align: left;
-  cursor: pointer;
-}
-.dir-a .guide-event-filter button:hover,
-.dir-a .guide-event-filter button.on {
-  background: var(--hover);
-  color: var(--text);
 }
 .dir-a .guide-info-card {
   padding-top: 16px;

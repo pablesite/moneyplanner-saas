@@ -7,6 +7,28 @@ import { describe, expect, it, vi } from 'vitest';
 // opción (no el string del DOM), igual que el ASelect real, para no romper los
 // selects numéricos/booleanos (ownership_id, financed_asset_id, cancelación).
 vi.mock('@/domains/ui', () => ({
+  AButton: defineComponent({
+    name: 'AButton',
+    props: {
+      variant: { type: String, required: false, default: 'default' },
+      size: { type: String, required: false, default: 'md' },
+      disabled: { type: Boolean, default: false },
+      type: { type: String, required: false, default: 'button' },
+    },
+    template: `
+      <button
+        :type="type"
+        class="btn"
+        :class="[
+          variant !== 'default' ? 'btn-' + variant : '',
+          size === 'sm' ? 'btn-sm' : '',
+        ]"
+        :disabled="disabled"
+      >
+        <slot />
+      </button>
+    `,
+  }),
   ASelect: defineComponent({
     name: 'ASelect',
     props: {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { AButton } from '@/domains/ui';
 import { clearAuthTokens, getAccessToken } from '@/domains/auth/session';
 
 const router = useRouter();
@@ -19,7 +20,7 @@ function logout() {
       <div class="ui-app-header-title">The Arkenstone Core</div>
 
       <div v-if="hasToken" class="ui-app-header-actions">
-        <button class="btn" type="button" @click="logout">Logout</button>
+        <AButton @click="logout">Logout</AButton>
       </div>
     </div>
   </header>

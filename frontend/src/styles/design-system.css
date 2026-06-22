@@ -342,12 +342,114 @@
   color: var(--faint);
 }
 
+.dir-a .hero-delta-copy {
+  margin-left: 6px;
+}
+
 .dir-a .a-hero-figure {
   min-width: 0;
 }
 
 .dir-a .a-hero-figure .eyebrow {
   color: var(--muted);
+}
+
+.dir-a .hero-breakdown {
+  flex: 1 1 360px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+  min-width: 0;
+}
+
+.dir-a .hero-comp-side {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dir-a .hero-comp-title {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dir-a .hero-comp-title b {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  font-weight: 500;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.dir-a .comp-list {
+  display: grid;
+  gap: 4px;
+}
+
+.dir-a .comp-row {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  margin: 0 -10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dir-a .comp-row:hover,
+.dir-a .comp-row.row-active {
+  background: var(--hover);
+}
+
+.dir-a .comp-row.row-active {
+  background: var(--accent-soft);
+}
+
+.dir-a .comp-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.dir-a .comp-label {
+  font-size: 13px;
+}
+
+.dir-a .comp-val {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.dir-a .comp-row.row-active .comp-val {
+  color: var(--text);
+}
+
+.dir-a .comp-val-share {
+  opacity: 0.5;
+}
+
+.dir-a .comp-empty {
+  color: var(--muted);
+  font-size: 11.5px;
+  padding-top: 6px;
 }
 
 /* Bloque de estado compartido (AState): loading/empty/error/success en dos

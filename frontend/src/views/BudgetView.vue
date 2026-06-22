@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
+  AButton,
   APageHead,
   AContextBar,
   AInfoHint,
@@ -166,14 +167,10 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
         <span>Base EUR</span>
       </template>
       <template #actions>
-        <button
-          class="btn btn-ghost bdg-sect-action"
-          type="button"
-          @click="presentationView = 'sugg'"
-        >
+        <AButton variant="ghost" class="bdg-sect-action" @click="presentationView = 'sugg'">
           {{ suggestionsCount }} sugerencias
-        </button>
-        <button class="btn btn-primary" type="button" @click="openNewEntry">+ Nueva partida</button>
+        </AButton>
+        <AButton variant="primary" @click="openNewEntry">+ Nueva partida</AButton>
       </template>
     </APageHead>
 
@@ -207,8 +204,7 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
       <div class="context-field">
         <span class="context-field-label">Tipo de partida</span>
         <div class="seg">
-          <button
-            type="button"
+          <AButton
             :class="{ on: incomeViewMode === 'all' }"
             @click="
               updateIncomeViewMode('all');
@@ -216,9 +212,8 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
             "
           >
             Todos
-          </button>
-          <button
-            type="button"
+          </AButton>
+          <AButton
             :class="{ on: incomeViewMode === 'recurrent' }"
             @click="
               updateIncomeViewMode('recurrent');
@@ -226,9 +221,8 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
             "
           >
             Recurrentes
-          </button>
-          <button
-            type="button"
+          </AButton>
+          <AButton
             :class="{ on: incomeViewMode === 'one_off' }"
             @click="
               updateIncomeViewMode('one_off');
@@ -236,7 +230,7 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
             "
           >
             Puntuales
-          </button>
+          </AButton>
         </div>
       </div>
 
@@ -245,27 +239,18 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
       <div class="context-field">
         <span class="context-field-label">Vista</span>
         <div class="seg">
-          <button
-            type="button"
+          <AButton
             :class="{ on: presentationView === 'annual' }"
             @click="presentationView = 'annual'"
           >
             Anual
-          </button>
-          <button
-            type="button"
-            :class="{ on: presentationView === 'exec' }"
-            @click="presentationView = 'exec'"
-          >
+          </AButton>
+          <AButton :class="{ on: presentationView === 'exec' }" @click="presentationView = 'exec'">
             Ejecución
-          </button>
-          <button
-            type="button"
-            :class="{ on: presentationView === 'sugg' }"
-            @click="presentationView = 'sugg'"
-          >
+          </AButton>
+          <AButton :class="{ on: presentationView === 'sugg' }" @click="presentationView = 'sugg'">
             Sugerencias
-          </button>
+          </AButton>
         </div>
       </div>
     </AContextBar>
@@ -303,9 +288,9 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
           </AInfoHint>
         </div>
         <div class="actions">
-          <button type="button" class="btn btn-ghost" @click="presentationView = 'annual'">
+          <AButton variant="ghost" @click="presentationView = 'annual'">
             ← Volver al detalle
-          </button>
+          </AButton>
         </div>
       </div>
 
@@ -349,12 +334,8 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
             </div>
           </div>
           <div class="bdg-sugg-actions">
-            <button type="button" class="btn btn-ghost" disabled title="Próximamente">
-              Ignorar
-            </button>
-            <button type="button" class="btn btn-primary" disabled title="Próximamente">
-              Aplicar
-            </button>
+            <AButton variant="ghost" disabled title="Próximamente"> Ignorar </AButton>
+            <AButton variant="primary" disabled title="Próximamente"> Aplicar </AButton>
           </div>
         </div>
       </template>

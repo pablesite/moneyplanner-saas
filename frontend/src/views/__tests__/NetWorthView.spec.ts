@@ -45,6 +45,28 @@ vi.mock('@/domains/net-worth/components/NetWorthItemModals.vue', () => ({
 }));
 
 vi.mock('@/domains/ui', () => ({
+  AButton: defineComponent({
+    name: 'AButton',
+    props: {
+      variant: { type: String, required: false, default: 'default' },
+      size: { type: String, required: false, default: 'md' },
+      disabled: { type: Boolean, default: false },
+      type: { type: String, required: false, default: 'button' },
+    },
+    template: `
+      <button
+        :type="type"
+        class="btn"
+        :class="[
+          variant !== 'default' ? 'btn-' + variant : '',
+          size === 'sm' ? 'btn-sm' : '',
+        ]"
+        :disabled="disabled"
+      >
+        <slot />
+      </button>
+    `,
+  }),
   APageHead: defineComponent({
     name: 'APageHead',
     props: { title: { type: String, required: true } },

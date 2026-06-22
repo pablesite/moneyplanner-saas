@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useLoginForm } from '@/domains/auth';
+import { AButton } from '@/domains/ui';
 
 const { username, password, error, loading, sessionNotice, login } = useLoginForm();
 </script>
@@ -35,9 +36,9 @@ const { username, password, error, loading, sessionNotice, login } = useLoginFor
             />
           </label>
 
-          <button :disabled="loading" type="submit" class="btn btn-primary ui-auth-submit">
+          <AButton variant="primary" type="submit" :disabled="loading" class="ui-auth-submit">
             {{ loading ? 'Entrando...' : 'Entrar' }}
-          </button>
+          </AButton>
         </form>
       </div>
     </div>

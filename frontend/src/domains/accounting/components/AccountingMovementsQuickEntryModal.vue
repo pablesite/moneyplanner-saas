@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { computed, ref, watch, type PropType } from 'vue';
-import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 
 const props = defineProps({
   page: {
@@ -200,10 +200,9 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
       @submit.prevent="page.submitQuickEntryFromModal"
     >
       <div class="ui-accounting-segmented">
-        <button
+        <AButton
           v-for="option in commonTypeOptions"
           :key="option.value"
-          type="button"
           class="btn ui-accounting-segmented-btn"
           :class="{
             'ui-accounting-segmented-btn-active':
@@ -212,12 +211,11 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
           @click="page.quickEntryForm.movement_type = option.value"
         >
           {{ option.label }}
-        </button>
+        </AButton>
         <div class="ui-accounting-segmented-divider" aria-hidden="true" />
-        <button
+        <AButton
           v-for="option in advancedTypeOptions"
           :key="option.value"
-          type="button"
           class="btn ui-accounting-segmented-btn ui-accounting-segmented-btn-advanced"
           :class="{
             'ui-accounting-segmented-btn-active':
@@ -226,7 +224,7 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
           @click="page.quickEntryForm.movement_type = option.value"
         >
           {{ option.label }}
-        </button>
+        </AButton>
       </div>
 
       <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
@@ -257,25 +255,20 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
       </div>
 
       <div class="ui-accounting-value-date-row">
-        <button
+        <AButton
           v-if="!showValueDate"
-          type="button"
           class="ui-accounting-value-date-toggle"
           @click="showValueDate = true"
         >
           Fecha valor diferente
-        </button>
+        </AButton>
         <label v-else class="ui-accounting-field">
           <span>Fecha valor</span>
           <div class="ui-accounting-value-date-input-row">
             <input v-model="page.quickEntryForm.value_date" type="date" class="input" required />
-            <button
-              type="button"
-              class="ui-accounting-value-date-close"
-              @click="showValueDate = false"
-            >
+            <AButton class="ui-accounting-value-date-close" @click="showValueDate = false">
               Misma fecha
-            </button>
+            </AButton>
           </div>
         </label>
       </div>
@@ -323,8 +316,7 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
 
       <template v-else-if="page.quickEntryForm.movement_type === 'investment'">
         <div class="ui-accounting-segmented">
-          <button
-            type="button"
+          <AButton
             class="ui-accounting-segmented-btn"
             :class="{
               'ui-accounting-segmented-btn-active':
@@ -333,9 +325,8 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
             @click="page.quickEntryForm.investment_direction = 'inflow'"
           >
             Aporte
-          </button>
-          <button
-            type="button"
+          </AButton>
+          <AButton
             class="ui-accounting-segmented-btn"
             :class="{
               'ui-accounting-segmented-btn-active':
@@ -344,9 +335,8 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
             @click="page.quickEntryForm.investment_direction = 'reinvestment'"
           >
             Reinversion
-          </button>
-          <button
-            type="button"
+          </AButton>
+          <AButton
             class="ui-accounting-segmented-btn"
             :class="{
               'ui-accounting-segmented-btn-active':
@@ -355,7 +345,7 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
             @click="page.quickEntryForm.investment_direction = 'outflow'"
           >
             Retirada
-          </button>
+          </AButton>
         </div>
 
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
@@ -606,13 +596,13 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
                 : 'Las partidas contables se generan automáticamente.'
           }}
         </p>
-        <button
-          class="btn btn-primary"
+        <AButton
+          variant="primary"
           type="submit"
           :disabled="page.transactionCreationLoading || !page.quickEntryReady"
         >
           {{ page.transactionCreationLoading ? 'Guardando...' : 'Registrar movimiento' }}
-        </button>
+        </AButton>
       </div>
     </form>
   </BaseModal>

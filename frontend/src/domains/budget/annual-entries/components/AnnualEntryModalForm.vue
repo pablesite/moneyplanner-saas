@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import AmountPeriodCurrencyRow from './AmountPeriodCurrencyRow.vue';
 
 type SelectOption = {
@@ -278,15 +278,15 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
         />
       </label>
 
-      <div v-if="error" class="ui-state-block ui-state-error md:col-span-2" role="alert">
+      <AState v-if="error" class="md:col-span-2" status="error" layout="inline" role="alert">
         {{ error }}
-      </div>
+      </AState>
 
       <div class="actions md:col-span-2">
-        <button class="btn btn-ghost" type="button" @click="emit('close')">Cancelar</button>
-        <button class="btn btn-primary" type="button" :disabled="loading" @click="emit('submit')">
+        <AButton variant="ghost" @click="emit('close')">Cancelar</AButton>
+        <AButton variant="primary" :disabled="loading" @click="emit('submit')">
           {{ submitLabel }}
-        </button>
+        </AButton>
       </div>
     </div>
   </BaseModal>

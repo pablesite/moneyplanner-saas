@@ -92,13 +92,11 @@ body {
   background: var(--panel);
 }
 
-.ui-pro-page,
 .ui-page-shell {
   display: grid;
   gap: 14px;
 }
 
-.ui-pro-panel,
 .ui-section-card {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
@@ -110,7 +108,6 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.ui-pro-header,
 .ui-page-head,
 .ui-section-head {
   display: flex;
@@ -124,7 +121,6 @@ body {
   flex-wrap: wrap;
 }
 
-.ui-pro-title,
 .ui-page-title,
 .ui-section-title {
   margin: 0;
@@ -133,7 +129,6 @@ body {
   letter-spacing: 0.01em;
 }
 
-.ui-pro-kicker,
 .ui-page-eyebrow {
   margin: 0 0 6px;
   font-size: 11px;
@@ -154,7 +149,6 @@ body {
   min-width: min(100%, 420px);
 }
 
-.ui-pro-toolbar,
 .ui-page-actions,
 .ui-section-actions,
 .ui-action-bar {
@@ -162,22 +156,6 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-}
-
-.ui-pro-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.ui-pro-divider {
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  padding-top: 12px;
 }
 
 /* El "hero shell" legacy (.ui-hero-*) se retiró: era el chrome del hero ui-pro de
@@ -198,19 +176,6 @@ body {
     rgba(11, 13, 18, 0.82);
 }
 
-.ui-state-block {
-  padding: var(--space-4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
-}
-
-.ui-state-empty {
-  border-color: rgba(148, 163, 184, 0.28);
-  background: rgba(148, 163, 184, 0.08);
-}
-
 .ui-accounting-empty-state {
   display: grid;
   gap: 4px;
@@ -219,35 +184,6 @@ body {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
-}
-
-.ui-state-title {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(232, 238, 248, 0.92);
-}
-
-.ui-state-hint {
-  margin: 0;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: rgba(200, 212, 228, 0.7);
-}
-
-.ui-state-error {
-  border-color: var(--state-error-border);
-  background: var(--state-error-bg);
-}
-
-.ui-state-success {
-  border-color: rgba(45, 212, 191, 0.38);
-  background: rgba(16, 185, 129, 0.12);
-}
-
-.ui-state-loading {
-  border-color: rgba(56, 189, 248, 0.32);
-  background: rgba(56, 189, 248, 0.08);
 }
 
 .ui-modal-backdrop {
@@ -1126,10 +1062,6 @@ body {
   font-weight: 700;
 }
 
-.ui-profile-title {
-  margin: 0 0 4px;
-}
-
 .ui-profile-panel {
   padding: 18px;
 }
@@ -1211,10 +1143,6 @@ body {
   border-color: rgba(255, 255, 255, 0.22);
   color: rgba(255, 255, 255, 0.78);
   background: rgba(255, 255, 255, 0.03);
-}
-
-.ui-settings-page-title {
-  margin: 0 0 4px;
 }
 
 .ui-settings-accordion-item {

@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 import { useAuxDataPage } from '@/domains/aux-data';
 import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
+import { AButton, APageHead } from '@/domains/ui';
 
 const {
   loading,
@@ -45,12 +46,12 @@ function formatTimestamp(value: string | null): string {
 </script>
 
 <template>
-  <div class="container ui-pro-page">
-    <h1 class="h1 ui-settings-page-title">Datos auxiliares</h1>
+  <div class="container ui-page-shell">
+    <APageHead title="Datos auxiliares" />
 
     <div v-if="error" class="alert mt-3">{{ error }}</div>
 
-    <section class="card ui-pro-panel ui-settings-accordion-item">
+    <section class="card ui-section-card ui-settings-accordion-item">
       <button
         class="ui-settings-toggle"
         type="button"
@@ -64,22 +65,20 @@ function formatTimestamp(value: string | null): string {
       </button>
       <div v-if="sections.family" class="ui-settings-content">
         <div class="ui-settings-family-tabs">
-          <button
-            class="btn opacity-60"
-            type="button"
+          <AButton
+            class="opacity-60"
             :class="{ '!opacity-100': familyTab === 'members' }"
             @click="familyTab = 'members'"
           >
             Miembros
-          </button>
-          <button
-            class="btn opacity-60"
-            type="button"
+          </AButton>
+          <AButton
+            class="opacity-60"
             :class="{ '!opacity-100': familyTab === 'ownerships' }"
             @click="familyTab = 'ownerships'"
           >
             Titularidades
-          </button>
+          </AButton>
         </div>
 
         <FamilyMemberManager v-if="familyTab === 'members'" />
@@ -87,7 +86,7 @@ function formatTimestamp(value: string | null): string {
       </div>
     </section>
 
-    <section class="card ui-pro-panel ui-settings-accordion-item">
+    <section class="card ui-section-card ui-settings-accordion-item">
       <button
         class="ui-settings-toggle"
         type="button"
@@ -101,9 +100,9 @@ function formatTimestamp(value: string | null): string {
       </button>
       <div v-if="sections.ipc" class="ui-settings-content">
         <div class="mb-3 flex flex-wrap items-center gap-2">
-          <button class="btn" type="button" :disabled="syncingInflation" @click="syncInflationNow">
+          <AButton :disabled="syncingInflation" @click="syncInflationNow">
             {{ syncingInflation ? 'Sincronizando IPC...' : 'Actualizar IPC ahora' }}
-          </button>
+          </AButton>
           <span v-if="syncSuccess" class="ui-form-help ui-form-help-success">{{
             syncSuccess
           }}</span>
@@ -149,7 +148,7 @@ function formatTimestamp(value: string | null): string {
       </div>
     </section>
 
-    <section class="card ui-pro-panel ui-settings-accordion-item">
+    <section class="card ui-section-card ui-settings-accordion-item">
       <button
         class="ui-settings-toggle"
         type="button"
@@ -163,9 +162,9 @@ function formatTimestamp(value: string | null): string {
       </button>
       <div v-if="sections.fx" class="ui-settings-content">
         <div class="mb-3 flex flex-wrap items-center gap-2">
-          <button class="btn" type="button" :disabled="syncingFx" @click="syncFxHistoryNow">
+          <AButton :disabled="syncingFx" @click="syncFxHistoryNow">
             {{ syncingFx ? 'Sincronizando FX...' : 'Actualizar FX histórico' }}
-          </button>
+          </AButton>
         </div>
 
         <div class="ui-data-status-grid">

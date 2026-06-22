@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue';
-import { AKindChip, ARowMenu, ASelect } from '@/domains/ui';
+import { AButton, AKindChip, ARowMenu, ASelect } from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 import type { LedgerTransaction } from '@/domains/accounting/models';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
@@ -169,8 +169,14 @@ function handleMenuSelect(id: string, tx: LedgerTransaction) {
       />
       <!-- Date popover -->
       <div class="a-mov-date-wrap">
-        <button class="filter-ctrl" type="button" @click="toggleDateDropdown">
-          {{ activeDateLabel() }} ▾
+        <button
+          class="filter-ctrl a-mov-date-trigger"
+          type="button"
+          :aria-expanded="dateDropdownOpen ? 'true' : 'false'"
+          @click="toggleDateDropdown"
+        >
+          <span>{{ activeDateLabel() }}</span>
+          <span class="a-mov-date-caret" aria-hidden="true">▾</span>
         </button>
         <div v-if="dateDropdownOpen" class="filter-popover">
           <button
@@ -185,6 +191,7 @@ function handleMenuSelect(id: string, tx: LedgerTransaction) {
           <template v-if="state.todosDatePreset === 'custom'">
             <hr />
             <div class="a-mov-popover-custom">
+              <span class="a-mov-popover-label">Rango manual</span>
               <input v-model="state.todosDateFrom" class="filter-ctrl" type="date" title="Desde" />
               <input v-model="state.todosDateTo" class="filter-ctrl" type="date" title="Hasta" />
             </div>
@@ -298,14 +305,9 @@ function handleMenuSelect(id: string, tx: LedgerTransaction) {
     </div>
 
     <div v-if="state.todosHasMore" class="a-mov-load-more">
-      <button
-        class="btn"
-        type="button"
-        :disabled="state.todosLoadingMore"
-        @click="state.loadMoreTodos"
-      >
+      <AButton :disabled="state.todosLoadingMore" @click="state.loadMoreTodos">
         {{ state.todosLoadingMore ? 'Cargando...' : 'Cargar más' }}
-      </button>
+      </AButton>
     </div>
     <p v-else-if="state.todosTransactions.length" class="a-mov-load-hint">
       Todos los movimientos cargados

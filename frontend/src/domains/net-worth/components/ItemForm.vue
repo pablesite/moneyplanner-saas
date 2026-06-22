@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
-import { ASelect, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
 import type {
   AssetImprovement,
   ContributionInterval,
@@ -1887,9 +1887,9 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
       <div v-if="isInvestmentCategory" class="ui-item-form-section ui-item-form-field-span-2">
         <div class="ui-item-form-section-head">
           <div class="ui-item-form-section-title">Aportaciones periódicas</div>
-          <button type="button" class="btn ui-item-form-mini-btn" @click="addContributionInterval">
+          <AButton class="ui-item-form-mini-btn" @click="addContributionInterval">
             + Añadir intervalo
-          </button>
+          </AButton>
         </div>
         <div v-if="!contributionIntervals.length" class="ui-form-help">
           Sin intervalos = activo sin aportaciones periódicas previstas.
@@ -1930,13 +1930,12 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
             />
           </label>
           <div class="ui-item-form-field">
-            <button
-              type="button"
-              class="btn ui-item-form-mini-btn"
+            <AButton
+              class="ui-item-form-mini-btn"
               @click="removeContributionInterval(interval._key)"
             >
               Eliminar
-            </button>
+            </AButton>
           </div>
         </div>
       </div>
@@ -2026,13 +2025,9 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
               </div>
             </div>
             <div class="ui-item-form-section-actions">
-              <button
-                type="button"
-                class="btn ui-item-form-mini-btn"
-                @click="addPrimaryHomeImprovement"
-              >
+              <AButton class="ui-item-form-mini-btn" @click="addPrimaryHomeImprovement">
                 Añadir reforma
-              </button>
+              </AButton>
             </div>
           </div>
           <div v-if="!primaryHomeImprovements.length" class="ui-form-help">
@@ -2054,13 +2049,9 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
                 </span>
               </div>
               <div class="ui-item-form-improvement-actions">
-                <button
-                  type="button"
-                  class="btn ui-item-form-mini-btn"
-                  @click="removePrimaryHomeImprovement(index)"
-                >
+                <AButton class="ui-item-form-mini-btn" @click="removePrimaryHomeImprovement(index)">
                   {{ improvementRemoveLabel(improvement) }}
-                </button>
+                </AButton>
                 <button
                   type="button"
                   class="icon-btn nw-cat-toggle"
@@ -2505,11 +2496,10 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           {{ submitError }}
         </div>
         <div class="ui-form-actions ui-item-form-actions">
-          <button v-if="onCancel" class="btn ui-form-action-btn" type="button" @click="onCancel">
-            Cancelar
-          </button>
-          <button
-            class="btn btn-primary ui-form-action-btn"
+          <AButton v-if="onCancel" class="ui-form-action-btn" @click="onCancel"> Cancelar </AButton>
+          <AButton
+            variant="primary"
+            class="ui-form-action-btn"
             :disabled="
               saving ||
               !!requiredFieldsError ||
@@ -2530,7 +2520,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           >
             <span v-if="saving" class="ui-item-form-btn-spinner" />
             {{ saving ? 'Guardando...' : isEdit ? 'Guardar' : 'Crear' }}
-          </button>
+          </AButton>
         </div>
       </div>
     </div>

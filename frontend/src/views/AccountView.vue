@@ -9,7 +9,7 @@ import {
 } from '@/domains/admin';
 import { authApi, toAuthErrorMessage, type CurrentUser } from '@/domains/auth';
 import { usePortableDataTransfer } from '@/domains/portable-data';
-import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { coreApi } from '@/lib/api';
 
 const route = useRoute();
@@ -318,8 +318,8 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
 </script>
 
 <template>
-  <div class="container ui-pro-page">
-    <h1 class="h1 ui-profile-title">{{ isAdmin ? 'Admin SaaS' : 'Perfil' }}</h1>
+  <div class="container ui-page-shell">
+    <APageHead :title="isAdmin ? 'Admin SaaS' : 'Perfil'" />
 
     <div v-if="error" class="alert mt-3">
       {{ error }}
@@ -332,7 +332,7 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
     <div v-if="loading" class="ui-status-line mt-3">Cargando cuenta...</div>
 
     <div v-else-if="currentUser" class="grid gap-3.5">
-      <section class="card ui-pro-panel ui-profile-panel">
+      <section class="card ui-section-card ui-profile-panel">
         <div class="ui-profile-head">
           <h2 class="ui-profile-head-title">{{ isAdmin ? 'Cuenta SaaS' : 'Mi cuenta' }}</h2>
         </div>
@@ -368,14 +368,14 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
                   :searchable="false"
                   @update:model-value="(v) => (baseCurrency = String(v))"
                 />
-                <button
-                  class="btn btn-ghost btn-sm"
-                  type="button"
+                <AButton
+                  variant="ghost"
+                  size="sm"
                   :disabled="baseCurrencySaveBusy || loading"
                   @click="saveBaseCurrency"
                 >
                   {{ baseCurrencySaveBusy ? 'Guardando...' : 'Guardar' }}
-                </button>
+                </AButton>
               </div>
             </div>
           </div>
@@ -398,26 +398,21 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
         </div>
       </section>
 
-      <section v-if="isAdmin" id="users" class="card ui-pro-panel ui-profile-panel">
+      <section v-if="isAdmin" id="users" class="card ui-section-card ui-profile-panel">
         <div class="ui-profile-head">
           <h2 class="ui-profile-head-title">Usuarios</h2>
           <div class="actions">
-            <button
-              class="btn btn-primary btn-sm"
-              type="button"
+            <AButton
+              variant="primary"
+              size="sm"
               :disabled="adminActionBusy"
               @click="openCreateUserModal"
             >
               +
-            </button>
-            <button
-              class="btn btn-ghost btn-sm"
-              type="button"
-              :disabled="adminActionBusy"
-              @click="loadAdminUsers"
-            >
+            </AButton>
+            <AButton variant="ghost" size="sm" :disabled="adminActionBusy" @click="loadAdminUsers">
               Recargar lista
-            </button>
+            </AButton>
           </div>
         </div>
         <p class="subtle m-0">
@@ -508,37 +503,36 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
               </div>
 
               <div v-if="row.saasUser" class="actions">
-                <button
-                  class="btn btn-ghost btn-sm"
-                  type="button"
+                <AButton
+                  variant="ghost"
+                  size="sm"
                   :disabled="adminActionBusy"
                   @click="switchUserRole(row.saasUser)"
                 >
                   {{ row.saasUser.role === 'saas_admin' ? 'Pasar a miembro' : 'Dar rol admin' }}
-                </button>
-                <button
-                  class="btn btn-ghost btn-sm"
-                  type="button"
+                </AButton>
+                <AButton
+                  variant="ghost"
+                  size="sm"
                   :disabled="adminActionBusy"
                   @click="toggleUserStatus(row.saasUser)"
                 >
                   {{ row.saasUser.is_active ? 'Desactivar' : 'Activar' }}
-                </button>
-                <button
-                  class="btn btn-ghost btn-sm"
-                  type="button"
+                </AButton>
+                <AButton
+                  variant="ghost"
+                  size="sm"
                   :disabled="adminActionBusy"
                   @click="deleteUser(row.saasUser)"
                 >
                   Eliminar
-                </button>
+                </AButton>
               </div>
             </article>
 
-            <div v-if="!adminIdentityRows.length" class="ui-state-block ui-state-empty">
-              <p class="ui-state-title">No hay usuarios cargados.</p>
-              <p class="ui-state-hint">Prueba a recargar la lista o crear el primer usuario.</p>
-            </div>
+            <AState v-if="!adminIdentityRows.length" status="empty">
+              No hay usuarios cargados. Prueba a recargar la lista o crear el primer usuario.
+            </AState>
           </div>
         </div>
       </section>
@@ -547,7 +541,7 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
         <p v-if="baseCurrencySaveMessage" class="subtle m-0">{{ baseCurrencySaveMessage }}</p>
         <p v-if="coreAccountError" class="alert m-0">{{ coreAccountError }}</p>
 
-        <section class="card ui-pro-panel grid gap-2.5">
+        <section class="card ui-section-card grid gap-2.5">
           <div class="ui-profile-head">
             <h2 class="ui-profile-head-title">Portable data</h2>
           </div>
@@ -555,30 +549,23 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
             Exporta, importa o reemplaza tus datos para mover tu entorno entre instancias.
           </p>
           <div class="actions m-0">
-            <button
-              class="btn btn-ghost"
-              type="button"
-              :disabled="dataTransferUiBusy"
-              @click="exportDataBundle"
-            >
+            <AButton variant="ghost" :disabled="dataTransferUiBusy" @click="exportDataBundle">
               Exportar datos
-            </button>
-            <button
-              class="btn btn-primary"
-              type="button"
+            </AButton>
+            <AButton
+              variant="primary"
               :disabled="dataTransferUiBusy"
               @click="triggerImportDialog('append')"
             >
               Importar datos
-            </button>
-            <button
-              class="btn btn-ghost"
-              type="button"
+            </AButton>
+            <AButton
+              variant="ghost"
               :disabled="dataTransferUiBusy"
               @click="triggerImportDialog('replace')"
             >
               Reemplazar datos
-            </button>
+            </AButton>
             <input
               :ref="setImportFileInputRef"
               type="file"
@@ -640,9 +627,9 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
       </label>
 
       <div class="actions md:col-span-2">
-        <button class="btn btn-primary" type="submit" :disabled="adminActionBusy">
+        <AButton variant="primary" type="submit" :disabled="adminActionBusy">
           {{ adminActionBusy ? 'Guardando...' : 'Crear usuario' }}
-        </button>
+        </AButton>
       </div>
     </form>
   </BaseModal>

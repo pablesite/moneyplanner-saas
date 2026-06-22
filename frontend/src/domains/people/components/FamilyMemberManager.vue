@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
-import { ASelect, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
 import { usePeopleMembers } from '@/domains/people/composables';
 
 const memberRoleOptions: ASelectItem[] = [
@@ -50,17 +50,10 @@ onMounted(async () => {
       <div class="card-header">
         <h2 class="card-header-title">Miembros</h2>
         <div class="ui-people-header-actions">
-          <button class="btn" type="button" :disabled="store.loading" @click="refreshMembers()">
-            Refrescar
-          </button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            :disabled="store.loading"
-            @click="openCreate"
-          >
+          <AButton :disabled="store.loading" @click="refreshMembers()"> Refrescar </AButton>
+          <AButton variant="primary" :disabled="store.loading" @click="openCreate">
             Nuevo miembro
-          </button>
+          </AButton>
         </div>
       </div>
 
@@ -87,15 +80,13 @@ onMounted(async () => {
             </td>
 
             <td class="text-right">
-              <button
-                class="btn"
-                type="button"
+              <AButton
                 :disabled="store.loading || rowBusy[m.id]"
                 :class="{ 'ui-people-status-inactive': !m.is_active }"
                 @click="toggleActive(m.id, !m.is_active)"
               >
                 {{ m.is_active ? 'Activo' : 'Inactivo' }}
-              </button>
+              </AButton>
             </td>
 
             <td class="ui-data-table-actions">
@@ -142,7 +133,7 @@ onMounted(async () => {
       @close="closeCreate"
     >
       <div class="ui-item-form-grid">
-        <p class="subtle md:col-span-2" style="margin: 0; padding-bottom: 4px">
+        <p class="subtle m-0 pb-1 md:col-span-2">
           Crea miembros de la familia. Al crear un adulto, se generará automáticamente su
           titularidad individual.
         </p>
@@ -164,17 +155,15 @@ onMounted(async () => {
         </label>
 
         <div class="ui-form-actions md:col-span-2">
-          <button class="btn ui-form-action-btn" type="button" @click="closeCreate">
-            Cancelar
-          </button>
-          <button
-            class="btn btn-primary ui-form-action-btn"
-            type="button"
+          <AButton class="ui-form-action-btn" @click="closeCreate"> Cancelar </AButton>
+          <AButton
+            variant="primary"
+            class="ui-form-action-btn"
             :disabled="saving || store.loading"
             @click="submit"
           >
             Crear
-          </button>
+          </AButton>
         </div>
       </div>
     </BaseModal>
@@ -205,15 +194,14 @@ onMounted(async () => {
         </label>
 
         <div class="ui-form-actions md:col-span-2">
-          <button class="btn ui-form-action-btn" type="button" @click="closeEdit">Cancelar</button>
-          <button
-            class="btn ui-form-action-btn"
-            type="button"
+          <AButton class="ui-form-action-btn" @click="closeEdit">Cancelar</AButton>
+          <AButton
+            class="ui-form-action-btn"
             :disabled="store.loading || (editForm.id != null && rowBusy[editForm.id])"
             @click="saveEdit"
           >
             Guardar
-          </button>
+          </AButton>
         </div>
       </div>
     </BaseModal>

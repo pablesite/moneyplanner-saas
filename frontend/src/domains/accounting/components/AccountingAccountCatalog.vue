@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ASectHead, AKindChip } from '@/domains/ui';
+import { AButton, ASectHead, AKindChip } from '@/domains/ui';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
@@ -80,11 +80,11 @@ function goToTodos(accountId: number) {
                 {{ state.formatCompact(account.current_balance, account.currency) }}
               </td>
               <td>
-                <button class="btn btn-icon" type="button" @click.stop="toggleAccount(account.id)">
+                <AButton variant="icon" @click.stop="toggleAccount(account.id)">
                   <span aria-hidden="true">{{
                     state.cuentasSelectedAccountId === account.id ? '▾' : '▸'
                   }}</span>
-                </button>
+                </AButton>
               </td>
             </tr>
 
@@ -96,13 +96,13 @@ function goToTodos(accountId: number) {
                     <span class="a-mov-expansion-label">
                       Movimientos · {{ state.accountDisplayName(account) }}
                     </span>
-                    <button
-                      class="btn btn-ghost a-mov-compact-action"
-                      type="button"
+                    <AButton
+                      variant="ghost"
+                      class="a-mov-compact-action"
                       @click.stop="goToTodos(account.id)"
                     >
                       Ver todos →
-                    </button>
+                    </AButton>
                   </div>
 
                   <div v-if="state.cuentasLoading" class="a-mov-expansion-state">
@@ -154,13 +154,13 @@ function goToTodos(accountId: number) {
                     v-if="state.cuentasTransactions.length > 6 || state.cuentasHasMore"
                     class="a-mov-expansion-more"
                   >
-                    <button
-                      class="btn btn-ghost a-mov-compact-action"
-                      type="button"
+                    <AButton
+                      variant="ghost"
+                      class="a-mov-compact-action"
                       @click.stop="goToTodos(account.id)"
                     >
                       Ver todos los movimientos →
-                    </button>
+                    </AButton>
                   </div>
                 </div>
               </td>

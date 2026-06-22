@@ -8,7 +8,7 @@ import {
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
-import { AInfoHint, ASparkline, AState } from '@/domains/ui';
+import { AButton, AInfoHint, ASparkline, AState } from '@/domains/ui';
 import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
@@ -524,15 +524,14 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
   <div v-show="sections.some((s) => s.groups.length > 0)" class="bdg-month-bar">
     <span class="bdg-month-bar-label">Ver acumulado hasta</span>
     <div class="seg" role="group" aria-label="Mes de detalle">
-      <button
+      <AButton
         v-for="(label, i) in monthLabels"
         :key="i"
-        type="button"
         :class="{ on: budgetDetailMonth === i + 1 }"
         @click="updateBudgetDetailMonth(i + 1)"
       >
         {{ label }}
-      </button>
+      </AButton>
     </div>
   </div>
 
@@ -548,13 +547,13 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
           <h2 class="sect-title bdg-section-title">{{ section.title }}</h2>
         </div>
         <div class="actions">
-          <button
-            type="button"
-            class="btn btn-ghost bdg-sect-action"
+          <AButton
+            variant="ghost"
+            class="bdg-sect-action"
             @click="openCreateForSection(section.id)"
           >
             + Añadir partida
-          </button>
+          </AButton>
         </div>
       </div>
 
@@ -690,14 +689,14 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
             {{ formatSignedMoney(sectionBar(section.id)!.deviation) }} EUR
           </span>
         </div>
-        <button
-          type="button"
+        <AButton
+          variant="ghost"
           class="bdg-expand-link"
           :aria-expanded="isSectionExpanded(section.id)"
           @click="toggleSectionExpanded(section.id)"
         >
           {{ isSectionExpanded(section.id) ? 'Ocultar ↑' : 'Ver desglose ↓' }}
-        </button>
+        </AButton>
       </div>
 
       <div v-if="section.groups.length && isSectionExpanded(section.id)">

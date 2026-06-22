@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { computed, ref, watch, type PropType } from 'vue';
-import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 
 const props = defineProps({
   page: {
@@ -278,10 +278,9 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
       @submit.prevent="page.submitEditedTransactionFromModal"
     >
       <div class="ui-accounting-segmented">
-        <button
+        <AButton
           v-for="option in commonTypeOptions"
           :key="option.value"
-          type="button"
           class="btn ui-accounting-segmented-btn"
           :class="{
             'ui-accounting-segmented-btn-active': page.editTransactionForm.kind === option.value,
@@ -289,12 +288,11 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
           @click="page.editTransactionForm.kind = option.value"
         >
           {{ option.label }}
-        </button>
+        </AButton>
         <div class="ui-accounting-segmented-divider" aria-hidden="true" />
-        <button
+        <AButton
           v-for="option in advancedTypeOptions"
           :key="option.value"
-          type="button"
           class="btn ui-accounting-segmented-btn ui-accounting-segmented-btn-advanced"
           :class="{
             'ui-accounting-segmented-btn-active': page.editTransactionForm.kind === option.value,
@@ -302,7 +300,7 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
           @click="page.editTransactionForm.kind = option.value"
         >
           {{ option.label }}
-        </button>
+        </AButton>
       </div>
 
       <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
@@ -338,14 +336,13 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
       </div>
 
       <div class="ui-accounting-value-date-row">
-        <button
+        <AButton
           v-if="!showValueDate"
-          type="button"
           class="ui-accounting-value-date-toggle"
           @click="showValueDate = true"
         >
           Fecha valor diferente
-        </button>
+        </AButton>
         <label v-else class="ui-accounting-field">
           <span>Fecha valor</span>
           <div class="ui-accounting-value-date-input-row">
@@ -355,13 +352,9 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
               class="input"
               required
             />
-            <button
-              type="button"
-              class="ui-accounting-value-date-close"
-              @click="showValueDate = false"
-            >
+            <AButton class="ui-accounting-value-date-close" @click="showValueDate = false">
               Misma fecha
-            </button>
+            </AButton>
           </div>
         </label>
       </div>
@@ -410,8 +403,7 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
 
       <template v-else-if="page.editTransactionForm.kind === 'investment'">
         <div class="ui-accounting-segmented">
-          <button
-            type="button"
+          <AButton
             class="ui-accounting-segmented-btn"
             :class="{
               'ui-accounting-segmented-btn-active':
@@ -420,9 +412,8 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
             @click="page.editTransactionForm.investment_direction = 'inflow'"
           >
             Aporte
-          </button>
-          <button
-            type="button"
+          </AButton>
+          <AButton
             class="ui-accounting-segmented-btn"
             :class="{
               'ui-accounting-segmented-btn-active':
@@ -431,9 +422,8 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
             @click="page.editTransactionForm.investment_direction = 'reinvestment'"
           >
             Reinversion
-          </button>
-          <button
-            type="button"
+          </AButton>
+          <AButton
             class="ui-accounting-segmented-btn"
             :class="{
               'ui-accounting-segmented-btn-active':
@@ -442,7 +432,7 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
             @click="page.editTransactionForm.investment_direction = 'outflow'"
           >
             Retirada
-          </button>
+          </AButton>
         </div>
 
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
@@ -703,13 +693,13 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
                 : 'Las partidas contables se generan automáticamente.'
           }}
         </p>
-        <button
-          class="btn btn-primary"
+        <AButton
+          variant="primary"
           type="submit"
           :disabled="page.transactionCreationLoading || !page.editEntryReady"
         >
           {{ page.transactionCreationLoading ? 'Guardando...' : 'Guardar cambios' }}
-        </button>
+        </AButton>
       </div>
     </form>
   </BaseModal>

@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
+import { AButton } from '@/domains/ui';
 import { usePeopleOwnerships } from '@/domains/people/composables';
 import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
 
@@ -43,17 +44,10 @@ onMounted(async () => {
         <h2 class="card-header-title">Titularidades</h2>
 
         <div class="ui-people-header-actions">
-          <button class="btn" type="button" :disabled="store.loading" @click="refreshOwnerships()">
-            Refrescar
-          </button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            :disabled="store.loading"
-            @click="openCreate"
-          >
+          <AButton :disabled="store.loading" @click="refreshOwnerships()"> Refrescar </AButton>
+          <AButton variant="primary" :disabled="store.loading" @click="openCreate">
             Nueva compartida
-          </button>
+          </AButton>
         </div>
       </div>
 
@@ -117,30 +111,28 @@ onMounted(async () => {
       @close="resetModal"
     >
       <div class="ui-item-form-grid">
-        <p class="subtle md:col-span-2" style="margin: 0; padding-bottom: 4px">
+        <p class="subtle m-0 pb-1 md:col-span-2">
           Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).
         </p>
 
         <div class="ui-item-form-field md:col-span-2">
           <span class="ui-item-form-label">Miembros</span>
           <div class="ui-people-member-list">
-            <button
+            <AButton
               v-for="m in adults"
               :key="m.id"
-              class="btn"
-              type="button"
               :class="{ 'ui-people-member-inactive': !form.memberIds.includes(m.id) }"
               @click="toggleMember(m.id)"
             >
               {{ m.name }}
-            </button>
+            </AButton>
           </div>
         </div>
 
         <div v-if="form.memberIds.length" class="ui-item-form-field md:col-span-2">
           <div class="ui-people-splits-header">
             <span class="ui-item-form-label">Porcentajes</span>
-            <button class="btn" type="button" @click="setEqualSplit">Reparto igual</button>
+            <AButton @click="setEqualSplit">Reparto igual</AButton>
           </div>
           <div class="ui-people-splits">
             <div v-for="id in form.memberIds" :key="id" class="ui-people-split-row">
@@ -159,15 +151,14 @@ onMounted(async () => {
         </div>
 
         <div class="ui-form-actions md:col-span-2">
-          <button class="btn ui-form-action-btn" type="button" @click="resetModal">Cancelar</button>
-          <button
-            class="btn ui-form-action-btn"
-            type="button"
+          <AButton class="ui-form-action-btn" @click="resetModal">Cancelar</AButton>
+          <AButton
+            class="ui-form-action-btn"
             :disabled="!canCreate || store.loading"
             @click="submit"
           >
             {{ editId != null ? 'Guardar' : 'Crear' }}
-          </button>
+          </AButton>
         </div>
       </div>
     </BaseModal>

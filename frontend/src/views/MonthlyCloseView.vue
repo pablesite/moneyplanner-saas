@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
+  AButton,
   APageHead,
   AContextBar,
   AMetaPill,
@@ -197,8 +198,8 @@ function goToCloseStep(): void {
         <span>{{ isCloseLocked ? 'Cerrado' : 'Borrador' }}</span>
       </template>
       <template #actions>
-        <button class="btn btn-ghost" type="button" @click="goToBudget">Ver presupuesto</button>
-        <button class="btn btn-primary" type="button" @click="goToCloseStep">Cerrar mes →</button>
+        <AButton variant="ghost" @click="goToBudget">Ver presupuesto</AButton>
+        <AButton variant="primary" @click="goToCloseStep">Cerrar mes →</AButton>
       </template>
     </APageHead>
 
@@ -249,22 +250,20 @@ function goToCloseStep(): void {
           @change="onStepChange"
         />
         <div class="mc-stepper-nav">
-          <button
-            type="button"
-            class="btn btn-ghost"
+          <AButton
+            variant="ghost"
             :disabled="!previousMonthlyCloseStep"
             @click="goToPreviousMonthlyCloseStep()"
           >
             ← Anterior
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
+          </AButton>
+          <AButton
+            variant="primary"
             :disabled="!nextMonthlyCloseStep"
             @click="goToNextMonthlyCloseStep()"
           >
             Siguiente →
-          </button>
+          </AButton>
         </div>
       </div>
     </section>
