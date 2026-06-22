@@ -35,7 +35,7 @@ const kpiItems = computed<AKpiItem[]>(() => [
 
 <template>
   <section class="sect mc-hero">
-    <div class="mc-hero-grid">
+    <div class="a-hero-shell mc-hero-grid">
       <AHero
         class="mc-hero-main"
         :eyebrow="`Residual del mes · ${monthLabel}`"

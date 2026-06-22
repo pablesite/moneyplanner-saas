@@ -350,6 +350,16 @@
   color: var(--muted);
 }
 
+/* Shell de hero (grid): la figura queda siempre arriba (top-aligned) para que
+   caiga en el mismo lugar vertical entre vistas. Cada vista define sus columnas
+   y su gap encima. Patrimonio usa un layout flex de 3 partes por su reflow
+   (donut + columnas) pero comparte la misma alineación y ausencia de offset
+   superior, de modo que su cifra cae en el mismo punto. */
+.dir-a .a-hero-shell {
+  display: grid;
+  align-items: start;
+}
+
 .dir-a .info-hint {
   position: relative;
   display: inline-flex;

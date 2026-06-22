@@ -61,7 +61,7 @@ const kpiItems = computed<AKpiItem[]>(() => [
 
 <template>
   <section class="sect">
-    <div class="budget-hero">
+    <div class="a-hero-shell budget-hero">
       <AHero
         class="budget-hero-main"
         eyebrow="Balance previsto del año"

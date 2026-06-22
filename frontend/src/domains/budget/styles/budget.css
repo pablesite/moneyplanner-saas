@@ -24,11 +24,10 @@
 }
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
+/* display:grid + align-items:start vienen de .a-hero-shell. */
 .budget-hero {
-  display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: 48px;
-  align-items: start;
 }
 
 .budget-hero-eyebrow {

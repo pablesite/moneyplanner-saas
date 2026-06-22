@@ -32,11 +32,11 @@
 
 /* Dos columnas: residual + variación de liquidez a la izquierda; KPIs del mes
    a la derecha (mismo patrón que el hero de Presupuesto). */
+/* display:grid + align-items:start vienen de .a-hero-shell (figura top-aligned
+   para coincidir con Presupuesto y Patrimonio). */
 .mc-hero-grid {
-  display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
   gap: 40px;
-  align-items: center;
 }
 
 /* hero-value, hero-delta y kpi-meta pos/neg viven ahora en design-system.css

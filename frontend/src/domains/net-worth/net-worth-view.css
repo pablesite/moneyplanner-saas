@@ -30,13 +30,16 @@
   color: var(--faint);
 }
 
+/* Layout flex de 3 partes (figura | donut | columnas) por su reflow responsive.
+   Comparte alineación (align-items: start) y ausencia de offset superior con
+   .a-hero-shell para que la cifra caiga en el mismo lugar que el resto de heroes. */
 .hero-top {
   display: flex;
   align-items: start;
   gap: 40px;
   flex-wrap: wrap;
   row-gap: 28px;
-  padding: 8px 0 4px;
+  padding: 0 0 4px;
 }
 
 .hero-headline {
