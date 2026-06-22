@@ -744,6 +744,17 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return `${month}::${budgetTaxonomyKey(category, subcategory)}`;
   }
 
+  // Total ejecutado (categorizado y repartido por titularidad) de un mes, sumando
+  // el bucket cuyas claves empiezan por `${month}::`.
+  function categorizedExecutedMonthTotal(bucket: Map<string, number>, month: number): number {
+    const prefix = `${month}::`;
+    let total = 0;
+    for (const [key, value] of bucket) {
+      if (key.startsWith(prefix)) total += value;
+    }
+    return total;
+  }
+
   function parseBudgetTaxonomyKey(rowKey: string): { categoryKey: string; subcategoryKey: string } {
     const [categoryKey = '', subcategoryKey = ''] = rowKey.split('::');
     return { categoryKey, subcategoryKey };
@@ -1281,6 +1292,19 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
         if (summaryExecutedTotal === 0 && summaryPlanned === 0) continue;
         const key = `${category.category}:${subcategory.subcategory}`;
         if (groups.has(key)) continue;
+        // El executed_total del summary del backend no está repartido por titularidad.
+        // Al filtrar por un titular usamos el bucket categorizado (repartido por la
+        // titularidad del movimiento); con "Todos" se mantiene el total del summary.
+        const taxonomyKey = budgetMonthTaxonomyKey(
+          selectedExecutionMonth.value,
+          category.category,
+          subcategory.subcategory,
+        );
+        const executedTotal =
+          ownershipFilter.value === 'all'
+            ? summaryExecutedTotal
+            : (accountingExecutionBuckets.value.incomeCategorizedByMonthTaxonomy.get(taxonomyKey) ??
+              0);
         groups.set(key, {
           key,
           categoryKey: category.category,
@@ -1290,9 +1314,9 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
             incomeSubcategoryLabels.get(subcategory.subcategory) ?? subcategory.subcategory,
           rows: [],
           plannedTotal: summaryPlanned,
-          executedTotal: summaryExecutedTotal,
-          checkedCount: summaryExecutedTotal > 0 ? 1 : 0,
-          ledgerDetectedTotal: summaryExecutedTotal,
+          executedTotal,
+          checkedCount: executedTotal > 0 ? 1 : 0,
+          ledgerDetectedTotal: executedTotal,
           editableRow: null,
         });
       }
@@ -1338,14 +1362,24 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           a.subcategoryLabel.localeCompare(b.subcategoryLabel, 'es'),
       );
   });
-  const selectedIncomeMonthExecuted = computed(
-    () =>
+  const selectedIncomeMonthExecuted = computed(() => {
+    // El summary del backend no está filtrado por titularidad; al filtrar por un
+    // titular usamos el total categorizado del bucket (repartido por la titularidad
+    // del movimiento). Con "Todos" se mantiene el summary completo.
+    if (ownershipFilter.value !== 'all') {
+      return categorizedExecutedMonthTotal(
+        accountingExecutionBuckets.value.incomeCategorizedByMonthTaxonomy,
+        selectedExecutionMonth.value,
+      );
+    }
+    return (
       monthlySummaryExecutedTotal(selectedIncomeSummaryMonth.value) ??
       groupedMonthlyIncomeExecutionEntries.value.reduce(
         (sum, group) => sum + group.executedTotal,
         0,
-      ),
-  );
+      )
+    );
+  });
   const selectedIncomeMonthDeviation = computed(
     () => selectedIncomeMonthExecuted.value - selectedIncomeMonthPlanned.value,
   );
@@ -1577,6 +1611,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       );
   });
 
+  // eslint-disable-next-line complexity
   const groupedMonthlyExpenseExecutionEntries = computed(() => {
     type Row = (typeof monthlyExpenseExecutionEntries.value)[number];
     const groups = new Map<
@@ -1645,6 +1680,20 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
         if (summaryExecutedTotal === 0 && summaryPlanned === 0) continue;
         const key = `${category.category}:${subcategory.subcategory}`;
         if (groups.has(key)) continue;
+        // El executed_total del summary del backend no está repartido por titularidad.
+        // Al filtrar por un titular usamos el bucket categorizado (repartido por la
+        // titularidad del movimiento); con "Todos" se mantiene el total del summary.
+        const taxonomyKey = budgetMonthTaxonomyKey(
+          selectedExecutionMonth.value,
+          category.category,
+          subcategory.subcategory,
+        );
+        const executedTotal =
+          ownershipFilter.value === 'all'
+            ? summaryExecutedTotal
+            : (accountingExecutionBuckets.value.expenseCategorizedByMonthTaxonomy.get(
+                taxonomyKey,
+              ) ?? 0);
         groups.set(key, {
           key,
           categoryKey: category.category,
@@ -1654,9 +1703,9 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
             expenseSubcategoryLabels.get(subcategory.subcategory) ?? subcategory.subcategory,
           rows: [],
           plannedTotal: summaryPlanned,
-          executedTotal: summaryExecutedTotal,
-          checkedCount: summaryExecutedTotal > 0 ? 1 : 0,
-          ledgerDetectedTotal: summaryExecutedTotal,
+          executedTotal,
+          checkedCount: executedTotal > 0 ? 1 : 0,
+          ledgerDetectedTotal: executedTotal,
           editableRow: null,
         });
       }
@@ -1704,14 +1753,22 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           a.subcategoryLabel.localeCompare(b.subcategoryLabel, 'es'),
       );
   });
-  const selectedExpenseMonthExecuted = computed(
-    () =>
-      monthlySummaryExecutedTotal(selectedExpenseSummaryMonth.value) ??
-      groupedMonthlyExpenseExecutionEntries.value.reduce(
-        (sum, group) => sum + group.executedTotal,
-        0,
-      ),
-  );
+  const selectedExpenseMonthExecuted = computed(() => {
+    // El summary del backend no está filtrado por titularidad; al filtrar por un
+    // titular usamos el total categorizado del bucket (repartido por la titularidad
+    // del movimiento). Con "Todos" se mantiene el summary completo.
+    if (ownershipFilter.value !== 'all') {
+      return categorizedExecutedMonthTotal(
+        accountingExecutionBuckets.value.expenseCategorizedByMonthTaxonomy,
+        selectedExecutionMonth.value,
+      );
+    }
+    const groupedTotal = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) => sum + group.executedTotal,
+      0,
+    );
+    return monthlySummaryExecutedTotal(selectedExpenseSummaryMonth.value) ?? groupedTotal;
+  });
 
   function buildMonthlyResultBreakdown<
     TEntry extends { category: string; subcategory: string },
