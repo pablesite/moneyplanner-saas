@@ -84,9 +84,8 @@ onBeforeUnmount(() => {
       </template>
       <template #actions>
         <button
-          class="btn btn-ghost"
+          class="btn btn-ghost a-mov-compact-action"
           type="button"
-          style="font-size: 12px"
           @click="page.activeTab = 'cuentas'"
         >
           Catálogo de cuentas
@@ -153,7 +152,7 @@ onBeforeUnmount(() => {
               </div>
               <div class="comp-list">
                 <div v-for="group in assetGroups" :key="group.key" class="comp-row">
-                  <span class="comp-dot" style="background: var(--pos)" />
+                  <span class="comp-dot a-mov-comp-dot-asset" />
                   <span class="comp-label">{{ group.label }}</span>
                   <span class="comp-val mono">{{ page.formatMoney(group.subtotal) }}</span>
                 </div>
@@ -169,7 +168,7 @@ onBeforeUnmount(() => {
               </div>
               <div class="comp-list">
                 <div v-for="group in liabilityGroups" :key="group.key" class="comp-row">
-                  <span class="comp-dot" style="background: var(--neg)" />
+                  <span class="comp-dot a-mov-comp-dot-liability" />
                   <span class="comp-label">{{ group.label }}</span>
                   <span class="comp-val mono">{{ page.formatMoney(group.subtotal) }}</span>
                 </div>
@@ -203,9 +202,8 @@ onBeforeUnmount(() => {
             </div>
             <button
               v-if="page.dailyBalanceSeriesChartPoints.length > 1"
-              class="btn btn-ghost"
+              class="btn btn-ghost a-mov-compact-action"
               type="button"
-              style="font-size: 12px"
               @click="page.dailyTimelineExpanded = true"
             >
               Ampliar

@@ -241,22 +241,24 @@ function handleMenuSelect(id: string, tx: LedgerTransaction) {
               state.openEditTransactionModal(row.transaction.id)
             "
           >
-            <td class="mono a-mov-row-date">
+            <td class="mono a-mov-row-date" data-label="Fecha">
               {{ state.formatDate(row.transaction.booking_date) }}
             </td>
-            <td class="a-mov-row-concept">
+            <td class="a-mov-row-concept" data-label="Concepto">
               {{ row.transaction.description }}
             </td>
-            <td>
+            <td data-label="Tipo">
               <AKindChip :tone="kindTone(row.transaction)">
                 {{ state.activityKindLabel(row.transaction) }}
               </AKindChip>
             </td>
-            <td class="a-mov-row-account">{{ row.presentation.accountName }}</td>
-            <td class="a-mov-row-account">
+            <td class="a-mov-row-account" data-label="Cuenta / origen">
+              {{ row.presentation.accountName }}
+            </td>
+            <td class="a-mov-row-account" data-label="Destino">
               {{ row.presentation.destinationName ?? '—' }}
             </td>
-            <td class="a-mov-row-classification">
+            <td class="a-mov-row-classification" data-label="Categoría">
               <template v-if="row.presentation.classificationState === 'available'">
                 <div
                   v-for="classification in row.presentation.classifications"
@@ -275,10 +277,14 @@ function handleMenuSelect(id: string, tx: LedgerTransaction) {
               </span>
               <span v-else>—</span>
             </td>
-            <td class="num mono a-mov-row-amount" :class="`is-${row.presentation.tone}`">
+            <td
+              class="num mono a-mov-row-amount"
+              :class="`is-${row.presentation.tone}`"
+              data-label="Importe"
+            >
               {{ formattedRowAmount(row.presentation) }}
             </td>
-            <td @click.stop>
+            <td class="a-mov-row-menu" data-label="Acciones" @click.stop>
               <ARowMenu
                 v-if="row.transaction.origin !== 'system'"
                 :items="rowMenuItems(row.transaction)"

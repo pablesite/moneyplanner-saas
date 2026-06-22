@@ -23,11 +23,8 @@ const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, lab
       </template>
     </ASectHead>
 
-    <div
-      class="kpis"
-      style="grid-template-columns: 1fr 1fr; padding-top: 16px; border-top: 1px solid var(--line)"
-    >
-      <div class="kpi" style="padding-left: 0">
+    <div class="kpis a-mov-stats-kpis">
+      <div class="kpi a-mov-stats-kpi-first">
         <p class="kpi-label">Activos contables</p>
         <div class="kpi-value mono">{{ state.formatMoney(state.accountingAssetsTotal) }}</div>
         <div class="kpi-meta">{{ (state.accountsByType.get('asset') ?? []).length }} cuentas</div>
@@ -41,24 +38,22 @@ const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, lab
       </div>
     </div>
 
-    <div v-if="state.summaryRows.length" style="margin-top: 20px">
+    <div v-if="state.summaryRows.length" class="a-mov-cashflow">
       <div class="a-mov-cashflow-label">Flujo mensual · {{ state.selectedYear }}</div>
       <div class="a-mov-cashflow-grid">
         <div v-for="row in state.summaryRows" :key="row.month" class="a-mov-cashflow-col">
           <div class="a-mov-cashflow-mon">{{ state.monthLabel(row.month) }}</div>
           <div
             class="mono a-mov-cashflow-val"
-            :style="{
-              color: row.incomeValue - row.expenseValue >= 0 ? 'var(--pos)' : 'var(--neg)',
-            }"
+            :class="row.incomeValue - row.expenseValue >= 0 ? 'is-positive' : 'is-negative'"
           >
             {{ row.incomeValue - row.expenseValue >= 0 ? '+' : '−'
             }}{{ state.formatMoney(Math.abs(row.incomeValue - row.expenseValue)) }}
           </div>
           <div class="a-mov-cashflow-meta">
-            <span style="color: var(--pos)">↑{{ state.formatMoney(row.incomeValue) }}</span>
-            <span style="color: var(--faint)"> / </span>
-            <span style="color: var(--neg)">↓{{ state.formatMoney(row.expenseValue) }}</span>
+            <span class="is-positive">↑{{ state.formatMoney(row.incomeValue) }}</span>
+            <span class="a-mov-cashflow-divider"> / </span>
+            <span class="is-negative">↓{{ state.formatMoney(row.expenseValue) }}</span>
           </div>
         </div>
       </div>
@@ -70,9 +65,9 @@ const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, lab
 
     <details v-if="state.hasTechnicalAccounts" class="a-mov-technical">
       <summary>
-        <span style="font-size: 11px">▸</span>
+        <span class="a-mov-technical-chevron">▸</span>
         Contrapartidas técnicas del sistema
-        <span class="chip" style="margin-left: 4px; font-size: 11px">{{
+        <span class="chip a-mov-technical-count">{{
           state.technicalAccountTypeOptions.length
         }}</span>
       </summary>
@@ -87,15 +82,13 @@ const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, lab
           class="a-mov-technical-row"
         >
           <div>
-            <div style="font-size: 13px">{{ account.name }}</div>
-            <div
-              style="font-size: 11px; color: var(--faint); margin-top: 2px; display: flex; gap: 6px"
-            >
-              <span class="chip" style="font-size: 10px">{{ account.currency }}</span>
-              <span class="chip" style="font-size: 10px">{{ account.origin }}</span>
+            <div class="a-mov-technical-name">{{ account.name }}</div>
+            <div class="a-mov-technical-meta">
+              <span class="chip">{{ account.currency }}</span>
+              <span class="chip">{{ account.origin }}</span>
             </div>
           </div>
-          <div class="mono" style="font-size: 13px; color: var(--muted)">
+          <div class="mono a-mov-technical-balance">
             {{ state.formatCompact(account.current_balance, account.currency) }}
           </div>
         </div>

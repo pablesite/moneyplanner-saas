@@ -36,7 +36,7 @@ function goToTodos(accountId: number) {
           <th>Cuenta</th>
           <th>Tipo</th>
           <th class="num">Saldo</th>
-          <th style="width: 36px"></th>
+          <th class="a-mov-catalog-menu-head"></th>
         </tr>
       </thead>
       <tbody>
@@ -58,7 +58,7 @@ function goToTodos(accountId: number) {
               :class="{ 'row-active': state.cuentasSelectedAccountId === account.id }"
               @click="toggleAccount(account.id)"
             >
-              <td>
+              <td class="a-mov-catalog-kind">
                 <div class="name">
                   <span class="swatch" :class="{ lia: group.positionType === 'liability' }" />
                   <div>
@@ -72,7 +72,7 @@ function goToTodos(accountId: number) {
                 </AKindChip>
               </td>
               <td
-                class="num mono"
+                class="num mono a-mov-catalog-balance"
                 :style="{
                   color: group.positionType === 'liability' ? 'var(--neg)' : 'var(--text)',
                 }"
@@ -97,8 +97,7 @@ function goToTodos(accountId: number) {
                       Movimientos · {{ state.accountDisplayName(account) }}
                     </span>
                     <button
-                      class="btn btn-ghost"
-                      style="font-size: 12px"
+                      class="btn btn-ghost a-mov-compact-action"
                       type="button"
                       @click.stop="goToTodos(account.id)"
                     >
@@ -106,16 +105,10 @@ function goToTodos(accountId: number) {
                     </button>
                   </div>
 
-                  <div
-                    v-if="state.cuentasLoading"
-                    style="color: var(--muted); font-size: 13px; padding: 8px 0"
-                  >
+                  <div v-if="state.cuentasLoading" class="a-mov-expansion-state">
                     Cargando movimientos...
                   </div>
-                  <div
-                    v-else-if="!state.cuentasTransactions.length"
-                    style="color: var(--muted); font-size: 13px; padding: 8px 0"
-                  >
+                  <div v-else-if="!state.cuentasTransactions.length" class="a-mov-expansion-state">
                     Sin movimientos para este periodo.
                   </div>
                   <div v-else class="a-mov-expansion-list">
@@ -124,16 +117,16 @@ function goToTodos(accountId: number) {
                       :key="mov.id"
                       class="a-mov-expansion-row"
                     >
-                      <span class="mono" style="color: var(--muted); font-size: 12px">
+                      <span class="mono a-mov-expansion-date">
                         {{ state.formatDate(mov.booking_date) }}
                       </span>
                       <div>
-                        <div style="font-size: 13.5px">{{ mov.description }}</div>
-                        <div style="font-size: 11px; color: var(--muted)">
+                        <div class="a-mov-expansion-concept">{{ mov.description }}</div>
+                        <div class="a-mov-expansion-trail">
                           {{ state.transactionAccountTrailLabel(mov) }}
                         </div>
                       </div>
-                      <AKindChip style="font-size: 11px">
+                      <AKindChip class="a-mov-expansion-kind">
                         {{ state.activityKindLabel(mov) }}
                       </AKindChip>
                       <span
@@ -159,11 +152,10 @@ function goToTodos(accountId: number) {
 
                   <div
                     v-if="state.cuentasTransactions.length > 6 || state.cuentasHasMore"
-                    style="padding-top: 10px"
+                    class="a-mov-expansion-more"
                   >
                     <button
-                      class="btn btn-ghost"
-                      style="font-size: 12px"
+                      class="btn btn-ghost a-mov-compact-action"
                       type="button"
                       @click.stop="goToTodos(account.id)"
                     >
