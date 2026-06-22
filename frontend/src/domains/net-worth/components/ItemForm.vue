@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
+import { ASelect, type ASelectItem } from '@/domains/ui';
 import type {
   AssetImprovement,
   ContributionInterval,
@@ -481,6 +482,47 @@ const subcategoriesForCategory = computed(() => {
   if (form.category !== 'real_estate') return options;
   return options.filter((option) => option.value !== 'rental');
 });
+
+// Opciones ASelect (Fase C). Las que necesitan placeholder anteponen una opción
+// deshabilitada de valor vacío; los enums fijos se pasan directos en el template.
+const categorySelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Selecciona categoría', disabled: true },
+  ...props.categories.map((c) => ({ value: c.value, label: c.label })),
+]);
+const subcategorySelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Selecciona subcategoría', disabled: true },
+  ...subcategoriesForCategory.value.map((s) => ({ value: s.value, label: s.label })),
+]);
+const currencyPlaceholderOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Selecciona moneda', disabled: true },
+  ...currencies.map((c) => ({ value: c.value, label: c.label })),
+]);
+const expenseSubcategorySelectOptions: ASelectItem[] = [
+  { value: '', label: 'Selecciona destino', disabled: true },
+  ...LIABILITY_EXPENSE_SUBCATEGORY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+];
+const intervalFrequencyOptions: ASelectItem[] = [
+  { value: 'monthly', label: 'Mensual' },
+  { value: 'weekly', label: 'Semanal' },
+];
+const valuationProfileSelectOptions: ASelectItem[] = [
+  ...PRIMARY_HOME_VALUATION_PROFILES.map((p) => ({ value: p.value, label: p.label })),
+  { value: PRIMARY_HOME_CUSTOM_PROFILE_VALUE, label: 'Personalizado' },
+];
+const depositTermSelectOptions: ASelectItem[] = [
+  { value: '', label: 'Selecciona duración', disabled: true },
+  ...DEPOSIT_TERM_MONTH_OPTIONS.map((month) => ({ value: String(month), label: String(month) })),
+];
+const cancellationPaymentMonthOptions: ASelectItem[] = [
+  { value: 'yes', label: 'Sí, se paga' },
+  { value: 'no', label: 'No, se omite' },
+];
+const realEstateUsageSelectOptions: ASelectItem[] = REAL_ESTATE_USAGE_OPTIONS.map((o) => ({
+  value: o.value,
+  label: o.label,
+}));
+const improvementAmortizationSelectOptions: ASelectItem[] =
+  PRIMARY_HOME_IMPROVEMENT_AMORTIZATION_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
 const showRealEstateUsageField = computed(
   () =>
     isAssetForm.value &&
@@ -1764,34 +1806,31 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
         ]"
       >
         <span class="ui-item-form-label">Categoría</span>
-        <select
-          v-model="form.category"
+        <ASelect
+          :model-value="form.category"
+          :options="categorySelectOptions"
           :class="['select ui-data-field', { 'ui-select-placeholder': !form.category }]"
-        >
-          <option value="" disabled>Selecciona categoría</option>
-          <option v-for="c in categories" :key="c.value" :value="c.value">{{ c.label }}</option>
-        </select>
+          @update:model-value="(v) => (form.category = String(v))"
+        />
       </label>
 
       <label v-if="props.subcategories" class="ui-item-form-field">
         <span class="ui-item-form-label">Subcategoría</span>
-        <select
-          v-model="form.subcategory"
+        <ASelect
+          :model-value="form.subcategory"
+          :options="subcategorySelectOptions"
           :class="['select ui-data-field', { 'ui-select-placeholder': !form.subcategory }]"
-        >
-          <option value="" disabled>Selecciona subcategoría</option>
-          <option v-for="s in subcategoriesForCategory" :key="s.value" :value="s.value">
-            {{ s.label }}
-          </option>
-        </select>
+          @update:model-value="(v) => (form.subcategory = String(v))"
+        />
       </label>
       <label v-if="showRealEstateUsageField" class="ui-item-form-field">
         <span class="ui-item-form-label">Uso</span>
-        <select v-model="realEstateUsage" class="select ui-data-field">
-          <option v-for="opt in REAL_ESTATE_USAGE_OPTIONS" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+        <ASelect
+          class="select ui-data-field"
+          :model-value="realEstateUsage"
+          :options="realEstateUsageSelectOptions"
+          @update:model-value="(v) => (realEstateUsage = v as typeof realEstateUsage)"
+        />
       </label>
       <label :class="['ui-item-form-field', { 'ui-item-form-field-span-2': isLiabilityForm }]">
         <span class="ui-item-form-label">Nombre</span>
@@ -1817,40 +1856,33 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
       </label>
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Moneda</span>
-        <select
-          v-model="form.currency"
+        <ASelect
+          :model-value="form.currency"
+          :options="currencyPlaceholderOptions"
           :class="['select ui-data-field', { 'ui-select-placeholder': !form.currency }]"
-        >
-          <option value="" disabled>Selecciona moneda</option>
-          <option v-for="c in currencies" :key="c.value" :value="c.value">{{ c.label }}</option>
-        </select>
+          @update:model-value="(v) => (form.currency = String(v))"
+        />
       </label>
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Tracking mode</span>
-        <select v-model="form.tracking_mode" class="select ui-data-field">
-          <option v-for="option in TRACKING_MODE_OPTIONS" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+        <ASelect
+          class="select ui-data-field"
+          :model-value="form.tracking_mode"
+          :options="TRACKING_MODE_OPTIONS"
+          @update:model-value="(v) => (form.tracking_mode = v as typeof form.tracking_mode)"
+        />
       </label>
       <label v-if="showLiabilityExpenseSubcategoryField" class="ui-item-form-field">
         <span class="ui-item-form-label">Destino de la salida</span>
-        <select
-          v-model="form.expense_subcategory_override"
+        <ASelect
+          :model-value="form.expense_subcategory_override"
+          :options="expenseSubcategorySelectOptions"
           :class="[
             'select ui-data-field',
             { 'ui-select-placeholder': !form.expense_subcategory_override },
           ]"
-        >
-          <option value="" disabled>Selecciona destino</option>
-          <option
-            v-for="option in LIABILITY_EXPENSE_SUBCATEGORY_OPTIONS"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
+          @update:model-value="(v) => (form.expense_subcategory_override = String(v))"
+        />
       </label>
       <div v-if="isInvestmentCategory" class="ui-item-form-section ui-item-form-field-span-2">
         <div class="ui-item-form-section-head">
@@ -1881,18 +1913,21 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Moneda</span>
-            <select v-model="interval.currency" class="select ui-data-field">
-              <option v-for="c in currencies" :key="`${interval._key}-${c.value}`" :value="c.value">
-                {{ c.label }}
-              </option>
-            </select>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="interval.currency"
+              :options="currencies"
+              @update:model-value="(v) => (interval.currency = v as typeof interval.currency)"
+            />
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Frecuencia</span>
-            <select v-model="interval.frequency" class="select ui-data-field">
-              <option value="monthly">Mensual</option>
-              <option value="weekly">Semanal</option>
-            </select>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="interval.frequency"
+              :options="intervalFrequencyOptions"
+              @update:model-value="(v) => (interval.frequency = v as typeof interval.frequency)"
+            />
           </label>
           <div class="ui-item-form-field">
             <button
@@ -1928,28 +1963,23 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
         <div class="ui-item-form-inline-grid">
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Modelo</span>
-            <select v-model="form.valuation_model" class="select ui-data-field">
-              <option
-                v-for="opt in PRIMARY_HOME_VALUATION_MODE_OPTIONS"
-                :key="opt.value"
-                :value="opt.value"
-              >
-                {{ opt.label }}
-              </option>
-            </select>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="form.valuation_model"
+              :options="PRIMARY_HOME_VALUATION_MODE_OPTIONS"
+              @update:model-value="(v) => (form.valuation_model = v as typeof form.valuation_model)"
+            />
           </label>
           <label v-if="showPrimaryHomeAutoValuationFields" class="ui-item-form-field">
             <span class="ui-item-form-label">Perfil</span>
-            <select v-model="primaryHomeValuationProfile" class="select ui-data-field">
-              <option
-                v-for="profile in PRIMARY_HOME_VALUATION_PROFILES"
-                :key="profile.value"
-                :value="profile.value"
-              >
-                {{ profile.label }}
-              </option>
-              <option :value="PRIMARY_HOME_CUSTOM_PROFILE_VALUE">Personalizado</option>
-            </select>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="primaryHomeValuationProfile"
+              :options="valuationProfileSelectOptions"
+              @update:model-value="
+                (v) => (primaryHomeValuationProfile = v as typeof primaryHomeValuationProfile)
+              "
+            />
           </label>
         </div>
         <div
@@ -2080,15 +2110,16 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
                 </label>
                 <label class="ui-item-form-field">
                   <span class="ui-item-form-label">Amortizacion</span>
-                  <select v-model="improvement.amortization_method" class="select ui-data-field">
-                    <option
-                      v-for="opt in PRIMARY_HOME_IMPROVEMENT_AMORTIZATION_OPTIONS"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <ASelect
+                    class="select ui-data-field"
+                    :model-value="improvement.amortization_method"
+                    :options="improvementAmortizationSelectOptions"
+                    @update:model-value="
+                      (v) =>
+                        (improvement.amortization_method =
+                          v as typeof improvement.amortization_method)
+                    "
+                  />
                 </label>
                 <label
                   v-if="improvement.amortization_method === 'straight_line'"
@@ -2171,18 +2202,15 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
       </label>
       <label v-if="showDepositTermMonthsInput" class="ui-item-form-field">
         <span class="ui-item-form-label">Duración del depósito (meses)</span>
-        <select
-          v-model="form.deposit_term_months"
+        <ASelect
+          :model-value="String(form.deposit_term_months ?? '')"
+          :options="depositTermSelectOptions"
           :class="[
             'select ui-data-field',
             { 'ui-select-placeholder': !String(form.deposit_term_months ?? '').trim() },
           ]"
-        >
-          <option value="" disabled>Selecciona duración</option>
-          <option v-for="month in DEPOSIT_TERM_MONTH_OPTIONS" :key="month" :value="String(month)">
-            {{ month }}
-          </option>
-        </select>
+          @update:model-value="(v) => (form.deposit_term_months = String(v))"
+        />
       </label>
       <label v-if="showLiabilityTaeOnlyField" class="ui-item-form-field">
         <span class="ui-item-form-label">TAE anual (%)</span>
@@ -2248,15 +2276,14 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Frecuencia</span>
-            <select v-model="form.payment_frequency" class="select ui-data-field">
-              <option
-                v-for="opt in LIABILITY_PAYMENT_FREQUENCIES"
-                :key="opt.value"
-                :value="opt.value"
-              >
-                {{ opt.label }}
-              </option>
-            </select>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="form.payment_frequency"
+              :options="LIABILITY_PAYMENT_FREQUENCIES"
+              @update:model-value="
+                (v) => (form.payment_frequency = v as typeof form.payment_frequency)
+              "
+            />
           </label>
         </div>
         <div v-if="liabilityTermFieldHint" class="ui-form-help">
@@ -2330,10 +2357,13 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Cuota del mes de cancelación</span>
-            <select v-model="form.cancellation_include_payment_month" class="select ui-data-field">
-              <option :value="true">Sí, se paga</option>
-              <option :value="false">No, se omite</option>
-            </select>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="form.cancellation_include_payment_month ? 'yes' : 'no'"
+              :options="cancellationPaymentMonthOptions"
+              :searchable="false"
+              @update:model-value="(v) => (form.cancellation_include_payment_month = v === 'yes')"
+            />
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Comision cancelacion (importe)</span>
@@ -2362,16 +2392,14 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
         <div class="ui-item-form-inline-grid">
           <label class="ui-item-form-field"
             ><span class="ui-item-form-label">Método</span
-            ><select v-model="form.amortization_method" class="select ui-data-field">
-              <option
-                v-for="opt in assetAmortizationMethodOptions"
-                :key="opt.value"
-                :value="opt.value"
-              >
-                {{ opt.label }}
-              </option>
-            </select></label
-          >
+            ><ASelect
+              class="select ui-data-field"
+              :model-value="form.amortization_method"
+              :options="assetAmortizationMethodOptions"
+              @update:model-value="
+                (v) => (form.amortization_method = v as typeof form.amortization_method)
+              "
+          /></label>
           <label v-if="requiresAssetAmortizationTermInput" class="ui-item-form-field"
             ><span class="ui-item-form-label">Plazo (años)</span
             ><input
@@ -2393,30 +2421,30 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
 
       <label class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Titularidad</span>
-        <select
-          v-model="form.ownership_id"
+        <ASelect
+          :model-value="form.ownership_id"
+          :options="ownershipOptions"
           :class="['select ui-data-field', { 'ui-select-placeholder': form.ownership_id == null }]"
-        >
-          <option v-for="o in ownershipOptions" :key="String(o.value)" :value="o.value">
-            {{ o.label }}
-          </option>
-        </select>
+          @update:model-value="(v) => (form.ownership_id = v as typeof form.ownership_id)"
+        />
       </label>
 
       <label v-if="showFinancedAsset" class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Activo financiado</span>
-        <select
-          v-model="form.financed_asset_id"
+        <ASelect
+          :model-value="form.financed_asset_id"
+          :options="financedAssetOptions"
           :class="[
             'select ui-data-field',
             { 'ui-select-placeholder': form.financed_asset_id == null },
           ]"
-          @change="onFinancedAssetChange"
-        >
-          <option v-for="a in financedAssetOptions" :key="String(a.value)" :value="a.value">
-            {{ a.label }}
-          </option>
-        </select>
+          @update:model-value="
+            (v) => {
+              form.financed_asset_id = v as typeof form.financed_asset_id;
+              onFinancedAssetChange();
+            }
+          "
+        />
         <div v-if="financedAssetSuggestionHelp" class="ui-form-help">
           {{ financedAssetSuggestionHelp }}
         </div>

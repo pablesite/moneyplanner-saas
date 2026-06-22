@@ -1,5 +1,44 @@
+import { defineComponent } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+
+// ASelect se stubea como <select> nativo para conservar el estilo de test
+// (findAll('select') + setValue). Clave: emite el valor *tipado* original de la
+// opción (no el string del DOM), igual que el ASelect real, para no romper los
+// selects numéricos/booleanos (ownership_id, financed_asset_id, cancelación).
+vi.mock('@/domains/ui', () => ({
+  ASelect: defineComponent({
+    name: 'ASelect',
+    props: {
+      modelValue: { type: [String, Number, Boolean], required: false, default: null },
+      options: { type: Array, required: true },
+      disabled: { type: Boolean, default: false },
+      searchable: { type: Boolean, default: undefined },
+    },
+    emits: ['update:modelValue'],
+    methods: {
+      onChange(event: Event) {
+        const raw = (event.target as HTMLSelectElement).value;
+        const flat = (this.options as Array<Record<string, unknown>>).flatMap((opt) =>
+          Array.isArray(opt.options) ? (opt.options as Array<Record<string, unknown>>) : [opt],
+        );
+        const match = flat.find((opt) => String(opt.value) === raw);
+        this.$emit('update:modelValue', match ? match.value : raw);
+      },
+    },
+    template: `
+      <select :value="modelValue == null ? '' : String(modelValue)" :disabled="disabled" @change="onChange">
+        <template v-for="opt in options">
+          <optgroup v-if="opt.group" :key="opt.group" :label="opt.group">
+            <option v-for="o in opt.options" :key="String(o.value)" :value="String(o.value)" :disabled="o.disabled">{{ o.label }}</option>
+          </optgroup>
+          <option v-else :key="String(opt.value)" :value="String(opt.value)" :disabled="opt.disabled">{{ opt.label }}</option>
+        </template>
+      </select>
+    `,
+  }),
+}));
+
 import ItemForm from '@/domains/net-worth/components/ItemForm.vue';
 
 describe('ItemForm (saas)', () => {

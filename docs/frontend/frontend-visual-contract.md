@@ -66,7 +66,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
    - `icon-btn`
    - `input`
    - `textarea`
-   - `ASelect` for Direction A filters and modal selects; use grouped/searchable options instead of native `<select>` when the list can grow.
+   - `ASelect` for all Direction A selects (filtros, formularios y modales). No quedan `<select>` nativos en el frontend SaaS: usar siempre `ASelect` con `options: ASelectItem[]` (búsqueda automática si la lista supera 8 opciones; `:searchable="false"` para enums fijos). `ASelect` reenvía `$attrs` al botón trigger (tiene dos root nodes por el `Teleport`), así que las clases del consumidor (`.filter-ctrl`, `.select`) y `aria-label` aplican sobre el control visible.
 7. Modal shell:
    - `ui-modal-backdrop`
    - `ui-modal-panel`
