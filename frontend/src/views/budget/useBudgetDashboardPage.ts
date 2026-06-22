@@ -1144,7 +1144,13 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
 
   const monthlyIncomeExecutionEntries = computed(() => {
     // eslint-disable-next-line complexity
-    return incomeEntries.value
+    // Usa las entradas owner-adjusted (igual que los gastos vía
+    // filteredExpenseEntries) para que el filtro de titularidad escale el
+    // previsto de ingresos del cierre, no solo lo ejecutado. Se descarta
+    // `baseAmountAnnual` (auxiliar del ajuste) para conservar el tipo
+    // AnnualIncomeEntry y el `amountAnnual` ya escalado.
+    return filteredIncomeEntries.value
+      .map(({ baseAmountAnnual: _baseAmountAnnual, ...entry }) => entry)
       .filter((entry) => {
         if (entry.fiscalYear !== fiscalYear.value) return false;
         const summaryMonth = incomeBreakdownMonthForTaxonomy(
