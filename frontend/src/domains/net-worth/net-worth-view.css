@@ -306,28 +306,7 @@
   color: var(--neg);
 }
 
-.a-nw-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 112px;
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  color: var(--muted);
-  text-align: center;
-}
-
-.a-nw-state-loading {
-  background: color-mix(in oklab, var(--accent-soft) 55%, transparent);
-}
-
-.a-nw-state-error {
-  color: color-mix(in oklab, var(--neg) 70%, white);
-  border-color: color-mix(in oklab, var(--neg) 45%, transparent);
-  background: color-mix(in oklab, var(--neg-soft) 70%, transparent);
-}
-
+/* Estados (.a-nw-state*) migrados a AState (.dir-a .a-state-panel) en design-system.css. */
 .a-nw-balance-wrap {
   overflow-x: auto;
 }

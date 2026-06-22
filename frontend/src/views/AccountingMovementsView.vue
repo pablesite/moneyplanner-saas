@@ -12,7 +12,7 @@ import AccountingMovementsActivationModal from '@/domains/accounting/components/
 import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import { NetWorthDeltaChart, NetWorthTimelineChart } from '@/domains/net-worth';
-import { AContextBar, APageHead, ASectHead, ASelect, BaseModal } from '@/domains/ui';
+import { AContextBar, APageHead, ASectHead, ASelect, AState, BaseModal } from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 
 const route = useRoute();
@@ -212,15 +212,15 @@ onBeforeUnmount(() => {
         </template>
       </ASectHead>
 
-      <div v-if="page.dailyBalanceSeriesLoading" class="a-mov-state a-mov-state-loading">
+      <AState v-if="page.dailyBalanceSeriesLoading" status="loading">
         Cargando evolución diaria...
-      </div>
-      <div v-else-if="page.dailyBalanceSeriesError" class="a-mov-state a-mov-state-error">
+      </AState>
+      <AState v-else-if="page.dailyBalanceSeriesError" status="error">
         {{ page.dailyBalanceSeriesError }}
-      </div>
-      <div v-else-if="!page.dailyBalanceSeriesRows.length" class="a-mov-state">
+      </AState>
+      <AState v-else-if="!page.dailyBalanceSeriesRows.length" status="empty">
         No hay movimientos suficientes para construir la serie diaria.
-      </div>
+      </AState>
       <div v-else class="a-nw-chart-stack">
         <div class="a-nw-chart-summary">
           <div>

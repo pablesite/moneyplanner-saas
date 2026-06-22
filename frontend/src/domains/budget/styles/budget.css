@@ -191,11 +191,7 @@
   font-size: 13px;
 }
 
-.dir-a .bdg-loading {
-  padding: 16px 6px;
-  color: var(--muted);
-  font-size: 13px;
-}
+/* .bdg-loading migrado a AState (.dir-a .a-state-inline) en design-system.css. */
 
 /* Cabecera de columnas alineada con el grid bdg-row */
 .dir-a .bdg-colhead {

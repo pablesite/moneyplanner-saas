@@ -8,7 +8,7 @@ import {
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
-import { AInfoHint, ASparkline } from '@/domains/ui';
+import { AInfoHint, ASparkline, AState } from '@/domains/ui';
 import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
@@ -1005,7 +1005,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     </section>
   </div>
 
-  <div v-if="isLoading" class="bdg-loading">Cargando presupuesto…</div>
+  <AState v-if="isLoading" status="loading" layout="inline">Cargando presupuesto…</AState>
 
   <AnnualEntryModalForm
     v-if="annualEntriesPage"

@@ -12,5 +12,6 @@ export { default as AContextBar } from './components/AContextBar.vue';
 export { default as AKindChip } from './components/AKindChip.vue';
 export { default as AMetaPill } from './components/AMetaPill.vue';
 export { default as ARowMenu } from './components/ARowMenu.vue';
+export { default as AState } from './components/AState.vue';
 export { default as ASelect } from './components/ASelect.vue';
 export type { ASelectItem, ASelectOption, ASelectGroup } from './components/ASelect.vue';

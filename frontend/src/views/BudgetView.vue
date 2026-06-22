@@ -6,6 +6,7 @@ import {
   AInfoHint,
   AMetaPill,
   ASelect,
+  AState,
   type ASelectItem,
 } from '@/domains/ui';
 import { BudgetAnnualSection, BudgetHero } from '@/domains/budget';
@@ -309,7 +310,9 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
       </div>
 
       <div v-if="budgetSuggestionsError" class="alert">{{ budgetSuggestionsError }}</div>
-      <div v-else-if="budgetSuggestionsLoading" class="bdg-loading">Calculando sugerencias…</div>
+      <AState v-else-if="budgetSuggestionsLoading" status="loading" layout="inline"
+        >Calculando sugerencias…</AState
+      >
       <p v-else-if="suggestionsCount === 0" class="sect-sub">
         No hay sugerencias con desviación relevante para el periodo seleccionado.
       </p>

@@ -350,6 +350,43 @@
   color: var(--muted);
 }
 
+/* Bloque de estado compartido (AState): loading/empty/error/success en dos
+   layouts (inline = texto; panel = caja centrada). Unifica a-nw-state/a-mov-state
+   y bdg-loading/etc. */
+.dir-a .a-state-inline {
+  padding: 16px 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dir-a .a-state-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 104px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.dir-a .a-state-panel.a-state-loading {
+  background: color-mix(in oklab, var(--accent-soft) 55%, transparent);
+}
+
+.dir-a .a-state-panel.a-state-error {
+  color: color-mix(in oklab, var(--neg) 70%, white);
+  border-color: color-mix(in oklab, var(--neg) 45%, transparent);
+  background: color-mix(in oklab, var(--neg-soft) 70%, transparent);
+}
+
+.dir-a .a-state-panel.a-state-success {
+  color: color-mix(in oklab, var(--pos) 70%, white);
+  border-color: color-mix(in oklab, var(--pos) 45%, transparent);
+  background: color-mix(in oklab, var(--pos-soft) 70%, transparent);
+}
+
 /* Pill de metadato compartido (AMetaPill): unifica los antiguos *-meta-pill. */
 .dir-a .meta-pill {
   display: inline-flex;

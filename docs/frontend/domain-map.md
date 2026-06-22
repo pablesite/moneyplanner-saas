@@ -198,7 +198,7 @@ Incluye redirecciones: `/data/fx` y `/data/ipc` → `/data`.
 
 Módulo de utilidades y primitivas de UI compartidas. No tiene ruta propia. Barrel en `domains/ui/index.ts`.
 
-Primitivas Direction A: `APageHead`, `ASectHead`, `AContextBar`, `ASelect`, `ARowMenu`, `AKindChip`, `AInfoHint`, `AStepper`, `ASparkline`, `BaseModal`, y las nuevas `AButton` (botón con variantes/`loading`), `AHero` (bloque de figura del hero), `AKpiBand` (rejilla de KPIs) y `AMetaPill` (pill de metadato, unifica los `*-meta-pill` por vista). `AHero`/`AKpiBand` consolidan los heroes de Presupuesto, Cierre y Patrimonio.
+Primitivas Direction A: `APageHead`, `ASectHead`, `AContextBar`, `ASelect`, `ARowMenu`, `AKindChip`, `AInfoHint`, `AStepper`, `ASparkline`, `BaseModal`, y las nuevas `AButton` (botón con variantes/`loading`), `AHero` (bloque de figura del hero), `AKpiBand` (rejilla de KPIs), `AMetaPill` (pill de metadato, unifica los `*-meta-pill` por vista) y `AState` (bloque de estado loading/empty/error/success, layouts `inline`/`panel`, unifica `a-nw-state`/`a-mov-state`/`bdg-loading`). `AHero`/`AKpiBand` consolidan los heroes de Presupuesto, Cierre y Patrimonio.
 
 ---
 

@@ -25,6 +25,7 @@ import {
   ARowMenu,
   ASectHead,
   ASelect,
+  AState,
   type ASelectItem,
   BaseModal,
 } from '@/domains/ui';
@@ -1031,15 +1032,12 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
         </template>
       </ASectHead>
 
-      <div
-        v-if="displayedTimelineLoading && timelineChartPoints.length === 0"
-        class="a-nw-state a-nw-state-loading"
-      >
+      <AState v-if="displayedTimelineLoading && timelineChartPoints.length === 0" status="loading">
         Cargando evolución...
-      </div>
-      <div v-else-if="timelineChartPoints.length === 0" class="a-nw-state a-nw-state-empty">
+      </AState>
+      <AState v-else-if="timelineChartPoints.length === 0" status="empty">
         No hay historial suficiente para la selección actual.
-      </div>
+      </AState>
       <div v-else class="a-nw-chart-stack">
         <div class="a-nw-chart-summary">
           <div>
@@ -1131,9 +1129,9 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
         </template>
       </ASectHead>
 
-      <div v-if="balanceGroups.length === 0" class="a-nw-state a-nw-state-empty">
+      <AState v-if="balanceGroups.length === 0" status="empty">
         No hay posiciones para el filtro actual.
-      </div>
+      </AState>
 
       <div v-else class="a-nw-balance-wrap">
         <table class="tbl a-nw-balance-table">
@@ -1209,9 +1207,9 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
       </div>
     </section>
 
-    <div v-if="store.error" class="a-nw-state a-nw-state-error">
+    <AState v-if="store.error" status="error">
       {{ prettyError() }}
-    </div>
+    </AState>
 
     <NetWorthItemModals
       :show-asset-modal="showAssetModal"
@@ -1245,9 +1243,9 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
       @close="showArchivedModal = false"
     >
       <div class="a-nw-modal-stack">
-        <div v-if="archivedItems.length === 0" class="a-nw-state a-nw-state-empty">
+        <AState v-if="archivedItems.length === 0" status="empty">
           No hay cuentas archivadas para el filtro actual.
-        </div>
+        </AState>
         <div v-else class="a-nw-archived-list">
           <article
             v-for="item in archivedItems"
