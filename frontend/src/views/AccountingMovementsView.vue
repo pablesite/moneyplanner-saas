@@ -12,7 +12,17 @@ import AccountingMovementsActivationModal from '@/domains/accounting/components/
 import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import { NetWorthDeltaChart, NetWorthTimelineChart } from '@/domains/net-worth';
-import { AContextBar, AHero, APageHead, ASectHead, ASelect, AState, BaseModal } from '@/domains/ui';
+import {
+  AContextBar,
+  ADonut,
+  AHero,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  BaseModal,
+  type ADonutSlice,
+} from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 
 const route = useRoute();
@@ -34,6 +44,29 @@ const assetGroups = computed(() =>
 const liabilityGroups = computed(() =>
   page.groupedCuentasAccounts.filter((g) => g.positionType === 'liability'),
 );
+
+// Donut Activos / Pasivos contables; el centro muestra el saldo neto. Tonos
+// alineados con los puntos del breakdown (--pos / --neg).
+const accountingDonutSlices = computed<ADonutSlice[]>(() => {
+  const assets = Math.max(Number(page.accountingAssetsTotal ?? 0), 0);
+  const liabilities = Math.max(Number(page.accountingLiabilitiesTotal ?? 0), 0);
+  return [
+    {
+      key: 'assets',
+      label: 'Activos',
+      value: assets,
+      color: 'oklch(0.74 0.13 148)',
+      hoverValue: page.formatMoney(assets),
+    },
+    {
+      key: 'liabilities',
+      label: 'Pasivos',
+      value: liabilities,
+      color: 'oklch(0.72 0.16 24)',
+      hoverValue: page.formatMoney(liabilities),
+    },
+  ];
+});
 
 const ownershipOptions = computed<ASelectItem[]>(() => [
   { value: 'all', label: 'Todos' },
@@ -144,6 +177,15 @@ onBeforeUnmount(() => {
               </span>
             </template>
           </AHero>
+
+          <div class="hero-donut">
+            <ADonut
+              :slices="accountingDonutSlices"
+              center-eyebrow="Saldo neto"
+              :center-value="page.formatMoney(page.accountingNetBalance)"
+              aria-label="Activos y pasivos contables"
+            />
+          </div>
 
           <div class="hero-breakdown">
             <!-- Activos -->
