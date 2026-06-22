@@ -1,4 +1,6 @@
 export { default as AButton } from './components/AButton.vue';
+export { default as ADonut } from './components/ADonut.vue';
+export type { ADonutSlice } from './components/ADonut.vue';
 export { default as AHero } from './components/AHero.vue';
 export { default as AKpiBand } from './components/AKpiBand.vue';
 export type { AKpiItem } from './components/AKpiBand.vue';

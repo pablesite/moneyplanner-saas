@@ -72,40 +72,15 @@
   color: var(--text);
 }
 
-.hero-donut .nw-donut {
+/* El donut es ADonut (.a-donut*, en design-system.css). Aquí solo su posición. */
+.hero-donut .a-donut {
   display: flex;
   justify-content: center;
 }
 
-.hero-donut .nw-donut-svg {
+.hero-donut .a-donut-svg {
   width: 100%;
   height: auto;
-}
-
-.nw-donut-arc {
-  cursor: default;
-  transition:
-    stroke-width 0.12s ease,
-    stroke-opacity 0.12s ease;
-}
-
-.nw-donut-center {
-  pointer-events: none;
-}
-
-.nw-donut-center-eyebrow {
-  fill: currentColor;
-  fill-opacity: 0.6;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.nw-donut-center-value {
-  fill: currentColor;
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 22px;
-  font-weight: 600;
 }
 
 .hero-breakdown {
