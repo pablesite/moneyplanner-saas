@@ -89,7 +89,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 15. Direction A accounting movement table (`/movimientos`): columns `Cuenta / origen`, `Destino`, `Categoría` and `Importe` replace ledger-side `Debe`/`Haber`. Transfers and investments show their moved amount as neutral without an account filter; with an account filter, every row shows the signed impact and currency of that account. Income, expense, investment and debt rows expose category/subcategory; transfers show classification as not applicable. Below `620px`, each movement becomes a labelled vertical record (without horizontal table scrolling); filters use one or two columns depending on available width, account rows hide the redundant type column, and tabs remain horizontally reachable.
 16. Direction A financial-state strip (`/estado-financiero` and `/estado-financiero/ambitos/:phaseId`): five equal-width steps with a 2px top hairline, eyebrow `Ámbito N`, scope label, mono score (`N/100`) and a compact A–E grade badge. Completed/current scopes are fully opaque; pending scopes stay muted. Grade colors use the unified `oklch(0.74 0.13 H)` scale (`A 148`, `B 115`, `C 80`, `D 45`, `E 24`).
 17. Direction A financial-state detail: page head + scope strip + two-column score/diagnostic surface. The score column uses a large grade-colored `N/100`, a native styled progress element, remaining percentage, summary band and scored indicators. Loading, API error, unknown scope and not-yet-supported scope states keep the same continuous, hairline-led surface instead of legacy cards.
-18. Direction A hero (`AHero` + `AKpiBand`, `domains/ui`): `AHero` renderiza el bloque de figura común (`.a-hero-figure`: eyebrow muted + `.hero-value` grande + slot `#delta` con `.hero-delta`); para valores no triviales usar el slot `#value`. `AKpiBand` renderiza la rejilla `.kpis` de celdas `label`/`value`/`meta` (prop `items`; deltas coloreados vía slots `meta-<i>`). El grid exterior y el contenido lateral (year-strip, donut, columnas) los aporta cada vista, pero la **alineación vertical** se comparte vía `.a-hero-shell` (`display: grid; align-items: start`) para que la cifra caiga en el mismo lugar entre vistas; cada vista define solo `grid-template-columns` y `gap`. Patrimonio mantiene un layout flex de 3 partes (figura · donut · columnas) por su reflow responsive, pero replica la misma alineación y sin offset superior. Las clases `.hero-value`, `.hero-delta`, `.hero-delta-sep` y `.kpi-meta .pos/.neg` viven en `design-system.css` bajo `.dir-a`; las vistas solo añaden overrides responsive scoped (`.mc-hero`, `.hero`, etc.). Consumido por `BudgetHero`, `MonthlyCloseHero` y el hero de Patrimonio; el hero de Contabilidad sigue en `ui-pro-*` (legacy) hasta su retirada.
+18. Direction A hero (`AHero` + `AKpiBand`, `domains/ui`): `AHero` renderiza el bloque de figura común (`.a-hero-figure`: eyebrow muted + `.hero-value` grande + slot `#delta` con `.hero-delta`); para valores no triviales usar el slot `#value`. `AKpiBand` renderiza la rejilla `.kpis` de celdas `label`/`value`/`meta` (prop `items`; deltas coloreados vía slots `meta-<i>`). El grid exterior y el contenido lateral (year-strip, donut, columnas) los aporta cada vista, pero la **alineación vertical** se comparte vía `.a-hero-shell` (`display: grid; align-items: start`) para que la cifra caiga en el mismo lugar entre vistas; cada vista define solo `grid-template-columns` y `gap`. Patrimonio mantiene un layout flex de 3 partes (figura · donut · columnas) por su reflow responsive, pero replica la misma alineación y sin offset superior. Las clases `.hero-value`, `.hero-delta`, `.hero-delta-sep` y `.kpi-meta .pos/.neg` viven en `design-system.css` bajo `.dir-a`; las vistas solo añaden overrides responsive scoped (`.mc-hero`, `.hero`, etc.). Consumido por `BudgetHero`, `MonthlyCloseHero`, el hero de Patrimonio y el de Contabilidad (el hero `ui-pro-*` legacy se retiró en Fase F).
 
 ## Usage Guidance
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.
@@ -105,3 +105,29 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 2. Update this document when shared visual behavior changes.
 3. Keep the contract small; it is a guardrail, not a full design system specification.
 4. Direction A phase 0 introduces these shell-level reusable classes: `.topbar`, `.topnav-brand`, `.topnav-list`, `.topnav-item`, `.topnav-right`, and `.avatar`.
+
+## Librería de componentes (primitivas Direction A)
+
+Primitivas reutilizables en `frontend/src/domains/ui` (barrel `@/domains/ui`). Preferirlas siempre sobre markup ad-hoc. `ScoreGrade` vive en `domains/guide` por depender de `gradeFromScore`.
+
+| Componente | Para qué | Props / slots clave |
+| --- | --- | --- |
+| `AButton` | Botón. Sustituye `<button>` crudos. | `variant` (`default`/`primary`/`ghost`/`icon`), `size` (`md`/`sm`), `type`, `disabled`, `loading` (spinner + `aria-busy`), `block`. |
+| `ASelect` | **Todos** los selects (filtros, formularios, modales). No usar `<select>` nativo. | `modelValue`, `options: ASelectItem[]` (opción o grupo; `disabled` por opción para placeholders), `disabled`, `searchable` (auto si >8). Reenvía `$attrs` al trigger. |
+| `AHero` | Bloque de figura del hero (eyebrow + cifra + delta). | props `eyebrow`, `value`; slots `#value` (valor no trivial), `#delta`, default. Grid exterior por vista; alineación compartida vía `.a-hero-shell`. |
+| `AKpiBand` | Rejilla de KPIs (`.kpis`). | `items: AKpiItem[]` (`label`/`value`/`meta`/`cellClass`); slots `#meta-<i>` para meta rica. |
+| `AMetaPill` | Pill de metadato corto (año fiscal, fecha…). | slot. |
+| `AState` | Bloque de estado loading/empty/error/success. | `status` (`neutral`/`loading`/`empty`/`error`/`success`), `layout` (`inline`/`panel`); slot. |
+| `ADonut` | Donut SVG genérico (sin librería). | `slices: ADonutSlice[]` (`value`/`color`/`label`/`hoverValue`), `centerEyebrow`, `centerValue`, `size`, `thickness`. |
+| `AKindChip` | Chip semántico (kind asset/liability/muted). | `tone`, `active`; slot. |
+| `ASectHead` | Cabecera de sección. | `eyebrow`, `title`, `subtitle`; slots `#hint`, `#actions`. |
+| `APageHead` | Cabecera de página. | `title`; slots `#meta`, `#actions`. |
+| `AContextBar` | Barra de contexto/filtros bajo la page head. | slot (campos `.context-field`). |
+| `AInfoHint` | Icono de ayuda con tooltip. | `label`; slot. |
+| `AStepper` | Rail de pasos (cierre mensual). | `steps`, `activeId`, `eyebrowPrefix`; emite `change`. |
+| `ASparkline` | Mini-serie 12 meses. | serie + mes activo. |
+| `ARowMenu` | Menú de fila (editar/archivar/borrar). | `items`; emite `select`. |
+| `BaseModal` | Chrome de modal compartido. | `open`, `title`; slot. |
+| `ScoreGrade` (guide) | Nota A–E desde una puntuación. | `score`, `variant` (`badge` caja / `label` texto), `large`. |
+
+Reglas: una primitiva nueva solo si ≥2 pantallas la usarían (Change Policy). No acoplar `domains/ui` a dominios (p. ej. `ScoreGrade` se queda en `guide`).
