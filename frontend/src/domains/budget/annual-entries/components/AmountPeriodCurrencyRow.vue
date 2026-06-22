@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { ASelect, type ASelectItem } from '@/domains/ui';
+
 type AmountInputPeriod = 'annual' | 'monthly';
 
 const props = withDefaults(
@@ -23,6 +26,10 @@ const emit = defineEmits<{
   'update:period': [value: AmountInputPeriod];
   'update:currency': [value: string];
 }>();
+
+const currencySelectOptions = computed<ASelectItem[]>(() =>
+  props.currencyOptions.map((option) => ({ value: option, label: option })),
+);
 </script>
 
 <template>
@@ -60,14 +67,12 @@ const emit = defineEmits<{
         {{ period === 'monthly' ? 'Mensual' : 'Anual' }}
       </span>
     </div>
-    <select
-      :value="currency"
+    <ASelect
       class="select ui-data-field"
-      @change="emit('update:currency', String(($event.target as HTMLSelectElement).value ?? ''))"
-    >
-      <option v-for="option in currencyOptions" :key="option" :value="option">
-        {{ option }}
-      </option>
-    </select>
+      :model-value="currency"
+      :options="currencySelectOptions"
+      :searchable="false"
+      @update:model-value="(v) => emit('update:currency', String(v))"
+    />
   </div>
 </template>

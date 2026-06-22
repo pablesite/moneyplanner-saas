@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
+// El template tiene dos root nodes (trigger + Teleport del panel), así que Vue
+// no puede heredar los $attrs automáticamente. Los reenviamos a mano al botón
+// trigger para que las clases del consumidor (.filter-ctrl, .select, etc.) y
+// atributos como aria-label apliquen sobre el control visible.
+defineOptions({ inheritAttrs: false });
+
 export type ASelectOption = {
   value: string | number | null;
   label: string;
@@ -186,6 +192,7 @@ watch(query, () => {
     :disabled="disabled"
     aria-haspopup="listbox"
     :aria-expanded="open"
+    v-bind="$attrs"
     @click="togglePanel"
     @keydown="handleKeydown"
   >

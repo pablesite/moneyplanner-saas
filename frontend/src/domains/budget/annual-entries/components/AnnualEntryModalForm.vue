@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { BaseModal } from '@/domains/ui';
+import { computed } from 'vue';
+import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 import AmountPeriodCurrencyRow from './AmountPeriodCurrencyRow.vue';
 
 type SelectOption = {
@@ -86,6 +87,23 @@ const emit = defineEmits<{
   submit: [];
   patch: [patch: Partial<AnnualEntryModalFormModel>];
 }>();
+
+const categorySelectOptions = computed<ASelectItem[]>(() =>
+  props.categoryOptions.map((option) => ({ value: option.value, label: option.label })),
+);
+const subcategorySelectOptions = computed<ASelectItem[]>(() =>
+  props.subcategoryOptions.map((option) => ({ value: option.value, label: option.label })),
+);
+const ownerSelectOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: '— Opcional —' },
+  ...(props.ownerOptions ?? []).map((option) => ({ value: option.value, label: option.label })),
+]);
+const timeProfileSelectOptions = computed<ASelectItem[]>(() =>
+  props.timeProfileOptions.map((option) => ({ value: option.value, label: option.label })),
+);
+const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
+  props.cashflowRoleOptions.map((option) => ({ value: option.value, label: option.label })),
+);
 </script>
 
 <template>
@@ -99,38 +117,22 @@ const emit = defineEmits<{
     <div class="ui-item-form-grid">
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Categoría</span>
-        <select
-          :value="form.category"
+        <ASelect
           class="select"
-          @change="
-            emit('patch', { category: String(($event.target as HTMLSelectElement).value ?? '') })
-          "
-        >
-          <option v-for="category in categoryOptions" :key="category.value" :value="category.value">
-            {{ category.label }}
-          </option>
-        </select>
+          :model-value="form.category"
+          :options="categorySelectOptions"
+          @update:model-value="(v) => emit('patch', { category: String(v) })"
+        />
       </label>
 
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Subcategoría</span>
-        <select
-          :value="form.subcategory"
+        <ASelect
           class="select"
-          @change="
-            emit('patch', {
-              subcategory: String(($event.target as HTMLSelectElement).value ?? ''),
-            })
-          "
-        >
-          <option
-            v-for="subcategory in subcategoryOptions"
-            :key="subcategory.value"
-            :value="subcategory.value"
-          >
-            {{ subcategory.label }}
-          </option>
-        </select>
+          :model-value="form.subcategory"
+          :options="subcategorySelectOptions"
+          @update:model-value="(v) => emit('patch', { subcategory: String(v) })"
+        />
       </label>
 
       <label class="ui-item-form-field" :class="{ 'md:col-span-2': !showOwnerField }">
@@ -145,52 +147,34 @@ const emit = defineEmits<{
 
       <label v-if="showOwnerField" class="ui-item-form-field">
         <span class="ui-item-form-label">Titular</span>
-        <select
-          :value="form.owner"
+        <ASelect
           class="select"
-          @change="
-            emit('patch', { owner: String(($event.target as HTMLSelectElement).value ?? '') })
-          "
-        >
-          <option value="">— Opcional —</option>
-          <option v-for="option in ownerOptions" :key="option.key" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+          :model-value="form.owner"
+          :options="ownerSelectOptions"
+          @update:model-value="(v) => emit('patch', { owner: String(v) })"
+        />
       </label>
 
       <label class="ui-item-form-field">
         <span v-if="timeProfileFieldLabel" class="ui-item-form-label">{{
           timeProfileFieldLabel
         }}</span>
-        <select
-          :value="form.timeProfile"
+        <ASelect
           class="select"
-          @change="
-            emit('patch', { timeProfile: String(($event.target as HTMLSelectElement).value ?? '') })
-          "
-        >
-          <option v-for="option in timeProfileOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+          :model-value="form.timeProfile"
+          :options="timeProfileSelectOptions"
+          @update:model-value="(v) => emit('patch', { timeProfile: String(v) })"
+        />
       </label>
 
       <label v-if="showCashflowRoleField" class="ui-item-form-field">
         <span class="ui-item-form-label">Rol en flujo de caja</span>
-        <select
-          :value="form.cashflowRole"
+        <ASelect
           class="select"
-          @change="
-            emit('patch', {
-              cashflowRole: String(($event.target as HTMLSelectElement).value ?? ''),
-            })
-          "
-        >
-          <option v-for="option in cashflowRoleOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+          :model-value="form.cashflowRole"
+          :options="cashflowRoleSelectOptions"
+          @update:model-value="(v) => emit('patch', { cashflowRole: String(v) })"
+        />
       </label>
 
       <label v-if="showEventGroupField" class="ui-item-form-field">

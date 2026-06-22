@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, unref } from 'vue';
+import { ASelect, type ASelectItem } from '@/domains/ui';
 import { AnnualEntryModalForm } from '@/domains/budget/annual-entries';
 
 const props = defineProps<{
@@ -45,6 +46,25 @@ const showExpenseModalModel = computed({
 
 const fiscalYearOptions = computed(() => unref(page.fiscalYearOptions) ?? []);
 const globalOwnershipFilterOptions = computed(() => unref(page.globalOwnershipFilterOptions) ?? []);
+
+const fiscalYearSelectOptions = computed<ASelectItem[]>(() =>
+  fiscalYearOptions.value.map((year: number) => ({ value: year, label: String(year) })),
+);
+
+const visibilitySelectOptions: ASelectItem[] = [
+  { value: 'active', label: 'Solo activos' },
+  { value: 'archived', label: 'Solo archivados' },
+  { value: 'all', label: 'Todos' },
+];
+
+const globalOwnershipSelectOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todos los miembros' },
+  { value: 'unassigned', label: 'Sin asignar' },
+  ...globalOwnershipFilterOptions.value.map((option: { id: number; label: string }) => ({
+    value: option.id,
+    label: option.label,
+  })),
+]);
 const annualIncomeEntries = computed(() => unref(page.annualIncomeEntries) ?? []);
 const filteredAnnualIncomeEntries = computed(() => unref(page.filteredAnnualIncomeEntries) ?? []);
 const annualIncomeGroups = computed(() => unref(page.annualIncomeGroups) ?? []);
@@ -118,42 +138,33 @@ const annualExpenseForm = computed(() => unref(page.annualExpenseForm) ?? {});
           <h2 class="ui-flow-air-title">Balance anual</h2>
           <div class="ui-flow-air-meta">
             <span class="ui-flow-air-subtitle">Ingresos y gastos</span>
-            <select
-              id="fiscal-year-income-expense"
-              v-model.number="fiscalYearModel"
+            <ASelect
               class="select nw-select-sm ui-flow-air-year-select"
               aria-label="Ejercicio"
-            >
-              <option v-for="year in fiscalYearOptions" :key="year" :value="year">
-                {{ year }}
-              </option>
-            </select>
-            <select
-              id="visibility-filter-mode"
-              v-model="visibilityFilterModeModel"
+              :model-value="fiscalYearModel"
+              :options="fiscalYearSelectOptions"
+              :searchable="false"
+              @update:model-value="(v) => (fiscalYearModel = Number(v))"
+            />
+            <ASelect
               class="select nw-select-sm ui-flow-air-year-select"
               aria-label="Filtro de visibilidad"
-            >
-              <option value="active">Solo activos</option>
-              <option value="archived">Solo archivados</option>
-              <option value="all">Todos</option>
-            </select>
-            <select
-              id="ownership-filter-mode"
-              v-model="globalOwnershipFilterModel"
+              :model-value="visibilityFilterModeModel"
+              :options="visibilitySelectOptions"
+              :searchable="false"
+              @update:model-value="
+                (v) => (visibilityFilterModeModel = v as 'active' | 'archived' | 'all')
+              "
+            />
+            <ASelect
               class="select nw-select-sm ui-flow-air-year-select"
               aria-label="Filtro de ownership"
-            >
-              <option value="all">Todos los miembros</option>
-              <option value="unassigned">Sin asignar</option>
-              <option
-                v-for="option in globalOwnershipFilterOptions"
-                :key="`global-owner-${option.id}`"
-                :value="option.id"
-              >
-                {{ option.label }}
-              </option>
-            </select>
+              :model-value="globalOwnershipFilterModel"
+              :options="globalOwnershipSelectOptions"
+              @update:model-value="
+                (v) => (globalOwnershipFilterModel = v as number | 'all' | 'unassigned')
+              "
+            />
           </div>
         </div>
         <div class="nw-list-header-right ui-flow-air-right">
