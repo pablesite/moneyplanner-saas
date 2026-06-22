@@ -1130,9 +1130,9 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
     }
   });
 
-  function selectExtraordinaryEventGroup(value: string, event: Event): void {
+  function selectExtraordinaryEventGroup(value: string, event?: Event): void {
     selectedExtraordinaryEventGroup.value = value;
-    const target = event.currentTarget as HTMLElement | null;
+    const target = event?.currentTarget as HTMLElement | null;
     const details = target?.closest('details') as HTMLDetailsElement | null;
     if (details) details.open = false;
   }

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { ASelect, type ASelectItem } from '@/domains/ui';
+
 type SummaryCard = {
   id: string;
   label: string;
@@ -16,15 +19,23 @@ type SummarySection = {
 type ScoreKpi = { id: string; label: string; valueText: string; hint: string };
 type InfoCard = { id: string; title: string; description: string; kpis: ScoreKpi[] };
 
-defineProps<{
+const props = defineProps<{
   isCashFlowPhase: boolean;
   cashFlowContextSummarySections: SummarySection[];
   extraordinaryEventGroupOptions: string[];
   selectedExtraordinaryEventGroupLabel: string;
   selectedExtraordinaryEventGroup: string;
-  selectExtraordinaryEventGroup: (eventGroup: string, event: MouseEvent) => void;
+  selectExtraordinaryEventGroup: (eventGroup: string, event?: MouseEvent) => void;
   phase2DistributionInfoCards: InfoCard[];
 }>();
+
+const extraordinaryEventGroupSelectOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todos los eventos' },
+  ...props.extraordinaryEventGroupOptions.map((eventGroup) => ({
+    value: eventGroup,
+    label: eventGroup,
+  })),
+]);
 </script>
 
 <template>
@@ -56,32 +67,16 @@ defineProps<{
               <h3>{{ section.title }}</h3>
               <p v-if="section.description">{{ section.description }}</p>
             </div>
-            <details
+            <ASelect
               v-if="
                 section.id === 'cashflow-extraordinary' && extraordinaryEventGroupOptions.length
               "
               class="guide-event-filter"
-            >
-              <summary>{{ selectedExtraordinaryEventGroupLabel }} <span>⌄</span></summary>
-              <div role="listbox" aria-label="Evento">
-                <button
-                  type="button"
-                  :class="{ on: selectedExtraordinaryEventGroup === 'all' }"
-                  @click="selectExtraordinaryEventGroup('all', $event)"
-                >
-                  Todos los eventos
-                </button>
-                <button
-                  v-for="eventGroup in extraordinaryEventGroupOptions"
-                  :key="eventGroup"
-                  type="button"
-                  :class="{ on: selectedExtraordinaryEventGroup === eventGroup }"
-                  @click="selectExtraordinaryEventGroup(eventGroup, $event)"
-                >
-                  {{ eventGroup }}
-                </button>
-              </div>
-            </details>
+              aria-label="Evento"
+              :model-value="selectedExtraordinaryEventGroup"
+              :options="extraordinaryEventGroupSelectOptions"
+              @update:model-value="(v) => selectExtraordinaryEventGroup(String(v))"
+            />
           </header>
           <div class="guide-context-grid" :class="`cols-${section.columns}`">
             <article v-for="card in section.cards" :key="card.id">
