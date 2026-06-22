@@ -12,7 +12,7 @@ import AccountingMovementsActivationModal from '@/domains/accounting/components/
 import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import { NetWorthDeltaChart, NetWorthTimelineChart } from '@/domains/net-worth';
-import { AContextBar, APageHead, ASectHead, ASelect, AState, BaseModal } from '@/domains/ui';
+import { AContextBar, AHero, APageHead, ASectHead, ASelect, AState, BaseModal } from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 
 const route = useRoute();
@@ -123,10 +123,12 @@ onBeforeUnmount(() => {
     <section class="sect">
       <div class="hero">
         <div class="hero-top">
-          <div class="hero-headline">
-            <p class="eyebrow hero-eyebrow">Saldo neto contable</p>
-            <div class="hero-value mono">{{ page.formatMoney(page.accountingNetBalance) }}</div>
-            <div v-if="currentMonthSummary" class="hero-delta">
+          <AHero
+            class="hero-headline"
+            eyebrow="Saldo neto contable"
+            :value="page.formatMoney(page.accountingNetBalance)"
+          >
+            <template v-if="currentMonthSummary" #delta>
               <span>
                 <span class="pos mono">
                   +{{ page.formatMoney(currentMonthSummary.incomeValue) }}
@@ -140,8 +142,8 @@ onBeforeUnmount(() => {
                 </span>
                 <span class="hero-delta-copy">gastos del mes</span>
               </span>
-            </div>
-          </div>
+            </template>
+          </AHero>
 
           <div class="hero-breakdown">
             <!-- Activos -->
