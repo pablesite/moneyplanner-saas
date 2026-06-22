@@ -1,7 +1,13 @@
 ﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
+import { ASelect, type ASelectItem } from '@/domains/ui';
 import { usePeopleMembers } from '@/domains/people/composables';
+
+const memberRoleOptions: ASelectItem[] = [
+  { value: 'adult', label: 'Adulto' },
+  { value: 'child', label: 'Niño' },
+];
 
 const {
   store,
@@ -148,10 +154,13 @@ onMounted(async () => {
 
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">Rol</span>
-          <select v-model="form.role" class="select">
-            <option value="adult">Adulto</option>
-            <option value="child">Niño</option>
-          </select>
+          <ASelect
+            class="select"
+            :model-value="form.role"
+            :options="memberRoleOptions"
+            :searchable="false"
+            @update:model-value="(v) => (form.role = v as 'adult' | 'child')"
+          />
         </label>
 
         <div class="ui-form-actions md:col-span-2">
@@ -186,10 +195,13 @@ onMounted(async () => {
 
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">Rol</span>
-          <select v-model="editForm.role" class="select">
-            <option value="adult">Adulto</option>
-            <option value="child">Niño</option>
-          </select>
+          <ASelect
+            class="select"
+            :model-value="editForm.role"
+            :options="memberRoleOptions"
+            :searchable="false"
+            @update:model-value="(v) => (editForm.role = v as 'adult' | 'child')"
+          />
         </label>
 
         <div class="ui-form-actions md:col-span-2">

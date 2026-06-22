@@ -9,7 +9,7 @@ import {
 } from '@/domains/admin';
 import { authApi, toAuthErrorMessage, type CurrentUser } from '@/domains/auth';
 import { usePortableDataTransfer } from '@/domains/portable-data';
-import { BaseModal } from '@/domains/ui';
+import { ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 import { coreApi } from '@/lib/api';
 
 const route = useRoute();
@@ -63,6 +63,14 @@ const permissionNotice =
 const isAdmin = computed(() => currentUser.value?.role === 'saas_admin');
 const isMember = computed(() => currentUser.value?.role === 'saas_member');
 const baseCurrencyOptions = ['EUR', 'USD'];
+const baseCurrencySelectOptions: ASelectItem[] = baseCurrencyOptions.map((currency) => ({
+  value: currency,
+  label: currency,
+}));
+const createUserRoleOptions: ASelectItem[] = [
+  { value: 'saas_member', label: 'Miembro SaaS' },
+  { value: 'saas_admin', label: 'Admin SaaS' },
+];
 
 type AdminIdentityRow = {
   key: string;
@@ -352,15 +360,14 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
             <div v-if="!isAdmin" class="ui-profile-row">
               <span class="ui-profile-label">Moneda base</span>
               <div class="flex items-center gap-2">
-                <select
-                  v-model="baseCurrency"
+                <ASelect
                   class="select"
+                  :model-value="baseCurrency"
+                  :options="baseCurrencySelectOptions"
                   :disabled="baseCurrencySaveBusy || loading"
-                >
-                  <option v-for="currency in baseCurrencyOptions" :key="currency" :value="currency">
-                    {{ currency }}
-                  </option>
-                </select>
+                  :searchable="false"
+                  @update:model-value="(v) => (baseCurrency = String(v))"
+                />
                 <button
                   class="btn btn-ghost btn-sm"
                   type="button"
@@ -618,10 +625,13 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
 
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Rol inicial</span>
-        <select v-model="createUserForm.role" class="select">
-          <option value="saas_member">Miembro SaaS</option>
-          <option value="saas_admin">Admin SaaS</option>
-        </select>
+        <ASelect
+          class="select"
+          :model-value="createUserForm.role"
+          :options="createUserRoleOptions"
+          :searchable="false"
+          @update:model-value="(v) => (createUserForm.role = v as SaasAdminRole)"
+        />
       </label>
 
       <label class="checkbox-row md:col-span-2">
