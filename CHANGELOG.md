@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.24.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.23.0...moneyplanner-saas-v0.24.0) (2026-06-22)
+
+
+### Features
+
+* **budget:** apportion monthly-close executed amounts by movement ownership ([4d3ed00](https://github.com/pablesite/moneyplanner-saas/commit/4d3ed0051317cda1918a5aadbc5543c7ae7606e6))
+* **frontend:** add assets/liabilities donut to the accounting hero (ADonut) ([e4ec0cd](https://github.com/pablesite/moneyplanner-saas/commit/e4ec0cd848bb06992f1d2d2fb76278e4005c283e))
+
+
+### Bug Fixes
+
+* **budget:** make monthly-close income honor the ownership filter (consistent with expenses) ([8b5893b](https://github.com/pablesite/moneyplanner-saas/commit/8b5893b773f12e17249790812d14951ae59c3d45))
+* **budget:** monthly-close executed totals read from the apportioned bucket when filtering ([f8bff66](https://github.com/pablesite/moneyplanner-saas/commit/f8bff66271a36a2205fbc7af2ddfda899043ed39))
+* **frontend:** align accounting "Período" popover selected color with accent ([e5ada14](https://github.com/pablesite/moneyplanner-saas/commit/e5ada143557387e67b813695b32e86432e9c92de))
+* **frontend:** ASelect panel sizes to content instead of stretching to max-height ([63e440f](https://github.com/pablesite/moneyplanner-saas/commit/63e440f0b0ca0d6868bbcbe370a04f37c009b7f9))
+* **frontend:** make accounting view responsive ([d69abe9](https://github.com/pablesite/moneyplanner-saas/commit/d69abe927f67854a6986a0416604da64d9ed2487))
+
+
+### Reverts
+
+* **frontend:** remove assets/liabilities donut from accounting hero ([a8fc6c9](https://github.com/pablesite/moneyplanner-saas/commit/a8fc6c9259a934c115944b5d35a217089463ee1b))
+
 ## [0.23.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.22.2...moneyplanner-saas-v0.23.0) (2026-06-21)
 
 
