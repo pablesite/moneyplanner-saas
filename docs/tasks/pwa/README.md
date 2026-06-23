@@ -9,7 +9,7 @@ multi-tenant** ni el flujo de auth por JWT.
 | Fase | Alcance | Estado |
 | ---- | ------- | ------ |
 | 1 | Instalable + rápida (manifest, iconos, service worker de precache del shell, toast de update) | ✅ completada (2026-06-23) |
-| 2 | Resiliencia offline (fallback offline, fuentes auto-hospedadas, estados "sin conexión") | ⚪ pendiente |
+| 2 | Resiliencia offline (fallback offline, fuentes auto-hospedadas, estados "sin conexión") | ✅ completada (2026-06-23) |
 | 3 | (Futuro/opcional) Push notifications + background sync — requiere trabajo de backend Django | ⚪ no planificada |
 
 v1 acordada = **Fases 1 + 2**. Orden de ejecución: 1 → 2.

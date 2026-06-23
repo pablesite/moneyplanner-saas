@@ -1,0 +1,21 @@
+/* Fuentes auto-hospedadas (PWA Fase 2): Geist se sirve desde el propio origen en
+ * lugar de la CDN de Google, para que la tipografía funcione sin red (el SW
+ * precachea los .woff2). Variables (eje wght 100–900), subset latino.
+ * Fuente: @fontsource-variable/geist + geist-mono (Geist © Vercel, SIL OFL 1.1).
+ * Ver public/fonts/OFL.txt. */
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/geist-latin-wght-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/geist-mono-latin-wght-normal.woff2') format('woff2');
+}

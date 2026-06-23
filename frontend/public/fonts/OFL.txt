@@ -1,0 +1,9 @@
+Geist & Geist Mono
+Copyright (c) 2023 Vercel, Inc. (https://vercel.com)
+
+These fonts are licensed under the SIL Open Font License, Version 1.1.
+License: https://openfontlicense.org
+
+Files vendored here (latin subset, variable weight axis) come from the
+@fontsource-variable/geist and @fontsource-variable/geist-mono packages
+and are self-hosted so the PWA works offline. See src/styles/fonts.css.

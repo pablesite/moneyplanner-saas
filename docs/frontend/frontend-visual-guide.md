@@ -100,6 +100,10 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
    captura `beforeinstallprompt` y ofrece **Instalar**; en iOS Safari (sin evento) muestra la
    mini-guía "Compartir → Añadir a pantalla de inicio". Se oculta si ya está instalada (`standalone`)
    y se recuerda el descarte 30 días en `localStorage`.
+10. **Indicador "sin conexión" (offline):** `OfflineBanner` (basado en `useOnlineStatus`) muestra un
+    aviso Direction A discreto abajo-centro cuando se pierde la red y desaparece al volver. Es
+    indicativo (no bloquea acciones). El shell sigue navegando offline gracias al precache del SW
+    (Fase 1) y a las fuentes Geist auto-hospedadas; los datos en vivo de `/api` no se cachean.
 
 ## Responsive System
 1. **Target:** the layout must stay usable and intentional from `360px` (small modern phone) up to wide desktop. `360px` is the minimum supported width; never let primary content overflow horizontally below it.

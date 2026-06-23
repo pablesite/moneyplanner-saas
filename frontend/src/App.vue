@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AppShellLayout from '@/shell/AppShellLayout.vue';
-import { PwaUpdatePrompt, PwaInstallPrompt } from '@/domains/pwa';
+import { PwaUpdatePrompt, PwaInstallPrompt, OfflineBanner } from '@/domains/pwa';
 
 const route = useRoute();
 const isLoginRoute = computed(() => route.name === 'login');
@@ -13,4 +13,5 @@ const isLoginRoute = computed(() => route.name === 'login');
   <AppShellLayout v-else />
   <PwaUpdatePrompt />
   <PwaInstallPrompt />
+  <OfflineBanner />
 </template>

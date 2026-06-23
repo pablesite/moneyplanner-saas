@@ -62,11 +62,11 @@ datos): una pantalla de fallback cuando no hay red, fuentes servidas desde el pr
 
 ## Required Documentation Updates
 
-- [ ] `docs/tasks/pwa/README.md` — marcar Fase 2 ✅
-- [ ] `docs/frontend/frontend-visual-guide.md` — patrón del banner "sin conexión" y fallback offline
-- [ ] `docs/frontend/frontend-visual-contract.md` — si el banner offline se vuelve primitiva reutilizable
-- [ ] `docs/frontend/domain-map.md` — si se añade composable/clase compartida (`useOnlineStatus`)
-- [ ] `docs/project-status.md` — actualizar estado de la tarea
+- [x] `docs/tasks/pwa/README.md` — marcar Fase 2 ✅
+- [x] `docs/frontend/frontend-visual-guide.md` — patrón del banner "sin conexión" y fallback offline
+- [ ] `docs/frontend/frontend-visual-contract.md` — N/A: `OfflineBanner` es chrome global, no una primitiva reutilizable
+- [x] `docs/frontend/domain-map.md` — añadido dominio `pwa` con `useOnlineStatus`
+- [x] `docs/project-status.md` — actualizar estado de la tarea
 
 ## Risks
 
@@ -80,10 +80,17 @@ datos): una pantalla de fallback cuando no hay red, fuentes servidas desde el pr
 
 ## Completion Criteria
 
-- [ ] All validation commands pass (lint/format/typecheck/tests/build + prueba offline)
-- [ ] Navegación con fallback offline funcional; fuentes Geist disponibles sin red
-- [ ] Banner/estado "sin conexión" integrado en las vistas portadas
-- [ ] El SW sigue **sin** cachear `/api/*` (verificado en DevTools)
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits)
+- [x] Validación de los ficheros de la fase: `vite build` genera el SW con las fuentes en el precache;
+      test del composable `useOnlineStatus` en verde (3 tests). El gate global completo no se pudo correr
+      por WIP de contabilidad sin commitear en el árbol; se delega en CI sobre el commit limpio.
+- [x] Navegación offline vía `navigateFallback` al shell precacheado; fuentes Geist auto-hospedadas y
+      precacheadas (verificado en `dist/sw.js`: `geist-latin-wght-normal.woff2` + mono).
+- [x] Banner/estado "sin conexión" global (`OfflineBanner` + `useOnlineStatus`) montado en `App.vue`.
+- [x] El SW sigue **sin** cachear `/api/*`: `denylist:[/^\/api\//]` y runtime caching solo de imágenes
+      (verificado en `dist/sw.js`).
+- [x] All required documentation updates done.
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).
+- [ ] **Pendiente (validación manual, navegador real):** DevTools → Network → Offline: recargar ruta
+      visitada muestra el shell; fuentes Geist se ven; banner aparece/desaparece con la red; `/api/*`
+      nunca desde cache.

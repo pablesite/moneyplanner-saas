@@ -202,6 +202,25 @@ Primitivas Direction A: `APageHead`, `ASectHead`, `AContextBar`, `ASelect`, `ARo
 
 ---
 
+### `pwa` — Progressive Web App
+
+**Origen:** SaaS (shared)
+**Cliente:** ninguno (no toca API)
+**Ruta:** ninguna (chrome global montado en `App.vue`)
+
+Soporte PWA: registro del service worker, instalación y resiliencia offline del shell. Barrel en `domains/pwa/index.ts`.
+
+| Archivo                          | Contenido                                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `components/PwaUpdatePrompt.vue` | Toast de actualización (`onNeedRefresh`/`onOfflineReady`, `registerType: 'prompt'`).                                                       |
+| `components/PwaInstallPrompt.vue`| Banner de instalación: `beforeinstallprompt` (Android/escritorio) + mini-guía iOS Safari.                                                  |
+| `components/OfflineBanner.vue`   | Indicador "sin conexión" global.                                                                                                           |
+| `useOnlineStatus.ts`             | Composable de conectividad (`navigator.onLine` + eventos `online`/`offline`). Devuelve `online` (readonly).                                |
+
+**Nota:** el SW (Workbox `generateSW`, config en `vite.config.ts`) precachea el shell estático y las fuentes Geist auto-hospedadas, pero **nunca cachea `/api/*`**.
+
+---
+
 ## Rutas del frontend SaaS
 
 | Ruta                   | Nombre                 | Vista                                      | Dominio principal                                                                                                                                                                                                                                                            |
