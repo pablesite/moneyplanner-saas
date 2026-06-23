@@ -225,6 +225,24 @@ runbook específico:
 
 La guía completa está en `prod-to-dev-refresh.md`.
 
+## PWA (Progressive Web App)
+
+El frontend SaaS es instalable como PWA (`vite-plugin-pwa`, Workbox `generateSW`).
+
+1. **Flag de build `VITE_PWA_ENABLED`**: la PWA está activada por defecto. Para desactivarla en un
+   build (p. ej. durante el piloto) sin tocar código, construir con `VITE_PWA_ENABLED=false`.
+2. **No corre en `vite dev`**: el service worker solo se genera en `npm run build` (`devOptions`
+   desactivado) para evitar SW pegajosos en desarrollo. Para probarlo en local:
+   `npm run build && npm run preview` y abrir en `http://localhost` (los SW solo corren en
+   `https` o `localhost`).
+3. **Servido por nginx en producción** (`frontend/nginx.prod.conf`): `sw.js` y
+   `manifest.webmanifest` se sirven con `Cache-Control: no-cache` para que las actualizaciones
+   lleguen siempre (un `sw.js` cacheado dejaría a los usuarios clavados en una versión vieja).
+4. **Actualizaciones**: con `registerType: 'prompt'`, al desplegar una versión nueva aparece un
+   toast "Hay una versión nueva disponible" con un botón **Actualizar** (no autorecarga).
+5. **Iconos**: se generan con `node frontend/scripts/generate-pwa-icons.mjs` (placeholders de la
+   gema "Arkenstone" hasta disponer del logo definitivo). Salida en `frontend/public/icons/`.
+
 ## Problemas frecuentes
 
 1. SaaS no puede bootstrapear Core:

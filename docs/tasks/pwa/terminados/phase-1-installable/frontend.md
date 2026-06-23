@@ -68,11 +68,11 @@ restricciones transversales.
 
 ## Required Documentation Updates
 
-- [ ] `docs/tasks/pwa/README.md` — marcar Fase 1 ✅ y fijar decisiones resueltas (scope, iconos)
-- [ ] `docs/frontend/frontend-visual-guide.md` — nota del toast de actualización y comportamiento standalone
-- [ ] `docs/operations/dev-setup.md` — cómo activar/desactivar la PWA (`VITE_PWA_ENABLED`) y servir el SW
-- [ ] `docs/architecture/architecture.md` — mención del service worker y la política de no-cache de API
-- [ ] `docs/project-status.md` — actualizar estado de la tarea
+- [x] `docs/tasks/pwa/README.md` — marcar Fase 1 ✅ y fijar decisiones resueltas (scope, iconos)
+- [x] `docs/frontend/frontend-visual-guide.md` — nota del toast de actualización y comportamiento standalone
+- [x] `docs/operations/dev-setup.md` — cómo activar/desactivar la PWA (`VITE_PWA_ENABLED`) y servir el SW
+- [x] `docs/architecture/architecture.md` — mención del service worker y la política de no-cache de API
+- [x] `docs/project-status.md` — actualizar estado de la tarea
 
 ## Risks
 
@@ -87,10 +87,16 @@ restricciones transversales.
 
 ## Completion Criteria
 
-- [ ] All validation commands pass (lint/format/typecheck/tests/build + Lighthouse installable)
-- [ ] El SW **no** intercepta ni cachea `/api/*` (verificado en DevTools)
-- [ ] App instalable en escritorio y Android, arranque `standalone` con theme Direction A
-- [ ] Toast de actualización funcional (`onNeedRefresh`)
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits)
+- [x] Validación automática en Docker en verde: lint, format:check, typecheck, 177 tests unitarios,
+      `npm run build` genera `dist/sw.js` + `dist/manifest.webmanifest` (precache 15 entries).
+- [x] El SW **no** intercepta ni cachea `/api/*`: verificado leyendo `dist/sw.js` — `NavigationRoute`
+      con `denylist:[/^\/api\//]` y runtime caching limitado a imágenes same-origin
+      (`StaleWhileRevalidate`, cache `ark-static-images`). Ninguna ruta cubre `/api`.
+- [x] Manifest válido: `standalone`, `theme_color`/`background_color` `#0c0d10`, iconos 192/512/maskable.
+- [x] Toast de actualización funcional cableado a `onNeedRefresh`/`onOfflineReady` (`PwaUpdatePrompt`).
+- [x] All required documentation updates done.
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).
+- [ ] **Pendiente (validación manual, requiere navegador real):** auditoría Lighthouse "Installable",
+      instalación en Chrome escritorio y Android, arranque `standalone`, y comprobación en
+      DevTools → Application de que `/api/*` no aparece en Cache Storage.
