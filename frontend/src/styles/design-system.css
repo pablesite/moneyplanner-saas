@@ -72,9 +72,21 @@
 .dir-a .page {
   padding: var(--pad-y) var(--pad-x);
   display: grid;
+  /* minmax(0, 1fr): la columna nunca excede el ancho del contenedor. Sin esto,
+     la columna implícita `auto` crece hasta el min-content del hijo más ancho
+     (tablas, etc.) y provoca scroll horizontal de toda la página. Los hijos con
+     overflow propio (p. ej. .a-mov-table-scroll) pasan a hacer scroll interno. */
+  grid-template-columns: minmax(0, 1fr);
   gap: calc(28px * var(--density-scale, 1));
   max-width: 1480px;
   margin: 0 auto;
+}
+
+/* Cada bloque de la página debe poder encoger a la pista (min-width:auto = su
+   min-content lo impediría y volvería a desbordar). Así los hijos con scroll
+   propio contienen su contenido en vez de ensanchar la página. */
+.dir-a .page > * {
+  min-width: 0;
 }
 
 .dir-a .page-head {
@@ -161,6 +173,12 @@
 .dir-a .sect {
   display: grid;
   gap: calc(14px * var(--density-scale, 1));
+}
+
+/* Los bloques dentro de una sección (grid) también deben poder encoger a la
+   pista; si no, su min-content (tablas anchas, etc.) desborda la página. */
+.dir-a .sect > * {
+  min-width: 0;
 }
 
 .dir-a .sect-head {
@@ -452,6 +470,25 @@
   padding-top: 6px;
 }
 
+/* Móvil: el desglose Activos/Pasivos del hero deja de ser dos columnas (se
+   cortaban los importes bajo 360px) y se apila — Pasivos debajo de Activos.
+   Patrimonio ya apila antes en su propia vista; esto cubre el resto (p. ej.
+   Contabilidad). */
+@container page (max-width: 560px) {
+  .dir-a .hero-breakdown {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  /* Con el desglose a ancho completo, el "bleed" lateral de la fila (margin
+     -10px, pensado para que el hover se extienda en escritorio) sobresale del
+     padding de la página y provoca scroll horizontal. En móvil lo anulamos. */
+  .dir-a .comp-row {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+}
+
 /* Bloque de estado compartido (AState): loading/empty/error/success en dos
    layouts (inline = texto; panel = caja centrada). Unifica a-nw-state/a-mov-state
    y bdg-loading/etc. */
@@ -562,8 +599,9 @@
   bottom: calc(100% + 8px);
   left: 0;
   z-index: 30;
-  min-width: 200px;
-  max-width: 280px;
+  width: max-content;
+  /* Acotado al viewport para no desbordar en móvil; sin suelo fijo de 200px. */
+  max-width: min(280px, calc(100vw - 24px));
   padding: 9px 11px;
   border-radius: 8px;
   border: 1px solid var(--line-strong);
@@ -576,16 +614,15 @@
   letter-spacing: normal;
   text-transform: none;
   white-space: normal;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s ease;
   pointer-events: none;
+  /* display:none (en lugar de visibility:hidden) para que el tooltip oculto no
+     ocupe espacio de overflow y deje de provocar scroll horizontal de página. */
+  display: none;
 }
 
 .dir-a .info-hint:hover .info-hint-tip,
 .dir-a .info-hint:focus-visible .info-hint-tip {
-  opacity: 1;
-  visibility: visible;
+  display: block;
 }
 
 .dir-a .sparkline {
@@ -1008,14 +1045,19 @@
   margin-top: 8px;
 }
 
-@container page (max-width: 1280px) {
+/* OJO: estos overrides usan @media (viewport), no @container. El contenedor de
+   query es el propio `.dir-a` (container-type: inline-size), y un container query
+   NO puede estilizar su propio contenedor — así que `@container page { .dir-a {…} }`
+   nunca aplicaba y el padding se quedaba en 40px en móvil. Con @media sí cascada
+   a sus descendientes (`.page`, topbar) que consumen --pad-x/--pad-y. */
+@media (max-width: 1280px) {
   .dir-a {
     --pad-x: calc(32px * var(--density-scale, 1));
     --pad-y: calc(24px * var(--density-scale, 1));
   }
 }
 
-@container page (max-width: 1024px) {
+@media (max-width: 1024px) {
   .dir-a {
     --pad-x: calc(24px * var(--density-scale, 1));
     --pad-y: calc(20px * var(--density-scale, 1));
@@ -1026,7 +1068,7 @@
   }
 }
 
-@container page (max-width: 820px) {
+@media (max-width: 820px) {
   .dir-a {
     --pad-x: 18px;
     --pad-y: 16px;
@@ -1038,5 +1080,11 @@
 
   .dir-a .page-head .actions {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dir-a {
+    --pad-x: 14px;
   }
 }

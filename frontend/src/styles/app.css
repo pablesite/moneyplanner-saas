@@ -94,7 +94,14 @@ body {
 
 .ui-page-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+}
+
+/* Igual que .dir-a .page: los bloques deben encoger a la pista para no desbordar
+   la página por su min-content (cabeceras con acciones, tablas, etc.). */
+.ui-page-shell > * {
+  min-width: 0;
 }
 
 .ui-section-card {
@@ -490,10 +497,19 @@ body {
 
 .a-nw-line-chart-canvas {
   height: 240px;
+  min-width: 0;
 }
 
 .a-nw-line-chart-canvas-expanded {
   height: 420px;
+}
+
+/* Chart.js fija el ancho del <canvas> inline al renderizar; si la página estaba
+   momentáneamente más ancha, el canvas conserva ese ancho y no encoge, forzando
+   scroll horizontal. max-width:100% lo acota siempre a su contenedor. */
+.a-nw-line-chart-canvas canvas,
+.a-nw-delta-chart-canvas canvas {
+  max-width: 100%;
 }
 
 .a-nw-delta-chart {
@@ -831,6 +847,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -1192,11 +1209,10 @@ body {
   top: calc(100% + 10px);
   right: 0;
   min-width: 200px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--line-strong);
   border-radius: 12px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
-    rgba(8, 12, 22, 0.98);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)), var(--surface);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.38);
   padding: 6px;
   z-index: 30;
@@ -1269,12 +1285,17 @@ body {
   top: 57px;
   left: 16px;
   right: 16px;
+  /* El elemento lleva la clase .dir-a (para heredar tokens del tema), pero
+     .dir-a fija width:100% y height:100%: lo primero rompe el anclaje left/right
+     (desbordaba 16px) y lo segundo estira el drawer a toda la altura. width/height
+     auto dejan que se ajuste a left+right y a su contenido. */
+  width: auto;
+  height: auto;
   z-index: 35;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--line-strong);
   border-radius: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-    rgba(8, 12, 22, 0.96);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)), var(--surface);
   box-shadow: 0 20px 42px rgba(0, 0, 0, 0.4);
   padding: 10px;
 }
