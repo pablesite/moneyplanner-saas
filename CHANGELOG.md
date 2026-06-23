@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.24.0...moneyplanner-saas-v0.24.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* **frontend:** full mobile responsive pass + header menus ([#45](https://github.com/pablesite/moneyplanner-saas/issues/45)) ([9fdfe3f](https://github.com/pablesite/moneyplanner-saas/commit/9fdfe3f918b854a8a5a59b21f1b1dfd8b63b6d44))
+
 ## [0.24.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.23.0...moneyplanner-saas-v0.24.0) (2026-06-22)
 
 
