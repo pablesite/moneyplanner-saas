@@ -42,3 +42,6 @@ v1 acordada = **Fases 1 + 2**. Orden de ejecución: 1 → 2.
   (192/512/maskable + apple-touch + `icon.svg` favicon). Sustituir por el logo definitivo cuando exista.
 - **Flag de build**: `VITE_PWA_ENABLED` (activada por defecto; `=false` la desactiva sin tocar código).
 - **Registro/update**: `registerType: 'prompt'` + componente `PwaUpdatePrompt` montado en `App.vue`.
+- **Install UX (refinamiento post-deploy)**: banner proactivo descartable `PwaInstallPrompt` para
+  bajar la fricción de instalación — botón `beforeinstallprompt` en Android/escritorio y mini-guía
+  "Compartir → Añadir a inicio" en iOS Safari. Se oculta en `standalone` y recuerda el descarte 30 días.

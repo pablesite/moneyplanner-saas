@@ -92,6 +92,7 @@ export default defineConfig({
         'src/domains/auth/components/AppHeader.vue',
         'src/domains/pwa/index.ts',
         'src/domains/pwa/components/PwaUpdatePrompt.vue',
+        'src/domains/pwa/components/PwaInstallPrompt.vue',
         'src/domains/ui/components/BaseModal.vue',
         'src/domains/people/components/OwnershipSplitEditor.vue',
         'src/domains/accounting/api.ts',

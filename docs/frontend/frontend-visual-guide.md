@@ -95,6 +95,11 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 8. **Standalone (instalada):** la app arranca en modo `standalone` con `theme_color`/`background_color`
    `#0c0d10` (Direction A oscuro). El shell topbar/footer debe seguir siendo coherente sin la barra
    del navegador.
+9. **PWA install banner:** banner proactivo descartable abajo-centro (`PwaInstallPrompt`, mismas
+   primitivas que el update toast) que reduce la fricción de instalación. En Android/escritorio
+   captura `beforeinstallprompt` y ofrece **Instalar**; en iOS Safari (sin evento) muestra la
+   mini-guía "Compartir → Añadir a pantalla de inicio". Se oculta si ya está instalada (`standalone`)
+   y se recuerda el descarte 30 días en `localStorage`.
 
 ## Responsive System
 1. **Target:** the layout must stay usable and intentional from `360px` (small modern phone) up to wide desktop. `360px` is the minimum supported width; never let primary content overflow horizontally below it.
