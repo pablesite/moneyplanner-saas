@@ -251,6 +251,15 @@
   overflow-x: auto;
 }
 
+/* Scroll propio del catálogo de cuentas. Clase aparte (no .a-mov-table-scroll)
+   porque esa se resetea a overflow:visible en el card-mode móvil de la tabla de
+   movimientos. Como scroll-container con min-width:0, su min-content es 0 y deja
+   de empujar el ancho de la página. */
+.a-mov-catalog-scroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+
 .a-mov-todos-table .a-mov-col-date {
   width: 90px;
 }

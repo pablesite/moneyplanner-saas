@@ -89,6 +89,24 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 5. Filters and drilldowns should preserve user context whenever possible.
 6. Responsive changes should adapt hierarchy, not just stack everything mechanically.
 
+## Responsive System
+1. **Target:** the layout must stay usable and intentional from `360px` (small modern phone) up to wide desktop. `360px` is the minimum supported width; never let primary content overflow horizontally below it.
+2. **Two query mechanisms, one decision rule:**
+   - **View content** (everything rendered inside `.dir-a .page`) responds with `@container page (...)`. The `page` container is `.dir-a` (`container-type: inline-size`), so view CSS reacts to the available content width, not the raw viewport.
+   - **Global shell** (topbar, mobile nav, footer, account menu in `app.css`) responds with `@media (...)` because it lives outside the `page` container.
+3. **Canonical breakpoints.** Use these values; do not invent new intermediate cutoffs unless a specific layout genuinely needs one (document it if so):
+
+   | Token | Width   | Mechanism      | Intent                                                            |
+   | ----- | ------- | -------------- | ----------------------------------------------------------------- |
+   | `lg`  | 1180px  | `@container`   | Roomy desktop → reduce density, 3-col → 2-col, relax padding.     |
+   | `md`  | 820px   | `@container`   | Tablet → major collapse: side-by-side → stacked, 2-col → 1-col.   |
+   | `sm`  | 560px   | `@container`   | Phone → single column, data tables become cards, hide secondary.  |
+   | `xs`  | 400px   | `@container`   | Small phone (covers 360 target) → final spacing/typography trims. |
+
+4. CSS query conditions **cannot** read `var()`, so these are a documented convention of literal pixel values, not CSS custom properties. Keep them consistent; consolidate stray values (900/920/980/600/620/520…) toward the nearest canonical token when touching a file.
+5. **Shell exceptions:** the topbar switches to the hamburger drawer at `@media (max-width: 960px)` (driven by horizontal nav width, not content) and trims brand/account labels at `@media (max-width: 520px)`. These are intentional shell-specific cutoffs.
+6. Responsive changes must adapt hierarchy (reflow, promote/demote, collapse), not just stack everything mechanically. Wide data tables should degrade to a card/stacked layout under `sm`, keeping `overflow-x:auto` only as a fallback.
+
 ## Review Checklist
 1. Is the primary task obvious within a few seconds?
 2. Is the visual hierarchy clearer than before?

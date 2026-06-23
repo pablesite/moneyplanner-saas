@@ -752,4 +752,29 @@
     grid-template-columns: 1fr;
     gap: 12px;
   }
+
+  /* La cabecera del bloque (título + KPIs mono nowrap) desbordaba: dejamos que
+     los KPIs caigan bajo el título y dejen de forzar el ancho. */
+  .mc-block > summary {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .mc-block-kpis {
+    margin-left: 0;
+    flex-wrap: wrap;
+    white-space: normal;
+    gap: 8px 12px;
+  }
+
+  /* Filas de desglose: las columnas fijas (90/56/90) no caben en 360px; el
+     concepto pasa a su propia línea y los importes se reparten debajo. */
+  .mc-breakdown-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px 10px;
+  }
+
+  .mc-breakdown-name {
+    grid-column: 1 / -1;
+  }
 }

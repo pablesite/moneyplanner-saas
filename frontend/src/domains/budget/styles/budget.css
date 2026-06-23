@@ -1028,3 +1028,52 @@
     flex-basis: 100%;
   }
 }
+
+/* Móvil: la tabla bdg-row deja de ser rejilla ancha (desbordaba bajo 360px) y
+   cada fila se apila — nombre + ejecutado real arriba, barra de ejecución a
+   ancho completo debajo. El "Previsto" absoluto se omite: el % y la desviación
+   de la barra ya lo representan. Sigue el patrón de colapso de Patrimonio. */
+@container page (max-width: 560px) {
+  .dir-a .bdg-colhead {
+    display: none;
+  }
+
+  .dir-a .bdg-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: center;
+    padding-block: 12px;
+  }
+
+  .dir-a .bdg-row > .bdg-row-lead {
+    grid-row: 1;
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  /* Previsto (2ª celda) oculto en móvil. */
+  .dir-a .bdg-row > .bdg-num:nth-child(2) {
+    display: none;
+  }
+
+  /* Ejecutado real (5ª celda): titular a la derecha en la primera línea. */
+  .dir-a .bdg-row > .bdg-num:nth-child(5) {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Barra de ejecución: segunda línea a ancho completo. */
+  .dir-a .bdg-row > .bdg-bar-cell {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  /* Celda final vacía/acciones (6ª): sin sitio en el layout apilado. */
+  .dir-a .bdg-row > :nth-child(6) {
+    display: none;
+  }
+}
