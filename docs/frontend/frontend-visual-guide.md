@@ -88,6 +88,13 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 4. Success: concise positive feedback.
 5. Filters and drilldowns should preserve user context whenever possible.
 6. Responsive changes should adapt hierarchy, not just stack everything mechanically.
+7. **PWA update toast:** cuando hay una versión nueva del service worker, se muestra un toast
+   Direction A fijo abajo-centro (`PwaUpdatePrompt`, tokens `--bg`/`--line-strong`/`--accent`) con
+   acción primaria **Actualizar** y secundaria **Después**. No autorecarga: el usuario decide
+   cuándo recargar para no perder estado de formularios.
+8. **Standalone (instalada):** la app arranca en modo `standalone` con `theme_color`/`background_color`
+   `#0c0d10` (Direction A oscuro). El shell topbar/footer debe seguir siendo coherente sin la barra
+   del navegador.
 
 ## Responsive System
 1. **Target:** the layout must stay usable and intentional from `360px` (small modern phone) up to wide desktop. `360px` is the minimum supported width; never let primary content overflow horizontally below it.
