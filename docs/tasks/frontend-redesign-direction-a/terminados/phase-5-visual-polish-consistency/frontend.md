@@ -56,15 +56,21 @@ visual más uniforme antes del cierre definitivo del módulo.
   - `/movimientos`
   - `/estado-financiero`
   - `/estado-financiero/ambitos/:phaseId`
+- Verificación manual adicional en vistas/formularios tocados por las primitivas compartidas:
+  - `/aux-data`
+  - `/account`
+  - `ItemForm`
+  - `AnnualEntryModalForm`
+  - `FamilyMemberManager`
 - Comparación lado a lado con `handoff/Moneyplanner Refinement.html` y los `.jsx` de referencia.
 
 ## Required Documentation Updates
 
-- [ ] `docs/frontend/frontend-visual-contract.md` — consolidar primitivas y patrones transversales finales
-- [ ] `docs/frontend/frontend-visual-guide.md` — reflejar los criterios finales de consistencia
-- [ ] `docs/frontend/domain-map.md` — solo si cambian fronteras de componentes o primitivas compartidas
-- [ ] `docs/project-status.md` — marcar Fase 5 ✅ y cierre final del módulo
-- [ ] `docs/tasks/frontend-redesign-direction-a/README.md` — marcar Fase 5 ✅ y el módulo completo
+- [x] `docs/frontend/frontend-visual-contract.md` — consolidar primitivas y patrones transversales finales
+- [x] `docs/frontend/frontend-visual-guide.md` — reflejar los criterios finales de consistencia
+- [x] `docs/frontend/domain-map.md` — sin cambios de fronteras; no requiere actualización
+- [x] `docs/project-status.md` — marcar Fase 5 ✅ y cierre final del módulo
+- [x] `docs/tasks/frontend-redesign-direction-a/README.md` — marcar Fase 5 ✅ y el módulo completo
 
 ## Risks
 
@@ -74,9 +80,9 @@ visual más uniforme antes del cierre definitivo del módulo.
 
 ## Completion Criteria
 
-- [ ] All validation commands pass
-- [ ] Gate visual happy-path completado en todas las vistas Direction A
-- [ ] Consistencia básica transversal revisada en page heads, context bars, tablas, chips, botones, sheets y estados
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
+- [x] All validation commands pass
+- [x] Gate visual happy-path completado en todas las vistas Direction A
+- [x] Consistencia básica transversal revisada en page heads, context bars, tablas, chips, botones, sheets y estados
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
 - [ ] Commit created (Conventional Commits)

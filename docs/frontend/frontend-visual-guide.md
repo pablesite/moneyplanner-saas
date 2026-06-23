@@ -72,6 +72,8 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 11. Contabilidad (`/movimientos`) presenta los asientos con lenguaje operativo: cuenta/origen, destino cuando existe, categoría/subcategoría e impacto monetario. `Debe`/`Haber` queda reservado para el detalle avanzado; al filtrar por cuenta, el importe expresa la variación de esa cuenta.
 12. Estado financiero (`/estado-financiero`) presenta el diagnóstico como un strip de cinco ámbitos con puntuaciones reales y grades A–E; el foco actual y los extremos (mayor tensión / mejor posicionado) preceden al mapa sin convertirlo en un dashboard de tarjetas.
 13. El detalle de Estado financiero (`/estado-financiero/ambitos/:phaseId`) conserva el mismo strip para mantener contexto y se organiza en una superficie a dos columnas: puntuación y palancas a la izquierda, diagnóstico contextual a la derecha. Los colores de grade explican estado y progreso; no son decoración ni sustituyen el texto.
+14. El cierre transversal de Direction A deja una librería de primitivas compartidas en `@/domains/ui`; antes de crear markup/CSS local para botones, selects, heroes, estados o KPI bands, hay que intentar composición sobre esas primitivas.
+15. Si un control necesita comportamiento especial y no puede ser `ASelect` (por ejemplo un rango de fechas), debe seguir el mismo lenguaje visual del resto de filtros: mismo trigger, mismo borde/radio, misma tipografía y mismo tratamiento del popover.
 
 ## Styling Rules
 1. Do not introduce inline styles unless there is a clear, temporary reason.

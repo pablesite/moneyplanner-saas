@@ -12,9 +12,9 @@ Reimplementación del frontend SaaS sobre el sistema visual "Direction A" del ha
 | 2 | Presupuesto + Cierre mensual (`BudgetView` + `MonthlyCloseView`) | ✅ cerrada. La presentación desacoplada y el reskin completo quedan aceptados; los remates de gate visual y consistencia transversal se mueven a la Fase 5 |
 | 3 | Contabilidad (`AccountingMovementsView`) | ✅ cerrada. La antigua fase de Movimientos se considera completada y consolidada como Contabilidad |
 | 4 | Estado financiero (`HomeView` + `GuidePhaseDetailView`) | ✅ cerrada. El port Direction A y el renombrado de la antigua Guía quedan aceptados; los remates de gate visual y happy-path se mueven a la Fase 5 |
-| 5 | Gate visual + consistencia transversal | 🔄 nueva fase de cierre: comparar happy-path contra handoff y unificar detalles básicos compartidos entre vistas (page heads, context bars, tablas, chips, botones, sheets y estados) |
+| 5 | Gate visual + consistencia transversal | ✅ cerrada. Happy-path validado manualmente y primitivas/shared CSS consolidados para el cierre definitivo del módulo |
 
-Orden de ejecución: 0 → 1 → 2 → 3 → 4 → 5. La Fase 5 consolida el cierre visual transversal sobre las vistas ya aceptadas en las fases anteriores.
+Orden de ejecución: 0 → 1 → 2 → 3 → 4 → 5. La Fase 5 consolida el cierre visual transversal sobre las vistas ya aceptadas en las fases anteriores y deja el módulo Direction A dado por cerrado a nivel de frontend SaaS.
 
 ---
 

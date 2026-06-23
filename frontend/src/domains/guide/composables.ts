@@ -377,25 +377,6 @@ export function useGuideHomeState(scope: GuideScope) {
     () => phaseSnapshots.value.slice().sort((a, b) => b.score - a.score)[0] ?? null,
   );
 
-  function phaseSummaryStyle(snapshot: PhaseSnapshot | null): Record<string, string> {
-    if (!snapshot) return {};
-    const color = scoreColor(snapshot.score);
-    return {
-      borderColor: color.replace(')', ' / 0.28)'),
-    };
-  }
-
-  function phaseCardStyle(phase: GuidePhase): Record<string, string> {
-    const score = phaseDisplayProgress(phase);
-    const grade = gradeFromScore(score);
-    const tintColor =
-      grade === 'A' || grade === 'B' ? scoreColor(score).replace(')', ' / 0.08)') : 'transparent';
-    return {
-      '--ui-home-phase-border-color': scoreColor(score),
-      '--ui-home-phase-tint': tintColor,
-    };
-  }
-
   const isLoading = computed(
     () =>
       store.loading ||
@@ -417,8 +398,6 @@ export function useGuideHomeState(scope: GuideScope) {
     phaseDetailTo,
     phaseDisplayProgress,
     phaseDonutStyle,
-    phaseSummaryStyle,
-    phaseCardStyle,
     mostTensePhase,
     strongestPhase,
   };

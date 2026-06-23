@@ -587,115 +587,12 @@
     @apply h-[260px];
   }
 
-  .ui-page-header {
-    @apply rounded-2xl border border-white/15 bg-white/[0.03] px-4 py-3 shadow-[0_14px_30px_rgba(0,0,0,0.25)] backdrop-blur-[2px] flex items-center justify-between gap-3;
-  }
-
-  .ui-page-title {
-    @apply m-0 text-[24px] tracking-[0.01em];
-  }
-
-  .ui-page-actions {
-    @apply flex flex-wrap items-center gap-2.5;
-  }
-
-  .ui-section-header {
-    @apply mb-3 grid gap-1 border-b border-white/10 pb-2;
-  }
-
   .ui-status-line {
     @apply mt-6 text-sm text-white/75;
   }
 
-  .ui-data-form-grid {
-    @apply mb-3.5 grid items-end gap-2.5 grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto];
-  }
-
   .ui-data-field {
     @apply h-[38px] text-[13px] leading-normal;
-  }
-
-  .ui-select-popover {
-    position: relative;
-  }
-
-  .ui-select-popover-trigger {
-    list-style: none;
-    min-height: 36px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text);
-    padding: 0 10px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    cursor: pointer;
-  }
-
-  .ui-select-popover-trigger::-webkit-details-marker {
-    display: none;
-  }
-
-  .ui-select-popover[open] .ui-select-popover-trigger {
-    border-color: rgba(45, 212, 191, 0.34);
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  .ui-select-popover-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .ui-select-popover-caret {
-    font-size: 14px;
-    color: var(--muted);
-    transform: translateY(-1px);
-  }
-
-  .ui-select-popover[open] .ui-select-popover-caret {
-    transform: rotate(180deg) translateY(1px);
-  }
-
-  .ui-select-popover-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    z-index: 20;
-    display: grid;
-    gap: 4px;
-    padding: 6px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(10, 14, 22, 0.98);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    max-height: 220px;
-    overflow: auto;
-  }
-
-  .ui-select-popover-option {
-    width: 100%;
-    text-align: left;
-    border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.02);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 7px 9px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-
-  .ui-select-popover-option:hover {
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  .ui-select-popover-option-active {
-    border-color: rgba(45, 212, 191, 0.28);
-    background: rgba(45, 212, 191, 0.1);
   }
 
   .ui-data-table {
@@ -709,10 +606,6 @@
 
   .ui-data-table-actions {
     @apply w-[1%] whitespace-nowrap text-right;
-  }
-
-  .ui-data-date-empty {
-    @apply bg-white/5 text-white/50;
   }
 
   .ui-alert-success {
@@ -792,18 +685,6 @@
 
   .ui-people-status-inactive {
     @apply opacity-70;
-  }
-
-  .ui-people-field-label {
-    @apply mb-1.5;
-  }
-
-  .ui-people-card-subtitle {
-    @apply mb-2.5;
-  }
-
-  .ui-people-splits-card {
-    @apply p-3;
   }
 
   .ui-people-member-list {
