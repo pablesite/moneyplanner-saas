@@ -21,6 +21,12 @@ Describe the current architecture of The Arkenstone SaaS stack.
    - Core linking
 2. `frontend/`
    - Vue frontend for SaaS-specific flows and managed access to Core-powered functionality
+   - Progressive Web App (instalable) vía `vite-plugin-pwa` (Workbox, `generateSW`,
+     `registerType: 'prompt'`), detrás del flag de build `VITE_PWA_ENABLED`.
+   - **Política de caché del service worker:** precachea únicamente el shell estático del
+     propio origen (JS/CSS/HTML/iconos) y hace runtime caching solo de imágenes same-origin.
+     **Nunca cachea respuestas de `/api/*`** (auth JWT multi-tenant): las llamadas autenticadas
+     van siempre a red y `/api/*` está en la `navigateFallbackDenylist`.
 
 ## Deployment Model
 

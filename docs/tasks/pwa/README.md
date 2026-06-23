@@ -8,7 +8,7 @@ multi-tenant** ni el flujo de auth por JWT.
 
 | Fase | Alcance | Estado |
 | ---- | ------- | ------ |
-| 1 | Instalable + rápida (manifest, iconos, service worker de precache del shell, toast de update) | ⚪ pendiente |
+| 1 | Instalable + rápida (manifest, iconos, service worker de precache del shell, toast de update) | ✅ completada (2026-06-23) |
 | 2 | Resiliencia offline (fallback offline, fuentes auto-hospedadas, estados "sin conexión") | ⚪ pendiente |
 | 3 | (Futuro/opcional) Push notifications + background sync — requiere trabajo de backend Django | ⚪ no planificada |
 
@@ -33,9 +33,12 @@ v1 acordada = **Fases 1 + 2**. Orden de ejecución: 1 → 2.
 
 `vite-plugin-pwa` (Workbox) en modo `generateSW`. Versión compatible con Vite 7 (línea `1.x`).
 
-## Decisiones abiertas (confirmar antes/while implementando)
+## Decisiones resueltas (Fase 1)
 
-- **Scope del SW vs zona admin SaaS (`/account`, panel `isSaasAdmin`)**: ¿entra en el scope PWA o se
-  excluye? Por defecto, scope `/` (incluye todo) salvo indicación.
-- **Iconos**: hace falta el SVG/PNG de origen del logo "The Arkenstone" para generar el set
-  (incluido **maskable**). En Fase 1 se usan placeholders si no está disponible.
+- **Scope del SW**: `scope: '/'` (incluye la zona admin SaaS `/account`). El SW solo precachea el
+  shell estático y no toca `/api/*`, por lo que incluir admin no implica cachear datos sensibles.
+- **Iconos**: no había logo de origen, así que se generan **placeholders** programáticos (gema teal
+  Direction A) con `frontend/scripts/generate-pwa-icons.mjs` → `frontend/public/icons/`
+  (192/512/maskable + apple-touch + `icon.svg` favicon). Sustituir por el logo definitivo cuando exista.
+- **Flag de build**: `VITE_PWA_ENABLED` (activada por defecto; `=false` la desactiva sin tocar código).
+- **Registro/update**: `registerType: 'prompt'` + componente `PwaUpdatePrompt` montado en `App.vue`.

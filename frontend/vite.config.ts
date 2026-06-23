@@ -8,10 +8,69 @@
 
 import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
+import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
+// La PWA va detrás de un flag de build para poder desactivarla en el piloto sin
+// revertir código. Activada por defecto; `VITE_PWA_ENABLED=false` la desactiva.
+const pwaEnabled = process.env.VITE_PWA_ENABLED !== 'false';
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    VitePWA({
+      // Con `disable` el módulo virtual `virtual:pwa-register/vue` sigue
+      // resolviéndose (la app compila igual) pero no se genera ningún SW.
+      disable: !pwaEnabled,
+      registerType: 'prompt',
+      // No autoinyectar el SW en `vite dev` (evita SW pegajosos en desarrollo).
+      // La validación de la PWA se hace sobre `npm run build` + preview.
+      devOptions: { enabled: false },
+      includeAssets: ['icons/apple-touch-icon.png'],
+      manifest: {
+        name: 'The Arkenstone',
+        short_name: 'Arkenstone',
+        description: 'Planificación financiera personal.',
+        lang: 'es',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        // Tokens Direction A (tema oscuro).
+        theme_color: '#0c0d10',
+        background_color: '#0c0d10',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: '/icons/maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        // Precache del shell estático del build (JS/CSS/HTML/iconos).
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Fallback SPA del shell precacheado, pero NUNCA para `/api/*`:
+        // las llamadas autenticadas deben ir siempre a red.
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        // Runtime caching SOLO de estáticos del propio origen (imágenes/iconos).
+        // Prohibido cachear respuestas de API (fuga de datos multi-tenant).
+        runtimeCaching: [
+          {
+            urlPattern: ({ request, sameOrigin }) => sameOrigin && request.destination === 'image',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'ark-static-images',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
+      },
+    }),
+  ],
   test: {
     include: ['src/**/*.spec.ts'],
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
@@ -31,6 +90,8 @@ export default defineConfig({
         'src/domains/auth/guard.ts',
         'src/domains/auth/index.ts',
         'src/domains/auth/components/AppHeader.vue',
+        'src/domains/pwa/index.ts',
+        'src/domains/pwa/components/PwaUpdatePrompt.vue',
         'src/domains/ui/components/BaseModal.vue',
         'src/domains/people/components/OwnershipSplitEditor.vue',
         'src/domains/accounting/api.ts',
