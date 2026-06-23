@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.24.1...moneyplanner-saas-v0.25.0) (2026-06-23)
+
+
+### Features
+
+* **frontend:** add installable PWA (phase 1) ([6a02c6c](https://github.com/pablesite/moneyplanner-saas/commit/6a02c6c8a41b129109d3a743cc4d8c09c7dc4bef))
+
 ## [0.24.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.24.0...moneyplanner-saas-v0.24.1) (2026-06-23)
 
 
