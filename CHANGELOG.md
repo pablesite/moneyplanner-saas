@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.28.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.27.0...moneyplanner-saas-v0.28.0) (2026-06-24)
+
+
+### Features
+
+* **frontend:** rediseño del alta de movimiento (móvil, importe primero) ([2de04a9](https://github.com/pablesite/moneyplanner-saas/commit/2de04a9c3148901113c2a80573756ada0fef27a1))
+* **frontend:** UX iteration modal registrar movimiento (móvil) ([3e639c5](https://github.com/pablesite/moneyplanner-saas/commit/3e639c5c6013029284b375f1e688c6ca5353c583))
+
 ## [0.27.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.26.0...moneyplanner-saas-v0.27.0) (2026-06-24)
 
 
