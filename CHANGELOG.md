@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.26.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.25.0...moneyplanner-saas-v0.26.0) (2026-06-24)
+
+
+### Features
+
+* **frontend:** accounting daily-operations workspace and net worth scopes ([9652e7d](https://github.com/pablesite/moneyplanner-saas/commit/9652e7d9c7b8df558dfabe474b609c9663f7fcdf))
+* **frontend:** add proactive PWA install banner ([d5fe7c4](https://github.com/pablesite/moneyplanner-saas/commit/d5fe7c48a3d9a3525d77aeeec9db920303a396cc))
+* **frontend:** PWA phase 2 — offline shell resilience ([f21f851](https://github.com/pablesite/moneyplanner-saas/commit/f21f85172e1a66ff829026e069fc310fcec2daee))
+
 ## [0.25.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.24.1...moneyplanner-saas-v0.25.0) (2026-06-23)
 
 
