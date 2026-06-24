@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.26.0...moneyplanner-saas-v0.27.0) (2026-06-24)
+
+
+### Features
+
+* **frontend:** rediseño UX de Contabilidad para móvil ([34088ce](https://github.com/pablesite/moneyplanner-saas/commit/34088ceb60a89ce087fcc9c87c4a7cda48e6e541))
+
 ## [0.26.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.25.0...moneyplanner-saas-v0.26.0) (2026-06-24)
 
 
