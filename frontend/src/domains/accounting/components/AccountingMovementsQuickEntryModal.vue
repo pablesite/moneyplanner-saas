@@ -101,12 +101,42 @@ const liabilityGroups = computed(() =>
 );
 
 type MovementTypeOption = { value: string; label: string };
-const commonTypeOptions = computed<MovementTypeOption[]>(() =>
-  (props.page.quickMovementTypeOptions as MovementTypeOption[]).slice(0, 2),
+const movementTypeOptions = computed<MovementTypeOption[]>(
+  () => props.page.quickMovementTypeOptions as MovementTypeOption[],
 );
-const advancedTypeOptions = computed<MovementTypeOption[]>(() =>
-  (props.page.quickMovementTypeOptions as MovementTypeOption[]).slice(2),
-);
+const QE_TYPE_GLYPHS: Record<string, string> = {
+  income: '↓',
+  expense: '↑',
+  transfer: '⇄',
+  adjustment: '±',
+  investment: '↗',
+  debt_payment: '↘',
+  revaluation: '↻',
+};
+function typeGlyph(value: string): string {
+  return QE_TYPE_GLYPHS[value] ?? '•';
+}
+function typeTone(value: string): 'positive' | 'negative' | 'neutral' {
+  if (value === 'income') return 'positive';
+  if (value === 'expense' || value === 'debt_payment') return 'negative';
+  return 'neutral';
+}
+const QE_TYPE_ORDER = [
+  'expense',
+  'income',
+  'transfer',
+  'investment',
+  'debt_payment',
+  'revaluation',
+  'adjustment',
+];
+const orderedTypeOptions = computed<MovementTypeOption[]>(() => {
+  const rank = (value: string) => {
+    const index = QE_TYPE_ORDER.indexOf(value);
+    return index === -1 ? QE_TYPE_ORDER.length : index;
+  };
+  return [...movementTypeOptions.value].sort((a, b) => rank(a.value) - rank(b.value));
+});
 
 const showValueDate = ref(false);
 const initialFormSnapshot = ref('');
@@ -151,7 +181,7 @@ const quickMainAccountGroups = computed(() => {
 });
 
 const revaluationSelectOptions = computed(() =>
-  accountSelectItems(revaluationGroups.value, 'Cuenta de inversión'),
+  accountSelectItems(revaluationGroups.value, 'Seleccionar'),
 );
 const investmentOriginSelectOptions = computed(() =>
   accountSelectItems(
@@ -181,11 +211,11 @@ const mainAccountSelectOptions = computed(() =>
     props.page.quickEntryForm.movement_type === 'adjustment'
       ? adjustmentGroups.value
       : quickMainAccountGroups.value,
-    mainAccountPlaceholder.value,
+    'Seleccionar',
   ),
 );
 const transferSelectOptions = computed(() =>
-  accountSelectItems(transferGroups.value, 'Cuenta destino'),
+  accountSelectItems(transferGroups.value, 'Seleccionar'),
 );
 const quickCategorySelectOptions = computed<ASelectItem[]>(() => [
   { value: '', label: 'Seleccionar' },
@@ -216,7 +246,7 @@ const confirmationSummary = computed(() => {
 <template>
   <BaseModal
     :open="page.showQuickEntryModal"
-    title="Registrar movimiento diario"
+    title="Registrar movimiento"
     variant="sheet"
     panel-class="max-w-[920px] dir-a dir-a-sheet a-mov-entry-sheet"
     @close="requestClose"
@@ -226,99 +256,46 @@ const confirmationSummary = computed(() => {
     </div>
 
     <form
-      class="ui-accounting-form ui-accounting-transaction-form ui-accounting-modal-form"
+      class="ui-accounting-form ui-accounting-transaction-form ui-accounting-modal-form qe-form"
       @submit.prevent="page.submitQuickEntryFromModal"
     >
-      <div class="ui-accounting-segmented">
-        <AButton
-          v-for="option in commonTypeOptions"
+      <div class="qe-types" role="group" aria-label="Tipo de movimiento">
+        <button
+          v-for="option in orderedTypeOptions"
           :key="option.value"
-          class="btn ui-accounting-segmented-btn"
-          :class="{
-            'ui-accounting-segmented-btn-active':
-              page.quickEntryForm.movement_type === option.value,
-          }"
+          type="button"
+          class="qe-type-chip"
+          :class="[
+            `qe-tone-${typeTone(option.value)}`,
+            { 'is-active': page.quickEntryForm.movement_type === option.value },
+          ]"
           @click="page.quickEntryForm.movement_type = option.value"
         >
-          {{ option.label }}
-        </AButton>
-        <div class="ui-accounting-segmented-divider" aria-hidden="true" />
-        <AButton
-          v-for="option in advancedTypeOptions"
-          :key="option.value"
-          class="btn ui-accounting-segmented-btn ui-accounting-segmented-btn-advanced"
-          :class="{
-            'ui-accounting-segmented-btn-active':
-              page.quickEntryForm.movement_type === option.value,
-          }"
-          @click="page.quickEntryForm.movement_type = option.value"
-        >
-          {{ option.label }}
-        </AButton>
+          <span class="qe-type-glyph" aria-hidden="true">{{ typeGlyph(option.value) }}</span>
+          <span>{{ option.label }}</span>
+        </button>
       </div>
 
-      <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
-        <label class="ui-accounting-field">
-          <span>Descripción</span>
+      <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
+        <label class="qe-amount-field">
+          <span>Nuevo valor del activo</span>
           <input
-            v-model="page.quickEntryForm.description"
-            class="input"
-            placeholder="Nomina marzo, compra semanal, mover a ahorro..."
+            v-model="page.quickEntryForm.revaluation_new_value"
+            class="input qe-amount"
+            inputmode="decimal"
+            placeholder="0,00"
             required
           />
         </label>
 
         <label class="ui-accounting-field">
-          <span>Titularidad</span>
-          <ASelect
-            v-model="page.quickEntryForm.ownership_id"
-            class="select"
-            :options="page.ownershipOptions"
-            :searchable="false"
-          />
-        </label>
-
-        <label class="ui-accounting-field">
-          <span>Fecha contabilización</span>
-          <input v-model="page.quickEntryForm.booking_date" type="date" class="input" required />
-        </label>
-      </div>
-
-      <div class="ui-accounting-value-date-row">
-        <AButton
-          v-if="!showValueDate"
-          class="ui-accounting-value-date-toggle"
-          @click="showValueDate = true"
-        >
-          Fecha valor diferente
-        </AButton>
-        <label v-else class="ui-accounting-field">
-          <span>Fecha valor</span>
-          <div class="ui-accounting-value-date-input-row">
-            <input v-model="page.quickEntryForm.value_date" type="date" class="input" required />
-            <AButton class="ui-accounting-value-date-close" @click="showValueDate = false">
-              Misma fecha
-            </AButton>
-          </div>
-        </label>
-      </div>
-
-      <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
+          <span>Cuenta de inversión</span>
           <ASelect
             v-model="page.quickEntryForm.account_id"
             class="select"
             :options="revaluationSelectOptions"
           />
-
-          <input
-            v-model="page.quickEntryForm.revaluation_new_value"
-            class="input"
-            inputmode="decimal"
-            placeholder="Nuevo valor total del activo"
-            required
-          />
-        </div>
+        </label>
 
         <p class="ui-accounting-balance-feedback">
           <template v-if="page.revaluationCurrentBalance != null">
@@ -345,38 +322,61 @@ const confirmationSummary = computed(() => {
       </template>
 
       <template v-else-if="page.quickEntryForm.movement_type === 'investment'">
-        <div class="ui-accounting-segmented">
-          <AButton
-            class="ui-accounting-segmented-btn"
-            :class="{
-              'ui-accounting-segmented-btn-active':
-                page.quickEntryForm.investment_direction === 'inflow',
-            }"
+        <div class="qe-subtypes" role="group" aria-label="Dirección de la inversión">
+          <button
+            type="button"
+            class="qe-subtype"
+            :class="{ 'is-active': page.quickEntryForm.investment_direction === 'inflow' }"
             @click="page.quickEntryForm.investment_direction = 'inflow'"
           >
             Aporte
-          </AButton>
-          <AButton
-            class="ui-accounting-segmented-btn"
-            :class="{
-              'ui-accounting-segmented-btn-active':
-                page.quickEntryForm.investment_direction === 'reinvestment',
-            }"
+          </button>
+          <button
+            type="button"
+            class="qe-subtype"
+            :class="{ 'is-active': page.quickEntryForm.investment_direction === 'reinvestment' }"
             @click="page.quickEntryForm.investment_direction = 'reinvestment'"
           >
-            Reinversion
-          </AButton>
-          <AButton
-            class="ui-accounting-segmented-btn"
-            :class="{
-              'ui-accounting-segmented-btn-active':
-                page.quickEntryForm.investment_direction === 'outflow',
-            }"
+            Reinversión
+          </button>
+          <button
+            type="button"
+            class="qe-subtype"
+            :class="{ 'is-active': page.quickEntryForm.investment_direction === 'outflow' }"
             @click="page.quickEntryForm.investment_direction = 'outflow'"
           >
             Retirada
-          </AButton>
+          </button>
         </div>
+
+        <label class="qe-amount-field">
+          <span
+            >Importe{{
+              page.quickInvestmentOriginCurrency ? ` (${page.quickInvestmentOriginCurrency})` : ''
+            }}</span
+          >
+          <input
+            v-model="page.quickEntryForm.amount"
+            class="input qe-amount"
+            inputmode="decimal"
+            placeholder="0,00"
+            required
+          />
+        </label>
+        <label v-if="page.quickInvestmentIsCrossCurrency" class="ui-accounting-field">
+          <span
+            >Importe destino ({{
+              page.quickInvestmentDestinationCurrency || 'moneda destino'
+            }})</span
+          >
+          <input
+            v-model="page.quickEntryForm.destination_amount"
+            class="input"
+            inputmode="decimal"
+            placeholder="0,00"
+            required
+          />
+        </label>
 
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
           <label class="ui-accounting-field">
@@ -408,40 +408,43 @@ const confirmationSummary = computed(() => {
           </label>
         </div>
 
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
-          <input
-            v-model="page.quickEntryForm.amount"
-            class="input"
-            inputmode="decimal"
-            :placeholder="`Importe${page.quickInvestmentOriginCurrency ? ` (${page.quickInvestmentOriginCurrency})` : ''}`"
-            required
-          />
-          <input
-            v-if="page.quickInvestmentIsCrossCurrency"
-            v-model="page.quickEntryForm.destination_amount"
-            class="input"
-            inputmode="decimal"
-            :placeholder="`Importe destino (${page.quickInvestmentDestinationCurrency || 'moneda destino'})`"
-            required
-          />
-          <template v-if="page.quickEntryForm.investment_direction === 'outflow'">
+        <div
+          v-if="page.quickEntryForm.investment_direction === 'outflow'"
+          class="ui-accounting-form-grid ui-accounting-form-grid-wide"
+        >
+          <label class="ui-accounting-field">
+            <span>Coste de adquisición (opcional)</span>
             <input
               v-model="page.quickEntryForm.realized_cost_basis"
               class="input"
               inputmode="decimal"
-              placeholder="Coste de adquisición (opcional)"
+              placeholder="0,00"
             />
+          </label>
+          <label class="ui-accounting-field">
+            <span>Ganancia/pérdida realizada (opcional)</span>
             <input
               v-model="page.quickEntryForm.realized_gain_loss"
               class="input"
               inputmode="decimal"
-              placeholder="Ganancia/pérdida realizada (opcional)"
+              placeholder="0,00"
             />
-          </template>
+          </label>
         </div>
       </template>
 
       <template v-else-if="page.quickEntryForm.movement_type === 'debt_payment'">
+        <label class="qe-amount-field">
+          <span>Total pagado</span>
+          <input
+            v-model="page.quickEntryForm.amount"
+            class="input qe-amount"
+            inputmode="decimal"
+            placeholder="0,00"
+            required
+          />
+        </label>
+
         <div class="ui-accounting-form-grid ui-accounting-form-grid-2col">
           <label class="ui-accounting-field">
             <span>Cuenta de liquidez</span>
@@ -463,19 +466,9 @@ const confirmationSummary = computed(() => {
 
         <div class="ui-accounting-debt-block">
           <p class="ui-accounting-debt-hint">
-            Informa dos de los tres campos — el tercero se calcula automáticamente.
+            Indica el total y una de las dos partidas; la otra se calcula automáticamente.
           </p>
-          <div class="ui-accounting-form-grid">
-            <label class="ui-accounting-field">
-              <span>Total pagado</span>
-              <input
-                v-model="page.quickEntryForm.amount"
-                class="input"
-                inputmode="decimal"
-                placeholder="Total cargado en cuenta"
-                required
-              />
-            </label>
+          <div class="ui-accounting-form-grid ui-accounting-form-grid-2col">
             <label class="ui-accounting-field">
               <span>Principal amortizado</span>
               <input
@@ -498,45 +491,48 @@ const confirmationSummary = computed(() => {
         </div>
       </template>
 
-      <div
-        v-else
-        class="ui-accounting-form-grid"
-        :class="
-          page.quickEntryForm.movement_type === 'transfer'
-            ? 'ui-accounting-form-grid-wide'
-            : 'ui-accounting-form-grid-edit-simple'
-        "
-      >
-        <ASelect
-          v-model="page.quickEntryForm.account_id"
-          class="select"
-          :options="mainAccountSelectOptions"
-        />
+      <template v-else>
+        <label class="qe-amount-field">
+          <span>{{
+            page.quickEntryForm.movement_type === 'adjustment' ? 'Saldo final objetivo' : 'Importe'
+          }}</span>
+          <input
+            v-model="page.quickEntryForm.amount"
+            class="input qe-amount"
+            inputmode="decimal"
+            placeholder="0,00"
+            required
+          />
+        </label>
 
-        <input
-          v-model="page.quickEntryForm.amount"
-          class="input"
-          inputmode="decimal"
-          :placeholder="
-            page.quickEntryForm.movement_type === 'adjustment' ? 'Saldo final objetivo' : '0.00'
-          "
-          required
-        />
-        <input
-          v-if="page.quickTransferIsCrossCurrency"
-          v-model="page.quickEntryForm.destination_amount"
-          class="input"
-          inputmode="decimal"
-          :placeholder="`Importe destino (${page.quickTransferDestinationCurrency})`"
-        />
+        <label v-if="page.quickTransferIsCrossCurrency" class="ui-accounting-field">
+          <span>Importe destino ({{ page.quickTransferDestinationCurrency }})</span>
+          <input
+            v-model="page.quickEntryForm.destination_amount"
+            class="input"
+            inputmode="decimal"
+            placeholder="0,00"
+          />
+        </label>
 
-        <ASelect
-          v-if="page.quickEntryForm.movement_type === 'transfer'"
-          v-model="page.quickEntryForm.counterparty_account_id"
-          class="select"
-          :options="transferSelectOptions"
-        />
-      </div>
+        <label class="ui-accounting-field">
+          <span>{{ mainAccountPlaceholder }}</span>
+          <ASelect
+            v-model="page.quickEntryForm.account_id"
+            class="select"
+            :options="mainAccountSelectOptions"
+          />
+        </label>
+
+        <label v-if="page.quickEntryForm.movement_type === 'transfer'" class="ui-accounting-field">
+          <span>Cuenta destino</span>
+          <ASelect
+            v-model="page.quickEntryForm.counterparty_account_id"
+            class="select"
+            :options="transferSelectOptions"
+          />
+        </label>
+      </template>
       <p
         v-if="page.quickEntryForm.movement_type === 'adjustment'"
         class="ui-accounting-balance-feedback"
@@ -568,6 +564,16 @@ const confirmationSummary = computed(() => {
         </template>
       </p>
 
+      <label class="ui-accounting-field">
+        <span>Concepto</span>
+        <input
+          v-model="page.quickEntryForm.description"
+          class="input"
+          placeholder="Nómina marzo, compra semanal, mover a ahorro..."
+          required
+        />
+      </label>
+
       <div
         v-if="page.quickEntryNeedsClassification"
         class="ui-accounting-form-grid ui-accounting-form-grid-wide"
@@ -594,47 +600,75 @@ const confirmationSummary = computed(() => {
         </label>
       </div>
 
-      <textarea
-        v-model="page.quickEntryForm.notes"
-        class="textarea"
-        rows="2"
-        placeholder="Nota opcional para el movimiento"
-      />
+      <details class="qe-more">
+        <summary class="qe-more-summary">Más detalles (titularidad, fecha, nota)</summary>
+        <div class="qe-more-body">
+          <label class="ui-accounting-field">
+            <span>Titularidad</span>
+            <ASelect
+              v-model="page.quickEntryForm.ownership_id"
+              class="select"
+              :options="page.ownershipOptions"
+              :searchable="false"
+            />
+          </label>
 
-      <p
-        v-if="!page.quickEntryReady && !page.transactionCreationLoading"
-        class="ui-accounting-inline-note"
-      >
-        Completa descripción, fechas, importe y cuenta. Algunos tipos requieren campos adicionales.
-      </p>
+          <label class="ui-accounting-field">
+            <span>Fecha contabilización</span>
+            <input v-model="page.quickEntryForm.booking_date" type="date" class="input" required />
+          </label>
 
-      <div v-if="isComplexMovement" class="a-mov-entry-confirmation" aria-live="polite">
-        <span>Asiento que se registrará</span>
-        <strong>{{ confirmationSummary }}</strong>
-        <small>Comprueba origen, destino e importe antes de guardar.</small>
-      </div>
+          <div class="ui-accounting-value-date-row">
+            <AButton
+              v-if="!showValueDate"
+              class="ui-accounting-value-date-toggle"
+              @click="showValueDate = true"
+            >
+              Fecha valor diferente
+            </AButton>
+            <label v-else class="ui-accounting-field">
+              <span>Fecha valor</span>
+              <div class="ui-accounting-value-date-input-row">
+                <input
+                  v-model="page.quickEntryForm.value_date"
+                  type="date"
+                  class="input"
+                  required
+                />
+                <AButton class="ui-accounting-value-date-close" @click="showValueDate = false">
+                  Misma fecha
+                </AButton>
+              </div>
+            </label>
+          </div>
 
-      <div class="ui-accounting-submit-row">
-        <p class="subtle">
-          {{
-            page.quickEntryForm.movement_type === 'transfer'
-              ? page.quickTransferIsCrossCurrency
-                ? 'Transferencia multimoneda: informa importe origen e importe destino segun ejecucion real.'
-                : 'Crea un asiento balanceado entre dos cuentas de liquidez.'
-              : page.quickEntryForm.movement_type === 'investment'
-                ? page.quickInvestmentIsCrossCurrency
-                  ? 'Inversión multimoneda: informa importe origen e importe destino según ejecución real.'
-                  : page.quickEntryForm.investment_direction === 'reinvestment'
-                    ? 'La reinversión mueve capital entre dos cuentas de inversión sin usar cuenta puente.'
-                    : page.quickEntryForm.investment_direction === 'outflow'
-                      ? 'La desinversión devuelve liquidez al activo de caja.'
-                      : 'El aporte registra el alta en la cuenta de inversión.'
-                : 'Las partidas contables se generan automáticamente.'
-          }}
+          <label class="ui-accounting-field">
+            <span>Nota</span>
+            <textarea
+              v-model="page.quickEntryForm.notes"
+              class="textarea"
+              rows="2"
+              placeholder="Nota opcional para el movimiento"
+            />
+          </label>
+        </div>
+      </details>
+
+      <div class="qe-footer">
+        <div v-if="isComplexMovement" class="a-mov-entry-confirmation" aria-live="polite">
+          <span>Asiento que se registrará</span>
+          <strong>{{ confirmationSummary }}</strong>
+        </div>
+        <p
+          v-else-if="!page.quickEntryReady && !page.transactionCreationLoading"
+          class="ui-accounting-inline-note qe-footer-note"
+        >
+          Completa importe, cuenta y concepto.
         </p>
         <AButton
           variant="primary"
           type="submit"
+          block
           :disabled="page.transactionCreationLoading || !page.quickEntryReady"
         >
           {{ page.transactionCreationLoading ? 'Guardando...' : 'Registrar movimiento' }}

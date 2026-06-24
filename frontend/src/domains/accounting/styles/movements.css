@@ -488,6 +488,207 @@
   font-size: 0.84rem;
 }
 
+/* -- Quick entry redesign (amount-first, mobile) --------------- */
+.qe-types {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  /* slight bleed so chips can scroll flush to the modal padding edges */
+  margin: 0 -2px;
+  padding: 2px;
+}
+
+.qe-types::-webkit-scrollbar {
+  display: none;
+}
+
+.qe-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  padding: 8px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+.qe-type-chip:hover {
+  border-color: var(--accent-line);
+  color: var(--text);
+}
+
+.qe-type-chip.is-active {
+  font-weight: 600;
+}
+
+/* Active chip adopts the tone the movement shows in the ledger. */
+.qe-type-chip.is-active.qe-tone-positive {
+  border-color: var(--pos);
+  color: var(--pos);
+  background: color-mix(in oklab, var(--pos) 14%, transparent);
+}
+
+.qe-type-chip.is-active.qe-tone-negative {
+  border-color: var(--neg);
+  color: var(--neg);
+  background: color-mix(in oklab, var(--neg) 14%, transparent);
+}
+
+.qe-type-chip.is-active.qe-tone-neutral {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: var(--hover);
+}
+
+.qe-type-glyph {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.qe-subtypes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qe-subtype {
+  padding: 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.qe-subtype.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Hero amount */
+.qe-amount-field {
+  display: grid;
+  gap: 6px;
+}
+
+.qe-amount-field > span {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.66);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.qe-amount.input {
+  font-size: 1.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  padding: 10px 14px;
+}
+
+/* Compact inline fields: label left, control right (selects, dates, single inputs). */
+.qe-form {
+  gap: 12px;
+}
+
+/* `.dir-a-sheet` specificity: the sheet base sets these fields to stacked grid with
+   14px vertical padding; we need to win that to lay them out inline + compact. */
+.dir-a-sheet .qe-form .ui-accounting-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.dir-a-sheet .qe-form .ui-accounting-field > span {
+  flex: 0 0 38%;
+  max-width: 132px;
+}
+
+.dir-a-sheet .qe-form .ui-accounting-field > .select,
+.dir-a-sheet .qe-form .ui-accounting-field > .input,
+.dir-a-sheet .qe-form .ui-accounting-field > .ui-accounting-value-date-input-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Multi-line fields (notes) stay stacked. */
+.dir-a-sheet .qe-form .ui-accounting-field:has(.textarea) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.dir-a-sheet .qe-form .ui-accounting-field:has(.textarea) > span {
+  flex: none;
+  max-width: none;
+}
+
+.qe-form .ui-accounting-form-grid,
+.qe-form .ui-accounting-form-grid-wide,
+.qe-form .ui-accounting-form-grid-2col {
+  gap: 12px;
+}
+
+/* "Más detalles" disclosure */
+.qe-more {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.qe-more-summary {
+  padding: 12px 2px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.qe-more-summary:hover {
+  color: var(--text);
+}
+
+.qe-more-body {
+  display: grid;
+  gap: 14px;
+  padding: 4px 0 8px;
+}
+
+/* Sticky footer bleeding to the modal body edges (body padding: 8px 24px 20px). */
+.qe-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+  margin: 6px -24px -20px;
+  padding: 14px 24px calc(18px + env(safe-area-inset-bottom));
+  background: rgb(12 13 16 / 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+}
+
+.qe-footer-note {
+  margin: 0;
+}
+
 /* -- Responsive ------------------------------------------------ */
 @media (max-width: 900px) {
 }
