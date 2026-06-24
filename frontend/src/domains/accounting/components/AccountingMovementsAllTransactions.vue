@@ -114,6 +114,14 @@ function formattedRowAmount(row: (typeof movementRows.value)[number]['presentati
     ? state.formatSignedMoney(row.amount, row.currency)
     : state.formatMoney(row.amount, row.currency);
 }
+
+const selectedTransactionPresentation = computed(() => {
+  if (!selectedTransaction.value) return null;
+  return (
+    movementRows.value.find((r) => r.transaction.id === selectedTransaction.value!.id)
+      ?.presentation ?? null
+  );
+});
 function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'muted' {
   if (tx.activity_kind === 'income') return 'asset';
   if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
@@ -407,6 +415,13 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
       @close="selectedTransaction = null"
     >
       <div v-if="selectedTransaction" class="a-mov-detail">
+        <div
+          v-if="selectedTransactionPresentation"
+          class="a-mov-detail-amount mono"
+          :class="`is-${selectedTransactionPresentation.tone}`"
+        >
+          {{ formattedRowAmount(selectedTransactionPresentation) }}
+        </div>
         <div class="a-mov-detail-summary">
           <div>
             <span>Fecha contable</span

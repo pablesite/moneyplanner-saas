@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
-import { computed, ref, watch, type PropType } from 'vue';
+import { computed, nextTick, onMounted, ref, watch, type PropType } from 'vue';
 import { AButton, ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
 
 const props = defineProps({
@@ -77,7 +77,7 @@ function accountSelectItems(
       group: group.label,
       options: group.accounts.map((account) => ({
         value: account.id,
-        label: `${accountLabel(account)} / ${account.currency}`,
+        label: accountLabel(account),
       })),
     })),
   ];
@@ -116,10 +116,8 @@ const QE_TYPE_GLYPHS: Record<string, string> = {
 function typeGlyph(value: string): string {
   return QE_TYPE_GLYPHS[value] ?? '•';
 }
-function typeTone(value: string): 'positive' | 'negative' | 'neutral' {
-  if (value === 'income') return 'positive';
-  if (value === 'expense' || value === 'debt_payment') return 'negative';
-  return 'neutral';
+function typeTone(value: string): string {
+  return value;
 }
 const QE_TYPE_ORDER = [
   'expense',
@@ -202,9 +200,8 @@ const liabilitySelectOptions = computed(() =>
 );
 const mainAccountPlaceholder = computed(() => {
   const type = props.page.quickEntryForm.movement_type;
-  if (type === 'adjustment') return 'Cuenta a conciliar';
-  if (type === 'income' || type === 'expense') return 'Cuenta contable';
-  return 'Cuenta de liquidez';
+  if (type === 'adjustment') return 'A conciliar';
+  return 'Cuenta';
 });
 const mainAccountSelectOptions = computed(() =>
   accountSelectItems(
@@ -228,6 +225,13 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
 const isComplexMovement = computed(() =>
   ['transfer', 'investment', 'debt_payment'].includes(props.page.quickEntryForm.movement_type),
 );
+
+const quickEntryCurrency = computed(() => {
+  const accountId = props.page.quickEntryForm.account_id;
+  if (!accountId) return null;
+  const account = (props.page.accounts as AccountOption[]).find((a) => a.id === accountId);
+  return account?.currency ?? null;
+});
 const confirmationSummary = computed(() => {
   if (!isComplexMovement.value) return '';
   const form = props.page.quickEntryForm;
@@ -241,6 +245,76 @@ const confirmationSummary = computed(() => {
   const amount = form.amount || '—';
   return `${accountLabel(origin ?? ({ name: 'Cuenta pendiente' } as AccountOption))} → ${accountLabel(destination ?? ({ name: 'Destino pendiente' } as AccountOption))} · ${amount}`;
 });
+
+// Chips carousel arrow navigation (desktop only — mobile uses touch scroll)
+const chipsRef = ref<HTMLElement | null>(null);
+const chipsCanScrollLeft = ref(false);
+const chipsCanScrollRight = ref(false);
+
+function updateChipsArrows() {
+  const el = chipsRef.value;
+  if (!el) return;
+  chipsCanScrollLeft.value = el.scrollLeft > 4;
+  chipsCanScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 4;
+}
+
+function scrollChips(direction: 1 | -1) {
+  const el = chipsRef.value;
+  if (!el) return;
+  el.scrollBy({ left: direction * Math.round(el.clientWidth * 0.7), behavior: 'smooth' });
+  setTimeout(updateChipsArrows, 320);
+}
+
+onMounted(() => nextTick(updateChipsArrows));
+watch(
+  () => props.page.showQuickEntryModal,
+  (open) => {
+    if (open) nextTick(updateChipsArrows);
+    if (!open) editingClassification.value = false;
+  },
+);
+
+const editingClassification = ref(false);
+
+const selectedCategoryLabel = computed(() => {
+  const key = props.page.quickEntryForm.category_key;
+  if (!key) return null;
+  const item = (quickCategorySelectOptions.value as any[]).find((o) => o.value === key);
+  return item?.label ?? null;
+});
+
+const selectedSubcategoryLabel = computed(() => {
+  const key = props.page.quickEntryForm.subcategory_key;
+  if (!key) return null;
+  const item = (quickSubcategorySelectOptions.value as any[]).find((o) => o.value === key);
+  return item?.label ?? null;
+});
+
+const classificationSummary = computed(() =>
+  selectedCategoryLabel.value && selectedSubcategoryLabel.value
+    ? `${selectedCategoryLabel.value} / ${selectedSubcategoryLabel.value}`
+    : null,
+);
+
+watch(
+  () => props.page.quickEntryForm.subcategory_key,
+  (key: string) => {
+    if (key) editingClassification.value = false;
+  },
+);
+
+function resetClassification(): void {
+  props.page.quickEntryForm.category_key = '';
+  props.page.quickEntryForm.subcategory_key = '';
+  editingClassification.value = false;
+}
+
+const quickEntryHint = computed(() => {
+  const type = props.page.quickEntryForm.movement_type;
+  return type === 'income' || type === 'expense'
+    ? 'Completa importe, cuenta, concepto y categoría.'
+    : 'Completa importe, cuenta y concepto.';
+});
 </script>
 
 <template>
@@ -248,7 +322,7 @@ const confirmationSummary = computed(() => {
     :open="page.showQuickEntryModal"
     title="Registrar movimiento"
     variant="sheet"
-    panel-class="max-w-[920px] dir-a dir-a-sheet a-mov-entry-sheet"
+    panel-class="max-w-[540px] dir-a dir-a-sheet a-mov-entry-sheet"
     @close="requestClose"
   >
     <div v-if="!page.liquidityAccounts.length" class="ui-accounting-inline-note">
@@ -259,25 +333,53 @@ const confirmationSummary = computed(() => {
       class="ui-accounting-form ui-accounting-transaction-form ui-accounting-modal-form qe-form"
       @submit.prevent="page.submitQuickEntryFromModal"
     >
-      <div class="qe-types" role="group" aria-label="Tipo de movimiento">
+      <div class="qe-types-wrap">
         <button
-          v-for="option in orderedTypeOptions"
-          :key="option.value"
           type="button"
-          class="qe-type-chip"
-          :class="[
-            `qe-tone-${typeTone(option.value)}`,
-            { 'is-active': page.quickEntryForm.movement_type === option.value },
-          ]"
-          @click="page.quickEntryForm.movement_type = option.value"
+          class="qe-types-arrow"
+          :disabled="!chipsCanScrollLeft"
+          aria-label="Ver tipos anteriores"
+          @click="scrollChips(-1)"
         >
-          <span class="qe-type-glyph" aria-hidden="true">{{ typeGlyph(option.value) }}</span>
-          <span>{{ option.label }}</span>
+          ‹
+        </button>
+
+        <div
+          ref="chipsRef"
+          class="qe-types"
+          role="group"
+          aria-label="Tipo de movimiento"
+          @scroll.passive="updateChipsArrows"
+        >
+          <button
+            v-for="option in orderedTypeOptions"
+            :key="option.value"
+            type="button"
+            class="qe-type-chip"
+            :class="[
+              `qe-tone-${typeTone(option.value)}`,
+              { 'is-active': page.quickEntryForm.movement_type === option.value },
+            ]"
+            @click="page.quickEntryForm.movement_type = option.value"
+          >
+            <span class="qe-type-glyph" aria-hidden="true">{{ typeGlyph(option.value) }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="qe-types-arrow"
+          :disabled="!chipsCanScrollRight"
+          aria-label="Ver más tipos"
+          @click="scrollChips(1)"
+        >
+          ›
         </button>
       </div>
 
       <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
-        <label class="qe-amount-field">
+        <label class="qe-amount-field ui-accounting-field">
           <span>Nuevo valor del activo</span>
           <input
             v-model="page.quickEntryForm.revaluation_new_value"
@@ -349,7 +451,7 @@ const confirmationSummary = computed(() => {
           </button>
         </div>
 
-        <label class="qe-amount-field">
+        <label class="qe-amount-field ui-accounting-field">
           <span
             >Importe{{
               page.quickInvestmentOriginCurrency ? ` (${page.quickInvestmentOriginCurrency})` : ''
@@ -434,7 +536,7 @@ const confirmationSummary = computed(() => {
       </template>
 
       <template v-else-if="page.quickEntryForm.movement_type === 'debt_payment'">
-        <label class="qe-amount-field">
+        <label class="qe-amount-field ui-accounting-field">
           <span>Total pagado</span>
           <input
             v-model="page.quickEntryForm.amount"
@@ -492,9 +594,13 @@ const confirmationSummary = computed(() => {
       </template>
 
       <template v-else>
-        <label class="qe-amount-field">
+        <label class="qe-amount-field ui-accounting-field">
           <span>{{
-            page.quickEntryForm.movement_type === 'adjustment' ? 'Saldo final objetivo' : 'Importe'
+            page.quickEntryForm.movement_type === 'adjustment'
+              ? 'Saldo final objetivo'
+              : quickEntryCurrency
+                ? `Importe (${quickEntryCurrency})`
+                : 'Importe'
           }}</span>
           <input
             v-model="page.quickEntryForm.amount"
@@ -512,6 +618,16 @@ const confirmationSummary = computed(() => {
             class="input"
             inputmode="decimal"
             placeholder="0,00"
+          />
+        </label>
+
+        <label class="ui-accounting-field">
+          <span>Concepto</span>
+          <input
+            v-model="page.quickEntryForm.description"
+            class="input"
+            placeholder="¿Qué fue este movimiento?"
+            required
           />
         </label>
 
@@ -564,41 +680,70 @@ const confirmationSummary = computed(() => {
         </template>
       </p>
 
-      <label class="ui-accounting-field">
+      <label
+        v-if="
+          ['revaluation', 'investment', 'debt_payment'].includes(page.quickEntryForm.movement_type)
+        "
+        class="ui-accounting-field"
+      >
         <span>Concepto</span>
         <input
           v-model="page.quickEntryForm.description"
           class="input"
-          placeholder="Nómina marzo, compra semanal, mover a ahorro..."
+          placeholder="¿Qué fue este movimiento?"
           required
         />
       </label>
 
-      <div
-        v-if="page.quickEntryNeedsClassification"
-        class="ui-accounting-form-grid ui-accounting-form-grid-wide"
-      >
-        <label class="ui-accounting-field">
+      <template v-if="page.quickEntryNeedsClassification">
+        <div
+          v-if="classificationSummary && !editingClassification"
+          class="ui-accounting-field qe-classification-field"
+        >
           <span>Categoría</span>
-          <ASelect
-            v-model="page.quickEntryForm.category_key"
-            class="select"
-            :options="quickCategorySelectOptions"
-            :disabled="page.quickCategoryLocked"
-            :searchable="false"
-          />
-        </label>
+          <div class="qe-classification-chip">
+            <button
+              type="button"
+              class="qe-classification-value"
+              @click="editingClassification = true"
+            >
+              <span class="qe-classification-cat">{{ selectedCategoryLabel }}</span>
+              <span class="qe-classification-subcat">{{ selectedSubcategoryLabel }}</span>
+            </button>
+            <button
+              type="button"
+              class="qe-classification-clear"
+              aria-label="Limpiar categoría"
+              @click="resetClassification"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
 
-        <label class="ui-accounting-field">
-          <span>Subcategoría</span>
-          <ASelect
-            v-model="page.quickEntryForm.subcategory_key"
-            class="select"
-            :options="quickSubcategorySelectOptions"
-            :disabled="page.quickSubcategoryLocked"
-          />
-        </label>
-      </div>
+        <template v-else>
+          <label class="ui-accounting-field">
+            <span>Categoría</span>
+            <ASelect
+              v-model="page.quickEntryForm.category_key"
+              class="select"
+              :options="quickCategorySelectOptions"
+              :disabled="page.quickCategoryLocked"
+              :searchable="false"
+            />
+          </label>
+
+          <label v-if="page.quickEntryForm.category_key" class="ui-accounting-field">
+            <span>Subcategoría</span>
+            <ASelect
+              v-model="page.quickEntryForm.subcategory_key"
+              class="select"
+              :options="quickSubcategorySelectOptions"
+              :disabled="page.quickSubcategoryLocked"
+            />
+          </label>
+        </template>
+      </template>
 
       <details class="qe-more">
         <summary class="qe-more-summary">Más detalles (titularidad, fecha, nota)</summary>
@@ -613,19 +758,25 @@ const confirmationSummary = computed(() => {
             />
           </label>
 
-          <label class="ui-accounting-field">
-            <span>Fecha contabilización</span>
-            <input v-model="page.quickEntryForm.booking_date" type="date" class="input" required />
-          </label>
+          <div class="qe-date-block">
+            <label class="ui-accounting-field">
+              <span>Fecha</span>
+              <input
+                v-model="page.quickEntryForm.booking_date"
+                type="date"
+                class="input"
+                required
+              />
+            </label>
 
-          <div class="ui-accounting-value-date-row">
-            <AButton
-              v-if="!showValueDate"
-              class="ui-accounting-value-date-toggle"
-              @click="showValueDate = true"
-            >
-              Fecha valor diferente
-            </AButton>
+            <div v-if="!showValueDate" class="qe-value-date-hint">
+              <span class="qe-value-date-spacer" aria-hidden="true" />
+              <button type="button" class="qe-value-date-hint-btn" @click="showValueDate = true">
+                ↳ fecha valor
+                <span class="qe-value-date-equal">igual</span>
+              </button>
+            </div>
+
             <label v-else class="ui-accounting-field">
               <span>Fecha valor</span>
               <div class="ui-accounting-value-date-input-row">
@@ -635,9 +786,13 @@ const confirmationSummary = computed(() => {
                   class="input"
                   required
                 />
-                <AButton class="ui-accounting-value-date-close" @click="showValueDate = false">
-                  Misma fecha
-                </AButton>
+                <button
+                  type="button"
+                  class="ui-accounting-value-date-close"
+                  @click="showValueDate = false"
+                >
+                  ×
+                </button>
               </div>
             </label>
           </div>
@@ -663,7 +818,7 @@ const confirmationSummary = computed(() => {
           v-else-if="!page.quickEntryReady && !page.transactionCreationLoading"
           class="ui-accounting-inline-note qe-footer-note"
         >
-          Completa importe, cuenta y concepto.
+          {{ quickEntryHint }}
         </p>
         <AButton
           variant="primary"

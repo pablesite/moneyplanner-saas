@@ -1270,6 +1270,25 @@
   gap: 24px;
 }
 
+.a-mov-detail-amount {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.a-mov-detail-amount.is-positive {
+  color: var(--pos);
+}
+
+.a-mov-detail-amount.is-negative {
+  color: var(--neg);
+}
+
+.a-mov-detail-amount.is-neutral {
+  color: var(--muted);
+}
+
 .a-mov-detail-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

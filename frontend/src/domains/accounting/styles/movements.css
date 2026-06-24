@@ -135,7 +135,7 @@
   gap: 6px;
 }
 
-.ui-accounting-field span {
+.ui-accounting-field > span {
   font-size: 0.74rem;
   color: rgba(255, 255, 255, 0.66);
   text-transform: uppercase;
@@ -489,7 +489,16 @@
 }
 
 /* -- Quick entry redesign (amount-first, mobile) --------------- */
+.qe-types-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0; /* overrides default min-width:auto on grid items */
+}
+
 .qe-types {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
@@ -497,13 +506,50 @@
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
-  /* slight bleed so chips can scroll flush to the modal padding edges */
-  margin: 0 -2px;
-  padding: 2px;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  padding: 3px;
 }
 
 .qe-types::-webkit-scrollbar {
   display: none;
+}
+
+.qe-types-arrow {
+  display: none;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.12s,
+    border-color 0.12s;
+}
+
+.qe-types-arrow:not(:disabled):hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.qe-types-arrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+/* Only show arrows on mouse/pointer devices (desktop), not on touch */
+@media (pointer: fine) {
+  .qe-types-arrow {
+    display: flex;
+  }
 }
 
 .qe-type-chip {
@@ -536,23 +582,45 @@
   font-weight: 600;
 }
 
-/* Active chip adopts the tone the movement shows in the ledger. */
-.qe-type-chip.is-active.qe-tone-positive {
+/* Active chip: each movement type has its own semantic color. */
+.qe-type-chip.is-active.qe-tone-income {
   border-color: var(--pos);
   color: var(--pos);
   background: color-mix(in oklab, var(--pos) 14%, transparent);
 }
 
-.qe-type-chip.is-active.qe-tone-negative {
+.qe-type-chip.is-active.qe-tone-expense {
   border-color: var(--neg);
   color: var(--neg);
   background: color-mix(in oklab, var(--neg) 14%, transparent);
 }
 
-.qe-type-chip.is-active.qe-tone-neutral {
+.qe-type-chip.is-active.qe-tone-transfer,
+.qe-type-chip.is-active.qe-tone-adjustment {
   border-color: var(--line-strong);
   color: var(--text);
   background: var(--hover);
+}
+
+.qe-type-chip.is-active.qe-tone-investment {
+  --qe-c: oklch(0.72 0.14 240);
+  border-color: var(--qe-c);
+  color: var(--qe-c);
+  background: color-mix(in oklab, var(--qe-c) 14%, transparent);
+}
+
+.qe-type-chip.is-active.qe-tone-debt_payment {
+  --qe-c: oklch(0.76 0.17 50);
+  border-color: var(--qe-c);
+  color: var(--qe-c);
+  background: color-mix(in oklab, var(--qe-c) 14%, transparent);
+}
+
+.qe-type-chip.is-active.qe-tone-revaluation {
+  --qe-c: oklch(0.8 0.14 78);
+  border-color: var(--qe-c);
+  color: var(--qe-c);
+  background: color-mix(in oklab, var(--qe-c) 14%, transparent);
 }
 
 .qe-type-glyph {
@@ -578,9 +646,10 @@
 }
 
 .qe-subtype.is-active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
+  --qe-c: oklch(0.72 0.14 240);
+  border-color: var(--qe-c);
+  background: color-mix(in oklab, var(--qe-c) 14%, transparent);
+  color: var(--qe-c);
   font-weight: 600;
 }
 
@@ -617,6 +686,7 @@
   align-items: center;
   gap: 12px;
   padding: 7px 0;
+  min-width: 0; /* grid item: prevent expanding beyond the form container */
 }
 
 .dir-a-sheet .qe-form .ui-accounting-field > span {
@@ -626,9 +696,35 @@
 
 .dir-a-sheet .qe-form .ui-accounting-field > .select,
 .dir-a-sheet .qe-form .ui-accounting-field > .input,
-.dir-a-sheet .qe-form .ui-accounting-field > .ui-accounting-value-date-input-row {
+.dir-a-sheet .qe-form .ui-accounting-field > .ui-accounting-value-date-input-row,
+.dir-a-sheet .qe-form .ui-accounting-field > .qe-classification-chip {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Selects look like plain value text in this layout — no dropdown chrome at rest.
+   Explicit color on both trigger and inner label span: Tailwind Preflight sets
+   color:inherit on buttons and spans, and the label+context chain can break the
+   inheritance on mobile. Setting it on the span that actually renders the text is
+   the surest fix.
+   The focus state (box-shadow underline from design-system.css) still signals interactivity. */
+.dir-a-sheet .qe-form .a-select-trigger {
+  width: 100%;
+  color: var(--text);
+}
+
+.dir-a-sheet .qe-form .a-select-label {
+  color: var(--text);
+}
+
+.dir-a-sheet .qe-form .a-select-caret {
+  display: none;
+}
+
+/* Prevent the modal body from scrolling horizontally on mobile.
+   overflow-y:auto (set by BaseModal) implicitly makes overflow-x:auto per CSS spec. */
+.a-mov-entry-sheet .ui-modal-body {
+  overflow-x: hidden;
 }
 
 /* Multi-line fields (notes) stay stacked. */
@@ -646,6 +742,54 @@
 .qe-form .ui-accounting-form-grid-wide,
 .qe-form .ui-accounting-form-grid-2col {
   gap: 12px;
+}
+
+/* Integrated date block: booking date + value date coupled tightly */
+.qe-date-block {
+  display: grid;
+  gap: 3px;
+}
+
+/* Mirrors the flex layout of ui-accounting-field so the hint text
+   aligns with the input column, not the label column */
+.qe-value-date-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qe-value-date-spacer {
+  flex: 0 0 38%;
+  max-width: 132px;
+}
+
+.qe-value-date-hint-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 3px 0;
+  font: inherit;
+  font-size: 0.77rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.12s;
+}
+
+.qe-value-date-hint-btn:hover {
+  color: var(--text);
+}
+
+.qe-value-date-equal {
+  padding: 1px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
 }
 
 /* "Más detalles" disclosure */
@@ -687,6 +831,69 @@
 
 .qe-footer-note {
   margin: 0;
+}
+
+/* Classification summary: two-line chip — category (muted, small) above subcategory (main) */
+.dir-a-sheet .qe-form .qe-classification-field {
+  align-items: flex-start;
+}
+
+.qe-classification-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.qe-classification-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 400;
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.qe-classification-cat {
+  font-size: 0.76rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qe-classification-subcat {
+  font-size: 15px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qe-classification-clear {
+  flex-shrink: 0;
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.55;
+  transition: opacity 0.12s;
+}
+
+.qe-classification-clear:hover {
+  opacity: 1;
 }
 
 /* -- Responsive ------------------------------------------------ */
