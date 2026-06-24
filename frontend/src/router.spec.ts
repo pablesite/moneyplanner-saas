@@ -34,6 +34,9 @@ describe('router (core)', () => {
           expect.objectContaining({ path: '/presupuesto' }),
           expect.objectContaining({ path: '/' }),
           expect.objectContaining({ path: '/data' }),
+          expect.objectContaining({ path: '/contabilidad' }),
+          expect.objectContaining({ path: '/contabilidad/cuentas' }),
+          expect.objectContaining({ path: '/movimientos' }),
         ]),
       }),
     );

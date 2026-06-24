@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   NetWorthDonut,
   NetWorthEvolutionChart,
@@ -32,6 +33,12 @@ import {
 } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
 import { toApiErrorMessage } from '@/lib/errors';
+import { coreAccountingApi } from '@/domains/accounting/api';
+import type { LedgerDailyBalanceSeriesRow } from '@/domains/accounting/models';
+import { coreNetWorthApi } from '@/domains/net-worth/api';
+
+const route = useRoute();
+const router = useRouter();
 
 const {
   store,
@@ -338,6 +345,43 @@ const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | '5a' | 'all'>('5a
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
 const timelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
 const activeTimelinePreset = computed(() => selectedTimelinePreset.value);
+type TimelineScope = 'total' | 'operational' | 'custom';
+type TimelineGranularity = 'monthly' | 'daily';
+type ScopedPosition = {
+  key: string;
+  type: 'asset' | 'liability';
+  id: number;
+  name: string;
+  category: string;
+  trackingMode: string;
+  accountId: number | null;
+  ownershipRef: number | null;
+};
+type ScopeChartPoint = {
+  date: string;
+  shortLabel: string;
+  fullLabel: string;
+  value: number;
+};
+
+const timelineScope = ref<TimelineScope>(
+  ['operational', 'custom'].includes(String(route.query.scope))
+    ? (String(route.query.scope) as TimelineScope)
+    : 'total',
+);
+const timelineGranularity = ref<TimelineGranularity>(
+  route.query.granularity === 'daily' ? 'daily' : 'monthly',
+);
+const customTimelinePositionKeys = ref<string[]>(
+  String(route.query.positions ?? '')
+    .split(',')
+    .filter(Boolean),
+);
+const showTimelineScopeModal = ref(false);
+const scopedTimelineLoading = ref(false);
+const scopedTimelineError = ref<string | null>(null);
+const scopedMonthlyPoints = ref<ScopeChartPoint[]>([]);
+const dailyBalanceRows = ref<LedgerDailyBalanceSeriesRow[]>([]);
 
 type TimelinePoint = {
   date: string;
@@ -706,7 +750,6 @@ const {
   visibleTimelineRows,
   timelineWindow,
   timelineChartPoints,
-  timelineRangeCaption,
   latestTimelineChartPoint,
   timelineSummaryLabel,
   displayedTimelineSeriesColor,
@@ -776,6 +819,261 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
 
 const currencySelectOptions = computed<ASelectItem[]>(() =>
   currencies.map((currency) => ({ value: currency.value, label: currency.label })),
+);
+
+const allScopedPositions = computed<ScopedPosition[]>(() => [
+  ...store.assets
+    .filter((item) => item.is_active !== false && matchesOwnershipFilter(item.ownership_ref))
+    .map((item) => ({
+      key: `asset:${item.id}`,
+      type: 'asset' as const,
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      trackingMode: item.tracking_mode,
+      accountId: item.accounting_account_id,
+      ownershipRef: item.ownership_ref ?? null,
+    })),
+  ...store.liabilities
+    .filter((item) => item.is_active !== false && matchesOwnershipFilter(item.ownership_ref))
+    .map((item) => ({
+      key: `liability:${item.id}`,
+      type: 'liability' as const,
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      trackingMode: item.tracking_mode,
+      accountId: item.accounting_account_id,
+      ownershipRef: item.ownership_ref ?? null,
+    })),
+]);
+
+const selectedScopePositions = computed(() => {
+  if (timelineScope.value === 'total') return allScopedPositions.value;
+  if (timelineScope.value === 'operational') {
+    return allScopedPositions.value.filter(
+      (position) =>
+        position.type === 'liability' || ['cash', 'investments'].includes(position.category),
+    );
+  }
+  const selected = new Set(customTimelinePositionKeys.value);
+  return allScopedPositions.value.filter((position) => selected.has(position.key));
+});
+
+const accountingScopePositions = computed(() =>
+  selectedScopePositions.value.filter(
+    (position) => position.trackingMode === 'accounting' && position.accountId != null,
+  ),
+);
+const manualScopePositions = computed(() =>
+  selectedScopePositions.value.filter(
+    (position) => position.trackingMode !== 'accounting' || position.accountId == null,
+  ),
+);
+const dailyTimelineAvailable = computed(
+  () => selectedScopePositions.value.length > 0 && manualScopePositions.value.length === 0,
+);
+const timelineScopeLabel = computed(() => {
+  if (timelineScope.value === 'operational') return 'Operativo';
+  if (timelineScope.value === 'custom')
+    return `Personalizado · ${selectedScopePositions.value.length}`;
+  return 'Patrimonio total';
+});
+
+function dailyDateFrom(): string | undefined {
+  if (selectedTimelinePreset.value === 'all') return undefined;
+  const daysByPreset = { '1m': 31, '3m': 92, '6m': 183, '1a': 366, '5a': 1826 } as const;
+  const date = new Date();
+  date.setDate(date.getDate() - daysByPreset[selectedTimelinePreset.value]);
+  return date.toISOString().slice(0, 10);
+}
+
+async function fetchDailyScopeTimeline(): Promise<void> {
+  if (timelineGranularity.value !== 'daily' || !dailyTimelineAvailable.value) {
+    dailyBalanceRows.value = [];
+    return;
+  }
+  scopedTimelineLoading.value = true;
+  scopedTimelineError.value = null;
+  try {
+    const response = await coreAccountingApi.getDailyBalanceSeries({
+      date_from: dailyDateFrom(),
+      account_ids: accountingScopePositions.value.map((position) => position.accountId!),
+      ownership_id:
+        ownershipFilter.value === 'all'
+          ? undefined
+          : store.ownerships.find(
+              (ownership) =>
+                ownership.kind === 'individual' && ownership.member?.id === ownershipFilter.value,
+            )?.id,
+    });
+    dailyBalanceRows.value = response.data.rows;
+  } catch (error: unknown) {
+    scopedTimelineError.value = toApiErrorMessage(error);
+    dailyBalanceRows.value = [];
+  } finally {
+    scopedTimelineLoading.value = false;
+  }
+}
+
+async function fetchMonthlyScopeTimeline(): Promise<void> {
+  if (timelineGranularity.value !== 'monthly' || timelineScope.value === 'total') {
+    scopedMonthlyPoints.value = [];
+    return;
+  }
+  const positions = selectedScopePositions.value;
+  if (!positions.length) {
+    scopedMonthlyPoints.value = [];
+    return;
+  }
+  scopedTimelineLoading.value = true;
+  scopedTimelineError.value = null;
+  try {
+    const timelines = await Promise.all(
+      positions.map(async (position) => ({
+        position,
+        timeline:
+          position.type === 'asset'
+            ? (await coreNetWorthApi.getAssetTimeline(position.id)).data.rows
+            : (await coreNetWorthApi.getLiabilityTimeline(position.id)).data.rows,
+      })),
+    );
+    const dates = Array.from(
+      new Set(timelines.flatMap(({ timeline }) => timeline.map((row) => row.date))),
+    ).sort();
+    scopedMonthlyPoints.value = dates.map((date) => {
+      let value = 0;
+      for (const { position, timeline } of timelines) {
+        const row = [...timeline].reverse().find((point) => point.date <= date);
+        if (!row) continue;
+        const fraction = allocationFractionForNetWorthOwner(
+          position.ownershipRef,
+          ownershipFilter.value,
+        );
+        const signed = position.type === 'liability' ? -1 : 1;
+        value += Number(row.value_base || row.value || 0) * fraction * signed;
+      }
+      const parsedDate = new Date(date);
+      return {
+        date,
+        shortLabel: new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(parsedDate),
+        fullLabel: new Intl.DateTimeFormat('es-ES', {
+          month: 'long',
+          year: 'numeric',
+        }).format(parsedDate),
+        value,
+      };
+    });
+  } catch (error: unknown) {
+    scopedTimelineError.value = toApiErrorMessage(error);
+    scopedMonthlyPoints.value = [];
+  } finally {
+    scopedTimelineLoading.value = false;
+  }
+}
+
+const scopedMonthlyVisiblePoints = computed(() => {
+  const countByPreset = { '1m': 1, '3m': 3, '6m': 6, '1a': 12, '5a': 60, all: Infinity } as const;
+  const count = countByPreset[selectedTimelinePreset.value];
+  return Number.isFinite(count)
+    ? scopedMonthlyPoints.value.slice(-count)
+    : scopedMonthlyPoints.value;
+});
+const dailyTimelinePoints = computed<ScopeChartPoint[]>(() =>
+  dailyBalanceRows.value.map((row) => {
+    const date = new Date(`${row.date}T00:00:00`);
+    return {
+      date: row.date,
+      shortLabel: new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(date),
+      fullLabel: new Intl.DateTimeFormat('es-ES', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(date),
+      value: Number(row.net_balance),
+    };
+  }),
+);
+const activeEvolutionPoints = computed(() => {
+  if (timelineGranularity.value === 'daily') return dailyTimelinePoints.value;
+  if (timelineScope.value !== 'total') return scopedMonthlyVisiblePoints.value;
+  return timelineChartPoints.value;
+});
+const activeEvolutionLoading = computed(
+  () =>
+    scopedTimelineLoading.value ||
+    (timelineGranularity.value === 'monthly' &&
+      timelineScope.value === 'total' &&
+      displayedTimelineLoading.value),
+);
+const activeEvolutionLatest = computed(
+  () => activeEvolutionPoints.value[activeEvolutionPoints.value.length - 1] ?? null,
+);
+const activeEvolutionCaption = computed(() => {
+  const points = activeEvolutionPoints.value;
+  if (!points.length) return '-';
+  return `${points[0]!.fullLabel} - ${points[points.length - 1]!.fullLabel}`;
+});
+const activeEvolutionLabel = computed(() =>
+  timelineGranularity.value === 'daily'
+    ? `Saldo contable · ${timelineScopeLabel.value}`
+    : timelineScope.value === 'total'
+      ? timelineSummaryLabel.value
+      : `Patrimonio · ${timelineScopeLabel.value}`,
+);
+
+function setTimelineScope(scope: TimelineScope): void {
+  timelineScope.value = scope;
+  clearPositionSelection();
+  if (scope === 'custom' && !customTimelinePositionKeys.value.length) {
+    customTimelinePositionKeys.value = allScopedPositions.value.map((position) => position.key);
+    showTimelineScopeModal.value = true;
+  }
+}
+function setTimelineGranularity(granularity: TimelineGranularity): void {
+  if (granularity === 'daily' && !dailyTimelineAvailable.value) return;
+  timelineGranularity.value = granularity;
+  if (granularity === 'daily') resetTimelineSelection();
+}
+function toggleCustomPosition(key: string): void {
+  customTimelinePositionKeys.value = customTimelinePositionKeys.value.includes(key)
+    ? customTimelinePositionKeys.value.filter((value) => value !== key)
+    : [...customTimelinePositionKeys.value, key];
+}
+function useOnlyAccountingPositions(): void {
+  customTimelinePositionKeys.value = accountingScopePositions.value.map((position) => position.key);
+  timelineScope.value = 'custom';
+  timelineGranularity.value = 'daily';
+}
+
+watch(
+  [
+    timelineGranularity,
+    timelineScope,
+    selectedTimelinePreset,
+    ownershipFilter,
+    () => selectedScopePositions.value.map((position) => position.key).join('|'),
+  ],
+  () => {
+    if (timelineGranularity.value === 'daily') void fetchDailyScopeTimeline();
+    else void fetchMonthlyScopeTimeline();
+  },
+  { immediate: true },
+);
+watch(
+  [timelineScope, timelineGranularity, customTimelinePositionKeys],
+  () => {
+    const query = { ...route.query };
+    if (timelineScope.value === 'total') delete query.scope;
+    else query.scope = timelineScope.value;
+    if (timelineGranularity.value === 'monthly') delete query.granularity;
+    else query.granularity = timelineGranularity.value;
+    if (timelineScope.value === 'custom' && customTimelinePositionKeys.value.length)
+      query.positions = customTimelinePositionKeys.value.join(',');
+    else delete query.positions;
+    void router.replace({ query });
+  },
+  { deep: true },
 );
 </script>
 
@@ -988,14 +1286,62 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
     <section class="sect">
       <ASectHead
         title="Evolución"
-        :subtitle="timelineFilterLabel ? `Filtrando: ${timelineFilterLabel}` : undefined"
+        :subtitle="
+          timelineGranularity === 'daily'
+            ? 'Saldo derivado del libro contable'
+            : timelineFilterLabel
+              ? `Filtrando: ${timelineFilterLabel}`
+              : undefined
+        "
       >
         <template #hint>
           <AInfoHint label="Sobre la evolución">Patrimonio neto en el tiempo.</AInfoHint>
         </template>
         <template #actions>
           <div class="actions">
-            <AButton v-if="timelineFilterLabel" variant="ghost" @click="resetTimelineSelection">
+            <div class="seg a-nw-scope-seg" aria-label="Ámbito de evolución">
+              <AButton :class="{ on: timelineScope === 'total' }" @click="setTimelineScope('total')"
+                >Total</AButton
+              >
+              <AButton
+                :class="{ on: timelineScope === 'operational' }"
+                @click="setTimelineScope('operational')"
+                >Operativo</AButton
+              >
+              <AButton
+                :class="{ on: timelineScope === 'custom' }"
+                @click="setTimelineScope('custom')"
+                >Personalizado</AButton
+              >
+            </div>
+            <AButton
+              v-if="timelineScope === 'custom'"
+              variant="ghost"
+              @click="showTimelineScopeModal = true"
+              >Configurar</AButton
+            >
+            <div class="seg" aria-label="Granularidad de evolución">
+              <AButton
+                :class="{ on: timelineGranularity === 'monthly' }"
+                @click="setTimelineGranularity('monthly')"
+                >Mensual</AButton
+              >
+              <AButton
+                :class="{ on: timelineGranularity === 'daily' }"
+                :disabled="!dailyTimelineAvailable"
+                @click="setTimelineGranularity('daily')"
+                >Diaria</AButton
+              >
+            </div>
+            <AButton
+              v-if="
+                timelineFilterLabel &&
+                timelineScope === 'total' &&
+                timelineGranularity === 'monthly'
+              "
+              variant="ghost"
+              @click="resetTimelineSelection"
+            >
               Quitar filtro
             </AButton>
             <div class="seg">
@@ -1009,7 +1355,7 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
               </AButton>
             </div>
             <AButton
-              v-if="timelineChartPoints.length > 1"
+              v-if="activeEvolutionPoints.length > 1"
               variant="ghost"
               @click="timelineExpanded = true"
             >
@@ -1019,28 +1365,41 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
         </template>
       </ASectHead>
 
-      <AState v-if="displayedTimelineLoading && timelineChartPoints.length === 0" status="loading">
+      <AState
+        v-if="timelineGranularity === 'monthly' && manualScopePositions.length"
+        status="empty"
+        layout="inline"
+      >
+        La vista mensual combina posiciones manuales y contables. Para ver el detalle diario usa
+        sólo posiciones contables.
+        <AButton variant="ghost" @click="useOnlyAccountingPositions"
+          >Usar sólo posiciones contables</AButton
+        >
+      </AState>
+      <AState v-if="scopedTimelineError" status="error">{{ scopedTimelineError }}</AState>
+
+      <AState v-if="activeEvolutionLoading && activeEvolutionPoints.length === 0" status="loading">
         Cargando evolución...
       </AState>
-      <AState v-else-if="timelineChartPoints.length === 0" status="empty">
+      <AState v-else-if="activeEvolutionPoints.length === 0" status="empty">
         No hay historial suficiente para la selección actual.
       </AState>
       <div v-else class="a-nw-chart-stack">
         <div class="a-nw-chart-summary">
           <div>
-            <span class="a-nw-chart-label">{{ timelineSummaryLabel }}</span>
+            <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
             <strong>
-              {{ formatNumber(latestTimelineChartPoint?.value ?? 0, 2) }}
+              {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
               {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
             </strong>
           </div>
-          <span>{{ timelineRangeCaption }}</span>
+          <span>{{ activeEvolutionCaption }}</span>
         </div>
         <div class="a-nw-chart-shell">
           <NetWorthEvolutionChart
-            :points="timelineChartPoints"
+            :points="activeEvolutionPoints"
             :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-            :series-label="timelineSummaryLabel"
+            :series-label="activeEvolutionLabel"
             :series-color="displayedTimelineSeriesColor"
             :y-axis-min-zero="timelineYAxisStartsAtZero"
           />
@@ -1057,16 +1416,19 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
         <div class="a-nw-modal-stack">
           <div class="a-nw-chart-summary">
             <div>
-              <span class="a-nw-chart-label">{{ timelineSummaryLabel }}</span>
+              <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
               <strong>
-                {{ formatNumber(latestTimelineChartPoint?.value ?? 0, 2) }}
+                {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
                 {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
               </strong>
             </div>
-            <span>{{ timelineRangeCaption }}</span>
+            <span>{{ activeEvolutionCaption }}</span>
           </div>
 
-          <div class="a-nw-range-grid">
+          <div
+            v-if="timelineGranularity === 'monthly' && timelineScope === 'total'"
+            class="a-nw-range-grid"
+          >
             <label class="a-nw-range-field">
               <span>Inicio</span>
               <input
@@ -1095,13 +1457,54 @@ const currencySelectOptions = computed<ASelectItem[]>(() =>
 
           <div class="a-nw-chart-shell a-nw-chart-shell-expanded">
             <NetWorthEvolutionChart
-              :points="timelineChartPoints"
+              :points="activeEvolutionPoints"
               :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-              :series-label="timelineSummaryLabel"
+              :series-label="activeEvolutionLabel"
               :series-color="displayedTimelineSeriesColor"
               :y-axis-min-zero="timelineYAxisStartsAtZero"
               expanded
             />
+          </div>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        :open="showTimelineScopeModal"
+        title="Personalizar evolución"
+        variant="sheet"
+        panel-class="a-nw-modal-panel dir-a dir-a-sheet"
+        @close="showTimelineScopeModal = false"
+      >
+        <div class="a-nw-scope-picker">
+          <p>Selecciona las posiciones que deben formar parte de la evolución.</p>
+          <label
+            v-for="position in allScopedPositions"
+            :key="position.key"
+            class="a-nw-scope-option"
+          >
+            <input
+              type="checkbox"
+              :checked="customTimelinePositionKeys.includes(position.key)"
+              @change="toggleCustomPosition(position.key)"
+            />
+            <span>
+              <strong>{{ position.name }}</strong>
+              <small
+                >{{ position.type === 'asset' ? 'Activo' : 'Pasivo' }} ·
+                {{ position.category }}</small
+              >
+            </span>
+            <span :class="position.accountId ? 'pos' : 'muted'">{{
+              position.accountId ? 'Contable' : 'Mensual'
+            }}</span>
+          </label>
+          <div class="a-nw-scope-actions">
+            <AButton
+              variant="primary"
+              :disabled="!customTimelinePositionKeys.length"
+              @click="showTimelineScopeModal = false"
+              >Aplicar selección</AButton
+            >
           </div>
         </div>
       </BaseModal>

@@ -1,5 +1,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { useAccountingPage } from '@/domains/accounting/composables';
+import { coreAccountingApi } from '@/domains/accounting/api';
+import type { LedgerAccount } from '@/domains/accounting/models';
 import { useNetWorthStore } from '@/domains/net-worth/store';
 
 export function useAccountingMovementsPage() {
@@ -106,6 +108,7 @@ export function useAccountingMovementsPage() {
     todosDateTo,
     todosTransactions,
     todosTotalCount,
+    todosNeedsReviewCount,
     todosLoading,
     todosLoadingMore,
     todosHasMore,
@@ -243,19 +246,19 @@ export function useAccountingMovementsPage() {
       (type) => (accountsByType.value.get(type.value)?.length ?? 0) > 0,
     ),
   );
-  const groupedCuentasAccounts = computed(() => {
+  function buildCuentasGroups(accountList: LedgerAccount[]) {
     type Group = {
       key: string;
       label: string;
       positionType: 'asset' | 'liability';
-      accounts: (typeof operationalAccounts.value)[number][];
+      accounts: LedgerAccount[];
       subtotal: number;
       baseCurrency: string;
     };
     const baseCurrency = netWorthStore.baseCurrency ?? 'EUR';
     const normalizedBaseCurrency = String(baseCurrency).trim().toUpperCase();
     const groups = new Map<string, Group>();
-    for (const account of operationalAccounts.value) {
+    for (const account of accountList) {
       const meta = accountPositionMetaByAccountId.value.get(account.id);
       const posType: 'asset' | 'liability' =
         (meta?.position_type as 'asset' | 'liability') ??
@@ -303,7 +306,62 @@ export function useAccountingMovementsPage() {
       ...Array.from(groups.keys()).filter((k) => !allOrderedKeys.includes(k)),
     ];
     return ordered.filter((k) => groups.has(k)).map((k) => groups.get(k)!);
+  }
+  const groupedCuentasAccounts = computed(() => buildCuentasGroups(operationalAccounts.value));
+
+  // --- Account catalog scope (Activas / Todas) ---
+  const accountCatalogScope = ref<'active' | 'all'>('active');
+  const inactiveCatalogAccounts = ref<LedgerAccount[]>([]);
+  const accountCatalogLoading = ref(false);
+
+  async function loadInactiveCatalogAccounts(): Promise<void> {
+    accountCatalogLoading.value = true;
+    try {
+      const { data } = await coreAccountingApi.getAccounts({ is_active: false });
+      inactiveCatalogAccounts.value = data;
+    } catch {
+      inactiveCatalogAccounts.value = [];
+    } finally {
+      accountCatalogLoading.value = false;
+    }
+  }
+
+  function setAccountCatalogScope(scope: 'active' | 'all'): void {
+    accountCatalogScope.value = scope;
+    if (scope === 'all' && !inactiveCatalogAccounts.value.length) {
+      void loadInactiveCatalogAccounts();
+    }
+  }
+
+  // Keep the inactive list fresh after account mutations refresh the active set.
+  watch(accounts, () => {
+    if (accountCatalogScope.value === 'all') void loadInactiveCatalogAccounts();
   });
+
+  const inactiveOperationalCatalogAccounts = computed(() =>
+    inactiveCatalogAccounts.value.filter(
+      (account) => account.account_type === 'asset' || account.account_type === 'liability',
+    ),
+  );
+  const catalogOperationalAccounts = computed(() =>
+    accountCatalogScope.value === 'all'
+      ? [...operationalAccounts.value, ...inactiveOperationalCatalogAccounts.value]
+      : operationalAccounts.value,
+  );
+  const groupedCatalogAccounts = computed(() =>
+    buildCuentasGroups(catalogOperationalAccounts.value),
+  );
+  const catalogTechnicalAccounts = computed(() => {
+    const active = ['equity', 'income', 'expense'].flatMap(
+      (type) => accountsByType.value.get(type) ?? [],
+    );
+    if (accountCatalogScope.value !== 'all') return active;
+    const inactiveTechnical = inactiveCatalogAccounts.value.filter(
+      (account) => account.account_type !== 'asset' && account.account_type !== 'liability',
+    );
+    return [...active, ...inactiveTechnical];
+  });
+
   function formatSignedMoney(value: number, currency = 'EUR'): string {
     if (value > 0) return `+${formatMoney(value, currency)}`;
     if (value < 0) return `-${formatMoney(Math.abs(value), currency)}`;
@@ -631,6 +689,11 @@ export function useAccountingMovementsPage() {
     updateDailyTimelineWindowEnd,
     activeTab,
     groupedCuentasAccounts,
+    accountCatalogScope,
+    setAccountCatalogScope,
+    accountCatalogLoading,
+    groupedCatalogAccounts,
+    catalogTechnicalAccounts,
     cuentasSelectedAccountId,
     cuentasSelectedAccount,
     cuentasDateFrom,
@@ -650,6 +713,7 @@ export function useAccountingMovementsPage() {
     applyDatePreset,
     todosTransactions,
     todosTotalCount,
+    todosNeedsReviewCount,
     todosLoading,
     todosLoadingMore,
     todosHasMore,

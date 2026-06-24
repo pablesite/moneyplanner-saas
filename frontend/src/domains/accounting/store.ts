@@ -74,6 +74,8 @@ export const useAccountingStore = defineStore('accounting', {
         kind?: string;
         category_key?: string;
         subcategory_key?: string;
+        ownership_id?: number | 'null';
+        review_state?: 'needs_review' | 'reviewed';
       },
       options?: { signal?: AbortSignal },
     ): Promise<PaginatedTransactionsResponse> {

@@ -33,7 +33,7 @@ export const appShellNavItems: NavItem[] = [
     icon: 'LD',
     label: 'Contabilidad',
     hint: 'Libro diario y cuentas contables',
-    to: '/movimientos',
+    to: '/contabilidad',
   },
   {
     id: 'monthly-close',

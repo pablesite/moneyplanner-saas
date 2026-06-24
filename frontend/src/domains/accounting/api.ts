@@ -26,6 +26,8 @@ function buildTransactionQueryParams(params?: {
   kind?: string;
   category_key?: string;
   subcategory_key?: string;
+  ownership_id?: number | 'null';
+  review_state?: 'needs_review' | 'reviewed';
 }) {
   if (!params) return undefined;
   const queryParams = {
@@ -41,6 +43,8 @@ function buildTransactionQueryParams(params?: {
     ...(params.kind ? { kind: params.kind } : {}),
     ...(params.category_key ? { category_key: params.category_key } : {}),
     ...(params.subcategory_key ? { subcategory_key: params.subcategory_key } : {}),
+    ...(params.ownership_id != null ? { ownership_id: params.ownership_id } : {}),
+    ...(params.review_state ? { review_state: params.review_state } : {}),
   };
   return Object.keys(queryParams).length ? queryParams : undefined;
 }
@@ -82,6 +86,8 @@ export const coreAccountingApi = {
       kind?: string;
       category_key?: string;
       subcategory_key?: string;
+      ownership_id?: number | 'null';
+      review_state?: 'needs_review' | 'reviewed';
     },
     options?: { signal?: AbortSignal },
   ) {
@@ -138,6 +144,7 @@ export const coreAccountingApi = {
     date_to?: string;
     status?: 'posted' | 'draft';
     ownership_id?: number | 'null';
+    account_ids?: number[];
   }) {
     return coreApi.get<LedgerDailyBalanceSeries>(
       '/api/accounting/transactions/daily-balance-series/',
@@ -148,6 +155,7 @@ export const coreAccountingApi = {
               ...(params.date_to ? { date_to: params.date_to } : {}),
               ...(params.status ? { status: params.status } : {}),
               ...(params.ownership_id != null ? { ownership_id: params.ownership_id } : {}),
+              ...(params.account_ids?.length ? { account_ids: params.account_ids.join(',') } : {}),
             }
           : undefined,
       },

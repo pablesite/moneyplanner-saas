@@ -226,6 +226,8 @@ export function useAccountingPage() {
     kind: 'all' as ActivityFilter,
     categoryKey: '',
     subcategoryKey: '',
+    ownershipId: 'all' as 'all' | number | null,
+    reviewState: 'all' as 'all' | 'needs_review' | 'reviewed',
   });
   const cuentasFilters = reactive({
     query: '',
@@ -1765,6 +1767,7 @@ export function useAccountingPage() {
   const todosTransactions = ref<LedgerTransaction[]>([]);
   const todosNextCursor = ref<string | null>(null);
   const todosTotalCount = ref(0);
+  const todosNeedsReviewCount = ref(0);
   const todosLoading = ref(false);
   const todosLoadingMore = ref(false);
   const cuentasTransactions = ref<AccountTimelineTransaction[]>([]);
@@ -1860,6 +1863,7 @@ export function useAccountingPage() {
       todosAbortController = new AbortController();
       todosNextCursor.value = null;
       todosTotalCount.value = 0;
+      todosNeedsReviewCount.value = 0;
     } else if (!todosNextCursor.value || todosLoading.value || todosLoadingMore.value) {
       return;
     }
@@ -1879,12 +1883,21 @@ export function useAccountingPage() {
           date_to: todosDateTo.value || undefined,
           category_key: activityFilters.categoryKey || undefined,
           subcategory_key: activityFilters.subcategoryKey || undefined,
+          ownership_id:
+            activityFilters.ownershipId === 'all'
+              ? undefined
+              : activityFilters.ownershipId === null
+                ? 'null'
+                : activityFilters.ownershipId,
+          review_state:
+            activityFilters.reviewState === 'all' ? undefined : activityFilters.reviewState,
         },
         { signal: controller.signal },
       );
       todosTransactions.value = reset ? page.results : todosTransactions.value.concat(page.results);
       todosNextCursor.value = page.next_cursor;
       todosTotalCount.value = page.total_count;
+      todosNeedsReviewCount.value = page.needs_review_count ?? 0;
     } catch (error: unknown) {
       if (isCanceledRequestError(error)) return;
       throw error;
@@ -1979,6 +1992,8 @@ export function useAccountingPage() {
       () => activityFilters.accountId,
       () => activityFilters.categoryKey,
       () => activityFilters.subcategoryKey,
+      () => activityFilters.ownershipId,
+      () => activityFilters.reviewState,
       todosDateFrom,
       todosDateTo,
     ],
@@ -3910,6 +3925,7 @@ export function useAccountingPage() {
     todosDateTo,
     todosTransactions,
     todosTotalCount,
+    todosNeedsReviewCount,
     todosLoading,
     todosLoadingMore,
     todosHasMore,

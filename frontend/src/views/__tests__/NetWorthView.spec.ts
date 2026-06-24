@@ -10,6 +10,11 @@ const mockAnnualExpenseStore = {
   listBySourceLiability: vi.fn(async () => []),
 };
 
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: {} }),
+  useRouter: () => ({ replace: vi.fn() }),
+}));
+
 function makeStub(name: string, template = `<div data-test="${name}"><slot /></div>`) {
   return defineComponent({
     name,

@@ -1,17 +1,35 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { AButton, ASectHead, AKindChip } from '@/domains/ui';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
 const state = props.page;
+const router = useRouter();
+const query = ref('');
+
+const filteredGroups = computed(() => {
+  const needle = query.value.trim().toLocaleLowerCase('es');
+  if (!needle) return state.groupedCatalogAccounts;
+  return state.groupedCatalogAccounts
+    .map((group) => ({
+      ...group,
+      accounts: group.accounts.filter((account) =>
+        state.accountDisplayName(account).toLocaleLowerCase('es').includes(needle),
+      ),
+    }))
+    .filter((group) => group.accounts.length > 0);
+});
+
+const technicalAccounts = computed(() => state.catalogTechnicalAccounts);
 
 function toggleAccount(accountId: number) {
   state.cuentasSelectedAccountId = state.cuentasSelectedAccountId === accountId ? null : accountId;
 }
 
 function goToTodos(accountId: number) {
-  state.activeTab = 'todos';
-  state.activityFilters.accountId = String(accountId);
+  void router.push({ name: 'accounting-movements', query: { account_id: String(accountId) } });
 }
 </script>
 
@@ -22,8 +40,33 @@ function goToTodos(accountId: number) {
       :subtitle="`${state.accounts.length} cuentas · click para ver movimientos`"
     />
 
+    <div class="a-mov-account-tools">
+      <input v-model="query" class="filter-ctrl" placeholder="Buscar cuenta…" />
+      <div class="seg" aria-label="Ámbito de cuentas">
+        <AButton
+          :class="{ on: state.accountCatalogScope === 'active' }"
+          @click="state.setAccountCatalogScope('active')"
+          >Activas</AButton
+        >
+        <AButton
+          :class="{ on: state.accountCatalogScope === 'all' }"
+          @click="state.setAccountCatalogScope('all')"
+          >Todas</AButton
+        >
+      </div>
+      <span
+        >{{
+          filteredGroups.reduce((total, group) => total + group.accounts.length, 0)
+        }}
+        operativas</span
+      >
+    </div>
+
     <div
-      v-if="state.cuentasLoading && !state.groupedCuentasAccounts.length"
+      v-if="
+        (state.cuentasLoading || state.accountCatalogLoading) &&
+        !state.groupedCatalogAccounts.length
+      "
       class="a-mov-loading-state"
     >
       <div class="ui-import-spinner"></div>
@@ -41,7 +84,7 @@ function goToTodos(accountId: number) {
           </tr>
         </thead>
         <tbody>
-          <template v-for="group in state.groupedCuentasAccounts" :key="group.key">
+          <template v-for="group in filteredGroups" :key="group.key">
             <!-- Group header row -->
             <tr class="grp-row">
               <td colspan="4">
@@ -63,7 +106,12 @@ function goToTodos(accountId: number) {
                   <div class="name">
                     <span class="swatch" :class="{ lia: group.positionType === 'liability' }" />
                     <div>
-                      <div class="nameMain">{{ state.accountDisplayName(account) }}</div>
+                      <div class="nameMain">
+                        {{ state.accountDisplayName(account) }}
+                        <span v-if="!account.is_active" class="a-mov-account-inactive-tag"
+                          >Inactiva</span
+                        >
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -74,9 +122,7 @@ function goToTodos(accountId: number) {
                 </td>
                 <td
                   class="num mono a-mov-catalog-balance"
-                  :style="{
-                    color: group.positionType === 'liability' ? 'var(--neg)' : 'var(--text)',
-                  }"
+                  :class="{ 'is-liability': group.positionType === 'liability' }"
                 >
                   {{ state.formatCompact(account.current_balance, account.currency) }}
                 </td>
@@ -133,17 +179,7 @@ function goToTodos(accountId: number) {
                         <AKindChip class="a-mov-expansion-kind">
                           {{ state.activityKindLabel(mov) }}
                         </AKindChip>
-                        <span
-                          class="mono a-mov-expansion-amount"
-                          :style="{
-                            color:
-                              mov.tone === 'positive'
-                                ? 'var(--pos)'
-                                : mov.tone === 'negative'
-                                  ? 'var(--neg)'
-                                  : 'var(--muted)',
-                          }"
-                        >
+                        <span class="mono a-mov-expansion-amount" :class="`is-${mov.tone}`">
                           {{
                             state.formatSignedMoney(
                               mov.impactValue,
@@ -174,5 +210,31 @@ function goToTodos(accountId: number) {
         </tbody>
       </table>
     </div>
+
+    <details v-if="technicalAccounts.length" class="a-mov-technical a-mov-account-technical">
+      <summary>
+        <span>Cuentas técnicas</span>
+        <span class="a-mov-technical-count">{{ technicalAccounts.length }}</span>
+      </summary>
+      <p class="a-mov-technical-note">
+        Contrapartidas internas usadas para mantener la partida doble. No forman parte del saldo
+        operativo.
+      </p>
+      <button
+        v-for="account in technicalAccounts"
+        :key="account.id"
+        class="a-mov-technical-row"
+        type="button"
+        @click="goToTodos(account.id)"
+      >
+        <span class="a-mov-technical-name">{{ state.accountDisplayName(account) }}</span>
+        <span class="a-mov-technical-meta"
+          >{{ account.account_type }} · {{ account.currency }}</span
+        >
+        <span class="mono a-mov-technical-balance">
+          {{ state.formatCompact(account.current_balance, account.currency) }}
+        </span>
+      </button>
+    </details>
   </div>
 </template>

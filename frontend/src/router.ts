@@ -9,6 +9,7 @@ import AuxDataView from './views/AuxDataView.vue';
 import AccountView from './views/AccountView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AccountingMovementsView from './views/AccountingMovementsView.vue';
+import AccountingAccountsView from './views/AccountingAccountsView.vue';
 import { registerAuthGuard } from '@/domains/auth';
 
 const routes: RouteRecordRaw[] = [
@@ -34,7 +35,19 @@ const routes: RouteRecordRaw[] = [
   { path: '/data/ipc', redirect: '/data' },
   { path: '/account', name: 'account', component: AccountView },
   { path: '/people', name: 'people', component: PeopleView },
-  { path: '/movimientos', name: 'accounting-movements', component: AccountingMovementsView },
+  {
+    path: '/movimientos',
+    redirect: (to) => ({
+      path: to.query.tab === 'cuentas' ? '/contabilidad/cuentas' : '/contabilidad',
+      query: Object.fromEntries(Object.entries(to.query).filter(([key]) => key !== 'tab')),
+    }),
+  },
+  { path: '/contabilidad', name: 'accounting-movements', component: AccountingMovementsView },
+  {
+    path: '/contabilidad/cuentas',
+    name: 'accounting-accounts',
+    component: AccountingAccountsView,
+  },
 ];
 
 export const router = createRouter({

@@ -77,7 +77,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 | `ownership.ts`   | Lógica de propiedad (ownership) de items patrimoniales.                                            |
 | `charts.ts`      | Datos y configuración para gráficos de patrimonio.                                                 |
 | `extensions.ts`  | Extensiones del modelo base.                                                                       |
-| `components/`    | Componentes: `ItemForm`, `NetWorthItemModals` (sheet Direction A, campos underline), `NetWorthDonut` (SVG), `NetWorthEvolutionChart` (SVG: línea + 8 ticks + delta + hover), `NetWorthTimelineChart`/`NetWorthDeltaChart` (Chart.js, reutilizados por `AccountingMovementsView`). La tabla Balance y el hero se construyen inline en `NetWorthView` sobre `useNetWorthPageMetrics`; los componentes heredados (`ItemList`/`Item*Row`/`*Workspace`/`*TimelineMain`/`*HeroSection`/`*Bar`/`SettingsPopover`) se eliminaron en el redesign Direction A. |
+| `components/`    | Componentes: `ItemForm`, `NetWorthItemModals`, `NetWorthDonut` y `NetWorthEvolutionChart`. La evolución combina valoración mensual con saldo contable diario por ámbitos Total/Operativo/Personalizado; la tabla Balance y el hero se construyen inline en `NetWorthView` sobre `useNetWorthPageMetrics`. |
 
 ---
 
@@ -142,18 +142,19 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 
 ---
 
-### `accounting` — Movimientos contables
+### `accounting` — Operativa contable diaria
 
 **Origen:** Core-backed
 **Cliente:** `coreApi`
-**Ruta:** `/movimientos`
+**Rutas:** `/contabilidad` + `/contabilidad/cuentas`; `/movimientos` redirige preservando filtros.
 
 | Archivo          | Contenido                                                                                                                                 |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `api.ts`         | Llamadas a Core: CRUD + listado paginado por cursor (`results`, `next_cursor`, `total_count`) con filtros server-side.                    |
 | `store.ts`       | Pinia store: datos globales livianos (`accounts`, `monthlySummary`, `accountBalancesSummary`) + `fetchTransactionsPage()` request-scoped. |
-| `composables.ts` | Composables para el workspace de movimientos con paginación server-side en tabs "Todos" y "Cuentas" (debounce de búsqueda en "Todos").    |
-| `models.ts`      | Tipos TypeScript: `AccountingMovement`, `MovementCategory`, etc.                                                                          |
+| `composables.ts` | Motor de alta/edición, listado por cursor, filtros server-side, cola calculada `needs_review` y detalle por cuenta. |
+| `models.ts`      | Contratos de cuentas, asientos, clasificación funcional y series diarias. |
+| `components/`    | Libro agrupado por fecha, detalle avanzado Debe/Haber, sheets de alta/edición y catálogo de cuentas. |
 
 **Requiere:** `core.accountingBasic: true` (activo). `core.accountingMovementsManual: false` (desactivado).
 
@@ -234,7 +235,9 @@ Soporte PWA: registro del service worker, instalación y resiliencia offline del
 | `/data`                | `aux-data`             | `AuxDataView`                              | `aux-data`                                                                                                                                                                                                                                                                   |
 | `/account`             | `account`              | `AccountView`                              | `auth` + `admin` para `saas_admin` + portable data para `saas_member`                                                                                                                                                                                                        |
 | `/people`              | `people`               | `PeopleView`                               | `people`                                                                                                                                                                                                                                                                     |
-| `/movimientos`         | `accounting-movements` | `AccountingMovementsView`                  | `accounting`                                                                                                                                                                                                                                                                 |
+| `/contabilidad`        | `accounting-movements` | `AccountingMovementsView`                  | Libro diario operativo: búsqueda, filtros URL, revisión de clasificación y alta/edición. |
+| `/contabilidad/cuentas` | `accounting-accounts` | `AccountingAccountsView`                   | Catálogo de cuentas operativo y técnico con retorno al libro conservando contexto. |
+| `/movimientos`         | —                      | redirect                                   | Alias compatible hacia `/contabilidad`; `tab=cuentas` se traduce a `/contabilidad/cuentas`. |
 
 ---
 

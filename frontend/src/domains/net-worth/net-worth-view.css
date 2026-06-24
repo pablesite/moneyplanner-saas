@@ -2,6 +2,75 @@
   position: relative;
 }
 
+/* Timeline scope and accounting granularity -------------------------------- */
+.a-nw-scope-seg {
+  max-width: 100%;
+}
+
+.a-nw-scope-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.a-nw-scope-picker > p {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.a-nw-scope-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.a-nw-scope-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.a-nw-scope-option > span {
+  display: grid;
+  gap: 3px;
+}
+
+.a-nw-scope-option small,
+.a-nw-scope-option > span:last-child {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.a-nw-scope-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+}
+
+@container page (max-width: 820px) {
+  .a-nw-page .sect-head > .actions {
+    flex-wrap: wrap;
+  }
+}
+
+@container page (max-width: 560px) {
+  .a-nw-scope-seg {
+    width: max-content;
+  }
+
+  .a-nw-scope-option {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .a-nw-scope-option > span:last-child {
+    grid-column: 2;
+  }
+}
+
 .a-nw-archived-trigger {
   padding-inline: 0;
 }

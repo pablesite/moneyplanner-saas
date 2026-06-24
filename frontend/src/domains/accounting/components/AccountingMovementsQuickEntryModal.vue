@@ -109,6 +109,20 @@ const advancedTypeOptions = computed<MovementTypeOption[]>(() =>
 );
 
 const showValueDate = ref(false);
+const initialFormSnapshot = ref('');
+
+watch(
+  () => props.page.showQuickEntryModal,
+  (open: boolean) => {
+    if (open) initialFormSnapshot.value = JSON.stringify(props.page.quickEntryForm);
+  },
+);
+
+function requestClose(): void {
+  const changed = JSON.stringify(props.page.quickEntryForm) !== initialFormSnapshot.value;
+  if (changed && !window.confirm('¿Descartar los cambios de este movimiento?')) return;
+  props.page.showQuickEntryModal = false;
+}
 
 watch(
   () => props.page.quickEntryForm.booking_date,
@@ -181,6 +195,22 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
   { value: '', label: 'Seleccionar' },
   ...props.page.quickSubcategoryOptions,
 ]);
+const isComplexMovement = computed(() =>
+  ['transfer', 'investment', 'debt_payment'].includes(props.page.quickEntryForm.movement_type),
+);
+const confirmationSummary = computed(() => {
+  if (!isComplexMovement.value) return '';
+  const form = props.page.quickEntryForm;
+  const accounts = props.page.accounts as AccountOption[];
+  const origin = accounts.find((account) => account.id === form.account_id);
+  const destinationId =
+    form.movement_type === 'debt_payment'
+      ? form.liability_account_id
+      : form.counterparty_account_id;
+  const destination = accounts.find((account) => account.id === destinationId);
+  const amount = form.amount || '—';
+  return `${accountLabel(origin ?? ({ name: 'Cuenta pendiente' } as AccountOption))} → ${accountLabel(destination ?? ({ name: 'Destino pendiente' } as AccountOption))} · ${amount}`;
+});
 </script>
 
 <template>
@@ -188,8 +218,8 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
     :open="page.showQuickEntryModal"
     title="Registrar movimiento diario"
     variant="sheet"
-    panel-class="max-w-[920px] dir-a dir-a-sheet"
-    @close="page.showQuickEntryModal = false"
+    panel-class="max-w-[920px] dir-a dir-a-sheet a-mov-entry-sheet"
+    @close="requestClose"
   >
     <div v-if="!page.liquidityAccounts.length" class="ui-accounting-inline-note">
       Necesitas al menos una cuenta de liquidez para registrar movimientos.
@@ -577,6 +607,12 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
       >
         Completa descripción, fechas, importe y cuenta. Algunos tipos requieren campos adicionales.
       </p>
+
+      <div v-if="isComplexMovement" class="a-mov-entry-confirmation" aria-live="polite">
+        <span>Asiento que se registrará</span>
+        <strong>{{ confirmationSummary }}</strong>
+        <small>Comprueba origen, destino e importe antes de guardar.</small>
+      </div>
 
       <div class="ui-accounting-submit-row">
         <p class="subtle">

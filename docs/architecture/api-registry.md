@@ -100,8 +100,9 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 |--------|-------|-------------|
 | `GET/POST` | `/api/accounting/accounts/` | Ledger accounts (`LedgerAccount`) |
 | `GET/PATCH/DELETE` | `/api/accounting/accounts/{id}/` | Account detail |
-| `GET/POST` | `/api/accounting/transactions/` | Transactions (`LedgerTransaction`) |
+| `GET/POST` | `/api/accounting/transactions/` | Transactions (`LedgerTransaction`). List supports cursor pagination, operational filters, `review_state=needs_review|reviewed`, calculated row `needs_review`, and filtered `needs_review_count`. |
 | `GET/PATCH/DELETE` | `/api/accounting/transactions/{id}/` | Transaction detail |
+| `GET` | `/api/accounting/transactions/daily-balance-series/` | Daily asset/liability/net ledger balance; optional validated comma-separated `account_ids` and ownership filter. |
 | `GET/POST` | `/api/accounting/entries/` | Ledger entries (`LedgerEntry`) |
 | `GET/PATCH/DELETE` | `/api/accounting/entries/{id}/` | Entry detail |
 

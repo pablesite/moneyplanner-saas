@@ -63,6 +63,7 @@ export type LedgerTransaction = {
   realized_cost_basis: string | null;
   realized_gain_loss: string | null;
   activity_kind: string;
+  needs_review?: boolean;
   account_balance_after?: string | null;
   entries: LedgerEntry[];
   created_at: string;
@@ -73,6 +74,7 @@ export type PaginatedTransactionsResponse = {
   results: LedgerTransaction[];
   next_cursor: string | null;
   total_count: number;
+  needs_review_count?: number;
 };
 
 export type MonthlyAccountingSummaryMonth = {
@@ -157,6 +159,7 @@ export type LedgerDailyBalanceSeries = {
     date_to: string;
     status: LedgerTransactionStatus;
     base_currency: string;
+    account_ids: number[];
   };
   base_currency: string;
   rows: LedgerDailyBalanceSeriesRow[];

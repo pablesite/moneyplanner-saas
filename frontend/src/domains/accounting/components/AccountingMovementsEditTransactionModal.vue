@@ -105,6 +105,13 @@ const advancedTypeOptions = computed<MovementTypeOption[]>(() =>
 
 const showValueDate = ref(false);
 const debtInterestManualOverride = ref(false);
+const initialFormSnapshot = ref('');
+
+function requestClose(): void {
+  const changed = JSON.stringify(props.page.editTransactionForm) !== initialFormSnapshot.value;
+  if (changed && !window.confirm('¿Descartar los cambios de este movimiento?')) return;
+  props.page.showEditTransactionModal = false;
+}
 
 function decimalsForCurrency(currency?: string): number {
   const code = String(currency ?? '')
@@ -142,6 +149,7 @@ watch(
   () => props.page.showEditTransactionModal,
   (isOpen: boolean) => {
     if (!isOpen) return;
+    initialFormSnapshot.value = JSON.stringify(props.page.editTransactionForm);
     debtInterestManualOverride.value = false;
     showValueDate.value =
       props.page.editTransactionForm.value_date !== props.page.editTransactionForm.booking_date;
@@ -270,8 +278,8 @@ const editSubcategorySelectOptions = computed<ASelectItem[]>(() => [
     :open="page.showEditTransactionModal"
     title="Editar movimiento"
     variant="sheet"
-    panel-class="max-w-[920px] dir-a dir-a-sheet"
-    @close="page.showEditTransactionModal = false"
+    panel-class="max-w-[920px] dir-a dir-a-sheet a-mov-entry-sheet"
+    @close="requestClose"
   >
     <form
       class="ui-accounting-form ui-accounting-transaction-form ui-accounting-modal-form"

@@ -11,8 +11,8 @@ vi.mock('@/domains/accounting/useAccountingMovementsPage', () => ({
 }));
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ query: {} }),
-  onBeforeRouteLeave: vi.fn(),
+  useRoute: () => ({ query: {}, fullPath: '/contabilidad' }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
 function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
@@ -48,9 +48,13 @@ function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
     updateDailyTimelineWindowEnd: vi.fn(),
     formatNumber: vi.fn((value: number) => String(value)),
     activityFilters: {
+      query: '',
+      accountId: 'all',
       kind: 'all',
       categoryKey: '',
       subcategoryKey: '',
+      ownershipId: 'all',
+      reviewState: 'all',
     },
     todosDatePreset: 'all',
     todosDateFrom: '',
@@ -61,25 +65,25 @@ function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
 }
 
 describe('AccountingMovementsView', () => {
-  it('renders hero actions and tabs', () => {
+  it('renders the daily operations workspace', () => {
     mockUseAccountingMovementsPage.mockReturnValue(makeState());
-    const wrapper = shallowMount(AccountingMovementsView);
+    const wrapper = shallowMount(AccountingMovementsView, {
+      global: {
+        stubs: {
+          APageHead: {
+            name: 'APageHead',
+            props: ['title'],
+            template: '<header><slot name="actions" /></header>',
+          },
+          AButton: { template: '<button><slot /></button>' },
+        },
+      },
+    });
 
-    expect(wrapper.text()).toContain('Cuentas');
-    expect(wrapper.text()).toContain('Todos los movimientos');
-    expect(wrapper.text()).toContain('Estad');
-    expect(wrapper.findComponent({ name: 'APageHead' }).attributes('title')).toBe('Contabilidad');
-  });
-
-  it('switches tab when clicking controls', async () => {
-    const state = makeState('cuentas');
-    mockUseAccountingMovementsPage.mockReturnValue(state);
-    const wrapper = shallowMount(AccountingMovementsView);
-
-    const buttons = wrapper.findAll('button.tab');
-    await buttons[1]!.trigger('click');
-    expect(state.activeTab).toBe('todos');
-    await buttons[2]!.trigger('click');
-    expect(state.activeTab).toBe('estadisticas');
+    expect(wrapper.text()).toContain('Gestionar cuentas');
+    expect(wrapper.text()).toContain('Nuevo movimiento');
+    expect(wrapper.text()).not.toContain('Evolución');
+    expect(wrapper.text()).not.toContain('Estadísticas');
+    expect(wrapper.findComponent({ name: 'APageHead' }).props('title')).toBe('Contabilidad');
   });
 });

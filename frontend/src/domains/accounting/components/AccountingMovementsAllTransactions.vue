@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue';
-import { AButton, AKindChip, ARowMenu, ASelect } from '@/domains/ui';
+import { computed, onBeforeUnmount, ref } from 'vue';
+import { AButton, AKindChip, ARowMenu, ASelect, BaseModal } from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 import type { LedgerTransaction } from '@/domains/accounting/models';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
@@ -8,40 +8,9 @@ import { buildMovementPresentation } from '@/domains/accounting/movementPresenta
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
 const state = props.page;
-
 const dateDropdownOpen = ref(false);
-
-function toggleDateDropdown() {
-  dateDropdownOpen.value = !dateDropdownOpen.value;
-}
-
-function selectDatePreset(preset: (typeof state.datePresetOptions)[number]['value']) {
-  state.applyDatePreset(preset);
-  if (preset !== 'custom') {
-    dateDropdownOpen.value = false;
-  }
-}
-
-function closeDateDropdown(e: MouseEvent) {
-  const target = e.target as HTMLElement;
-  if (!target.closest('.a-mov-date-wrap')) {
-    dateDropdownOpen.value = false;
-  }
-}
-
-document.addEventListener('click', closeDateDropdown, true);
-onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, true));
-
-const activeDateLabel = () => {
-  const opt = state.datePresetOptions.find((o) => o.value === state.todosDatePreset);
-  return opt?.label ?? 'Período';
-};
-
-function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'muted' {
-  if (tx.activity_kind === 'income') return 'asset';
-  if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
-  return 'muted';
-}
+const mobileFiltersOpen = ref(false);
+const selectedTransaction = ref<LedgerTransaction | null>(null);
 
 const selectedAccountId = computed(() => {
   const parsed = Number(state.activityFilters.accountId);
@@ -59,70 +28,130 @@ const movementRows = computed(() =>
   })),
 );
 
+const movementGroups = computed(() => {
+  const groups: Array<{ date: string; label: string; rows: typeof movementRows.value }> = [];
+  for (const row of movementRows.value) {
+    let group = groups[groups.length - 1];
+    if (!group || group.date !== row.transaction.booking_date) {
+      group = {
+        date: row.transaction.booking_date,
+        label: state.formatDate(row.transaction.booking_date),
+        rows: [],
+      };
+      groups.push(group);
+    }
+    group.rows.push(row);
+  }
+  return groups;
+});
+
 const netDelta = computed(() =>
   movementRows.value.reduce((sum, row) => sum + row.presentation.aggregateImpact, 0),
 );
-
-const netCurrency = computed(() => {
-  if (selectedAccountId.value == null) return state.dailyBalanceSeriesUnit || 'EUR';
-  return (
-    state.accounts.find((account) => account.id === selectedAccountId.value)?.currency ?? 'EUR'
-  );
-});
-
-const netLabel = computed(() =>
-  selectedAccountId.value == null ? 'resultado' : 'variación de la cuenta',
+const netCurrency = computed(() =>
+  selectedAccountId.value == null
+    ? 'EUR'
+    : (state.accounts.find((account) => account.id === selectedAccountId.value)?.currency ?? 'EUR'),
+);
+const netTone = computed(() =>
+  netDelta.value > 0 ? 'is-positive' : netDelta.value < 0 ? 'is-negative' : 'is-neutral',
 );
 
-const netTone = computed(() => {
-  if (netDelta.value > 0) return 'is-positive';
-  if (netDelta.value < 0) return 'is-negative';
-  return 'is-neutral';
-});
+const showCategory = computed(() =>
+  ['income', 'expense', 'investment', 'debt_payment'].includes(state.activityFilters.kind),
+);
+const activeFilterCount = computed(
+  () =>
+    Number(state.activityFilters.accountId !== 'all') +
+    Number(state.activityFilters.kind !== 'all') +
+    Number(Boolean(state.activityFilters.categoryKey)) +
+    Number(Boolean(state.activityFilters.subcategoryKey)) +
+    Number(state.activityFilters.ownershipId !== 'all') +
+    Number(state.activityFilters.reviewState !== 'all') +
+    Number(Boolean(state.todosDateFrom || state.todosDateTo)),
+);
+
+const accountOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todas las cuentas' },
+  ...state.groupedCuentasAccounts.map((group) => ({
+    group: `${group.positionType === 'asset' ? 'Activos' : 'Pasivos'} · ${group.label}`,
+    options: group.accounts.map((account) => ({
+      value: String(account.id),
+      label: state.accountDisplayName(account),
+    })),
+  })),
+]);
+const kindOptions: ASelectItem[] = [
+  { value: 'all', label: 'Todos los tipos' },
+  { value: 'income', label: 'Ingresos' },
+  { value: 'expense', label: 'Gastos' },
+  { value: 'transfer', label: 'Transferencias' },
+  { value: 'investment', label: 'Inversiones' },
+  { value: 'debt_payment', label: 'Pagos de deuda' },
+  { value: 'adjustment', label: 'Ajustes' },
+  { value: 'opening_balance', label: 'Saldos iniciales' },
+  { value: 'revaluation', label: 'Revalorizaciones' },
+];
+const reviewOptions: ASelectItem[] = [
+  { value: 'all', label: 'Todos los estados' },
+  { value: 'needs_review', label: 'Por revisar' },
+  { value: 'reviewed', label: 'Clasificados' },
+];
+const ownershipOptions = computed<ASelectItem[]>(() => [
+  { value: 'all', label: 'Todas las titularidades' },
+  ...state.ownershipFilterOptions.map((option) => ({
+    value: option.value === null ? 'null' : String(option.value),
+    label: option.label,
+  })),
+]);
+const categoryOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Todas las categorías' },
+  ...state.filterCategoryOptions.map((option) => ({ value: option.value, label: option.label })),
+]);
+const subcategoryOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Todas las subcategorías' },
+  ...state.filterSubcategoryOptions.map((option) => ({
+    value: option.value,
+    label: option.label,
+  })),
+]);
 
 function formattedRowAmount(row: (typeof movementRows.value)[number]['presentation']): string {
   return row.showSign
     ? state.formatSignedMoney(row.amount, row.currency)
     : state.formatMoney(row.amount, row.currency);
 }
-
-const showCategory = computed(() =>
-  ['income', 'expense', 'investment', 'debt_payment'].includes(state.activityFilters.kind),
-);
-
-const accountOptions = computed<ASelectItem[]>(() => [
-  { value: 'all', label: 'Cuenta' },
-  ...state.groupedCuentasAccounts.map((group) => ({
-    group: `${group.positionType === 'asset' ? 'Activos' : 'Pasivos'} · ${group.label}`,
-    options: group.accounts.map((a) => ({
-      value: String(a.id),
-      label: state.accountDisplayName(a),
-    })),
-  })),
-]);
-
-const kindOptions: ASelectItem[] = [
-  { value: 'all', label: 'Tipo' },
-  { value: 'income', label: 'Ingresos' },
-  { value: 'expense', label: 'Gastos' },
-  { value: 'transfer', label: 'Transferencias' },
-  { value: 'adjustment', label: 'Ajustes' },
-  { value: 'investment', label: 'Inversión' },
-  { value: 'debt_payment', label: 'Pago deuda' },
-  { value: 'opening_balance', label: 'Saldo inicial' },
-  { value: 'revaluation', label: 'Revalorizaciones' },
-];
-
-const categoryOptions = computed<ASelectItem[]>(() => [
-  { value: '', label: 'Categoría' },
-  ...state.filterCategoryOptions.map((c) => ({ value: c.value, label: c.label })),
-]);
-
-const subcategoryOptions = computed<ASelectItem[]>(() => [
-  { value: '', label: 'Subcategoría' },
-  ...state.filterSubcategoryOptions.map((s) => ({ value: s.value, label: s.label })),
-]);
-
+function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'muted' {
+  if (tx.activity_kind === 'income') return 'asset';
+  if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
+  return 'muted';
+}
+function selectDatePreset(preset: (typeof state.datePresetOptions)[number]['value']) {
+  state.applyDatePreset(preset);
+  if (preset !== 'custom') dateDropdownOpen.value = false;
+}
+function activeDateLabel(): string {
+  return (
+    state.datePresetOptions.find((option) => option.value === state.todosDatePreset)?.label ??
+    'Período'
+  );
+}
+function setOwnership(value: string | number | null): void {
+  state.activityFilters.ownershipId =
+    value === 'all' ? 'all' : value === 'null' ? null : Number(value);
+}
+function clearFilters(): void {
+  state.activityFilters.accountId = 'all';
+  state.activityFilters.kind = 'all';
+  state.activityFilters.categoryKey = '';
+  state.activityFilters.subcategoryKey = '';
+  state.activityFilters.ownershipId = 'all';
+  state.activityFilters.reviewState = 'all';
+  state.applyDatePreset('all');
+}
+function reviewPending(): void {
+  state.activityFilters.reviewState = 'needs_review';
+}
 function rowMenuItems(tx: LedgerTransaction) {
   if (tx.origin === 'system') return [];
   return [
@@ -131,186 +160,312 @@ function rowMenuItems(tx: LedgerTransaction) {
     { id: 'delete', label: 'Eliminar', danger: true },
   ];
 }
-
 function handleMenuSelect(id: string, tx: LedgerTransaction) {
   if (id === 'edit') state.openEditTransactionModal(tx.id);
   else if (id === 'duplicate') state.openDuplicateFromTransaction(tx);
   else if (id === 'delete') state.deleteTransactionFromTimeline(tx.id, tx.description);
 }
+function editSelected(): void {
+  const transaction = selectedTransaction.value;
+  if (!transaction) return;
+  selectedTransaction.value = null;
+  state.openEditTransactionModal(transaction.id);
+}
+function closeDateDropdown(event: MouseEvent) {
+  if (!(event.target as HTMLElement).closest('.a-mov-date-wrap')) dateDropdownOpen.value = false;
+}
+document.addEventListener('click', closeDateDropdown, true);
+onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, true));
 </script>
 
 <template>
-  <div>
-    <!-- Filter bar -->
-    <div class="filter-bar">
+  <div class="a-mov-ledger">
+    <div class="a-mov-ops-band" aria-label="Resumen operativo">
+      <div>
+        <span>Movimientos</span>
+        <strong class="mono">{{ state.todosTotalCount }}</strong>
+        <small>{{ state.todosTransactions.length }} cargados</small>
+      </div>
+      <div>
+        <span>Neto cargado</span>
+        <strong class="mono" :class="netTone">
+          {{ state.formatSignedMoney(netDelta, netCurrency) }}
+        </strong>
+        <small>{{
+          selectedAccountId == null ? 'resultado operativo' : 'variación de la cuenta'
+        }}</small>
+      </div>
+      <button
+        class="a-mov-review-kpi"
+        :class="{ 'has-pending': state.todosNeedsReviewCount > 0 }"
+        type="button"
+        @click="reviewPending"
+      >
+        <span>Por revisar</span>
+        <strong class="mono">{{ state.todosNeedsReviewCount }}</strong>
+        <small>{{
+          state.todosNeedsReviewCount ? 'Completar clasificación →' : 'Todo al día'
+        }}</small>
+      </button>
+    </div>
+
+    <div class="a-mov-toolbar">
       <input
         v-model="state.activityFilters.query"
         class="filter-ctrl a-mov-search"
-        placeholder="Buscar…"
+        placeholder="Buscar concepto, nota o cuenta…"
+        aria-label="Buscar movimientos"
       />
-      <!-- Cuenta -->
-      <ASelect
-        v-model="state.activityFilters.accountId"
-        :options="accountOptions"
-        class="filter-ctrl"
-      />
-      <ASelect v-model="state.activityFilters.kind" :options="kindOptions" class="filter-ctrl" />
-      <ASelect
-        v-if="showCategory"
-        v-model="state.activityFilters.categoryKey"
-        :options="categoryOptions"
-        class="filter-ctrl"
-      />
-      <ASelect
-        v-if="state.filterSubcategoryOptions.length"
-        v-model="state.activityFilters.subcategoryKey"
-        :options="subcategoryOptions"
-        class="filter-ctrl"
-      />
-      <!-- Date popover -->
-      <div class="a-mov-date-wrap">
-        <button
-          class="filter-ctrl a-mov-date-trigger"
-          type="button"
-          :aria-expanded="dateDropdownOpen ? 'true' : 'false'"
-          @click="toggleDateDropdown"
-        >
-          <span>{{ activeDateLabel() }}</span>
-          <span class="a-mov-date-caret" aria-hidden="true">▾</span>
-        </button>
-        <div v-if="dateDropdownOpen" class="filter-popover">
+      <AButton
+        class="a-mov-mobile-filter-trigger"
+        :class="{ on: mobileFiltersOpen }"
+        @click="mobileFiltersOpen = !mobileFiltersOpen"
+      >
+        Filtros{{ activeFilterCount ? ` · ${activeFilterCount}` : '' }}
+      </AButton>
+      <div class="a-mov-filter-controls" :class="{ 'is-open': mobileFiltersOpen }">
+        <ASelect
+          v-model="state.activityFilters.accountId"
+          :options="accountOptions"
+          class="filter-ctrl"
+        />
+        <ASelect v-model="state.activityFilters.kind" :options="kindOptions" class="filter-ctrl" />
+        <ASelect
+          v-if="showCategory"
+          v-model="state.activityFilters.categoryKey"
+          :options="categoryOptions"
+          class="filter-ctrl"
+        />
+        <ASelect
+          v-if="state.filterSubcategoryOptions.length"
+          v-model="state.activityFilters.subcategoryKey"
+          :options="subcategoryOptions"
+          class="filter-ctrl"
+        />
+        <ASelect
+          :model-value="
+            state.activityFilters.ownershipId === null
+              ? 'null'
+              : String(state.activityFilters.ownershipId)
+          "
+          :options="ownershipOptions"
+          class="filter-ctrl"
+          @update:model-value="setOwnership"
+        />
+        <ASelect
+          v-model="state.activityFilters.reviewState"
+          :options="reviewOptions"
+          class="filter-ctrl"
+        />
+        <div class="a-mov-date-wrap">
           <button
-            v-for="preset in state.datePresetOptions"
-            :key="preset.value"
-            :class="{ on: state.todosDatePreset === preset.value }"
+            class="filter-ctrl a-mov-date-trigger"
             type="button"
-            @click="selectDatePreset(preset.value)"
+            :aria-expanded="dateDropdownOpen"
+            @click="dateDropdownOpen = !dateDropdownOpen"
           >
-            {{ preset.label }}
+            <span>{{ activeDateLabel() }}</span
+            ><span aria-hidden="true">▾</span>
           </button>
-          <template v-if="state.todosDatePreset === 'custom'">
-            <hr />
-            <div class="a-mov-popover-custom">
-              <span class="a-mov-popover-label">Rango manual</span>
-              <input v-model="state.todosDateFrom" class="filter-ctrl" type="date" title="Desde" />
-              <input v-model="state.todosDateTo" class="filter-ctrl" type="date" title="Hasta" />
+          <div v-if="dateDropdownOpen" class="filter-popover">
+            <button
+              v-for="preset in state.datePresetOptions"
+              :key="preset.value"
+              :class="{ on: state.todosDatePreset === preset.value }"
+              type="button"
+              @click="selectDatePreset(preset.value)"
+            >
+              {{ preset.label }}
+            </button>
+            <div v-if="state.todosDatePreset === 'custom'" class="a-mov-popover-custom">
+              <label
+                >Desde <input v-model="state.todosDateFrom" class="filter-ctrl" type="date"
+              /></label>
+              <label
+                >Hasta <input v-model="state.todosDateTo" class="filter-ctrl" type="date"
+              /></label>
             </div>
-          </template>
+          </div>
         </div>
+        <AButton v-if="activeFilterCount" variant="ghost" @click="clearFilters">Limpiar</AButton>
       </div>
-      <!-- Count + net -->
-      <span class="filter-count">
-        <strong>{{ state.todosTransactions.length }}</strong>
-        <span class="a-mov-filter-faint"> de </span>
-        {{ state.todosTotalCount }}
-        <span class="dot" />
-        <span class="mono a-mov-filter-net" :class="netTone">
-          {{ state.formatSignedMoney(netDelta, netCurrency) }}
-        </span>
-        {{ netLabel }}
-      </span>
     </div>
 
-    <!-- Loading -->
     <div v-if="state.todosLoading && !state.todosTransactions.length" class="a-mov-loading-state">
-      <div class="ui-import-spinner"></div>
-      <span>Cargando movimientos...</span>
+      <div class="ui-import-spinner" />
+      <span>Cargando movimientos…</span>
     </div>
-
-    <!-- Empty state -->
     <div v-else-if="!state.todosTransactions.length" class="a-mov-todos-empty">
-      <div class="a-mov-todos-empty-title">Sin movimientos para estos filtros</div>
-      <div>Prueba otro periodo o ajusta la búsqueda para ver actividad.</div>
+      <div class="a-mov-todos-empty-title">
+        {{
+          state.activityFilters.reviewState === 'needs_review'
+            ? 'No quedan movimientos por revisar'
+            : 'Sin movimientos para estos filtros'
+        }}
+      </div>
+      <div>
+        {{
+          state.activityFilters.reviewState === 'needs_review'
+            ? 'La clasificación está al día.'
+            : 'Prueba otro período o limpia los filtros.'
+        }}
+      </div>
     </div>
 
-    <!-- Movements table -->
     <div v-else class="a-mov-table-scroll">
-      <table class="a-mov-todos-table">
+      <table class="a-mov-todos-table a-mov-operations-table">
         <thead>
           <tr>
-            <th class="a-mov-col-date">Fecha</th>
-            <th class="a-mov-col-concept">Concepto</th>
-            <th>Tipo</th>
-            <th>Cuenta / origen</th>
-            <th>Destino</th>
-            <th>Categoría</th>
+            <th>Fecha y concepto</th>
+            <th>Origen → destino</th>
+            <th>Clasificación</th>
             <th class="num">Importe</th>
-            <th class="a-mov-col-menu"></th>
+            <th />
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="row in movementRows"
-            :key="row.transaction.id"
-            class="clickable"
-            @click="
-              row.transaction.origin !== 'system' &&
-              state.openEditTransactionModal(row.transaction.id)
-            "
-          >
-            <td class="mono a-mov-row-date" data-label="Fecha">
-              {{ state.formatDate(row.transaction.booking_date) }}
-            </td>
-            <td class="a-mov-row-concept" data-label="Concepto">
-              {{ row.transaction.description }}
-            </td>
-            <td data-label="Tipo">
-              <AKindChip :tone="kindTone(row.transaction)">
-                {{ state.activityKindLabel(row.transaction) }}
-              </AKindChip>
-            </td>
-            <td class="a-mov-row-account" data-label="Cuenta / origen">
-              {{ row.presentation.accountName }}
-            </td>
-            <td class="a-mov-row-account" data-label="Destino">
-              {{ row.presentation.destinationName ?? '—' }}
-            </td>
-            <td class="a-mov-row-classification" data-label="Categoría">
-              <template v-if="row.presentation.classificationState === 'available'">
-                <div
-                  v-for="classification in row.presentation.classifications"
-                  :key="`${classification.category}:${classification.subcategory}`"
-                  class="a-mov-classification"
-                >
-                  <span>{{ classification.category }}</span>
-                  <span>{{ classification.subcategory }}</span>
-                </div>
-              </template>
-              <span
-                v-else-if="row.presentation.classificationState === 'missing'"
-                class="is-missing"
-              >
-                Sin categoría
-              </span>
-              <span v-else>—</span>
-            </td>
-            <td
-              class="num mono a-mov-row-amount"
-              :class="`is-${row.presentation.tone}`"
-              data-label="Importe"
+          <template v-for="group in movementGroups" :key="group.date">
+            <tr class="a-mov-date-group">
+              <th colspan="5">{{ group.label }}</th>
+            </tr>
+            <tr
+              v-for="row in group.rows"
+              :key="row.transaction.id"
+              class="clickable"
+              :class="{ 'needs-review': row.transaction.needs_review }"
+              @click="selectedTransaction = row.transaction"
             >
-              {{ formattedRowAmount(row.presentation) }}
-            </td>
-            <td class="a-mov-row-menu" data-label="Acciones" @click.stop>
-              <ARowMenu
-                v-if="row.transaction.origin !== 'system'"
-                :items="rowMenuItems(row.transaction)"
-                label="Acciones del movimiento"
-                @select="handleMenuSelect($event, row.transaction)"
-              />
-            </td>
-          </tr>
+              <td class="a-mov-row-concept" data-label="Movimiento">
+                <strong>{{ row.transaction.description }}</strong>
+                <span
+                  ><AKindChip :tone="kindTone(row.transaction)">{{
+                    state.activityKindLabel(row.transaction)
+                  }}</AKindChip></span
+                >
+              </td>
+              <td class="a-mov-row-account" data-label="Origen → destino">
+                <span>{{ row.presentation.accountName }}</span>
+                <span v-if="row.presentation.destinationName" class="a-mov-trail-arrow"
+                  >→ {{ row.presentation.destinationName }}</span
+                >
+              </td>
+              <td class="a-mov-row-classification" data-label="Clasificación">
+                <template v-if="row.presentation.classificationState === 'available'">
+                  <div
+                    v-for="item in row.presentation.classifications"
+                    :key="`${item.category}:${item.subcategory}`"
+                    class="a-mov-classification"
+                  >
+                    <span>{{ item.category }}</span
+                    ><span>{{ item.subcategory }}</span>
+                  </div>
+                </template>
+                <button
+                  v-else-if="row.transaction.needs_review"
+                  class="a-mov-review-chip"
+                  type="button"
+                  @click.stop="state.openEditTransactionModal(row.transaction.id)"
+                >
+                  Por revisar
+                </button>
+                <span v-else>—</span>
+              </td>
+              <td
+                class="num mono a-mov-row-amount"
+                :class="`is-${row.presentation.tone}`"
+                data-label="Importe"
+              >
+                {{ formattedRowAmount(row.presentation) }}
+              </td>
+              <td class="a-mov-row-menu" data-label="Acciones" @click.stop>
+                <ARowMenu
+                  v-if="row.transaction.origin !== 'system'"
+                  :items="rowMenuItems(row.transaction)"
+                  label="Acciones del movimiento"
+                  @select="handleMenuSelect($event, row.transaction)"
+                />
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
 
     <div v-if="state.todosHasMore" class="a-mov-load-more">
       <AButton :disabled="state.todosLoadingMore" @click="state.loadMoreTodos">
-        {{ state.todosLoadingMore ? 'Cargando...' : 'Cargar más' }}
+        {{ state.todosLoadingMore ? 'Cargando…' : 'Cargar más' }}
       </AButton>
     </div>
-    <p v-else-if="state.todosTransactions.length" class="a-mov-load-hint">
-      Todos los movimientos cargados
-    </p>
+
+    <BaseModal
+      :open="selectedTransaction != null"
+      :title="selectedTransaction?.description"
+      variant="sheet"
+      panel-class="dir-a dir-a-sheet a-mov-detail-sheet"
+      close-on-backdrop
+      @close="selectedTransaction = null"
+    >
+      <div v-if="selectedTransaction" class="a-mov-detail">
+        <div class="a-mov-detail-summary">
+          <div>
+            <span>Fecha contable</span
+            ><strong>{{ state.formatDate(selectedTransaction.booking_date) }}</strong>
+          </div>
+          <div>
+            <span>Fecha valor</span
+            ><strong>{{ state.formatDate(selectedTransaction.value_date) }}</strong>
+          </div>
+          <div>
+            <span>Tipo</span><strong>{{ state.activityKindLabel(selectedTransaction) }}</strong>
+          </div>
+          <div>
+            <span>Titularidad</span
+            ><strong>{{ state.transactionOwnershipLabel(selectedTransaction) }}</strong>
+          </div>
+          <div>
+            <span>Origen</span><strong>{{ selectedTransaction.origin }}</strong>
+          </div>
+          <div>
+            <span>Clasificación</span
+            ><strong>{{
+              state.transactionClassificationLabel(selectedTransaction) || 'No aplica'
+            }}</strong>
+          </div>
+        </div>
+        <div class="a-mov-detail-entries">
+          <div class="a-mov-detail-entry a-mov-detail-entry-head">
+            <span>Cuenta</span><span>Debe</span><span>Haber</span>
+          </div>
+          <div
+            v-for="entry in selectedTransaction.entries"
+            :key="entry.id"
+            class="a-mov-detail-entry"
+          >
+            <span>{{ entry.account_name }}</span>
+            <span class="mono">{{
+              entry.side === 'debit' ? state.formatMoney(Number(entry.amount), entry.currency) : '—'
+            }}</span>
+            <span class="mono">{{
+              entry.side === 'credit'
+                ? state.formatMoney(Number(entry.amount), entry.currency)
+                : '—'
+            }}</span>
+          </div>
+        </div>
+        <p v-if="selectedTransaction.notes" class="a-mov-detail-notes">
+          {{ selectedTransaction.notes }}
+        </p>
+        <div v-if="selectedTransaction.origin !== 'system'" class="a-mov-detail-actions">
+          <AButton variant="primary" @click="editSelected">Editar movimiento</AButton>
+          <AButton
+            @click="
+              state.openDuplicateFromTransaction(selectedTransaction);
+              selectedTransaction = null;
+            "
+            >Duplicar</AButton
+          >
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
