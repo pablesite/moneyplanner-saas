@@ -80,7 +80,6 @@ describe('AccountingMovementsView', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Gestionar cuentas');
     expect(wrapper.text()).toContain('Nuevo movimiento');
     expect(wrapper.text()).not.toContain('Evolución');
     expect(wrapper.text()).not.toContain('Estadísticas');

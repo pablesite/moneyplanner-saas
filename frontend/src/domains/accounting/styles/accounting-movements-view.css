@@ -290,7 +290,7 @@
 }
 
 .a-mov-todos-table td {
-  padding: 12px 12px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   font-size: 13.5px;
   vertical-align: middle;
@@ -449,6 +449,32 @@
 
 .a-mov-catalog-table .grp-kind-liability {
   color: var(--neg);
+}
+
+.a-mov-grp-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.a-mov-grp-chevron {
+  width: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.a-mov-grp-count {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 12px;
 }
 
 .a-mov-catalog-table .name {
@@ -858,60 +884,102 @@
     display: none;
   }
 
-  .a-mov-todos-table tr {
-    display: grid;
-    gap: 0;
-    margin-bottom: 12px;
-    padding: 12px 14px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-  }
-
-  .a-mov-todos-table tr:hover td {
+  .a-mov-operations-table .a-mov-date-group {
+    display: block;
+    border: 0;
     background: transparent;
   }
 
-  .a-mov-todos-table td {
+  .a-mov-operations-table .a-mov-date-group th {
+    display: block;
+    padding: 16px 2px 6px;
+  }
+
+  /* Operations rows collapse to a single two-line entry: icon · concept/account · amount.
+     Full detail (classification, double-entry, actions) lives in the tap-to-open sheet. */
+  .a-mov-operations-table tr.clickable {
     display: grid;
-    grid-template-columns: minmax(92px, 0.8fr) minmax(0, 1.2fr);
-    gap: 12px;
-    align-items: start;
-    padding: 7px 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 1px;
+    margin: 0;
+    padding: 10px 2px;
+    border: 0;
     border-bottom: 1px solid var(--line);
-    text-align: right;
-    overflow-wrap: anywhere;
+    border-radius: 0;
   }
 
-  .a-mov-todos-table td::before {
-    content: attr(data-label);
-    color: var(--faint);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+  .a-mov-operations-table tr.clickable:hover td {
+    background: transparent;
+  }
+
+  .a-mov-operations-table tr.clickable td {
+    display: block;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
     text-align: left;
-    text-transform: uppercase;
   }
 
-  .a-mov-todos-table td:last-child {
-    border-bottom: 0;
+  .a-mov-operations-table tr.clickable td::before {
+    content: none;
   }
 
-  .a-mov-todos-table td.num {
-    text-align: right;
+  .a-mov-operations-table .a-mov-row-icon {
+    display: grid;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
   }
 
-  .a-mov-todos-table .a-mov-row-concept {
+  .a-mov-operations-table .a-mov-row-concept {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
     color: var(--text);
     font-weight: 500;
   }
 
-  .a-mov-row-classification,
-  .a-mov-classification {
-    justify-items: end;
+  .a-mov-operations-table .a-mov-row-concept strong {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
-  .a-mov-row-menu > * {
-    justify-self: end;
+  .a-mov-operations-table .a-mov-row-concept .a-mov-kind-chip {
+    display: none;
+  }
+
+  .a-mov-operations-table .a-mov-row-account {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .a-mov-operations-table .a-mov-row-account .a-mov-trail-arrow {
+    display: inline;
+    margin: 0 0 0 4px;
+  }
+
+  .a-mov-operations-table .a-mov-row-amount {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+    font-size: 15px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .a-mov-operations-table tr.clickable td.a-mov-row-classification,
+  .a-mov-operations-table tr.clickable td.a-mov-row-menu {
+    display: none;
   }
 
   .a-mov-catalog-table th:nth-child(2),
@@ -1006,64 +1074,106 @@
   padding-bottom: 88px;
 }
 
+/* Tighten the rhythm between the page title and the ledger. Needs `.dir-a .page`
+   specificity to beat the shared 28px page gap. */
+.dir-a .page.a-mov-operations-page,
+.dir-a .page.a-mov-accounts-page {
+  gap: 12px;
+}
+
+/* Account selector lives in the (sticky) toolbar, styled like the search field.
+   Spans the full toolbar width; shows the current balance when one account is picked. */
+.a-mov-account-picker {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.a-mov-account-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.a-mov-account-balance {
+  flex-shrink: 0;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.a-mov-account-balance.is-liability {
+  color: var(--neg);
+}
+
 .a-mov-ledger-section,
 .a-mov-accounts-section {
   min-width: 0;
 }
 
-.a-mov-ops-band {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+.a-mov-review-chip {
+  color: var(--accent);
 }
 
-.a-mov-ops-band > div,
-.a-mov-review-kpi {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  padding: 18px 20px;
-  border: 0;
-  border-right: 1px solid var(--line);
-  background: transparent;
+/* Movement count rides in the page-head meta as a tight subtitle of "Contabilidad". */
+.a-mov-head-count strong {
   color: var(--text);
-  text-align: left;
+  font-weight: 600;
 }
 
-.a-mov-ops-band > :last-child {
-  border-right: 0;
-}
-
-.a-mov-ops-band span,
-.a-mov-ops-band small {
-  color: var(--muted);
+.a-mov-review-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
   font-size: 12px;
-}
-
-.a-mov-ops-band strong {
-  font-size: 22px;
-  font-weight: 500;
-}
-
-.a-mov-review-kpi {
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.a-mov-review-kpi:hover,
-.a-mov-review-kpi.has-pending {
-  background: var(--accent-soft);
+/* Movement type icon — shown only in the compact mobile row */
+.a-mov-todos-table .a-mov-row-icon {
+  display: none;
 }
 
-.a-mov-review-kpi.has-pending strong,
-.a-mov-review-chip {
-  color: var(--accent);
+.a-mov-kind-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.a-mov-kind-icon.is-asset {
+  border-color: color-mix(in oklab, var(--pos) 40%, var(--line));
+  color: var(--pos);
+}
+
+.a-mov-kind-icon.is-liability {
+  border-color: color-mix(in oklab, var(--neg) 40%, var(--line));
+  color: var(--neg);
+}
+
+.a-mov-detail-delete {
+  color: var(--neg);
 }
 
 .a-mov-toolbar {
   position: sticky;
   z-index: 15;
-  top: 0;
+  /* Stick just below the 57px app shell header so search + filters stay reachable. */
+  top: 56px;
   display: grid;
   grid-template-columns: minmax(240px, 1fr) auto;
   gap: 10px;
@@ -1084,6 +1194,18 @@
   min-width: 148px;
 }
 
+.a-mov-filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* "Cerrar" only matters when the panel is a toggleable mobile dropdown. */
+.a-mov-filters-close {
+  display: none;
+}
+
 .a-mov-mobile-filter-trigger,
 .a-mov-mobile-create {
   display: none;
@@ -1092,12 +1214,13 @@
 .a-mov-operations-table thead th {
   position: sticky;
   z-index: 4;
-  top: 72px;
+  /* Sit below the sticky shell header (57px) + the sticky toolbar (~62px). */
+  top: 118px;
   background: var(--bg);
 }
 
 .a-mov-date-group th {
-  padding: 18px 10px 7px;
+  padding: 14px 10px 6px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-size: 11px;
@@ -1271,7 +1394,11 @@
     justify-content: stretch;
     padding: 14px;
     border: 1px solid var(--line);
-    background: var(--panel);
+    border-radius: 12px;
+    /* Same popover surface as .filter-popover and the ASelect panel (not the 4% --panel). */
+    background: rgb(12 13 16 / 0.98);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 20px 45px rgb(0 0 0 / 0.42);
   }
 
   .a-mov-filter-controls.is-open {
@@ -1285,65 +1412,100 @@
     width: 100%;
     min-width: 0;
   }
+
+  /* Período expands inline so the panel grows, instead of a nested popover that
+     overflows the dropdown. */
+  .a-mov-filter-controls .a-mov-date-wrap .filter-popover {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .a-mov-filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .a-mov-filters-close {
+    display: inline-flex;
+  }
 }
 
 @container page (max-width: 560px) {
-  .a-mov-operations-page .page-head .actions .a-mov-manage-accounts {
+  /* Both header actions are hidden here (create lives in the floating FAB), so drop the
+     whole actions container — otherwise its wrapped, full-width empty row reserves space. */
+  .a-mov-operations-page .page-head .actions {
     display: none;
   }
 
-  .a-mov-ops-band {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .a-mov-toolbar {
+    padding-top: 8px;
   }
 
-  .a-mov-review-kpi {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--line);
-  }
-
+  /* Dropdown anchored to the sticky toolbar (its positioned containing block), not the
+     viewport: `fixed` here lands inside the toolbar's backdrop-filter / container-query
+     containing block and drifts. `absolute` keeps it pinned right under the toolbar. */
   .a-mov-filter-controls.is-open {
-    position: fixed;
+    position: absolute;
     z-index: 40;
-    right: 12px;
-    bottom: 76px;
-    left: 12px;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
     grid-template-columns: 1fr;
-    max-height: min(72vh, 620px);
+    max-height: min(70vh, 560px);
     overflow-y: auto;
     border-radius: 12px;
-    box-shadow: 0 20px 60px rgb(0 0 0 / 45%);
+    box-shadow: 0 20px 60px rgb(0 0 0 / 50%);
   }
 
-  .a-mov-operations-table thead,
-  .a-mov-operations-table .a-mov-date-group {
-    display: table-row;
-  }
-
-  .a-mov-operations-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
-
-  .a-mov-operations-table .a-mov-date-group {
-    border: 0;
-    background: transparent;
-  }
-
-  .a-mov-operations-table .a-mov-date-group th {
-    display: table-cell;
-  }
-
-  .a-mov-mobile-create {
+  /* Icon-only floating action button: elevated dark squircle with a "+" in accent,
+     matching the row icon boxes and shell controls instead of a loud accent fill.
+     Needs `.dir-a .btn` specificity to override the shared button base. */
+  .dir-a .btn.a-mov-mobile-create {
     position: fixed;
     z-index: 30;
-    right: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom));
+    right: 18px;
+    bottom: calc(18px + env(safe-area-inset-bottom));
     display: inline-flex;
-    min-height: 48px;
-    box-shadow: 0 14px 40px rgb(0 0 0 / 38%);
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--accent-line);
+    border-radius: 18px;
+    /* Same frosted background as the app shell header for visual continuity. */
+    background: rgba(11, 13, 18, 0.82);
+    backdrop-filter: blur(12px);
+    color: var(--accent);
+    box-shadow: 0 16px 38px rgb(0 0 0 / 48%);
+  }
+
+  .dir-a .btn.a-mov-mobile-create:hover {
+    border-color: var(--accent);
+    background: rgba(11, 13, 18, 0.92);
+  }
+
+  .dir-a .btn.a-mov-mobile-create:disabled {
+    border-color: var(--line);
+    color: var(--faint);
+    box-shadow: none;
+  }
+
+  .a-mov-mobile-create .a-mov-fab-label {
+    display: none;
+  }
+
+  .a-mov-mobile-create .a-mov-fab-plus {
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1;
   }
 
   .a-mov-detail-sheet,
@@ -1365,16 +1527,5 @@
   .a-mov-account-tools {
     align-items: stretch;
     flex-direction: column;
-  }
-}
-
-@container page (max-width: 400px) {
-  .a-mov-ops-band strong {
-    font-size: 18px;
-  }
-
-  .a-mov-ops-band > div,
-  .a-mov-review-kpi {
-    padding: 14px 12px;
   }
 }

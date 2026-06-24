@@ -7,6 +7,7 @@ import { useAccountingMovementsPage } from '@/domains/accounting/useAccountingMo
 import AccountingMovementsAllTransactions from '@/domains/accounting/components/AccountingMovementsAllTransactions.vue';
 import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
+import AccountingTabs from '@/domains/accounting/components/AccountingTabs.vue';
 import { AButton, APageHead, AState } from '@/domains/ui';
 
 const route = useRoute();
@@ -58,11 +59,8 @@ function currentQuery(): Record<string, string> {
   return query;
 }
 
-function openAccounts(): void {
-  void router.push({
-    name: 'accounting-accounts',
-    query: { return_to: route.fullPath },
-  });
+function reviewPending(): void {
+  page.activityFilters.reviewState = 'needs_review';
 }
 
 onMounted(async () => {
@@ -107,16 +105,22 @@ watch(
   <div class="page a-mov-page a-mov-operations-page">
     <APageHead title="Contabilidad">
       <template #meta>
-        <span>Libro diario</span>
-        <span class="dot" />
-        <span>Partida doble</span>
+        <span class="a-mov-head-count">
+          <strong class="mono">{{ page.todosTotalCount }}</strong> movimientos
+        </span>
+        <button
+          v-if="page.todosNeedsReviewCount > 0"
+          class="a-mov-review-badge"
+          type="button"
+          @click="reviewPending"
+        >
+          {{ page.todosNeedsReviewCount }} por revisar
+        </button>
       </template>
       <template #actions>
-        <AButton variant="ghost" class="a-mov-manage-accounts" @click="openAccounts">
-          Gestionar cuentas
-        </AButton>
         <AButton
           variant="primary"
+          class="a-mov-header-create"
           :disabled="!page.liquidityAccounts.length"
           @click="page.showQuickEntryModal = true"
         >
@@ -124,6 +128,8 @@ watch(
         </AButton>
       </template>
     </APageHead>
+
+    <AccountingTabs />
 
     <AState v-if="page.error" status="error">{{ page.error }}</AState>
     <AState v-if="page.successMessage" status="success">{{ page.successMessage }}</AState>
@@ -136,9 +142,11 @@ watch(
       variant="primary"
       class="a-mov-mobile-create"
       :disabled="!page.liquidityAccounts.length"
+      aria-label="Nuevo movimiento"
       @click="page.showQuickEntryModal = true"
     >
-      + Nuevo movimiento
+      <span class="a-mov-fab-plus" aria-hidden="true">+</span>
+      <span class="a-mov-fab-label">Nuevo movimiento</span>
     </AButton>
 
     <AccountingMovementsEditTransactionModal :page="page" />

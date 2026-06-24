@@ -17,6 +17,12 @@ const selectedAccountId = computed(() => {
   return state.activityFilters.accountId === 'all' || !Number.isFinite(parsed) ? undefined : parsed;
 });
 
+const scopedAccount = computed(() =>
+  selectedAccountId.value == null
+    ? null
+    : (state.accounts.find((account) => account.id === selectedAccountId.value) ?? null),
+);
+
 const movementRows = computed(() =>
   state.todosTransactions.map((transaction) => ({
     transaction,
@@ -45,24 +51,11 @@ const movementGroups = computed(() => {
   return groups;
 });
 
-const netDelta = computed(() =>
-  movementRows.value.reduce((sum, row) => sum + row.presentation.aggregateImpact, 0),
-);
-const netCurrency = computed(() =>
-  selectedAccountId.value == null
-    ? 'EUR'
-    : (state.accounts.find((account) => account.id === selectedAccountId.value)?.currency ?? 'EUR'),
-);
-const netTone = computed(() =>
-  netDelta.value > 0 ? 'is-positive' : netDelta.value < 0 ? 'is-negative' : 'is-neutral',
-);
-
 const showCategory = computed(() =>
   ['income', 'expense', 'investment', 'debt_payment'].includes(state.activityFilters.kind),
 );
 const activeFilterCount = computed(
   () =>
-    Number(state.activityFilters.accountId !== 'all') +
     Number(state.activityFilters.kind !== 'all') +
     Number(Boolean(state.activityFilters.categoryKey)) +
     Number(Boolean(state.activityFilters.subcategoryKey)) +
@@ -126,6 +119,19 @@ function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'm
   if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
   return 'muted';
 }
+const KIND_GLYPHS: Record<string, string> = {
+  income: '↓',
+  expense: '↑',
+  transfer: '⇄',
+  investment: '↗',
+  debt_payment: '↑',
+  adjustment: '±',
+  opening_balance: '●',
+  revaluation: '↻',
+};
+function kindGlyph(tx: LedgerTransaction): string {
+  return KIND_GLYPHS[tx.activity_kind] ?? '•';
+}
 function selectDatePreset(preset: (typeof state.datePresetOptions)[number]['value']) {
   state.applyDatePreset(preset);
   if (preset !== 'custom') dateDropdownOpen.value = false;
@@ -149,9 +155,6 @@ function clearFilters(): void {
   state.activityFilters.reviewState = 'all';
   state.applyDatePreset('all');
 }
-function reviewPending(): void {
-  state.activityFilters.reviewState = 'needs_review';
-}
 function rowMenuItems(tx: LedgerTransaction) {
   if (tx.origin === 'system') return [];
   return [
@@ -171,6 +174,12 @@ function editSelected(): void {
   selectedTransaction.value = null;
   state.openEditTransactionModal(transaction.id);
 }
+function deleteSelected(): void {
+  const transaction = selectedTransaction.value;
+  if (!transaction) return;
+  selectedTransaction.value = null;
+  state.deleteTransactionFromTimeline(transaction.id, transaction.description);
+}
 function closeDateDropdown(event: MouseEvent) {
   if (!(event.target as HTMLElement).closest('.a-mov-date-wrap')) dateDropdownOpen.value = false;
 }
@@ -180,36 +189,22 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
 
 <template>
   <div class="a-mov-ledger">
-    <div class="a-mov-ops-band" aria-label="Resumen operativo">
-      <div>
-        <span>Movimientos</span>
-        <strong class="mono">{{ state.todosTotalCount }}</strong>
-        <small>{{ state.todosTransactions.length }} cargados</small>
-      </div>
-      <div>
-        <span>Neto cargado</span>
-        <strong class="mono" :class="netTone">
-          {{ state.formatSignedMoney(netDelta, netCurrency) }}
-        </strong>
-        <small>{{
-          selectedAccountId == null ? 'resultado operativo' : 'variación de la cuenta'
-        }}</small>
-      </div>
-      <button
-        class="a-mov-review-kpi"
-        :class="{ 'has-pending': state.todosNeedsReviewCount > 0 }"
-        type="button"
-        @click="reviewPending"
-      >
-        <span>Por revisar</span>
-        <strong class="mono">{{ state.todosNeedsReviewCount }}</strong>
-        <small>{{
-          state.todosNeedsReviewCount ? 'Completar clasificación →' : 'Todo al día'
-        }}</small>
-      </button>
-    </div>
-
     <div class="a-mov-toolbar">
+      <div class="a-mov-account-picker">
+        <ASelect
+          v-model="state.activityFilters.accountId"
+          :options="accountOptions"
+          class="filter-ctrl a-mov-account-select"
+          aria-label="Cuenta"
+        />
+        <span
+          v-if="scopedAccount"
+          class="a-mov-account-balance mono"
+          :class="{ 'is-liability': scopedAccount.account_type === 'liability' }"
+        >
+          {{ state.formatMoney(Number(scopedAccount.current_balance), scopedAccount.currency) }}
+        </span>
+      </div>
       <input
         v-model="state.activityFilters.query"
         class="filter-ctrl a-mov-search"
@@ -224,11 +219,6 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
         Filtros{{ activeFilterCount ? ` · ${activeFilterCount}` : '' }}
       </AButton>
       <div class="a-mov-filter-controls" :class="{ 'is-open': mobileFiltersOpen }">
-        <ASelect
-          v-model="state.activityFilters.accountId"
-          :options="accountOptions"
-          class="filter-ctrl"
-        />
         <ASelect v-model="state.activityFilters.kind" :options="kindOptions" class="filter-ctrl" />
         <ASelect
           v-if="showCategory"
@@ -287,7 +277,12 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
             </div>
           </div>
         </div>
-        <AButton v-if="activeFilterCount" variant="ghost" @click="clearFilters">Limpiar</AButton>
+        <div class="a-mov-filter-actions">
+          <AButton v-if="activeFilterCount" variant="ghost" @click="clearFilters">Limpiar</AButton>
+          <AButton class="a-mov-filters-close" variant="primary" @click="mobileFiltersOpen = false">
+            Cerrar
+          </AButton>
+        </div>
       </div>
     </div>
 
@@ -316,6 +311,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
       <table class="a-mov-todos-table a-mov-operations-table">
         <thead>
           <tr>
+            <th class="a-mov-row-icon" aria-hidden="true" />
             <th>Fecha y concepto</th>
             <th>Origen → destino</th>
             <th>Clasificación</th>
@@ -326,7 +322,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
         <tbody>
           <template v-for="group in movementGroups" :key="group.date">
             <tr class="a-mov-date-group">
-              <th colspan="5">{{ group.label }}</th>
+              <th colspan="6">{{ group.label }}</th>
             </tr>
             <tr
               v-for="row in group.rows"
@@ -335,9 +331,14 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
               :class="{ 'needs-review': row.transaction.needs_review }"
               @click="selectedTransaction = row.transaction"
             >
+              <td class="a-mov-row-icon" aria-hidden="true">
+                <span class="a-mov-kind-icon" :class="`is-${kindTone(row.transaction)}`">{{
+                  kindGlyph(row.transaction)
+                }}</span>
+              </td>
               <td class="a-mov-row-concept" data-label="Movimiento">
                 <strong>{{ row.transaction.description }}</strong>
-                <span
+                <span class="a-mov-kind-chip"
                   ><AKindChip :tone="kindTone(row.transaction)">{{
                     state.activityKindLabel(row.transaction)
                   }}</AKindChip></span
@@ -463,6 +464,9 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
               selectedTransaction = null;
             "
             >Duplicar</AButton
+          >
+          <AButton variant="ghost" class="a-mov-detail-delete" @click="deleteSelected"
+            >Eliminar</AButton
           >
         </div>
       </div>

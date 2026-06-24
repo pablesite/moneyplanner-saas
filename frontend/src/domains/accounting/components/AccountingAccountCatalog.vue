@@ -24,6 +24,16 @@ const filteredGroups = computed(() => {
 
 const technicalAccounts = computed(() => state.catalogTechnicalAccounts);
 
+const collapsedGroups = ref(new Set<string>());
+function isGroupCollapsed(key: string): boolean {
+  return collapsedGroups.value.has(key);
+}
+function toggleGroup(key: string): void {
+  const groups = collapsedGroups.value;
+  if (groups.has(key)) groups.delete(key);
+  else groups.add(key);
+}
+
 function toggleAccount(accountId: number) {
   state.cuentasSelectedAccountId = state.cuentasSelectedAccountId === accountId ? null : accountId;
 }
@@ -85,18 +95,32 @@ function goToTodos(accountId: number) {
         </thead>
         <tbody>
           <template v-for="group in filteredGroups" :key="group.key">
-            <!-- Group header row -->
+            <!-- Group header row (collapsible) -->
             <tr class="grp-row">
               <td colspan="4">
-                <span class="grp-kind" :class="`grp-kind-${group.positionType}`">
-                  {{ group.positionType === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
-                </span>
-                {{ group.label }}
+                <button
+                  type="button"
+                  class="a-mov-grp-toggle"
+                  :aria-expanded="!isGroupCollapsed(group.key)"
+                  @click="toggleGroup(group.key)"
+                >
+                  <span class="a-mov-grp-chevron" aria-hidden="true">{{
+                    isGroupCollapsed(group.key) ? '▸' : '▾'
+                  }}</span>
+                  <span class="grp-kind" :class="`grp-kind-${group.positionType}`">
+                    {{ group.positionType === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
+                  </span>
+                  {{ group.label }}
+                  <span class="a-mov-grp-count">{{ group.accounts.length }}</span>
+                </button>
               </td>
             </tr>
 
             <!-- Account rows -->
-            <template v-for="account in group.accounts" :key="account.id">
+            <template
+              v-for="account in isGroupCollapsed(group.key) ? [] : group.accounts"
+              :key="account.id"
+            >
               <tr
                 class="clickable"
                 :class="{ 'row-active': state.cuentasSelectedAccountId === account.id }"

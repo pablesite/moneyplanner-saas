@@ -154,9 +154,11 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 | `store.ts`       | Pinia store: datos globales livianos (`accounts`, `monthlySummary`, `accountBalancesSummary`) + `fetchTransactionsPage()` request-scoped. |
 | `composables.ts` | Motor de alta/edición, listado por cursor, filtros server-side, cola calculada `needs_review` y detalle por cuenta. |
 | `models.ts`      | Contratos de cuentas, asientos, clasificación funcional y series diarias. |
-| `components/`    | Libro agrupado por fecha, detalle avanzado Debe/Haber, sheets de alta/edición y catálogo de cuentas. |
+| `components/`    | Libro agrupado por fecha, detalle avanzado Debe/Haber, sheets de alta/edición, catálogo de cuentas y `AccountingTabs` (conmutador Movimientos/Cuentas). |
 
 **Requiere:** `core.accountingBasic: true` (activo). `core.accountingMovementsManual: false` (desactivado).
+
+**UX móvil (primero móvil, usable en PC):** `AccountingTabs` conmuta entre `/contabilidad` (Movimientos) y `/contabilidad/cuentas` (Cuentas) bajo el título. En Movimientos la lista es de una sola línea (icono de tipo + concepto/cuenta + importe) y el detalle/acciones viven en el sheet al pulsar; la toolbar flotante (sticky) integra buscador, panel de filtros y un **selector de cuenta** (fuera de "Filtros") que muestra el saldo actual de la cuenta seleccionada y dirige el filtro `account_id`. La pantalla de Cuentas agrupa Activos/Pasivos de forma colapsable.
 
 ---
 
