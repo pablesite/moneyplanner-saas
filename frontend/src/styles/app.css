@@ -35,6 +35,11 @@ body {
      y los valores de los campos parecían tipografías distintas. */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Desactiva el "font boosting" de los navegadores móviles: sin esto, en móvil
+     real el texto de los <input> (Concepto, Principal, Interés…) se infla y se ve
+     más grande que el de los <button> de ASelect, pese a compartir font-size. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 #app {

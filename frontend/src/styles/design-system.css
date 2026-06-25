@@ -979,7 +979,12 @@
   background: transparent;
   box-shadow: none;
   color: var(--text);
-  font-size: 15px;
+  /* 16px (no 15): en móvil el motor impone un suelo de 16px al texto de los
+     <input> y no se puede bajar, mientras que los <button> de ASelect (.select)
+     sí respetan el tamaño. A 15px los inputs se veían más grandes que los selects;
+     igualándolos a 16 quedan consistentes. Además, inputs ≥16px evitan el
+     zoom-on-focus de iOS. */
+  font-size: 16px;
   outline: none;
 }
 
