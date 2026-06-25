@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.30.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.29.0...moneyplanner-saas-v0.30.0) (2026-06-25)
+
+
+### Features
+
+* **frontend:** columna de titularidad y alineación del libro de contabilidad ([833158e](https://github.com/pablesite/moneyplanner-saas/commit/833158e9d775288409a5fd9b84f1b576f9d26d2d))
+* **frontend:** indica la moneda del activo en la revalorización ([c00a0c8](https://github.com/pablesite/moneyplanner-saas/commit/c00a0c843c71584457f6562e9c20540ed595483d))
+* **frontend:** pago de deuda con desglose en vivo y proyección del pasivo ([b4cc5f7](https://github.com/pablesite/moneyplanner-saas/commit/b4cc5f78265c1ce8ff50a7fe710a893eb1dde8a5))
+
+
+### Bug Fixes
+
+* **frontend:** habilita registrar pago de deuda con interés y muestra moneda ([a83503c](https://github.com/pablesite/moneyplanner-saas/commit/a83503cd8c0ec1cc60bff381019d13b60d04e46f))
+* **frontend:** iguala el tamaño de inputs y selects del sheet en móvil ([9329faf](https://github.com/pablesite/moneyplanner-saas/commit/9329faf2ee683d6bf2b18382d6447a46e2d33b37))
+* **frontend:** limita el ajuste de conciliación a liquidez y pasivos ([4b47252](https://github.com/pablesite/moneyplanner-saas/commit/4b472529240773fae393805612efce9435784940))
+* **frontend:** limita la revalorización a inversiones no-cripto ([9e93bd8](https://github.com/pablesite/moneyplanner-saas/commit/9e93bd8848e4a076f4741aaaa7f20d0ed591f713))
+* **frontend:** no preseleccionar "gastos de consumo" en pago de deuda ([39e3f35](https://github.com/pablesite/moneyplanner-saas/commit/39e3f356fb138a7e5407e78fd245bacc1f015025))
+
 ## [0.29.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.28.1...moneyplanner-saas-v0.29.0) (2026-06-25)
 
 
