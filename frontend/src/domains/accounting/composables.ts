@@ -427,10 +427,19 @@ export function useAccountingPage() {
   const liquidityAccounts = computed(() =>
     accounts.value.filter((account) => account.account_type === 'asset'),
   );
+  // Ajuste de conciliación = forzar el saldo contable al saldo real de un extracto,
+  // cuadrando la diferencia contra patrimonio ("Ajustes de conciliación"). Solo
+  // procede donde el saldo es un hecho externo: liquidez (cuentas, monederos,
+  // depósitos, ahorro) y pasivos. Se EXCLUYE inversiones (su diferencia es
+  // ganancia/pérdida → Revalorización), inmuebles, y cripto (se gestiona en su
+  // moneda + FX; los cambios son movimientos reales).
   const quickAdjustmentAccountOptions = computed(() =>
-    accounts.value.filter(
-      (account) => account.account_type === 'asset' || account.account_type === 'liability',
-    ),
+    accounts.value.filter((account) => {
+      if (account.account_type === 'liability') return true;
+      if (!isLiquidityAssetAccount(account)) return false;
+      const meta = accountPositionMetaByAccountId.value.get(account.id);
+      return meta?.subcategory !== 'crypto_spot_earn';
+    }),
   );
   const manualPositionTypeOptions: { value: ManualPositionType; label: string }[] = [
     { value: 'asset', label: 'Activo manual' },
