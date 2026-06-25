@@ -483,6 +483,27 @@ export function useAccountingPage() {
       .toLowerCase();
     return normalizedName.startsWith('puente traspasos inversion (auto)');
   }
+  // ¿La cuenta es válida como cuenta principal del alta rápida para ese tipo?
+  // Espeja la validación del backend (_validate_income_expense_origin_account y
+  // validate_liquidity_account): ingreso admite cualquier activo (incluida
+  // inversión, p. ej. EARN) o pasivo; gasto admite pasivos y liquidez/operativas
+  // pero no inversión; transferencia solo liquidez/operativas. Otros tipos se
+  // gestionan con sus propios selectores, así que no se restringen aquí.
+  function isQuickMainAccountAllowed(
+    account: LedgerAccount,
+    movementType: QuickLedgerMovementType,
+  ): boolean {
+    if (movementType === 'income') {
+      return account.account_type === 'asset' || account.account_type === 'liability';
+    }
+    if (movementType === 'expense') {
+      return account.account_type === 'liability' || isLiquidityAssetAccount(account);
+    }
+    if (movementType === 'transfer') {
+      return isLiquidityAssetAccount(account);
+    }
+    return true;
+  }
   const transferOriginOptions = computed(() =>
     accounts.value.filter((account) => isLiquidityAssetAccount(account)),
   );
@@ -1026,6 +1047,18 @@ export function useAccountingPage() {
       )
       .sort((a, b) => a.name.localeCompare(b.name, 'es')),
   );
+  // Cuentas válidas como origen de un GASTO. Espeja la regla del backend
+  // (_validate_income_expense_origin_account): se admiten pasivos (p. ej.
+  // tarjetas de crédito) y activos de liquidez/operativos, pero NO activos de
+  // inversión: disponer de cripto/inversión debe pasar por el flujo de inversión
+  // (retirada) para registrar correctamente la plusvalía/minusvalía.
+  // El INGRESO no necesita este filtro: el backend permite ingresos sobre activos
+  // de inversión (rendimiento reinvertido tipo EARN), así que usa editAccountOptions.
+  const quickExpenseAccountOptions = computed(() =>
+    editAccountOptions.value.filter(
+      (account) => account.account_type === 'liability' || isLiquidityAssetAccount(account),
+    ),
+  );
   function kindUsesClassification(
     kind: EditableActivityKind,
     investmentDirection: 'inflow' | 'outflow' | 'reinvestment',
@@ -1314,6 +1347,17 @@ export function useAccountingPage() {
       } else {
         quickEntryForm.category_key = '';
         quickEntryForm.subcategory_key = '';
+      }
+      // Si la cuenta seleccionada deja de ser válida para el nuevo tipo, la
+      // limpiamos para no arrastrar una selección que el backend rechazaría
+      // (p. ej. un activo de inversión al pasar a gasto, o un pasivo al pasar a
+      // transferencia). Espeja la regla del backend por tipo.
+      {
+        const currentId = normalizeAccountId(quickEntryForm.account_id);
+        const current = currentId != null ? accountMap.value.get(currentId) : null;
+        if (current && !isQuickMainAccountAllowed(current, movementType)) {
+          quickEntryForm.account_id = null;
+        }
       }
     },
   );
@@ -3582,7 +3626,7 @@ export function useAccountingPage() {
     await store.createQuickEntry(payload);
     await reloadMovementPagesAfterMutation();
     resetQuickEntryForm();
-    successMessage.value = 'Revalorizacion registrada.';
+    successMessage.value = 'Revalorización registrada.';
   }
 
   // eslint-disable-next-line complexity
@@ -3683,7 +3727,7 @@ export function useAccountingPage() {
     await store.createQuickEntry(payload);
     await reloadMovementPagesAfterMutation();
     resetQuickEntryForm();
-    successMessage.value = 'Movimiento rapido registrado.';
+    successMessage.value = 'Movimiento registrado.';
   }
 
   onMounted(() => {
@@ -3823,6 +3867,7 @@ export function useAccountingPage() {
     quickMovementTypeOptions,
     editMovementTypeOptions,
     editAccountOptions,
+    quickExpenseAccountOptions,
     editCounterpartyOptions,
     editCounterpartyMissingHint,
     editKindNeedsCounterparty,

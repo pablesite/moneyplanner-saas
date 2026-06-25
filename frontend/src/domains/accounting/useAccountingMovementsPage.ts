@@ -21,6 +21,7 @@ export function useAccountingMovementsPage() {
     quickMovementTypeOptions,
     editMovementTypeOptions,
     editAccountOptions,
+    quickExpenseAccountOptions,
     editCounterpartyOptions,
     editCounterpartyMissingHint,
     editKindNeedsCounterparty,
@@ -567,7 +568,15 @@ export function useAccountingMovementsPage() {
   }
 
   async function submitQuickEntryFromModal() {
-    await submitQuickEntry();
+    try {
+      await submitQuickEntry();
+    } catch {
+      // Error de API: ya queda reflejado en `error`. Mantener el modal abierto
+      // para que el usuario lea el error junto al formulario y pueda reintentar.
+      return;
+    }
+    // Las validaciones síncronas también dejan `error` seteado sin lanzar.
+    if (error.value) return;
     showQuickEntryModal.value = false;
   }
 
@@ -615,6 +624,7 @@ export function useAccountingMovementsPage() {
     quickMovementTypeOptions,
     editMovementTypeOptions,
     editAccountOptions,
+    quickExpenseAccountOptions,
     editCounterpartyOptions,
     editCounterpartyMissingHint,
     editKindNeedsCounterparty,

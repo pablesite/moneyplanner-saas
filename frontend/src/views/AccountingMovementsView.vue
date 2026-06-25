@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import '@/domains/accounting/styles/movements.css';
 import '@/domains/accounting/styles/accounting-movements-view.css';
@@ -68,6 +68,24 @@ onMounted(async () => {
   routeReady.value = true;
 });
 
+// El mensaje de éxito se muestra como toast transitorio (no como banner fijo):
+// se auto-descarta a los pocos segundos para no dejar una caja ocupando la lista.
+let successTimer: ReturnType<typeof setTimeout> | null = null;
+watch(
+  () => page.successMessage,
+  (message) => {
+    if (successTimer) clearTimeout(successTimer);
+    if (!message) return;
+    successTimer = setTimeout(() => {
+      page.successMessage = null;
+      successTimer = null;
+    }, 3200);
+  },
+);
+onBeforeUnmount(() => {
+  if (successTimer) clearTimeout(successTimer);
+});
+
 watch(
   () => route.query,
   () => {
@@ -131,8 +149,16 @@ watch(
 
     <AccountingTabs />
 
-    <AState v-if="page.error" status="error">{{ page.error }}</AState>
-    <AState v-if="page.successMessage" status="success">{{ page.successMessage }}</AState>
+    <AState v-if="page.error && !page.showQuickEntryModal" status="error">{{ page.error }}</AState>
+
+    <Teleport to="body">
+      <Transition name="a-mov-toast">
+        <div v-if="page.successMessage" class="a-mov-toast" role="status" aria-live="polite">
+          <span class="a-mov-toast-icon" aria-hidden="true">✓</span>
+          <span>{{ page.successMessage }}</span>
+        </div>
+      </Transition>
+    </Teleport>
 
     <section class="sect a-mov-ledger-section">
       <AccountingMovementsAllTransactions :page="page" />

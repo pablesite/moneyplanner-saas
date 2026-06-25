@@ -84,7 +84,10 @@ function accountSelectItems(
 }
 
 const liquidityGroups = computed(() => groupAndSortAccounts(props.page.liquidityAccounts));
-const operationalGroups = computed(() => groupAndSortAccounts(props.page.editAccountOptions));
+// Ingreso: el backend admite cualquier activo (incluida inversión, p. ej. EARN) o pasivo.
+const incomeGroups = computed(() => groupAndSortAccounts(props.page.editAccountOptions));
+// Gasto: pasivos (tarjetas) + liquidez/operativas, sin activos de inversión.
+const expenseGroups = computed(() => groupAndSortAccounts(props.page.quickExpenseAccountOptions));
 const revaluationGroups = computed(() =>
   groupAndSortAccounts(props.page.revaluationAccountOptions),
 );
@@ -142,13 +145,19 @@ const initialFormSnapshot = ref('');
 watch(
   () => props.page.showQuickEntryModal,
   (open: boolean) => {
-    if (open) initialFormSnapshot.value = JSON.stringify(props.page.quickEntryForm);
+    if (open) {
+      initialFormSnapshot.value = JSON.stringify(props.page.quickEntryForm);
+      // Limpiar cualquier error previo para que el formulario abra en limpio.
+      props.page.error = null;
+    }
   },
 );
 
 function requestClose(): void {
   const changed = JSON.stringify(props.page.quickEntryForm) !== initialFormSnapshot.value;
   if (changed && !window.confirm('¿Descartar los cambios de este movimiento?')) return;
+  // No dejar un banner de error colgando en la lista tras cancelar.
+  props.page.error = null;
   props.page.showQuickEntryModal = false;
 }
 
@@ -169,12 +178,9 @@ watch(showValueDate, (show: boolean) => {
 
 const quickMainAccountGroups = computed(() => {
   const type = props.page.quickEntryForm.movement_type;
-  if (type === 'income' || type === 'expense') {
-    return operationalGroups.value;
-  }
-  if (type === 'transfer') {
-    return transferOriginGroups.value;
-  }
+  if (type === 'income') return incomeGroups.value;
+  if (type === 'expense') return expenseGroups.value;
+  if (type === 'transfer') return transferOriginGroups.value;
   return liquidityGroups.value;
 });
 
@@ -810,6 +816,10 @@ const quickEntryHint = computed(() => {
       </details>
 
       <div class="qe-footer">
+        <p v-if="page.error" class="qe-error" role="alert">
+          <span class="qe-error-icon" aria-hidden="true">!</span>
+          <span>{{ page.error }}</span>
+        </p>
         <div v-if="isComplexMovement" class="a-mov-entry-confirmation" aria-live="polite">
           <span>Asiento que se registrará</span>
           <strong>{{ confirmationSummary }}</strong>
