@@ -625,6 +625,25 @@ body {
   background: #1f2937;
 }
 
+/* ── Anti auto-zoom iOS/Safari (red de seguridad global) ──────────────────
+   iOS/Safari hace auto-zoom al enfocar un control nativo cuyo font-size < 16px,
+   desplazando el viewport y sacando de pantalla paneles position:fixed (p. ej.
+   el dropdown de ASelect). En punteros táctiles forzamos un mínimo de 16px en
+   todos los controles nativos.
+   - !important es deliberado: muchos controles fijan tamaños compactos vía
+     clases de mayor especificidad (.filter-ctrl, .mc-input, .dir-a-sheet .input…);
+     este es el patrón canónico anti-zoom y debe ganar siempre en táctil.
+   - Solo afecta a controles nativos. Los <button> (incluido el trigger de
+     ASelect) no hacen zoom, así que conservan su tamaño compacto en móvil.
+   - En desktop (pointer: fine) se respetan íntegros los tamaños del diseño. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 .form-grid {
   display: grid;
   gap: 10px;

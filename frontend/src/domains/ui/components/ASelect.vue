@@ -28,6 +28,10 @@ function isGroup(item: ASelectItem): item is ASelectGroup {
   return 'group' in item;
 }
 
+function isCoarsePointer(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+}
+
 const props = withDefaults(
   defineProps<{
     modelValue: string | number | null;
@@ -123,7 +127,11 @@ async function openPanel() {
   highlightIdx.value = Math.max(0, currentIdx);
   await nextTick();
   computePosition();
-  if (isSearchable.value) searchRef.value?.focus();
+  // En táctil no auto-enfocamos el buscador: abriría el teclado de inmediato
+  // tapando las opciones del panel (sobre todo en el bottom-sheet móvil). El
+  // usuario puede tocar el campo para buscar si lo necesita. En desktop sí
+  // enfocamos para permitir escribir al instante.
+  if (isSearchable.value && !isCoarsePointer()) searchRef.value?.focus();
 }
 
 function closePanel() {
