@@ -433,7 +433,9 @@ const quickEntryHint = computed(() => {
         </label>
 
         <label class="qe-amount-field ui-accounting-field">
-          <span>Nuevo valor del activo</span>
+          <span
+            >Nuevo valor del activo{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span
+          >
           <input
             v-model="page.quickEntryForm.revaluation_new_value"
             class="input qe-amount"
@@ -446,7 +448,9 @@ const quickEntryHint = computed(() => {
         <p class="ui-accounting-balance-feedback">
           <template v-if="page.revaluationCurrentBalance != null">
             Saldo actual:
-            <strong>{{ page.revaluationCurrentBalance.toFixed(2) }}</strong
+            <strong>{{
+              page.formatMoney(page.revaluationCurrentBalance, quickEntryCurrency ?? 'EUR')
+            }}</strong
             >.
             <template v-if="page.revaluationDelta != null">
               Revalorización:
@@ -459,7 +463,7 @@ const quickEntryHint = computed(() => {
                       : ''
                 "
               >
-                {{ page.revaluationDelta >= 0 ? '+' : '' }}{{ page.revaluationDelta.toFixed(2) }}
+                {{ page.formatSignedMoney(page.revaluationDelta, quickEntryCurrency ?? 'EUR') }}
               </strong>
             </template>
           </template>
