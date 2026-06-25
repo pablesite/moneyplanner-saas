@@ -309,6 +309,37 @@
   border-collapse: collapse;
 }
 
+/* Fixed layout stabilizes column widths regardless of cell content, preventing
+   rows of different heights that make horizontal borders look misaligned. */
+.a-mov-operations-table {
+  table-layout: fixed;
+}
+
+/* Column widths — defined on <col> elements so they work even when <thead> is
+   hidden on desktop. Percentages distribute the flexible space; fixed widths
+   for the icon and menu bookends. */
+.a-mov-col-icon {
+  width: 44px;
+}
+.a-mov-col-concept {
+  width: 24%;
+}
+.a-mov-col-account {
+  width: 24%;
+}
+.a-mov-col-classification {
+  width: 16%;
+}
+.a-mov-col-ownership {
+  width: 10%;
+}
+.a-mov-col-amount {
+  width: 100px;
+}
+.a-mov-col-menu {
+  width: 36px;
+}
+
 .a-mov-table-scroll {
   overflow-x: auto;
 }
@@ -368,9 +399,16 @@
 
 .a-mov-row-date,
 .a-mov-row-account,
-.a-mov-row-classification {
+.a-mov-row-classification,
+.a-mov-row-ownership {
   color: var(--muted);
   font-size: 12.5px !important;
+}
+
+.a-mov-row-ownership {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .a-mov-row-concept {
@@ -406,9 +444,9 @@
   color: var(--muted);
 }
 
-@container page (max-width: 920px) {
+@container page (max-width: 1000px) {
   .a-mov-todos-table {
-    min-width: 940px;
+    min-width: 1020px;
   }
 }
 
@@ -1040,6 +1078,7 @@
   }
 
   .a-mov-operations-table tr.clickable td.a-mov-row-classification,
+  .a-mov-operations-table tr.clickable td.a-mov-row-ownership,
   .a-mov-operations-table tr.clickable td.a-mov-row-menu {
     display: none;
   }
@@ -1292,13 +1331,14 @@
   text-transform: uppercase;
 }
 
-.a-mov-operations-table .a-mov-row-concept {
-  display: grid;
-  gap: 7px;
-}
-
-.a-mov-operations-table .a-mov-row-concept > span {
-  justify-self: start;
+/* Keep the concept cell as a real table-cell. Using `display: grid` here turned
+   the <td> into a non-cell box: the browser wrapped it in an anonymous cell and
+   the grid element drew its inherited `td` border-bottom at its own content
+   height (one line), not the full row height — producing an L-shaped stray line
+   (partial underline + left edge) around every concept. The kind chip is hidden
+   in both breakpoints, so the cell only renders the (block) concept title. */
+.a-mov-operations-table .a-mov-row-concept strong {
+  display: block;
 }
 
 .a-mov-trail-arrow {
@@ -1627,6 +1667,21 @@
 
   .a-mov-operations-table .a-mov-row-concept .a-mov-kind-chip {
     display: none;
+  }
+
+  /* Prevent long descriptions and account trails from wrapping and making rows
+     taller than their neighbours — the root cause of misaligned row borders. */
+  .a-mov-operations-table .a-mov-row-concept strong {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .a-mov-operations-table .a-mov-row-account {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .a-mov-account-picker {

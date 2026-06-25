@@ -375,6 +375,22 @@ export function useAccountingPage() {
       .filter(Boolean);
     return parts.length ? `Compartido (${parts.join(' / ')})` : 'Compartido';
   }
+  // Compact label for tight spaces (e.g. ledger column): drops names and shows
+  // only the split ratio, "Compartido 60/40". The position is the convention —
+  // the first number is the first family member, as in `ownershipLabel`'s order.
+  function ownershipShortLabel(ownership: OwnershipRead): string {
+    if (ownership.kind === 'individual') {
+      return ownership.member?.name?.trim() || `Titularidad #${ownership.id}`;
+    }
+    const percents = (ownership.splits ?? [])
+      .map((split) => {
+        const value = Number(String(split.percent ?? '').trim());
+        // `String(50)` → "50", `String(33.33)` → "33.33"; drops trailing ".00".
+        return Number.isFinite(value) ? String(value) : '';
+      })
+      .filter(Boolean);
+    return percents.length ? `Compartido ${percents.join('/')}` : 'Compartido';
+  }
   const ownershipById = computed(() => {
     const map = new Map<number, OwnershipRead>();
     for (const ownership of peopleStore.ownerships) {
@@ -3283,6 +3299,12 @@ export function useAccountingPage() {
     if (!ownership) return `Titularidad #${transaction.ownership_id}`;
     return ownershipLabel(ownership);
   }
+  function transactionOwnershipShortLabel(transaction: LedgerTransaction): string | null {
+    if (transaction.ownership_id == null) return null;
+    const ownership = ownershipById.value.get(transaction.ownership_id);
+    if (!ownership) return `Titularidad #${transaction.ownership_id}`;
+    return ownershipShortLabel(ownership);
+  }
   function transactionClassificationLabel(transaction: LedgerTransaction): string | null {
     const classifiedEntry =
       (transaction.entries ?? []).find(
@@ -4170,6 +4192,7 @@ export function useAccountingPage() {
     addEntry,
     activityKindLabel,
     transactionOwnershipLabel,
+    transactionOwnershipShortLabel,
     transactionClassificationLabel,
     transactionAccountTrailLabel,
     liquidityBalanceDeltaTone,

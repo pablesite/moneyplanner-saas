@@ -317,12 +317,22 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
 
     <div v-else class="a-mov-table-scroll">
       <table class="a-mov-todos-table a-mov-operations-table">
+        <colgroup>
+          <col class="a-mov-col-icon" />
+          <col class="a-mov-col-concept" />
+          <col class="a-mov-col-account" />
+          <col class="a-mov-col-classification" />
+          <col class="a-mov-col-ownership" />
+          <col class="a-mov-col-amount" />
+          <col class="a-mov-col-menu" />
+        </colgroup>
         <thead>
           <tr>
             <th class="a-mov-row-icon" aria-hidden="true" />
             <th>Fecha y concepto</th>
             <th>Origen → destino</th>
             <th>Clasificación</th>
+            <th>Titularidad</th>
             <th class="num">Importe</th>
             <th />
           </tr>
@@ -330,7 +340,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
         <tbody>
           <template v-for="group in movementGroups" :key="group.date">
             <tr class="a-mov-date-group">
-              <th colspan="6">{{ group.label }}</th>
+              <th colspan="7">{{ group.label }}</th>
             </tr>
             <tr
               v-for="row in group.rows"
@@ -378,6 +388,9 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
                   Por revisar
                 </button>
                 <span v-else>—</span>
+              </td>
+              <td class="a-mov-row-ownership" data-label="Titularidad">
+                {{ state.transactionOwnershipShortLabel(row.transaction) ?? '—' }}
               </td>
               <td
                 class="num mono a-mov-row-amount"
