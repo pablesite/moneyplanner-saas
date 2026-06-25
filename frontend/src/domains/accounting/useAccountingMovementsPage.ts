@@ -699,6 +699,7 @@ export function useAccountingMovementsPage() {
     updateDailyTimelineWindowEnd,
     activeTab,
     groupedCuentasAccounts,
+    buildCuentasGroups,
     accountCatalogScope,
     setAccountCatalogScope,
     accountCatalogLoading,

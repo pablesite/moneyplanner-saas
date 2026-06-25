@@ -26,15 +26,6 @@ type AccountGroup = {
   accounts: AccountOption[];
 };
 
-function accountTypeLabel(accountType?: string): string {
-  if (accountType === 'asset') return 'Activos';
-  if (accountType === 'liability') return 'Pasivos';
-  if (accountType === 'equity') return 'Patrimonio neto';
-  if (accountType === 'income') return 'Ingresos';
-  if (accountType === 'expense') return 'Gastos';
-  return 'Otras cuentas';
-}
-
 function accountLabel(account: AccountOption): string {
   if (typeof props.page.accountDisplayName === 'function') {
     return props.page.accountDisplayName(account);
@@ -42,28 +33,23 @@ function accountLabel(account: AccountOption): string {
   return account.display_name || account.name;
 }
 
+type CuentasGroup = {
+  key: string;
+  label: string;
+  positionType: 'asset' | 'liability';
+  accounts: AccountOption[];
+};
+
+// Agrupa por tipo de activo/pasivo (Liquidez, Criptomonedas, Préstamos…) usando
+// la misma función que el filtro de cuentas de la vista de movimientos, para que
+// el desplegable del modal y el de la lista se comporten de forma idéntica.
 function groupAndSortAccounts(accounts: AccountOption[]): AccountGroup[] {
-  const order = ['asset', 'liability', 'equity', 'income', 'expense', 'other'];
-  const groups = new Map<string, AccountOption[]>();
-
-  for (const account of accounts) {
-    const key = account.account_type ?? 'other';
-    const existing = groups.get(key) ?? [];
-    existing.push(account);
-    groups.set(key, existing);
-  }
-
-  return Array.from(groups.entries())
-    .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
-    .map(([key, grouped]) => ({
-      key,
-      label: accountTypeLabel(key),
-      accounts: grouped
-        .slice()
-        .sort((left, right) =>
-          accountLabel(left).localeCompare(accountLabel(right), 'es', { sensitivity: 'base' }),
-        ),
-    }));
+  const groups = props.page.buildCuentasGroups(accounts) as CuentasGroup[];
+  return groups.map((group) => ({
+    key: group.key,
+    label: `${group.positionType === 'asset' ? 'Activos' : 'Pasivos'} · ${group.label}`,
+    accounts: group.accounts,
+  }));
 }
 
 function accountSelectItems(
