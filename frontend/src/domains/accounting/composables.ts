@@ -815,26 +815,31 @@ export function useAccountingPage() {
     }
     return null;
   });
+  // Categoría por defecto del pago de deuda SOLO cuando es deducible sin ambigüedad
+  // (hipoteca o préstamo con activo financiado vinculado). En cualquier otro caso
+  // devuelve '' para no preseleccionar: endeudarse para consumo es la excepción,
+  // así que un default de "gastos de consumo" acierta casi nunca y se colaría sin
+  // que el usuario lo note. Mejor dejar que lo elija.
   function debtPaymentDefaultCategoryForAccount(
     liabilityAccountId: number | null,
-  ): ExpenseCategoryKey {
-    if (liabilityAccountId == null) return 'consumption_expenses';
+  ): ExpenseCategoryKey | '' {
+    if (liabilityAccountId == null) return '';
     const liabilityId = accountMap.value.get(liabilityAccountId)?.liability_id ?? null;
-    if (liabilityId == null) return 'consumption_expenses';
+    if (liabilityId == null) return '';
     const liability = liabilityMap.value.get(liabilityId);
-    if (!liability) return 'consumption_expenses';
+    if (!liability) return '';
     if (liability.category === 'mortgage') return 'real_estate_assets';
 
     const financedAssetId = liability.financed_asset_ref ?? null;
-    if (financedAssetId == null) return 'consumption_expenses';
+    if (financedAssetId == null) return '';
     const financedAsset = manualAssets.value.find((asset) => asset.id === financedAssetId);
-    if (!financedAsset) return 'consumption_expenses';
+    if (!financedAsset) return '';
     if (financedAsset.category === 'real_estate') return 'real_estate_assets';
     if (financedAsset.category === 'furnishings' || financedAsset.category === 'vehicle') {
       return 'tangible_assets';
     }
     if (financedAsset.category === 'investments') return 'financial_investments';
-    return 'consumption_expenses';
+    return '';
   }
   function resolveInvestmentExpenseSubcategoryFromAccount(accountId: number | null): string {
     if (accountId == null) return '';

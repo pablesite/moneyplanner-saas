@@ -350,7 +350,7 @@ const quickEntryHint = computed(() => {
           return 'Completa importe, cuenta de liquidez (origen), cuenta de inversión (destino) y concepto.';
       }
     case 'debt_payment':
-      return 'Completa el importe, la cuenta de liquidez y la cuenta de pasivo.';
+      return 'Completa el importe, las cuentas de liquidez y pasivo, y la categoría.';
     case 'adjustment':
       return 'Selecciona la cuenta y el saldo final objetivo.';
     case 'revaluation':
