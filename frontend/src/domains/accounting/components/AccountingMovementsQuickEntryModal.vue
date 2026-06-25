@@ -350,7 +350,7 @@ const quickEntryHint = computed(() => {
           return 'Completa importe, cuenta de liquidez (origen), cuenta de inversión (destino) y concepto.';
       }
     case 'debt_payment':
-      return 'Completa el total, la cuenta de liquidez y la cuenta de pasivo.';
+      return 'Completa el importe, la cuenta de liquidez y la cuenta de pasivo.';
     case 'adjustment':
       return 'Selecciona la cuenta y el saldo final objetivo.';
     case 'revaluation':
@@ -557,7 +557,7 @@ const quickEntryHint = computed(() => {
 
       <template v-else-if="page.quickEntryForm.movement_type === 'debt_payment'">
         <label class="qe-amount-field ui-accounting-field">
-          <span>Total pagado{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span>
+          <span>Importe{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span>
           <input
             v-model="page.quickEntryForm.amount"
             class="input qe-amount"
