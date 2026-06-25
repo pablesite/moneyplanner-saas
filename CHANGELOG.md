@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.29.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.28.1...moneyplanner-saas-v0.29.0) (2026-06-25)
+
+
+### Features
+
+* **frontend:** agrupar cuentas por tipo de activo/pasivo en el alta de movimiento ([6a0d4bc](https://github.com/pablesite/moneyplanner-saas/commit/6a0d4bca284b0cd832ad0ef295e3adacf70b63d2))
+* **frontend:** alta de movimiento — inversión por dirección, inferencia de clasificación y autorrelleno FX ([719e775](https://github.com/pablesite/moneyplanner-saas/commit/719e775e52b7048f4f36904691c2968a138db426))
+* **frontend:** rediseño de la lista de movimientos en escritorio + consistencia tipográfica ([1a88f16](https://github.com/pablesite/moneyplanner-saas/commit/1a88f16242b0ab05a829e0c48e5d8efecee9115b))
+* **frontend:** transferencia admite pasivos como origen y exclusión simétrica origen/destino ([844912e](https://github.com/pablesite/moneyplanner-saas/commit/844912e92d988560886c4f23cdf62d47a53fd936))
+
+
+### Bug Fixes
+
+* **frontend:** UX del alta de movimiento (error en modal, toast de éxito, cuentas válidas por tipo) ([92baaa2](https://github.com/pablesite/moneyplanner-saas/commit/92baaa253d6b7cf408f79685dc7772333c958526))
+
 ## [0.28.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.28.0...moneyplanner-saas-v0.28.1) (2026-06-25)
 
 
