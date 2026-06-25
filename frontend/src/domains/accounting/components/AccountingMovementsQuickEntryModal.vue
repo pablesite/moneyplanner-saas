@@ -557,7 +557,7 @@ const quickEntryHint = computed(() => {
 
       <template v-else-if="page.quickEntryForm.movement_type === 'debt_payment'">
         <label class="qe-amount-field ui-accounting-field">
-          <span>Total pagado</span>
+          <span>Total pagado{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span>
           <input
             v-model="page.quickEntryForm.amount"
             class="input qe-amount"
@@ -585,7 +585,9 @@ const quickEntryHint = computed(() => {
         </label>
 
         <label class="ui-accounting-field">
-          <span>Principal amortizado</span>
+          <span
+            >Principal amortizado{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span
+          >
           <input
             v-model="page.quickEntryForm.principal_amount"
             class="input"
@@ -594,7 +596,7 @@ const quickEntryHint = computed(() => {
           />
         </label>
         <label class="ui-accounting-field">
-          <span>Interés</span>
+          <span>Interés{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span>
           <input
             v-model="page.quickEntryForm.interest_amount"
             class="input"

@@ -987,7 +987,13 @@ export function useAccountingPage() {
     if (!hasQuickClassification()) return false;
     const breakdown = resolveQuickDebtBreakdown();
     if (!breakdown.valid) return false;
-    if (breakdown.interest > 0 && quickEntryForm.interest_account_id == null) return false;
+    // El interés necesita una cuenta de gasto. No hay selector en el alta rápida:
+    // se auto-resuelve en el submit. Para no dejar el botón deshabilitado de forma
+    // permanente, basta con que exista una cuenta por defecto resoluble.
+    if (breakdown.interest > 0 && quickEntryForm.interest_account_id == null) {
+      const currency = quickSelectedLiquidityAccount.value?.currency ?? 'EUR';
+      if (resolveDefaultDebtInterestAccountId(currency) == null) return false;
+    }
     return true;
   }
   // Live preview for the debt-payment form: resolved principal/interest split
