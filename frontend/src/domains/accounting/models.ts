@@ -220,8 +220,6 @@ export type QuickLedgerTransactionWritePayload = {
   interest_account_id?: number | null;
   principal_amount?: string | null;
   interest_amount?: string | null;
-  realized_cost_basis?: string | null;
-  realized_gain_loss?: string | null;
   notes?: string;
   status?: LedgerTransactionStatus;
   origin?: LedgerTransactionOrigin;

@@ -554,29 +554,6 @@ const quickEntryHint = computed(() => {
           </label>
         </div>
 
-        <div
-          v-if="page.quickEntryForm.investment_direction === 'outflow'"
-          class="ui-accounting-form-grid ui-accounting-form-grid-wide"
-        >
-          <label class="ui-accounting-field">
-            <span>Coste de compra</span>
-            <input
-              v-model="page.quickEntryForm.realized_cost_basis"
-              class="input"
-              inputmode="decimal"
-              placeholder="Opcional"
-            />
-          </label>
-          <label class="ui-accounting-field">
-            <span>Ganancia/pérdida</span>
-            <input
-              v-model="page.quickEntryForm.realized_gain_loss"
-              class="input"
-              inputmode="decimal"
-              placeholder="Opcional"
-            />
-          </label>
-        </div>
       </template>
 
       <template v-else-if="page.quickEntryForm.movement_type === 'debt_payment'">

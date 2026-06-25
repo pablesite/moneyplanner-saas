@@ -235,8 +235,6 @@ export function useAccountingPage() {
     interest_account_id: null as number | null,
     principal_amount: '',
     interest_amount: '',
-    realized_cost_basis: '',
-    realized_gain_loss: '',
     flow_family: '' as '' | 'income' | 'expense',
     category_key: '',
     subcategory_key: '',
@@ -1496,8 +1494,6 @@ export function useAccountingPage() {
       quickEntryForm.interest_account_id = null;
       quickEntryForm.principal_amount = '';
       quickEntryForm.interest_amount = '';
-      quickEntryForm.realized_cost_basis = '';
-      quickEntryForm.realized_gain_loss = '';
       quickEntryForm.destination_amount = '';
       quickEntryForm.flow_family = '';
       quickEntryForm.revaluation_new_value = '';
@@ -2359,8 +2355,6 @@ export function useAccountingPage() {
     quickEntryForm.interest_account_id = null;
     quickEntryForm.principal_amount = '';
     quickEntryForm.interest_amount = '';
-    quickEntryForm.realized_cost_basis = '';
-    quickEntryForm.realized_gain_loss = '';
     quickEntryForm.flow_family = '';
     quickEntryForm.category_key = '';
     quickEntryForm.subcategory_key = '';
@@ -3915,12 +3909,6 @@ export function useAccountingPage() {
             ...(quickInvestmentIsCrossCurrency.value
               ? { destination_amount: formatDecimalInput(quickEntryForm.destination_amount) }
               : {}),
-            ...(quickEntryForm.realized_cost_basis.trim()
-              ? { realized_cost_basis: formatDecimalInput(quickEntryForm.realized_cost_basis) }
-              : {}),
-            ...(quickEntryForm.realized_gain_loss.trim()
-              ? { realized_gain_loss: formatDecimalInput(quickEntryForm.realized_gain_loss) }
-              : {}),
           }
         : {}),
       ...(quickEntryForm.movement_type === 'debt_payment'
@@ -4051,8 +4039,6 @@ export function useAccountingPage() {
       quickEntryForm.principal_amount = '';
       quickEntryForm.interest_amount = '';
     }
-    quickEntryForm.realized_cost_basis = transaction.realized_cost_basis ?? '';
-    quickEntryForm.realized_gain_loss = transaction.realized_gain_loss ?? '';
     quickEntryForm.category_key = classifiedEntry?.category_key ?? '';
     quickEntryForm.subcategory_key = classifiedEntry?.subcategory_key ?? '';
     quickEntryForm.notes = transaction.notes ?? '';
