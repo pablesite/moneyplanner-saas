@@ -30,6 +30,11 @@ body {
   background: var(--bg-gradient);
   background-attachment: fixed;
   color: var(--text);
+  /* Suavizado uniforme en toda la app: sin esto, los <input> nativos se
+     renderizan más gruesos que los triggers de ASelect (que ya iban antialiased),
+     y los valores de los campos parecían tipografías distintas. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {

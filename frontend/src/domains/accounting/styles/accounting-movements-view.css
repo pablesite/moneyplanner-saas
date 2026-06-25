@@ -1302,8 +1302,9 @@
 }
 
 .a-mov-trail-arrow {
-  display: block;
-  margin-top: 4px;
+  /* Origen y destino en una sola línea cuando hay espacio; envuelve si no cabe. */
+  display: inline;
+  margin-left: 6px;
   color: var(--muted);
 }
 
@@ -1392,21 +1393,6 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-.a-mov-entry-confirmation {
-  display: grid;
-  gap: 5px;
-  margin-top: 16px;
-  padding: 14px 16px;
-  border: 1px solid var(--accent-line);
-  background: var(--accent-soft);
-}
-
-.a-mov-entry-confirmation span,
-.a-mov-entry-confirmation small {
-  color: var(--muted);
-  font-size: 12px;
 }
 
 .a-mov-account-tools {
@@ -1608,5 +1594,111 @@
   .a-mov-account-tools {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+/* Escritorio/tablet (≥621px, donde la tabla muestra cabecera): barra en una sola
+   línea [cuenta][buscador][Filtros] y filtros ocultos hasta pulsar el botón, que
+   se despliegan como panel anclado bajo la barra y alineado a la izquierda.
+   Bloque aditivo al final para ganar a los breakpoints intermedios sin tocar el
+   layout de móvil (≤620), ya validado. Mantener la barra en una fila también
+   corrige el offset de la cabecera sticky de la tabla. */
+@container page (min-width: 621px) {
+  .a-mov-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Sin cabecera de columnas en escritorio: los subencabezados por fecha y el
+     contenido de cada fila son autoexplicativos. Elimina la banda muerta entre
+     la barra y la lista, y la fragilidad del sticky de la cabecera. */
+  .a-mov-operations-table thead {
+    display: none;
+  }
+
+  /* Tipo de movimiento como icono (igual que en móvil), no como chip de texto. */
+  .a-mov-operations-table .a-mov-row-icon {
+    display: table-cell;
+    width: 44px;
+    vertical-align: middle;
+  }
+
+  .a-mov-operations-table .a-mov-row-concept .a-mov-kind-chip {
+    display: none;
+  }
+
+  .a-mov-account-picker {
+    flex: 0 1 300px;
+    min-width: 180px;
+  }
+
+  .a-mov-search {
+    flex: 1 1 200px;
+    width: auto;
+    min-width: 140px;
+  }
+
+  .a-mov-mobile-filter-trigger {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .a-mov-filter-controls {
+    display: none;
+  }
+
+  .a-mov-filter-controls.is-open {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgb(12 13 16 / 0.98);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 20px 45px rgb(0 0 0 / 0.42);
+  }
+
+  .a-mov-filter-controls .filter-ctrl,
+  .a-mov-filter-controls .a-select,
+  .a-mov-filter-controls .a-mov-date-wrap {
+    width: auto;
+    min-width: 160px;
+  }
+
+  /* Período se expande en línea dentro del panel (no un popover flotante que el
+     panel recortaría con scroll). El panel crece hacia abajo sobre la lista. */
+  .a-mov-filter-controls .a-mov-date-wrap {
+    align-self: flex-start;
+  }
+
+  .a-mov-filter-controls .a-mov-date-wrap .filter-popover {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  /* Limpiar/Cerrar al extremo derecho del panel, con los filtros a la izquierda. */
+  .a-mov-filter-actions {
+    margin-left: auto;
+  }
+
+  .a-mov-filters-close {
+    display: inline-flex;
   }
 }
