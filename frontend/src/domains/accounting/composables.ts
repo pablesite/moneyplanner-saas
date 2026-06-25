@@ -500,18 +500,28 @@ export function useAccountingPage() {
       return account.account_type === 'liability' || isLiquidityAssetAccount(account);
     }
     if (movementType === 'transfer') {
-      return isLiquidityAssetAccount(account);
+      return isTransferAccount(account);
     }
     return true;
   }
+  // Origen y destino de una transferencia comparten las mismas reglas (espeja
+  // _validate_transfer_account del backend): liquidez/operativas o pasivos con
+  // liability_id; nunca activos de inversión. Cada lado excluye la cuenta ya
+  // elegida en el otro para impedir origen == destino.
+  function isTransferAccount(account: LedgerAccount): boolean {
+    if (isLiquidityAssetAccount(account)) return true;
+    return account.account_type === 'liability' && account.liability_id != null;
+  }
   const transferOriginOptions = computed(() =>
-    accounts.value.filter((account) => isLiquidityAssetAccount(account)),
+    accounts.value.filter((account) => {
+      if (account.id === quickEntryForm.counterparty_account_id) return false;
+      return isTransferAccount(account);
+    }),
   );
   const transferCounterpartyOptions = computed(() =>
     accounts.value.filter((account) => {
       if (account.id === quickEntryForm.account_id) return false;
-      if (isLiquidityAssetAccount(account)) return true;
-      return account.account_type === 'liability' && account.liability_id != null;
+      return isTransferAccount(account);
     }),
   );
   const investmentCounterpartyOptions = computed(() =>
