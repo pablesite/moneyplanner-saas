@@ -653,6 +653,22 @@
   font-weight: 600;
 }
 
+/* Cada dirección de inversión tiene su propio color semántico: aporte = entra
+   capital a inversión (verde positivo); reinversión = movimiento interno (azul
+   inversión); retirada = sale a liquidez/realización (ámbar). Solo se sobrescribe
+   --qe-c; el borde/fondo/texto ya derivan de él en la regla base. */
+.qe-subtype.is-active.qe-subtype-inflow {
+  --qe-c: var(--pos);
+}
+
+.qe-subtype.is-active.qe-subtype-reinvestment {
+  --qe-c: oklch(0.72 0.14 240);
+}
+
+.qe-subtype.is-active.qe-subtype-outflow {
+  --qe-c: oklch(0.8 0.14 78);
+}
+
 /* Hero amount */
 .qe-amount-field {
   display: grid;
@@ -715,6 +731,11 @@
 
 .dir-a-sheet .qe-form .a-select-label {
   color: var(--text);
+}
+
+/* …salvo cuando aún no se ha elegido: el placeholder va atenuado. */
+.dir-a-sheet .qe-form .a-select-is-placeholder .a-select-label {
+  color: var(--muted);
 }
 
 .dir-a-sheet .qe-form .a-select-caret {
@@ -831,6 +852,14 @@
 
 .qe-footer-note {
   margin: 0;
+}
+
+/* Aviso de importe destino autorrellenado con el cambio diario. */
+.qe-fx-note {
+  margin: -2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: color-mix(in oklab, var(--accent) 78%, white);
 }
 
 /* Error de envío junto al botón (en lugar de un banner detrás del modal). */

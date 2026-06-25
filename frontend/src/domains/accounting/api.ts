@@ -11,6 +11,7 @@ import type {
   LedgerTransactionWritePayload,
   MonthlyAccountingSummary,
   QuickLedgerTransactionWritePayload,
+  FxConversionResult,
 } from '@/domains/accounting/models';
 
 function buildTransactionQueryParams(params?: {
@@ -107,6 +108,9 @@ export const coreAccountingApi = {
   },
   createQuickEntry(payload: QuickLedgerTransactionWritePayload) {
     return coreApi.post<LedgerTransaction>('/api/accounting/transactions/quick-entry/', payload);
+  },
+  convertCurrency(params: { amount: string; from: string; to: string; date?: string }) {
+    return coreApi.get<FxConversionResult>('/api/core/fx/convert/', { params });
   },
   getEntries(params?: {
     account_id?: number;

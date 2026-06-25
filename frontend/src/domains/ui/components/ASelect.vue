@@ -62,9 +62,16 @@ const isSearchable = computed(() =>
   props.searchable !== undefined ? props.searchable : allFlat.value.length > 8,
 );
 
-const selectedLabel = computed(() => {
-  const found = allFlat.value.find((o) => String(o.value) === String(props.modelValue));
-  return found?.label ?? '—';
+const selectedOption = computed(() =>
+  allFlat.value.find((o) => String(o.value) === String(props.modelValue)),
+);
+const selectedLabel = computed(() => selectedOption.value?.label ?? '—');
+// Estado "sin elegir": valor vacío, opción placeholder (deshabilitada) o sin match.
+// Se pinta atenuado para que no parezca un valor ya seleccionado.
+const isPlaceholder = computed(() => {
+  const value = props.modelValue;
+  if (value === null || value === undefined || value === '') return true;
+  return Boolean(selectedOption.value?.disabled) || !selectedOption.value;
 });
 
 const filtered = computed<ASelectItem[]>(() => {
@@ -196,7 +203,7 @@ watch(query, () => {
     ref="triggerRef"
     type="button"
     class="a-select-trigger"
-    :class="{ 'a-select-open': open }"
+    :class="{ 'a-select-open': open, 'a-select-is-placeholder': isPlaceholder }"
     :disabled="disabled"
     aria-haspopup="listbox"
     :aria-expanded="open"
@@ -299,6 +306,11 @@ watch(query, () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Placeholder ("Seleccionar"): atenuado para no parecer un valor ya elegido. */
+.a-select-is-placeholder .a-select-label {
+  color: var(--muted);
 }
 
 .a-select-caret {

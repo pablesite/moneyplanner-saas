@@ -226,3 +226,14 @@ export type QuickLedgerTransactionWritePayload = {
   status?: LedgerTransactionStatus;
   origin?: LedgerTransactionOrigin;
 };
+
+export type FxConversionResult = {
+  amount: string;
+  from_currency: string;
+  to_currency: string;
+  converted: string;
+  rate: string;
+  rate_date: string | null;
+  resolution: 'same' | 'exact' | 'synced' | 'fallback';
+  requested_date: string;
+};

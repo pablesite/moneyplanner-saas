@@ -136,6 +136,37 @@ const DEBT_PAYMENT_ALLOWED_CATEGORY_KEYS: ExpenseCategoryKey[] = [
 ];
 const ROTATORY_DEPOSIT_ASSET_SUBCATEGORIES = new Set(['deposits', 'short_term_deposit']);
 
+// Inferencia de clasificación para Aporte (inflow) a partir del activo de la
+// cuenta de inversión destino. Categorías permitidas: financial_investments,
+// real_estate_assets, tangible_assets.
+const APORTE_CATEGORY_KEYS = ['financial_investments', 'real_estate_assets', 'tangible_assets'];
+const APORTE_CATEGORY_BY_ASSET_CATEGORY: Record<string, string> = {
+  investments: 'financial_investments',
+  real_estate: 'real_estate_assets',
+  vehicle: 'tangible_assets',
+  furnishings: 'tangible_assets',
+};
+const APORTE_SUBCATEGORY_BY_ASSET_SUBCATEGORY: Record<string, string> = {
+  cryptocurrencies: 'crypto',
+  etfs: 'etf_indexed',
+  funds: 'index_funds',
+  stocks: 'stocks_dividends',
+  pension_plans: 'pension_plan',
+  roboadvisor: 'roboadvisor',
+  crowdlending: 'crowdlending_p2p',
+  real_estate_crowd: 'crowdfunding_real_estate',
+  deposits: 'deposits_fixed_income',
+  short_term_deposit: 'deposits_fixed_income',
+  primary_home: 'property_purchase',
+  second_home: 'property_purchase',
+  rental: 'property_purchase',
+  vehicles: 'vehicle_purchase',
+  technology: 'technology_devices',
+  home_furnishings: 'home_furniture_appliances',
+  sports_equipment: 'sports_equipment',
+  jewelry: 'jewelry_collectibles',
+};
+
 function formatDecimalInput(raw: string): string {
   return raw.replace(',', '.').trim();
 }
@@ -524,23 +555,43 @@ export function useAccountingPage() {
       return isTransferAccount(account);
     }),
   );
-  const investmentCounterpartyOptions = computed(() =>
-    accounts.value.filter(
-      (account) =>
-        account.account_type === 'asset' &&
-        account.id !== normalizeAccountId(quickEntryForm.account_id) &&
-        !isAutoInvestmentBridgeAccount(account) &&
-        account.asset_id != null,
-    ),
+  // Una cuenta de inversión "real": activo ligado y de categoría NO líquida
+  // (excluye cash, que incluye Spot/Earn cripto). Crypto-as-investment, fondos,
+  // ETFs, inmuebles… entran aquí.
+  function isInvestmentAssetAccount(account: LedgerAccount): boolean {
+    if (account.account_type !== 'asset') return false;
+    if (isAutoInvestmentBridgeAccount(account)) return false;
+    if (account.asset_id == null) return false;
+    const category = (accountPositionMetaByAccountId.value.get(account.id)?.category ?? '').trim();
+    return category !== '' && category !== 'cash';
+  }
+  // La reinversión exige (backend) categoría `investments` en ambos lados.
+  function isReinvestmentAssetAccount(account: LedgerAccount): boolean {
+    if (!isInvestmentAssetAccount(account)) return false;
+    const category = (accountPositionMetaByAccountId.value.get(account.id)?.category ?? '').trim();
+    return category === 'investments';
+  }
+  // Lado liquidez de un aporte/retirada: liquidez u operativas (nunca inversión).
+  const quickInvestmentLiquidityOptions = computed(() =>
+    accounts.value.filter((account) => isLiquidityAssetAccount(account)),
   );
+  // Lado inversión (rol counterparty en aporte/retirada, destino en reinversión).
+  // Direccion-aware: reinversión limita a categoría investments; aporte/retirada
+  // admiten cualquier inversión no líquida. Excluye la cuenta elegida como origen.
+  const investmentCounterpartyOptions = computed(() =>
+    accounts.value.filter((account) => {
+      if (account.id === normalizeAccountId(quickEntryForm.account_id)) return false;
+      return quickEntryForm.investment_direction === 'reinvestment'
+        ? isReinvestmentAssetAccount(account)
+        : isInvestmentAssetAccount(account);
+    }),
+  );
+  // Origen de una reinversión: inversión categoría investments, excluyendo el destino.
   const investmentOriginOptions = computed(() =>
-    accounts.value.filter(
-      (account) =>
-        account.account_type === 'asset' &&
-        account.asset_id != null &&
-        !isAutoInvestmentBridgeAccount(account) &&
-        account.id !== normalizeAccountId(quickEntryForm.counterparty_account_id),
-    ),
+    accounts.value.filter((account) => {
+      if (account.id === normalizeAccountId(quickEntryForm.counterparty_account_id)) return false;
+      return isReinvestmentAssetAccount(account);
+    }),
   );
   function normalizeAccountId(value: unknown): number | null {
     if (typeof value === 'number') return Number.isFinite(value) ? value : null;
@@ -615,6 +666,79 @@ export function useAccountingPage() {
     const origin = quickInvestmentOriginCurrency.value.trim().toUpperCase();
     const destination = quickInvestmentDestinationCurrency.value.trim().toUpperCase();
     return Boolean(origin && destination && origin !== destination);
+  });
+
+  // Autorrelleno del importe destino en inversión multimoneda usando el cambio
+  // diario de Core (/api/core/fx/convert/). Muestra una nota con la fecha del
+  // tipo usado para que el usuario pueda afinarlo con el de su broker.
+  const quickInvestmentFxNote = ref<{
+    rateDate: string;
+    resolution: 'same' | 'exact' | 'synced' | 'fallback';
+  } | null>(null);
+  let lastAutoDestinationAmount = '';
+  let fxRequestToken = 0;
+  let fxDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function recomputeQuickInvestmentDestination(): Promise<void> {
+    if (quickEntryForm.movement_type !== 'investment' || !quickInvestmentIsCrossCurrency.value) {
+      quickInvestmentFxNote.value = null;
+      return;
+    }
+    const amountRaw = formatDecimalInput(quickEntryForm.amount);
+    const from = quickInvestmentOriginCurrency.value.trim().toUpperCase();
+    const to = quickInvestmentDestinationCurrency.value.trim().toUpperCase();
+    if (!amountRaw || Number(amountRaw) <= 0 || !from || !to) {
+      quickInvestmentFxNote.value = null;
+      return;
+    }
+    // No pisar un importe destino editado a mano (distinto del último automático).
+    const current = quickEntryForm.destination_amount.trim();
+    if (current && current !== lastAutoDestinationAmount) {
+      quickInvestmentFxNote.value = null;
+      return;
+    }
+    const token = ++fxRequestToken;
+    try {
+      const { data } = await coreAccountingApi.convertCurrency({
+        amount: amountRaw,
+        from,
+        to,
+        // La fecha valor es la económicamente correcta para el tipo de cambio.
+        date: quickEntryForm.value_date || quickEntryForm.booking_date || undefined,
+      });
+      if (token !== fxRequestToken) return;
+      const converted = Number(data.converted).toFixed(currencyDecimals(to));
+      quickEntryForm.destination_amount = converted;
+      lastAutoDestinationAmount = converted;
+      quickInvestmentFxNote.value = {
+        rateDate: data.rate_date ?? data.requested_date,
+        resolution: data.resolution,
+      };
+    } catch {
+      if (token !== fxRequestToken) return;
+      quickInvestmentFxNote.value = null;
+    }
+  }
+
+  watch(
+    () =>
+      [
+        quickEntryForm.movement_type,
+        quickEntryForm.investment_direction,
+        quickEntryForm.amount,
+        quickInvestmentOriginCurrency.value,
+        quickInvestmentDestinationCurrency.value,
+        quickEntryForm.value_date,
+      ] as const,
+    () => {
+      if (fxDebounceTimer) clearTimeout(fxDebounceTimer);
+      fxDebounceTimer = setTimeout(() => {
+        void recomputeQuickInvestmentDestination();
+      }, 350);
+    },
+  );
+  onBeforeUnmount(() => {
+    if (fxDebounceTimer) clearTimeout(fxDebounceTimer);
   });
   const revaluationAccountOptions = computed(() =>
     accounts.value.filter(
@@ -705,6 +829,21 @@ export function useAccountingPage() {
     return ROTATORY_DEPOSIT_ASSET_SUBCATEGORIES.has(meta.subcategory)
       ? 'deposits_fixed_income'
       : '';
+  }
+  // Aporte: deduce categoría (y subcategoría si hay mapeo) del activo destino.
+  // Devuelve null si el activo no mapea a una categoría de inversión.
+  function inferAporteClassificationFromAccount(
+    accountId: number | null,
+  ): { category: string; subcategory: string } | null {
+    if (accountId == null) return null;
+    const meta = accountPositionMetaByAccountId.value.get(accountId);
+    if (!meta || meta.position_type !== 'asset') return null;
+    const category = APORTE_CATEGORY_BY_ASSET_CATEGORY[meta.category];
+    if (!category) return null;
+    return {
+      category,
+      subcategory: APORTE_SUBCATEGORY_BY_ASSET_SUBCATEGORY[meta.subcategory] ?? '',
+    };
   }
   const debtInterestOptions = computed(() =>
     accounts.value.filter((account) => account.account_type === 'expense'),
@@ -1375,6 +1514,28 @@ export function useAccountingPage() {
     () => [quickEntryForm.movement_type, quickEntryForm.investment_direction] as const,
     () => {
       if (quickEntryForm.movement_type !== 'investment') return;
+      // Limpiar cuentas que dejan de ser válidas al cambiar de dirección: el lado
+      // liquidez debe ser liquidez/operativa y el de inversión un activo de
+      // inversión (categoría investments en reinversión).
+      {
+        const reinvest = quickEntryForm.investment_direction === 'reinvestment';
+        const accountId = normalizeAccountId(quickEntryForm.account_id);
+        const account = accountId != null ? accountMap.value.get(accountId) : null;
+        const accountOk = account
+          ? reinvest
+            ? isReinvestmentAssetAccount(account)
+            : isLiquidityAssetAccount(account)
+          : true;
+        if (!accountOk) quickEntryForm.account_id = null;
+        const cpId = normalizeAccountId(quickEntryForm.counterparty_account_id);
+        const counterparty = cpId != null ? accountMap.value.get(cpId) : null;
+        const counterpartyOk = counterparty
+          ? reinvest
+            ? isReinvestmentAssetAccount(counterparty)
+            : isInvestmentAssetAccount(counterparty)
+          : true;
+        if (!counterpartyOk) quickEntryForm.counterparty_account_id = null;
+      }
       if (quickEntryForm.investment_direction === 'reinvestment') {
         quickEntryForm.category_key = '';
         quickEntryForm.subcategory_key = '';
@@ -1383,34 +1544,52 @@ export function useAccountingPage() {
       if (quickEntryForm.investment_direction === 'outflow') {
         quickEntryForm.category_key = 'capital_gains';
         quickEntryForm.subcategory_key = 'sale_financial_assets';
-      } else if (!quickEntryForm.category_key) {
-        quickEntryForm.category_key = 'financial_investments';
       }
+      // El default y la inferencia de aporte (inflow) los gestiona el watcher de
+      // clasificación de abajo.
     },
     { immediate: true },
   );
+  // Aporte: default inteligente editable. Al elegir/cambiar la cuenta de inversión
+  // destino, autocompletamos categoría y subcategoría desde el activo, pero sin
+  // pisar lo que el usuario haya tocado a mano (se compara contra la última
+  // inferencia aplicada). Si no hay cuenta o no mapea, cae al default financiero.
+  let lastAporteAuto = { category: '', subcategory: '' };
   watch(
     () =>
       [
         quickEntryForm.movement_type,
         quickEntryForm.investment_direction,
-        quickEntryForm.category_key,
         quickEntryForm.counterparty_account_id,
       ] as const,
     () => {
-      if (quickEntryForm.movement_type !== 'investment') return;
-      if (quickEntryForm.investment_direction === 'reinvestment') return;
-      if (quickEntryForm.category_key !== 'financial_investments') return;
-      const inferredSubcategory = resolveInvestmentExpenseSubcategoryFromAccount(
-        normalizeAccountId(quickEntryForm.counterparty_account_id),
-      );
-      if (inferredSubcategory) {
-        quickEntryForm.subcategory_key = inferredSubcategory;
+      if (
+        quickEntryForm.movement_type !== 'investment' ||
+        quickEntryForm.investment_direction !== 'inflow'
+      ) {
         return;
       }
-      if (quickEntryForm.subcategory_key === 'deposits_fixed_income') {
-        quickEntryForm.subcategory_key = '';
+      const auto = inferAporteClassificationFromAccount(
+        normalizeAccountId(quickEntryForm.counterparty_account_id),
+      ) ?? { category: 'financial_investments', subcategory: '' };
+      // La categoría es "automática" si está vacía, sigue la inferencia previa, o
+      // no es válida para aporte (p. ej. arrastrada de retirada: capital_gains).
+      const categoryIsAuto =
+        !quickEntryForm.category_key ||
+        quickEntryForm.category_key === lastAporteAuto.category ||
+        !APORTE_CATEGORY_KEYS.includes(quickEntryForm.category_key);
+      if (categoryIsAuto) {
+        if (quickEntryForm.category_key !== auto.category) {
+          quickEntryForm.category_key = auto.category;
+          quickEntryForm.subcategory_key = auto.subcategory;
+        } else if (
+          !quickEntryForm.subcategory_key ||
+          quickEntryForm.subcategory_key === lastAporteAuto.subcategory
+        ) {
+          quickEntryForm.subcategory_key = auto.subcategory;
+        }
       }
+      lastAporteAuto = auto;
     },
     { immediate: true },
   );
@@ -3925,10 +4104,12 @@ export function useAccountingPage() {
     transferOriginOptions,
     transferCounterpartyOptions,
     investmentOriginOptions,
+    quickInvestmentLiquidityOptions,
     investmentCounterpartyOptions,
     quickInvestmentOriginCurrency,
     quickInvestmentDestinationCurrency,
     quickInvestmentIsCrossCurrency,
+    quickInvestmentFxNote,
     quickTransferOriginCurrency,
     quickTransferDestinationCurrency,
     quickTransferIsCrossCurrency,

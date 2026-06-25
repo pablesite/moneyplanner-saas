@@ -110,6 +110,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET` | `/api/core/fx-rates/` | FX rates |
+| `GET` | `/api/core/fx/convert/` | Currency conversion (crypto precision; on-demand sync + nearest-date fallback). Consumed by the quick-entry investment flow to auto-fill the destination amount. |
 | `GET` | `/api/core/inflation/` | CPI indexes (national + autonomous regions) |
 | `GET` | `/api/core/market-data/status/` | Market-data synchronization status |
 | `GET` | `/api/core/portable-data/meta/` | Portable bundle metadata (version, etc.) |

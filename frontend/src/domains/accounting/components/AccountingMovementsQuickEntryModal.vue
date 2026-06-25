@@ -82,9 +82,6 @@ const transferOriginGroups = computed(() => groupAndSortAccounts(props.page.tran
 const adjustmentGroups = computed(() =>
   groupAndSortAccounts(props.page.quickAdjustmentAccountOptions),
 );
-const investmentGroups = computed(() =>
-  groupAndSortAccounts(props.page.investmentCounterpartyOptions),
-);
 const liabilityGroups = computed(() =>
   groupAndSortAccounts(props.page.liabilityCounterpartyOptions),
 );
@@ -173,17 +170,68 @@ const quickMainAccountGroups = computed(() => {
 const revaluationSelectOptions = computed(() =>
   accountSelectItems(revaluationGroups.value, 'Seleccionar'),
 );
-const investmentOriginSelectOptions = computed(() =>
-  accountSelectItems(
-    props.page.quickEntryForm.investment_direction === 'reinvestment'
-      ? groupAndSortAccounts(props.page.investmentOriginOptions)
-      : liquidityGroups.value,
+// Inversión: modelamos columnas ORIGEN (izq.) y DESTINO (der.) para que el flujo
+// se lea siempre "origen → destino" en las tres direcciones. En retirada los
+// campos del formulario se invierten respecto a aporte/reinversión.
+const investmentDirection = computed(() => props.page.quickEntryForm.investment_direction);
+const investmentOriginModel = computed<number | string | null>({
+  get: () =>
+    investmentDirection.value === 'outflow'
+      ? props.page.quickEntryForm.counterparty_account_id
+      : props.page.quickEntryForm.account_id,
+  set: (value) => {
+    if (investmentDirection.value === 'outflow') {
+      props.page.quickEntryForm.counterparty_account_id = value;
+    } else {
+      props.page.quickEntryForm.account_id = value;
+    }
+  },
+});
+const investmentDestinationModel = computed<number | string | null>({
+  get: () =>
+    investmentDirection.value === 'outflow'
+      ? props.page.quickEntryForm.account_id
+      : props.page.quickEntryForm.counterparty_account_id,
+  set: (value) => {
+    if (investmentDirection.value === 'outflow') {
+      props.page.quickEntryForm.account_id = value;
+    } else {
+      props.page.quickEntryForm.counterparty_account_id = value;
+    }
+  },
+});
+const investmentOriginSelectOptions = computed(() => {
+  if (investmentDirection.value === 'inflow') {
+    return accountSelectItems(
+      groupAndSortAccounts(props.page.quickInvestmentLiquidityOptions),
+      'Seleccionar',
+    );
+  }
+  if (investmentDirection.value === 'reinvestment') {
+    return accountSelectItems(
+      groupAndSortAccounts(props.page.investmentOriginOptions),
+      'Seleccionar',
+    );
+  }
+  // outflow: el origen es la cuenta de inversión (rol counterparty)
+  return accountSelectItems(
+    groupAndSortAccounts(props.page.investmentCounterpartyOptions),
     'Seleccionar',
-  ),
-);
-const investmentSelectOptions = computed(() =>
-  accountSelectItems(investmentGroups.value, 'Seleccionar'),
-);
+  );
+});
+const investmentDestinationSelectOptions = computed(() => {
+  if (investmentDirection.value === 'outflow') {
+    return accountSelectItems(
+      groupAndSortAccounts(props.page.quickInvestmentLiquidityOptions),
+      'Seleccionar',
+    );
+  }
+  // inflow y reinversión: el destino es la cuenta de inversión (rol counterparty)
+  return accountSelectItems(
+    groupAndSortAccounts(props.page.investmentCounterpartyOptions),
+    'Seleccionar',
+  );
+});
 const liquiditySelectOptions = computed(() =>
   accountSelectItems(liquidityGroups.value, 'Seleccionar'),
 );
@@ -193,6 +241,7 @@ const liabilitySelectOptions = computed(() =>
 const mainAccountPlaceholder = computed(() => {
   const type = props.page.quickEntryForm.movement_type;
   if (type === 'adjustment') return 'A conciliar';
+  if (type === 'transfer') return 'Cuenta origen';
   return 'Cuenta';
 });
 const mainAccountSelectOptions = computed(() =>
@@ -214,28 +263,11 @@ const quickSubcategorySelectOptions = computed<ASelectItem[]>(() => [
   { value: '', label: 'Seleccionar' },
   ...props.page.quickSubcategoryOptions,
 ]);
-const isComplexMovement = computed(() =>
-  ['transfer', 'investment', 'debt_payment'].includes(props.page.quickEntryForm.movement_type),
-);
-
 const quickEntryCurrency = computed(() => {
   const accountId = props.page.quickEntryForm.account_id;
   if (!accountId) return null;
   const account = (props.page.accounts as AccountOption[]).find((a) => a.id === accountId);
   return account?.currency ?? null;
-});
-const confirmationSummary = computed(() => {
-  if (!isComplexMovement.value) return '';
-  const form = props.page.quickEntryForm;
-  const accounts = props.page.accounts as AccountOption[];
-  const origin = accounts.find((account) => account.id === form.account_id);
-  const destinationId =
-    form.movement_type === 'debt_payment'
-      ? form.liability_account_id
-      : form.counterparty_account_id;
-  const destination = accounts.find((account) => account.id === destinationId);
-  const amount = form.amount || '—';
-  return `${accountLabel(origin ?? ({ name: 'Cuenta pendiente' } as AccountOption))} → ${accountLabel(destination ?? ({ name: 'Destino pendiente' } as AccountOption))} · ${amount}`;
 });
 
 // Chips carousel arrow navigation (desktop only — mobile uses touch scroll)
@@ -302,10 +334,30 @@ function resetClassification(): void {
 }
 
 const quickEntryHint = computed(() => {
-  const type = props.page.quickEntryForm.movement_type;
-  return type === 'income' || type === 'expense'
-    ? 'Completa importe, cuenta, concepto y categoría.'
-    : 'Completa importe, cuenta y concepto.';
+  switch (props.page.quickEntryForm.movement_type) {
+    case 'income':
+    case 'expense':
+      return 'Completa importe, cuenta, concepto y categoría.';
+    case 'transfer':
+      return 'Completa importe, cuenta origen, cuenta destino y concepto.';
+    case 'investment':
+      switch (props.page.quickEntryForm.investment_direction) {
+        case 'reinvestment':
+          return 'Completa importe, cuenta de inversión origen y destino, y concepto.';
+        case 'outflow':
+          return 'Completa importe, cuenta de inversión (origen), cuenta de liquidez (destino) y concepto.';
+        default:
+          return 'Completa importe, cuenta de liquidez (origen), cuenta de inversión (destino) y concepto.';
+      }
+    case 'debt_payment':
+      return 'Completa el total, la cuenta de liquidez y la cuenta de pasivo.';
+    case 'adjustment':
+      return 'Selecciona la cuenta y el saldo final objetivo.';
+    case 'revaluation':
+      return 'Selecciona la cuenta de inversión y el nuevo valor.';
+    default:
+      return 'Completa importe, cuenta y concepto.';
+  }
 });
 </script>
 
@@ -314,7 +366,7 @@ const quickEntryHint = computed(() => {
     :open="page.showQuickEntryModal"
     title="Registrar movimiento"
     variant="sheet"
-    panel-class="max-w-[540px] dir-a dir-a-sheet a-mov-entry-sheet"
+    panel-class="max-w-[540px] self-start dir-a dir-a-sheet a-mov-entry-sheet"
     @close="requestClose"
   >
     <div v-if="!page.liquidityAccounts.length" class="ui-accounting-inline-note">
@@ -419,7 +471,7 @@ const quickEntryHint = computed(() => {
         <div class="qe-subtypes" role="group" aria-label="Dirección de la inversión">
           <button
             type="button"
-            class="qe-subtype"
+            class="qe-subtype qe-subtype-inflow"
             :class="{ 'is-active': page.quickEntryForm.investment_direction === 'inflow' }"
             @click="page.quickEntryForm.investment_direction = 'inflow'"
           >
@@ -427,7 +479,7 @@ const quickEntryHint = computed(() => {
           </button>
           <button
             type="button"
-            class="qe-subtype"
+            class="qe-subtype qe-subtype-reinvestment"
             :class="{ 'is-active': page.quickEntryForm.investment_direction === 'reinvestment' }"
             @click="page.quickEntryForm.investment_direction = 'reinvestment'"
           >
@@ -435,7 +487,7 @@ const quickEntryHint = computed(() => {
           </button>
           <button
             type="button"
-            class="qe-subtype"
+            class="qe-subtype qe-subtype-outflow"
             :class="{ 'is-active': page.quickEntryForm.investment_direction === 'outflow' }"
             @click="page.quickEntryForm.investment_direction = 'outflow'"
           >
@@ -471,33 +523,33 @@ const quickEntryHint = computed(() => {
             required
           />
         </label>
+        <p
+          v-if="page.quickInvestmentIsCrossCurrency && page.quickInvestmentFxNote"
+          class="qe-fx-note"
+        >
+          {{
+            page.quickInvestmentFxNote.resolution === 'fallback'
+              ? `Rellenado con el cambio del ${page.quickInvestmentFxNote.rateDate} (último disponible).`
+              : `Rellenado automáticamente con el cambio del ${page.quickInvestmentFxNote.rateDate}.`
+          }}
+          Si quieres afinar con el tipo real de tu broker, edítalo.
+        </p>
 
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">
           <label class="ui-accounting-field">
-            <span>
-              {{
-                page.quickEntryForm.investment_direction === 'reinvestment'
-                  ? 'Cuenta de inversion (origen)'
-                  : `Cuenta de liquidez ${page.quickEntryForm.investment_direction === 'inflow' ? '(origen)' : '(destino)'}`
-              }}
-            </span>
+            <span>Cuenta origen</span>
             <ASelect
-              v-model="page.quickEntryForm.account_id"
+              v-model="investmentOriginModel"
               class="select"
               :options="investmentOriginSelectOptions"
             />
           </label>
           <label class="ui-accounting-field">
-            <span>
-              Cuenta de inversión
-              {{
-                page.quickEntryForm.investment_direction === 'outflow' ? '(origen)' : '(destino)'
-              }}
-            </span>
+            <span>Cuenta destino</span>
             <ASelect
-              v-model="page.quickEntryForm.counterparty_account_id"
+              v-model="investmentDestinationModel"
               class="select"
-              :options="investmentSelectOptions"
+              :options="investmentDestinationSelectOptions"
             />
           </label>
         </div>
@@ -507,21 +559,21 @@ const quickEntryHint = computed(() => {
           class="ui-accounting-form-grid ui-accounting-form-grid-wide"
         >
           <label class="ui-accounting-field">
-            <span>Coste de adquisición (opcional)</span>
+            <span>Coste de compra</span>
             <input
               v-model="page.quickEntryForm.realized_cost_basis"
               class="input"
               inputmode="decimal"
-              placeholder="0,00"
+              placeholder="Opcional"
             />
           </label>
           <label class="ui-accounting-field">
-            <span>Ganancia/pérdida realizada (opcional)</span>
+            <span>Ganancia/pérdida</span>
             <input
               v-model="page.quickEntryForm.realized_gain_loss"
               class="input"
               inputmode="decimal"
-              placeholder="0,00"
+              placeholder="Opcional"
             />
           </label>
         </div>
@@ -806,12 +858,8 @@ const quickEntryHint = computed(() => {
           <span class="qe-error-icon" aria-hidden="true">!</span>
           <span>{{ page.error }}</span>
         </p>
-        <div v-if="isComplexMovement" class="a-mov-entry-confirmation" aria-live="polite">
-          <span>Asiento que se registrará</span>
-          <strong>{{ confirmationSummary }}</strong>
-        </div>
         <p
-          v-else-if="!page.quickEntryReady && !page.transactionCreationLoading"
+          v-if="!page.quickEntryReady && !page.transactionCreationLoading"
           class="ui-accounting-inline-note qe-footer-note"
         >
           {{ quickEntryHint }}
