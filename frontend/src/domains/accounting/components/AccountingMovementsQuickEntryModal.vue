@@ -553,7 +553,6 @@ const quickEntryHint = computed(() => {
             />
           </label>
         </div>
-
       </template>
 
       <template v-else-if="page.quickEntryForm.movement_type === 'debt_payment'">
@@ -568,50 +567,94 @@ const quickEntryHint = computed(() => {
           />
         </label>
 
-        <div class="ui-accounting-form-grid ui-accounting-form-grid-2col">
-          <label class="ui-accounting-field">
-            <span>Cuenta de liquidez</span>
-            <ASelect
-              v-model="page.quickEntryForm.account_id"
-              class="select"
-              :options="liquiditySelectOptions"
-            />
-          </label>
-          <label class="ui-accounting-field">
-            <span>Cuenta de pasivo</span>
-            <ASelect
-              v-model="page.quickEntryForm.liability_account_id"
-              class="select"
-              :options="liabilitySelectOptions"
-            />
-          </label>
-        </div>
+        <label class="ui-accounting-field">
+          <span>Cuenta de liquidez</span>
+          <ASelect
+            v-model="page.quickEntryForm.account_id"
+            class="select"
+            :options="liquiditySelectOptions"
+          />
+        </label>
+        <label class="ui-accounting-field">
+          <span>Cuenta de pasivo</span>
+          <ASelect
+            v-model="page.quickEntryForm.liability_account_id"
+            class="select"
+            :options="liabilitySelectOptions"
+          />
+        </label>
 
-        <div class="ui-accounting-debt-block">
-          <p class="ui-accounting-debt-hint">
+        <label class="ui-accounting-field">
+          <span>Principal amortizado</span>
+          <input
+            v-model="page.quickEntryForm.principal_amount"
+            class="input"
+            inputmode="decimal"
+            placeholder="Parte que reduce deuda"
+          />
+        </label>
+        <label class="ui-accounting-field">
+          <span>Interés</span>
+          <input
+            v-model="page.quickEntryForm.interest_amount"
+            class="input"
+            inputmode="decimal"
+            placeholder="Coste financiero"
+          />
+        </label>
+
+        <p v-if="page.quickDebtPreview" class="ui-accounting-balance-feedback">
+          <template v-if="page.quickDebtPreview.breakdown.valid">
+            Principal
+            <strong>{{
+              page.formatMoney(
+                page.quickDebtPreview.breakdown.principal,
+                page.quickDebtPreview.currency,
+              )
+            }}</strong>
+            · interés
+            <strong
+              :class="
+                page.quickDebtPreview.breakdown.interest > 0 ? 'ui-accounting-tone-negative' : ''
+              "
+              >{{
+                page.formatMoney(
+                  page.quickDebtPreview.breakdown.interest,
+                  page.quickDebtPreview.currency,
+                )
+              }}</strong
+            >.
+            <template v-if="page.quickDebtPreview.projected != null">
+              Pendiente{{
+                page.quickDebtPreview.liabilityName
+                  ? ` ${page.quickDebtPreview.liabilityName}`
+                  : ''
+              }}:
+              <strong>{{
+                page.formatMoney(page.quickDebtPreview.outstanding, page.quickDebtPreview.currency)
+              }}</strong>
+              →
+              <strong class="ui-accounting-tone-positive">{{
+                page.formatMoney(page.quickDebtPreview.projected, page.quickDebtPreview.currency)
+              }}</strong>
+              tras amortizar.
+            </template>
+          </template>
+          <template v-else>
             Indica el total y una de las dos partidas; la otra se calcula automáticamente.
-          </p>
-          <div class="ui-accounting-form-grid ui-accounting-form-grid-2col">
-            <label class="ui-accounting-field">
-              <span>Principal amortizado</span>
-              <input
-                v-model="page.quickEntryForm.principal_amount"
-                class="input"
-                inputmode="decimal"
-                placeholder="Parte que reduce deuda"
-              />
-            </label>
-            <label class="ui-accounting-field">
-              <span>Interés</span>
-              <input
-                v-model="page.quickEntryForm.interest_amount"
-                class="input"
-                inputmode="decimal"
-                placeholder="Coste financiero"
-              />
-            </label>
-          </div>
-        </div>
+            <template v-if="page.quickDebtPreview.outstanding != null">
+              Pendiente{{
+                page.quickDebtPreview.liabilityName
+                  ? ` ${page.quickDebtPreview.liabilityName}`
+                  : ''
+              }}:
+              <strong>{{
+                page.formatMoney(page.quickDebtPreview.outstanding, page.quickDebtPreview.currency)
+              }}</strong
+              >.
+            </template>
+          </template>
+        </p>
       </template>
 
       <template v-else>

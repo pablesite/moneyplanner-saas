@@ -990,6 +990,30 @@ export function useAccountingPage() {
     if (breakdown.interest > 0 && quickEntryForm.interest_account_id == null) return false;
     return true;
   }
+  // Live preview for the debt-payment form: resolved principal/interest split
+  // (so the auto-calculated leg is visible while typing, mirroring how
+  // revaluation/adjustment surface their computed delta) plus the selected
+  // liability's outstanding balance and its projection after the principal.
+  const quickDebtPreview = computed(() => {
+    if (quickEntryForm.movement_type !== 'debt_payment') return null;
+    const breakdown = resolveQuickDebtBreakdown();
+    const liabilityAccountId = normalizeAccountId(quickEntryForm.liability_account_id);
+    const liabilityAccount =
+      liabilityAccountId != null ? (accountMap.value.get(liabilityAccountId) ?? null) : null;
+    const rawOutstanding = liabilityAccount ? Number(liabilityAccount.current_balance) : null;
+    const outstanding =
+      rawOutstanding != null && Number.isFinite(rawOutstanding) ? rawOutstanding : null;
+    const projected =
+      outstanding != null && breakdown.valid ? outstanding - breakdown.principal : null;
+    return {
+      breakdown,
+      currency:
+        quickSelectedLiquidityAccount.value?.currency ?? liabilityAccount?.currency ?? 'EUR',
+      liabilityName: liabilityAccount ? accountDisplayName(liabilityAccount) : null,
+      outstanding,
+      projected,
+    };
+  });
   function quickInvestmentEntryReady(): boolean {
     if (quickSelectedInvestmentAccountId.value == null) return false;
     if (quickEntryForm.investment_direction === 'reinvestment') {
@@ -4131,6 +4155,7 @@ export function useAccountingPage() {
     quickAdjustmentCurrentBalance,
     quickAdjustmentDelta,
     quickEntryReady,
+    quickDebtPreview,
     editEntryReady,
     debitTotal,
     creditTotal,
