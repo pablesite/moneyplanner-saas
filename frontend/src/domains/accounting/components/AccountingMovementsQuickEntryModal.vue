@@ -423,6 +423,15 @@ const quickEntryHint = computed(() => {
       </div>
 
       <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
+        <label class="ui-accounting-field">
+          <span>Cuenta de inversión</span>
+          <ASelect
+            v-model="page.quickEntryForm.account_id"
+            class="select"
+            :options="revaluationSelectOptions"
+          />
+        </label>
+
         <label class="qe-amount-field ui-accounting-field">
           <span>Nuevo valor del activo</span>
           <input
@@ -431,15 +440,6 @@ const quickEntryHint = computed(() => {
             inputmode="decimal"
             placeholder="0,00"
             required
-          />
-        </label>
-
-        <label class="ui-accounting-field">
-          <span>Cuenta de inversión</span>
-          <ASelect
-            v-model="page.quickEntryForm.account_id"
-            class="select"
-            :options="revaluationSelectOptions"
           />
         </label>
 

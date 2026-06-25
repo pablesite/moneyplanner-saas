@@ -756,12 +756,16 @@ export function useAccountingPage() {
   });
   // Revalorización = marcar a mercado posiciones de inversión cuyo valor en € el
   // usuario lee del banco/plataforma pero cuyas participaciones no puede contabilizar
-  // (fondos, ETFs, acciones, roboadvisor, planes de pensiones, crowdlending,
-  // crowdfunding). Se EXCLUYE la cripto: se gestiona en su propia moneda y su valor
-  // en € deriva del cambio (FX), no de una revalorización manual. Y se excluye
-  // liquidez, depósitos, monederos, bienes e inmuebles (no son "participaciones a
-  // mercado" por esta vía).
-  const REVALUATION_EXCLUDED_SUBCATEGORIES = new Set(['cryptocurrencies', 'crypto_spot_earn']);
+  // (fondos, ETFs, acciones, roboadvisor, planes de pensiones). Se EXCLUYE:
+  //  - cripto: se gestiona en su propia moneda y su valor en € deriva del cambio (FX);
+  //  - crowdlending / crowdfunding inmobiliario: no se marcan a mercado por esta vía;
+  //  - liquidez, depósitos, monederos, bienes e inmuebles.
+  const REVALUATION_EXCLUDED_SUBCATEGORIES = new Set([
+    'cryptocurrencies',
+    'crypto_spot_earn',
+    'crowdlending',
+    'real_estate_crowd',
+  ]);
   const revaluationAccountOptions = computed(() =>
     accounts.value.filter((account) => {
       if (account.account_type !== 'asset' || account.asset_id == null) return false;
