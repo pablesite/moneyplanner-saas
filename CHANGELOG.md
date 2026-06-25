@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.28.0...moneyplanner-saas-v0.28.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* **frontend:** evitar auto-zoom de iOS en inputs y teclado intrusivo en ASelect móvil ([6b6a239](https://github.com/pablesite/moneyplanner-saas/commit/6b6a239be0380433246bf89c432e6d3febb8bfea))
+
 ## [0.28.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.27.0...moneyplanner-saas-v0.28.0) (2026-06-24)
 
 
