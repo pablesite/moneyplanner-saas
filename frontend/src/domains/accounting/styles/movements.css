@@ -552,6 +552,46 @@
   }
 }
 
+/* Indicador de scroll por puntos: espeja a las flechas (estas en pointer:fine,
+   los puntos en táctil). Un punto por tipo; el del tipo activo crece y se
+   ilumina, señalando que hay más tipos a los lados y en cuál estás. */
+.qe-type-dots {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+@media (pointer: coarse) {
+  .qe-type-dots {
+    display: flex;
+  }
+}
+
+.qe-type-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition:
+    width 0.18s ease,
+    height 0.18s ease,
+    background 0.18s ease;
+}
+
+.qe-type-dot.is-active {
+  width: 8px;
+  height: 8px;
+  background: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qe-type-dot {
+    transition: none;
+  }
+}
+
 .qe-type-chip {
   display: inline-flex;
   align-items: center;

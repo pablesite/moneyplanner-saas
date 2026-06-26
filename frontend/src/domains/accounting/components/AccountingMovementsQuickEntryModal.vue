@@ -422,6 +422,18 @@ const quickEntryHint = computed(() => {
         </button>
       </div>
 
+      <!-- Indicador de scroll (solo táctil; en escritorio están las flechas):
+           un punto por tipo, el del tipo activo más grande. Decorativo: el
+           control accesible siguen siendo los chips. -->
+      <div class="qe-type-dots" aria-hidden="true">
+        <span
+          v-for="option in orderedTypeOptions"
+          :key="`dot-${option.value}`"
+          class="qe-type-dot"
+          :class="{ 'is-active': page.quickEntryForm.movement_type === option.value }"
+        />
+      </div>
+
       <template v-if="page.quickEntryForm.movement_type === 'revaluation'">
         <label class="ui-accounting-field">
           <span>Cuenta de inversión</span>
