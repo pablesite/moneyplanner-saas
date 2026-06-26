@@ -1576,8 +1576,8 @@
   .dir-a .btn.a-mov-mobile-create {
     position: fixed;
     z-index: 30;
-    right: 18px;
-    bottom: calc(18px + env(safe-area-inset-bottom));
+    right: 24px;
+    bottom: calc(32px + env(safe-area-inset-bottom));
     display: inline-flex;
     align-items: center;
     justify-content: center;
