@@ -1270,6 +1270,17 @@
   color: var(--neg);
 }
 
+.a-mov-detail-delete:hover {
+  border-color: color-mix(in oklab, var(--neg) 45%, var(--line));
+  color: var(--neg);
+}
+
+/* Separar la acción destructiva (Eliminar) de editar/duplicar para evitar
+   toques accidentales. */
+.a-mov-detail-actions .a-mov-detail-delete {
+  margin-left: auto;
+}
+
 .a-mov-toolbar {
   position: sticky;
   z-index: 15;
@@ -1362,15 +1373,54 @@
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
-.a-mov-detail-sheet {
+/* Altura consistente para todos los detalles (antes tomaba la altura del
+   contenido y variaba: cada movimiento abría a distinta altura y "se bajaba").
+   La doble clase gana a `.ui-modal-panel { height: auto }` de app.css. */
+.dir-a-sheet.a-mov-detail-sheet {
   width: min(560px, 100%);
-  height: calc(100vh - 32px);
+  height: min(86vh, 660px);
   margin-left: auto;
 }
 
+/* El cuerpo llena el panel para poder anclar las acciones abajo y dejar que el
+   contenido scrollee si se desborda (asiento expandido, muchos apuntes). */
+.dir-a-sheet.a-mov-detail-sheet .ui-modal-body {
+  flex: 1;
+  min-height: 0;
+}
+
 .a-mov-detail {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+  min-height: 100%;
+}
+
+/* Clasificación como en el formulario de alta: categoría pequeña arriba,
+   subcategoría como valor principal debajo (alineadas a la derecha). */
+.a-mov-detail-class {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.a-mov-detail-class-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.a-mov-detail-class-cat {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.a-mov-detail-class-sub {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: right;
 }
 
 /* Cabecera del detalle: icono de tipo (coloreado) + etiqueta + estado a la derecha */
@@ -1515,8 +1565,12 @@
 
 .a-mov-detail-actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: flex-start;
   gap: 8px;
+  /* Ancladas al fondo del panel (altura fija): contenido arriba, acciones abajo. */
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .a-mov-account-tools {
