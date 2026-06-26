@@ -1702,6 +1702,26 @@ export function useAccountingPage() {
       }
     },
   );
+  // El ajuste no tiene campo Concepto: su descripción es intrínsecamente "Ajuste
+  // de conciliación". Se fija sola al entrar en el tipo (sin pisar una descripción
+  // propia, p. ej. al duplicar) y se limpia al salir si seguía siendo la automática.
+  const AUTO_ADJUSTMENT_DESCRIPTION = 'Ajuste de conciliación';
+  watch(
+    () => quickEntryForm.movement_type,
+    (movementType, previous) => {
+      if (movementType === 'adjustment') {
+        if (!quickEntryForm.description.trim()) {
+          quickEntryForm.description = AUTO_ADJUSTMENT_DESCRIPTION;
+        }
+      } else if (
+        previous === 'adjustment' &&
+        quickEntryForm.description === AUTO_ADJUSTMENT_DESCRIPTION
+      ) {
+        quickEntryForm.description = '';
+      }
+    },
+    { immediate: true },
+  );
   watch(
     () => quickEntryForm.category_key,
     () => {

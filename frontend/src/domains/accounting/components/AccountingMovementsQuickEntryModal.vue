@@ -663,15 +663,61 @@ const quickEntryHint = computed(() => {
         </p>
       </template>
 
+      <template v-else-if="page.quickEntryForm.movement_type === 'adjustment'">
+        <label class="ui-accounting-field">
+          <span>Cuenta a conciliar</span>
+          <ASelect
+            v-model="page.quickEntryForm.account_id"
+            class="select"
+            :options="mainAccountSelectOptions"
+          />
+        </label>
+
+        <label class="qe-amount-field ui-accounting-field">
+          <span
+            >Saldo final objetivo{{ quickEntryCurrency ? ` (${quickEntryCurrency})` : '' }}</span
+          >
+          <input
+            v-model="page.quickEntryForm.amount"
+            class="input qe-amount"
+            inputmode="decimal"
+            placeholder="0,00"
+            required
+          />
+        </label>
+
+        <p class="ui-accounting-balance-feedback">
+          <template v-if="page.quickAdjustmentCurrentBalance != null">
+            Saldo actual:
+            <strong>{{
+              page.formatMoney(page.quickAdjustmentCurrentBalance, quickEntryCurrency ?? 'EUR')
+            }}</strong
+            >.
+            <template v-if="page.quickAdjustmentDelta != null">
+              Ajuste calculado:
+              <strong
+                :class="
+                  page.quickAdjustmentDelta > 0
+                    ? 'ui-accounting-tone-positive'
+                    : page.quickAdjustmentDelta < 0
+                      ? 'ui-accounting-tone-negative'
+                      : ''
+                "
+                >{{
+                  page.formatSignedMoney(page.quickAdjustmentDelta, quickEntryCurrency ?? 'EUR')
+                }}</strong
+              >
+            </template>
+          </template>
+          <template v-else>
+            Selecciona la cuenta y el saldo final objetivo para calcular el ajuste automáticamente.
+          </template>
+        </p>
+      </template>
+
       <template v-else>
         <label class="qe-amount-field ui-accounting-field">
-          <span>{{
-            page.quickEntryForm.movement_type === 'adjustment'
-              ? 'Saldo final objetivo'
-              : quickEntryCurrency
-                ? `Importe (${quickEntryCurrency})`
-                : 'Importe'
-          }}</span>
+          <span>{{ quickEntryCurrency ? `Importe (${quickEntryCurrency})` : 'Importe' }}</span>
           <input
             v-model="page.quickEntryForm.amount"
             class="input qe-amount"
@@ -719,36 +765,6 @@ const quickEntryHint = computed(() => {
           />
         </label>
       </template>
-      <p
-        v-if="page.quickEntryForm.movement_type === 'adjustment'"
-        class="ui-accounting-balance-feedback"
-      >
-        <template v-if="page.quickAdjustmentCurrentBalance != null">
-          Saldo actual:
-          <strong>{{
-            page.quickAdjustmentCurrentBalance.toFixed(page.quickAdjustmentDisplayDecimals)
-          }}</strong
-          >.
-          <template v-if="page.quickAdjustmentDelta != null">
-            Ajuste calculado:
-            <strong
-              :class="
-                page.quickAdjustmentDelta > 0
-                  ? 'ui-accounting-tone-positive'
-                  : page.quickAdjustmentDelta < 0
-                    ? 'ui-accounting-tone-negative'
-                    : ''
-              "
-            >
-              {{ page.quickAdjustmentDelta >= 0 ? '+' : ''
-              }}{{ page.quickAdjustmentDelta.toFixed(page.quickAdjustmentDisplayDecimals) }}
-            </strong>
-          </template>
-        </template>
-        <template v-else>
-          Selecciona la cuenta y el saldo final objetivo para calcular el ajuste automáticamente.
-        </template>
-      </p>
 
       <label
         v-if="
