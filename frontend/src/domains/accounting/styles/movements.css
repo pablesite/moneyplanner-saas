@@ -572,17 +572,17 @@
 .qe-type-dot {
   width: 5px;
   height: 5px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--line-strong);
   transition:
     width 0.18s ease,
-    height 0.18s ease,
     background 0.18s ease;
 }
 
+/* El activo se alarga en horizontal (misma altura) como el thumb de un
+   scrollbar, en vez de crecer como círculo. */
 .qe-type-dot.is-active {
-  width: 8px;
-  height: 8px;
+  width: 18px;
   background: var(--text);
 }
 
