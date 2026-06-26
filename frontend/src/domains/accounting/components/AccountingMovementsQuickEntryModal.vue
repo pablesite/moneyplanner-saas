@@ -274,12 +274,19 @@ const quickEntryCurrency = computed(() => {
 const chipsRef = ref<HTMLElement | null>(null);
 const chipsCanScrollLeft = ref(false);
 const chipsCanScrollRight = ref(false);
+// Índice del punto resaltado: refleja la posición de scroll (como el thumb de un
+// scrollbar), no el tipo seleccionado. 0 = inicio, count-1 = final.
+const chipsScrollIndex = ref(0);
 
 function updateChipsArrows() {
   const el = chipsRef.value;
   if (!el) return;
   chipsCanScrollLeft.value = el.scrollLeft > 4;
   chipsCanScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 4;
+  const maxScroll = el.scrollWidth - el.clientWidth;
+  const count = orderedTypeOptions.value.length;
+  const fraction = maxScroll > 4 ? el.scrollLeft / maxScroll : 0;
+  chipsScrollIndex.value = count > 1 ? Math.round(fraction * (count - 1)) : 0;
 }
 
 function scrollChips(direction: 1 | -1) {
@@ -423,14 +430,14 @@ const quickEntryHint = computed(() => {
       </div>
 
       <!-- Indicador de scroll (solo táctil; en escritorio están las flechas):
-           un punto por tipo, el del tipo activo más grande. Decorativo: el
-           control accesible siguen siendo los chips. -->
+           un punto por tipo; el resaltado sigue la posición de scroll como el
+           thumb de un scrollbar. Decorativo: el control accesible son los chips. -->
       <div class="qe-type-dots" aria-hidden="true">
         <span
-          v-for="option in orderedTypeOptions"
+          v-for="(option, index) in orderedTypeOptions"
           :key="`dot-${option.value}`"
           class="qe-type-dot"
-          :class="{ 'is-active': page.quickEntryForm.movement_type === option.value }"
+          :class="{ 'is-active': index === chipsScrollIndex }"
         />
       </div>
 
