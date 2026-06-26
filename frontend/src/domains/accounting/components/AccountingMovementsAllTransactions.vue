@@ -122,6 +122,21 @@ const selectedTransactionPresentation = computed(() => {
       ?.presentation ?? null
   );
 });
+// Fecha valor solo se muestra cuando difiere de la contable (evita repetir la misma fecha).
+const detailShowValueDate = computed(
+  () =>
+    !!selectedTransaction.value &&
+    selectedTransaction.value.booking_date !== selectedTransaction.value.value_date,
+);
+// Impacto en € base: útil cuando el movimiento está en otra divisa (p. ej. stocks USD,
+// cripto). Para transferencias/inversiones el impacto agregado es 0 y no se muestra.
+const detailBaseImpact = computed(() => {
+  const presentation = selectedTransactionPresentation.value;
+  if (!presentation || presentation.currency === 'EUR' || !presentation.aggregateImpact) {
+    return null;
+  }
+  return presentation.aggregateImpact;
+});
 function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'muted' {
   if (tx.activity_kind === 'income') return 'asset';
   if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
@@ -428,6 +443,21 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
       @close="selectedTransaction = null"
     >
       <div v-if="selectedTransaction" class="a-mov-detail">
+        <div class="a-mov-detail-head">
+          <span class="a-mov-kind-icon" :class="`is-${kindTone(selectedTransaction)}`">{{
+            kindGlyph(selectedTransaction)
+          }}</span>
+          <span class="a-mov-detail-kind">{{ state.activityKindLabel(selectedTransaction) }}</span>
+          <button
+            v-if="selectedTransaction.needs_review"
+            class="a-mov-review-chip a-mov-detail-review"
+            type="button"
+            @click="editSelected"
+          >
+            Por revisar
+          </button>
+        </div>
+
         <div
           v-if="selectedTransactionPresentation"
           class="a-mov-detail-amount mono"
@@ -435,55 +465,77 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
         >
           {{ formattedRowAmount(selectedTransactionPresentation) }}
         </div>
+        <div v-if="detailBaseImpact != null" class="a-mov-detail-base mono">
+          ≈ {{ state.formatSignedMoney(detailBaseImpact, 'EUR') }}
+        </div>
+
+        <div v-if="selectedTransactionPresentation" class="a-mov-detail-flow">
+          <span>{{ selectedTransactionPresentation.accountName }}</span>
+          <span
+            v-if="selectedTransactionPresentation.destinationName"
+            class="a-mov-detail-flow-arrow"
+            >→ {{ selectedTransactionPresentation.destinationName }}</span
+          >
+        </div>
+
         <div class="a-mov-detail-summary">
           <div>
-            <span>Fecha contable</span
+            <span>Fecha</span
             ><strong>{{ state.formatDate(selectedTransaction.booking_date) }}</strong>
           </div>
-          <div>
+          <div v-if="detailShowValueDate">
             <span>Fecha valor</span
             ><strong>{{ state.formatDate(selectedTransaction.value_date) }}</strong>
           </div>
           <div>
-            <span>Tipo</span><strong>{{ state.activityKindLabel(selectedTransaction) }}</strong>
-          </div>
-          <div>
             <span>Titularidad</span
-            ><strong>{{ state.transactionOwnershipLabel(selectedTransaction) }}</strong>
-          </div>
-          <div>
-            <span>Origen</span><strong>{{ selectedTransaction.origin }}</strong>
-          </div>
-          <div>
-            <span>Clasificación</span
             ><strong>{{
-              state.transactionClassificationLabel(selectedTransaction) || 'No aplica'
+              state.transactionOwnershipLabel(selectedTransaction) || 'Sin titularidad'
             }}</strong>
           </div>
-        </div>
-        <div class="a-mov-detail-entries">
-          <div class="a-mov-detail-entry a-mov-detail-entry-head">
-            <span>Cuenta</span><span>Debe</span><span>Haber</span>
-          </div>
-          <div
-            v-for="entry in selectedTransaction.entries"
-            :key="entry.id"
-            class="a-mov-detail-entry"
-          >
-            <span>{{ entry.account_name }}</span>
-            <span class="mono">{{
-              entry.side === 'debit' ? state.formatMoney(Number(entry.amount), entry.currency) : '—'
-            }}</span>
-            <span class="mono">{{
-              entry.side === 'credit'
-                ? state.formatMoney(Number(entry.amount), entry.currency)
-                : '—'
-            }}</span>
+          <div v-if="selectedTransactionPresentation?.classificationState !== 'not_applicable'">
+            <span>Clasificación</span>
+            <strong v-if="selectedTransactionPresentation?.classificationState === 'available'">{{
+              state.transactionClassificationLabel(selectedTransaction)
+            }}</strong>
+            <button v-else class="a-mov-review-chip" type="button" @click="editSelected">
+              Por clasificar
+            </button>
           </div>
         </div>
+
         <p v-if="selectedTransaction.notes" class="a-mov-detail-notes">
           {{ selectedTransaction.notes }}
         </p>
+
+        <details class="a-mov-detail-ledger">
+          <summary>Asiento contable</summary>
+          <div class="a-mov-detail-entries">
+            <div class="a-mov-detail-entry a-mov-detail-entry-head">
+              <span>Cuenta</span><span>Debe</span><span>Haber</span>
+            </div>
+            <div
+              v-for="entry in selectedTransaction.entries"
+              :key="entry.id"
+              class="a-mov-detail-entry"
+            >
+              <span>{{ entry.account_name }}</span>
+              <span class="mono">{{
+                entry.side === 'debit'
+                  ? state.formatMoney(Number(entry.amount), entry.currency)
+                  : '—'
+              }}</span>
+              <span class="mono">{{
+                entry.side === 'credit'
+                  ? state.formatMoney(Number(entry.amount), entry.currency)
+                  : '—'
+              }}</span>
+            </div>
+          </div>
+          <div class="a-mov-detail-origin">
+            Registro: {{ selectedTransaction.origin === 'system' ? 'Automático' : 'Manual' }}
+          </div>
+        </details>
         <div v-if="selectedTransaction.origin !== 'system'" class="a-mov-detail-actions">
           <AButton variant="primary" @click="editSelected">Editar movimiento</AButton>
           <AButton
