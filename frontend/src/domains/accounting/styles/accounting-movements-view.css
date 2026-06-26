@@ -1373,17 +1373,16 @@
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
-/* Altura consistente para todos los detalles (antes tomaba la altura del
-   contenido y variaba: cada movimiento abría a distinta altura y "se bajaba").
-   La doble clase gana a `.ui-modal-panel { height: auto }` de app.css. */
+/* El detalle se ancla ARRIBA (no centrado) para que todos abran en la misma
+   posición y no "se bajen" según el contenido; la altura es la del contenido,
+   sin hueco muerto. El cuerpo scrollea si se desborda (asiento expandido). */
 .dir-a-sheet.a-mov-detail-sheet {
   width: min(560px, 100%);
-  height: min(86vh, 660px);
+  height: auto;
+  align-self: flex-start;
   margin-left: auto;
 }
 
-/* El cuerpo llena el panel para poder anclar las acciones abajo y dejar que el
-   contenido scrollee si se desborda (asiento expandido, muchos apuntes). */
 .dir-a-sheet.a-mov-detail-sheet .ui-modal-body {
   flex: 1;
   min-height: 0;
@@ -1393,7 +1392,6 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  min-height: 100%;
 }
 
 /* Clasificación como en el formulario de alta: categoría pequeña arriba,
@@ -1568,9 +1566,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
-  /* Ancladas al fondo del panel (altura fija): contenido arriba, acciones abajo. */
-  margin-top: auto;
-  padding-top: 12px;
+  padding-top: 4px;
 }
 
 .a-mov-account-tools {
