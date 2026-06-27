@@ -344,9 +344,14 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Patrimonio neto');
     expect(wrapper.text()).toContain('Evolución');
     expect(wrapper.text()).toContain('Balance');
+    expect(wrapper.text()).toContain('Mayor peso');
+    expect(wrapper.text()).toContain('Pasivo principal');
+    expect(wrapper.text()).toContain('Este mes');
+    expect(wrapper.text()).toContain('YTD');
     expect(wrapper.text()).toContain('01 ene 2026');
     expect(wrapper.text()).toContain('750,00€');
     expect(wrapper.text()).toContain('1.000,00 €');
+    expect(wrapper.text()).not.toContain('+ Añadir cuenta');
   });
 
   it('recalculates the visible totals when ownership changes', async () => {
@@ -429,12 +434,15 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('60,00 €');
   });
 
-  it('opens the primary asset modal from the page action', async () => {
+  it('opens the primary asset modal from the mobile balance action', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
-    await wrapper.get('button.btn-primary').trigger('click');
+    expect(wrapper.find('.a-nw-mobile-create').exists()).toBe(false);
+
+    await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-create').trigger('click');
 
     expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(true);
   });

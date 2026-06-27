@@ -700,6 +700,89 @@ function buildHeroCompositionRows(kind: 'asset' | 'liability'): HeroCompositionR
 const heroAssetRows = computed(() => buildHeroCompositionRows('asset'));
 const heroLiabilityRows = computed(() => buildHeroCompositionRows('liability'));
 
+type ExecutiveSignalTone = 'positive' | 'negative' | 'neutral';
+type ExecutiveSignal = {
+  label: string;
+  value: string;
+  meta: string;
+  tone: ExecutiveSignalTone;
+};
+
+const largestAssetCategory = computed(
+  () => [...heroAssetRows.value].sort((a, b) => b.value - a.value)[0] ?? null,
+);
+const largestLiabilityPosition = computed(
+  () => [...allLiabilityPositionRows.value].sort((a, b) => b.value - a.value)[0] ?? null,
+);
+
+function signedDeltaLabel(delta: { value: number; pct: number | null }): string {
+  const sign = delta.value > 0 ? '+' : '';
+  return `${sign}${formatNumber(delta.value, 0)} ${heroUnitLabel.value}`;
+}
+
+function deltaTone(delta: { value: number }): ExecutiveSignalTone {
+  if (delta.value > 0) return 'positive';
+  if (delta.value < 0) return 'negative';
+  return 'neutral';
+}
+
+const executiveSignals = computed<ExecutiveSignal[]>(() => {
+  const topAsset = largestAssetCategory.value;
+  const topLiability = largestLiabilityPosition.value;
+  const month = monthlyDelta.value;
+  const year = ytdDelta.value;
+  return [
+    {
+      label: 'Mayor peso',
+      value: topAsset?.label ?? 'Sin activos',
+      meta: topAsset
+        ? `${formatNumber(topAsset.value, 0)} ${heroUnitLabel.value} · ${Math.round(topAsset.share * 100)}% de activos`
+        : 'Añade posiciones para ver composición',
+      tone: 'neutral',
+    },
+    {
+      label: 'Pasivo principal',
+      value: topLiability?.name ?? 'Sin pasivos',
+      meta: topLiability
+        ? `${formatNumber(topLiability.value, 0)} ${heroUnitLabel.value} · ${topLiability.subtitle}`
+        : 'Sin deuda activa en el filtro actual',
+      tone: topLiability ? 'negative' : 'positive',
+    },
+    month
+      ? {
+          label: 'Este mes',
+          value: signedDeltaLabel(month),
+          meta:
+            month.pct === null
+              ? 'Sin porcentaje comparable'
+              : `${month.pct > 0 ? '+' : ''}${formatPct(month.pct, 1)} frente al mes anterior`,
+          tone: deltaTone(month),
+        }
+      : {
+          label: 'Este mes',
+          value: 'Sin comparativa',
+          meta: 'Faltan cierres mensuales para comparar',
+          tone: 'neutral',
+        },
+    year
+      ? {
+          label: 'YTD',
+          value: signedDeltaLabel(year),
+          meta:
+            year.pct === null
+              ? 'Sin porcentaje comparable'
+              : `${year.pct > 0 ? '+' : ''}${formatPct(year.pct, 1)} desde inicio de año`,
+          tone: deltaTone(year),
+        }
+      : {
+          label: 'YTD',
+          value: 'Sin histórico',
+          meta: 'Aparecerá al tener más puntos del año',
+          tone: 'neutral',
+        },
+  ];
+});
+
 const assetCompositionHues = [148, 178, 210, 24, 80];
 const liabilityCompositionHues = [24, 345, 12, 45, 80];
 
@@ -1242,9 +1325,6 @@ watch(
           Archivadas {{ archivedItemsCount }}
         </AButton>
       </template>
-      <template #actions>
-        <AButton variant="primary" @click="openPrimaryCreateModal"> + Añadir cuenta </AButton>
-      </template>
     </APageHead>
 
     <AContextBar>
@@ -1442,6 +1522,19 @@ watch(
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="a-nw-executive-strip" aria-label="Lectura rápida de patrimonio">
+        <article
+          v-for="signal in executiveSignals"
+          :key="signal.label"
+          class="a-nw-executive-signal"
+          :class="`is-${signal.tone}`"
+        >
+          <span>{{ signal.label }}</span>
+          <strong>{{ signal.value }}</strong>
+          <small>{{ signal.meta }}</small>
+        </article>
       </div>
     </section>
 
@@ -1844,7 +1937,12 @@ watch(
       </div>
     </section>
 
-    <AButton class="a-nw-mobile-create" variant="primary" @click="openPrimaryCreateModal">
+    <AButton
+      v-if="activeNetWorthTab === 'balance'"
+      class="a-nw-mobile-create"
+      variant="primary"
+      @click="openPrimaryCreateModal"
+    >
       <span class="a-nw-fab-plus" aria-hidden="true">+</span>
       <span class="a-nw-fab-label">Añadir posición</span>
     </AButton>

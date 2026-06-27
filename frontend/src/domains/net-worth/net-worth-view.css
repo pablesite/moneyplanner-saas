@@ -55,6 +55,18 @@
   .a-nw-page .sect-head > .actions {
     flex-wrap: wrap;
   }
+
+  .a-nw-executive-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .a-nw-executive-signal:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .a-nw-executive-signal:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
 }
 
 @container page (max-width: 560px) {
@@ -75,6 +87,26 @@
   padding-inline: 0;
 }
 
+.a-nw-page .context-bar {
+  flex-wrap: nowrap;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.a-nw-page .context-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.a-nw-page .context-field {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.a-nw-page .context-divider {
+  display: none;
+}
+
 .a-nw-page .filter-ctrl {
   min-height: 32px;
   padding: 6px 10px;
@@ -88,6 +120,7 @@
 .a-nw-context-note {
   font-size: 11px;
   color: var(--faint);
+  white-space: nowrap;
 }
 
 .a-nw-tabs-bar {
@@ -202,6 +235,60 @@
 .hero-donut .a-donut-svg {
   width: 100%;
   height: auto;
+}
+
+.a-nw-executive-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.a-nw-executive-signal {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-right: 1px solid var(--line);
+}
+
+.a-nw-executive-signal:last-child {
+  border-right: 0;
+}
+
+.a-nw-executive-signal > span {
+  color: var(--faint);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.a-nw-executive-signal > strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a-nw-executive-signal > small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a-nw-executive-signal.is-positive > strong {
+  color: var(--pos);
+}
+
+.a-nw-executive-signal.is-negative > strong {
+  color: var(--neg);
 }
 
 .a-nw-chart-stack,
@@ -885,14 +972,10 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  /* Context bar: que envuelva y sin separadores verticales en móvil. */
+  /* Context bar: carril compacto de una línea; si no cabe, desplaza horizontal. */
   .a-nw-page .context-bar {
-    flex-wrap: wrap;
-    gap: 12px 16px;
-  }
-
-  .a-nw-page .context-divider {
-    display: none;
+    flex-wrap: nowrap;
+    gap: 10px;
   }
 
   /* En móvil el balance pasa de tabla comprimida a lista operativa. */
