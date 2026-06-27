@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { AButton, ASectHead, AKindChip } from '@/domains/ui';
+import { AButton, AKindChip } from '@/domains/ui';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
@@ -59,41 +59,10 @@ function toggleAccount(accountId: number) {
 function goToTodos(accountId: number) {
   void router.push({ name: 'accounting-movements', query: { account_id: String(accountId) } });
 }
-
-// Pista de uso: popover que se abre al tocar (en móvil el `title` no se muestra).
-const showHint = ref(false);
-function closeHint(event: MouseEvent): void {
-  if (!(event.target as HTMLElement).closest('.a-mov-catalog-hint-wrap')) showHint.value = false;
-}
-onMounted(() => {
-  document.addEventListener('click', closeHint, true);
-  // Cargar las archivadas para que el total cuente activas + archivadas.
-  state.ensureInactiveCatalogLoaded();
-});
-onBeforeUnmount(() => document.removeEventListener('click', closeHint, true));
 </script>
 
 <template>
   <div>
-    <ASectHead title="Cuentas">
-      <template #hint>
-        <span class="a-mov-catalog-hint-wrap">
-          <button
-            type="button"
-            class="a-mov-catalog-hint"
-            :aria-expanded="showHint"
-            aria-label="Cómo usar esta vista"
-            @click.stop="showHint = !showHint"
-          >
-            ⓘ
-          </button>
-          <span v-if="showHint" class="a-mov-catalog-hint-pop" role="tooltip">
-            Toca una cuenta para ver sus movimientos
-          </span>
-        </span>
-      </template>
-    </ASectHead>
-
     <div class="a-mov-account-tools">
       <input
         v-model="query"
@@ -105,7 +74,8 @@ onBeforeUnmount(() => document.removeEventListener('click', closeHint, true));
     <div class="a-mov-catalog-summary">
       <div class="a-mov-catalog-summary-meta">
         <span class="a-mov-catalog-summary-count">
-          {{ operationalCount }} cuentas · {{ state.totalUserAccounts }} en total
+          {{ operationalCount }}
+          {{ state.accountCatalogScope === 'active' ? 'activas' : 'cuentas' }}
         </span>
         <div class="a-mov-catalog-scope" role="group" aria-label="Ámbito de cuentas">
           <button
