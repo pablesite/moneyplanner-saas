@@ -75,25 +75,35 @@ function goToTodos(accountId: number) {
     </ASectHead>
 
     <div class="a-mov-account-tools">
-      <input v-model="query" class="filter-ctrl" placeholder="Buscar cuenta…" />
-      <div class="seg" aria-label="Ámbito de cuentas">
-        <AButton
-          :class="{ on: state.accountCatalogScope === 'active' }"
-          @click="state.setAccountCatalogScope('active')"
-          >Activas</AButton
-        >
-        <AButton
-          :class="{ on: state.accountCatalogScope === 'all' }"
-          @click="state.setAccountCatalogScope('all')"
-          >Todas</AButton
-        >
-      </div>
+      <input
+        v-model="query"
+        class="filter-ctrl a-mov-account-search"
+        placeholder="Buscar cuenta…"
+      />
     </div>
 
     <div class="a-mov-catalog-summary">
-      <span class="a-mov-catalog-summary-count">
-        {{ operationalCount }} cuentas · {{ state.accounts.length }} en total
-      </span>
+      <div class="a-mov-catalog-summary-meta">
+        <span class="a-mov-catalog-summary-count">
+          {{ operationalCount }} cuentas · {{ state.accounts.length }} en total
+        </span>
+        <div class="a-mov-catalog-scope" role="group" aria-label="Ámbito de cuentas">
+          <button
+            type="button"
+            :class="{ on: state.accountCatalogScope === 'active' }"
+            @click="state.setAccountCatalogScope('active')"
+          >
+            Activas
+          </button>
+          <button
+            type="button"
+            :class="{ on: state.accountCatalogScope === 'all' }"
+            @click="state.setAccountCatalogScope('all')"
+          >
+            Todas
+          </button>
+        </div>
+      </div>
       <div class="a-mov-catalog-summary-figs">
         <div class="a-mov-catalog-summary-fig">
           <span>Activos</span>

@@ -1624,9 +1624,44 @@
   margin-bottom: 8px;
 }
 
+.a-mov-catalog-summary-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .a-mov-catalog-summary-count {
   color: var(--muted);
   font-size: 12px;
+}
+
+/* Ámbito Activas/Todas: toggle discreto (no sticky, secundario). */
+.a-mov-catalog-scope {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.a-mov-catalog-scope button {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color 0.12s,
+    background 0.12s;
+}
+
+.a-mov-catalog-scope button:hover {
+  color: var(--text);
+}
+
+.a-mov-catalog-scope button.on {
+  color: var(--text);
+  background: var(--hover);
 }
 
 .a-mov-catalog-summary-figs {
