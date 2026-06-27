@@ -35,7 +35,7 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
               class="topnav-brand ui-shell-brand-link"
               :to="isSaasAdmin ? '/account' : '/'"
             >
-              <span class="topnav-brand-mark">TA</span>
+              <img class="topnav-brand-logo" src="/icons/icon.svg" alt="" aria-hidden="true" />
               <span class="topnav-brand-text">
                 <span class="topnav-brand-title">The Arkenstone</span>
                 <span class="topnav-brand-sub">SaaS financiero</span>

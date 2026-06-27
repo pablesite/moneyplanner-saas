@@ -55,6 +55,9 @@ describe('AppShellLayout', () => {
     const bottomNav = wrapper.get('nav.ui-shell-bottom-nav');
     const tabs = bottomNav.findAll('.ui-shell-bottom-nav-item');
 
+    expect(wrapper.get('.topnav-brand-logo').attributes('src')).toContain('svg');
+    expect(wrapper.get('.topnav-brand-logo').attributes('alt')).toBe('');
+    expect(wrapper.text()).not.toContain('TA');
     expect(tabs).toHaveLength(5);
     expect(tabs.map((tab) => tab.text())).toEqual([
       'Estado',
