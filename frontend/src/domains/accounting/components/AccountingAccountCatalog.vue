@@ -65,7 +65,11 @@ const showHint = ref(false);
 function closeHint(event: MouseEvent): void {
   if (!(event.target as HTMLElement).closest('.a-mov-catalog-hint-wrap')) showHint.value = false;
 }
-onMounted(() => document.addEventListener('click', closeHint, true));
+onMounted(() => {
+  document.addEventListener('click', closeHint, true);
+  // Cargar las archivadas para que el total cuente activas + archivadas.
+  state.ensureInactiveCatalogLoaded();
+});
 onBeforeUnmount(() => document.removeEventListener('click', closeHint, true));
 </script>
 
@@ -101,7 +105,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeHint, true));
     <div class="a-mov-catalog-summary">
       <div class="a-mov-catalog-summary-meta">
         <span class="a-mov-catalog-summary-count">
-          {{ operationalCount }} cuentas · {{ state.accounts.length }} en total
+          {{ operationalCount }} cuentas · {{ state.totalUserAccounts }} en total
         </span>
         <div class="a-mov-catalog-scope" role="group" aria-label="Ámbito de cuentas">
           <button

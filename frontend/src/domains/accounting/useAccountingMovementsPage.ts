@@ -307,6 +307,7 @@ export function useAccountingMovementsPage() {
   // --- Account catalog scope (Activas / Todas) ---
   const accountCatalogScope = ref<'active' | 'all'>('active');
   const inactiveCatalogAccounts = ref<LedgerAccount[]>([]);
+  const inactiveCatalogLoaded = ref(false);
   const accountCatalogLoading = ref(false);
 
   async function loadInactiveCatalogAccounts(): Promise<void> {
@@ -317,8 +318,15 @@ export function useAccountingMovementsPage() {
     } catch {
       inactiveCatalogAccounts.value = [];
     } finally {
+      inactiveCatalogLoaded.value = true;
       accountCatalogLoading.value = false;
     }
+  }
+
+  // Carga las cuentas archivadas una sola vez (para el conteo total, aunque el
+  // ámbito visible sea "Activas").
+  function ensureInactiveCatalogLoaded(): void {
+    if (!inactiveCatalogLoaded.value) void loadInactiveCatalogAccounts();
   }
 
   function setAccountCatalogScope(scope: 'active' | 'all'): void {
@@ -345,6 +353,11 @@ export function useAccountingMovementsPage() {
   );
   const groupedCatalogAccounts = computed(() =>
     buildCuentasGroups(catalogOperationalAccounts.value),
+  );
+  // Total de cuentas del usuario: operativas activas + archivadas. Excluye las
+  // cuentas técnicas internas (equity/income/expense) de la partida doble.
+  const totalUserAccounts = computed(
+    () => operationalAccounts.value.length + inactiveOperationalCatalogAccounts.value.length,
   );
   const catalogTechnicalAccounts = computed(() => {
     const active = ['equity', 'income', 'expense'].flatMap(
@@ -689,6 +702,8 @@ export function useAccountingMovementsPage() {
     setAccountCatalogScope,
     accountCatalogLoading,
     groupedCatalogAccounts,
+    totalUserAccounts,
+    ensureInactiveCatalogLoaded,
     catalogTechnicalAccounts,
     cuentasSelectedAccountId,
     cuentasSelectedAccount,
