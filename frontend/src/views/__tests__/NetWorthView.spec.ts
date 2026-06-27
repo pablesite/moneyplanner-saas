@@ -448,6 +448,37 @@ describe('NetWorthView', () => {
     expect(state.store.fetchPositionActivity).toHaveBeenCalledWith('asset', 11, 'cash');
   });
 
+  it('opens a mobile position detail from the compact balance list', async () => {
+    const state = makeState();
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    const mobileRows = wrapper.findAll('.a-nw-mobile-row');
+
+    expect(mobileRows).toHaveLength(2);
+    await mobileRows[0]!.trigger('click');
+
+    expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
+    expect(wrapper.text()).toContain('Detalle de activo');
+    expect(wrapper.text()).toContain('Cuenta principal');
+    expect(wrapper.text()).toContain('Fuente');
+    expect(wrapper.text()).toContain('Manual');
+  });
+
+  it('filters the mobile balance list by search text', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await wrapper.get('.a-nw-mobile-search').setValue('hipoteca');
+    const mobileListText = wrapper.get('.a-nw-mobile-balance-list').text();
+
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
+    expect(mobileListText).toContain('Hipoteca');
+    expect(mobileListText).not.toContain('Cuenta principal');
+  });
+
   it('shows archived items and restores them from the archived modal', async () => {
     const base = makeState();
     mockUseNetWorthViewState.mockReturnValue(

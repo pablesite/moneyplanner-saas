@@ -90,6 +90,13 @@
   color: var(--faint);
 }
 
+.a-nw-mobile-tools,
+.a-nw-mobile-balance-list,
+.a-nw-mobile-empty,
+.a-nw-mobile-create {
+  display: none;
+}
+
 /* Layout flex de 3 partes (figura | donut | columnas) por su reflow responsive.
    Comparte alineación (align-items: start) y ausencia de offset superior con
    .a-hero-shell para que la cifra caiga en el mismo lugar que el resto de heroes. */
@@ -390,6 +397,91 @@
   color: oklch(0.72 0.16 24 / 0.82);
 }
 
+.a-nw-detail {
+  display: grid;
+  gap: 20px;
+}
+
+.a-nw-detail-head {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.a-nw-detail-kind {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.a-nw-detail-kind.is-asset {
+  border-color: color-mix(in oklab, var(--pos) 40%, transparent);
+  color: var(--pos);
+}
+
+.a-nw-detail-kind.is-liability {
+  border-color: color-mix(in oklab, var(--neg) 40%, transparent);
+  color: var(--neg);
+}
+
+.a-nw-detail-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.a-nw-detail-head > strong {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 550;
+}
+
+.a-nw-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  margin: 0;
+}
+
+.a-nw-detail-grid div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.a-nw-detail-grid dt {
+  color: var(--faint);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.a-nw-detail-grid dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.a-nw-detail-chart {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.a-nw-detail-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .a-nw-actions-col {
   width: 48px;
   text-align: right;
@@ -628,19 +720,232 @@
     display: none;
   }
 
-  /* Tabla: 3 columnas (Cuenta · Valor · acciones), sin scroll horizontal. */
-  .a-nw-balance-table {
-    min-width: 0;
+  /* En móvil el balance pasa de tabla comprimida a lista operativa. */
+  .a-nw-mobile-tools {
+    position: sticky;
+    top: 56px;
+    z-index: 15;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px 0 12px;
+    background: color-mix(in oklab, var(--bg) 94%, transparent);
+    backdrop-filter: blur(14px);
   }
 
-  .a-nw-balance-table th:nth-child(2),
-  .a-nw-balance-table td:nth-child(2) {
+  .a-nw-mobile-search {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .a-nw-mobile-scope {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .a-nw-mobile-scope::-webkit-scrollbar {
     display: none;
   }
 
-  .a-nw-balance-table th,
-  .a-nw-balance-table td {
-    padding-inline: 8px;
+  .a-nw-mobile-scope .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .a-nw-mobile-count {
+    align-self: center;
+    color: var(--muted);
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .a-nw-mobile-empty {
+    display: block;
+  }
+
+  .a-nw-mobile-balance-list {
+    display: grid;
+    gap: 18px;
+  }
+
+  .a-nw-mobile-group {
+    display: grid;
+    gap: 4px;
+  }
+
+  .a-nw-mobile-group-head,
+  .a-nw-mobile-row {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .a-nw-mobile-group-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0 8px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .a-nw-mobile-group-head > span:first-child {
+    display: grid;
+    gap: 3px;
+  }
+
+  .a-nw-mobile-group-head .grp-kind {
+    color: var(--faint);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .a-nw-mobile-group-head .grp-kind-asset {
+    color: var(--pos);
+  }
+
+  .a-nw-mobile-group-head .grp-kind-liability {
+    color: var(--neg);
+  }
+
+  .a-nw-mobile-group-head strong {
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  .a-nw-mobile-group-head > .mono {
+    color: var(--text);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .a-nw-mobile-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(96px, auto);
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .a-nw-mobile-row.row-active,
+  .a-nw-mobile-group-head.row-active {
+    background: linear-gradient(90deg, var(--accent-soft), transparent 72%);
+  }
+
+  .a-nw-mobile-row .swatch {
+    width: 4px;
+    height: 28px;
+    border-radius: 2px;
+    background: var(--pos);
+  }
+
+  .a-nw-mobile-row .swatch.lia {
+    background: var(--neg);
+  }
+
+  .a-nw-mobile-row-main {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .a-nw-mobile-row-main strong,
+  .a-nw-mobile-row-main small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .a-nw-mobile-row-main strong {
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .a-nw-mobile-row-main small {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+
+  .a-nw-mobile-row-value {
+    display: grid;
+    gap: 2px;
+    justify-items: end;
+    min-width: 0;
+  }
+
+  .a-nw-mobile-row-value small {
+    color: var(--faint);
+    font-size: 10px;
+  }
+
+  .a-nw-mobile-row-value strong {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .a-nw-balance-table {
+    display: none;
+  }
+
+  .dir-a .btn.a-nw-mobile-create {
+    position: fixed;
+    z-index: 45;
+    right: 24px;
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--accent-line);
+    border-radius: 18px;
+    background: rgba(11, 13, 18, 0.82);
+    backdrop-filter: blur(12px);
+    color: var(--accent);
+    box-shadow: 0 16px 38px rgb(0 0 0 / 48%);
+  }
+
+  .a-nw-mobile-create .a-nw-fab-label {
+    display: none;
+  }
+
+  .a-nw-mobile-create .a-nw-fab-plus {
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .a-nw-detail-sheet {
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .a-nw-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .a-nw-detail-actions {
+    justify-content: stretch;
+  }
+
+  .a-nw-detail-actions .btn {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
   }
 
   /* Chart SVG: tipografía interna aún mayor para móvil. */

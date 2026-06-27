@@ -77,7 +77,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 | `ownership.ts`   | Lógica de propiedad (ownership) de items patrimoniales.                                            |
 | `charts.ts`      | Datos y configuración para gráficos de patrimonio.                                                 |
 | `extensions.ts`  | Extensiones del modelo base.                                                                       |
-| `components/`    | Componentes: `ItemForm`, `NetWorthItemModals`, `NetWorthDonut` y `NetWorthEvolutionChart`. La evolución combina valoración mensual con saldo contable diario por ámbitos Total/Operativo/Personalizado; la tabla Balance y el hero se construyen inline en `NetWorthView` sobre `useNetWorthPageMetrics`. |
+| `components/`    | Componentes: `ItemForm`, `NetWorthItemModals`, `NetWorthDonut` y `NetWorthEvolutionChart`. La evolución combina valoración mensual con saldo contable diario por ámbitos Total/Operativo/Personalizado; el hero y Balance se construyen inline en `NetWorthView` sobre `useNetWorthPageMetrics`. En móvil, Balance usa lista compacta con buscador/segmento sticky, sheet de detalle por posición y FAB de alta; en desktop conserva tabla agrupada. |
 
 ---
 

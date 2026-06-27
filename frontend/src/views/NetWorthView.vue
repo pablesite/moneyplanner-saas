@@ -609,6 +609,40 @@ const balanceGroups = computed<BalanceGroup[]>(() => {
   ];
 });
 
+type BalanceKindFilter = 'all' | 'asset' | 'liability';
+
+const balanceSearch = ref('');
+const balanceKindFilter = ref<BalanceKindFilter>('all');
+const selectedBalanceDetailRow = ref<PositionRow | null>(null);
+
+function balanceRowMatchesMobileFilters(row: PositionRow): boolean {
+  if (balanceKindFilter.value !== 'all' && row.type !== balanceKindFilter.value) return false;
+  const query = balanceSearch.value.trim().toLocaleLowerCase('es');
+  if (!query) return true;
+  return [row.name, row.subtitle, ownershipBadgeForRow(row) ?? 'Sin asignar']
+    .join(' ')
+    .toLocaleLowerCase('es')
+    .includes(query);
+}
+
+const mobileBalanceGroups = computed<BalanceGroup[]>(() =>
+  balanceGroups.value
+    .filter((group) => balanceKindFilter.value === 'all' || group.kind === balanceKindFilter.value)
+    .map((group) => {
+      const rows = group.rows.filter(balanceRowMatchesMobileFilters);
+      return {
+        ...group,
+        rows,
+        total: rows.reduce((sum, row) => sum + row.value, 0),
+      };
+    })
+    .filter((group) => group.rows.length > 0),
+);
+
+const mobileBalanceRowCount = computed(() =>
+  mobileBalanceGroups.value.reduce((total, group) => total + group.rows.length, 0),
+);
+
 type HeroCompositionRow = {
   key: string;
   label: string;
@@ -692,6 +726,17 @@ function foreignAmountLabel(row: PositionRow): string | null {
   return `(${formatNumber(toNumber(rawAmount), 2)} ${sourceCurrency})`;
 }
 
+function positionSourceLabel(row: PositionRow): string {
+  const source = sourceItemForRow(row);
+  if (source?.tracking_mode === 'accounting' && source.accounting_account_id) return 'Contable';
+  return 'Manual';
+}
+
+function balanceDetailTitle(row: PositionRow | null): string {
+  if (!row) return 'Detalle de posición';
+  return row.type === 'asset' ? 'Detalle de activo' : 'Detalle de pasivo';
+}
+
 function rowMenuItems(row: PositionRow) {
   return [
     { id: 'focus', label: 'Ver evolucion' },
@@ -717,6 +762,30 @@ async function handleRowMenuAction(row: PositionRow, actionId: string): Promise<
   if (actionId === 'delete') {
     await deleteRow(row);
   }
+}
+
+async function openBalanceDetail(row: PositionRow): Promise<void> {
+  selectedBalanceDetailRow.value = row;
+  await selectPosition(row);
+}
+
+function closeBalanceDetail(): void {
+  selectedBalanceDetailRow.value = null;
+}
+
+function editBalanceDetail(row: PositionRow): void {
+  closeBalanceDetail();
+  editRow(row);
+}
+
+async function archiveBalanceDetail(row: PositionRow): Promise<void> {
+  closeBalanceDetail();
+  await archiveRow(row);
+}
+
+async function deleteBalanceDetail(row: PositionRow): Promise<void> {
+  closeBalanceDetail();
+  await deleteRow(row);
 }
 
 function resetAccountingActivity(): void {}
@@ -1519,11 +1588,96 @@ watch(
         </template>
       </ASectHead>
 
+      <div class="a-nw-mobile-tools" aria-label="Herramientas de balance">
+        <input
+          v-model="balanceSearch"
+          class="filter-ctrl a-nw-mobile-search"
+          type="search"
+          placeholder="Buscar posición"
+          aria-label="Buscar posición patrimonial"
+        />
+        <div class="seg a-nw-mobile-scope" aria-label="Tipo de posición">
+          <AButton :class="{ on: balanceKindFilter === 'all' }" @click="balanceKindFilter = 'all'">
+            Todo
+          </AButton>
+          <AButton
+            :class="{ on: balanceKindFilter === 'asset' }"
+            @click="balanceKindFilter = 'asset'"
+          >
+            Activos
+          </AButton>
+          <AButton
+            :class="{ on: balanceKindFilter === 'liability' }"
+            @click="balanceKindFilter = 'liability'"
+          >
+            Pasivos
+          </AButton>
+        </div>
+        <span class="a-nw-mobile-count">{{ mobileBalanceRowCount }} posiciones</span>
+      </div>
+
       <AState v-if="balanceGroups.length === 0" status="empty">
         No hay posiciones para el filtro actual.
       </AState>
 
       <div v-else class="a-nw-balance-wrap">
+        <AState v-if="mobileBalanceGroups.length === 0" class="a-nw-mobile-empty" status="empty">
+          No hay posiciones que coincidan con la búsqueda.
+        </AState>
+
+        <div v-else class="a-nw-mobile-balance-list">
+          <section
+            v-for="group in mobileBalanceGroups"
+            :key="`mobile-${group.kind}-${group.key}`"
+            class="a-nw-mobile-group"
+          >
+            <button
+              type="button"
+              class="a-nw-mobile-group-head"
+              :class="{ 'row-active': isBalanceGroupActive(group) }"
+              @click="applyCompositionCategoryFilter({ key: group.key, type: group.kind })"
+            >
+              <span>
+                <span
+                  class="grp-kind"
+                  :class="group.kind === 'asset' ? 'grp-kind-asset' : 'grp-kind-liability'"
+                >
+                  {{ group.kind === 'asset' ? 'Activos' : 'Pasivos' }}
+                </span>
+                <strong>{{ group.label }}</strong>
+              </span>
+              <span class="mono">
+                {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 0) }}
+                {{ heroUnitLabel }}
+              </span>
+            </button>
+
+            <button
+              v-for="row in group.rows"
+              :key="`mobile-row-${row.type}-${row.id}`"
+              type="button"
+              class="a-nw-mobile-row"
+              :class="{ 'row-active': isBalanceRowActive(row) }"
+              @click="openBalanceDetail(row)"
+            >
+              <span class="swatch" :class="{ lia: row.type === 'liability' }" />
+              <span class="a-nw-mobile-row-main">
+                <strong>{{ row.name }}</strong>
+                <small>
+                  {{ row.subtitle }} · {{ ownershipBadgeForRow(row) ?? 'Sin asignar' }} ·
+                  {{ positionSourceLabel(row) }}
+                </small>
+              </span>
+              <span class="a-nw-mobile-row-value mono">
+                <small v-if="foreignAmountLabel(row)">{{ foreignAmountLabel(row) }}</small>
+                <strong :class="{ 'account-value-neg': row.type === 'liability' }">
+                  {{ formatNumber(row.value, 0) }} {{ displayCurrencyUnit(row.currency) }}
+                </strong>
+              </span>
+            </button>
+          </section>
+        </div>
+
         <table class="tbl a-nw-balance-table">
           <thead>
             <tr>
@@ -1597,6 +1751,11 @@ watch(
       </div>
     </section>
 
+    <AButton class="a-nw-mobile-create" variant="primary" @click="openPrimaryCreateModal">
+      <span class="a-nw-fab-plus" aria-hidden="true">+</span>
+      <span class="a-nw-fab-label">Añadir posición</span>
+    </AButton>
+
     <AState v-if="store.error" status="error">
       {{ prettyError() }}
     </AState>
@@ -1624,6 +1783,92 @@ watch(
       :on-close-liability-modal="closeLiabilityModal"
       :edit-error="editError"
     />
+
+    <BaseModal
+      :open="selectedBalanceDetailRow !== null"
+      :title="balanceDetailTitle(selectedBalanceDetailRow)"
+      variant="sheet"
+      panel-class="a-nw-modal-panel a-nw-detail-sheet dir-a dir-a-sheet"
+      @close="closeBalanceDetail"
+    >
+      <div v-if="selectedBalanceDetailRow" class="a-nw-detail">
+        <div class="a-nw-detail-head">
+          <span
+            class="a-nw-detail-kind"
+            :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
+          >
+            {{ selectedBalanceDetailRow.type === 'asset' ? 'Activo' : 'Pasivo' }}
+          </span>
+          <h3>{{ selectedBalanceDetailRow.name }}</h3>
+          <strong
+            class="mono"
+            :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
+          >
+            {{ formatNumber(selectedBalanceDetailRow.value, 2) }}
+            {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+          </strong>
+          <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
+            {{ foreignAmountLabel(selectedBalanceDetailRow) }}
+          </span>
+        </div>
+
+        <dl class="a-nw-detail-grid">
+          <div>
+            <dt>Categoría</dt>
+            <dd>{{ selectedBalanceDetailRow.subtitle }}</dd>
+          </div>
+          <div>
+            <dt>Titularidad</dt>
+            <dd>{{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}</dd>
+          </div>
+          <div>
+            <dt>Fuente</dt>
+            <dd>{{ positionSourceLabel(selectedBalanceDetailRow) }}</dd>
+          </div>
+          <div>
+            <dt>Moneda</dt>
+            <dd>{{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}</dd>
+          </div>
+        </dl>
+
+        <div class="a-nw-detail-chart">
+          <ASectHead
+            title="Evolución propia"
+            :subtitle="activeEvolutionPoints.length ? activeEvolutionCaption : undefined"
+          />
+          <AState
+            v-if="activeEvolutionLoading && activeEvolutionPoints.length === 0"
+            status="loading"
+          >
+            Cargando evolución...
+          </AState>
+          <AState v-else-if="activeEvolutionPoints.length === 0" status="empty">
+            No hay historial suficiente para esta posición.
+          </AState>
+          <NetWorthEvolutionChart
+            v-else
+            :points="activeEvolutionPoints"
+            :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
+            :series-label="activeEvolutionLabel"
+            :series-color="displayedTimelineSeriesColor"
+            :y-axis-min-zero="timelineYAxisStartsAtZero"
+          />
+        </div>
+
+        <div class="actions a-nw-detail-actions">
+          <AButton variant="ghost" @click="closeBalanceDetail">Cerrar</AButton>
+          <AButton variant="ghost" @click="editBalanceDetail(selectedBalanceDetailRow)">
+            Editar
+          </AButton>
+          <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
+            Archivar
+          </AButton>
+          <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
+            Eliminar
+          </AButton>
+        </div>
+      </div>
+    </BaseModal>
 
     <BaseModal
       :open="showArchivedModal"
