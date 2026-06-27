@@ -7,7 +7,6 @@ import { appShellNavItems, type NavItem } from './appShellNav';
 export function useAppShell() {
   const route = useRoute();
   const router = useRouter();
-  const sidebarOpen = ref(false);
   const accountMenuOpen = ref(false);
   const accountMenuRef = ref<HTMLElement | null>(null);
   const accountLabel = ref('Mi cuenta');
@@ -74,14 +73,6 @@ export function useAppShell() {
     return route.path === item.to || route.path.startsWith(`${item.to}/`);
   }
 
-  function toggleSidebar(): void {
-    sidebarOpen.value = !sidebarOpen.value;
-  }
-
-  function closeSidebar(): void {
-    sidebarOpen.value = false;
-  }
-
   function toggleAccountMenu(): void {
     accountMenuOpen.value = !accountMenuOpen.value;
   }
@@ -93,13 +84,11 @@ export function useAppShell() {
   function logout(): void {
     clearAuthTokens();
     closeAccountMenu();
-    sidebarOpen.value = false;
     void router.push('/login');
   }
 
   function handleGlobalKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
-      if (sidebarOpen.value) closeSidebar();
       if (accountMenuOpen.value) closeAccountMenu();
     }
   }
@@ -113,14 +102,9 @@ export function useAppShell() {
     }
   }
 
-  watch(sidebarOpen, (open) => {
-    document.body.style.overflow = open ? 'hidden' : '';
-  });
-
   watch(
     () => route.fullPath,
     () => {
-      sidebarOpen.value = false;
       accountMenuOpen.value = false;
     },
   );
@@ -146,7 +130,6 @@ export function useAppShell() {
   onBeforeUnmount(() => {
     window.removeEventListener('keydown', handleGlobalKeydown);
     document.removeEventListener('click', handleGlobalClick);
-    document.body.style.overflow = '';
   });
 
   return {
@@ -158,7 +141,6 @@ export function useAppShell() {
     accountRole,
     accountRoleKey,
     closeAccountMenu,
-    closeSidebar,
     hasToken,
     isLoginRoute,
     isNavItemActive,
@@ -166,8 +148,6 @@ export function useAppShell() {
     logout,
     navItems,
     pageTitle,
-    sidebarOpen,
     toggleAccountMenu,
-    toggleSidebar,
   };
 }

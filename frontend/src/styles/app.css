@@ -1129,14 +1129,6 @@ body {
   min-height: 100vh;
 }
 
-.ui-shell-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(3, 7, 16, 0.72);
-  backdrop-filter: blur(2px);
-  z-index: 30;
-}
-
 .ui-shell-main {
   min-width: 0;
 }
@@ -1155,16 +1147,6 @@ body {
   align-items: center;
   gap: 10px;
   min-width: 0;
-}
-
-.ui-shell-icon-btn {
-  width: 36px;
-  height: 36px;
-}
-
-.ui-shell-nav-toggle {
-  display: none;
-  flex-shrink: 0;
 }
 
 .ui-shell-brand-link {
@@ -1309,58 +1291,8 @@ body {
   }
 }
 
-.ui-shell-mobile-nav {
-  position: fixed;
-  top: 57px;
-  left: 16px;
-  right: 16px;
-  /* El elemento lleva la clase .dir-a (para heredar tokens del tema), pero
-     .dir-a fija width:100% y height:100%: lo primero rompe el anclaje left/right
-     (desbordaba 16px) y lo segundo estira el drawer a toda la altura. width/height
-     auto dejan que se ajuste a left+right y a su contenido. */
-  width: auto;
-  height: auto;
-  z-index: 35;
-  border: 1px solid var(--line-strong);
-  border-radius: 16px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)), var(--surface);
-  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.4);
-  padding: 10px;
-}
-
-.ui-shell-mobile-nav-list {
-  display: grid;
-  gap: 4px;
-}
-
-.ui-shell-mobile-nav-item {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.76);
-  text-decoration: none;
-}
-
-.ui-shell-mobile-nav-item:hover,
-.ui-shell-mobile-nav-item.on {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.94);
-}
-
-.ui-shell-mobile-nav-item.on {
-  box-shadow: inset 0 -1.5px 0 rgba(88, 224, 208, 0.85);
-}
-
-.ui-shell-mobile-nav-label {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.ui-shell-mobile-nav-hint {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.54);
+.ui-shell-bottom-nav {
+  display: none;
 }
 
 @media (max-width: 960px) {
@@ -1368,11 +1300,7 @@ body {
     gap: 12px;
   }
 
-  .ui-shell-nav-toggle {
-    display: inline-flex;
-  }
-
-  /* Especificidad alta: el menú superior debe desaparecer al pasar a hamburguesa
+  /* Especificidad alta: el menú superior desaparece cuando entra la tab bar móvil
      (gana al `.dir-a .topnav-list { display: flex }` del design system). */
   .dir-a .topnav-list.ui-shell-desktop-nav {
     display: none;
@@ -1388,6 +1316,87 @@ body {
 
   .ui-shell-account-meta {
     display: none;
+  }
+
+  .ui-shell-content-stage {
+    min-height: calc(100vh - 57px - 84px);
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .ui-shell-footer {
+    margin-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .ui-shell-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: 100%;
+    height: calc(68px + env(safe-area-inset-bottom));
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018)),
+      rgba(11, 13, 18, 0.96);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 -18px 38px rgba(0, 0, 0, 0.32);
+  }
+
+  .ui-shell-bottom-nav-item {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    align-content: center;
+    justify-items: center;
+    gap: 3px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.58);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ui-shell-bottom-nav-item:hover,
+  .ui-shell-bottom-nav-item.on {
+    color: rgba(255, 255, 255, 0.94);
+  }
+
+  .ui-shell-bottom-nav-item.on::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    transform: translateX(-50%);
+  }
+
+  .ui-shell-bottom-nav-item.on .ui-shell-bottom-nav-icon {
+    color: var(--accent);
+  }
+
+  .ui-shell-bottom-nav-icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .ui-shell-bottom-nav-label {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 10.5px;
+    font-weight: 650;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pwa-floating-banner {
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
   }
 }
 

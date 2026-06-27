@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue';
 import { version as appVersion } from '../../package.json';
+import AppShellNavIcon from './AppShellNavIcon.vue';
 import { useAppShell } from './useAppShell';
 
 const {
@@ -11,16 +12,13 @@ const {
   accountPlan,
   accountRole,
   closeAccountMenu,
-  closeSidebar,
   hasToken,
   isSaasAdmin,
   isNavItemActive,
   logout,
   navItems,
   pageTitle,
-  sidebarOpen,
   toggleAccountMenu,
-  toggleSidebar,
 } = useAppShell();
 const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null) => {
   accountMenuRef.value = element as HTMLElement | null;
@@ -29,36 +27,10 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
 
 <template>
   <div class="ui-shell">
-    <div v-if="sidebarOpen && !isSaasAdmin" class="ui-shell-backdrop" @click="closeSidebar" />
-
     <div class="ui-shell-main">
       <header class="ui-shell-header dir-a">
         <div class="topbar">
           <div class="ui-shell-header-left">
-            <button
-              v-if="!isSaasAdmin"
-              class="icon-btn ui-shell-icon-btn ui-shell-nav-toggle"
-              type="button"
-              :aria-label="sidebarOpen ? 'Cerrar menu' : 'Abrir menu'"
-              :aria-expanded="sidebarOpen"
-              @click="toggleSidebar"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                aria-hidden="true"
-              >
-                <line x1="2.5" y1="5" x2="15.5" y2="5" />
-                <line x1="2.5" y1="9" x2="15.5" y2="9" />
-                <line x1="2.5" y1="13" x2="15.5" y2="13" />
-              </svg>
-            </button>
-
             <RouterLink
               class="topnav-brand ui-shell-brand-link"
               :to="isSaasAdmin ? '/account' : '/'"
@@ -146,27 +118,6 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
         </div>
       </header>
 
-      <div v-if="sidebarOpen && !isSaasAdmin" class="ui-shell-mobile-nav dir-a">
-        <nav class="ui-shell-mobile-nav-list" aria-label="Navegacion principal movil">
-          <RouterLink
-            v-for="item in navItems"
-            :key="item.id"
-            :to="item.to"
-            class="ui-shell-mobile-nav-item"
-            :class="{ on: isNavItemActive(item) }"
-            :title="`${item.label}: ${item.hint}`"
-            @click="closeSidebar"
-          >
-            <span class="ui-shell-mobile-nav-label">
-              {{ item.label }}
-            </span>
-            <span class="ui-shell-mobile-nav-hint">
-              {{ item.hint }}
-            </span>
-          </RouterLink>
-        </nav>
-      </div>
-
       <main class="ui-shell-content">
         <div class="dir-a ui-shell-content-stage">
           <router-view />
@@ -179,6 +130,25 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
           <span class="ui-shell-footer-version">v{{ appVersion }}</span>
         </div>
       </footer>
+
+      <nav
+        v-if="!isSaasAdmin"
+        class="ui-shell-bottom-nav dir-a"
+        aria-label="Navegacion principal movil"
+      >
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.id"
+          :to="item.to"
+          class="ui-shell-bottom-nav-item"
+          :class="{ on: isNavItemActive(item) }"
+          :aria-label="`${item.label}: ${item.hint}`"
+          :title="`${item.label}: ${item.hint}`"
+        >
+          <AppShellNavIcon :name="item.iconKey" />
+          <span class="ui-shell-bottom-nav-label">{{ item.mobileLabel }}</span>
+        </RouterLink>
+      </nav>
     </div>
   </div>
 </template>

@@ -121,7 +121,7 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
    | `xs`  | 400px   | `@container`   | Small phone (covers 360 target) → final spacing/typography trims. |
 
 4. CSS query conditions **cannot** read `var()`, so these are a documented convention of literal pixel values, not CSS custom properties. Keep them consistent; consolidate stray values (900/920/980/600/620/520…) toward the nearest canonical token when touching a file.
-5. **Shell exceptions:** the topbar switches to the hamburger drawer at `@media (max-width: 960px)` (driven by horizontal nav width, not content) and trims brand/account labels at `@media (max-width: 520px)`. These are intentional shell-specific cutoffs.
+5. **Shell exceptions:** the topbar switches from desktop horizontal navigation to a fixed bottom tab bar at `@media (max-width: 960px)` (driven by horizontal nav width, not content) and trims brand/account labels at `@media (max-width: 520px)`. The hamburger drawer is not used for primary product sections; `/account` and `/data` remain in the account menu. These are intentional shell-specific cutoffs.
 6. Responsive changes must adapt hierarchy (reflow, promote/demote, collapse), not just stack everything mechanically. Wide data tables should degrade to a card/stacked layout under `sm`, keeping `overflow-x:auto` only as a fallback.
 
 ## Review Checklist

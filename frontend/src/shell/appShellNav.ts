@@ -1,7 +1,8 @@
 export type NavItem = {
   id: string;
-  icon: string;
+  iconKey: 'status' | 'wealth' | 'budget' | 'movements' | 'close';
   label: string;
+  mobileLabel: string;
   hint: string;
   to: string;
 };
@@ -9,36 +10,41 @@ export type NavItem = {
 export const appShellNavItems: NavItem[] = [
   {
     id: 'home',
-    icon: 'EF',
+    iconKey: 'status',
     label: 'Estado financiero',
+    mobileLabel: 'Estado',
     hint: 'Diagnóstico por ámbitos',
     to: '/estado-financiero',
   },
   {
     id: 'net-worth',
-    icon: 'PT',
+    iconKey: 'wealth',
     label: 'Patrimonio',
+    mobileLabel: 'Patrimonio',
     hint: 'Estado financiero',
     to: '/patrimonio',
   },
   {
     id: 'budget',
-    icon: 'PR',
+    iconKey: 'budget',
     label: 'Presupuesto',
+    mobileLabel: 'Presupuesto',
     hint: 'Plan anual de ingresos y gastos',
     to: '/presupuesto',
   },
   {
     id: 'accounting-movements',
-    icon: 'LD',
+    iconKey: 'movements',
     label: 'Contabilidad',
+    mobileLabel: 'Movimientos',
     hint: 'Libro diario y cuentas contables',
     to: '/contabilidad',
   },
   {
     id: 'monthly-close',
-    icon: 'CM',
+    iconKey: 'close',
     label: 'Cierre mensual',
+    mobileLabel: 'Cierre',
     hint: 'Liquidez, ingresos, gastos y residual',
     to: '/cierre-mensual',
   },

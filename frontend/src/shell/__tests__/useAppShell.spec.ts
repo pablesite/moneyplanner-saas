@@ -42,23 +42,29 @@ describe('useAppShell', () => {
     mocks.route.name = 'home';
     mocks.route.path = '/';
     mocks.route.fullPath = '/';
-    document.body.style.overflow = '';
   });
 
-  it('tracks login route and navigation state', async () => {
+  it('tracks login route and navigation state', () => {
     const { shell, unmount } = mountShell();
 
     expect(shell.isLoginRoute.value).toBe(false);
     expect(shell.navItems.value).toHaveLength(5);
     expect(shell.isNavItemActive(shell.navItems.value[1]!)).toBe(true);
 
+    mocks.route.path = '/patrimonio';
+    expect(shell.isNavItemActive(shell.navItems.value[1]!)).toBe(true);
+
+    mocks.route.path = '/presupuesto';
+    expect(shell.isNavItemActive(shell.navItems.value[2]!)).toBe(true);
+
     mocks.route.path = '/estado-financiero/ambitos/2';
     expect(shell.isNavItemActive(shell.navItems.value[0]!)).toBe(true);
 
-    shell.toggleSidebar();
-    await nextTick();
-    expect(shell.sidebarOpen.value).toBe(true);
-    expect(document.body.style.overflow).toBe('hidden');
+    mocks.route.path = '/contabilidad/cuentas';
+    expect(shell.isNavItemActive(shell.navItems.value[3]!)).toBe(true);
+
+    mocks.route.path = '/cierre-mensual';
+    expect(shell.isNavItemActive(shell.navItems.value[4]!)).toBe(true);
 
     unmount();
   });
@@ -84,12 +90,10 @@ describe('useAppShell', () => {
     expect(shell.accountInitials.value).toBe('PP');
 
     shell.toggleAccountMenu();
-    shell.toggleSidebar();
     shell.logout();
 
     expect(mocks.clearAuthTokens).toHaveBeenCalledTimes(1);
     expect(shell.accountMenuOpen.value).toBe(false);
-    expect(shell.sidebarOpen.value).toBe(false);
     expect(mocks.router.push).toHaveBeenCalledWith('/login');
 
     unmount();

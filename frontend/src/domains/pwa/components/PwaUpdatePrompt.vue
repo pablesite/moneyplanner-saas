@@ -27,7 +27,7 @@ const dismiss = () => {
   >
     <div
       v-if="needRefresh || offlineReady"
-      class="dir-a fixed inset-x-0 bottom-4 z-[90] mx-auto flex w-[min(92vw,460px)] items-center gap-3 rounded-xl border border-[var(--line-strong)] bg-[var(--bg)]/95 px-4 py-3 text-sm text-[var(--text)] shadow-2xl backdrop-blur"
+      class="pwa-floating-banner dir-a fixed inset-x-0 bottom-4 z-[90] mx-auto flex w-[min(92vw,460px)] items-center gap-3 rounded-xl border border-[var(--line-strong)] bg-[var(--bg)]/95 px-4 py-3 text-sm text-[var(--text)] shadow-2xl backdrop-blur"
       role="status"
       aria-live="polite"
     >

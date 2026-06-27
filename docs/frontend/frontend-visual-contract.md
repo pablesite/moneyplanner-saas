@@ -113,6 +113,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 2. Update this document when shared visual behavior changes.
 3. Keep the contract small; it is a guardrail, not a full design system specification.
 4. Direction A phase 0 introduces these shell-level reusable classes: `.topbar`, `.topnav-brand`, `.topnav-list`, `.topnav-item`, `.topnav-right`, and `.avatar`.
+5. Mobile shell navigation uses the shared `.ui-shell-bottom-nav` tab bar for the five primary product sections (`Estado`, `Patrimonio`, `Presupuesto`, `Movimientos`, `Cierre`) at `max-width: 960px`; primary product navigation must not be hidden behind a hamburger drawer. `/account` and `/data` stay in the account menu.
 
 ## Librería de componentes (primitivas Direction A)
 
