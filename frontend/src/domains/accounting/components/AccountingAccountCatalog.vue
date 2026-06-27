@@ -64,15 +64,7 @@ function goToTodos(accountId: number) {
 <template>
   <div>
     <div class="a-mov-account-tools">
-      <input
-        v-model="query"
-        class="filter-ctrl a-mov-account-search"
-        placeholder="Buscar cuenta…"
-      />
-    </div>
-
-    <div class="a-mov-catalog-summary">
-      <div class="a-mov-catalog-summary-meta">
+      <div class="a-mov-account-scope-row">
         <span class="a-mov-catalog-summary-count">
           {{ operationalCount }}
           {{ state.accountCatalogScope === 'active' ? 'activas' : 'cuentas' }}
@@ -94,6 +86,14 @@ function goToTodos(accountId: number) {
           </button>
         </div>
       </div>
+      <input
+        v-model="query"
+        class="filter-ctrl a-mov-account-search"
+        placeholder="Buscar cuenta…"
+      />
+    </div>
+
+    <div class="a-mov-catalog-summary">
       <div class="a-mov-catalog-summary-figs">
         <div class="a-mov-catalog-summary-fig">
           <span>Activos</span>
