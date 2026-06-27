@@ -26,6 +26,18 @@ const page = useAccountingMovementsPage();
     <section class="sect a-mov-accounts-section">
       <AccountingAccountCatalog :page="page" />
     </section>
+
+    <AButton
+      v-if="page.hasAvailableManualPositions"
+      variant="primary"
+      class="a-mov-mobile-create"
+      aria-label="Activar cuenta"
+      @click="page.openActivationModal"
+    >
+      <span class="a-mov-fab-plus" aria-hidden="true">+</span>
+      <span class="a-mov-fab-label">Activar cuenta</span>
+    </AButton>
+
     <AccountingMovementsActivationModal :page="page" />
   </div>
 </template>

@@ -63,7 +63,16 @@ function goToTodos(accountId: number) {
 
 <template>
   <div>
-    <ASectHead title="Cuentas" subtitle="Toca una cuenta para ver sus movimientos" />
+    <ASectHead title="Cuentas">
+      <template #hint>
+        <span
+          class="a-mov-catalog-hint"
+          title="Toca una cuenta para ver sus movimientos"
+          aria-label="Toca una cuenta para ver sus movimientos"
+          >ⓘ</span
+        >
+      </template>
+    </ASectHead>
 
     <div class="a-mov-account-tools">
       <input v-model="query" class="filter-ctrl" placeholder="Buscar cuenta…" />

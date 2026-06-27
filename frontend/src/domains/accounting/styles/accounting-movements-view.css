@@ -1583,14 +1583,28 @@
 }
 
 .a-mov-account-tools {
+  /* Buscador + ámbito pegados arriba (igual que el toolbar de Movimientos), bajo
+     la cabecera del shell, para que el filtrado quede siempre a mano. */
+  position: sticky;
+  z-index: 15;
+  top: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px 16px;
-  margin-bottom: 12px;
+  padding: 12px 0;
+  background: color-mix(in oklab, var(--bg) 94%, transparent);
+  backdrop-filter: blur(14px);
   color: var(--muted);
   font-size: 12px;
+}
+
+/* Pista de uso escondida en un tooltip (junto al título "Cuentas"). */
+.a-mov-catalog-hint {
+  color: var(--faint);
+  font-size: 14px;
+  cursor: help;
 }
 
 .a-mov-account-tools .filter-ctrl {
@@ -1746,9 +1760,10 @@
 }
 
 @container page (max-width: 560px) {
-  /* Both header actions are hidden here (create lives in the floating FAB), so drop the
-     whole actions container — otherwise its wrapped, full-width empty row reserves space. */
-  .a-mov-operations-page .page-head .actions {
+  /* Both header actions are hidden here (create/activate live in the floating FAB), so drop
+     the whole actions container — otherwise its wrapped, full-width empty row reserves space. */
+  .a-mov-operations-page .page-head .actions,
+  .a-mov-accounts-page .page-head .actions {
     display: none;
   }
 
