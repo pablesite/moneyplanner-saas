@@ -1313,25 +1313,27 @@ watch(
       <template #meta>
         <AMetaPill>{{ asOfLabel }}</AMetaPill>
         <span class="dot"></span>
-        <span>Base {{ store.baseCurrency ?? 'EUR' }}</span>
-        <span v-if="valueMode === 'real' || archivedItemsCount" class="dot"></span>
+        <span>{{ store.baseCurrency ?? 'EUR' }}</span>
+        <span v-if="valueMode === 'real'" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
+        <span v-if="archivedItemsCount" class="dot"></span>
         <AButton
           v-if="archivedItemsCount"
           variant="ghost"
           class="a-nw-archived-trigger"
           @click="showArchivedModal = true"
         >
-          Archivadas {{ archivedItemsCount }}
+          {{ archivedItemsCount }} archivadas
         </AButton>
       </template>
     </APageHead>
 
-    <AContextBar>
-      <label class="context-field" data-test="ownership-filter">
-        <span class="context-field-label">Titularidad</span>
+    <AContextBar class="a-nw-read-controls" aria-label="Opciones de lectura de patrimonio">
+      <label class="context-field a-nw-control-chip" data-test="ownership-filter">
+        <span class="a-nw-sr-only">Titularidad</span>
         <ASelect
           class="filter-ctrl"
+          aria-label="Titularidad"
           :model-value="String(ownershipFilter)"
           :options="ownershipSelectOptions"
           :disabled="ownershipFilterDisabled"
@@ -1340,12 +1342,11 @@ watch(
         />
       </label>
 
-      <div class="context-divider"></div>
-
-      <label class="context-field">
-        <span class="context-field-label">Moneda</span>
+      <label class="context-field a-nw-control-chip">
+        <span class="a-nw-sr-only">Moneda</span>
         <ASelect
           class="filter-ctrl"
+          aria-label="Moneda"
           :model-value="store.baseCurrency ?? 'EUR'"
           :options="currencySelectOptions"
           :searchable="false"
@@ -1353,16 +1354,19 @@ watch(
         />
       </label>
 
-      <div class="context-divider"></div>
-
-      <div class="context-field">
-        <span class="context-field-label">Valoración</span>
-        <div class="seg">
-          <AButton :class="{ on: valueMode === 'nominal' }" @click="setValueMode('nominal')">
+      <div class="context-field a-nw-control-chip a-nw-valuation-control">
+        <span class="a-nw-sr-only">Valoración</span>
+        <div class="seg" role="group" aria-label="Valoración">
+          <AButton
+            :aria-pressed="valueMode === 'nominal'"
+            :class="{ on: valueMode === 'nominal' }"
+            @click="setValueMode('nominal')"
+          >
             Nominal
           </AButton>
           <AButton
             v-if="canShowReal()"
+            :aria-pressed="valueMode === 'real'"
             :class="{ on: valueMode === 'real' }"
             @click="setValueMode('real')"
           >
