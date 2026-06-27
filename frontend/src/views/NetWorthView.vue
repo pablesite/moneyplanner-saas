@@ -737,6 +737,16 @@ function balanceDetailTitle(row: PositionRow | null): string {
   return row.type === 'asset' ? 'Detalle de activo' : 'Detalle de pasivo';
 }
 
+function positionKindLabel(row: PositionRow): string {
+  return row.type === 'asset' ? 'Activo' : 'Pasivo';
+}
+
+function detailMetaLine(row: PositionRow): string {
+  return [row.subtitle, ownershipBadgeForRow(row) ?? 'Sin asignar', positionSourceLabel(row)].join(
+    ' · ',
+  );
+}
+
 function rowMenuItems(row: PositionRow) {
   return [
     { id: 'focus', label: 'Ver evolucion' },
@@ -1077,6 +1087,37 @@ const activeEvolutionLoading = computed(
 );
 const activeEvolutionLatest = computed(
   () => activeEvolutionPoints.value[activeEvolutionPoints.value.length - 1] ?? null,
+);
+const activeEvolutionPrevious = computed(() => {
+  const points = activeEvolutionPoints.value;
+  return points.length >= 2 ? (points[points.length - 2] ?? null) : null;
+});
+const activeEvolutionYtdBaseline = computed(() => {
+  const latest = activeEvolutionLatest.value;
+  if (!latest) return null;
+  const currentYear = new Date(latest.date).getFullYear();
+  return (
+    activeEvolutionPoints.value.find(
+      (point) => new Date(point.date).getFullYear() === currentYear,
+    ) ??
+    activeEvolutionPoints.value[0] ??
+    null
+  );
+});
+function evolutionDelta(
+  latest: ScopeChartPoint | null,
+  baseline: ScopeChartPoint | null,
+): { value: number; pct: number | null } | null {
+  if (!latest || !baseline || latest === baseline) return null;
+  const value = latest.value - baseline.value;
+  const pct = baseline.value !== 0 ? value / Math.abs(baseline.value) : null;
+  return { value, pct };
+}
+const activeEvolutionMonthlyDelta = computed(() =>
+  evolutionDelta(activeEvolutionLatest.value, activeEvolutionPrevious.value),
+);
+const activeEvolutionYtdDelta = computed(() =>
+  evolutionDelta(activeEvolutionLatest.value, activeEvolutionYtdBaseline.value),
 );
 const activeEvolutionCaption = computed(() => {
   const points = activeEvolutionPoints.value;
@@ -1793,43 +1834,119 @@ watch(
     >
       <div v-if="selectedBalanceDetailRow" class="a-nw-detail">
         <div class="a-nw-detail-head">
-          <span
-            class="a-nw-detail-kind"
-            :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
-          >
-            {{ selectedBalanceDetailRow.type === 'asset' ? 'Activo' : 'Pasivo' }}
-          </span>
-          <h3>{{ selectedBalanceDetailRow.name }}</h3>
-          <strong
-            class="mono"
-            :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
-          >
-            {{ formatNumber(selectedBalanceDetailRow.value, 2) }}
-            {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
-          </strong>
-          <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
-            {{ foreignAmountLabel(selectedBalanceDetailRow) }}
-          </span>
+          <div class="a-nw-detail-title-row">
+            <span
+              class="a-nw-detail-kind"
+              :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
+            >
+              {{ positionKindLabel(selectedBalanceDetailRow) }}
+            </span>
+            <span class="a-nw-detail-source">
+              {{ positionSourceLabel(selectedBalanceDetailRow) }}
+            </span>
+          </div>
+          <div>
+            <h3>{{ selectedBalanceDetailRow.name }}</h3>
+            <p>{{ detailMetaLine(selectedBalanceDetailRow) }}</p>
+          </div>
+          <div class="a-nw-detail-value-block">
+            <strong
+              class="mono"
+              :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
+            >
+              {{ formatNumber(selectedBalanceDetailRow.value, 2) }}
+              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+            </strong>
+            <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
+              {{ foreignAmountLabel(selectedBalanceDetailRow) }}
+            </span>
+          </div>
         </div>
 
-        <dl class="a-nw-detail-grid">
+        <div class="a-nw-detail-kpis">
           <div>
-            <dt>Categoría</dt>
-            <dd>{{ selectedBalanceDetailRow.subtitle }}</dd>
+            <span>Último valor</span>
+            <strong class="mono">
+              {{ formatNumber(activeEvolutionLatest?.value ?? selectedBalanceDetailRow.value, 2) }}
+              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+            </strong>
+            <small>{{ activeEvolutionLatest?.fullLabel ?? 'Valor actual' }}</small>
           </div>
           <div>
-            <dt>Titularidad</dt>
-            <dd>{{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}</dd>
+            <span>Cambio mensual</span>
+            <strong
+              v-if="activeEvolutionMonthlyDelta"
+              class="mono"
+              :class="activeEvolutionMonthlyDelta.value >= 0 ? 'pos' : 'neg'"
+            >
+              {{ activeEvolutionMonthlyDelta.value > 0 ? '+' : ''
+              }}{{ formatNumber(activeEvolutionMonthlyDelta.value, 0) }}
+              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+            </strong>
+            <strong v-else class="mono">-</strong>
+            <small v-if="activeEvolutionMonthlyDelta && activeEvolutionMonthlyDelta.pct !== null">
+              {{ activeEvolutionMonthlyDelta.value > 0 ? '+' : ''
+              }}{{ formatPct(activeEvolutionMonthlyDelta.pct, 1) }}
+            </small>
+            <small v-else>Sin comparativa</small>
           </div>
           <div>
-            <dt>Fuente</dt>
-            <dd>{{ positionSourceLabel(selectedBalanceDetailRow) }}</dd>
+            <span>Cambio YTD</span>
+            <strong
+              v-if="activeEvolutionYtdDelta"
+              class="mono"
+              :class="activeEvolutionYtdDelta.value >= 0 ? 'pos' : 'neg'"
+            >
+              {{ activeEvolutionYtdDelta.value > 0 ? '+' : ''
+              }}{{ formatNumber(activeEvolutionYtdDelta.value, 0) }}
+              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+            </strong>
+            <strong v-else class="mono">-</strong>
+            <small v-if="activeEvolutionYtdDelta && activeEvolutionYtdDelta.pct !== null">
+              {{ activeEvolutionYtdDelta.value > 0 ? '+' : ''
+              }}{{ formatPct(activeEvolutionYtdDelta.pct, 1) }}
+            </small>
+            <small v-else>Sin comparativa</small>
           </div>
-          <div>
-            <dt>Moneda</dt>
-            <dd>{{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}</dd>
+        </div>
+
+        <div class="actions a-nw-detail-primary-actions">
+          <AButton variant="primary" @click="editBalanceDetail(selectedBalanceDetailRow)">
+            Editar posición
+          </AButton>
+          <AButton variant="ghost" @click="closeBalanceDetail">Cerrar</AButton>
+        </div>
+
+        <details class="a-nw-detail-more-actions">
+          <summary>Más acciones</summary>
+          <div class="actions">
+            <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
+              Archivar
+            </AButton>
+            <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
+              Eliminar
+            </AButton>
           </div>
-        </dl>
+        </details>
+
+        <div class="a-nw-detail-grid" role="list" aria-label="Datos de la posición">
+          <div role="listitem">
+            <span>Categoría</span>
+            <strong>{{ selectedBalanceDetailRow.subtitle }}</strong>
+          </div>
+          <div role="listitem">
+            <span>Titularidad</span>
+            <strong>{{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}</strong>
+          </div>
+          <div role="listitem">
+            <span>Fuente</span>
+            <strong>{{ positionSourceLabel(selectedBalanceDetailRow) }}</strong>
+          </div>
+          <div role="listitem">
+            <span>Moneda</span>
+            <strong>{{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}</strong>
+          </div>
+        </div>
 
         <div class="a-nw-detail-chart">
           <ASectHead
@@ -1853,19 +1970,6 @@ watch(
             :series-color="displayedTimelineSeriesColor"
             :y-axis-min-zero="timelineYAxisStartsAtZero"
           />
-        </div>
-
-        <div class="actions a-nw-detail-actions">
-          <AButton variant="ghost" @click="closeBalanceDetail">Cerrar</AButton>
-          <AButton variant="ghost" @click="editBalanceDetail(selectedBalanceDetailRow)">
-            Editar
-          </AButton>
-          <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
-            Archivar
-          </AButton>
-          <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
-            Eliminar
-          </AButton>
         </div>
       </div>
     </BaseModal>

@@ -464,6 +464,10 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Cuenta principal');
     expect(wrapper.text()).toContain('Fuente');
     expect(wrapper.text()).toContain('Manual');
+    expect(wrapper.text()).toContain('Último valor');
+    expect(wrapper.text()).toContain('Cambio mensual');
+    expect(wrapper.text()).toContain('Cambio YTD');
+    expect(wrapper.text()).toContain('Editar posición');
   });
 
   it('filters the mobile balance list by search text', async () => {
