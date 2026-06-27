@@ -5,7 +5,6 @@ import '@/domains/accounting/styles/movements.css';
 import '@/domains/accounting/styles/accounting-movements-view.css';
 import { useAccountingMovementsPage } from '@/domains/accounting/useAccountingMovementsPage';
 import AccountingMovementsAllTransactions from '@/domains/accounting/components/AccountingMovementsAllTransactions.vue';
-import AccountingMovementsEditTransactionModal from '@/domains/accounting/components/AccountingMovementsEditTransactionModal.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import AccountingTabs from '@/domains/accounting/components/AccountingTabs.vue';
 import { AButton, APageHead, AState } from '@/domains/ui';
@@ -140,7 +139,7 @@ watch(
           variant="primary"
           class="a-mov-header-create"
           :disabled="!page.liquidityAccounts.length"
-          @click="page.showQuickEntryModal = true"
+          @click="page.openQuickEntryForCreate()"
         >
           + Nuevo movimiento
         </AButton>
@@ -169,13 +168,12 @@ watch(
       class="a-mov-mobile-create"
       :disabled="!page.liquidityAccounts.length"
       aria-label="Nuevo movimiento"
-      @click="page.showQuickEntryModal = true"
+      @click="page.openQuickEntryForCreate()"
     >
       <span class="a-mov-fab-plus" aria-hidden="true">+</span>
       <span class="a-mov-fab-label">Nuevo movimiento</span>
     </AButton>
 
-    <AccountingMovementsEditTransactionModal :page="page" />
     <AccountingMovementsQuickEntryModal :page="page" />
   </div>
 </template>

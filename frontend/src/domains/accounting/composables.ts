@@ -3688,15 +3688,52 @@ export function useAccountingPage() {
     successMessage.value = 'Movimiento contable registrado.';
   }
 
-  function openTransactionForEditing(transactionId: number) {
+  // Modo edición sobre el modal unificado de alta: se capturan id/apuntes/initial_kind
+  // (vía fillEditTransactionForm, que alimenta la lógica de update reutilizada) y se
+  // precarga quickEntryForm para la UI preservando las fechas originales. Revalorización
+  // y ajuste no son editables in-place (se borran y recrean).
+  async function openTransactionForEditing(transactionId: number): Promise<boolean> {
     const transaction = findLoadedTransactionById(transactionId);
     if (!transaction) return false;
     if (transaction.origin === 'system') {
       store.error = 'Los asientos de origen system no se pueden editar desde esta vista.';
       return false;
     }
+    if (transaction.activity_kind === 'revaluation' || transaction.activity_kind === 'adjustment') {
+      store.error = 'Las revalorizaciones y ajustes no se editan: elimínalos y vuelve a crearlos.';
+      return false;
+    }
     fillEditTransactionForm(transaction);
+    await fillQuickEntryFromTransaction(transaction, { preserveDates: true });
     return true;
+  }
+
+  // Vuelca quickEntryForm (lo que edita el usuario en el modal unificado) sobre
+  // editTransactionForm, que es la fuente que consume submitEditedTransaction. Solo
+  // se invoca para los 5 tipos comunes (reval/ajuste no son editables). id, apuntes
+  // persistidos, initial_kind, currency y booking_time los fijó fillEditTransactionForm.
+  function syncEditTransactionFormFromQuickEntry(): void {
+    const mt = quickEntryForm.movement_type;
+    editTransactionForm.kind =
+      mt === 'adjustment' ? 'balance_adjustment' : (mt as EditableActivityKind);
+    editTransactionForm.description = quickEntryForm.description;
+    editTransactionForm.notes = quickEntryForm.notes;
+    editTransactionForm.ownership_id = quickEntryForm.ownership_id;
+    editTransactionForm.booking_date = quickEntryForm.booking_date;
+    editTransactionForm.value_date = quickEntryForm.value_date;
+    editTransactionForm.amount = quickEntryForm.amount;
+    editTransactionForm.destination_amount = quickEntryForm.destination_amount;
+    editTransactionForm.account_id = quickEntryForm.account_id;
+    editTransactionForm.counterparty_account_id =
+      mt === 'debt_payment'
+        ? quickEntryForm.liability_account_id
+        : quickEntryForm.counterparty_account_id;
+    editTransactionForm.investment_direction = quickEntryForm.investment_direction;
+    editTransactionForm.category_key = quickEntryForm.category_key;
+    editTransactionForm.subcategory_key = quickEntryForm.subcategory_key;
+    editTransactionForm.interest_account_id = quickEntryForm.interest_account_id;
+    editTransactionForm.principal_amount = quickEntryForm.principal_amount;
+    editTransactionForm.interest_amount = quickEntryForm.interest_amount;
   }
 
   // eslint-disable-next-line complexity
@@ -3915,6 +3952,15 @@ export function useAccountingPage() {
 
   // eslint-disable-next-line complexity
   async function submitQuickEntry() {
+    // Modo edición: el modal unificado conduce quickEntryForm; al guardar se reutiliza
+    // la lógica de actualización (reconstrucción de apuntes). Solo llegan los 5 tipos
+    // comunes (reval/ajuste no son editables in-place).
+    if (editTransactionId.value != null) {
+      syncEditTransactionFormFromQuickEntry();
+      const saved = await submitEditedTransaction();
+      if (saved) resetQuickEntryForm();
+      return;
+    }
     if (quickEntryForm.movement_type === 'revaluation') {
       await submitRevaluationEntry();
       return;
@@ -4040,7 +4086,10 @@ export function useAccountingPage() {
   });
 
   // eslint-disable-next-line complexity
-  async function fillQuickEntryFromTransaction(transaction: LedgerTransaction): Promise<void> {
+  async function fillQuickEntryFromTransaction(
+    transaction: LedgerTransaction,
+    opts?: { preserveDates?: boolean },
+  ): Promise<void> {
     const rawKind: string = transaction.quick_entry_kind || transaction.activity_kind;
     let movementType: QuickLedgerMovementType = 'expense';
     if (rawKind === 'income') movementType = 'income';
@@ -4099,8 +4148,9 @@ export function useAccountingPage() {
 
     quickEntryForm.investment_direction = direction;
     const today = new Date().toISOString().slice(0, 10);
-    quickEntryForm.booking_date = today;
-    quickEntryForm.value_date = today;
+    // Editar conserva las fechas reales del movimiento; duplicar arranca en hoy.
+    quickEntryForm.booking_date = opts?.preserveDates ? transaction.booking_date : today;
+    quickEntryForm.value_date = opts?.preserveDates ? transaction.value_date : today;
     quickEntryForm.description = transaction.description;
     quickEntryForm.ownership_id = transaction.ownership_id ?? null;
     quickEntryForm.amount = amount;
@@ -4275,6 +4325,7 @@ export function useAccountingPage() {
     openTransactionForEditing,
     submitEditedTransaction,
     resetEditTransactionForm,
+    resetQuickEntryForm,
     deleteTransaction,
     fillQuickEntryFromTransaction,
   };

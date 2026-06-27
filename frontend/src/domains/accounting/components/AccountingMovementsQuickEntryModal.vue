@@ -119,7 +119,15 @@ const orderedTypeOptions = computed<MovementTypeOption[]>(() => {
     const index = QE_TYPE_ORDER.indexOf(value);
     return index === -1 ? QE_TYPE_ORDER.length : index;
   };
-  return [...movementTypeOptions.value].sort((a, b) => rank(a.value) - rank(b.value));
+  const options = [...movementTypeOptions.value].sort((a, b) => rank(a.value) - rank(b.value));
+  // Al editar no se puede convertir a/desde revalorización ni ajuste (no editables
+  // in-place): se ocultan del carrusel.
+  if (props.page.quickEntryIsEditing) {
+    return options.filter(
+      (option) => option.value !== 'revaluation' && option.value !== 'adjustment',
+    );
+  }
+  return options;
 });
 
 const showValueDate = ref(false);
@@ -371,7 +379,7 @@ const quickEntryHint = computed(() => {
 <template>
   <BaseModal
     :open="page.showQuickEntryModal"
-    title="Registrar movimiento"
+    :title="page.quickEntryIsEditing ? 'Editar movimiento' : 'Registrar movimiento'"
     variant="sheet"
     panel-class="max-w-[540px] self-start dir-a dir-a-sheet a-mov-entry-sheet"
     @close="requestClose"
@@ -931,7 +939,13 @@ const quickEntryHint = computed(() => {
           block
           :disabled="page.transactionCreationLoading || !page.quickEntryReady"
         >
-          {{ page.transactionCreationLoading ? 'Guardando...' : 'Registrar movimiento' }}
+          {{
+            page.transactionCreationLoading
+              ? 'Guardando...'
+              : page.quickEntryIsEditing
+                ? 'Guardar cambios'
+                : 'Registrar movimiento'
+          }}
         </AButton>
       </div>
     </form>

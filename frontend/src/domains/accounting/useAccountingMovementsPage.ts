@@ -130,8 +130,10 @@ export function useAccountingMovementsPage() {
     deleteTransaction,
     openTransactionForEditing,
     submitQuickEntry,
-    submitEditedTransaction,
     fillQuickEntryFromTransaction,
+    resetQuickEntryForm,
+    resetEditTransactionForm,
+    editTransactionId,
   } = useAccountingPage();
 
   const netWorthStore = useNetWorthStore();
@@ -454,8 +456,9 @@ export function useAccountingMovementsPage() {
   }
 
   const showActivationModal = ref(false);
-  const showEditTransactionModal = ref(false);
   const showQuickEntryModal = ref(false);
+  // El modal unificado está en modo edición cuando hay una transacción cargada.
+  const quickEntryIsEditing = computed(() => editTransactionId.value != null);
   const activationQuery = ref('');
   const activationOperationalOnly = ref(true);
   const selectedActivationIds = ref<number[]>([]);
@@ -584,22 +587,24 @@ export function useAccountingMovementsPage() {
     showQuickEntryModal.value = false;
   }
 
-  function openEditTransactionModal(transactionId: number) {
-    if (openTransactionForEditing(transactionId)) {
-      showEditTransactionModal.value = true;
-    }
+  // Alta, duplicar y editar comparten el mismo modal (quickEntryForm). El modo lo
+  // marca editTransactionId: null = alta/duplicar, set = edición.
+  function openQuickEntryForCreate() {
+    resetEditTransactionForm();
+    resetQuickEntryForm();
+    showQuickEntryModal.value = true;
   }
 
-  async function submitEditedTransactionFromModal() {
-    const saved = await submitEditedTransaction();
-    if (saved) {
-      showEditTransactionModal.value = false;
+  async function openEditTransactionModal(transactionId: number) {
+    if (await openTransactionForEditing(transactionId)) {
+      showQuickEntryModal.value = true;
     }
   }
 
   async function openDuplicateFromTransaction(
     transaction: Parameters<typeof fillQuickEntryFromTransaction>[0],
   ) {
+    resetEditTransactionForm();
     await fillQuickEntryFromTransaction(transaction);
     showQuickEntryModal.value = true;
   }
@@ -749,8 +754,8 @@ export function useAccountingMovementsPage() {
     deleteTransaction,
     openTransactionForEditing,
     showActivationModal,
-    showEditTransactionModal,
     showQuickEntryModal,
+    quickEntryIsEditing,
     activationQuery,
     activationOperationalOnly,
     selectedActivationIds,
@@ -768,9 +773,9 @@ export function useAccountingMovementsPage() {
     toggleSelectAllFiltered,
     activatePositionFromModal,
     submitQuickEntryFromModal,
-    submitEditedTransactionFromModal,
     deleteTransactionFromTimeline,
     openActivationModal,
+    openQuickEntryForCreate,
     openEditTransactionModal,
     openDuplicateFromTransaction,
   });

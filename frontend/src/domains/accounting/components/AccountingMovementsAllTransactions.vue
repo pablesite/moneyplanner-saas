@@ -178,10 +178,15 @@ function clearFilters(): void {
   state.activityFilters.reviewState = 'all';
   state.applyDatePreset('all');
 }
+// Revalorización y ajuste no se editan in-place (se borran y recrean): se omite
+// "Editar" para esos tipos, conservando duplicar y eliminar.
+function isEditableKind(tx: LedgerTransaction): boolean {
+  return tx.activity_kind !== 'revaluation' && tx.activity_kind !== 'adjustment';
+}
 function rowMenuItems(tx: LedgerTransaction) {
   if (tx.origin === 'system') return [];
   return [
-    { id: 'edit', label: 'Editar' },
+    ...(isEditableKind(tx) ? [{ id: 'edit', label: 'Editar' }] : []),
     { id: 'duplicate', label: 'Duplicar' },
     { id: 'delete', label: 'Eliminar', danger: true },
   ];
@@ -554,6 +559,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
         </details>
         <div v-if="selectedTransaction.origin !== 'system'" class="a-mov-detail-actions">
           <AButton
+            v-if="isEditableKind(selectedTransaction)"
             variant="icon"
             aria-label="Editar movimiento"
             title="Editar"
