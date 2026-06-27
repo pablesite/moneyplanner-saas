@@ -1600,11 +1600,46 @@
   font-size: 12px;
 }
 
-/* Pista de uso escondida en un tooltip (junto al título "Cuentas"). */
+/* Pista de uso (junto al título "Cuentas"): popover que abre al tocar/clicar,
+   para que también funcione en móvil donde el tooltip nativo no aparece. */
+.a-mov-catalog-hint-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .a-mov-catalog-hint {
+  border: 0;
+  background: transparent;
   color: var(--faint);
+  font: inherit;
   font-size: 14px;
-  cursor: help;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.a-mov-catalog-hint:hover,
+.a-mov-catalog-hint[aria-expanded='true'] {
+  color: var(--text);
+}
+
+.a-mov-catalog-hint-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgb(12 13 16 / 0.98);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .a-mov-account-tools .filter-ctrl {

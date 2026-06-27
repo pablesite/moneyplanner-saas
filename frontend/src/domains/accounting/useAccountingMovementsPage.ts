@@ -146,6 +146,9 @@ export function useAccountingMovementsPage() {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
       currency: normalizedCurrency,
+      // Agrupar siempre los miles: por defecto el motor usa "min2" y no separa
+      // 1.000–9.999 ("3350,39"), lo que queda inconsistente con 10.000+ ("26.296,78").
+      useGrouping: true,
       minimumFractionDigits: isCrypto ? 8 : normalizedCurrency === 'EUR' ? 2 : undefined,
       maximumFractionDigits: isCrypto ? 8 : 2,
     }).format(value);
