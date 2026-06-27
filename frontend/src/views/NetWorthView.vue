@@ -345,6 +345,28 @@ const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | '5a' | 'all'>('5a
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
 const timelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
 const activeTimelinePreset = computed(() => selectedTimelinePreset.value);
+type NetWorthTab = 'general' | 'evolution' | 'balance';
+const netWorthTabOptions: { id: NetWorthTab; label: string }[] = [
+  { id: 'general', label: 'General' },
+  { id: 'evolution', label: 'Evolución' },
+  { id: 'balance', label: 'Balance' },
+];
+
+function parseNetWorthTab(raw: unknown): NetWorthTab {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value === 'evolution' || value === 'balance' || value === 'general' ? value : 'general';
+}
+
+const activeNetWorthTab = ref<NetWorthTab>(parseNetWorthTab(route.query.tab));
+
+function setNetWorthTab(tab: NetWorthTab): void {
+  activeNetWorthTab.value = tab;
+  const query = { ...route.query };
+  if (tab === 'general') delete query.tab;
+  else query.tab = tab;
+  void router.replace({ query });
+}
+
 type TimelineScope = 'total' | 'operational' | 'custom';
 type TimelineGranularity = 'monthly' | 'daily';
 type ScopedPosition = {
@@ -1193,6 +1215,13 @@ watch(
   },
   { deep: true },
 );
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    activeNetWorthTab.value = parseNetWorthTab(tab);
+  },
+);
 </script>
 
 <template>
@@ -1266,7 +1295,22 @@ watch(
       </div>
     </AContextBar>
 
-    <section class="sect">
+    <nav class="a-nw-tabs-bar" aria-label="Secciones de patrimonio">
+      <div class="tabs">
+        <button
+          v-for="tab in netWorthTabOptions"
+          :key="tab.id"
+          class="tab"
+          type="button"
+          :class="{ on: activeNetWorthTab === tab.id }"
+          @click="setNetWorthTab(tab.id)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+    </nav>
+
+    <section v-if="activeNetWorthTab === 'general'" class="sect">
       <div class="hero">
         <div class="hero-top">
           <AHero class="hero-headline" eyebrow="Patrimonio neto">
@@ -1401,7 +1445,7 @@ watch(
       </div>
     </section>
 
-    <section class="sect">
+    <section v-if="activeNetWorthTab === 'evolution'" class="sect">
       <ASectHead
         title="Evolución"
         :subtitle="
@@ -1628,7 +1672,7 @@ watch(
       </BaseModal>
     </section>
 
-    <section class="sect">
+    <section v-if="activeNetWorthTab === 'balance'" class="sect">
       <ASectHead title="Balance">
         <template #hint>
           <AInfoHint label="Sobre el balance">

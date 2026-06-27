@@ -314,6 +314,12 @@ function makeState(overrides: Record<string, unknown> = {}) {
   };
 }
 
+async function openTab(wrapper: ReturnType<typeof mount>, label: string): Promise<void> {
+  const tab = wrapper.findAll('.a-nw-tabs-bar .tab').find((button) => button.text() === label);
+  if (!tab) throw new Error(`Tab not found: ${label}`);
+  await tab.trigger('click');
+}
+
 describe('NetWorthView', () => {
   beforeEach(() => {
     mockUseNetWorthViewState.mockReset();
@@ -450,6 +456,7 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
     await wrapper.findAll('tr.clickable')[1]!.trigger('click');
 
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
@@ -462,6 +469,7 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
     const mobileRows = wrapper.findAll('.a-nw-mobile-row');
 
     expect(mobileRows).toHaveLength(2);
@@ -487,6 +495,7 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
     await wrapper.get('.a-nw-mobile-search').setValue('hipoteca');
     const mobileListText = wrapper.get('.a-nw-mobile-balance-list').text();
 
@@ -528,6 +537,7 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
 
     expect(wrapper.text()).toContain('(0,17123456 ETH)');
   });
@@ -571,6 +581,7 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Evolución');
     await wrapper.get('button.btn-ghost').trigger('click');
     await wrapper.get('.a-nw-range-input').setValue('2');
 

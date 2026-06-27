@@ -90,6 +90,42 @@
   color: var(--faint);
 }
 
+.a-nw-tabs-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.a-nw-page .tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: -1px;
+}
+
+.a-nw-page .tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  padding: 10px 16px;
+  transition: color 0.12s;
+}
+
+.a-nw-page .tab:hover {
+  color: var(--text);
+}
+
+.a-nw-page .tab.on {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
 .a-nw-mobile-tools,
 .a-nw-mobile-balance-list,
 .a-nw-mobile-empty,
@@ -798,6 +834,24 @@
 }
 
 @container page (max-width: 560px) {
+  .a-nw-tabs-bar {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .a-nw-tabs-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .a-nw-page .tabs {
+    min-width: max-content;
+  }
+
+  .a-nw-page .tab {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
   /* Hero apilado y centrado: cifra → donut → columnas Activos/Pasivos. */
   .hero-top {
     flex-direction: column;
