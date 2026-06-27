@@ -165,7 +165,15 @@ vi.mock('@/domains/ui', () => ({
       open: { type: Boolean, required: true },
       title: { type: String, required: false, default: '' },
     },
-    template: '<section v-if="open"><h3>{{ title }}</h3><slot /></section>',
+    emits: ['close'],
+    template: `
+      <section v-if="open">
+        <slot name="header" title-id="test-title" :close="() => $emit('close')">
+          <h3>{{ title }}</h3>
+        </slot>
+        <slot />
+      </section>
+    `,
   }),
 }));
 
@@ -467,7 +475,11 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Último valor');
     expect(wrapper.text()).toContain('Cambio mensual');
     expect(wrapper.text()).toContain('Cambio YTD');
-    expect(wrapper.text()).toContain('Editar posición');
+    expect(wrapper.get('[aria-label="Editar posición"]').attributes('title')).toBe(
+      'Editar posición',
+    );
+    expect(wrapper.get('[aria-label="Cerrar detalle"]').attributes('title')).toBe('Cerrar');
+    expect(wrapper.text()).not.toContain('Editar posición');
   });
 
   it('filters the mobile balance list by search text', async () => {
@@ -481,6 +493,43 @@ describe('NetWorthView', () => {
     expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
     expect(mobileListText).toContain('Hipoteca');
     expect(mobileListText).not.toContain('Cuenta principal');
+  });
+
+  it('shows eight decimals for crypto original amounts', async () => {
+    const base = makeState();
+    mockUseNetWorthViewState.mockReturnValue(
+      makeState({
+        store: {
+          ...base.store,
+          assets: [
+            {
+              id: 15,
+              name: 'Cripto',
+              category: 'investments',
+              subcategory: 'cryptocurrencies',
+              amount: '0.17123456',
+              amount_base: '233.21',
+              currency: 'ETH',
+              is_active: true,
+              ownership_ref: null,
+            },
+          ],
+          liabilities: [],
+        },
+        assetCategories: [{ value: 'investments', label: 'Inversiones' }],
+        assetSubcategories: [
+          { category: 'investments', value: 'cryptocurrencies', label: 'Criptomonedas' },
+        ],
+        byCategoryKeys: ref(['investments']),
+        byCategoryAssets: ref([233.21]),
+        byCategoryLiabilities: ref([0]),
+      }),
+    );
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+
+    expect(wrapper.text()).toContain('(0,17123456 ETH)');
   });
 
   it('shows archived items and restores them from the archived modal', async () => {

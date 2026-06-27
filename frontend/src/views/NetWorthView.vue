@@ -715,6 +715,14 @@ function isHeroCategoryActive(row: HeroCompositionRow): boolean {
   );
 }
 
+function isCryptoPosition(row: PositionRow): boolean {
+  const source = sourceItemForRow(row);
+  return (
+    row.type === 'asset' &&
+    ['crypto_spot_earn', 'cryptocurrencies'].includes(String(source?.subcategory ?? ''))
+  );
+}
+
 function foreignAmountLabel(row: PositionRow): string | null {
   const source = sourceItemForRow(row);
   if (!source) return null;
@@ -723,7 +731,7 @@ function foreignAmountLabel(row: PositionRow): string | null {
   if (!sourceCurrency || sourceCurrency === baseCurrency) return null;
   const rawAmount = source.effective_amount ?? source.estimated_outstanding_amount ?? source.amount;
   if (rawAmount == null || String(rawAmount).trim() === '') return null;
-  return `(${formatNumber(toNumber(rawAmount), 2)} ${sourceCurrency})`;
+  return `(${formatNumber(toNumber(rawAmount), isCryptoPosition(row) ? 8 : 2)} ${sourceCurrency})`;
 }
 
 function positionSourceLabel(row: PositionRow): string {
@@ -1832,6 +1840,59 @@ watch(
       panel-class="a-nw-modal-panel a-nw-detail-sheet dir-a dir-a-sheet"
       @close="closeBalanceDetail"
     >
+      <template #header="{ titleId, close }">
+        <div :id="titleId" class="ui-modal-title a-nw-detail-modal-title">
+          {{ balanceDetailTitle(selectedBalanceDetailRow) }}
+        </div>
+        <div class="a-nw-detail-header-actions">
+          <button
+            v-if="selectedBalanceDetailRow"
+            class="a-nw-detail-header-btn"
+            type="button"
+            aria-label="Editar posición"
+            title="Editar posición"
+            @click="editBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <button
+            class="a-nw-detail-header-btn"
+            type="button"
+            aria-label="Cerrar detalle"
+            title="Cerrar"
+            @click="close"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+      </template>
+
       <div v-if="selectedBalanceDetailRow" class="a-nw-detail">
         <div class="a-nw-detail-head">
           <div class="a-nw-detail-title-row">
@@ -1908,13 +1969,6 @@ watch(
             </small>
             <small v-else>Sin comparativa</small>
           </div>
-        </div>
-
-        <div class="actions a-nw-detail-primary-actions">
-          <AButton variant="primary" @click="editBalanceDetail(selectedBalanceDetailRow)">
-            Editar posición
-          </AButton>
-          <AButton variant="ghost" @click="closeBalanceDetail">Cerrar</AButton>
         </div>
 
         <details class="a-nw-detail-more-actions">

@@ -112,7 +112,7 @@ watch(
               : 'flex items-center gap-3 border-b border-white/10 px-4 py-3.5'
           "
         >
-          <slot name="header">
+          <slot name="header" :title-id="titleId" :close="() => emit('close')">
             <div
               :id="titleId"
               :class="props.variant === 'sheet' ? 'ui-modal-title' : 'text-base font-semibold'"
