@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.32.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.31.0...moneyplanner-saas-v0.32.0) (2026-06-27)
+
+
+### Features
+
+* **frontend:** Cuentas en móvil — FAB activar, buscador sticky, pista en tooltip ([07632ab](https://github.com/pablesite/moneyplanner-saas/commit/07632ab736e1f1413528d2158b9ae89ca5e30e34))
+* **frontend:** mejora la vista de Cuentas (nombre visible, subtotales, resumen) ([d434067](https://github.com/pablesite/moneyplanner-saas/commit/d43406739a3c85fb18ebf9e0d9c13fb11734c16f))
+
+
+### Bug Fixes
+
+* **frontend:** agrupa miles en importes y pista de Cuentas accesible en móvil ([0644faf](https://github.com/pablesite/moneyplanner-saas/commit/0644faf8865855020dfdee47cb07d3371f17dbf0))
+* **frontend:** el total de Cuentas cuenta solo cuentas de usuario (activas + archivadas) ([b2fc69b](https://github.com/pablesite/moneyplanner-saas/commit/b2fc69bef62007e2d09f04d5d3189adcd85ff60e))
+
 ## [0.31.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.30.0...moneyplanner-saas-v0.31.0) (2026-06-27)
 
 
