@@ -24,6 +24,24 @@ const filteredGroups = computed(() => {
 
 const technicalAccounts = computed(() => state.catalogTechnicalAccounts);
 
+// Resumen de saldos del ámbito visible (reutiliza los subtotales que ya calcula
+// buildCuentasGroups, convertidos a la moneda base vía amount_base).
+const operationalCount = computed(() =>
+  filteredGroups.value.reduce((total, group) => total + group.accounts.length, 0),
+);
+const summaryCurrency = computed(() => filteredGroups.value[0]?.baseCurrency ?? 'EUR');
+const assetsTotal = computed(() =>
+  filteredGroups.value
+    .filter((group) => group.positionType === 'asset')
+    .reduce((sum, group) => sum + group.subtotal, 0),
+);
+const liabilitiesTotal = computed(() =>
+  filteredGroups.value
+    .filter((group) => group.positionType === 'liability')
+    .reduce((sum, group) => sum + group.subtotal, 0),
+);
+const netTotal = computed(() => assetsTotal.value - liabilitiesTotal.value);
+
 const collapsedGroups = ref(new Set<string>());
 function isGroupCollapsed(key: string): boolean {
   return collapsedGroups.value.has(key);
@@ -45,10 +63,7 @@ function goToTodos(accountId: number) {
 
 <template>
   <div>
-    <ASectHead
-      title="Cuentas"
-      :subtitle="`${state.accounts.length} cuentas · click para ver movimientos`"
-    />
+    <ASectHead title="Cuentas" subtitle="Toca una cuenta para ver sus movimientos" />
 
     <div class="a-mov-account-tools">
       <input v-model="query" class="filter-ctrl" placeholder="Buscar cuenta…" />
@@ -64,12 +79,30 @@ function goToTodos(accountId: number) {
           >Todas</AButton
         >
       </div>
-      <span
-        >{{
-          filteredGroups.reduce((total, group) => total + group.accounts.length, 0)
-        }}
-        operativas</span
-      >
+    </div>
+
+    <div class="a-mov-catalog-summary">
+      <span class="a-mov-catalog-summary-count">
+        {{ operationalCount }} cuentas · {{ state.accounts.length }} en total
+      </span>
+      <div class="a-mov-catalog-summary-figs">
+        <div class="a-mov-catalog-summary-fig">
+          <span>Activos</span>
+          <strong class="mono">{{
+            state.formatCompact(String(assetsTotal), summaryCurrency)
+          }}</strong>
+        </div>
+        <div class="a-mov-catalog-summary-fig">
+          <span>Pasivos</span>
+          <strong class="mono is-liability">{{
+            state.formatCompact(String(liabilitiesTotal), summaryCurrency)
+          }}</strong>
+        </div>
+        <div class="a-mov-catalog-summary-fig">
+          <span>Neto</span>
+          <strong class="mono">{{ state.formatCompact(String(netTotal), summaryCurrency) }}</strong>
+        </div>
+      </div>
     </div>
 
     <div
@@ -88,7 +121,6 @@ function goToTodos(accountId: number) {
         <thead>
           <tr>
             <th>Cuenta</th>
-            <th>Tipo</th>
             <th class="num">Saldo</th>
             <th class="a-mov-catalog-menu-head"></th>
           </tr>
@@ -97,7 +129,7 @@ function goToTodos(accountId: number) {
           <template v-for="group in filteredGroups" :key="group.key">
             <!-- Group header row (collapsible) -->
             <tr class="grp-row">
-              <td colspan="4">
+              <td colspan="3">
                 <button
                   type="button"
                   class="a-mov-grp-toggle"
@@ -111,7 +143,14 @@ function goToTodos(accountId: number) {
                     {{ group.positionType === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
                   </span>
                   {{ group.label }}
-                  <span class="a-mov-grp-count">{{ group.accounts.length }}</span>
+                  <span class="a-mov-grp-meta">
+                    <span class="a-mov-grp-count">{{ group.accounts.length }}</span>
+                    <span
+                      class="a-mov-grp-subtotal mono"
+                      :class="{ 'is-liability': group.positionType === 'liability' }"
+                      >{{ state.formatCompact(String(group.subtotal), group.baseCurrency) }}</span
+                    >
+                  </span>
                 </button>
               </td>
             </tr>
@@ -139,11 +178,6 @@ function goToTodos(accountId: number) {
                     </div>
                   </div>
                 </td>
-                <td>
-                  <AKindChip :tone="group.positionType === 'asset' ? 'asset' : 'liability'">
-                    {{ group.positionType === 'asset' ? 'Activo' : 'Pasivo' }} · {{ group.label }}
-                  </AKindChip>
-                </td>
                 <td
                   class="num mono a-mov-catalog-balance"
                   :class="{ 'is-liability': group.positionType === 'liability' }"
@@ -161,7 +195,7 @@ function goToTodos(accountId: number) {
 
               <!-- Expansion row -->
               <tr v-if="state.cuentasSelectedAccountId === account.id" class="a-mov-expansion">
-                <td colspan="4">
+                <td colspan="3">
                   <div class="a-mov-expansion-inner">
                     <div class="a-mov-expansion-header">
                       <span class="a-mov-expansion-label">

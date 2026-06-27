@@ -571,10 +571,28 @@
   font-size: 11px;
 }
 
-.a-mov-grp-count {
+.a-mov-grp-meta {
   margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.a-mov-grp-count {
   color: var(--faint);
   font-size: 12px;
+}
+
+/* Subtotal del grupo (saldo agregado de la categoría, en moneda base). */
+.a-mov-grp-subtotal {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.a-mov-grp-subtotal.is-liability {
+  color: var(--neg);
 }
 
 .a-mov-catalog-table .name {
@@ -1083,11 +1101,6 @@
     display: none;
   }
 
-  .a-mov-catalog-table th:nth-child(2),
-  .a-mov-catalog-kind {
-    display: none;
-  }
-
   .a-mov-catalog-table th,
   .a-mov-catalog-table td {
     padding-right: 8px;
@@ -1582,6 +1595,61 @@
 
 .a-mov-account-tools .filter-ctrl {
   width: min(360px, 100%);
+}
+
+/* Resumen de saldos del catálogo: cuenta operativa + Activos/Pasivos/Neto. */
+.a-mov-catalog-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.a-mov-catalog-summary-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.a-mov-catalog-summary-figs {
+  display: flex;
+  gap: 20px;
+}
+
+.a-mov-catalog-summary-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.a-mov-catalog-summary-fig > span {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.a-mov-catalog-summary-fig > strong {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.a-mov-catalog-summary-fig > strong.is-liability {
+  color: var(--neg);
+}
+
+@container page (max-width: 560px) {
+  .a-mov-catalog-summary-figs {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
 }
 
 .a-mov-account-inactive-tag {
