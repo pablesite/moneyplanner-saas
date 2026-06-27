@@ -1251,15 +1251,6 @@ export function useAccountingPage() {
     { value: 'debt_payment', label: 'Pago deuda' },
     { value: 'revaluation', label: 'Revalorizacion' },
   ];
-  const editMovementTypeOptions: { value: EditableActivityKind; label: string }[] = [
-    { value: 'income', label: 'Ingreso' },
-    { value: 'expense', label: 'Gasto' },
-    { value: 'transfer', label: 'Transferencia' },
-    { value: 'investment', label: 'Inversion' },
-    { value: 'debt_payment', label: 'Deuda' },
-    { value: 'balance_adjustment', label: 'Ajuste' },
-    { value: 'revaluation', label: 'Revalorizacion' },
-  ];
   const editAccountOptions = computed(() =>
     accounts.value
       .filter(
@@ -1297,17 +1288,6 @@ export function useAccountingPage() {
     kindUsesClassification(editTransactionForm.kind, editTransactionForm.investment_direction),
   );
   const editKindNeedsCounterparty = computed(() => isCounterpartyKind(editTransactionForm.kind));
-  const editCounterpartyLabel = computed(() => {
-    if (editTransactionForm.kind === 'investment') return 'Cuenta de inversion';
-    if (editTransactionForm.kind === 'debt_payment') return 'Cuenta de pasivo';
-    return 'Contracuenta';
-  });
-  const editSelectedAccountCurrentBalance = computed(() => {
-    if (editTransactionForm.account_id == null) return null;
-    const account = accountMap.value.get(editTransactionForm.account_id);
-    if (!account) return null;
-    return toNumber(account.current_balance).toFixed(2);
-  });
   const editCounterpartyOptions = computed(() => {
     const baseOptions = editAccountOptions.value.filter(
       (account) => account.id !== editTransactionForm.account_id,
@@ -1323,26 +1303,6 @@ export function useAccountingPage() {
       );
     }
     return baseOptions;
-  });
-  const editInvestmentOriginOptions = computed(() => {
-    const selectedCounterpartyId = editTransactionForm.counterparty_account_id;
-    return editAccountOptions.value.filter((account) => {
-      if (account.account_type !== 'asset') return false;
-      if (account.asset_id == null) return false;
-      if (selectedCounterpartyId == null) return true;
-      return account.id !== selectedCounterpartyId;
-    });
-  });
-  const editCounterpartyMissingHint = computed(() => {
-    if (!editKindNeedsCounterparty.value) return '';
-    if (editCounterpartyOptions.value.length > 0) return '';
-    if (editTransactionForm.kind === 'investment') {
-      return 'No hay cuentas de inversión contables activas. Activa tracking contable en la posición manual para poder usarla aquí.';
-    }
-    if (editTransactionForm.kind === 'debt_payment') {
-      return 'No hay cuentas de pasivo contables activas. Activa tracking contable en el pasivo manual para poder usarlo aquí.';
-    }
-    return 'No hay contracuentas disponibles para el tipo seleccionado.';
   });
   const editSelectedLiquidityAccount = computed(() =>
     editTransactionForm.account_id != null
@@ -1409,34 +1369,6 @@ export function useAccountingPage() {
     if (selectedId == null) return false;
     return editCounterpartyOptions.value.some((account) => account.id === selectedId);
   }
-  const editCategoryOptions = computed(() => {
-    if (editTransactionForm.kind === 'income') return incomeCategories;
-    if (editTransactionForm.kind === 'expense') {
-      return expenseCategories.filter((row) =>
-        EXPENSE_MOVEMENT_CATEGORY_KEYS.includes(row.value as ExpenseCategoryKey),
-      );
-    }
-    if (editTransactionForm.kind === 'investment') {
-      if (editTransactionForm.investment_direction === 'reinvestment') {
-        return [];
-      }
-      if (editTransactionForm.investment_direction === 'outflow') {
-        return incomeCategories.filter((row) => row.value === 'capital_gains');
-      }
-      return expenseCategories.filter((row) =>
-        ['financial_investments', 'real_estate_assets', 'tangible_assets'].includes(row.value),
-      );
-    }
-    if (editTransactionForm.kind === 'debt_payment') {
-      if (editSelectedDebtLiabilityCategory.value === 'mortgage') {
-        return expenseCategories.filter((row) => row.value === 'real_estate_assets');
-      }
-      return expenseCategories.filter((row) =>
-        DEBT_PAYMENT_ALLOWED_CATEGORY_KEYS.includes(row.value as ExpenseCategoryKey),
-      );
-    }
-    return [];
-  });
   const editSubcategoryOptions = computed(() => {
     if (!editTransactionForm.category_key) return [];
     if (editTransactionForm.kind === 'income') {
@@ -1464,75 +1396,6 @@ export function useAccountingPage() {
     }
     return [];
   });
-  const editCategoryLocked = computed(() => {
-    if (editTransactionForm.kind === 'investment') {
-      return editTransactionForm.investment_direction !== 'reinvestment';
-    }
-    if (editTransactionForm.kind === 'debt_payment') {
-      return editSelectedDebtLiabilityCategory.value === 'mortgage';
-    }
-    return false;
-  });
-  const editSubcategoryLocked = computed(() => {
-    if (editTransactionForm.kind === 'investment') {
-      return (
-        editTransactionForm.investment_direction === 'outflow' ||
-        editTransactionForm.investment_direction === 'reinvestment'
-      );
-    }
-    if (editTransactionForm.kind === 'debt_payment') {
-      return editSelectedDebtLiabilityCategory.value === 'mortgage';
-    }
-    return false;
-  });
-  const editDebtComputedInterest = computed((): number | null => {
-    if (editTransactionForm.kind !== 'debt_payment') return null;
-    if (editTransactionForm.interest_amount.trim()) return null;
-    const currency =
-      (editTransactionForm.account_id != null
-        ? accountMap.value.get(editTransactionForm.account_id)?.currency
-        : null) ?? 'EUR';
-    const breakdown = resolveFlexibleDebtBreakdown(
-      editTransactionForm.amount,
-      editTransactionForm.principal_amount,
-      editTransactionForm.interest_amount,
-      currency,
-    );
-    return breakdown.valid ? breakdown.interest : null;
-  });
-  const editEntryReady = computed(() => {
-    if (!editTransactionForm.description.trim()) return false;
-    if (!editTransactionForm.booking_date || !editTransactionForm.value_date) return false;
-    if (editTransactionForm.account_id == null) return false;
-    const parsedAmount = Number(formatDecimalInput(editTransactionForm.amount));
-    if (!Number.isFinite(parsedAmount)) return false;
-    if (
-      editTransactionForm.kind !== 'balance_adjustment' &&
-      editTransactionForm.kind !== 'revaluation' &&
-      parsedAmount <= 0
-    )
-      return false;
-    if (editTransactionForm.kind === 'revaluation' && parsedAmount === 0) return false;
-    if (
-      editKindNeedsCounterparty.value &&
-      (editTransactionForm.counterparty_account_id == null ||
-        editTransactionForm.counterparty_account_id === editTransactionForm.account_id)
-    ) {
-      return false;
-    }
-    if (editKindNeedsClassification.value) {
-      return Boolean(editTransactionForm.category_key && editTransactionForm.subcategory_key);
-    }
-    if (
-      (editTransactionForm.kind === 'investment' || editTransactionForm.kind === 'transfer') &&
-      editInvestmentIsCrossCurrency.value
-    ) {
-      const destinationValue = Number(formatDecimalInput(editTransactionForm.destination_amount));
-      return Number.isFinite(destinationValue) && destinationValue > 0;
-    }
-    return true;
-  });
-
   watch(
     () => transactionForm.entries.map((entry) => entry.account_id),
     (accountIds) => {
@@ -4191,24 +4054,8 @@ export function useAccountingPage() {
     accountTypeOptions,
     manualPositionTypeOptions,
     quickMovementTypeOptions,
-    editMovementTypeOptions,
     editAccountOptions,
     quickExpenseAccountOptions,
-    editCounterpartyOptions,
-    editCounterpartyMissingHint,
-    editKindNeedsCounterparty,
-    editKindNeedsClassification,
-    editCounterpartyLabel,
-    editInvestmentOriginOptions,
-    editInvestmentOriginCurrency,
-    editInvestmentDestinationCurrency,
-    editInvestmentIsCrossCurrency,
-    editSelectedAccountCurrentBalance,
-    editCategoryOptions,
-    editSubcategoryOptions,
-    editCategoryLocked,
-    editSubcategoryLocked,
-    editDebtComputedInterest,
     accountForm,
     activationForm,
     ownershipOptions,
@@ -4216,7 +4063,6 @@ export function useAccountingPage() {
     quickEntryForm,
     transactionForm,
     editTransactionId,
-    editTransactionForm,
     activityFilters,
     cuentasFilters,
     liquidityAccounts,
@@ -4261,7 +4107,6 @@ export function useAccountingPage() {
     quickAdjustmentDelta,
     quickEntryReady,
     quickDebtPreview,
-    editEntryReady,
     debitTotal,
     creditTotal,
     transactionBalanced,
