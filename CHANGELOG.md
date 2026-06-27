@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.31.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.30.0...moneyplanner-saas-v0.31.0) (2026-06-27)
+
+
+### Features
+
+* **frontend:** indicador de puntos en el carrusel de tipos (móvil) ([95c56d6](https://github.com/pablesite/moneyplanner-saas/commit/95c56d65dfca8bfef003f5b984be9efc8f76e614))
+* **frontend:** pule el detalle de movimiento (titularidad, clasificación, acciones, altura) ([a2f2b71](https://github.com/pablesite/moneyplanner-saas/commit/a2f2b71ed0c53640b426398244847bf30eaeb6a3))
+* **frontend:** rediseña el detalle de movimiento (legible y progresivo) ([bfee7a5](https://github.com/pablesite/moneyplanner-saas/commit/bfee7a5afb4a3d1ae145bebeef55ab522b469a54))
+
+
+### Bug Fixes
+
+* **frontend:** el detalle se ancla arriba sin hueco muerto ([a9ffd37](https://github.com/pablesite/moneyplanner-saas/commit/a9ffd379c260c1a79277a880e2a3015e897794dc))
+
 ## [0.30.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.29.0...moneyplanner-saas-v0.30.0) (2026-06-25)
 
 
