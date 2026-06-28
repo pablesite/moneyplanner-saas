@@ -246,8 +246,8 @@
 
 .hero-delta-grid {
   display: grid;
-  gap: 14px;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .hero-equity-chip {
