@@ -75,12 +75,15 @@
 .a-nw-archived-trigger {
   display: inline-flex;
   align-items: baseline;
+  justify-self: start;
   gap: 5px;
+  width: fit-content;
   min-height: 0;
+  margin-top: -8px;
   padding: 0;
   border: 0;
   color: var(--muted);
-  font-size: inherit;
+  font-size: 12.5px;
   font-weight: inherit;
   line-height: inherit;
   background: transparent;
@@ -98,16 +101,15 @@
 }
 
 .a-nw-page .context-bar {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  flex-wrap: nowrap;
-  gap: 8px;
-  margin-top: -10px;
-  margin-bottom: -10px;
-  padding: 0 0 2px;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 10px;
+  margin: -2px 0 0;
+  padding: 10px 0 0;
   border-bottom: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: visible;
 }
 
 .a-nw-page .context-bar::-webkit-scrollbar {
@@ -115,8 +117,12 @@
 }
 
 .a-nw-page .context-field {
-  flex: 0 0 auto;
+  min-width: 0;
   white-space: nowrap;
+}
+
+.a-nw-page [data-test='ownership-filter'] {
+  grid-column: 1 / -1;
 }
 
 .a-nw-sr-only {
@@ -135,6 +141,7 @@
 }
 
 .a-nw-page .filter-ctrl {
+  width: 100%;
   min-height: 32px;
   padding: 6px 10px;
   border: 1px solid var(--line);
@@ -165,14 +172,14 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-top: -2px;
+  margin-top: 8px;
   border-bottom: 1px solid var(--line);
 }
 
 .a-nw-page .tabs {
   display: flex;
   gap: 0;
-  margin-bottom: -1px;
+  margin-bottom: 0;
 }
 
 .a-nw-page .tab {
@@ -190,7 +197,7 @@
 .a-nw-page .tab::after {
   position: absolute;
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   height: 2px;
   background: transparent;
@@ -1252,8 +1259,8 @@
 
   /* Context bar: carril compacto de una línea; si no cabe, desplaza horizontal. */
   .a-nw-page .context-bar {
-    flex-wrap: nowrap;
-    gap: 10px;
+    grid-template-columns: minmax(76px, auto) minmax(0, 1fr);
+    gap: 8px;
   }
 
   /* En móvil el balance pasa de tabla comprimida a lista operativa. */

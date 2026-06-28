@@ -1369,24 +1369,36 @@ watch(
 <template>
   <div class="page a-nw-page">
     <APageHead title="Patrimonio">
-      <template #meta>
+      <template v-if="asOfLabel !== 'Hoy' || valueMode === 'real'" #meta>
         <AMetaPill v-if="asOfLabel !== 'Hoy'">{{ asOfLabel }}</AMetaPill>
         <span v-if="asOfLabel !== 'Hoy' && valueMode === 'real'" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
-        <span
-          v-if="(asOfLabel !== 'Hoy' || valueMode === 'real') && archivedItemsCount"
-          class="dot"
-        ></span>
-        <AButton
-          v-if="archivedItemsCount"
-          variant="ghost"
-          class="a-nw-archived-trigger"
-          @click="showArchivedModal = true"
-        >
-          <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
-        </AButton>
       </template>
     </APageHead>
+
+    <AButton
+      v-if="archivedItemsCount"
+      variant="ghost"
+      class="a-nw-archived-trigger"
+      @click="showArchivedModal = true"
+    >
+      <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
+    </AButton>
+
+    <nav class="a-nw-tabs-bar" aria-label="Secciones de patrimonio">
+      <div class="tabs">
+        <button
+          v-for="tab in netWorthTabOptions"
+          :key="tab.id"
+          class="tab"
+          type="button"
+          :class="{ on: activeNetWorthTab === tab.id }"
+          @click="setNetWorthTab(tab.id)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+    </nav>
 
     <AContextBar class="a-nw-read-controls" aria-label="Opciones de lectura de patrimonio">
       <label class="context-field a-nw-control-chip" data-test="ownership-filter">
@@ -1438,21 +1450,6 @@ watch(
         </span>
       </div>
     </AContextBar>
-
-    <nav class="a-nw-tabs-bar" aria-label="Secciones de patrimonio">
-      <div class="tabs">
-        <button
-          v-for="tab in netWorthTabOptions"
-          :key="tab.id"
-          class="tab"
-          type="button"
-          :class="{ on: activeNetWorthTab === tab.id }"
-          @click="setNetWorthTab(tab.id)"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-    </nav>
 
     <section v-if="activeNetWorthTab === 'general'" class="sect">
       <div class="hero">
