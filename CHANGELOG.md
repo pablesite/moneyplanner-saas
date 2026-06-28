@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.33.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.32.0...moneyplanner-saas-v0.33.0) (2026-06-28)
+
+
+### Features
+
+* **frontend:** add mobile bottom navigation ([1167ad1](https://github.com/pablesite/moneyplanner-saas/commit/1167ad185ff60bbbf8ad85d151341c184591bcaf))
+* **frontend:** add net worth section tabs ([fa89ce5](https://github.com/pablesite/moneyplanner-saas/commit/fa89ce5ce85c17f886120d069ed083ceefb6bf53))
+* **frontend:** clarify net worth comparison metrics ([df543cf](https://github.com/pablesite/moneyplanner-saas/commit/df543cf95bd336c7d9cfe19c3895234290197db4))
+* **frontend:** explain net worth hero metrics ([9afb080](https://github.com/pablesite/moneyplanner-saas/commit/9afb0807ffb359367cc8966d285e20cb57d61a53))
+* **frontend:** improve mobile net worth balance ([4bff832](https://github.com/pablesite/moneyplanner-saas/commit/4bff83220b0123b6a09a2f3704293fd22b75b410))
+* **frontend:** polish net worth detail actions ([b024b4c](https://github.com/pablesite/moneyplanner-saas/commit/b024b4cb2e06bbe7803685084b2653b8085e4cf5))
+* **frontend:** refine mobile net worth detail ([d38363b](https://github.com/pablesite/moneyplanner-saas/commit/d38363b1ff129b9de2e547ebf2163fed1ec9b3d3))
+* **frontend:** simplify net worth general overview ([0971270](https://github.com/pablesite/moneyplanner-saas/commit/097127070b18159b88311bb8aa76702ea5d8bca7))
+* **frontend:** streamline net worth overview ([2ad1ef8](https://github.com/pablesite/moneyplanner-saas/commit/2ad1ef8a999f90ec29aa374f7cad360067e0dafe))
+* **frontend:** use core net worth comparison baselines ([23875b2](https://github.com/pablesite/moneyplanner-saas/commit/23875b25f29bd55414feea72961eb0f0bb4220bb))
+
+
+### Bug Fixes
+
+* **frontend:** accent active net worth selectors ([dfae3ed](https://github.com/pablesite/moneyplanner-saas/commit/dfae3edb066cf2b253d71886b5badd337513332f))
+* **frontend:** align net worth mobile controls ([1297013](https://github.com/pablesite/moneyplanner-saas/commit/1297013ff175b027252d761f3c9c56f44165794d))
+* **frontend:** clarify net worth evolution selectors ([8f261e0](https://github.com/pablesite/moneyplanner-saas/commit/8f261e09a03b36d8678bbe0cca4e7d99055bf7d0))
+* **frontend:** clarify net worth kpi comparisons ([2187a3e](https://github.com/pablesite/moneyplanner-saas/commit/2187a3e259834ae59f45a451ae64c1182ebafaa1))
+* **frontend:** compact net worth header controls ([b9c4d3b](https://github.com/pablesite/moneyplanner-saas/commit/b9c4d3b90b033ed67352526438fe7af5de38c7a0))
+* **frontend:** compact net worth overview spacing ([20a7a69](https://github.com/pablesite/moneyplanner-saas/commit/20a7a6950255b45d4c5b691d081def25a7e6afcf))
+* **frontend:** improve net worth evolution layout ([c79e881](https://github.com/pablesite/moneyplanner-saas/commit/c79e881e3568df48b34a5b72835c65927ea7db5e))
+* **frontend:** refine net worth mobile kpis ([6fcc1ab](https://github.com/pablesite/moneyplanner-saas/commit/6fcc1ab5eab12f85c6c570f6112a9ad0f13aa966))
+* **frontend:** remove mobile shell footer gap ([767c4fd](https://github.com/pablesite/moneyplanner-saas/commit/767c4fd9a30323ef80c367cf7cf71a88058b02dc))
+* **frontend:** remove redundant net worth header metadata ([6232ed6](https://github.com/pablesite/moneyplanner-saas/commit/6232ed692b735bd100da4ad20a25359f96990402))
+* **frontend:** scope net worth comparison kpis ([de7d43e](https://github.com/pablesite/moneyplanner-saas/commit/de7d43e8a65c6ea3e98153d17a7db2a751170188))
+* **frontend:** show active net worth tab indicator ([be01bb0](https://github.com/pablesite/moneyplanner-saas/commit/be01bb0bbec9a040950966dec4918aa205c0fb70))
+* **frontend:** show brand logo in app shell ([81362ad](https://github.com/pablesite/moneyplanner-saas/commit/81362ad401070aea1ed51c6e0ff378d93431014a))
+* **frontend:** simplify net worth evolution controls ([54f9b3e](https://github.com/pablesite/moneyplanner-saas/commit/54f9b3ef4bf0b5f3a385c2865895bacf7cdf54de))
+* **frontend:** tighten net worth equity spacing ([8e9ec99](https://github.com/pablesite/moneyplanner-saas/commit/8e9ec991c19bd48b303e8d8fea9e1e3e40c8c869))
+* **frontend:** tighten net worth mobile spacing ([a9d8542](https://github.com/pablesite/moneyplanner-saas/commit/a9d85420cdaf6bdb0ba60ecaf88ee5d823e70d2e))
+
 ## [0.32.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.31.0...moneyplanner-saas-v0.32.0) (2026-06-27)
 
 
