@@ -147,6 +147,11 @@
   align-items: center;
 }
 
+.a-nw-page .seg button.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .a-nw-context-note {
   font-size: 11px;
   color: var(--faint);
@@ -195,7 +200,7 @@
 }
 
 .a-nw-page .tab.on {
-  color: var(--text);
+  color: var(--accent);
 }
 
 .a-nw-page .tab.on::after {
