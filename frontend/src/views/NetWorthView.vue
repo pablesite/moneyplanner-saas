@@ -456,6 +456,7 @@ type NetWorthComparison = {
   value: number;
   pct: number | null;
   baselineLabel: string;
+  baselineDate: string;
 };
 
 const {
@@ -532,7 +533,16 @@ function comparisonFromBaseline(baseline: TimelinePoint | null): NetWorthCompari
   if (!baseline) return null;
   const value = analysis.value.netWorth - baseline.netWorth;
   const pct = baseline.netWorth !== 0 ? value / Math.abs(baseline.netWorth) : null;
-  return { value, pct, baselineLabel: baseline.label };
+  return { value, pct, baselineLabel: baseline.label, baselineDate: baseline.date };
+}
+
+function formatComparisonDateLabel(date: string | Date | null, includeYear = false): string {
+  if (!date) return 'fecha equivalente';
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    ...(includeYear ? { year: 'numeric' } : {}),
+  }).format(date instanceof Date ? date : parseDate(date));
 }
 
 function comparisonPointToTimelinePoint(
@@ -579,6 +589,12 @@ const sameDayPreviousMonthDelta = computed(() =>
     ) ?? exactPoint(sameDayMonthsAgo(currentComparisonDate.value, 1)),
   ),
 );
+const sameDayPreviousMonthLabel = computed(() => {
+  const target =
+    sameDayPreviousMonthDelta.value?.baselineDate ??
+    sameDayMonthsAgo(currentComparisonDate.value, 1);
+  return `vs ${formatComparisonDateLabel(target)}`;
+});
 const previousYearCloseDelta = computed(() =>
   comparisonFromBaseline(
     comparisonPointToTimelinePoint(globalTimelineComparisons.value?.previous_year_close ?? null) ??
@@ -592,6 +608,16 @@ const sameDayPreviousYearDelta = computed(() =>
     ) ?? exactPoint(sameDayYearsAgo(currentComparisonDate.value, 1)),
   ),
 );
+const sameDayPreviousYearLabel = computed(() => {
+  const target =
+    sameDayPreviousYearDelta.value?.baselineDate ?? sameDayYearsAgo(currentComparisonDate.value, 1);
+  return `vs ${formatComparisonDateLabel(target, true)}`;
+});
+const equityRatioPercent = computed(() => {
+  const ratio = analysis.value.equityRatio;
+  if (typeof ratio !== 'number' || !Number.isFinite(ratio)) return 0;
+  return Math.max(0, Math.min(100, ratio * 100));
+});
 
 function ownershipBadgeForRow(row: PositionRow): string | null {
   return ownershipBadge(sourceItemForRow(row)?.ownership_ref);
@@ -1405,88 +1431,23 @@ watch(
             </template>
             <template #delta>
               <div class="hero-delta-grid">
-                <section class="hero-delta-group">
-                  <h3>
-                    Mes
-                    <AInfoHint label="Cómo se calcula el cambio mensual">
-                      Compara tu patrimonio actual contra dos referencias mensuales: el último
-                      cierre mensual disponible y, si existe histórico diario, el mismo día del mes
-                      anterior.
-                    </AInfoHint>
-                  </h3>
-                  <div class="hero-delta-row">
-                    <span>Cierre anterior</span>
-                    <strong
-                      v-if="previousMonthCloseDelta"
-                      :class="previousMonthCloseDelta.value >= 0 ? 'pos mono' : 'neg mono'"
-                    >
-                      {{ previousMonthCloseDelta.value > 0 ? '+' : ''
-                      }}{{ formatNumber(previousMonthCloseDelta.value, 0) }} {{ heroUnitLabel }}
-                      <small v-if="previousMonthCloseDelta.pct !== null">
-                        ({{ previousMonthCloseDelta.value > 0 ? '+' : ''
-                        }}{{ formatPct(previousMonthCloseDelta.pct, 1) }})
-                      </small>
-                    </strong>
-                    <strong v-else class="hero-delta-empty">Sin cierre</strong>
-                  </div>
-                  <div class="hero-delta-row">
-                    <span>Mismo día</span>
-                    <strong
-                      v-if="sameDayPreviousMonthDelta"
-                      :class="sameDayPreviousMonthDelta.value >= 0 ? 'pos mono' : 'neg mono'"
-                    >
-                      {{ sameDayPreviousMonthDelta.value > 0 ? '+' : ''
-                      }}{{ formatNumber(sameDayPreviousMonthDelta.value, 0) }} {{ heroUnitLabel }}
-                      <small v-if="sameDayPreviousMonthDelta.pct !== null">
-                        ({{ sameDayPreviousMonthDelta.value > 0 ? '+' : ''
-                        }}{{ formatPct(sameDayPreviousMonthDelta.pct, 1) }})
-                      </small>
-                    </strong>
-                    <strong v-else class="hero-delta-empty">Sin histórico diario</strong>
-                  </div>
-                </section>
+                <div
+                  v-if="sameDayPreviousYearDelta"
+                  class="hero-delta-summary"
+                  :class="sameDayPreviousYearDelta.value >= 0 ? 'pos' : 'neg'"
+                >
+                  <strong class="mono">
+                    {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
+                    }}{{ formatNumber(sameDayPreviousYearDelta.value, 0) }} {{ heroUnitLabel }}
+                  </strong>
+                  <span v-if="sameDayPreviousYearDelta.pct !== null" class="mono">
+                    {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
+                    }}{{ formatPct(sameDayPreviousYearDelta.pct, 1) }}
+                  </span>
+                  <span>este año</span>
+                </div>
 
-                <section class="hero-delta-group">
-                  <h3>
-                    Año
-                    <AInfoHint label="Cómo se calcula el año en curso">
-                      Compara tu patrimonio actual contra dos referencias anuales: el cierre del año
-                      anterior y, si existe histórico diario, el mismo día del año anterior.
-                    </AInfoHint>
-                  </h3>
-                  <div class="hero-delta-row">
-                    <span>Cierre anterior</span>
-                    <strong
-                      v-if="previousYearCloseDelta"
-                      :class="previousYearCloseDelta.value >= 0 ? 'pos mono' : 'neg mono'"
-                    >
-                      {{ previousYearCloseDelta.value > 0 ? '+' : ''
-                      }}{{ formatNumber(previousYearCloseDelta.value, 0) }} {{ heroUnitLabel }}
-                      <small v-if="previousYearCloseDelta.pct !== null">
-                        ({{ previousYearCloseDelta.value > 0 ? '+' : ''
-                        }}{{ formatPct(previousYearCloseDelta.pct, 1) }})
-                      </small>
-                    </strong>
-                    <strong v-else class="hero-delta-empty">Sin cierre</strong>
-                  </div>
-                  <div class="hero-delta-row">
-                    <span>Mismo día</span>
-                    <strong
-                      v-if="sameDayPreviousYearDelta"
-                      :class="sameDayPreviousYearDelta.value >= 0 ? 'pos mono' : 'neg mono'"
-                    >
-                      {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
-                      }}{{ formatNumber(sameDayPreviousYearDelta.value, 0) }} {{ heroUnitLabel }}
-                      <small v-if="sameDayPreviousYearDelta.pct !== null">
-                        ({{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
-                        }}{{ formatPct(sameDayPreviousYearDelta.pct, 1) }})
-                      </small>
-                    </strong>
-                    <strong v-else class="hero-delta-empty">Sin histórico diario</strong>
-                  </div>
-                </section>
-
-                <div class="hero-delta-row">
+                <div class="hero-equity-chip">
                   <span class="hero-delta-label">
                     Capital propio
                     <AInfoHint label="Cómo se calcula el capital propio">
@@ -1495,7 +1456,95 @@ watch(
                       está financiado por deuda.
                     </AInfoHint>
                   </span>
+                  <progress
+                    class="hero-equity-meter"
+                    :value="equityRatioPercent"
+                    max="100"
+                    aria-label="Capital propio"
+                  />
                   <strong class="mono">{{ formatPct(analysis.equityRatio, 0) }}</strong>
+                </div>
+
+                <div class="hero-comparison-grid">
+                  <section class="hero-delta-group">
+                    <h3>
+                      Mes
+                      <AInfoHint label="Cómo se calcula el cambio mensual">
+                        Compara tu patrimonio actual contra el último cierre mensual disponible y,
+                        si existe histórico diario, contra la fecha equivalente del mes anterior.
+                      </AInfoHint>
+                    </h3>
+                    <div class="hero-delta-row">
+                      <span>vs cierre anterior</span>
+                      <strong
+                        v-if="previousMonthCloseDelta"
+                        :class="previousMonthCloseDelta.value >= 0 ? 'pos mono' : 'neg mono'"
+                      >
+                        {{ previousMonthCloseDelta.value > 0 ? '+' : ''
+                        }}{{ formatNumber(previousMonthCloseDelta.value, 0) }} {{ heroUnitLabel }}
+                        <small v-if="previousMonthCloseDelta.pct !== null">
+                          {{ previousMonthCloseDelta.value > 0 ? '+' : ''
+                          }}{{ formatPct(previousMonthCloseDelta.pct, 1) }}
+                        </small>
+                      </strong>
+                      <strong v-else class="hero-delta-empty">Sin cierre</strong>
+                    </div>
+                    <div class="hero-delta-row">
+                      <span>{{ sameDayPreviousMonthLabel }}</span>
+                      <strong
+                        v-if="sameDayPreviousMonthDelta"
+                        :class="sameDayPreviousMonthDelta.value >= 0 ? 'pos mono' : 'neg mono'"
+                      >
+                        {{ sameDayPreviousMonthDelta.value > 0 ? '+' : ''
+                        }}{{ formatNumber(sameDayPreviousMonthDelta.value, 0) }} {{ heroUnitLabel }}
+                        <small v-if="sameDayPreviousMonthDelta.pct !== null">
+                          {{ sameDayPreviousMonthDelta.value > 0 ? '+' : ''
+                          }}{{ formatPct(sameDayPreviousMonthDelta.pct, 1) }}
+                        </small>
+                      </strong>
+                      <strong v-else class="hero-delta-empty">Sin histórico diario</strong>
+                    </div>
+                  </section>
+
+                  <section class="hero-delta-group">
+                    <h3>
+                      Año
+                      <AInfoHint label="Cómo se calcula el año en curso">
+                        Compara tu patrimonio actual contra el cierre del año anterior y, si existe
+                        histórico diario, contra la fecha equivalente del año anterior.
+                      </AInfoHint>
+                    </h3>
+                    <div class="hero-delta-row">
+                      <span>vs cierre anterior</span>
+                      <strong
+                        v-if="previousYearCloseDelta"
+                        :class="previousYearCloseDelta.value >= 0 ? 'pos mono' : 'neg mono'"
+                      >
+                        {{ previousYearCloseDelta.value > 0 ? '+' : ''
+                        }}{{ formatNumber(previousYearCloseDelta.value, 0) }} {{ heroUnitLabel }}
+                        <small v-if="previousYearCloseDelta.pct !== null">
+                          {{ previousYearCloseDelta.value > 0 ? '+' : ''
+                          }}{{ formatPct(previousYearCloseDelta.pct, 1) }}
+                        </small>
+                      </strong>
+                      <strong v-else class="hero-delta-empty">Sin cierre</strong>
+                    </div>
+                    <div class="hero-delta-row">
+                      <span>{{ sameDayPreviousYearLabel }}</span>
+                      <strong
+                        v-if="sameDayPreviousYearDelta"
+                        :class="sameDayPreviousYearDelta.value >= 0 ? 'pos mono' : 'neg mono'"
+                      >
+                        {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
+                        }}{{ formatNumber(sameDayPreviousYearDelta.value, 0) }} {{ heroUnitLabel }}
+                        <small v-if="sameDayPreviousYearDelta.pct !== null">
+                          {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
+                          }}{{ formatPct(sameDayPreviousYearDelta.pct, 1) }}
+                        </small>
+                      </strong>
+                      <strong v-else class="hero-delta-empty">Sin histórico diario</strong>
+                    </div>
+                  </section>
                 </div>
               </div>
             </template>

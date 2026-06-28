@@ -239,8 +239,83 @@
 
 .hero-delta-grid {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   margin-top: 14px;
+}
+
+.hero-delta-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hero-delta-summary strong {
+  font-weight: 700;
+}
+
+.hero-delta-summary.pos strong,
+.hero-delta-summary.pos .mono {
+  color: var(--pos);
+}
+
+.hero-delta-summary.neg strong,
+.hero-delta-summary.neg .mono {
+  color: var(--neg);
+}
+
+.hero-equity-chip {
+  display: grid;
+  grid-template-columns: auto minmax(64px, 96px) auto;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hero-equity-chip strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.hero-equity-meter {
+  height: 5px;
+  width: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--line-strong) 40%, transparent);
+  appearance: none;
+}
+
+.hero-equity-meter::-webkit-progress-bar {
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--line-strong) 40%, transparent);
+}
+
+.hero-equity-meter::-webkit-progress-value {
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.hero-equity-meter::-moz-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.hero-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 18px 24px;
+  align-items: start;
 }
 
 .hero-delta-group {
@@ -261,7 +336,8 @@
 }
 
 .hero-delta-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(118px, 1fr) auto;
   align-items: baseline;
   gap: 10px;
   color: var(--muted);
@@ -275,11 +351,13 @@
 }
 
 .hero-delta-row > span:first-child {
-  min-width: 112px;
+  min-width: 0;
 }
 
 .hero-delta-row strong {
   font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .hero-delta-empty {
@@ -288,8 +366,12 @@
 }
 
 .hero-delta-row small {
-  margin-left: 4px;
+  display: inline-block;
+  min-width: 48px;
+  margin-left: 8px;
   font: inherit;
+  color: currentColor;
+  opacity: 0.86;
 }
 
 .a-nw-chart-stack,
@@ -889,6 +971,10 @@
     gap: 24px;
   }
 
+  .hero-comparison-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .hero-breakdown,
   .a-nw-range-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -954,6 +1040,30 @@
 
   .hero .hero-value {
     font-size: 38px;
+  }
+
+  .hero-equity-chip {
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+    border-radius: 8px;
+  }
+
+  .hero-equity-meter {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .hero-delta-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .hero-delta-row strong {
+    text-align: left;
+  }
+
+  .hero-delta-row small {
+    min-width: 0;
   }
 
   .hero-kpis {
