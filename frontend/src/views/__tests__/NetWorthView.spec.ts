@@ -351,6 +351,7 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('01 ene 2026');
     expect(wrapper.text()).toContain('750,00€');
     expect(wrapper.text()).toContain('1.000,00 €');
+    expect(wrapper.text()).not.toContain('Base EUR');
     expect(wrapper.text()).not.toContain('+ Añadir cuenta');
   });
 
@@ -439,6 +440,7 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
+    expect(wrapper.text()).not.toContain('Hoy');
     expect(wrapper.find('.a-nw-mobile-create').exists()).toBe(false);
 
     await openTab(wrapper, 'Balance');

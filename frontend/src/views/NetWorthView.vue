@@ -1311,12 +1311,13 @@ watch(
   <div class="page a-nw-page">
     <APageHead title="Patrimonio">
       <template #meta>
-        <AMetaPill>{{ asOfLabel }}</AMetaPill>
-        <span class="dot"></span>
-        <span>{{ store.baseCurrency ?? 'EUR' }}</span>
-        <span v-if="valueMode === 'real'" class="dot"></span>
+        <AMetaPill v-if="asOfLabel !== 'Hoy'">{{ asOfLabel }}</AMetaPill>
+        <span v-if="asOfLabel !== 'Hoy' && valueMode === 'real'" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
-        <span v-if="archivedItemsCount" class="dot"></span>
+        <span
+          v-if="(asOfLabel !== 'Hoy' || valueMode === 'real') && archivedItemsCount"
+          class="dot"
+        ></span>
         <AButton
           v-if="archivedItemsCount"
           variant="ghost"
