@@ -347,6 +347,15 @@ const timelineExpanded = ref(false);
 const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | '5a' | 'all'>('5a');
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
 const timelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
+const timelineScopeOptions = [
+  { value: 'total', label: 'Total' },
+  { value: 'operational', label: 'Operativo' },
+  { value: 'custom', label: 'Personalizado' },
+] as const;
+const timelineGranularityOptions = [
+  { value: 'monthly', label: 'Mensual' },
+  { value: 'daily', label: 'Diaria' },
+] as const;
 const activeTimelinePreset = computed(() => selectedTimelinePreset.value);
 type NetWorthTab = 'general' | 'evolution' | 'balance';
 const netWorthTabOptions: { id: NetWorthTab; label: string }[] = [
@@ -1292,13 +1301,6 @@ const activeEvolutionPresetLabel = computed(() => {
 function timelinePresetLabel(preset: (typeof timelinePresetOptions)[number]): string {
   return preset === 'all' ? 'Todo' : preset;
 }
-const activeEvolutionInsight = computed(() => {
-  const points = activeEvolutionPoints.value;
-  if (!points.length) return null;
-  const max = points.reduce((best, point) => (point.value > best.value ? point : best), points[0]!);
-  const min = points.reduce((best, point) => (point.value < best.value ? point : best), points[0]!);
-  return { max, min };
-});
 const activeEvolutionLabel = computed(() =>
   timelineGranularity.value === 'daily'
     ? `Saldo contable · ${timelineScopeLabel.value}`
@@ -1324,11 +1326,6 @@ function toggleCustomPosition(key: string): void {
   customTimelinePositionKeys.value = customTimelinePositionKeys.value.includes(key)
     ? customTimelinePositionKeys.value.filter((value) => value !== key)
     : [...customTimelinePositionKeys.value, key];
-}
-function useOnlyAccountingPositions(): void {
-  customTimelinePositionKeys.value = accountingScopePositions.value.map((position) => position.key);
-  timelineScope.value = 'custom';
-  timelineGranularity.value = 'daily';
 }
 
 watch(
@@ -1649,21 +1646,6 @@ watch(
         No hay historial suficiente para la selección actual.
       </AState>
       <div v-else class="a-nw-evolution-stack">
-        <header class="a-nw-evolution-head">
-          <div class="a-nw-evolution-title">
-            <span class="a-nw-chart-label">Evolución</span>
-            <AInfoHint label="Sobre la evolución">Patrimonio neto en el tiempo.</AInfoHint>
-          </div>
-          <AButton
-            v-if="activeEvolutionPoints.length > 1"
-            variant="ghost"
-            class="a-nw-evolution-expand"
-            @click="timelineExpanded = true"
-          >
-            Ampliar
-          </AButton>
-        </header>
-
         <div class="a-nw-evolution-summary">
           <div>
             <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
@@ -1701,87 +1683,83 @@ watch(
           />
         </div>
 
+        <AButton
+          v-if="activeEvolutionPoints.length > 1"
+          variant="ghost"
+          class="a-nw-evolution-expand"
+          @click="timelineExpanded = true"
+        >
+          Ampliar
+        </AButton>
+
         <div class="a-nw-evolution-controls">
-          <div class="seg a-nw-scope-seg" aria-label="Ámbito de evolución">
-            <AButton :class="{ on: timelineScope === 'total' }" @click="setTimelineScope('total')"
-              >Total</AButton
-            >
+          <div class="a-nw-dot-control">
+            <span>Ámbito</span>
+            <strong>{{ timelineScopeLabel }}</strong>
+            <div class="a-nw-control-dots" aria-label="Ámbito de evolución">
+              <button
+                v-for="option in timelineScopeOptions"
+                :key="option.value"
+                type="button"
+                class="a-nw-control-dot"
+                :class="{ 'is-active': timelineScope === option.value }"
+                :aria-label="option.label"
+                :aria-pressed="timelineScope === option.value"
+                @click="setTimelineScope(option.value)"
+              />
+            </div>
             <AButton
-              :class="{ on: timelineScope === 'operational' }"
-              @click="setTimelineScope('operational')"
-              >Operativo</AButton
-            >
-            <AButton :class="{ on: timelineScope === 'custom' }" @click="setTimelineScope('custom')"
-              >Personalizado</AButton
+              v-if="timelineScope === 'custom'"
+              variant="ghost"
+              class="a-nw-dot-action"
+              @click="showTimelineScopeModal = true"
+              >Configurar</AButton
             >
           </div>
-          <AButton
-            v-if="timelineScope === 'custom'"
-            variant="ghost"
-            @click="showTimelineScopeModal = true"
-            >Configurar</AButton
-          >
-          <div class="seg" aria-label="Granularidad de evolución">
-            <AButton
-              :class="{ on: timelineGranularity === 'monthly' }"
-              @click="setTimelineGranularity('monthly')"
-              >Mensual</AButton
-            >
-            <AButton
-              :class="{ on: timelineGranularity === 'daily' }"
-              :disabled="!dailyTimelineAvailable"
-              @click="setTimelineGranularity('daily')"
-              >Diaria</AButton
-            >
+          <div class="a-nw-dot-control">
+            <span>Detalle</span>
+            <strong>{{ timelineGranularity === 'monthly' ? 'Mensual' : 'Diaria' }}</strong>
+            <div class="a-nw-control-dots" aria-label="Granularidad de evolución">
+              <button
+                v-for="option in timelineGranularityOptions"
+                :key="option.value"
+                type="button"
+                class="a-nw-control-dot"
+                :class="{ 'is-active': timelineGranularity === option.value }"
+                :disabled="option.value === 'daily' && !dailyTimelineAvailable"
+                :aria-label="option.label"
+                :aria-pressed="timelineGranularity === option.value"
+                @click="setTimelineGranularity(option.value)"
+              />
+            </div>
           </div>
-          <div class="seg" aria-label="Rango de evolución">
-            <AButton
-              v-for="preset in timelinePresetOptions"
-              :key="preset"
-              :class="{ on: activeTimelinePreset === preset }"
-              @click="setTimelinePreset(preset)"
-            >
-              {{ timelinePresetLabel(preset) }}
-            </AButton>
+          <div class="a-nw-dot-control">
+            <span>Rango</span>
+            <strong>{{ timelinePresetLabel(activeTimelinePreset) }}</strong>
+            <div class="a-nw-control-dots" aria-label="Rango de evolución">
+              <button
+                v-for="preset in timelinePresetOptions"
+                :key="preset"
+                type="button"
+                class="a-nw-control-dot"
+                :class="{ 'is-active': activeTimelinePreset === preset }"
+                :aria-label="timelinePresetLabel(preset)"
+                :aria-pressed="activeTimelinePreset === preset"
+                @click="setTimelinePreset(preset)"
+              />
+            </div>
           </div>
           <AButton
             v-if="
               timelineFilterLabel && timelineScope === 'total' && timelineGranularity === 'monthly'
             "
             variant="ghost"
+            class="a-nw-dot-action a-nw-dot-action-wide"
             @click="resetTimelineSelection"
           >
             Quitar filtro
           </AButton>
         </div>
-
-        <div v-if="activeEvolutionInsight" class="a-nw-evolution-insights">
-          <span>
-            Máximo
-            <strong class="mono">
-              {{ formatNumber(activeEvolutionInsight.max.value, 0) }}
-              {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-            </strong>
-          </span>
-          <span>
-            Mínimo
-            <strong class="mono">
-              {{ formatNumber(activeEvolutionInsight.min.value, 0) }}
-              {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-            </strong>
-          </span>
-        </div>
-
-        <AState
-          v-if="timelineGranularity === 'monthly' && manualScopePositions.length"
-          status="empty"
-          layout="inline"
-        >
-          La vista mensual combina posiciones manuales y contables.
-          <AButton variant="ghost" @click="useOnlyAccountingPositions"
-            >Usar sólo posiciones contables</AButton
-          >
-        </AState>
       </div>
 
       <BaseModal
