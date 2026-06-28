@@ -388,6 +388,7 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('vs 1 de febrero');
     expect(wrapper.text()).toContain('vs 1 de enero de 2025');
     expect(wrapper.text()).not.toContain('Mismo día');
+    expect(wrapper.text()).not.toContain('este año');
     expect(wrapper.text()).toContain('+190 €');
     expect(wrapper.text()).toContain('+200 €');
     expect(wrapper.text()).toContain('+230 €');

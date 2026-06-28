@@ -243,72 +243,46 @@
   margin-top: 14px;
 }
 
-.hero-delta-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.hero-delta-summary strong {
-  font-weight: 700;
-}
-
-.hero-delta-summary.pos strong,
-.hero-delta-summary.pos .mono {
-  color: var(--pos);
-}
-
-.hero-delta-summary.neg strong,
-.hero-delta-summary.neg .mono {
-  color: var(--neg);
-}
-
 .hero-equity-chip {
   display: grid;
-  grid-template-columns: auto minmax(64px, 96px) auto;
+  grid-template-columns: auto minmax(56px, 84px) auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: fit-content;
   max-width: 100%;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
+  color: var(--faint);
   font-size: 12px;
 }
 
 .hero-equity-chip strong {
-  color: var(--text);
-  font-weight: 700;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .hero-equity-meter {
-  height: 5px;
+  height: 3px;
   width: 100%;
   overflow: hidden;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in oklab, var(--line-strong) 40%, transparent);
+  background: color-mix(in oklab, var(--line-strong) 26%, transparent);
   appearance: none;
 }
 
 .hero-equity-meter::-webkit-progress-bar {
   border-radius: inherit;
-  background: color-mix(in oklab, var(--line-strong) 40%, transparent);
+  background: color-mix(in oklab, var(--line-strong) 26%, transparent);
 }
 
 .hero-equity-meter::-webkit-progress-value {
   border-radius: inherit;
-  background: var(--accent);
+  background: color-mix(in oklab, var(--accent) 42%, var(--muted));
 }
 
 .hero-equity-meter::-moz-progress-bar {
   height: 100%;
   border-radius: inherit;
-  background: var(--accent);
+  background: color-mix(in oklab, var(--accent) 42%, var(--muted));
 }
 
 .hero-comparison-grid {
@@ -1035,7 +1009,8 @@
   .hero-top {
     flex-direction: column;
     align-items: stretch;
-    gap: 20px;
+    gap: 14px;
+    padding-bottom: 0;
   }
 
   .hero .hero-value {
@@ -1043,14 +1018,23 @@
   }
 
   .hero-equity-chip {
-    grid-template-columns: minmax(0, 1fr) auto;
-    width: 100%;
-    border-radius: 8px;
+    grid-template-columns: auto minmax(44px, 72px) auto;
+    width: fit-content;
   }
 
   .hero-equity-meter {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .a-nw-page .hero-breakdown {
+    flex: 0 0 auto;
+    gap: 14px;
+    padding-bottom: 0;
+  }
+
+  .a-nw-page .hero-comp-side {
+    gap: 0;
   }
 
   .hero-delta-row {

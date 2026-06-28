@@ -1431,22 +1431,6 @@ watch(
             </template>
             <template #delta>
               <div class="hero-delta-grid">
-                <div
-                  v-if="sameDayPreviousYearDelta"
-                  class="hero-delta-summary"
-                  :class="sameDayPreviousYearDelta.value >= 0 ? 'pos' : 'neg'"
-                >
-                  <strong class="mono">
-                    {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
-                    }}{{ formatNumber(sameDayPreviousYearDelta.value, 0) }} {{ heroUnitLabel }}
-                  </strong>
-                  <span v-if="sameDayPreviousYearDelta.pct !== null" class="mono">
-                    {{ sameDayPreviousYearDelta.value > 0 ? '+' : ''
-                    }}{{ formatPct(sameDayPreviousYearDelta.pct, 1) }}
-                  </span>
-                  <span>este año</span>
-                </div>
-
                 <div class="hero-equity-chip">
                   <span class="hero-delta-label">
                     Capital propio
