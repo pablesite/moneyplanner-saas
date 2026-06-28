@@ -308,6 +308,7 @@ export function useNetWorthTimeline(params: {
   });
 
   return {
+    activeTimelineRows,
     displayedTimelineLoading,
     visibleTimelineRows,
     timelineWindow,

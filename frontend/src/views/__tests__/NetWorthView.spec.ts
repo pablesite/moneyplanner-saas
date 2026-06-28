@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { defineComponent, reactive, ref } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import NetWorthView from '../NetWorthView.vue';
 
 const mockUseNetWorthViewState = vi.fn();
@@ -9,6 +9,10 @@ const mockUseNetWorthViewExtensions = vi.fn();
 const mockAnnualExpenseStore = {
   listBySourceLiability: vi.fn(async () => []),
 };
+const mockCoreNetWorthApi = vi.hoisted(() => ({
+  getAssetTimeline: vi.fn(),
+  getLiabilityTimeline: vi.fn(),
+}));
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ query: {} }),
@@ -27,6 +31,7 @@ vi.mock('@/domains/net-worth', () => ({
   NetWorthDeltaChart: makeStub('NetWorthDeltaChart'),
   NetWorthTimelineChart: makeStub('NetWorthTimelineChart'),
   NetWorthDonut: makeStub('NetWorthDonut'),
+  coreNetWorthApi: mockCoreNetWorthApi,
   useNetWorthViewState: () => mockUseNetWorthViewState(),
   useNetWorthViewExtensions: () => mockUseNetWorthViewExtensions(),
 }));
@@ -363,6 +368,8 @@ describe('NetWorthView', () => {
     mockUseNetWorthViewState.mockReset();
     mockUseNetWorthViewExtensions.mockReset();
     mockAnnualExpenseStore.listBySourceLiability.mockClear();
+    mockCoreNetWorthApi.getAssetTimeline.mockReset();
+    mockCoreNetWorthApi.getLiabilityTimeline.mockReset();
   });
 
   it('renders the direction-a sections and visible euro amounts', () => {
@@ -400,6 +407,108 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('1.000,00 €');
     expect(wrapper.text()).not.toContain('Base EUR');
     expect(wrapper.text()).not.toContain('+ Añadir cuenta');
+  });
+
+  it('calculates hero comparisons inside the selected ownership scope', async () => {
+    mockCoreNetWorthApi.getAssetTimeline.mockImplementation(async (id: number) => ({
+      data: {
+        rows:
+          id === 11
+            ? [
+                { date: '2026-02-28', value: '180', value_base: '180' },
+                { date: '2026-03-31', value: '200', value_base: '200' },
+              ]
+            : [
+                { date: '2026-02-28', value: '40', value_base: '40' },
+                { date: '2026-03-31', value: '50', value_base: '50' },
+              ],
+      },
+    }));
+    mockCoreNetWorthApi.getLiabilityTimeline.mockResolvedValue({
+      data: {
+        rows: [
+          { date: '2026-02-28', value: '90', value_base: '90' },
+          { date: '2026-03-31', value: '100', value_base: '100' },
+        ],
+      },
+    });
+
+    mockUseNetWorthViewState.mockReturnValue(
+      makeState({
+        store: {
+          ...makeState().store,
+          snapshots: [{ id: 5, snapshot_date: '2026-03-31' }],
+          assets: [
+            {
+              id: 11,
+              name: 'Cuenta compartida',
+              category: 'cash',
+              subcategory: 'bank_account',
+              amount: '200',
+              amount_base: '200',
+              currency: 'EUR',
+              is_active: true,
+              ownership_ref: 2,
+            },
+            {
+              id: 12,
+              name: 'Cuenta Pablo',
+              category: 'cash',
+              subcategory: 'bank_account',
+              amount: '50',
+              amount_base: '50',
+              currency: 'EUR',
+              is_active: true,
+              ownership_ref: 1,
+            },
+          ],
+          liabilities: [
+            {
+              id: 41,
+              name: 'Prestamo compartido',
+              category: 'mortgage',
+              amount: '100',
+              amount_base: '100',
+              currency: 'EUR',
+              is_active: true,
+              ownership_ref: 2,
+              financed_asset_ref: 11,
+            },
+          ],
+          ownerships: [
+            {
+              id: 1,
+              kind: 'individual',
+              member: { id: 7, name: 'Pablo', role: 'adult' },
+              splits: [],
+              notes: '',
+            },
+            {
+              id: 2,
+              kind: 'shared',
+              member: null,
+              splits: [
+                { member: { id: 7, name: 'Pablo', role: 'adult' }, percent: '50' },
+                { member: { id: 8, name: 'Ana', role: 'adult' }, percent: '50' },
+              ],
+              notes: '',
+            },
+          ],
+        },
+      }),
+    );
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await wrapper.get('[data-test="ownership-filter"] select').setValue('7');
+    await flushPromises();
+
+    expect(mockCoreNetWorthApi.getAssetTimeline).toHaveBeenCalledWith(11);
+    expect(mockCoreNetWorthApi.getAssetTimeline).toHaveBeenCalledWith(12);
+    expect(mockCoreNetWorthApi.getLiabilityTimeline).toHaveBeenCalledWith(41);
+    expect(wrapper.text()).toContain('100,00€');
+    expect(wrapper.text()).toContain('+15 €');
+    expect(wrapper.text()).not.toContain('-460 €');
   });
 
   it('recalculates the visible totals when ownership changes', async () => {

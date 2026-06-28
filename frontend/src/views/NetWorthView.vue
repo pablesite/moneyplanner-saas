@@ -560,15 +560,15 @@ function comparisonPointToTimelinePoint(
   };
 }
 
-function latestBefore(date: Date): TimelinePoint | null {
+function latestBefore(rows: TimelinePoint[], date: Date): TimelinePoint | null {
   const target = isoDate(date);
-  return [...globalTimelineRows.value].reverse().find((row) => row.date < target) ?? null;
+  return [...rows].reverse().find((row) => row.date < target) ?? null;
 }
 
-function exactPoint(date: Date | null): TimelinePoint | null {
+function exactPoint(rows: TimelinePoint[], date: Date | null): TimelinePoint | null {
   if (!date) return null;
   const target = isoDate(date);
-  return globalTimelineRows.value.find((row) => row.date === target) ?? null;
+  return rows.find((row) => row.date === target) ?? null;
 }
 
 const currentComparisonDate = computed(() => {
@@ -578,15 +578,22 @@ const currentComparisonDate = computed(() => {
 
 const previousMonthCloseDelta = computed(() =>
   comparisonFromBaseline(
-    comparisonPointToTimelinePoint(globalTimelineComparisons.value?.previous_month_close ?? null) ??
-      latestBefore(startOfMonth(currentComparisonDate.value)),
+    (ownershipFilter.value === 'all'
+      ? comparisonPointToTimelinePoint(
+          globalTimelineComparisons.value?.previous_month_close ?? null,
+        )
+      : null) ??
+      latestBefore(comparisonTimelineRows.value, startOfMonth(currentComparisonDate.value)),
   ),
 );
 const sameDayPreviousMonthDelta = computed(() =>
   comparisonFromBaseline(
-    comparisonPointToTimelinePoint(
-      globalTimelineComparisons.value?.same_day_previous_month ?? null,
-    ) ?? exactPoint(sameDayMonthsAgo(currentComparisonDate.value, 1)),
+    (ownershipFilter.value === 'all'
+      ? comparisonPointToTimelinePoint(
+          globalTimelineComparisons.value?.same_day_previous_month ?? null,
+        )
+      : null) ??
+      exactPoint(comparisonTimelineRows.value, sameDayMonthsAgo(currentComparisonDate.value, 1)),
   ),
 );
 const sameDayPreviousMonthLabel = computed(() => {
@@ -597,15 +604,20 @@ const sameDayPreviousMonthLabel = computed(() => {
 });
 const previousYearCloseDelta = computed(() =>
   comparisonFromBaseline(
-    comparisonPointToTimelinePoint(globalTimelineComparisons.value?.previous_year_close ?? null) ??
-      latestBefore(startOfYear(currentComparisonDate.value)),
+    (ownershipFilter.value === 'all'
+      ? comparisonPointToTimelinePoint(globalTimelineComparisons.value?.previous_year_close ?? null)
+      : null) ??
+      latestBefore(comparisonTimelineRows.value, startOfYear(currentComparisonDate.value)),
   ),
 );
 const sameDayPreviousYearDelta = computed(() =>
   comparisonFromBaseline(
-    comparisonPointToTimelinePoint(
-      globalTimelineComparisons.value?.same_day_previous_year ?? null,
-    ) ?? exactPoint(sameDayYearsAgo(currentComparisonDate.value, 1)),
+    (ownershipFilter.value === 'all'
+      ? comparisonPointToTimelinePoint(
+          globalTimelineComparisons.value?.same_day_previous_year ?? null,
+        )
+      : null) ??
+      exactPoint(comparisonTimelineRows.value, sameDayYearsAgo(currentComparisonDate.value, 1)),
   ),
 );
 const sameDayPreviousYearLabel = computed(() => {
@@ -960,6 +972,7 @@ function closeLiabilityModal(): void {
 }
 
 const {
+  activeTimelineRows,
   displayedTimelineLoading,
   visibleTimelineRows,
   timelineWindow,
@@ -990,6 +1003,9 @@ const {
   resetPositionSelection: clearPositionSelection,
   getTimelineMetricValue,
 });
+const comparisonTimelineRows = computed(() =>
+  ownershipFilter.value === 'all' ? globalTimelineRows.value : activeTimelineRows.value,
+);
 
 const {
   openCreateModal,
