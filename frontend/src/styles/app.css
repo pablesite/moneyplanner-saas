@@ -1320,7 +1320,6 @@ body {
 
   .ui-shell-content-stage {
     min-height: auto;
-    padding-bottom: calc(84px + env(safe-area-inset-bottom));
   }
 
   .ui-shell-footer {
