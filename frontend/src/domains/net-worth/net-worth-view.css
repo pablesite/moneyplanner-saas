@@ -251,7 +251,10 @@
   font-size: 13px;
 }
 
-.hero-delta-row > span {
+.hero-delta-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   min-width: 112px;
 }
 

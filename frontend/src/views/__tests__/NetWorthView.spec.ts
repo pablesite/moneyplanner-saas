@@ -83,6 +83,11 @@ vi.mock('@/domains/ui', () => ({
       </header>
     `,
   }),
+  AInfoHint: defineComponent({
+    name: 'AInfoHint',
+    props: { label: { type: String, required: false, default: '' } },
+    template: `<span class="info-hint"><slot /></span>`,
+  }),
   AContextBar: makeStub('AContextBar'),
   AMetaPill: makeStub('AMetaPill'),
   AState: makeStub('AState'),
@@ -346,6 +351,8 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Balance');
     expect(wrapper.text()).toContain('Cambio mensual');
     expect(wrapper.text()).toContain('Año en curso');
+    expect(wrapper.text()).toContain('Capital propio');
+    expect(wrapper.text()).toContain('patrimonio neto dividido entre activos totales');
     expect(wrapper.text()).toContain('01 ene 2026');
     expect(wrapper.text()).toContain('750,00€');
     expect(wrapper.text()).toContain('1.000,00 €');

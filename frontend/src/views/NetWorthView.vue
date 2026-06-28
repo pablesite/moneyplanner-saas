@@ -1326,7 +1326,13 @@ watch(
             <template #delta>
               <div class="hero-delta-list">
                 <div v-if="monthlyDelta" class="hero-delta-row">
-                  <span>Cambio mensual</span>
+                  <span class="hero-delta-label">
+                    Cambio mensual
+                    <AInfoHint label="Cómo se calcula el cambio mensual">
+                      Diferencia entre el último patrimonio neto mensual disponible y el mes
+                      anterior. El porcentaje usa el mes anterior como base.
+                    </AInfoHint>
+                  </span>
                   <strong :class="monthlyDelta.value >= 0 ? 'pos mono' : 'neg mono'">
                     {{ monthlyDelta.value > 0 ? '+' : '' }}{{ formatNumber(monthlyDelta.value, 0) }}
                     {{ heroUnitLabel }}
@@ -1336,11 +1342,23 @@ watch(
                   </strong>
                 </div>
                 <div v-else class="hero-delta-row">
-                  <span>Cambio mensual</span>
+                  <span class="hero-delta-label">
+                    Cambio mensual
+                    <AInfoHint label="Cómo se calcula el cambio mensual">
+                      Diferencia entre el último patrimonio neto mensual disponible y el mes
+                      anterior. El porcentaje usa el mes anterior como base.
+                    </AInfoHint>
+                  </span>
                   <strong>Sin comparativa</strong>
                 </div>
                 <div v-if="ytdDelta" class="hero-delta-row">
-                  <span>Año en curso</span>
+                  <span class="hero-delta-label">
+                    Año en curso
+                    <AInfoHint label="Cómo se calcula el año en curso">
+                      Diferencia entre el último patrimonio neto disponible y el primer punto del
+                      año actual. El porcentaje usa ese primer punto como base.
+                    </AInfoHint>
+                  </span>
                   <strong :class="ytdDelta.value >= 0 ? 'pos mono' : 'neg mono'">
                     {{ ytdDelta.value > 0 ? '+' : '' }}{{ formatNumber(ytdDelta.value, 0) }}
                     {{ heroUnitLabel }}
@@ -1348,6 +1366,17 @@ watch(
                       ({{ ytdDelta.value > 0 ? '+' : '' }}{{ formatPct(ytdDelta.pct, 1) }})
                     </small>
                   </strong>
+                </div>
+                <div class="hero-delta-row">
+                  <span class="hero-delta-label">
+                    Capital propio
+                    <AInfoHint label="Cómo se calcula el capital propio">
+                      Porcentaje de tus activos que queda cubierto por patrimonio neto: patrimonio
+                      neto dividido entre activos totales. Sirve para leer cuánto de tus activos no
+                      está financiado por deuda.
+                    </AInfoHint>
+                  </span>
+                  <strong class="mono">{{ formatPct(analysis.equityRatio, 0) }}</strong>
                 </div>
               </div>
             </template>
