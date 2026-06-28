@@ -1693,60 +1693,58 @@ watch(
         </AButton>
 
         <div class="a-nw-evolution-controls">
-          <div class="a-nw-dot-control">
+          <div class="a-nw-evolution-control-group">
             <span>Ámbito</span>
-            <strong>{{ timelineScopeLabel }}</strong>
-            <div class="a-nw-control-dots" aria-label="Ámbito de evolución">
-              <button
+            <div class="a-nw-evolution-mini-seg" aria-label="Ámbito de evolución">
+              <AButton
                 v-for="option in timelineScopeOptions"
                 :key="option.value"
-                type="button"
-                class="a-nw-control-dot"
-                :class="{ 'is-active': timelineScope === option.value }"
-                :aria-label="option.label"
-                :aria-pressed="timelineScope === option.value"
+                size="sm"
+                variant="ghost"
+                :class="{ on: timelineScope === option.value }"
                 @click="setTimelineScope(option.value)"
-              />
+              >
+                {{ option.label }}
+              </AButton>
             </div>
             <AButton
               v-if="timelineScope === 'custom'"
               variant="ghost"
-              class="a-nw-dot-action"
+              size="sm"
+              class="a-nw-evolution-inline-action"
               @click="showTimelineScopeModal = true"
               >Configurar</AButton
             >
           </div>
-          <div class="a-nw-dot-control">
+          <div class="a-nw-evolution-control-group">
             <span>Detalle</span>
-            <strong>{{ timelineGranularity === 'monthly' ? 'Mensual' : 'Diaria' }}</strong>
-            <div class="a-nw-control-dots" aria-label="Granularidad de evolución">
-              <button
+            <div class="a-nw-evolution-mini-seg" aria-label="Granularidad de evolución">
+              <AButton
                 v-for="option in timelineGranularityOptions"
                 :key="option.value"
-                type="button"
-                class="a-nw-control-dot"
-                :class="{ 'is-active': timelineGranularity === option.value }"
+                size="sm"
+                variant="ghost"
+                :class="{ on: timelineGranularity === option.value }"
                 :disabled="option.value === 'daily' && !dailyTimelineAvailable"
-                :aria-label="option.label"
-                :aria-pressed="timelineGranularity === option.value"
                 @click="setTimelineGranularity(option.value)"
-              />
+              >
+                {{ option.label }}
+              </AButton>
             </div>
           </div>
-          <div class="a-nw-dot-control">
+          <div class="a-nw-evolution-control-group">
             <span>Rango</span>
-            <strong>{{ timelinePresetLabel(activeTimelinePreset) }}</strong>
-            <div class="a-nw-control-dots" aria-label="Rango de evolución">
-              <button
+            <div class="a-nw-evolution-mini-seg" aria-label="Rango de evolución">
+              <AButton
                 v-for="preset in timelinePresetOptions"
                 :key="preset"
-                type="button"
-                class="a-nw-control-dot"
-                :class="{ 'is-active': activeTimelinePreset === preset }"
-                :aria-label="timelinePresetLabel(preset)"
-                :aria-pressed="activeTimelinePreset === preset"
+                size="sm"
+                variant="ghost"
+                :class="{ on: activeTimelinePreset === preset }"
                 @click="setTimelinePreset(preset)"
-              />
+              >
+                {{ timelinePresetLabel(preset) }}
+              </AButton>
             </div>
           </div>
           <AButton
@@ -1754,7 +1752,8 @@ watch(
               timelineFilterLabel && timelineScope === 'total' && timelineGranularity === 'monthly'
             "
             variant="ghost"
-            class="a-nw-dot-action a-nw-dot-action-wide"
+            size="sm"
+            class="a-nw-evolution-inline-action a-nw-evolution-inline-action-wide"
             @click="resetTimelineSelection"
           >
             Quitar filtro

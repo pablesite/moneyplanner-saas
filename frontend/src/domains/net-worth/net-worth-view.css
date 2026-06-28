@@ -422,22 +422,21 @@
 
 .a-nw-evolution-controls {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.82fr) minmax(0, 1.35fr);
   align-items: start;
   gap: 12px;
   padding-top: 4px;
 }
 
-.a-nw-dot-control {
+.a-nw-evolution-control-group {
   display: grid;
-  justify-items: center;
-  gap: 5px;
+  align-content: start;
+  gap: 6px;
   min-width: 0;
   color: var(--muted);
-  text-align: center;
 }
 
-.a-nw-dot-control > span {
+.a-nw-evolution-control-group > span {
   overflow: hidden;
   max-width: 100%;
   font-size: 10px;
@@ -448,77 +447,56 @@
   white-space: nowrap;
 }
 
-.a-nw-dot-control > strong {
-  overflow: hidden;
-  max-width: 100%;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.a-nw-control-dots {
+.a-nw-evolution-mini-seg {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  min-height: 14px;
+  gap: 4px;
 }
 
-.a-nw-control-dot {
-  width: 5px;
-  height: 5px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: var(--line-strong);
-  cursor: pointer;
-  transition:
-    width 0.18s ease,
-    background 0.18s ease,
-    opacity 0.18s ease;
+.a-nw-evolution-mini-seg .btn {
+  min-height: 26px;
+  padding: 4px 8px;
+  border-color: transparent;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+  line-height: 1.1;
 }
 
-.a-nw-control-dot.is-active {
-  width: 18px;
-  background: var(--text);
+.a-nw-evolution-mini-seg .btn:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
 }
 
-.a-nw-control-dot:disabled {
-  cursor: not-allowed;
-  opacity: 0.28;
+.a-nw-evolution-mini-seg .btn.on {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: var(--panel);
 }
 
-.a-nw-control-dot:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+.a-nw-evolution-mini-seg .btn:disabled {
+  opacity: 0.32;
 }
 
-.a-nw-dot-action {
+.a-nw-evolution-inline-action {
+  justify-self: start;
   min-height: 0;
-  padding: 2px 0 0;
+  padding: 0;
   border: 0;
   color: var(--muted);
   background: transparent;
   font-size: 12px;
 }
 
-.a-nw-dot-action:hover {
+.a-nw-evolution-inline-action:hover {
   color: var(--text);
   background: transparent;
 }
 
-.a-nw-dot-action-wide {
-  justify-self: center;
+.a-nw-evolution-inline-action-wide {
+  justify-self: start;
   grid-column: 1 / -1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .a-nw-control-dot {
-    transition: none;
-  }
 }
 
 .a-nw-chart-summary {
@@ -1238,11 +1216,26 @@
   }
 
   .a-nw-evolution-controls {
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
-  .a-nw-dot-control > strong {
-    font-size: 12px;
+  .a-nw-evolution-control-group {
+    gap: 5px;
+  }
+
+  .a-nw-evolution-mini-seg {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .a-nw-evolution-mini-seg::-webkit-scrollbar {
+    display: none;
+  }
+
+  .a-nw-evolution-mini-seg .btn {
+    flex: 0 0 auto;
   }
 
   /* Context bar: carril compacto de una línea; si no cabe, desplaza horizontal. */
