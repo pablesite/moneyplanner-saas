@@ -1319,7 +1319,7 @@ body {
   }
 
   .ui-shell-content-stage {
-    min-height: calc(100vh - 57px - 84px);
+    min-height: auto;
     padding-bottom: calc(84px + env(safe-area-inset-bottom));
   }
 

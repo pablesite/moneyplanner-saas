@@ -349,8 +349,10 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Patrimonio neto');
     expect(wrapper.text()).toContain('Evolución');
     expect(wrapper.text()).toContain('Balance');
-    expect(wrapper.text()).toContain('Cambio mensual');
-    expect(wrapper.text()).toContain('Año en curso');
+    expect(wrapper.text()).toContain('Mes');
+    expect(wrapper.text()).toContain('Año');
+    expect(wrapper.text()).toContain('Cierre anterior');
+    expect(wrapper.text()).toContain('Mismo día');
     expect(wrapper.text()).toContain('Capital propio');
     expect(wrapper.text()).toContain('patrimonio neto dividido entre activos totales');
     expect(wrapper.text()).toContain('01 ene 2026');

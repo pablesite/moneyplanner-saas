@@ -237,10 +237,27 @@
   margin-left: 8px;
 }
 
-.hero-delta-list {
+.hero-delta-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.hero-delta-group {
   display: grid;
   gap: 7px;
-  margin-top: 10px;
+}
+
+.hero-delta-group h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 1px;
+  color: var(--faint);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .hero-delta-row {
@@ -255,11 +272,19 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+.hero-delta-row > span:first-child {
   min-width: 112px;
 }
 
 .hero-delta-row strong {
   font-weight: 600;
+}
+
+.hero-delta-empty {
+  color: var(--faint);
+  font-family: inherit;
 }
 
 .hero-delta-row small {
