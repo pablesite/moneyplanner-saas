@@ -7,7 +7,11 @@ import {
   useNetWorthViewState,
 } from '@/domains/net-worth';
 import NetWorthItemModals from '@/domains/net-worth/components/NetWorthItemModals.vue';
-import type { NetWorthWritePayload } from '@/domains/net-worth/models';
+import type {
+  NetWorthWritePayload,
+  TimelineComparisonPoint,
+  TimelineComparisons,
+} from '@/domains/net-worth/models';
 import '@/domains/net-worth/net-worth-view.css';
 import { useNetWorthOwnership } from '@/domains/net-worth/useNetWorthOwnership';
 import {
@@ -436,10 +440,14 @@ const timelineRows = computed<TimelinePoint[]>(() =>
 );
 
 const globalTimelineRows = ref<TimelinePoint[]>([]);
+const globalTimelineComparisons = ref<TimelineComparisons | null>(null);
 watch(
   [timelineRows, selectedTimelineCategory],
   ([rows, cat]) => {
-    if (cat === null) globalTimelineRows.value = rows;
+    if (cat === null) {
+      globalTimelineRows.value = rows;
+      globalTimelineComparisons.value = store.timeline?.comparisons ?? null;
+    }
   },
   { immediate: true },
 );
@@ -527,6 +535,21 @@ function comparisonFromBaseline(baseline: TimelinePoint | null): NetWorthCompari
   return { value, pct, baselineLabel: baseline.label };
 }
 
+function comparisonPointToTimelinePoint(
+  point: TimelineComparisonPoint | null,
+): TimelinePoint | null {
+  if (!point) return null;
+  return {
+    date: point.date,
+    label: new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(
+      new Date(point.date),
+    ),
+    netWorth: toNumber(point.net_worth),
+    assets: toNumber(point.total_assets),
+    liabilities: toNumber(point.total_liabilities),
+  };
+}
+
 function latestBefore(date: Date): TimelinePoint | null {
   const target = isoDate(date);
   return [...globalTimelineRows.value].reverse().find((row) => row.date < target) ?? null;
@@ -544,16 +567,30 @@ const currentComparisonDate = computed(() => {
 });
 
 const previousMonthCloseDelta = computed(() =>
-  comparisonFromBaseline(latestBefore(startOfMonth(currentComparisonDate.value))),
+  comparisonFromBaseline(
+    comparisonPointToTimelinePoint(globalTimelineComparisons.value?.previous_month_close ?? null) ??
+      latestBefore(startOfMonth(currentComparisonDate.value)),
+  ),
 );
 const sameDayPreviousMonthDelta = computed(() =>
-  comparisonFromBaseline(exactPoint(sameDayMonthsAgo(currentComparisonDate.value, 1))),
+  comparisonFromBaseline(
+    comparisonPointToTimelinePoint(
+      globalTimelineComparisons.value?.same_day_previous_month ?? null,
+    ) ?? exactPoint(sameDayMonthsAgo(currentComparisonDate.value, 1)),
+  ),
 );
 const previousYearCloseDelta = computed(() =>
-  comparisonFromBaseline(latestBefore(startOfYear(currentComparisonDate.value))),
+  comparisonFromBaseline(
+    comparisonPointToTimelinePoint(globalTimelineComparisons.value?.previous_year_close ?? null) ??
+      latestBefore(startOfYear(currentComparisonDate.value)),
+  ),
 );
 const sameDayPreviousYearDelta = computed(() =>
-  comparisonFromBaseline(exactPoint(sameDayYearsAgo(currentComparisonDate.value, 1))),
+  comparisonFromBaseline(
+    comparisonPointToTimelinePoint(
+      globalTimelineComparisons.value?.same_day_previous_year ?? null,
+    ) ?? exactPoint(sameDayYearsAgo(currentComparisonDate.value, 1)),
+  ),
 );
 
 function ownershipBadgeForRow(row: PositionRow): string | null {

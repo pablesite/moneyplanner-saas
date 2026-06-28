@@ -234,7 +234,14 @@ function makeState(overrides: Record<string, unknown> = {}) {
     ],
     ownerships: [],
     timeline: {
+      group_by: 'month',
+      start_date: '2025-01-01',
+      end_date: '2026-03-31',
       base_currency: 'EUR',
+      filters: {
+        asset_category: null,
+        liability_category: null,
+      },
       rows: [
         { date: '2025-11-30', net_worth: '500', total_assets: '700', total_liabilities: '200' },
         { date: '2025-12-31', net_worth: '520', total_assets: '720', total_liabilities: '200' },
@@ -242,6 +249,32 @@ function makeState(overrides: Record<string, unknown> = {}) {
         { date: '2026-02-28', net_worth: '560', total_assets: '780', total_liabilities: '220' },
         { date: '2026-03-31', net_worth: '600', total_assets: '830', total_liabilities: '230' },
       ],
+      comparisons: {
+        previous_month_close: {
+          date: '2026-02-28',
+          net_worth: '560',
+          total_assets: '780',
+          total_liabilities: '220',
+        },
+        same_day_previous_month: {
+          date: '2026-02-01',
+          net_worth: '550',
+          total_assets: '770',
+          total_liabilities: '220',
+        },
+        previous_year_close: {
+          date: '2025-12-31',
+          net_worth: '520',
+          total_assets: '720',
+          total_liabilities: '200',
+        },
+        same_day_previous_year: {
+          date: '2025-01-01',
+          net_worth: '500',
+          total_assets: '700',
+          total_liabilities: '200',
+        },
+      },
     },
     timelineLoading: false,
     positionTimeline: {
@@ -353,6 +386,10 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Año');
     expect(wrapper.text()).toContain('Cierre anterior');
     expect(wrapper.text()).toContain('Mismo día');
+    expect(wrapper.text()).toContain('+190 €');
+    expect(wrapper.text()).toContain('+200 €');
+    expect(wrapper.text()).toContain('+230 €');
+    expect(wrapper.text()).toContain('+250 €');
     expect(wrapper.text()).toContain('Capital propio');
     expect(wrapper.text()).toContain('patrimonio neto dividido entre activos totales');
     expect(wrapper.text()).toContain('01 ene 2026');

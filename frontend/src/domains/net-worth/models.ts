@@ -123,6 +123,20 @@ export type TimelineFilters = {
   liability_category: string | null;
 };
 
+export type TimelineComparisonPoint = {
+  date: string;
+  total_assets: string;
+  total_liabilities: string;
+  net_worth: string;
+};
+
+export type TimelineComparisons = {
+  previous_month_close: TimelineComparisonPoint | null;
+  same_day_previous_month: TimelineComparisonPoint | null;
+  previous_year_close: TimelineComparisonPoint | null;
+  same_day_previous_year: TimelineComparisonPoint | null;
+};
+
 export type NetWorthTimeline = {
   group_by: 'month';
   start_date: string;
@@ -130,6 +144,8 @@ export type NetWorthTimeline = {
   base_currency: string;
   filters: TimelineFilters;
   rows: TimelineRow[];
+  comparisons?: TimelineComparisons;
+  prev_month_same_day?: TimelineComparisonPoint | null;
 };
 
 export type PositionTimelineRow = {
