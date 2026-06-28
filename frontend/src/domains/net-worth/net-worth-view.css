@@ -1,5 +1,6 @@
 .a-nw-page {
   position: relative;
+  gap: 20px;
 }
 
 /* Timeline scope and accounting granularity -------------------------------- */
@@ -77,7 +78,13 @@
   border: 0;
   color: var(--muted);
   font-size: inherit;
+  font-weight: inherit;
   background: transparent;
+}
+
+.a-nw-archived-trigger strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .a-nw-archived-trigger:hover {
@@ -91,7 +98,7 @@
   flex-wrap: nowrap;
   gap: 8px;
   margin-top: -18px;
-  margin-bottom: -8px;
+  margin-bottom: -14px;
   padding: 0 0 6px;
   overflow-x: auto;
   scrollbar-width: none;

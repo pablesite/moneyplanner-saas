@@ -1346,7 +1346,7 @@ watch(
           class="a-nw-archived-trigger"
           @click="showArchivedModal = true"
         >
-          {{ archivedItemsCount }} archivadas
+          <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
         </AButton>
       </template>
     </APageHead>

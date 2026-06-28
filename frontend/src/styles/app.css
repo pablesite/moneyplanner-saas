@@ -1323,6 +1323,7 @@ body {
   }
 
   .ui-shell-footer {
+    margin-top: 18px;
     margin-bottom: calc(76px + env(safe-area-inset-bottom));
   }
 
