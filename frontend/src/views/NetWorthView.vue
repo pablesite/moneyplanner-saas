@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
-  NetWorthDonut,
   NetWorthEvolutionChart,
   useNetWorthViewExtensions,
   useNetWorthViewState,
@@ -700,89 +699,6 @@ function buildHeroCompositionRows(kind: 'asset' | 'liability'): HeroCompositionR
 const heroAssetRows = computed(() => buildHeroCompositionRows('asset'));
 const heroLiabilityRows = computed(() => buildHeroCompositionRows('liability'));
 
-type ExecutiveSignalTone = 'positive' | 'negative' | 'neutral';
-type ExecutiveSignal = {
-  label: string;
-  value: string;
-  meta: string;
-  tone: ExecutiveSignalTone;
-};
-
-const largestAssetCategory = computed(
-  () => [...heroAssetRows.value].sort((a, b) => b.value - a.value)[0] ?? null,
-);
-const largestLiabilityPosition = computed(
-  () => [...allLiabilityPositionRows.value].sort((a, b) => b.value - a.value)[0] ?? null,
-);
-
-function signedDeltaLabel(delta: { value: number; pct: number | null }): string {
-  const sign = delta.value > 0 ? '+' : '';
-  return `${sign}${formatNumber(delta.value, 0)} ${heroUnitLabel.value}`;
-}
-
-function deltaTone(delta: { value: number }): ExecutiveSignalTone {
-  if (delta.value > 0) return 'positive';
-  if (delta.value < 0) return 'negative';
-  return 'neutral';
-}
-
-const executiveSignals = computed<ExecutiveSignal[]>(() => {
-  const topAsset = largestAssetCategory.value;
-  const topLiability = largestLiabilityPosition.value;
-  const month = monthlyDelta.value;
-  const year = ytdDelta.value;
-  return [
-    {
-      label: 'Mayor peso',
-      value: topAsset?.label ?? 'Sin activos',
-      meta: topAsset
-        ? `${formatNumber(topAsset.value, 0)} ${heroUnitLabel.value} · ${Math.round(topAsset.share * 100)}% de activos`
-        : 'Añade posiciones para ver composición',
-      tone: 'neutral',
-    },
-    {
-      label: 'Pasivo principal',
-      value: topLiability?.name ?? 'Sin pasivos',
-      meta: topLiability
-        ? `${formatNumber(topLiability.value, 0)} ${heroUnitLabel.value} · ${topLiability.subtitle}`
-        : 'Sin deuda activa en el filtro actual',
-      tone: topLiability ? 'negative' : 'positive',
-    },
-    month
-      ? {
-          label: 'Este mes',
-          value: signedDeltaLabel(month),
-          meta:
-            month.pct === null
-              ? 'Sin porcentaje comparable'
-              : `${month.pct > 0 ? '+' : ''}${formatPct(month.pct, 1)} frente al mes anterior`,
-          tone: deltaTone(month),
-        }
-      : {
-          label: 'Este mes',
-          value: 'Sin comparativa',
-          meta: 'Faltan cierres mensuales para comparar',
-          tone: 'neutral',
-        },
-    year
-      ? {
-          label: 'YTD',
-          value: signedDeltaLabel(year),
-          meta:
-            year.pct === null
-              ? 'Sin porcentaje comparable'
-              : `${year.pct > 0 ? '+' : ''}${formatPct(year.pct, 1)} desde inicio de año`,
-          tone: deltaTone(year),
-        }
-      : {
-          label: 'YTD',
-          value: 'Sin histórico',
-          meta: 'Aparecerá al tener más puntos del año',
-          tone: 'neutral',
-        },
-  ];
-});
-
 const assetCompositionHues = [148, 178, 210, 24, 80];
 const liabilityCompositionHues = [24, 345, 12, 45, 80];
 
@@ -1408,62 +1324,34 @@ watch(
               </button>
             </template>
             <template #delta>
-              <template v-if="monthlyDelta">
-                <span>
-                  <span :class="monthlyDelta.value >= 0 ? 'pos mono' : 'neg mono'">
+              <div class="hero-delta-list">
+                <div v-if="monthlyDelta" class="hero-delta-row">
+                  <span>Cambio mensual</span>
+                  <strong :class="monthlyDelta.value >= 0 ? 'pos mono' : 'neg mono'">
                     {{ monthlyDelta.value > 0 ? '+' : '' }}{{ formatNumber(monthlyDelta.value, 0) }}
                     {{ heroUnitLabel }}
-                  </span>
-                  <span
-                    v-if="monthlyDelta.pct !== null"
-                    :class="
-                      monthlyDelta.value >= 0
-                        ? 'pos mono hero-delta-pct'
-                        : 'neg mono hero-delta-pct'
-                    "
-                  >
-                    ({{ monthlyDelta.value > 0 ? '+' : '' }}{{ formatPct(monthlyDelta.pct, 1) }})
-                  </span>
-                  <span class="hero-delta-copy">este mes</span>
-                </span>
-              </template>
-              <template v-else>
-                <span>Sin comparativa mensual todavía</span>
-              </template>
-              <template v-if="ytdDelta">
-                <span class="hero-delta-sep">·</span>
-                <span>
-                  <span :class="ytdDelta.value >= 0 ? 'pos mono' : 'neg mono'">
+                    <small v-if="monthlyDelta.pct !== null">
+                      ({{ monthlyDelta.value > 0 ? '+' : '' }}{{ formatPct(monthlyDelta.pct, 1) }})
+                    </small>
+                  </strong>
+                </div>
+                <div v-else class="hero-delta-row">
+                  <span>Cambio mensual</span>
+                  <strong>Sin comparativa</strong>
+                </div>
+                <div v-if="ytdDelta" class="hero-delta-row">
+                  <span>Año en curso</span>
+                  <strong :class="ytdDelta.value >= 0 ? 'pos mono' : 'neg mono'">
                     {{ ytdDelta.value > 0 ? '+' : '' }}{{ formatNumber(ytdDelta.value, 0) }}
                     {{ heroUnitLabel }}
-                  </span>
-                  <span
-                    v-if="ytdDelta.pct !== null"
-                    :class="
-                      ytdDelta.value >= 0 ? 'pos mono hero-delta-pct' : 'neg mono hero-delta-pct'
-                    "
-                  >
-                    ({{ ytdDelta.value > 0 ? '+' : '' }}{{ formatPct(ytdDelta.pct, 1) }})
-                  </span>
-                  <span class="hero-delta-copy">YTD</span>
-                </span>
-              </template>
+                    <small v-if="ytdDelta.pct !== null">
+                      ({{ ytdDelta.value > 0 ? '+' : '' }}{{ formatPct(ytdDelta.pct, 1) }})
+                    </small>
+                  </strong>
+                </div>
+              </div>
             </template>
           </AHero>
-
-          <div class="hero-donut">
-            <NetWorthDonut
-              :total-assets="analysis.assets"
-              :total-liabilities="analysis.liabilities"
-              :asset-backed-liabilities="analysis.backedDebt"
-              :unbacked-liabilities="analysis.unbackedDebt"
-              :net-worth="analysis.netWorth"
-              :unit="heroUnitLabel"
-              :show-composition="false"
-              center-label="Capital propio"
-              :center-value="formatPct(analysis.equityRatio, 0)"
-            />
-          </div>
 
           <div class="hero-breakdown">
             <div class="hero-comp-side">
@@ -1527,19 +1415,6 @@ watch(
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="a-nw-executive-strip" aria-label="Lectura rápida de patrimonio">
-        <article
-          v-for="signal in executiveSignals"
-          :key="signal.label"
-          class="a-nw-executive-signal"
-          :class="`is-${signal.tone}`"
-        >
-          <span>{{ signal.label }}</span>
-          <strong>{{ signal.value }}</strong>
-          <small>{{ signal.meta }}</small>
-        </article>
       </div>
     </section>
 
