@@ -361,6 +361,105 @@
   gap: 18px;
 }
 
+.a-nw-evolution-section {
+  gap: 12px;
+}
+
+.a-nw-evolution-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.a-nw-evolution-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.a-nw-evolution-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.a-nw-evolution-expand {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+.a-nw-evolution-expand:hover {
+  color: var(--text);
+  background: transparent;
+}
+
+.a-nw-evolution-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.a-nw-evolution-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1.05;
+}
+
+.a-nw-evolution-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.a-nw-evolution-delta.pos .mono {
+  color: var(--pos);
+}
+
+.a-nw-evolution-delta.neg .mono {
+  color: var(--neg);
+}
+
+.a-nw-evolution-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.a-nw-evolution-insights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.a-nw-evolution-insights span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.a-nw-evolution-insights strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .a-nw-chart-summary {
   display: flex;
   align-items: flex-end;
@@ -1059,6 +1158,45 @@
 
   .hero-kpis {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .a-nw-evolution-section {
+    gap: 10px;
+  }
+
+  .a-nw-evolution-stack {
+    gap: 12px;
+  }
+
+  .a-nw-evolution-summary {
+    gap: 8px;
+  }
+
+  .a-nw-evolution-summary strong {
+    font-size: 22px;
+  }
+
+  .a-nw-evolution-controls {
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
+    margin-inline: -14px;
+    padding-inline: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .a-nw-evolution-controls::-webkit-scrollbar {
+    display: none;
+  }
+
+  .a-nw-evolution-controls .seg,
+  .a-nw-evolution-controls .btn {
+    flex: 0 0 auto;
+  }
+
+  .a-nw-evolution-insights {
+    gap: 8px 14px;
   }
 
   /* Context bar: carril compacto de una línea; si no cabe, desplaza horizontal. */
