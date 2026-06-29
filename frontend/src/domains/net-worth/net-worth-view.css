@@ -3,6 +3,12 @@
   gap: 12px;
 }
 
+@media (max-width: 960px) {
+  .dir-a .page.a-nw-page {
+    padding-bottom: 88px;
+  }
+}
+
 /* Timeline scope and accounting granularity -------------------------------- */
 .a-nw-scope-seg {
   max-width: 100%;
