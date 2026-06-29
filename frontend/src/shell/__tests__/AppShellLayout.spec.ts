@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { version as appVersion } from '../../../package.json';
 import AppShellLayout from '../AppShellLayout.vue';
 
 const mocks = vi.hoisted(() => ({
@@ -98,7 +99,7 @@ describe('AppShellLayout', () => {
 
     expect(document.body.textContent).toContain('Acerca de');
     expect(document.body.textContent).toContain('The Arkenstone');
-    expect(document.body.textContent).toContain('v0.33.0');
+    expect(document.body.textContent).toContain(`v${appVersion}`);
   });
 });
 
