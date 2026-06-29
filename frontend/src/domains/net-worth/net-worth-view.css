@@ -1,6 +1,6 @@
-.a-nw-page {
+.dir-a .page.a-nw-page {
   position: relative;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* Timeline scope and accounting granularity -------------------------------- */
