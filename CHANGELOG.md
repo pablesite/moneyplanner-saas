@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.34.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.33.0...moneyplanner-saas-v0.34.0) (2026-06-29)
+
+
+### Features
+
+* **frontend:** clarify net worth zero crossing ([73eebfe](https://github.com/pablesite/moneyplanner-saas/commit/73eebfe869e9b10864a02725beeb6fa7a9d99e09))
+* **frontend:** simplify net worth evolution controls ([00d1eda](https://github.com/pablesite/moneyplanner-saas/commit/00d1eda0313da0c08dd45019887d180f871e016e))
+
+
+### Bug Fixes
+
+* **frontend:** align net worth header rhythm ([113dd41](https://github.com/pablesite/moneyplanner-saas/commit/113dd41995d6df2f6433e54a08ff957d213fde1b))
+* **frontend:** align net worth tabs height ([906272a](https://github.com/pablesite/moneyplanner-saas/commit/906272a61c1a19df9178105b15e4ea8285ae8a3e))
+* **frontend:** inline net worth scope selector ([6498bda](https://github.com/pablesite/moneyplanner-saas/commit/6498bdaeb8374594a0541182f0601db03c2a301c))
+* **frontend:** keep evolution range controls reachable ([468bee3](https://github.com/pablesite/moneyplanner-saas/commit/468bee36066148d7118a8d4c4a053e07833eb117))
+* **frontend:** place evolution controls in context ([a47015b](https://github.com/pablesite/moneyplanner-saas/commit/a47015b1e61fdf96e211290debd02e29fd96bf5e))
+* **frontend:** refine evolution header layout ([26835be](https://github.com/pablesite/moneyplanner-saas/commit/26835be3ef03c64a1afa34814b6f47607bf4b143))
+* **frontend:** stabilize net worth evolution chart ([70b88f2](https://github.com/pablesite/moneyplanner-saas/commit/70b88f2e631439fa589142389386cc9a534140af))
+* **frontend:** tighten evolution range selector ([9c7f82f](https://github.com/pablesite/moneyplanner-saas/commit/9c7f82fd7c62adecfecb38a1dac96132ea587ce2))
+* **frontend:** tighten net worth header spacing ([d28d8cf](https://github.com/pablesite/moneyplanner-saas/commit/d28d8cfa36467d530dfb8b705881ecc895a372e0))
+
 ## [0.33.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.32.0...moneyplanner-saas-v0.33.0) (2026-06-28)
 
 
