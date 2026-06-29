@@ -793,4 +793,23 @@ describe('NetWorthView', () => {
 
     expect(wrapper.text()).toContain('enero de 2026 - marzo de 2026');
   });
+
+  it('simplifies evolution controls to scope and range only', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Evolución');
+
+    expect(wrapper.text()).toContain('Ámbito');
+    expect(wrapper.text()).toContain('Rango');
+    expect(wrapper.text()).toContain('3a');
+    expect(wrapper.text()).toContain('Fechas');
+    expect(wrapper.text()).not.toContain('Detalle');
+    expect(wrapper.text()).not.toContain('Personalizado');
+    expect(wrapper.text()).not.toContain('Diaria');
+    expect(
+      wrapper.findAll('.a-nw-evolution-mini-seg .btn').some((button) => button.text() === '1m'),
+    ).toBe(false);
+  });
 });

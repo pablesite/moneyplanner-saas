@@ -427,7 +427,7 @@
 
 .a-nw-evolution-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.82fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(140px, 0.58fr) minmax(0, 1.42fr);
   align-items: start;
   gap: 12px;
   padding-top: 4px;
@@ -502,6 +502,29 @@
 .a-nw-evolution-inline-action-wide {
   justify-self: start;
   grid-column: 1 / -1;
+}
+
+.a-nw-evolution-date-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.a-nw-evolution-date-range label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.a-nw-evolution-date-range .filter-ctrl {
+  min-height: 30px;
+  width: 136px;
+  color-scheme: dark;
+  font-size: 12px;
 }
 
 .a-nw-chart-summary {

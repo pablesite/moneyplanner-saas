@@ -344,17 +344,18 @@ const selectedPositionId = ref<number | null>(null);
 const createAssetCategory = ref<string | null>(null);
 const createLiabilityCategory = ref<string | null>(null);
 const timelineExpanded = ref(false);
-const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | '5a' | 'all'>('5a');
+type TimelinePreset = '3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom';
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
-const timelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
+const timelinePresetOptions = ['3m', '6m', '1a', '3a', '5a', 'all', 'custom'] as const;
+function parseTimelinePreset(raw: unknown): TimelinePreset {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return timelinePresetOptions.includes(value as TimelinePreset) ? (value as TimelinePreset) : '5a';
+}
+
+const selectedTimelinePreset = ref<TimelinePreset>(parseTimelinePreset(route.query.range));
 const timelineScopeOptions = [
   { value: 'total', label: 'Total' },
   { value: 'operational', label: 'Operativo' },
-  { value: 'custom', label: 'Personalizado' },
-] as const;
-const timelineGranularityOptions = [
-  { value: 'monthly', label: 'Mensual' },
-  { value: 'daily', label: 'Diaria' },
 ] as const;
 const activeTimelinePreset = computed(() => selectedTimelinePreset.value);
 type NetWorthTab = 'general' | 'evolution' | 'balance';
@@ -379,7 +380,7 @@ function setNetWorthTab(tab: NetWorthTab): void {
   void router.replace({ query });
 }
 
-type TimelineScope = 'total' | 'operational' | 'custom';
+type TimelineScope = 'total' | 'operational';
 type TimelineGranularity = 'monthly' | 'daily';
 type ScopedPosition = {
   key: string;
@@ -399,19 +400,17 @@ type ScopeChartPoint = {
 };
 
 const timelineScope = ref<TimelineScope>(
-  ['operational', 'custom'].includes(String(route.query.scope))
-    ? (String(route.query.scope) as TimelineScope)
-    : 'total',
+  String(route.query.scope) === 'operational' ? 'operational' : 'total',
 );
-const timelineGranularity = ref<TimelineGranularity>(
-  route.query.granularity === 'daily' ? 'daily' : 'monthly',
+const timelineGranularity = computed<TimelineGranularity>(() =>
+  timelineScope.value === 'operational' ? 'daily' : 'monthly',
 );
-const customTimelinePositionKeys = ref<string[]>(
-  String(route.query.positions ?? '')
-    .split(',')
-    .filter(Boolean),
+const customTimelineDateFrom = ref(
+  typeof route.query.date_from === 'string' ? route.query.date_from : '',
 );
-const showTimelineScopeModal = ref(false);
+const customTimelineDateTo = ref(
+  typeof route.query.date_to === 'string' ? route.query.date_to : '',
+);
 const scopedTimelineLoading = ref(false);
 const scopedTimelineError = ref<string | null>(null);
 const scopedMonthlyPoints = ref<ScopeChartPoint[]>([]);
@@ -1089,14 +1088,12 @@ const allScopedPositions = computed<ScopedPosition[]>(() => [
 
 const selectedScopePositions = computed(() => {
   if (timelineScope.value === 'total') return allScopedPositions.value;
-  if (timelineScope.value === 'operational') {
-    return allScopedPositions.value.filter(
-      (position) =>
-        position.type === 'liability' || ['cash', 'investments'].includes(position.category),
-    );
-  }
-  const selected = new Set(customTimelinePositionKeys.value);
-  return allScopedPositions.value.filter((position) => selected.has(position.key));
+  return allScopedPositions.value.filter(
+    (position) =>
+      position.trackingMode === 'accounting' &&
+      position.accountId != null &&
+      (position.type === 'liability' || ['cash', 'investments'].includes(position.category)),
+  );
 });
 
 const accountingScopePositions = computed(() =>
@@ -1104,27 +1101,27 @@ const accountingScopePositions = computed(() =>
     (position) => position.trackingMode === 'accounting' && position.accountId != null,
   ),
 );
-const manualScopePositions = computed(() =>
-  selectedScopePositions.value.filter(
-    (position) => position.trackingMode !== 'accounting' || position.accountId == null,
-  ),
-);
 const dailyTimelineAvailable = computed(
-  () => selectedScopePositions.value.length > 0 && manualScopePositions.value.length === 0,
+  () => timelineScope.value === 'operational' && accountingScopePositions.value.length > 0,
 );
 const timelineScopeLabel = computed(() => {
   if (timelineScope.value === 'operational') return 'Operativo';
-  if (timelineScope.value === 'custom')
-    return `Personalizado · ${selectedScopePositions.value.length}`;
   return 'Patrimonio total';
 });
 
 function dailyDateFrom(): string | undefined {
+  if (selectedTimelinePreset.value === 'custom') return customTimelineDateFrom.value || undefined;
   if (selectedTimelinePreset.value === 'all') return undefined;
-  const daysByPreset = { '1m': 31, '3m': 92, '6m': 183, '1a': 366, '5a': 1826 } as const;
+  const daysByPreset = { '3m': 92, '6m': 183, '1a': 366, '3a': 1096, '5a': 1826 } as const;
   const date = new Date();
   date.setDate(date.getDate() - daysByPreset[selectedTimelinePreset.value]);
   return date.toISOString().slice(0, 10);
+}
+
+function dailyDateTo(): string | undefined {
+  return selectedTimelinePreset.value === 'custom'
+    ? customTimelineDateTo.value || undefined
+    : undefined;
 }
 
 async function fetchDailyScopeTimeline(): Promise<void> {
@@ -1137,6 +1134,7 @@ async function fetchDailyScopeTimeline(): Promise<void> {
   try {
     const response = await coreAccountingApi.getDailyBalanceSeries({
       date_from: dailyDateFrom(),
+      date_to: dailyDateTo(),
       account_ids: accountingScopePositions.value.map((position) => position.accountId!),
       ownership_id:
         ownershipFilter.value === 'all'
@@ -1211,12 +1209,34 @@ async function fetchMonthlyScopeTimeline(): Promise<void> {
   }
 }
 
+function filterTimelinePointsByCustomDates<TPoint extends ScopeChartPoint>(
+  points: TPoint[],
+): TPoint[] {
+  if (selectedTimelinePreset.value !== 'custom') return points;
+  const dateFrom = customTimelineDateFrom.value;
+  const dateTo = customTimelineDateTo.value;
+  return points.filter((point) => {
+    if (dateFrom && point.date < dateFrom) return false;
+    if (dateTo && point.date > dateTo) return false;
+    return true;
+  });
+}
+
 const scopedMonthlyVisiblePoints = computed(() => {
-  const countByPreset = { '1m': 1, '3m': 3, '6m': 6, '1a': 12, '5a': 60, all: Infinity } as const;
+  const countByPreset = {
+    '3m': 3,
+    '6m': 6,
+    '1a': 12,
+    '3a': 36,
+    '5a': 60,
+    all: Infinity,
+    custom: Infinity,
+  } as const;
   const count = countByPreset[selectedTimelinePreset.value];
-  return Number.isFinite(count)
+  const points = Number.isFinite(count)
     ? scopedMonthlyPoints.value.slice(-count)
     : scopedMonthlyPoints.value;
+  return filterTimelinePointsByCustomDates(points);
 });
 const dailyTimelinePoints = computed<ScopeChartPoint[]>(() =>
   dailyBalanceRows.value.map((row) => {
@@ -1234,9 +1254,10 @@ const dailyTimelinePoints = computed<ScopeChartPoint[]>(() =>
   }),
 );
 const activeEvolutionPoints = computed(() => {
-  if (timelineGranularity.value === 'daily') return dailyTimelinePoints.value;
+  if (timelineGranularity.value === 'daily')
+    return filterTimelinePointsByCustomDates(dailyTimelinePoints.value);
   if (timelineScope.value !== 'total') return scopedMonthlyVisiblePoints.value;
-  return timelineChartPoints.value;
+  return filterTimelinePointsByCustomDates(timelineChartPoints.value);
 });
 const activeEvolutionLoading = computed(
   () =>
@@ -1289,16 +1310,21 @@ const activeEvolutionCaption = computed(() => {
 });
 const activeEvolutionPresetLabel = computed(() => {
   const labels: Record<(typeof timelinePresetOptions)[number], string> = {
-    '1m': '1 mes',
     '3m': '3 meses',
     '6m': '6 meses',
     '1a': '1 año',
+    '3a': '3 años',
     '5a': '5 años',
     all: 'todo el histórico',
+    custom:
+      customTimelineDateFrom.value || customTimelineDateTo.value
+        ? 'el rango seleccionado'
+        : 'todo el histórico',
   };
   return labels[selectedTimelinePreset.value];
 });
 function timelinePresetLabel(preset: (typeof timelinePresetOptions)[number]): string {
+  if (preset === 'custom') return 'Fechas';
   return preset === 'all' ? 'Todo' : preset;
 }
 const activeEvolutionLabel = computed(() =>
@@ -1312,20 +1338,11 @@ const activeEvolutionLabel = computed(() =>
 function setTimelineScope(scope: TimelineScope): void {
   timelineScope.value = scope;
   clearPositionSelection();
-  if (scope === 'custom' && !customTimelinePositionKeys.value.length) {
-    customTimelinePositionKeys.value = allScopedPositions.value.map((position) => position.key);
-    showTimelineScopeModal.value = true;
-  }
+  if (scope === 'operational') void resetTimelineSelection();
 }
-function setTimelineGranularity(granularity: TimelineGranularity): void {
-  if (granularity === 'daily' && !dailyTimelineAvailable.value) return;
-  timelineGranularity.value = granularity;
-  if (granularity === 'daily') resetTimelineSelection();
-}
-function toggleCustomPosition(key: string): void {
-  customTimelinePositionKeys.value = customTimelinePositionKeys.value.includes(key)
-    ? customTimelinePositionKeys.value.filter((value) => value !== key)
-    : [...customTimelinePositionKeys.value, key];
+
+function handleTimelinePreset(preset: TimelinePreset): void {
+  setTimelinePreset(preset);
 }
 
 watch(
@@ -1333,6 +1350,8 @@ watch(
     timelineGranularity,
     timelineScope,
     selectedTimelinePreset,
+    customTimelineDateFrom,
+    customTimelineDateTo,
     ownershipFilter,
     () => selectedScopePositions.value.map((position) => position.key).join('|'),
   ],
@@ -1343,16 +1362,21 @@ watch(
   { immediate: true },
 );
 watch(
-  [timelineScope, timelineGranularity, customTimelinePositionKeys],
+  [timelineScope, selectedTimelinePreset, customTimelineDateFrom, customTimelineDateTo],
   () => {
     const query = { ...route.query };
     if (timelineScope.value === 'total') delete query.scope;
     else query.scope = timelineScope.value;
-    if (timelineGranularity.value === 'monthly') delete query.granularity;
-    else query.granularity = timelineGranularity.value;
-    if (timelineScope.value === 'custom' && customTimelinePositionKeys.value.length)
-      query.positions = customTimelinePositionKeys.value.join(',');
-    else delete query.positions;
+    delete query.granularity;
+    delete query.positions;
+    if (selectedTimelinePreset.value === '5a') delete query.range;
+    else query.range = selectedTimelinePreset.value;
+    if (selectedTimelinePreset.value === 'custom' && customTimelineDateFrom.value)
+      query.date_from = customTimelineDateFrom.value;
+    else delete query.date_from;
+    if (selectedTimelinePreset.value === 'custom' && customTimelineDateTo.value)
+      query.date_to = customTimelineDateTo.value;
+    else delete query.date_to;
     void router.replace({ query });
   },
   { deep: true },
@@ -1707,32 +1731,8 @@ watch(
                 {{ option.label }}
               </AButton>
             </div>
-            <AButton
-              v-if="timelineScope === 'custom'"
-              variant="ghost"
-              size="sm"
-              class="a-nw-evolution-inline-action"
-              @click="showTimelineScopeModal = true"
-              >Configurar</AButton
-            >
           </div>
-          <div class="a-nw-evolution-control-group">
-            <span>Detalle</span>
-            <div class="a-nw-evolution-mini-seg" aria-label="Granularidad de evolución">
-              <AButton
-                v-for="option in timelineGranularityOptions"
-                :key="option.value"
-                size="sm"
-                variant="ghost"
-                :class="{ on: timelineGranularity === option.value }"
-                :disabled="option.value === 'daily' && !dailyTimelineAvailable"
-                @click="setTimelineGranularity(option.value)"
-              >
-                {{ option.label }}
-              </AButton>
-            </div>
-          </div>
-          <div class="a-nw-evolution-control-group">
+          <div class="a-nw-evolution-control-group a-nw-evolution-range-group">
             <span>Rango</span>
             <div class="a-nw-evolution-mini-seg" aria-label="Rango de evolución">
               <AButton
@@ -1741,10 +1741,20 @@ watch(
                 size="sm"
                 variant="ghost"
                 :class="{ on: activeTimelinePreset === preset }"
-                @click="setTimelinePreset(preset)"
+                @click="handleTimelinePreset(preset)"
               >
                 {{ timelinePresetLabel(preset) }}
               </AButton>
+            </div>
+            <div v-if="selectedTimelinePreset === 'custom'" class="a-nw-evolution-date-range">
+              <label>
+                <span>Desde</span>
+                <input v-model="customTimelineDateFrom" class="filter-ctrl" type="date" />
+              </label>
+              <label>
+                <span>Hasta</span>
+                <input v-model="customTimelineDateTo" class="filter-ctrl" type="date" />
+              </label>
             </div>
           </div>
           <AButton
@@ -1819,47 +1829,6 @@ watch(
               :y-axis-min-zero="timelineYAxisStartsAtZero"
               expanded
             />
-          </div>
-        </div>
-      </BaseModal>
-
-      <BaseModal
-        :open="showTimelineScopeModal"
-        title="Personalizar evolución"
-        variant="sheet"
-        panel-class="a-nw-modal-panel dir-a dir-a-sheet"
-        @close="showTimelineScopeModal = false"
-      >
-        <div class="a-nw-scope-picker">
-          <p>Selecciona las posiciones que deben formar parte de la evolución.</p>
-          <label
-            v-for="position in allScopedPositions"
-            :key="position.key"
-            class="a-nw-scope-option"
-          >
-            <input
-              type="checkbox"
-              :checked="customTimelinePositionKeys.includes(position.key)"
-              @change="toggleCustomPosition(position.key)"
-            />
-            <span>
-              <strong>{{ position.name }}</strong>
-              <small
-                >{{ position.type === 'asset' ? 'Activo' : 'Pasivo' }} ·
-                {{ position.category }}</small
-              >
-            </span>
-            <span :class="position.accountId ? 'pos' : 'muted'">{{
-              position.accountId ? 'Contable' : 'Mensual'
-            }}</span>
-          </label>
-          <div class="a-nw-scope-actions">
-            <AButton
-              variant="primary"
-              :disabled="!customTimelinePositionKeys.length"
-              @click="showTimelineScopeModal = false"
-              >Aplicar selección</AButton
-            >
           </div>
         </div>
       </BaseModal>
