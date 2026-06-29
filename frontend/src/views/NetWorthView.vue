@@ -1666,60 +1666,63 @@ watch(
       <AState v-if="activeEvolutionLoading && activeEvolutionPoints.length === 0" status="loading">
         Cargando evolución...
       </AState>
-      <AState v-else-if="activeEvolutionPoints.length === 0" status="empty">
-        No hay historial suficiente para la selección actual.
-      </AState>
       <div v-else class="a-nw-evolution-stack">
-        <div class="a-nw-evolution-summary">
-          <div class="a-nw-evolution-headline">
-            <div class="a-nw-evolution-title-row">
-              <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
-              <div class="a-nw-evolution-scope-inline" aria-label="Ámbito de evolución">
-                <AButton
-                  v-for="option in timelineScopeOptions"
-                  :key="option.value"
-                  size="sm"
-                  variant="ghost"
-                  :class="{ on: timelineScope === option.value }"
-                  @click="setTimelineScope(option.value)"
-                >
-                  {{ option.label }}
-                </AButton>
+        <template v-if="activeEvolutionPoints.length > 0">
+          <div class="a-nw-evolution-summary">
+            <div class="a-nw-evolution-headline">
+              <div class="a-nw-evolution-title-row">
+                <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
+                <div class="a-nw-evolution-scope-inline" aria-label="Ámbito de evolución">
+                  <AButton
+                    v-for="option in timelineScopeOptions"
+                    :key="option.value"
+                    size="sm"
+                    variant="ghost"
+                    :class="{ on: timelineScope === option.value }"
+                    @click="setTimelineScope(option.value)"
+                  >
+                    {{ option.label }}
+                  </AButton>
+                </div>
               </div>
-            </div>
-            <strong>
-              {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
-              {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-            </strong>
-            <p
-              v-if="activeEvolutionPeriodDelta"
-              class="a-nw-evolution-delta"
-              :class="activeEvolutionPeriodDelta.value >= 0 ? 'pos' : 'neg'"
-            >
-              <span class="mono">
-                {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
-                }}{{ formatNumber(activeEvolutionPeriodDelta.value, 0) }}
+              <strong>
+                {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
                 {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-              </span>
-              <span v-if="activeEvolutionPeriodDelta.pct !== null" class="mono">
-                {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
-                }}{{ formatPct(activeEvolutionPeriodDelta.pct, 1) }}
-              </span>
-              <span>en {{ activeEvolutionPresetLabel }}</span>
-            </p>
-            <p class="a-nw-evolution-caption">{{ activeEvolutionCaption }}</p>
+              </strong>
+              <p
+                v-if="activeEvolutionPeriodDelta"
+                class="a-nw-evolution-delta"
+                :class="activeEvolutionPeriodDelta.value >= 0 ? 'pos' : 'neg'"
+              >
+                <span class="mono">
+                  {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
+                  }}{{ formatNumber(activeEvolutionPeriodDelta.value, 0) }}
+                  {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
+                </span>
+                <span v-if="activeEvolutionPeriodDelta.pct !== null" class="mono">
+                  {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
+                  }}{{ formatPct(activeEvolutionPeriodDelta.pct, 1) }}
+                </span>
+                <span>en {{ activeEvolutionPresetLabel }}</span>
+              </p>
+              <p class="a-nw-evolution-caption">{{ activeEvolutionCaption }}</p>
+            </div>
           </div>
-        </div>
 
-        <div class="a-nw-chart-shell">
-          <NetWorthEvolutionChart
-            :points="activeEvolutionPoints"
-            :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-            :series-label="activeEvolutionLabel"
-            :series-color="displayedTimelineSeriesColor"
-            :y-axis-min-zero="timelineYAxisStartsAtZero"
-          />
-        </div>
+          <div class="a-nw-chart-shell">
+            <NetWorthEvolutionChart
+              :points="activeEvolutionPoints"
+              :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
+              :series-label="activeEvolutionLabel"
+              :series-color="displayedTimelineSeriesColor"
+              :y-axis-min-zero="timelineYAxisStartsAtZero"
+            />
+          </div>
+        </template>
+
+        <AState v-else status="empty">
+          No hay historial suficiente para la selección actual.
+        </AState>
 
         <div class="a-nw-evolution-chart-actions">
           <div class="a-nw-evolution-control-group a-nw-evolution-range-group">

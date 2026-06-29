@@ -812,4 +812,25 @@ describe('NetWorthView', () => {
       wrapper.findAll('.a-nw-evolution-mini-seg .btn').some((button) => button.text() === '1m'),
     ).toBe(false);
   });
+
+  it('keeps range controls visible when a custom date range has no data', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Evolución');
+    const datesButton = wrapper
+      .findAll('.a-nw-evolution-mini-seg .btn')
+      .find((button) => button.text() === 'Fechas');
+    if (!datesButton) throw new Error('Fechas button not found');
+
+    await datesButton.trigger('click');
+    await wrapper.get('.a-nw-evolution-date-range input[type="date"]').setValue('2099-01-01');
+
+    expect(wrapper.text()).toContain('No hay historial suficiente');
+    expect(wrapper.find('[aria-label="Rango de evolución"]').exists()).toBe(true);
+    expect(
+      wrapper.findAll('.a-nw-evolution-mini-seg .btn').some((button) => button.text() === '5a'),
+    ).toBe(true);
+  });
 });
