@@ -1689,7 +1689,7 @@ watch(
           class="a-nw-evolution-expand"
           @click="timelineExpanded = true"
         >
-          Ampliar
+          Ampliar gráfico
         </AButton>
 
         <div class="a-nw-evolution-controls">

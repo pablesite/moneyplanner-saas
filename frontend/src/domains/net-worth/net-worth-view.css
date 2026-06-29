@@ -375,16 +375,18 @@
 
 .a-nw-evolution-expand {
   justify-self: end;
-  min-height: 0;
-  padding: 0;
-  border: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-color: var(--line);
   color: var(--muted);
-  background: transparent;
+  background: color-mix(in oklab, var(--panel) 42%, transparent);
+  font-size: 12px;
 }
 
 .a-nw-evolution-expand:hover {
   color: var(--text);
-  background: transparent;
+  border-color: var(--line-strong);
+  background: var(--hover);
 }
 
 .a-nw-evolution-summary {
@@ -552,6 +554,20 @@
   fill-opacity: 0.45;
   font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 10px;
+}
+
+.a-nw-evo-zero line {
+  stroke: var(--text);
+  stroke-dasharray: 5 5;
+  stroke-opacity: 0.42;
+}
+
+.a-nw-evo-zero-label {
+  fill: var(--text);
+  fill-opacity: 0.72;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 650;
 }
 
 .a-nw-evo-tip {
