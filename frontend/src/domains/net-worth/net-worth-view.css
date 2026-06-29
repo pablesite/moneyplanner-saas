@@ -1061,6 +1061,20 @@
   overflow-x: hidden;
 }
 
+.a-nw-asset-sheet .ui-modal-close {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 0;
+}
+
+.a-nw-asset-sheet .ui-modal-close::before {
+  content: '×';
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+}
+
 .dir-a-sheet .a-nw-asset-form .ui-item-form-grid {
   gap: 0;
 }
@@ -1068,6 +1082,7 @@
 .dir-a-sheet .a-nw-asset-form .ui-item-form-field {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   min-width: 0;
   padding: 8px 0;
@@ -1086,6 +1101,27 @@
   min-width: 0;
 }
 
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .ui-form-help {
+  flex: 1 0 100%;
+  margin-left: min(144px, calc(38% + 12px));
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-money-field {
+  align-items: center;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-money-controls {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(74px, auto);
+  gap: 12px;
+  min-width: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-money-controls .select {
+  min-width: 70px;
+}
+
 .dir-a-sheet .a-nw-asset-form .input,
 .dir-a-sheet .a-nw-asset-form .select {
   color: var(--text);
@@ -1101,6 +1137,22 @@
 
 .dir-a-sheet .a-nw-asset-form .a-select-caret {
   opacity: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-advanced,
+.dir-a-sheet .a-nw-asset-form .ui-item-form-notes {
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-advanced-body {
+  display: grid;
+  gap: 0;
+  padding-top: 6px;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-notes .ui-item-form-field {
+  margin-top: 8px;
 }
 
 .dir-a-sheet .a-nw-asset-form .ui-item-form-field:has(.textarea),
@@ -1157,6 +1209,14 @@
 
 .dir-a-sheet .a-nw-asset-form .ui-form-action-btn {
   min-width: 128px;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-form-action-btn:disabled {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--faint);
+  opacity: 0.72;
+  transform: none;
 }
 
 .a-nw-archived-list,

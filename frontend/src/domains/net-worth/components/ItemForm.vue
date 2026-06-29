@@ -96,6 +96,7 @@ type ContributionIntervalDraft = {
 
 const props = defineProps<Props>();
 const saving = ref(false);
+const validationAttempted = ref(false);
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -1438,16 +1439,34 @@ const investmentContributionError = computed(() => {
   }
   return '';
 });
+const nameRequiredError = computed(() =>
+  String(form.name ?? '').trim() ? '' : 'Nombre obligatorio',
+);
+const categoryRequiredError = computed(() =>
+  String(form.category ?? '').trim() ? '' : 'Categoría obligatoria',
+);
+const subcategoryRequiredError = computed(() =>
+  props.subcategories && !String(form.subcategory ?? '').trim() ? 'Subcategoría obligatoria' : '',
+);
+const startDateRequiredError = computed(() =>
+  String(form.start_date ?? '').trim() ? '' : 'Fecha inicio obligatoria',
+);
+const amountRequiredError = computed(() =>
+  String(form.amount ?? '').trim() ? '' : 'Importe obligatorio',
+);
+const currencyRequiredError = computed(() =>
+  String(form.currency ?? '').trim() ? '' : 'Moneda obligatoria',
+);
 const requiredFieldsError = computed(() => {
-  if (!String(form.name ?? '').trim()) return 'Nombre obligatorio';
-  if (!String(form.category ?? '').trim()) return 'Categoría obligatoria';
-  if (props.subcategories && !String(form.subcategory ?? '').trim()) {
-    return 'Subcategoría obligatoria';
-  }
-  if (!String(form.start_date ?? '').trim()) return 'Fecha inicio obligatoria';
-  if (!String(form.amount ?? '').trim()) return 'Importe obligatorio';
-  if (!String(form.currency ?? '').trim()) return 'Moneda obligatoria';
-  return '';
+  const errors = [
+    nameRequiredError.value,
+    categoryRequiredError.value,
+    subcategoryRequiredError.value,
+    startDateRequiredError.value,
+    amountRequiredError.value,
+    currencyRequiredError.value,
+  ];
+  return errors.find((message) => !!message) ?? '';
 });
 const assetAmortizationError = computed(() => {
   if (!requiresAssetAmortizationInputs.value) return '';
@@ -1536,6 +1555,7 @@ const liabilityTermFieldHint = computed(() => {
 });
 
 async function submit() {
+  validationAttempted.value = true;
   if (getFirstSubmitBlockingError()) return;
 
   const { value: normalizedAmount, error } = sanitizeAmount(form.amount, maxDecimals.value);
@@ -1799,6 +1819,17 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
 <template>
   <div>
     <div class="ui-item-form-grid">
+      <label :class="['ui-item-form-field', { 'ui-item-form-field-span-2': isLiabilityForm }]">
+        <span class="ui-item-form-label">Nombre</span>
+        <input v-model="form.name" placeholder="Nombre" class="input ui-data-field" />
+        <div
+          v-if="validationAttempted && nameRequiredError"
+          class="ui-form-help ui-form-help-error"
+        >
+          {{ nameRequiredError }}
+        </div>
+      </label>
+
       <label
         :class="[
           'ui-item-form-field',
@@ -1812,6 +1843,12 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           :class="['select ui-data-field', { 'ui-select-placeholder': !form.category }]"
           @update:model-value="(v) => (form.category = String(v))"
         />
+        <div
+          v-if="validationAttempted && categoryRequiredError"
+          class="ui-form-help ui-form-help-error"
+        >
+          {{ categoryRequiredError }}
+        </div>
       </label>
 
       <label v-if="props.subcategories" class="ui-item-form-field">
@@ -1822,6 +1859,12 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           :class="['select ui-data-field', { 'ui-select-placeholder': !form.subcategory }]"
           @update:model-value="(v) => (form.subcategory = String(v))"
         />
+        <div
+          v-if="validationAttempted && subcategoryRequiredError"
+          class="ui-form-help ui-form-help-error"
+        >
+          {{ subcategoryRequiredError }}
+        </div>
       </label>
       <label v-if="showRealEstateUsageField" class="ui-item-form-field">
         <span class="ui-item-form-label">Uso</span>
@@ -1832,38 +1875,51 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           @update:model-value="(v) => (realEstateUsage = v as typeof realEstateUsage)"
         />
       </label>
-      <label :class="['ui-item-form-field', { 'ui-item-form-field-span-2': isLiabilityForm }]">
-        <span class="ui-item-form-label">Nombre</span>
-        <input v-model="form.name" placeholder="Nombre" class="input ui-data-field" />
-      </label>
 
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">{{
           isLiabilityForm ? 'Fecha contratación préstamo' : 'Fecha inicio'
         }}</span>
         <input v-model="form.start_date" type="date" class="input ui-data-field" />
+        <div
+          v-if="validationAttempted && startDateRequiredError"
+          class="ui-form-help ui-form-help-error"
+        >
+          {{ startDateRequiredError }}
+        </div>
       </label>
-      <label class="ui-item-form-field">
+      <div class="ui-item-form-field ui-item-form-money-field">
         <span class="ui-item-form-label">{{
           isLiabilityForm ? 'Principal / saldo actual' : 'Importe'
         }}</span>
-        <input
-          v-model="form.amount"
-          inputmode="decimal"
-          placeholder="Importe"
-          class="input ui-data-field"
-        />
-      </label>
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Moneda</span>
-        <ASelect
-          :model-value="form.currency"
-          :options="currencyPlaceholderOptions"
-          :class="['select ui-data-field', { 'ui-select-placeholder': !form.currency }]"
-          @update:model-value="(v) => (form.currency = String(v))"
-        />
-      </label>
-      <label class="ui-item-form-field">
+        <div class="ui-item-form-money-controls">
+          <input
+            v-model="form.amount"
+            inputmode="decimal"
+            placeholder="Importe"
+            class="input ui-data-field"
+          />
+          <ASelect
+            :model-value="form.currency"
+            :options="currencyPlaceholderOptions"
+            :class="['select ui-data-field', { 'ui-select-placeholder': !form.currency }]"
+            @update:model-value="(v) => (form.currency = String(v))"
+          />
+        </div>
+        <div
+          v-if="amountError || (validationAttempted && amountRequiredError)"
+          class="ui-form-help ui-form-help-error"
+        >
+          {{ amountError || amountRequiredError }}
+        </div>
+        <div
+          v-if="validationAttempted && currencyRequiredError"
+          class="ui-form-help ui-form-help-error"
+        >
+          {{ currencyRequiredError }}
+        </div>
+      </div>
+      <label v-if="isLiabilityForm" class="ui-item-form-field">
         <span class="ui-item-form-label">Tracking mode</span>
         <ASelect
           class="select ui-data-field"
@@ -1872,6 +1928,20 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           @update:model-value="(v) => (form.tracking_mode = v as typeof form.tracking_mode)"
         />
       </label>
+      <details v-else class="ui-item-form-advanced ui-item-form-field-span-2">
+        <summary class="ui-item-form-details-summary">Opciones avanzadas</summary>
+        <div class="ui-item-form-advanced-body">
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">Tracking mode</span>
+            <ASelect
+              class="select ui-data-field"
+              :model-value="form.tracking_mode"
+              :options="TRACKING_MODE_OPTIONS"
+              @update:model-value="(v) => (form.tracking_mode = v as typeof form.tracking_mode)"
+            />
+          </label>
+        </div>
+      </details>
       <label v-if="showLiabilityExpenseSubcategoryField" class="ui-item-form-field">
         <span class="ui-item-form-label">Destino de la salida</span>
         <ASelect
@@ -2441,7 +2511,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
         </div>
       </label>
 
-      <label class="ui-item-form-field ui-item-form-field-span-2">
+      <label v-if="isLiabilityForm" class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Notas</span>
         <textarea
           v-model="form.notes"
@@ -2450,9 +2520,35 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           class="textarea ui-data-field"
         ></textarea>
       </label>
+      <details v-else class="ui-item-form-notes ui-item-form-field-span-2">
+        <summary class="ui-item-form-details-summary">Añadir notas</summary>
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Notas</span>
+          <textarea
+            v-model="form.notes"
+            placeholder="Notas"
+            rows="2"
+            class="textarea ui-data-field"
+          ></textarea>
+        </label>
+      </details>
 
-      <div class="ui-item-form-feedback ui-item-form-field-span-2">
-        <div v-if="amountError" class="ui-form-help ui-form-help-error">{{ amountError }}</div>
+      <div
+        v-if="
+          annualInterestError ||
+          estimatedAverageBalanceForInterestError ||
+          depositTermMonthsError ||
+          monthlyPaymentError ||
+          assetAmortizationError ||
+          investmentContributionError ||
+          primaryHomeValuationError ||
+          primaryHomeImprovementsError ||
+          liabilityDatesError ||
+          liabilityScheduleError ||
+          cancellationForecastError
+        "
+        class="ui-item-form-feedback ui-item-form-field-span-2"
+      >
         <div v-if="annualInterestError" class="ui-form-help ui-form-help-error">
           {{ annualInterestError }}
         </div>
@@ -2461,9 +2557,6 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
         </div>
         <div v-if="depositTermMonthsError" class="ui-form-help ui-form-help-error">
           {{ depositTermMonthsError }}
-        </div>
-        <div v-if="requiredFieldsError" class="ui-form-help ui-form-help-error">
-          {{ requiredFieldsError }}
         </div>
         <div v-if="monthlyPaymentError" class="ui-form-help ui-form-help-error">
           {{ monthlyPaymentError }}
@@ -2494,6 +2587,12 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
       <div class="ui-item-form-footer ui-item-form-field-span-2">
         <div v-if="submitError" class="ui-form-help ui-form-help-error ui-item-form-submit-error">
           {{ submitError }}
+        </div>
+        <div
+          v-else-if="requiredFieldsError && !validationAttempted"
+          class="ui-form-help ui-item-form-footer-hint"
+        >
+          Completa nombre, tipo e importe para continuar.
         </div>
         <div class="ui-form-actions ui-item-form-actions">
           <AButton v-if="onCancel" class="ui-form-action-btn" @click="onCancel"> Cancelar </AButton>
