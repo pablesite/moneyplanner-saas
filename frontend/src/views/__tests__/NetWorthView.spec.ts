@@ -631,7 +631,7 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('60,00 €');
   });
 
-  it('opens the primary asset modal from the mobile balance action', async () => {
+  it('opens the asset modal from the mobile balance action', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
@@ -642,7 +642,22 @@ describe('NetWorthView', () => {
     await openTab(wrapper, 'Balance');
     await wrapper.get('.a-nw-mobile-create').trigger('click');
 
+    expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(false);
+
+    await wrapper.get('.a-nw-mobile-create-menu .btn:first-child').trigger('click');
     expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(true);
+  });
+
+  it('opens the liability modal from the mobile balance action', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-create').trigger('click');
+    await wrapper.get('.a-nw-mobile-create-menu .btn:nth-child(2)').trigger('click');
+
+    expect(wrapper.find('[data-test="liability-modal"]').exists()).toBe(true);
   });
 
   it('opens evolution from a hero breakdown category and returns to general', async () => {
@@ -737,6 +752,49 @@ describe('NetWorthView', () => {
     await firstGroup.trigger('click');
     expect(firstGroup.attributes('aria-expanded')).toBe('true');
     expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+  });
+
+  it('renders each balance kind label once around its collapsible groups', async () => {
+    const state = makeState({
+      store: {
+        ...makeState().store,
+        assets: [
+          ...makeState().store.assets,
+          {
+            id: 12,
+            name: 'Cartera indexada',
+            category: 'investments',
+            subcategory: 'funds',
+            amount: '200',
+            amount_base: '200',
+            currency: 'EUR',
+            is_active: true,
+            ownership_ref: null,
+          },
+        ],
+      },
+      assetCategories: [
+        { value: 'cash', label: 'Liquidez' },
+        { value: 'investments', label: 'Inversiones' },
+      ],
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+
+    const labels = wrapper.findAll('.a-nw-mobile-section-head').map((node) => node.text());
+    expect(labels).toHaveLength(2);
+    expect(labels[0]).toContain('Activos');
+    expect(labels[1]).toContain('Pasivos');
+    expect(wrapper.findAll('.a-nw-mobile-group-head')).toHaveLength(3);
+    expect(
+      wrapper.findAll('.a-nw-mobile-group-head').some((node) => node.text().includes('Activos')),
+    ).toBe(false);
+    expect(
+      wrapper.findAll('.a-nw-mobile-group-head').some((node) => node.text().includes('Pasivos')),
+    ).toBe(false);
   });
 
   it('shows eight decimals for crypto original amounts', async () => {

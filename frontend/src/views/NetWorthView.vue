@@ -722,6 +722,14 @@ type BalanceGroup = {
   total: number;
 };
 
+type BalanceSection = {
+  kind: 'asset' | 'liability';
+  label: string;
+  groups: BalanceGroup[];
+  total: number;
+  count: number;
+};
+
 const balanceGroups = computed<BalanceGroup[]>(() => {
   const assetLabelMap = new Map(
     assetCategories.map((category) => [category.value, category.label]),
@@ -768,6 +776,7 @@ const balanceGroups = computed<BalanceGroup[]>(() => {
 
 const balanceSearch = ref('');
 const collapsedBalanceGroups = ref<Set<string>>(new Set());
+const mobileCreateMenuOpen = ref(false);
 const selectedBalanceDetailRow = ref<PositionRow | null>(null);
 
 function balanceRowMatchesMobileFilters(row: PositionRow): boolean {
@@ -794,6 +803,26 @@ const mobileBalanceGroups = computed<BalanceGroup[]>(() =>
 
 const mobileBalanceRowCount = computed(() =>
   mobileBalanceGroups.value.reduce((total, group) => total + group.rows.length, 0),
+);
+
+function makeBalanceSections(groups: BalanceGroup[]): BalanceSection[] {
+  return (['asset', 'liability'] as const)
+    .map((kind) => {
+      const sectionGroups = groups.filter((group) => group.kind === kind);
+      return {
+        kind,
+        label: kind === 'asset' ? 'Activos' : 'Pasivos',
+        groups: sectionGroups,
+        total: sectionGroups.reduce((sum, group) => sum + group.total, 0),
+        count: sectionGroups.reduce((sum, group) => sum + group.rows.length, 0),
+      };
+    })
+    .filter((section) => section.groups.length > 0);
+}
+
+const balanceSections = computed<BalanceSection[]>(() => makeBalanceSections(balanceGroups.value));
+const mobileBalanceSections = computed<BalanceSection[]>(() =>
+  makeBalanceSections(mobileBalanceGroups.value),
 );
 
 function balanceGroupKey(group: BalanceGroup): string {
@@ -863,8 +892,13 @@ const timelineFilterLabel = computed(() => {
   return selectedTimelineCategory.value ? selectedCategoryLabel.value : null;
 });
 
-function openPrimaryCreateModal(): void {
-  openCreateModal('asset', null);
+function toggleMobileCreateMenu(): void {
+  mobileCreateMenuOpen.value = !mobileCreateMenuOpen.value;
+}
+
+function openMobileCreateModal(type: 'asset' | 'liability'): void {
+  mobileCreateMenuOpen.value = false;
+  openCreateModal(type, null);
 }
 
 function isBalanceRowActive(row: PositionRow): boolean {
@@ -1804,67 +1838,78 @@ watch(
       </AState>
 
       <div v-else class="a-nw-balance-wrap">
-        <AState v-if="mobileBalanceGroups.length === 0" class="a-nw-mobile-empty" status="empty">
+        <AState v-if="mobileBalanceSections.length === 0" class="a-nw-mobile-empty" status="empty">
           No hay posiciones que coincidan con la búsqueda.
         </AState>
 
         <div v-else class="a-nw-mobile-balance-list">
           <section
-            v-for="group in mobileBalanceGroups"
-            :key="`mobile-${group.kind}-${group.key}`"
-            class="a-nw-mobile-group"
+            v-for="section in mobileBalanceSections"
+            :key="`mobile-section-${section.kind}`"
+            class="a-nw-mobile-section"
           >
-            <button
-              type="button"
-              class="a-nw-mobile-group-head"
-              :aria-expanded="!isBalanceGroupCollapsed(group)"
-              @click="toggleBalanceGroup(group)"
+            <div
+              class="a-nw-mobile-section-head"
+              :class="section.kind === 'asset' ? 'is-asset' : 'is-liability'"
             >
-              <span>
-                <span
-                  class="grp-kind"
-                  :class="group.kind === 'asset' ? 'grp-kind-asset' : 'grp-kind-liability'"
-                >
-                  {{ group.kind === 'asset' ? 'Activos' : 'Pasivos' }}
-                </span>
-                <strong>{{ group.label }}</strong>
+              <span>{{ section.label }}</span>
+              <span class="mono">
+                {{ section.kind === 'liability' ? '−' : '' }}{{ formatNumber(section.total, 0) }}
+                {{ heroUnitLabel }}
               </span>
-              <span class="a-nw-group-head-right">
-                <span class="mono">
-                  {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 0) }}
-                  {{ heroUnitLabel }}
-                </span>
-                <span class="a-nw-group-chevron" aria-hidden="true">
-                  {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
-                </span>
-              </span>
-            </button>
+            </div>
 
-            <template v-if="!isBalanceGroupCollapsed(group)">
+            <section
+              v-for="group in section.groups"
+              :key="`mobile-${group.kind}-${group.key}`"
+              class="a-nw-mobile-group"
+            >
               <button
-                v-for="row in group.rows"
-                :key="`mobile-row-${row.type}-${row.id}`"
                 type="button"
-                class="a-nw-mobile-row"
-                :class="{ 'row-active': isBalanceRowActive(row) }"
-                @click="openBalanceDetail(row)"
+                class="a-nw-mobile-group-head"
+                :aria-expanded="!isBalanceGroupCollapsed(group)"
+                @click="toggleBalanceGroup(group)"
               >
-                <span class="swatch" :class="{ lia: row.type === 'liability' }" />
-                <span class="a-nw-mobile-row-main">
-                  <strong>{{ row.name }}</strong>
-                  <small>
-                    {{ row.subtitle }} · {{ ownershipBadgeForRow(row) ?? 'Sin asignar' }} ·
-                    {{ positionSourceLabel(row) }}
-                  </small>
+                <span>
+                  <strong>{{ group.label }}</strong>
                 </span>
-                <span class="a-nw-mobile-row-value mono">
-                  <small v-if="foreignAmountLabel(row)">{{ foreignAmountLabel(row) }}</small>
-                  <strong :class="{ 'account-value-neg': row.type === 'liability' }">
-                    {{ formatNumber(row.value, 0) }} {{ displayCurrencyUnit(row.currency) }}
-                  </strong>
+                <span class="a-nw-group-head-right">
+                  <span class="mono">
+                    {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 0) }}
+                    {{ heroUnitLabel }}
+                  </span>
+                  <span class="a-nw-group-chevron" aria-hidden="true">
+                    {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
+                  </span>
                 </span>
               </button>
-            </template>
+
+              <template v-if="!isBalanceGroupCollapsed(group)">
+                <button
+                  v-for="row in group.rows"
+                  :key="`mobile-row-${row.type}-${row.id}`"
+                  type="button"
+                  class="a-nw-mobile-row"
+                  :class="{ 'row-active': isBalanceRowActive(row) }"
+                  @click="openBalanceDetail(row)"
+                >
+                  <span class="swatch" :class="{ lia: row.type === 'liability' }" />
+                  <span class="a-nw-mobile-row-main">
+                    <strong>{{ row.name }}</strong>
+                    <small>
+                      {{ row.subtitle }} · {{ ownershipBadgeForRow(row) ?? 'Sin asignar' }} ·
+                      {{ positionSourceLabel(row) }}
+                    </small>
+                  </span>
+                  <span class="a-nw-mobile-row-value mono">
+                    <small v-if="foreignAmountLabel(row)">{{ foreignAmountLabel(row) }}</small>
+                    <strong :class="{ 'account-value-neg': row.type === 'liability' }">
+                      {{ formatNumber(row.value, 0) }} {{ displayCurrencyUnit(row.currency) }}
+                    </strong>
+                  </span>
+                </button>
+              </template>
+            </section>
           </section>
         </div>
 
@@ -1879,69 +1924,84 @@ watch(
             </tr>
           </thead>
           <tbody>
-            <template v-for="group in balanceGroups" :key="`${group.kind}-${group.key}`">
-              <tr
-                class="grp-row clickable"
-                :aria-expanded="!isBalanceGroupCollapsed(group)"
-                @click="toggleBalanceGroup(group)"
-              >
+            <template v-for="section in balanceSections" :key="`section-${section.kind}`">
+              <tr class="kind-row">
                 <td colspan="3">
-                  <div class="grp-name">
-                    <span class="a-nw-group-chevron" aria-hidden="true">
-                      {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
-                    </span>
-                    <span
-                      class="grp-kind"
-                      :class="group.kind === 'asset' ? 'grp-kind-asset' : 'grp-kind-liability'"
-                    >
-                      {{ group.kind === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
-                    </span>
-                    <span>{{ group.label }}</span>
+                  <div
+                    class="kind-name"
+                    :class="section.kind === 'asset' ? 'kind-name-asset' : 'kind-name-liability'"
+                  >
+                    {{ section.label }}
                   </div>
                 </td>
                 <td class="num">
                   <span class="grp-total">
-                    {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 2) }}
+                    {{ section.kind === 'liability' ? '−' : ''
+                    }}{{ formatNumber(section.total, 2) }}
                     {{ heroUnitLabel }}
                   </span>
                 </td>
                 <td></td>
               </tr>
 
-              <template v-if="!isBalanceGroupCollapsed(group)">
+              <template v-for="group in section.groups" :key="`${group.kind}-${group.key}`">
                 <tr
-                  v-for="row in group.rows"
-                  :key="`${row.type}-${row.id}`"
-                  class="clickable"
-                  :class="{ 'row-active': isBalanceRowActive(row) }"
-                  @click="selectPosition(row)"
+                  class="grp-row clickable"
+                  :aria-expanded="!isBalanceGroupCollapsed(group)"
+                  @click="toggleBalanceGroup(group)"
                 >
-                  <td>
-                    <div class="name">
-                      <span class="swatch" :class="{ lia: row.type === 'liability' }" />
-                      <div class="nameMain">{{ row.name }}</div>
+                  <td colspan="3">
+                    <div class="grp-name">
+                      <span class="a-nw-group-chevron" aria-hidden="true">
+                        {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
+                      </span>
+                      <span>{{ group.label }}</span>
                     </div>
                   </td>
-                  <td class="tbl-cell-muted">{{ row.subtitle }}</td>
-                  <td class="tbl-cell-muted">{{ ownershipBadgeForRow(row) ?? 'Sin asignar' }}</td>
                   <td class="num">
-                    <span v-if="foreignAmountLabel(row)" class="foreign-amount">
-                      {{ foreignAmountLabel(row) }}
-                    </span>
-                    <span
-                      class="account-value mono"
-                      :class="{ 'account-value-neg': row.type === 'liability' }"
-                    >
-                      {{ formatNumber(row.value, 2) }} {{ displayCurrencyUnit(row.currency) }}
+                    <span class="grp-total">
+                      {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 2) }}
+                      {{ heroUnitLabel }}
                     </span>
                   </td>
-                  <td class="a-nw-actions-col" @click.stop>
-                    <ARowMenu
-                      :items="rowMenuItems(row)"
-                      @select="handleRowMenuAction(row, $event)"
-                    />
-                  </td>
+                  <td></td>
                 </tr>
+
+                <template v-if="!isBalanceGroupCollapsed(group)">
+                  <tr
+                    v-for="row in group.rows"
+                    :key="`${row.type}-${row.id}`"
+                    class="clickable"
+                    :class="{ 'row-active': isBalanceRowActive(row) }"
+                    @click="selectPosition(row)"
+                  >
+                    <td>
+                      <div class="name">
+                        <span class="swatch" :class="{ lia: row.type === 'liability' }" />
+                        <div class="nameMain">{{ row.name }}</div>
+                      </div>
+                    </td>
+                    <td class="tbl-cell-muted">{{ row.subtitle }}</td>
+                    <td class="tbl-cell-muted">{{ ownershipBadgeForRow(row) ?? 'Sin asignar' }}</td>
+                    <td class="num">
+                      <span v-if="foreignAmountLabel(row)" class="foreign-amount">
+                        {{ foreignAmountLabel(row) }}
+                      </span>
+                      <span
+                        class="account-value mono"
+                        :class="{ 'account-value-neg': row.type === 'liability' }"
+                      >
+                        {{ formatNumber(row.value, 2) }} {{ displayCurrencyUnit(row.currency) }}
+                      </span>
+                    </td>
+                    <td class="a-nw-actions-col" @click.stop>
+                      <ARowMenu
+                        :items="rowMenuItems(row)"
+                        @select="handleRowMenuAction(row, $event)"
+                      />
+                    </td>
+                  </tr>
+                </template>
               </template>
             </template>
           </tbody>
@@ -1949,15 +2009,26 @@ watch(
       </div>
     </section>
 
-    <AButton
-      v-if="activeNetWorthTab === 'balance'"
-      class="a-nw-mobile-create"
-      variant="primary"
-      @click="openPrimaryCreateModal"
-    >
-      <span class="a-nw-fab-plus" aria-hidden="true">+</span>
-      <span class="a-nw-fab-label">Añadir posición</span>
-    </AButton>
+    <div v-if="activeNetWorthTab === 'balance'" class="a-nw-mobile-create-wrap">
+      <div v-if="mobileCreateMenuOpen" class="a-nw-mobile-create-menu">
+        <AButton variant="ghost" size="sm" @click="openMobileCreateModal('asset')">
+          Añadir activo
+        </AButton>
+        <AButton variant="ghost" size="sm" @click="openMobileCreateModal('liability')">
+          Añadir pasivo
+        </AButton>
+      </div>
+      <AButton
+        class="a-nw-mobile-create"
+        variant="primary"
+        :aria-expanded="mobileCreateMenuOpen"
+        aria-label="Añadir posición"
+        @click="toggleMobileCreateMenu"
+      >
+        <span class="a-nw-fab-plus" aria-hidden="true">+</span>
+        <span class="a-nw-fab-label">Añadir posición</span>
+      </AButton>
+    </div>
 
     <AState v-if="store.error" status="error">
       {{ prettyError() }}
