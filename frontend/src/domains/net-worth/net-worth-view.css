@@ -396,6 +396,14 @@
   flex-wrap: wrap;
 }
 
+.a-nw-evolution-back.btn {
+  min-height: 24px;
+  padding: 3px 8px;
+  color: var(--text);
+  font-size: 11.5px;
+  line-height: 1.1;
+}
+
 .a-nw-evolution-scope-inline {
   display: inline-flex;
   align-items: center;

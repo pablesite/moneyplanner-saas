@@ -369,13 +369,25 @@ function parseNetWorthTab(raw: unknown): NetWorthTab {
 }
 
 const activeNetWorthTab = ref<NetWorthTab>(parseNetWorthTab(route.query.tab));
+const evolutionReturnTab = ref<NetWorthTab | null>(null);
 
 function setNetWorthTab(tab: NetWorthTab): void {
   activeNetWorthTab.value = tab;
+  if (tab !== 'evolution') evolutionReturnTab.value = null;
   const query = { ...route.query };
   if (tab === 'general') delete query.tab;
   else query.tab = tab;
   void router.replace({ query });
+}
+
+async function openEvolutionFromComposition(row: HeroCompositionRow): Promise<void> {
+  await applyCompositionCategoryFilter({ key: row.key, type: row.kind });
+  evolutionReturnTab.value = 'general';
+  setNetWorthTab('evolution');
+}
+
+function returnFromEvolution(): void {
+  setNetWorthTab(evolutionReturnTab.value ?? 'general');
 }
 
 type TimelineScope = 'total' | 'operational';
@@ -1604,7 +1616,7 @@ watch(
                   type="button"
                   class="comp-row"
                   :class="{ 'row-active': isHeroCategoryActive(row) }"
-                  @click="applyCompositionCategoryFilter({ key: row.key, type: row.kind })"
+                  @click="openEvolutionFromComposition(row)"
                 >
                   <span
                     class="comp-dot"
@@ -1634,7 +1646,7 @@ watch(
                   type="button"
                   class="comp-row"
                   :class="{ 'row-active': isHeroCategoryActive(row) }"
-                  @click="applyCompositionCategoryFilter({ key: row.key, type: row.kind })"
+                  @click="openEvolutionFromComposition(row)"
                 >
                   <span
                     class="comp-dot"
@@ -1667,6 +1679,16 @@ watch(
           <div class="a-nw-evolution-summary">
             <div class="a-nw-evolution-headline">
               <div class="a-nw-evolution-title-row">
+                <AButton
+                  v-if="evolutionReturnTab"
+                  variant="ghost"
+                  size="sm"
+                  class="a-nw-evolution-back"
+                  aria-label="Volver a General"
+                  @click="returnFromEvolution"
+                >
+                  ← General
+                </AButton>
                 <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
                 <div class="a-nw-evolution-scope-inline" aria-label="Ámbito de evolución">
                   <AButton

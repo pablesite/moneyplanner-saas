@@ -645,15 +645,22 @@ describe('NetWorthView', () => {
     expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(true);
   });
 
-  it('requests a category timeline from the hero breakdown', async () => {
+  it('opens evolution from a hero breakdown category and returns to general', async () => {
     const state = makeState();
     mockUseNetWorthViewState.mockReturnValue(state);
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
     await wrapper.get('.comp-row').trigger('click');
+    await flushPromises();
 
     expect(state.store.fetchTimeline).toHaveBeenCalledWith('cash', 'asset');
+    expect(wrapper.find('.a-nw-evolution-section').exists()).toBe(true);
+    expect(wrapper.find('.a-nw-evolution-back').exists()).toBe(true);
+
+    await wrapper.get('.a-nw-evolution-back').trigger('click');
+    expect(wrapper.find('.hero-breakdown').exists()).toBe(true);
+    expect(wrapper.find('.a-nw-evolution-section').exists()).toBe(false);
   });
 
   it('selects a balance row and fetches the per-position timeline', async () => {
