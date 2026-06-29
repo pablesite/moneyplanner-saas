@@ -945,12 +945,6 @@ function positionKindLabel(row: PositionRow): string {
   return row.type === 'asset' ? 'Activo' : 'Pasivo';
 }
 
-function detailMetaLine(row: PositionRow): string {
-  return [row.subtitle, ownershipBadgeForRow(row) ?? 'Sin asignar', positionSourceLabel(row)].join(
-    ' · ',
-  );
-}
-
 function rowMenuItems(row: PositionRow) {
   return [
     { id: 'focus', label: 'Ver evolucion' },
@@ -2120,44 +2114,50 @@ watch(
 
       <div v-if="selectedBalanceDetailRow" class="a-nw-detail">
         <div class="a-nw-detail-head">
-          <div class="a-nw-detail-title-row">
-            <span
-              class="a-nw-detail-kind"
-              :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
-            >
-              {{ positionKindLabel(selectedBalanceDetailRow) }}
-            </span>
-            <span class="a-nw-detail-source">
-              {{ positionSourceLabel(selectedBalanceDetailRow) }}
-            </span>
+          <div class="a-nw-detail-hero">
+            <div class="a-nw-detail-title-block">
+              <div class="a-nw-detail-title-row">
+                <span
+                  class="a-nw-detail-kind"
+                  :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
+                >
+                  {{ positionKindLabel(selectedBalanceDetailRow) }}
+                </span>
+                <span v-if="activeEvolutionLatest?.fullLabel" class="a-nw-detail-asof">
+                  {{ activeEvolutionLatest.fullLabel }}
+                </span>
+              </div>
+              <h3>{{ selectedBalanceDetailRow.name }}</h3>
+              <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
+                {{ foreignAmountLabel(selectedBalanceDetailRow) }}
+              </span>
+            </div>
+            <div class="a-nw-detail-value-block">
+              <strong
+                class="mono"
+                :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
+              >
+                {{
+                  formatNumber(activeEvolutionLatest?.value ?? selectedBalanceDetailRow.value, 2)
+                }}
+                {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+              </strong>
+            </div>
           </div>
-          <div>
-            <h3>{{ selectedBalanceDetailRow.name }}</h3>
-            <p>{{ detailMetaLine(selectedBalanceDetailRow) }}</p>
-          </div>
-          <div class="a-nw-detail-value-block">
-            <strong
-              class="mono"
-              :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
-            >
-              {{ formatNumber(selectedBalanceDetailRow.value, 2) }}
-              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
-            </strong>
-            <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
-              {{ foreignAmountLabel(selectedBalanceDetailRow) }}
+
+          <div class="a-nw-detail-meta-strip" role="list" aria-label="Datos de la posición">
+            <span role="listitem">{{ selectedBalanceDetailRow.subtitle }}</span>
+            <span role="listitem">
+              {{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}
             </span>
+            <span role="listitem">{{ positionSourceLabel(selectedBalanceDetailRow) }}</span>
+            <span role="listitem">{{
+              displayCurrencyUnit(selectedBalanceDetailRow.currency)
+            }}</span>
           </div>
         </div>
 
         <div class="a-nw-detail-kpis">
-          <div>
-            <span>Último valor</span>
-            <strong class="mono">
-              {{ formatNumber(activeEvolutionLatest?.value ?? selectedBalanceDetailRow.value, 2) }}
-              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
-            </strong>
-            <small>{{ activeEvolutionLatest?.fullLabel ?? 'Valor actual' }}</small>
-          </div>
           <div>
             <span>Cambio mensual</span>
             <strong
@@ -2196,37 +2196,6 @@ watch(
           </div>
         </div>
 
-        <details class="a-nw-detail-more-actions">
-          <summary>Más acciones</summary>
-          <div class="actions">
-            <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
-              Archivar
-            </AButton>
-            <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
-              Eliminar
-            </AButton>
-          </div>
-        </details>
-
-        <div class="a-nw-detail-grid" role="list" aria-label="Datos de la posición">
-          <div role="listitem">
-            <span>Categoría</span>
-            <strong>{{ selectedBalanceDetailRow.subtitle }}</strong>
-          </div>
-          <div role="listitem">
-            <span>Titularidad</span>
-            <strong>{{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}</strong>
-          </div>
-          <div role="listitem">
-            <span>Fuente</span>
-            <strong>{{ positionSourceLabel(selectedBalanceDetailRow) }}</strong>
-          </div>
-          <div role="listitem">
-            <span>Moneda</span>
-            <strong>{{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}</strong>
-          </div>
-        </div>
-
         <div class="a-nw-detail-chart">
           <ASectHead
             title="Evolución propia"
@@ -2250,6 +2219,18 @@ watch(
             :y-axis-min-zero="timelineYAxisStartsAtZero"
           />
         </div>
+
+        <details class="a-nw-detail-more-actions">
+          <summary>Más acciones</summary>
+          <div class="actions">
+            <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
+              Archivar
+            </AButton>
+            <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
+              Eliminar
+            </AButton>
+          </div>
+        </details>
       </div>
     </BaseModal>
 

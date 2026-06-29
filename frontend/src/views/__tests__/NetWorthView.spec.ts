@@ -706,9 +706,7 @@ describe('NetWorthView', () => {
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
     expect(wrapper.text()).toContain('Detalle de activo');
     expect(wrapper.text()).toContain('Cuenta principal');
-    expect(wrapper.text()).toContain('Fuente');
     expect(wrapper.text()).toContain('Manual');
-    expect(wrapper.text()).toContain('Último valor');
     expect(wrapper.text()).toContain('Cambio mensual');
     expect(wrapper.text()).toContain('Cambio YTD');
     expect(wrapper.get('[aria-label="Editar posición"]').attributes('title')).toBe(

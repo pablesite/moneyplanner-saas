@@ -825,7 +825,7 @@
 
 .a-nw-detail {
   display: grid;
-  gap: 20px;
+  gap: 14px;
 }
 
 .a-nw-detail-modal-title {
@@ -860,9 +860,21 @@
 
 .a-nw-detail-head {
   display: grid;
-  gap: 12px;
-  padding-bottom: 16px;
+  gap: 10px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.a-nw-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.a-nw-detail-title-block {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
 }
 
 .a-nw-detail-title-row {
@@ -894,24 +906,18 @@
   color: var(--neg);
 }
 
-.a-nw-detail-source {
+.a-nw-detail-asof {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11.5px;
+  white-space: nowrap;
 }
 
 .a-nw-detail-head h3 {
   margin: 0;
   color: var(--text);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 650;
   letter-spacing: 0;
-}
-
-.a-nw-detail-head p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.35;
 }
 
 .a-nw-detail-value-block {
@@ -921,25 +927,43 @@
 
 .a-nw-detail-value-block > strong {
   color: var(--text);
-  font-size: 26px;
+  font-size: clamp(25px, 9vw, 32px);
   font-weight: 550;
+  letter-spacing: -0.045em;
+}
+
+.a-nw-detail-meta-strip {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.a-nw-detail-meta-strip span {
+  min-width: 0;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.15;
 }
 
 .a-nw-detail-kpis {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
   background: var(--line);
 }
 
 .a-nw-detail-kpis > div {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
-  padding: 12px;
+  padding: 10px 12px;
   background: color-mix(in oklab, var(--hover) 58%, var(--bg));
 }
 
@@ -957,7 +981,7 @@
 .a-nw-detail-kpis strong {
   overflow: hidden;
   color: var(--text);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -969,12 +993,12 @@
 
 .a-nw-detail-more-actions {
   border-top: 1px solid var(--line);
-  padding-top: 2px;
+  padding-top: 0;
 }
 
 .a-nw-detail-more-actions summary {
   width: fit-content;
-  padding: 8px 0;
+  padding: 6px 0;
   color: var(--muted);
   font-size: 12px;
   cursor: pointer;
@@ -984,36 +1008,22 @@
   padding-top: 6px;
 }
 
-.a-nw-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 18px;
-  margin: 0;
-}
-
-.a-nw-detail-grid div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.a-nw-detail-grid span {
-  color: var(--faint);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.a-nw-detail-grid strong {
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
-}
-
 .a-nw-detail-chart {
   display: grid;
-  gap: 12px;
-  padding-top: 4px;
+  gap: 8px;
+  padding-top: 0;
+}
+
+.a-nw-detail-chart .sect-head {
+  margin-bottom: 0;
+}
+
+.a-nw-detail-chart .sect-head h2 {
+  font-size: 15px;
+}
+
+.a-nw-detail-chart .sect-head p {
+  font-size: 12px;
 }
 
 .a-nw-actions-col {
