@@ -801,10 +801,10 @@ describe('NetWorthView', () => {
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Evolución');
 
-    expect(wrapper.text()).toContain('Ámbito');
     expect(wrapper.text()).toContain('Rango');
     expect(wrapper.text()).toContain('3a');
     expect(wrapper.text()).toContain('Fechas');
+    expect(wrapper.find('.a-nw-evolution-scope-inline').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('Detalle');
     expect(wrapper.text()).not.toContain('Personalizado');
     expect(wrapper.text()).not.toContain('Diaria');

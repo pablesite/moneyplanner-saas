@@ -1672,7 +1672,21 @@ watch(
       <div v-else class="a-nw-evolution-stack">
         <div class="a-nw-evolution-summary">
           <div class="a-nw-evolution-headline">
-            <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
+            <div class="a-nw-evolution-title-row">
+              <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
+              <div class="a-nw-evolution-scope-inline" aria-label="Ámbito de evolución">
+                <AButton
+                  v-for="option in timelineScopeOptions"
+                  :key="option.value"
+                  size="sm"
+                  variant="ghost"
+                  :class="{ on: timelineScope === option.value }"
+                  @click="setTimelineScope(option.value)"
+                >
+                  {{ option.label }}
+                </AButton>
+              </div>
+            </div>
             <strong>
               {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
               {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
@@ -1694,21 +1708,6 @@ watch(
               <span>en {{ activeEvolutionPresetLabel }}</span>
             </p>
             <p class="a-nw-evolution-caption">{{ activeEvolutionCaption }}</p>
-          </div>
-          <div class="a-nw-evolution-control-group a-nw-evolution-scope-group">
-            <span>Ámbito</span>
-            <div class="a-nw-evolution-mini-seg" aria-label="Ámbito de evolución">
-              <AButton
-                v-for="option in timelineScopeOptions"
-                :key="option.value"
-                size="sm"
-                variant="ghost"
-                :class="{ on: timelineScope === option.value }"
-                @click="setTimelineScope(option.value)"
-              >
-                {{ option.label }}
-              </AButton>
-            </div>
           </div>
         </div>
 

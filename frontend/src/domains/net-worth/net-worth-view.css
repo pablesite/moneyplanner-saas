@@ -391,16 +391,50 @@
 }
 
 .a-nw-evolution-summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 18px;
+  display: block;
   color: var(--muted);
   font-size: 12px;
 }
 
 .a-nw-evolution-headline {
   min-width: 0;
+}
+
+.a-nw-evolution-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.a-nw-evolution-scope-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--panel) 42%, transparent);
+}
+
+.a-nw-evolution-scope-inline .btn {
+  min-height: 24px;
+  padding: 3px 8px;
+  border-color: transparent;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11.5px;
+  line-height: 1.1;
+}
+
+.a-nw-evolution-scope-inline .btn:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+
+.a-nw-evolution-scope-inline .btn.on {
+  color: var(--text);
+  background: var(--panel);
 }
 
 .a-nw-evolution-summary strong {
@@ -448,11 +482,6 @@
   gap: 6px;
   min-width: 0;
   color: var(--muted);
-}
-
-.a-nw-evolution-scope-group {
-  justify-self: end;
-  min-width: max-content;
 }
 
 .a-nw-evolution-range-group {
@@ -1270,17 +1299,8 @@
     gap: 12px;
   }
 
-  .a-nw-evolution-summary {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
   .a-nw-evolution-summary strong {
     font-size: 22px;
-  }
-
-  .a-nw-evolution-scope-group {
-    justify-self: start;
   }
 
   .a-nw-evolution-chart-actions {
