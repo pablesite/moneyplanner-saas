@@ -105,10 +105,14 @@
   flex-wrap: nowrap;
   gap: 10px;
   margin: 0;
-  padding: 20px 0 4px;
+  padding: 0 0 10px;
   border-bottom: 0;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+.a-nw-page .context-bar.a-nw-read-controls {
+  margin-top: 16px;
 }
 
 .a-nw-page .context-bar::-webkit-scrollbar {
