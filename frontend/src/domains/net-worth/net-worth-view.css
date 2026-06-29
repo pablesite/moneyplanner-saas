@@ -111,6 +111,13 @@
   scrollbar-width: none;
 }
 
+.dir-a .page.a-nw-page .context-bar.a-nw-read-controls {
+  gap: 10px;
+  margin: 0;
+  padding: 14px 0;
+  border-bottom: 0;
+}
+
 .a-nw-page .context-bar::-webkit-scrollbar {
   display: none;
 }
