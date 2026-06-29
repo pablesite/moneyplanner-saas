@@ -105,7 +105,7 @@
   flex-wrap: nowrap;
   gap: 10px;
   margin: 0;
-  padding: 14px 0 4px;
+  padding: 20px 0 4px;
   border-bottom: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -174,10 +174,6 @@
   gap: 16px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--line);
-}
-
-.a-nw-read-controls {
-  margin-top: 12px;
 }
 
 .a-nw-page .tabs {
