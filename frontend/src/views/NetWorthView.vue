@@ -343,7 +343,6 @@ const selectedPositionType = ref<'asset' | 'liability' | null>(null);
 const selectedPositionId = ref<number | null>(null);
 const createAssetCategory = ref<string | null>(null);
 const createLiabilityCategory = ref<string | null>(null);
-const timelineExpanded = ref(false);
 type TimelinePreset = '3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom';
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
 const timelinePresetOptions = ['3m', '6m', '1a', '3a', '5a', 'all', 'custom'] as const;
@@ -982,10 +981,8 @@ function closeLiabilityModal(): void {
 const {
   activeTimelineRows,
   displayedTimelineLoading,
-  visibleTimelineRows,
   timelineWindow,
   timelineChartPoints,
-  latestTimelineChartPoint,
   timelineSummaryLabel,
   displayedTimelineSeriesColor,
   timelineYAxisStartsAtZero,
@@ -1023,8 +1020,6 @@ const {
   applyCompositionCategoryFilter,
   selectPosition,
   setTimelinePreset,
-  updateTimelineWindowStart,
-  updateTimelineWindowEnd,
   assetCreateInitial,
   liabilityCreateInitial,
 } = useNetWorthPageActions({
@@ -1750,14 +1745,6 @@ watch(
             </div>
           </div>
           <AButton
-            v-if="activeEvolutionPoints.length > 1"
-            variant="ghost"
-            class="a-nw-evolution-expand"
-            @click="timelineExpanded = true"
-          >
-            Ampliar gráfico
-          </AButton>
-          <AButton
             v-if="
               timelineFilterLabel && timelineScope === 'total' && timelineGranularity === 'monthly'
             "
@@ -1770,68 +1757,6 @@ watch(
           </AButton>
         </div>
       </div>
-
-      <BaseModal
-        :open="timelineExpanded"
-        title="Evolución temporal"
-        variant="sheet"
-        panel-class="a-nw-modal-panel dir-a"
-        @close="timelineExpanded = false"
-      >
-        <div class="a-nw-modal-stack">
-          <div class="a-nw-chart-summary">
-            <div>
-              <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
-              <strong>
-                {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
-                {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-              </strong>
-            </div>
-            <span>{{ activeEvolutionCaption }}</span>
-          </div>
-
-          <div
-            v-if="timelineGranularity === 'monthly' && timelineScope === 'total'"
-            class="a-nw-range-grid"
-          >
-            <label class="a-nw-range-field">
-              <span>Inicio</span>
-              <input
-                class="a-nw-range-input"
-                type="range"
-                min="0"
-                :max="Math.max(0, visibleTimelineRows.length - 1)"
-                :value="timelineWindow.start"
-                @input="updateTimelineWindowStart(($event.target as HTMLInputElement).value)"
-              />
-              <strong>{{ timelineChartPoints[0]?.fullLabel ?? '-' }}</strong>
-            </label>
-            <label class="a-nw-range-field">
-              <span>Fin</span>
-              <input
-                class="a-nw-range-input"
-                type="range"
-                min="0"
-                :max="Math.max(0, visibleTimelineRows.length - 1)"
-                :value="timelineWindow.end"
-                @input="updateTimelineWindowEnd(($event.target as HTMLInputElement).value)"
-              />
-              <strong>{{ latestTimelineChartPoint?.fullLabel ?? '-' }}</strong>
-            </label>
-          </div>
-
-          <div class="a-nw-chart-shell a-nw-chart-shell-expanded">
-            <NetWorthEvolutionChart
-              :points="activeEvolutionPoints"
-              :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-              :series-label="activeEvolutionLabel"
-              :series-color="displayedTimelineSeriesColor"
-              :y-axis-min-zero="timelineYAxisStartsAtZero"
-              expanded
-            />
-          </div>
-        </div>
-      </BaseModal>
     </section>
 
     <section v-if="activeNetWorthTab === 'balance'" class="sect">

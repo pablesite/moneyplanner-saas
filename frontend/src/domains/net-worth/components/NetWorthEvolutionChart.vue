@@ -15,23 +15,20 @@ type Props = {
   seriesLabel: string;
   seriesColor?: string;
   yAxisMinZero?: boolean;
-  expanded?: boolean;
 };
 
 const props = withDefaults(defineProps<Props>(), {
   seriesColor: 'var(--accent)',
   yAxisMinZero: false,
-  expanded: false,
 });
 
 // Geometría del prototipo (handoff/direction-a.jsx · AInteractiveChart).
-// viewBox fijo y ancho 100%: el SVG escala con el contenedor, así que el modo
-// "expanded" sólo se ve más grande porque su contenedor es más ancho.
+// viewBox fijo y ancho 100%: el SVG escala con el contenedor.
 const W = 1280;
-const padL = 56;
-const padR = 16;
-const padT = 12;
-const padB = 18;
+const padL = 78;
+const padR = 28;
+const padT = 18;
+const padB = 30;
 const gap = 12;
 const lineH = 280;
 const deltaH = 72;
@@ -87,6 +84,10 @@ function px(i: number): number {
 
 function py(v: number): number {
   return padT + (1 - (v - bounds.value.min) / range.value) * (lineH - padT - padB);
+}
+
+function clampPlotY(y: number): number {
+  return Math.max(padT, Math.min(lineH - padB, y));
 }
 
 const pts = computed(() => props.points.map((p, i) => ({ x: px(i), y: py(p.value) })));
@@ -146,9 +147,9 @@ const linePath = computed(() => {
     const p2 = p[i + 1]!;
     const p3 = p[i + 2] ?? p2;
     const cp1x = p1.x + (p2.x - p0.x) * tension;
-    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp1y = clampPlotY(p1.y + (p2.y - p0.y) * tension);
     const cp2x = p2.x - (p3.x - p1.x) * tension;
-    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    const cp2y = clampPlotY(p2.y - (p3.y - p1.y) * tension);
     d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
   }
   return d;
@@ -357,7 +358,7 @@ function handleLeave(): void {
         <text
           v-if="entry.show || hoverIndex === i"
           :x="px(i)"
-          :y="totalH - 2"
+          :y="totalH - 8"
           text-anchor="middle"
           class="a-nw-evo-axis"
           :fill-opacity="hoverIndex === i ? 0.95 : 0.5"

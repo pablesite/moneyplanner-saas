@@ -373,23 +373,6 @@
   gap: 14px;
 }
 
-.a-nw-evolution-expand {
-  justify-self: end;
-  flex: 0 0 auto;
-  min-height: 32px;
-  padding: 6px 10px;
-  border-color: var(--line);
-  color: var(--muted);
-  background: color-mix(in oklab, var(--panel) 42%, transparent);
-  font-size: 12px;
-}
-
-.a-nw-evolution-expand:hover {
-  color: var(--text);
-  border-color: var(--line-strong);
-  background: var(--hover);
-}
-
 .a-nw-evolution-summary {
   display: block;
   color: var(--muted);
@@ -557,7 +540,7 @@
 .a-nw-evolution-date-range {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
@@ -571,27 +554,11 @@
 }
 
 .a-nw-evolution-date-range .filter-ctrl {
-  min-height: 30px;
-  width: 136px;
+  min-height: 28px;
+  width: 118px;
+  padding: 4px 7px;
   color-scheme: dark;
-  font-size: 12px;
-}
-
-.a-nw-chart-summary {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.a-nw-chart-summary strong {
-  display: block;
-  margin-top: 4px;
-  color: var(--text);
-  font-size: 18px;
+  font-size: 11px;
 }
 
 .a-nw-chart-label {
@@ -604,22 +571,21 @@
 .a-nw-chart-shell {
   display: grid;
   gap: 14px;
-}
-
-.a-nw-chart-shell-expanded {
-  padding-top: 4px;
+  overflow: visible;
 }
 
 /* Gráfico de Evolución (SVG a medida, patrón AInteractiveChart del handoff). */
 .a-nw-evo {
   position: relative;
   color: var(--accent);
+  overflow: visible;
 }
 
 .a-nw-evo-svg {
   display: block;
   width: 100%;
   height: auto;
+  overflow: visible;
 }
 
 .a-nw-evo-axis {
@@ -1067,29 +1033,6 @@
   max-width: 1080px;
 }
 
-.a-nw-range-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.a-nw-range-field {
-  display: grid;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.a-nw-range-field strong {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.a-nw-range-input {
-  width: 100%;
-  accent-color: oklch(0.72 0.12 var(--accent-h, 178));
-}
-
 .a-nw-archived-list,
 .a-nw-generated-list {
   display: grid;
@@ -1187,8 +1130,7 @@
     gap: 10px 14px;
   }
 
-  .hero-breakdown,
-  .a-nw-range-grid {
+  .hero-breakdown {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1201,7 +1143,6 @@
     font-size: 12.5px;
   }
 
-  .a-nw-chart-summary,
   .a-nw-generated-head,
   .a-nw-archived-card,
   .a-nw-generated-card {
@@ -1310,11 +1251,6 @@
     align-items: stretch;
     flex-direction: column;
     gap: 8px;
-  }
-
-  .a-nw-evolution-expand {
-    justify-self: start;
-    width: fit-content;
   }
 
   .a-nw-evolution-control-group {
