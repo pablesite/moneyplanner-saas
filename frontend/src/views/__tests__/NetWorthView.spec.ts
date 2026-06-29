@@ -709,10 +709,18 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('Manual');
     expect(wrapper.text()).toContain('Cambio mensual');
     expect(wrapper.text()).toContain('Cambio YTD');
-    expect(wrapper.get('[aria-label="Editar posición"]').attributes('title')).toBe(
-      'Editar posición',
-    );
+    expect(wrapper.findAll('.a-nw-detail-header-btn')).toHaveLength(1);
+    expect(
+      wrapper.get('.a-nw-detail-actions [aria-label="Editar posición"]').attributes('title'),
+    ).toBe('Editar posición');
+    expect(
+      wrapper.get('.a-nw-detail-actions [aria-label="Archivar posición"]').attributes('title'),
+    ).toBe('Archivar');
+    expect(
+      wrapper.get('.a-nw-detail-actions [aria-label="Eliminar posición"]').attributes('title'),
+    ).toBe('Eliminar');
     expect(wrapper.get('[aria-label="Cerrar detalle"]').attributes('title')).toBe('Cerrar');
+    expect(wrapper.text()).not.toContain('Más acciones');
     expect(wrapper.text()).not.toContain('Editar posición');
   });
 

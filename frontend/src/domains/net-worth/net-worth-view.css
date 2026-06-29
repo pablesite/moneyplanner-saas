@@ -877,35 +877,6 @@
   min-width: 0;
 }
 
-.a-nw-detail-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.a-nw-detail-kind {
-  width: fit-content;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.a-nw-detail-kind.is-asset {
-  border-color: color-mix(in oklab, var(--pos) 40%, transparent);
-  color: var(--pos);
-}
-
-.a-nw-detail-kind.is-liability {
-  border-color: color-mix(in oklab, var(--neg) 40%, transparent);
-  color: var(--neg);
-}
-
 .a-nw-detail-asof {
   color: var(--muted);
   font-size: 11.5px;
@@ -952,19 +923,16 @@
 .a-nw-detail-kpis {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  border: 1px solid var(--line-strong);
-  border-radius: 16px;
-  background: var(--line);
+  gap: 16px;
+  padding: 2px 0 0;
 }
 
 .a-nw-detail-kpis > div {
   display: grid;
   gap: 4px;
   min-width: 0;
-  padding: 10px 12px;
-  background: color-mix(in oklab, var(--hover) 58%, var(--bg));
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
 }
 
 .a-nw-detail-kpis span,
@@ -987,25 +955,36 @@
   white-space: nowrap;
 }
 
-.a-nw-detail-more-actions .actions {
+.a-nw-detail-actions {
+  display: flex;
   justify-content: flex-end;
-}
-
-.a-nw-detail-more-actions {
+  gap: 8px;
   border-top: 1px solid var(--line);
-  padding-top: 0;
+  padding-top: 10px;
 }
 
-.a-nw-detail-more-actions summary {
-  width: fit-content;
-  padding: 6px 0;
+.a-nw-detail-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
   color: var(--muted);
-  font-size: 12px;
   cursor: pointer;
 }
 
-.a-nw-detail-more-actions .actions {
-  padding-top: 6px;
+.a-nw-detail-action-btn:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: var(--hover);
+}
+
+.a-nw-detail-action-btn.is-danger:hover {
+  border-color: color-mix(in oklab, var(--neg) 45%, transparent);
+  color: var(--neg);
 }
 
 .a-nw-detail-chart {
@@ -1566,19 +1545,6 @@
     width: 100%;
     height: 100vh;
     max-height: 100vh;
-  }
-
-  .a-nw-detail-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .a-nw-detail-more-actions .actions {
-    justify-content: stretch;
-  }
-
-  .a-nw-detail-more-actions .btn {
-    flex: 1 1 calc(50% - 4px);
-    justify-content: center;
   }
 
   /* Chart SVG: tipografía interna aún mayor para móvil. */

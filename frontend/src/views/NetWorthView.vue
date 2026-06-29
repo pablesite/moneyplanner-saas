@@ -941,10 +941,6 @@ function balanceDetailTitle(row: PositionRow | null): string {
   return row.type === 'asset' ? 'Detalle de activo' : 'Detalle de pasivo';
 }
 
-function positionKindLabel(row: PositionRow): string {
-  return row.type === 'asset' ? 'Activo' : 'Pasivo';
-}
-
 function rowMenuItems(row: PositionRow) {
   return [
     { id: 'focus', label: 'Ver evolucion' },
@@ -2065,29 +2061,6 @@ watch(
         </div>
         <div class="a-nw-detail-header-actions">
           <button
-            v-if="selectedBalanceDetailRow"
-            class="a-nw-detail-header-btn"
-            type="button"
-            aria-label="Editar posición"
-            title="Editar posición"
-            @click="editBalanceDetail(selectedBalanceDetailRow)"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-          </button>
-          <button
             class="a-nw-detail-header-btn"
             type="button"
             aria-label="Cerrar detalle"
@@ -2116,17 +2089,9 @@ watch(
         <div class="a-nw-detail-head">
           <div class="a-nw-detail-hero">
             <div class="a-nw-detail-title-block">
-              <div class="a-nw-detail-title-row">
-                <span
-                  class="a-nw-detail-kind"
-                  :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
-                >
-                  {{ positionKindLabel(selectedBalanceDetailRow) }}
-                </span>
-                <span v-if="activeEvolutionLatest?.fullLabel" class="a-nw-detail-asof">
-                  {{ activeEvolutionLatest.fullLabel }}
-                </span>
-              </div>
+              <span v-if="activeEvolutionLatest?.fullLabel" class="a-nw-detail-asof">
+                {{ activeEvolutionLatest.fullLabel }}
+              </span>
               <h3>{{ selectedBalanceDetailRow.name }}</h3>
               <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
                 {{ foreignAmountLabel(selectedBalanceDetailRow) }}
@@ -2150,10 +2115,6 @@ watch(
             <span role="listitem">
               {{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}
             </span>
-            <span role="listitem">{{ positionSourceLabel(selectedBalanceDetailRow) }}</span>
-            <span role="listitem">{{
-              displayCurrencyUnit(selectedBalanceDetailRow.currency)
-            }}</span>
           </div>
         </div>
 
@@ -2220,17 +2181,78 @@ watch(
           />
         </div>
 
-        <details class="a-nw-detail-more-actions">
-          <summary>Más acciones</summary>
-          <div class="actions">
-            <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
-              Archivar
-            </AButton>
-            <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
-              Eliminar
-            </AButton>
-          </div>
-        </details>
+        <div class="a-nw-detail-actions" aria-label="Acciones de la posición">
+          <button
+            class="a-nw-detail-action-btn"
+            type="button"
+            aria-label="Editar posición"
+            title="Editar posición"
+            @click="editBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <button
+            class="a-nw-detail-action-btn"
+            type="button"
+            aria-label="Archivar posición"
+            title="Archivar"
+            @click="archiveBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 8v13H3V8" />
+              <path d="M1 3h22v5H1z" />
+              <path d="M10 12h4" />
+            </svg>
+          </button>
+          <button
+            class="a-nw-detail-action-btn is-danger"
+            type="button"
+            aria-label="Eliminar posición"
+            title="Eliminar"
+            @click="deleteBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="M19 6l-1 15H6L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </BaseModal>
 
