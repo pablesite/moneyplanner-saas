@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue';
+import { ref } from 'vue';
 import { version as appVersion } from '../../package.json';
+import { BaseModal } from '@/domains/ui';
 import AppShellNavIcon from './AppShellNavIcon.vue';
 import { useAppShell } from './useAppShell';
 
@@ -20,9 +22,15 @@ const {
   pageTitle,
   toggleAccountMenu,
 } = useAppShell();
+const aboutOpen = ref(false);
 const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null) => {
   accountMenuRef.value = element as HTMLElement | null;
 };
+
+function openAbout() {
+  closeAccountMenu();
+  aboutOpen.value = true;
+}
 </script>
 
 <template>
@@ -108,6 +116,14 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
                   class="ui-shell-account-item ui-shell-account-item-btn"
                   type="button"
                   role="menuitem"
+                  @click="openAbout"
+                >
+                  Acerca de
+                </button>
+                <button
+                  class="ui-shell-account-item ui-shell-account-item-btn"
+                  type="button"
+                  role="menuitem"
                   @click="logout"
                 >
                   Cerrar sesion
@@ -123,13 +139,6 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
           <router-view />
         </div>
       </main>
-
-      <footer class="ui-shell-footer dir-a">
-        <div class="ui-shell-footer-inner">
-          <span class="ui-shell-footer-name">The Arkenstone</span>
-          <span class="ui-shell-footer-version">v{{ appVersion }}</span>
-        </div>
-      </footer>
 
       <nav
         v-if="!isSaasAdmin"
@@ -150,5 +159,30 @@ const assignAccountMenuRef = (element: Element | ComponentPublicInstance | null)
         </RouterLink>
       </nav>
     </div>
+
+    <BaseModal
+      :open="aboutOpen"
+      title="Acerca de"
+      panel-class="ui-shell-about-modal"
+      @close="aboutOpen = false"
+    >
+      <div class="ui-shell-about-body">
+        <p class="ui-shell-about-name">The Arkenstone</p>
+        <p class="ui-shell-about-copy">
+          SaaS financiero para el seguimiento patrimonial, el presupuesto y la operativa diaria.
+        </p>
+
+        <dl class="ui-shell-about-meta">
+          <div>
+            <dt>Versión</dt>
+            <dd>v{{ appVersion }}</dd>
+          </div>
+          <div>
+            <dt>Edición</dt>
+            <dd>SaaS</dd>
+          </div>
+        </dl>
+      </div>
+    </BaseModal>
   </div>
 </template>
