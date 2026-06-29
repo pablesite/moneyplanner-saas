@@ -732,6 +732,9 @@
 }
 
 .a-nw-balance-table .grp-row .grp-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
@@ -744,7 +747,6 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--faint);
-  margin-right: 10px;
 }
 
 .a-nw-balance-table .grp-row .grp-name .grp-kind-asset {
@@ -761,6 +763,12 @@
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.a-nw-group-chevron {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1;
 }
 
 .a-nw-balance-table .name {
@@ -1310,23 +1318,10 @@
     width: 100%;
   }
 
-  .a-nw-mobile-scope {
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .a-nw-mobile-scope::-webkit-scrollbar {
-    display: none;
-  }
-
-  .a-nw-mobile-scope .btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
   .a-nw-mobile-count {
+    grid-column: 1 / -1;
     align-self: center;
+    justify-self: end;
     color: var(--muted);
     font-size: 11.5px;
     white-space: nowrap;
@@ -1392,7 +1387,13 @@
     font-weight: 650;
   }
 
-  .a-nw-mobile-group-head > .mono {
+  .a-nw-group-head-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .a-nw-group-head-right .mono {
     color: var(--text);
     font-size: 13px;
     white-space: nowrap;

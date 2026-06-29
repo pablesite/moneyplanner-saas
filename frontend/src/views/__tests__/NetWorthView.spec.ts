@@ -717,6 +717,28 @@ describe('NetWorthView', () => {
     expect(mobileListText).not.toContain('Cuenta principal');
   });
 
+  it('collapses and expands balance groups', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+
+    const firstGroup = wrapper.get('.a-nw-mobile-group-head');
+    expect(firstGroup.attributes('aria-expanded')).toBe('true');
+
+    await firstGroup.trigger('click');
+    expect(firstGroup.attributes('aria-expanded')).toBe('false');
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
+    expect(wrapper.get('.a-nw-mobile-balance-list').text()).not.toContain('Cuenta principal');
+
+    await firstGroup.trigger('click');
+    expect(firstGroup.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+  });
+
   it('shows eight decimals for crypto original amounts', async () => {
     const base = makeState();
     mockUseNetWorthViewState.mockReturnValue(
