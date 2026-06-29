@@ -103,16 +103,16 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
-  padding: 0 0 10px;
-  border-bottom: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
   overflow-x: auto;
   scrollbar-width: none;
 }
 
 .a-nw-page .context-bar.a-nw-read-controls {
-  margin-top: 8px;
+  margin-bottom: 4px;
 }
 
 .a-nw-page .context-bar::-webkit-scrollbar {
