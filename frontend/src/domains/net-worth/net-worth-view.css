@@ -391,21 +391,16 @@
 }
 
 .a-nw-evolution-summary {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
   color: var(--muted);
   font-size: 12px;
 }
 
-.a-nw-evolution-summary > div:first-child {
-  min-width: min(100%, 240px);
-}
-
-.a-nw-evolution-summary > span {
-  margin-left: auto;
+.a-nw-evolution-headline {
+  min-width: 0;
 }
 
 .a-nw-evolution-summary strong {
@@ -422,6 +417,12 @@
   gap: 6px;
   align-items: baseline;
   margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.a-nw-evolution-caption {
+  margin: 10px 0 0;
   color: var(--muted);
   font-size: 13px;
 }
@@ -451,6 +452,7 @@
 
 .a-nw-evolution-scope-group {
   justify-self: end;
+  min-width: max-content;
 }
 
 .a-nw-evolution-range-group {
@@ -1269,11 +1271,16 @@
   }
 
   .a-nw-evolution-summary {
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
   .a-nw-evolution-summary strong {
     font-size: 22px;
+  }
+
+  .a-nw-evolution-scope-group {
+    justify-self: start;
   }
 
   .a-nw-evolution-chart-actions {

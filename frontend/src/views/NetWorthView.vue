@@ -1671,7 +1671,7 @@ watch(
       </AState>
       <div v-else class="a-nw-evolution-stack">
         <div class="a-nw-evolution-summary">
-          <div>
+          <div class="a-nw-evolution-headline">
             <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
             <strong>
               {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
@@ -1693,8 +1693,8 @@ watch(
               </span>
               <span>en {{ activeEvolutionPresetLabel }}</span>
             </p>
+            <p class="a-nw-evolution-caption">{{ activeEvolutionCaption }}</p>
           </div>
-          <span>{{ activeEvolutionCaption }}</span>
           <div class="a-nw-evolution-control-group a-nw-evolution-scope-group">
             <span>Ámbito</span>
             <div class="a-nw-evolution-mini-seg" aria-label="Ámbito de evolución">
