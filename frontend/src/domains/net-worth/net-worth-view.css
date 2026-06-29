@@ -97,10 +97,6 @@
   background: transparent;
 }
 
-.a-nw-read-section {
-  gap: 0;
-}
-
 .a-nw-read-controls {
   width: 100%;
   max-width: 100%;
@@ -109,7 +105,7 @@
   flex-wrap: nowrap;
   gap: 10px;
   margin: 0;
-  padding: 14px 0;
+  padding: 10px 0;
   border-bottom: 0;
   overflow-x: auto;
   scrollbar-width: none;
