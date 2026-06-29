@@ -486,6 +486,7 @@
 
 .a-nw-evolution-range-group {
   flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .a-nw-evolution-control-group > span {
@@ -507,13 +508,15 @@
 }
 
 .a-nw-evolution-mini-seg .btn {
+  flex: 0 0 auto;
   min-height: 26px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-color: transparent;
   color: var(--muted);
   background: transparent;
   font-size: 12px;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .a-nw-evolution-mini-seg .btn:hover {
@@ -1319,8 +1322,10 @@
   }
 
   .a-nw-evolution-mini-seg {
+    width: 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
+    padding-bottom: 2px;
     scrollbar-width: none;
   }
 

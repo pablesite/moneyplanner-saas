@@ -1723,7 +1723,6 @@ watch(
 
         <div class="a-nw-evolution-chart-actions">
           <div class="a-nw-evolution-control-group a-nw-evolution-range-group">
-            <span>Rango</span>
             <div class="a-nw-evolution-mini-seg" aria-label="Rango de evolución">
               <AButton
                 v-for="preset in timelinePresetOptions"
