@@ -1052,6 +1052,113 @@
   max-width: 1080px;
 }
 
+.a-nw-item-sheet {
+  align-self: flex-start;
+  max-width: 540px;
+}
+
+.a-nw-item-sheet .ui-modal-body {
+  overflow-x: hidden;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-grid {
+  gap: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .ui-item-form-label {
+  flex: 0 0 38%;
+  max-width: 132px;
+  line-height: 1.2;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .input,
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .select,
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .input,
+.dir-a-sheet .a-nw-asset-form .select {
+  color: var(--text);
+}
+
+.dir-a-sheet .a-nw-asset-form .a-select-label {
+  color: var(--text);
+}
+
+.dir-a-sheet .a-nw-asset-form .a-select-is-placeholder .a-select-label {
+  color: var(--muted);
+}
+
+.dir-a-sheet .a-nw-asset-form .a-select-caret {
+  opacity: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field:has(.textarea),
+.dir-a-sheet .a-nw-asset-form .ui-item-form-section,
+.dir-a-sheet .a-nw-asset-form .ui-item-form-feedback {
+  display: grid;
+  align-items: stretch;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-field:has(.textarea) > .ui-item-form-label {
+  flex: none;
+  max-width: none;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-section {
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-section-head {
+  margin-bottom: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-feedback {
+  gap: 6px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+  margin: 6px -24px -20px;
+  padding: 14px 24px calc(18px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: rgb(12 13 16 / 0.96);
+  backdrop-filter: blur(12px);
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-item-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dir-a-sheet .a-nw-asset-form .ui-form-action-btn {
+  min-width: 128px;
+}
+
 .a-nw-archived-list,
 .a-nw-generated-list {
   display: grid;
