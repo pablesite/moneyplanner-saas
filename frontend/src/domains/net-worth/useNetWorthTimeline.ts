@@ -27,7 +27,7 @@ type CachedTimelineRows = {
   rows: PositionTimelinePoint[];
 };
 
-type TimelinePreset = '1m' | '3m' | '6m' | '1a' | '5a' | 'all';
+type TimelinePreset = '3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom';
 
 function formatMonthYearLabel(date: string): string {
   return new Intl.DateTimeFormat('es-ES', { month: 'short', year: '2-digit' }).format(
@@ -219,12 +219,13 @@ export function useNetWorthTimeline(params: {
   });
 
   const timelinePresetPointCount: Record<TimelinePreset, number> = {
-    '1m': 1,
     '3m': 3,
     '6m': 6,
     '1a': 12,
+    '3a': 36,
     '5a': 60,
     all: Number.POSITIVE_INFINITY,
+    custom: Number.POSITIVE_INFINITY,
   };
 
   const timelineDefaultWindow = computed(() => {

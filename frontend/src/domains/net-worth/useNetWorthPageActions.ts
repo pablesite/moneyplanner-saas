@@ -6,7 +6,7 @@ type PositionRow = {
   category: string;
 };
 
-type TimelinePreset = '1m' | '3m' | '6m' | '1a' | '5a' | 'all';
+type TimelinePreset = '3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom';
 
 type StoreLike = {
   positionTimeline: unknown;
@@ -134,7 +134,7 @@ export function useNetWorthPageActions<
 
   function setTimelinePreset(preset: TimelinePreset): void {
     params.selectedTimelinePreset.value = preset;
-    params.customTimelineWindow.value = null;
+    if (preset !== 'custom') params.customTimelineWindow.value = null;
   }
 
   function updateTimelineWindowStart(rawValue: string): void {

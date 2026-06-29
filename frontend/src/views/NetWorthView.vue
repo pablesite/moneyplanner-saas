@@ -22,7 +22,6 @@ import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActio
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
 import {
   AButton,
-  AContextBar,
   AHero,
   AInfoHint,
   AMetaPill,
@@ -343,18 +342,18 @@ const selectedPositionType = ref<'asset' | 'liability' | null>(null);
 const selectedPositionId = ref<number | null>(null);
 const createAssetCategory = ref<string | null>(null);
 const createLiabilityCategory = ref<string | null>(null);
-const timelineExpanded = ref(false);
-const selectedTimelinePreset = ref<'1m' | '3m' | '6m' | '1a' | '5a' | 'all'>('5a');
+type TimelinePreset = '3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom';
 const customTimelineWindow = ref<{ start: number; end: number } | null>(null);
-const timelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
+const timelinePresetOptions = ['3m', '6m', '1a', '3a', '5a', 'all', 'custom'] as const;
+function parseTimelinePreset(raw: unknown): TimelinePreset {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return timelinePresetOptions.includes(value as TimelinePreset) ? (value as TimelinePreset) : '5a';
+}
+
+const selectedTimelinePreset = ref<TimelinePreset>(parseTimelinePreset(route.query.range));
 const timelineScopeOptions = [
   { value: 'total', label: 'Total' },
   { value: 'operational', label: 'Operativo' },
-  { value: 'custom', label: 'Personalizado' },
-] as const;
-const timelineGranularityOptions = [
-  { value: 'monthly', label: 'Mensual' },
-  { value: 'daily', label: 'Diaria' },
 ] as const;
 const activeTimelinePreset = computed(() => selectedTimelinePreset.value);
 type NetWorthTab = 'general' | 'evolution' | 'balance';
@@ -370,16 +369,28 @@ function parseNetWorthTab(raw: unknown): NetWorthTab {
 }
 
 const activeNetWorthTab = ref<NetWorthTab>(parseNetWorthTab(route.query.tab));
+const evolutionReturnTab = ref<NetWorthTab | null>(null);
 
 function setNetWorthTab(tab: NetWorthTab): void {
   activeNetWorthTab.value = tab;
+  if (tab !== 'evolution') evolutionReturnTab.value = null;
   const query = { ...route.query };
   if (tab === 'general') delete query.tab;
   else query.tab = tab;
   void router.replace({ query });
 }
 
-type TimelineScope = 'total' | 'operational' | 'custom';
+async function openEvolutionFromComposition(row: HeroCompositionRow): Promise<void> {
+  await applyCompositionCategoryFilter({ key: row.key, type: row.kind });
+  evolutionReturnTab.value = 'general';
+  setNetWorthTab('evolution');
+}
+
+function returnFromEvolution(): void {
+  setNetWorthTab(evolutionReturnTab.value ?? 'general');
+}
+
+type TimelineScope = 'total' | 'operational';
 type TimelineGranularity = 'monthly' | 'daily';
 type ScopedPosition = {
   key: string;
@@ -399,19 +410,17 @@ type ScopeChartPoint = {
 };
 
 const timelineScope = ref<TimelineScope>(
-  ['operational', 'custom'].includes(String(route.query.scope))
-    ? (String(route.query.scope) as TimelineScope)
-    : 'total',
+  String(route.query.scope) === 'operational' ? 'operational' : 'total',
 );
-const timelineGranularity = ref<TimelineGranularity>(
-  route.query.granularity === 'daily' ? 'daily' : 'monthly',
+const timelineGranularity = computed<TimelineGranularity>(() =>
+  timelineScope.value === 'operational' ? 'daily' : 'monthly',
 );
-const customTimelinePositionKeys = ref<string[]>(
-  String(route.query.positions ?? '')
-    .split(',')
-    .filter(Boolean),
+const customTimelineDateFrom = ref(
+  typeof route.query.date_from === 'string' ? route.query.date_from : '',
 );
-const showTimelineScopeModal = ref(false);
+const customTimelineDateTo = ref(
+  typeof route.query.date_to === 'string' ? route.query.date_to : '',
+);
 const scopedTimelineLoading = ref(false);
 const scopedTimelineError = ref<string | null>(null);
 const scopedMonthlyPoints = ref<ScopeChartPoint[]>([]);
@@ -713,6 +722,14 @@ type BalanceGroup = {
   total: number;
 };
 
+type BalanceSection = {
+  kind: 'asset' | 'liability';
+  label: string;
+  groups: BalanceGroup[];
+  total: number;
+  count: number;
+};
+
 const balanceGroups = computed<BalanceGroup[]>(() => {
   const assetLabelMap = new Map(
     assetCategories.map((category) => [category.value, category.label]),
@@ -757,14 +774,12 @@ const balanceGroups = computed<BalanceGroup[]>(() => {
   ];
 });
 
-type BalanceKindFilter = 'all' | 'asset' | 'liability';
-
 const balanceSearch = ref('');
-const balanceKindFilter = ref<BalanceKindFilter>('all');
+const collapsedBalanceGroups = ref<Set<string>>(new Set());
+const mobileCreateMenuOpen = ref(false);
 const selectedBalanceDetailRow = ref<PositionRow | null>(null);
 
 function balanceRowMatchesMobileFilters(row: PositionRow): boolean {
-  if (balanceKindFilter.value !== 'all' && row.type !== balanceKindFilter.value) return false;
   const query = balanceSearch.value.trim().toLocaleLowerCase('es');
   if (!query) return true;
   return [row.name, row.subtitle, ownershipBadgeForRow(row) ?? 'Sin asignar']
@@ -775,7 +790,6 @@ function balanceRowMatchesMobileFilters(row: PositionRow): boolean {
 
 const mobileBalanceGroups = computed<BalanceGroup[]>(() =>
   balanceGroups.value
-    .filter((group) => balanceKindFilter.value === 'all' || group.kind === balanceKindFilter.value)
     .map((group) => {
       const rows = group.rows.filter(balanceRowMatchesMobileFilters);
       return {
@@ -790,6 +804,42 @@ const mobileBalanceGroups = computed<BalanceGroup[]>(() =>
 const mobileBalanceRowCount = computed(() =>
   mobileBalanceGroups.value.reduce((total, group) => total + group.rows.length, 0),
 );
+
+function makeBalanceSections(groups: BalanceGroup[]): BalanceSection[] {
+  return (['asset', 'liability'] as const)
+    .map((kind) => {
+      const sectionGroups = groups.filter((group) => group.kind === kind);
+      return {
+        kind,
+        label: kind === 'asset' ? 'Activos' : 'Pasivos',
+        groups: sectionGroups,
+        total: sectionGroups.reduce((sum, group) => sum + group.total, 0),
+        count: sectionGroups.reduce((sum, group) => sum + group.rows.length, 0),
+      };
+    })
+    .filter((section) => section.groups.length > 0);
+}
+
+const balanceSections = computed<BalanceSection[]>(() => makeBalanceSections(balanceGroups.value));
+const mobileBalanceSections = computed<BalanceSection[]>(() =>
+  makeBalanceSections(mobileBalanceGroups.value),
+);
+
+function balanceGroupKey(group: BalanceGroup): string {
+  return `${group.kind}:${group.key}`;
+}
+
+function isBalanceGroupCollapsed(group: BalanceGroup): boolean {
+  return collapsedBalanceGroups.value.has(balanceGroupKey(group));
+}
+
+function toggleBalanceGroup(group: BalanceGroup): void {
+  const next = new Set(collapsedBalanceGroups.value);
+  const key = balanceGroupKey(group);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  collapsedBalanceGroups.value = next;
+}
 
 type HeroCompositionRow = {
   key: string;
@@ -842,15 +892,13 @@ const timelineFilterLabel = computed(() => {
   return selectedTimelineCategory.value ? selectedCategoryLabel.value : null;
 });
 
-function openPrimaryCreateModal(): void {
-  openCreateModal('asset', null);
+function toggleMobileCreateMenu(): void {
+  mobileCreateMenuOpen.value = !mobileCreateMenuOpen.value;
 }
 
-function isBalanceGroupActive(group: BalanceGroup): boolean {
-  return (
-    selectedTimelineCategory.value === group.key &&
-    selectedTimelineCategoryType.value === group.kind
-  );
+function openMobileCreateModal(type: 'asset' | 'liability'): void {
+  mobileCreateMenuOpen.value = false;
+  openCreateModal(type, null);
 }
 
 function isBalanceRowActive(row: PositionRow): boolean {
@@ -891,16 +939,6 @@ function positionSourceLabel(row: PositionRow): string {
 function balanceDetailTitle(row: PositionRow | null): string {
   if (!row) return 'Detalle de posición';
   return row.type === 'asset' ? 'Detalle de activo' : 'Detalle de pasivo';
-}
-
-function positionKindLabel(row: PositionRow): string {
-  return row.type === 'asset' ? 'Activo' : 'Pasivo';
-}
-
-function detailMetaLine(row: PositionRow): string {
-  return [row.subtitle, ownershipBadgeForRow(row) ?? 'Sin asignar', positionSourceLabel(row)].join(
-    ' · ',
-  );
 }
 
 function rowMenuItems(row: PositionRow) {
@@ -983,10 +1021,8 @@ function closeLiabilityModal(): void {
 const {
   activeTimelineRows,
   displayedTimelineLoading,
-  visibleTimelineRows,
   timelineWindow,
   timelineChartPoints,
-  latestTimelineChartPoint,
   timelineSummaryLabel,
   displayedTimelineSeriesColor,
   timelineYAxisStartsAtZero,
@@ -1024,8 +1060,6 @@ const {
   applyCompositionCategoryFilter,
   selectPosition,
   setTimelinePreset,
-  updateTimelineWindowStart,
-  updateTimelineWindowEnd,
   assetCreateInitial,
   liabilityCreateInitial,
 } = useNetWorthPageActions({
@@ -1089,14 +1123,12 @@ const allScopedPositions = computed<ScopedPosition[]>(() => [
 
 const selectedScopePositions = computed(() => {
   if (timelineScope.value === 'total') return allScopedPositions.value;
-  if (timelineScope.value === 'operational') {
-    return allScopedPositions.value.filter(
-      (position) =>
-        position.type === 'liability' || ['cash', 'investments'].includes(position.category),
-    );
-  }
-  const selected = new Set(customTimelinePositionKeys.value);
-  return allScopedPositions.value.filter((position) => selected.has(position.key));
+  return allScopedPositions.value.filter(
+    (position) =>
+      position.trackingMode === 'accounting' &&
+      position.accountId != null &&
+      (position.type === 'liability' || ['cash', 'investments'].includes(position.category)),
+  );
 });
 
 const accountingScopePositions = computed(() =>
@@ -1104,27 +1136,27 @@ const accountingScopePositions = computed(() =>
     (position) => position.trackingMode === 'accounting' && position.accountId != null,
   ),
 );
-const manualScopePositions = computed(() =>
-  selectedScopePositions.value.filter(
-    (position) => position.trackingMode !== 'accounting' || position.accountId == null,
-  ),
-);
 const dailyTimelineAvailable = computed(
-  () => selectedScopePositions.value.length > 0 && manualScopePositions.value.length === 0,
+  () => timelineScope.value === 'operational' && accountingScopePositions.value.length > 0,
 );
 const timelineScopeLabel = computed(() => {
   if (timelineScope.value === 'operational') return 'Operativo';
-  if (timelineScope.value === 'custom')
-    return `Personalizado · ${selectedScopePositions.value.length}`;
   return 'Patrimonio total';
 });
 
 function dailyDateFrom(): string | undefined {
+  if (selectedTimelinePreset.value === 'custom') return customTimelineDateFrom.value || undefined;
   if (selectedTimelinePreset.value === 'all') return undefined;
-  const daysByPreset = { '1m': 31, '3m': 92, '6m': 183, '1a': 366, '5a': 1826 } as const;
+  const daysByPreset = { '3m': 92, '6m': 183, '1a': 366, '3a': 1096, '5a': 1826 } as const;
   const date = new Date();
   date.setDate(date.getDate() - daysByPreset[selectedTimelinePreset.value]);
   return date.toISOString().slice(0, 10);
+}
+
+function dailyDateTo(): string | undefined {
+  return selectedTimelinePreset.value === 'custom'
+    ? customTimelineDateTo.value || undefined
+    : undefined;
 }
 
 async function fetchDailyScopeTimeline(): Promise<void> {
@@ -1137,6 +1169,7 @@ async function fetchDailyScopeTimeline(): Promise<void> {
   try {
     const response = await coreAccountingApi.getDailyBalanceSeries({
       date_from: dailyDateFrom(),
+      date_to: dailyDateTo(),
       account_ids: accountingScopePositions.value.map((position) => position.accountId!),
       ownership_id:
         ownershipFilter.value === 'all'
@@ -1211,12 +1244,34 @@ async function fetchMonthlyScopeTimeline(): Promise<void> {
   }
 }
 
+function filterTimelinePointsByCustomDates<TPoint extends ScopeChartPoint>(
+  points: TPoint[],
+): TPoint[] {
+  if (selectedTimelinePreset.value !== 'custom') return points;
+  const dateFrom = customTimelineDateFrom.value;
+  const dateTo = customTimelineDateTo.value;
+  return points.filter((point) => {
+    if (dateFrom && point.date < dateFrom) return false;
+    if (dateTo && point.date > dateTo) return false;
+    return true;
+  });
+}
+
 const scopedMonthlyVisiblePoints = computed(() => {
-  const countByPreset = { '1m': 1, '3m': 3, '6m': 6, '1a': 12, '5a': 60, all: Infinity } as const;
+  const countByPreset = {
+    '3m': 3,
+    '6m': 6,
+    '1a': 12,
+    '3a': 36,
+    '5a': 60,
+    all: Infinity,
+    custom: Infinity,
+  } as const;
   const count = countByPreset[selectedTimelinePreset.value];
-  return Number.isFinite(count)
+  const points = Number.isFinite(count)
     ? scopedMonthlyPoints.value.slice(-count)
     : scopedMonthlyPoints.value;
+  return filterTimelinePointsByCustomDates(points);
 });
 const dailyTimelinePoints = computed<ScopeChartPoint[]>(() =>
   dailyBalanceRows.value.map((row) => {
@@ -1234,9 +1289,10 @@ const dailyTimelinePoints = computed<ScopeChartPoint[]>(() =>
   }),
 );
 const activeEvolutionPoints = computed(() => {
-  if (timelineGranularity.value === 'daily') return dailyTimelinePoints.value;
+  if (timelineGranularity.value === 'daily')
+    return filterTimelinePointsByCustomDates(dailyTimelinePoints.value);
   if (timelineScope.value !== 'total') return scopedMonthlyVisiblePoints.value;
-  return timelineChartPoints.value;
+  return filterTimelinePointsByCustomDates(timelineChartPoints.value);
 });
 const activeEvolutionLoading = computed(
   () =>
@@ -1289,16 +1345,21 @@ const activeEvolutionCaption = computed(() => {
 });
 const activeEvolutionPresetLabel = computed(() => {
   const labels: Record<(typeof timelinePresetOptions)[number], string> = {
-    '1m': '1 mes',
     '3m': '3 meses',
     '6m': '6 meses',
     '1a': '1 año',
+    '3a': '3 años',
     '5a': '5 años',
     all: 'todo el histórico',
+    custom:
+      customTimelineDateFrom.value || customTimelineDateTo.value
+        ? 'el rango seleccionado'
+        : 'todo el histórico',
   };
   return labels[selectedTimelinePreset.value];
 });
 function timelinePresetLabel(preset: (typeof timelinePresetOptions)[number]): string {
+  if (preset === 'custom') return 'Fechas';
   return preset === 'all' ? 'Todo' : preset;
 }
 const activeEvolutionLabel = computed(() =>
@@ -1312,20 +1373,11 @@ const activeEvolutionLabel = computed(() =>
 function setTimelineScope(scope: TimelineScope): void {
   timelineScope.value = scope;
   clearPositionSelection();
-  if (scope === 'custom' && !customTimelinePositionKeys.value.length) {
-    customTimelinePositionKeys.value = allScopedPositions.value.map((position) => position.key);
-    showTimelineScopeModal.value = true;
-  }
+  if (scope === 'operational') void resetTimelineSelection();
 }
-function setTimelineGranularity(granularity: TimelineGranularity): void {
-  if (granularity === 'daily' && !dailyTimelineAvailable.value) return;
-  timelineGranularity.value = granularity;
-  if (granularity === 'daily') resetTimelineSelection();
-}
-function toggleCustomPosition(key: string): void {
-  customTimelinePositionKeys.value = customTimelinePositionKeys.value.includes(key)
-    ? customTimelinePositionKeys.value.filter((value) => value !== key)
-    : [...customTimelinePositionKeys.value, key];
+
+function handleTimelinePreset(preset: TimelinePreset): void {
+  setTimelinePreset(preset);
 }
 
 watch(
@@ -1333,6 +1385,8 @@ watch(
     timelineGranularity,
     timelineScope,
     selectedTimelinePreset,
+    customTimelineDateFrom,
+    customTimelineDateTo,
     ownershipFilter,
     () => selectedScopePositions.value.map((position) => position.key).join('|'),
   ],
@@ -1343,16 +1397,21 @@ watch(
   { immediate: true },
 );
 watch(
-  [timelineScope, timelineGranularity, customTimelinePositionKeys],
+  [timelineScope, selectedTimelinePreset, customTimelineDateFrom, customTimelineDateTo],
   () => {
     const query = { ...route.query };
     if (timelineScope.value === 'total') delete query.scope;
     else query.scope = timelineScope.value;
-    if (timelineGranularity.value === 'monthly') delete query.granularity;
-    else query.granularity = timelineGranularity.value;
-    if (timelineScope.value === 'custom' && customTimelinePositionKeys.value.length)
-      query.positions = customTimelinePositionKeys.value.join(',');
-    else delete query.positions;
+    delete query.granularity;
+    delete query.positions;
+    if (selectedTimelinePreset.value === '5a') delete query.range;
+    else query.range = selectedTimelinePreset.value;
+    if (selectedTimelinePreset.value === 'custom' && customTimelineDateFrom.value)
+      query.date_from = customTimelineDateFrom.value;
+    else delete query.date_from;
+    if (selectedTimelinePreset.value === 'custom' && customTimelineDateTo.value)
+      query.date_to = customTimelineDateTo.value;
+    else delete query.date_to;
     void router.replace({ query });
   },
   { deep: true },
@@ -1369,21 +1428,24 @@ watch(
 <template>
   <div class="page a-nw-page">
     <APageHead title="Patrimonio">
-      <template v-if="asOfLabel !== 'Hoy' || valueMode === 'real'" #meta>
+      <template v-if="archivedItemsCount || asOfLabel !== 'Hoy' || valueMode === 'real'" #meta>
+        <button
+          v-if="archivedItemsCount"
+          class="a-nw-archived-trigger"
+          type="button"
+          @click="showArchivedModal = true"
+        >
+          <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
+        </button>
+        <span
+          v-if="archivedItemsCount && (asOfLabel !== 'Hoy' || valueMode === 'real')"
+          class="dot"
+        ></span>
         <AMetaPill v-if="asOfLabel !== 'Hoy'">{{ asOfLabel }}</AMetaPill>
         <span v-if="asOfLabel !== 'Hoy' && valueMode === 'real'" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
       </template>
     </APageHead>
-
-    <AButton
-      v-if="archivedItemsCount"
-      variant="ghost"
-      class="a-nw-archived-trigger"
-      @click="showArchivedModal = true"
-    >
-      <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
-    </AButton>
 
     <nav class="a-nw-tabs-bar" aria-label="Secciones de patrimonio">
       <div class="tabs">
@@ -1400,56 +1462,58 @@ watch(
       </div>
     </nav>
 
-    <AContextBar class="a-nw-read-controls" aria-label="Opciones de lectura de patrimonio">
-      <label class="context-field a-nw-control-chip" data-test="ownership-filter">
-        <span class="a-nw-sr-only">Titularidad</span>
-        <ASelect
-          class="filter-ctrl"
-          aria-label="Titularidad"
-          :model-value="String(ownershipFilter)"
-          :options="ownershipSelectOptions"
-          :disabled="ownershipFilterDisabled"
-          :searchable="false"
-          @update:model-value="(v) => setOwnershipFilter(v === 'all' ? 'all' : Number(v))"
-        />
-      </label>
+    <section class="sect a-nw-read-section" aria-label="Opciones de lectura de patrimonio">
+      <div class="a-nw-read-controls">
+        <label class="context-field a-nw-control-chip" data-test="ownership-filter">
+          <span class="a-nw-sr-only">Titularidad</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Titularidad"
+            :model-value="String(ownershipFilter)"
+            :options="ownershipSelectOptions"
+            :disabled="ownershipFilterDisabled"
+            :searchable="false"
+            @update:model-value="(v) => setOwnershipFilter(v === 'all' ? 'all' : Number(v))"
+          />
+        </label>
 
-      <label class="context-field a-nw-control-chip">
-        <span class="a-nw-sr-only">Moneda</span>
-        <ASelect
-          class="filter-ctrl"
-          aria-label="Moneda"
-          :model-value="store.baseCurrency ?? 'EUR'"
-          :options="currencySelectOptions"
-          :searchable="false"
-          @update:model-value="(v) => store.updateBaseCurrency(String(v))"
-        />
-      </label>
+        <label class="context-field a-nw-control-chip">
+          <span class="a-nw-sr-only">Moneda</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Moneda"
+            :model-value="store.baseCurrency ?? 'EUR'"
+            :options="currencySelectOptions"
+            :searchable="false"
+            @update:model-value="(v) => store.updateBaseCurrency(String(v))"
+          />
+        </label>
 
-      <div class="context-field a-nw-control-chip a-nw-valuation-control">
-        <span class="a-nw-sr-only">Valoración</span>
-        <div class="seg" role="group" aria-label="Valoración">
-          <AButton
-            :aria-pressed="valueMode === 'nominal'"
-            :class="{ on: valueMode === 'nominal' }"
-            @click="setValueMode('nominal')"
-          >
-            Nominal
-          </AButton>
-          <AButton
-            v-if="canShowReal()"
-            :aria-pressed="valueMode === 'real'"
-            :class="{ on: valueMode === 'real' }"
-            @click="setValueMode('real')"
-          >
-            Real
-          </AButton>
+        <div class="context-field a-nw-control-chip a-nw-valuation-control">
+          <span class="a-nw-sr-only">Valoración</span>
+          <div class="seg" role="group" aria-label="Valoración">
+            <AButton
+              :aria-pressed="valueMode === 'nominal'"
+              :class="{ on: valueMode === 'nominal' }"
+              @click="setValueMode('nominal')"
+            >
+              Nominal
+            </AButton>
+            <AButton
+              v-if="canShowReal()"
+              :aria-pressed="valueMode === 'real'"
+              :class="{ on: valueMode === 'real' }"
+              @click="setValueMode('real')"
+            >
+              Real
+            </AButton>
+          </div>
+          <span v-if="valueMode === 'real' && realBaseLabel" class="a-nw-context-note">
+            {{ realBaseLabel }}
+          </span>
         </div>
-        <span v-if="valueMode === 'real' && realBaseLabel" class="a-nw-context-note">
-          {{ realBaseLabel }}
-        </span>
       </div>
-    </AContextBar>
+    </section>
 
     <section v-if="activeNetWorthTab === 'general'" class="sect">
       <div class="hero">
@@ -1581,7 +1645,7 @@ watch(
                   type="button"
                   class="comp-row"
                   :class="{ 'row-active': isHeroCategoryActive(row) }"
-                  @click="applyCompositionCategoryFilter({ key: row.key, type: row.kind })"
+                  @click="openEvolutionFromComposition(row)"
                 >
                   <span
                     class="comp-dot"
@@ -1611,7 +1675,7 @@ watch(
                   type="button"
                   class="comp-row"
                   :class="{ 'row-active': isHeroCategoryActive(row) }"
-                  @click="applyCompositionCategoryFilter({ key: row.key, type: row.kind })"
+                  @click="openEvolutionFromComposition(row)"
                 >
                   <span
                     class="comp-dot"
@@ -1639,98 +1703,76 @@ watch(
       <AState v-if="activeEvolutionLoading && activeEvolutionPoints.length === 0" status="loading">
         Cargando evolución...
       </AState>
-      <AState v-else-if="activeEvolutionPoints.length === 0" status="empty">
-        No hay historial suficiente para la selección actual.
-      </AState>
       <div v-else class="a-nw-evolution-stack">
-        <div class="a-nw-evolution-summary">
-          <div>
-            <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
-            <strong>
-              {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
-              {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-            </strong>
-            <p
-              v-if="activeEvolutionPeriodDelta"
-              class="a-nw-evolution-delta"
-              :class="activeEvolutionPeriodDelta.value >= 0 ? 'pos' : 'neg'"
-            >
-              <span class="mono">
-                {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
-                }}{{ formatNumber(activeEvolutionPeriodDelta.value, 0) }}
+        <template v-if="activeEvolutionPoints.length > 0">
+          <div class="a-nw-evolution-summary">
+            <div class="a-nw-evolution-headline">
+              <div class="a-nw-evolution-title-row">
+                <AButton
+                  v-if="evolutionReturnTab"
+                  variant="ghost"
+                  size="sm"
+                  class="a-nw-evolution-back"
+                  aria-label="Volver a General"
+                  @click="returnFromEvolution"
+                >
+                  ← General
+                </AButton>
+                <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
+                <div class="a-nw-evolution-scope-inline" aria-label="Ámbito de evolución">
+                  <AButton
+                    v-for="option in timelineScopeOptions"
+                    :key="option.value"
+                    size="sm"
+                    variant="ghost"
+                    :class="{ on: timelineScope === option.value }"
+                    @click="setTimelineScope(option.value)"
+                  >
+                    {{ option.label }}
+                  </AButton>
+                </div>
+              </div>
+              <strong>
+                {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
                 {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-              </span>
-              <span v-if="activeEvolutionPeriodDelta.pct !== null" class="mono">
-                {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
-                }}{{ formatPct(activeEvolutionPeriodDelta.pct, 1) }}
-              </span>
-              <span>en {{ activeEvolutionPresetLabel }}</span>
-            </p>
-          </div>
-          <span>{{ activeEvolutionCaption }}</span>
-        </div>
-
-        <div class="a-nw-chart-shell">
-          <NetWorthEvolutionChart
-            :points="activeEvolutionPoints"
-            :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-            :series-label="activeEvolutionLabel"
-            :series-color="displayedTimelineSeriesColor"
-            :y-axis-min-zero="timelineYAxisStartsAtZero"
-          />
-        </div>
-
-        <AButton
-          v-if="activeEvolutionPoints.length > 1"
-          variant="ghost"
-          class="a-nw-evolution-expand"
-          @click="timelineExpanded = true"
-        >
-          Ampliar
-        </AButton>
-
-        <div class="a-nw-evolution-controls">
-          <div class="a-nw-evolution-control-group">
-            <span>Ámbito</span>
-            <div class="a-nw-evolution-mini-seg" aria-label="Ámbito de evolución">
-              <AButton
-                v-for="option in timelineScopeOptions"
-                :key="option.value"
-                size="sm"
-                variant="ghost"
-                :class="{ on: timelineScope === option.value }"
-                @click="setTimelineScope(option.value)"
+              </strong>
+              <p
+                v-if="activeEvolutionPeriodDelta"
+                class="a-nw-evolution-delta"
+                :class="activeEvolutionPeriodDelta.value >= 0 ? 'pos' : 'neg'"
               >
-                {{ option.label }}
-              </AButton>
-            </div>
-            <AButton
-              v-if="timelineScope === 'custom'"
-              variant="ghost"
-              size="sm"
-              class="a-nw-evolution-inline-action"
-              @click="showTimelineScopeModal = true"
-              >Configurar</AButton
-            >
-          </div>
-          <div class="a-nw-evolution-control-group">
-            <span>Detalle</span>
-            <div class="a-nw-evolution-mini-seg" aria-label="Granularidad de evolución">
-              <AButton
-                v-for="option in timelineGranularityOptions"
-                :key="option.value"
-                size="sm"
-                variant="ghost"
-                :class="{ on: timelineGranularity === option.value }"
-                :disabled="option.value === 'daily' && !dailyTimelineAvailable"
-                @click="setTimelineGranularity(option.value)"
-              >
-                {{ option.label }}
-              </AButton>
+                <span class="mono">
+                  {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
+                  }}{{ formatNumber(activeEvolutionPeriodDelta.value, 0) }}
+                  {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
+                </span>
+                <span v-if="activeEvolutionPeriodDelta.pct !== null" class="mono">
+                  {{ activeEvolutionPeriodDelta.value > 0 ? '+' : ''
+                  }}{{ formatPct(activeEvolutionPeriodDelta.pct, 1) }}
+                </span>
+                <span>en {{ activeEvolutionPresetLabel }}</span>
+              </p>
+              <p class="a-nw-evolution-caption">{{ activeEvolutionCaption }}</p>
             </div>
           </div>
-          <div class="a-nw-evolution-control-group">
-            <span>Rango</span>
+
+          <div class="a-nw-chart-shell">
+            <NetWorthEvolutionChart
+              :points="activeEvolutionPoints"
+              :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
+              :series-label="activeEvolutionLabel"
+              :series-color="displayedTimelineSeriesColor"
+              :y-axis-min-zero="timelineYAxisStartsAtZero"
+            />
+          </div>
+        </template>
+
+        <AState v-else status="empty">
+          No hay historial suficiente para la selección actual.
+        </AState>
+
+        <div class="a-nw-evolution-chart-actions">
+          <div class="a-nw-evolution-control-group a-nw-evolution-range-group">
             <div class="a-nw-evolution-mini-seg" aria-label="Rango de evolución">
               <AButton
                 v-for="preset in timelinePresetOptions"
@@ -1738,10 +1780,20 @@ watch(
                 size="sm"
                 variant="ghost"
                 :class="{ on: activeTimelinePreset === preset }"
-                @click="setTimelinePreset(preset)"
+                @click="handleTimelinePreset(preset)"
               >
                 {{ timelinePresetLabel(preset) }}
               </AButton>
+            </div>
+            <div v-if="selectedTimelinePreset === 'custom'" class="a-nw-evolution-date-range">
+              <label>
+                <span>Desde</span>
+                <input v-model="customTimelineDateFrom" class="filter-ctrl" type="date" />
+              </label>
+              <label>
+                <span>Hasta</span>
+                <input v-model="customTimelineDateTo" class="filter-ctrl" type="date" />
+              </label>
             </div>
           </div>
           <AButton
@@ -1757,120 +1809,9 @@ watch(
           </AButton>
         </div>
       </div>
-
-      <BaseModal
-        :open="timelineExpanded"
-        title="Evolución temporal"
-        variant="sheet"
-        panel-class="a-nw-modal-panel dir-a"
-        @close="timelineExpanded = false"
-      >
-        <div class="a-nw-modal-stack">
-          <div class="a-nw-chart-summary">
-            <div>
-              <span class="a-nw-chart-label">{{ activeEvolutionLabel }}</span>
-              <strong>
-                {{ formatNumber(activeEvolutionLatest?.value ?? 0, 2) }}
-                {{ displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel()) }}
-              </strong>
-            </div>
-            <span>{{ activeEvolutionCaption }}</span>
-          </div>
-
-          <div
-            v-if="timelineGranularity === 'monthly' && timelineScope === 'total'"
-            class="a-nw-range-grid"
-          >
-            <label class="a-nw-range-field">
-              <span>Inicio</span>
-              <input
-                class="a-nw-range-input"
-                type="range"
-                min="0"
-                :max="Math.max(0, visibleTimelineRows.length - 1)"
-                :value="timelineWindow.start"
-                @input="updateTimelineWindowStart(($event.target as HTMLInputElement).value)"
-              />
-              <strong>{{ timelineChartPoints[0]?.fullLabel ?? '-' }}</strong>
-            </label>
-            <label class="a-nw-range-field">
-              <span>Fin</span>
-              <input
-                class="a-nw-range-input"
-                type="range"
-                min="0"
-                :max="Math.max(0, visibleTimelineRows.length - 1)"
-                :value="timelineWindow.end"
-                @input="updateTimelineWindowEnd(($event.target as HTMLInputElement).value)"
-              />
-              <strong>{{ latestTimelineChartPoint?.fullLabel ?? '-' }}</strong>
-            </label>
-          </div>
-
-          <div class="a-nw-chart-shell a-nw-chart-shell-expanded">
-            <NetWorthEvolutionChart
-              :points="activeEvolutionPoints"
-              :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-              :series-label="activeEvolutionLabel"
-              :series-color="displayedTimelineSeriesColor"
-              :y-axis-min-zero="timelineYAxisStartsAtZero"
-              expanded
-            />
-          </div>
-        </div>
-      </BaseModal>
-
-      <BaseModal
-        :open="showTimelineScopeModal"
-        title="Personalizar evolución"
-        variant="sheet"
-        panel-class="a-nw-modal-panel dir-a dir-a-sheet"
-        @close="showTimelineScopeModal = false"
-      >
-        <div class="a-nw-scope-picker">
-          <p>Selecciona las posiciones que deben formar parte de la evolución.</p>
-          <label
-            v-for="position in allScopedPositions"
-            :key="position.key"
-            class="a-nw-scope-option"
-          >
-            <input
-              type="checkbox"
-              :checked="customTimelinePositionKeys.includes(position.key)"
-              @change="toggleCustomPosition(position.key)"
-            />
-            <span>
-              <strong>{{ position.name }}</strong>
-              <small
-                >{{ position.type === 'asset' ? 'Activo' : 'Pasivo' }} ·
-                {{ position.category }}</small
-              >
-            </span>
-            <span :class="position.accountId ? 'pos' : 'muted'">{{
-              position.accountId ? 'Contable' : 'Mensual'
-            }}</span>
-          </label>
-          <div class="a-nw-scope-actions">
-            <AButton
-              variant="primary"
-              :disabled="!customTimelinePositionKeys.length"
-              @click="showTimelineScopeModal = false"
-              >Aplicar selección</AButton
-            >
-          </div>
-        </div>
-      </BaseModal>
     </section>
 
     <section v-if="activeNetWorthTab === 'balance'" class="sect">
-      <ASectHead title="Balance">
-        <template #hint>
-          <AInfoHint label="Sobre el balance">
-            Activos y pasivos por categoría con filtrado cruzado hacia la evolución.
-          </AInfoHint>
-        </template>
-      </ASectHead>
-
       <div class="a-nw-mobile-tools" aria-label="Herramientas de balance">
         <input
           v-model="balanceSearch"
@@ -1879,23 +1820,6 @@ watch(
           placeholder="Buscar posición"
           aria-label="Buscar posición patrimonial"
         />
-        <div class="seg a-nw-mobile-scope" aria-label="Tipo de posición">
-          <AButton :class="{ on: balanceKindFilter === 'all' }" @click="balanceKindFilter = 'all'">
-            Todo
-          </AButton>
-          <AButton
-            :class="{ on: balanceKindFilter === 'asset' }"
-            @click="balanceKindFilter = 'asset'"
-          >
-            Activos
-          </AButton>
-          <AButton
-            :class="{ on: balanceKindFilter === 'liability' }"
-            @click="balanceKindFilter = 'liability'"
-          >
-            Pasivos
-          </AButton>
-        </div>
         <span class="a-nw-mobile-count">{{ mobileBalanceRowCount }} posiciones</span>
       </div>
 
@@ -1904,60 +1828,78 @@ watch(
       </AState>
 
       <div v-else class="a-nw-balance-wrap">
-        <AState v-if="mobileBalanceGroups.length === 0" class="a-nw-mobile-empty" status="empty">
+        <AState v-if="mobileBalanceSections.length === 0" class="a-nw-mobile-empty" status="empty">
           No hay posiciones que coincidan con la búsqueda.
         </AState>
 
         <div v-else class="a-nw-mobile-balance-list">
           <section
-            v-for="group in mobileBalanceGroups"
-            :key="`mobile-${group.kind}-${group.key}`"
-            class="a-nw-mobile-group"
+            v-for="section in mobileBalanceSections"
+            :key="`mobile-section-${section.kind}`"
+            class="a-nw-mobile-section"
           >
-            <button
-              type="button"
-              class="a-nw-mobile-group-head"
-              :class="{ 'row-active': isBalanceGroupActive(group) }"
-              @click="applyCompositionCategoryFilter({ key: group.key, type: group.kind })"
+            <div
+              class="a-nw-mobile-section-head"
+              :class="section.kind === 'asset' ? 'is-asset' : 'is-liability'"
             >
-              <span>
-                <span
-                  class="grp-kind"
-                  :class="group.kind === 'asset' ? 'grp-kind-asset' : 'grp-kind-liability'"
-                >
-                  {{ group.kind === 'asset' ? 'Activos' : 'Pasivos' }}
-                </span>
-                <strong>{{ group.label }}</strong>
-              </span>
+              <span>{{ section.label }}</span>
               <span class="mono">
-                {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 0) }}
+                {{ section.kind === 'liability' ? '−' : '' }}{{ formatNumber(section.total, 0) }}
                 {{ heroUnitLabel }}
               </span>
-            </button>
+            </div>
 
-            <button
-              v-for="row in group.rows"
-              :key="`mobile-row-${row.type}-${row.id}`"
-              type="button"
-              class="a-nw-mobile-row"
-              :class="{ 'row-active': isBalanceRowActive(row) }"
-              @click="openBalanceDetail(row)"
+            <section
+              v-for="group in section.groups"
+              :key="`mobile-${group.kind}-${group.key}`"
+              class="a-nw-mobile-group"
             >
-              <span class="swatch" :class="{ lia: row.type === 'liability' }" />
-              <span class="a-nw-mobile-row-main">
-                <strong>{{ row.name }}</strong>
-                <small>
-                  {{ row.subtitle }} · {{ ownershipBadgeForRow(row) ?? 'Sin asignar' }} ·
-                  {{ positionSourceLabel(row) }}
-                </small>
-              </span>
-              <span class="a-nw-mobile-row-value mono">
-                <small v-if="foreignAmountLabel(row)">{{ foreignAmountLabel(row) }}</small>
-                <strong :class="{ 'account-value-neg': row.type === 'liability' }">
-                  {{ formatNumber(row.value, 0) }} {{ displayCurrencyUnit(row.currency) }}
-                </strong>
-              </span>
-            </button>
+              <button
+                type="button"
+                class="a-nw-mobile-group-head"
+                :aria-expanded="!isBalanceGroupCollapsed(group)"
+                @click="toggleBalanceGroup(group)"
+              >
+                <span>
+                  <strong>{{ group.label }}</strong>
+                </span>
+                <span class="a-nw-group-head-right">
+                  <span class="mono">
+                    {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 0) }}
+                    {{ heroUnitLabel }}
+                  </span>
+                  <span class="a-nw-group-chevron" aria-hidden="true">
+                    {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
+                  </span>
+                </span>
+              </button>
+
+              <template v-if="!isBalanceGroupCollapsed(group)">
+                <button
+                  v-for="row in group.rows"
+                  :key="`mobile-row-${row.type}-${row.id}`"
+                  type="button"
+                  class="a-nw-mobile-row"
+                  :class="{ 'row-active': isBalanceRowActive(row) }"
+                  @click="openBalanceDetail(row)"
+                >
+                  <span class="swatch" :class="{ lia: row.type === 'liability' }" />
+                  <span class="a-nw-mobile-row-main">
+                    <strong>{{ row.name }}</strong>
+                    <small>
+                      {{ row.subtitle }} · {{ ownershipBadgeForRow(row) ?? 'Sin asignar' }} ·
+                      {{ positionSourceLabel(row) }}
+                    </small>
+                  </span>
+                  <span class="a-nw-mobile-row-value mono">
+                    <small v-if="foreignAmountLabel(row)">{{ foreignAmountLabel(row) }}</small>
+                    <strong :class="{ 'account-value-neg': row.type === 'liability' }">
+                      {{ formatNumber(row.value, 0) }} {{ displayCurrencyUnit(row.currency) }}
+                    </strong>
+                  </span>
+                </button>
+              </template>
+            </section>
           </section>
         </div>
 
@@ -1972,77 +1914,111 @@ watch(
             </tr>
           </thead>
           <tbody>
-            <template v-for="group in balanceGroups" :key="`${group.kind}-${group.key}`">
-              <tr
-                class="grp-row clickable"
-                :class="{ 'row-active': isBalanceGroupActive(group) }"
-                @click="applyCompositionCategoryFilter({ key: group.key, type: group.kind })"
-              >
+            <template v-for="section in balanceSections" :key="`section-${section.kind}`">
+              <tr class="kind-row">
                 <td colspan="3">
-                  <div class="grp-name">
-                    <span
-                      class="grp-kind"
-                      :class="group.kind === 'asset' ? 'grp-kind-asset' : 'grp-kind-liability'"
-                    >
-                      {{ group.kind === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
-                    </span>
-                    <span>{{ group.label }}</span>
+                  <div
+                    class="kind-name"
+                    :class="section.kind === 'asset' ? 'kind-name-asset' : 'kind-name-liability'"
+                  >
+                    {{ section.label }}
                   </div>
                 </td>
                 <td class="num">
                   <span class="grp-total">
-                    {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 2) }}
+                    {{ section.kind === 'liability' ? '−' : ''
+                    }}{{ formatNumber(section.total, 2) }}
                     {{ heroUnitLabel }}
                   </span>
                 </td>
                 <td></td>
               </tr>
 
-              <tr
-                v-for="row in group.rows"
-                :key="`${row.type}-${row.id}`"
-                class="clickable"
-                :class="{ 'row-active': isBalanceRowActive(row) }"
-                @click="selectPosition(row)"
-              >
-                <td>
-                  <div class="name">
-                    <span class="swatch" :class="{ lia: row.type === 'liability' }" />
-                    <div class="nameMain">{{ row.name }}</div>
-                  </div>
-                </td>
-                <td class="tbl-cell-muted">{{ row.subtitle }}</td>
-                <td class="tbl-cell-muted">{{ ownershipBadgeForRow(row) ?? 'Sin asignar' }}</td>
-                <td class="num">
-                  <span v-if="foreignAmountLabel(row)" class="foreign-amount">
-                    {{ foreignAmountLabel(row) }}
-                  </span>
-                  <span
-                    class="account-value mono"
-                    :class="{ 'account-value-neg': row.type === 'liability' }"
+              <template v-for="group in section.groups" :key="`${group.kind}-${group.key}`">
+                <tr
+                  class="grp-row clickable"
+                  :aria-expanded="!isBalanceGroupCollapsed(group)"
+                  @click="toggleBalanceGroup(group)"
+                >
+                  <td colspan="3">
+                    <div class="grp-name">
+                      <span class="a-nw-group-chevron" aria-hidden="true">
+                        {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
+                      </span>
+                      <span>{{ group.label }}</span>
+                    </div>
+                  </td>
+                  <td class="num">
+                    <span class="grp-total">
+                      {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 2) }}
+                      {{ heroUnitLabel }}
+                    </span>
+                  </td>
+                  <td></td>
+                </tr>
+
+                <template v-if="!isBalanceGroupCollapsed(group)">
+                  <tr
+                    v-for="row in group.rows"
+                    :key="`${row.type}-${row.id}`"
+                    class="clickable"
+                    :class="{ 'row-active': isBalanceRowActive(row) }"
+                    @click="selectPosition(row)"
                   >
-                    {{ formatNumber(row.value, 2) }} {{ displayCurrencyUnit(row.currency) }}
-                  </span>
-                </td>
-                <td class="a-nw-actions-col" @click.stop>
-                  <ARowMenu :items="rowMenuItems(row)" @select="handleRowMenuAction(row, $event)" />
-                </td>
-              </tr>
+                    <td>
+                      <div class="name">
+                        <span class="swatch" :class="{ lia: row.type === 'liability' }" />
+                        <div class="nameMain">{{ row.name }}</div>
+                      </div>
+                    </td>
+                    <td class="tbl-cell-muted">{{ row.subtitle }}</td>
+                    <td class="tbl-cell-muted">{{ ownershipBadgeForRow(row) ?? 'Sin asignar' }}</td>
+                    <td class="num">
+                      <span v-if="foreignAmountLabel(row)" class="foreign-amount">
+                        {{ foreignAmountLabel(row) }}
+                      </span>
+                      <span
+                        class="account-value mono"
+                        :class="{ 'account-value-neg': row.type === 'liability' }"
+                      >
+                        {{ formatNumber(row.value, 2) }} {{ displayCurrencyUnit(row.currency) }}
+                      </span>
+                    </td>
+                    <td class="a-nw-actions-col" @click.stop>
+                      <ARowMenu
+                        :items="rowMenuItems(row)"
+                        @select="handleRowMenuAction(row, $event)"
+                      />
+                    </td>
+                  </tr>
+                </template>
+              </template>
             </template>
           </tbody>
         </table>
       </div>
     </section>
 
-    <AButton
-      v-if="activeNetWorthTab === 'balance'"
-      class="a-nw-mobile-create"
-      variant="primary"
-      @click="openPrimaryCreateModal"
-    >
-      <span class="a-nw-fab-plus" aria-hidden="true">+</span>
-      <span class="a-nw-fab-label">Añadir posición</span>
-    </AButton>
+    <div v-if="activeNetWorthTab === 'balance'" class="a-nw-mobile-create-wrap">
+      <div v-if="mobileCreateMenuOpen" class="a-nw-mobile-create-menu">
+        <AButton variant="ghost" size="sm" @click="openMobileCreateModal('asset')">
+          Añadir activo
+        </AButton>
+        <AButton variant="ghost" size="sm" @click="openMobileCreateModal('liability')">
+          Añadir pasivo
+        </AButton>
+      </div>
+      <AButton
+        class="a-nw-mobile-create"
+        variant="primary"
+        :aria-expanded="mobileCreateMenuOpen"
+        aria-label="Añadir posición"
+        @click="toggleMobileCreateMenu"
+      >
+        <span class="a-nw-fab-plus" aria-hidden="true">+</span>
+        <span class="a-nw-fab-label">Añadir posición</span>
+      </AButton>
+    </div>
 
     <AState v-if="store.error" status="error">
       {{ prettyError() }}
@@ -2085,29 +2061,6 @@ watch(
         </div>
         <div class="a-nw-detail-header-actions">
           <button
-            v-if="selectedBalanceDetailRow"
-            class="a-nw-detail-header-btn"
-            type="button"
-            aria-label="Editar posición"
-            title="Editar posición"
-            @click="editBalanceDetail(selectedBalanceDetailRow)"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-          </button>
-          <button
             class="a-nw-detail-header-btn"
             type="button"
             aria-label="Cerrar detalle"
@@ -2134,44 +2087,38 @@ watch(
 
       <div v-if="selectedBalanceDetailRow" class="a-nw-detail">
         <div class="a-nw-detail-head">
-          <div class="a-nw-detail-title-row">
-            <span
-              class="a-nw-detail-kind"
-              :class="selectedBalanceDetailRow.type === 'asset' ? 'is-asset' : 'is-liability'"
-            >
-              {{ positionKindLabel(selectedBalanceDetailRow) }}
-            </span>
-            <span class="a-nw-detail-source">
-              {{ positionSourceLabel(selectedBalanceDetailRow) }}
-            </span>
+          <div class="a-nw-detail-hero">
+            <div class="a-nw-detail-title-block">
+              <span v-if="activeEvolutionLatest?.fullLabel" class="a-nw-detail-asof">
+                {{ activeEvolutionLatest.fullLabel }}
+              </span>
+              <h3>{{ selectedBalanceDetailRow.name }}</h3>
+              <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
+                {{ foreignAmountLabel(selectedBalanceDetailRow) }}
+              </span>
+            </div>
+            <div class="a-nw-detail-value-block">
+              <strong
+                class="mono"
+                :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
+              >
+                {{
+                  formatNumber(activeEvolutionLatest?.value ?? selectedBalanceDetailRow.value, 2)
+                }}
+                {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
+              </strong>
+            </div>
           </div>
-          <div>
-            <h3>{{ selectedBalanceDetailRow.name }}</h3>
-            <p>{{ detailMetaLine(selectedBalanceDetailRow) }}</p>
-          </div>
-          <div class="a-nw-detail-value-block">
-            <strong
-              class="mono"
-              :class="{ 'account-value-neg': selectedBalanceDetailRow.type === 'liability' }"
-            >
-              {{ formatNumber(selectedBalanceDetailRow.value, 2) }}
-              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
-            </strong>
-            <span v-if="foreignAmountLabel(selectedBalanceDetailRow)" class="foreign-amount">
-              {{ foreignAmountLabel(selectedBalanceDetailRow) }}
+
+          <div class="a-nw-detail-meta-strip" role="list" aria-label="Datos de la posición">
+            <span role="listitem">{{ selectedBalanceDetailRow.subtitle }}</span>
+            <span role="listitem">
+              {{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}
             </span>
           </div>
         </div>
 
         <div class="a-nw-detail-kpis">
-          <div>
-            <span>Último valor</span>
-            <strong class="mono">
-              {{ formatNumber(activeEvolutionLatest?.value ?? selectedBalanceDetailRow.value, 2) }}
-              {{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}
-            </strong>
-            <small>{{ activeEvolutionLatest?.fullLabel ?? 'Valor actual' }}</small>
-          </div>
           <div>
             <span>Cambio mensual</span>
             <strong
@@ -2210,37 +2157,6 @@ watch(
           </div>
         </div>
 
-        <details class="a-nw-detail-more-actions">
-          <summary>Más acciones</summary>
-          <div class="actions">
-            <AButton variant="ghost" @click="archiveBalanceDetail(selectedBalanceDetailRow)">
-              Archivar
-            </AButton>
-            <AButton variant="ghost" @click="deleteBalanceDetail(selectedBalanceDetailRow)">
-              Eliminar
-            </AButton>
-          </div>
-        </details>
-
-        <div class="a-nw-detail-grid" role="list" aria-label="Datos de la posición">
-          <div role="listitem">
-            <span>Categoría</span>
-            <strong>{{ selectedBalanceDetailRow.subtitle }}</strong>
-          </div>
-          <div role="listitem">
-            <span>Titularidad</span>
-            <strong>{{ ownershipBadgeForRow(selectedBalanceDetailRow) ?? 'Sin asignar' }}</strong>
-          </div>
-          <div role="listitem">
-            <span>Fuente</span>
-            <strong>{{ positionSourceLabel(selectedBalanceDetailRow) }}</strong>
-          </div>
-          <div role="listitem">
-            <span>Moneda</span>
-            <strong>{{ displayCurrencyUnit(selectedBalanceDetailRow.currency) }}</strong>
-          </div>
-        </div>
-
         <div class="a-nw-detail-chart">
           <ASectHead
             title="Evolución propia"
@@ -2263,6 +2179,79 @@ watch(
             :series-color="displayedTimelineSeriesColor"
             :y-axis-min-zero="timelineYAxisStartsAtZero"
           />
+        </div>
+
+        <div class="a-nw-detail-actions" aria-label="Acciones de la posición">
+          <button
+            class="a-nw-detail-action-btn"
+            type="button"
+            aria-label="Editar posición"
+            title="Editar posición"
+            @click="editBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <button
+            class="a-nw-detail-action-btn"
+            type="button"
+            aria-label="Archivar posición"
+            title="Archivar"
+            @click="archiveBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 8v13H3V8" />
+              <path d="M1 3h22v5H1z" />
+              <path d="M10 12h4" />
+            </svg>
+          </button>
+          <button
+            class="a-nw-detail-action-btn is-danger"
+            type="button"
+            aria-label="Eliminar posición"
+            title="Eliminar"
+            @click="deleteBalanceDetail(selectedBalanceDetailRow)"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="M19 6l-1 15H6L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
         </div>
       </div>
     </BaseModal>

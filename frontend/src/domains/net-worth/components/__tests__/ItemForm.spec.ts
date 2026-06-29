@@ -148,7 +148,7 @@ describe('ItemForm (saas)', () => {
     expect(wrapper.text()).toContain('Importe inv');
   });
 
-  it('shows required field message and blocks submit when name is missing', async () => {
+  it('keeps submit disabled with a compact hint when required fields are missing', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const wrapper = mount(ItemForm, {
       props: {
@@ -165,11 +165,10 @@ describe('ItemForm (saas)', () => {
     const currencySelect = selects.find((s) => s.text().includes('Selecciona moneda'))!;
     await currencySelect.setValue('EUR');
     await wrapper.find('input[placeholder="Importe"]').setValue('10000');
-    await wrapper.find('button.btn-primary').trigger('click');
-    await flushPromises();
-
+    expect(wrapper.find('button.btn-primary').attributes('disabled')).toBeDefined();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(wrapper.text()).toContain('Nombre obligatorio');
+    expect(wrapper.text()).toContain('Completa nombre, tipo e importe para continuar.');
+    expect(wrapper.text()).not.toContain('Nombre obligatorio');
   });
 
   it('allows straight-line amortization without initial purchase value when amount is provided', async () => {

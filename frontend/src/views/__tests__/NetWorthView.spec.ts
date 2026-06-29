@@ -409,6 +409,46 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).not.toContain('+ Añadir cuenta');
   });
 
+  it('keeps archived positions inside the page head metadata', () => {
+    mockUseNetWorthViewState.mockReturnValue(
+      makeState({
+        store: {
+          ...makeState().store,
+          assets: [
+            {
+              id: 11,
+              name: 'Cuenta principal',
+              category: 'cash',
+              subcategory: 'bank_account',
+              amount: '1000',
+              amount_base: '1000',
+              currency: 'EUR',
+              is_active: true,
+              ownership_ref: null,
+            },
+            {
+              id: 12,
+              name: 'Cuenta antigua',
+              category: 'cash',
+              subcategory: 'bank_account',
+              amount: '100',
+              amount_base: '100',
+              currency: 'EUR',
+              is_active: false,
+              ownership_ref: null,
+            },
+          ],
+        },
+      }),
+    );
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+
+    expect(wrapper.find('header .a-nw-archived-trigger').text()).toContain('1 archivadas');
+    expect(wrapper.find('.page > .a-nw-archived-trigger').exists()).toBe(false);
+  });
+
   it('calculates hero comparisons inside the selected ownership scope', async () => {
     mockCoreNetWorthApi.getAssetTimeline.mockImplementation(async (id: number) => ({
       data: {
@@ -591,7 +631,7 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('60,00 €');
   });
 
-  it('opens the primary asset modal from the mobile balance action', async () => {
+  it('opens the asset modal from the mobile balance action', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
@@ -602,18 +642,40 @@ describe('NetWorthView', () => {
     await openTab(wrapper, 'Balance');
     await wrapper.get('.a-nw-mobile-create').trigger('click');
 
+    expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(false);
+
+    await wrapper.get('.a-nw-mobile-create-menu .btn:first-child').trigger('click');
     expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(true);
   });
 
-  it('requests a category timeline from the hero breakdown', async () => {
+  it('opens the liability modal from the mobile balance action', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-create').trigger('click');
+    await wrapper.get('.a-nw-mobile-create-menu .btn:nth-child(2)').trigger('click');
+
+    expect(wrapper.find('[data-test="liability-modal"]').exists()).toBe(true);
+  });
+
+  it('opens evolution from a hero breakdown category and returns to general', async () => {
     const state = makeState();
     mockUseNetWorthViewState.mockReturnValue(state);
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
     await wrapper.get('.comp-row').trigger('click');
+    await flushPromises();
 
     expect(state.store.fetchTimeline).toHaveBeenCalledWith('cash', 'asset');
+    expect(wrapper.find('.a-nw-evolution-section').exists()).toBe(true);
+    expect(wrapper.find('.a-nw-evolution-back').exists()).toBe(true);
+
+    await wrapper.get('.a-nw-evolution-back').trigger('click');
+    expect(wrapper.find('.hero-breakdown').exists()).toBe(true);
+    expect(wrapper.find('.a-nw-evolution-section').exists()).toBe(false);
   });
 
   it('selects a balance row and fetches the per-position timeline', async () => {
@@ -644,15 +706,21 @@ describe('NetWorthView', () => {
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
     expect(wrapper.text()).toContain('Detalle de activo');
     expect(wrapper.text()).toContain('Cuenta principal');
-    expect(wrapper.text()).toContain('Fuente');
     expect(wrapper.text()).toContain('Manual');
-    expect(wrapper.text()).toContain('Último valor');
     expect(wrapper.text()).toContain('Cambio mensual');
     expect(wrapper.text()).toContain('Cambio YTD');
-    expect(wrapper.get('[aria-label="Editar posición"]').attributes('title')).toBe(
-      'Editar posición',
-    );
+    expect(wrapper.findAll('.a-nw-detail-header-btn')).toHaveLength(1);
+    expect(
+      wrapper.get('.a-nw-detail-actions [aria-label="Editar posición"]').attributes('title'),
+    ).toBe('Editar posición');
+    expect(
+      wrapper.get('.a-nw-detail-actions [aria-label="Archivar posición"]').attributes('title'),
+    ).toBe('Archivar');
+    expect(
+      wrapper.get('.a-nw-detail-actions [aria-label="Eliminar posición"]').attributes('title'),
+    ).toBe('Eliminar');
     expect(wrapper.get('[aria-label="Cerrar detalle"]').attributes('title')).toBe('Cerrar');
+    expect(wrapper.text()).not.toContain('Más acciones');
     expect(wrapper.text()).not.toContain('Editar posición');
   });
 
@@ -668,6 +736,71 @@ describe('NetWorthView', () => {
     expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
     expect(mobileListText).toContain('Hipoteca');
     expect(mobileListText).not.toContain('Cuenta principal');
+  });
+
+  it('collapses and expands balance groups', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+
+    const firstGroup = wrapper.get('.a-nw-mobile-group-head');
+    expect(firstGroup.attributes('aria-expanded')).toBe('true');
+
+    await firstGroup.trigger('click');
+    expect(firstGroup.attributes('aria-expanded')).toBe('false');
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
+    expect(wrapper.get('.a-nw-mobile-balance-list').text()).not.toContain('Cuenta principal');
+
+    await firstGroup.trigger('click');
+    expect(firstGroup.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+  });
+
+  it('renders each balance kind label once around its collapsible groups', async () => {
+    const state = makeState({
+      store: {
+        ...makeState().store,
+        assets: [
+          ...makeState().store.assets,
+          {
+            id: 12,
+            name: 'Cartera indexada',
+            category: 'investments',
+            subcategory: 'funds',
+            amount: '200',
+            amount_base: '200',
+            currency: 'EUR',
+            is_active: true,
+            ownership_ref: null,
+          },
+        ],
+      },
+      assetCategories: [
+        { value: 'cash', label: 'Liquidez' },
+        { value: 'investments', label: 'Inversiones' },
+      ],
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+
+    const labels = wrapper.findAll('.a-nw-mobile-section-head').map((node) => node.text());
+    expect(labels).toHaveLength(2);
+    expect(labels[0]).toContain('Activos');
+    expect(labels[1]).toContain('Pasivos');
+    expect(wrapper.findAll('.a-nw-mobile-group-head')).toHaveLength(3);
+    expect(
+      wrapper.findAll('.a-nw-mobile-group-head').some((node) => node.text().includes('Activos')),
+    ).toBe(false);
+    expect(
+      wrapper.findAll('.a-nw-mobile-group-head').some((node) => node.text().includes('Pasivos')),
+    ).toBe(false);
   });
 
   it('shows eight decimals for crypto original amounts', async () => {
@@ -742,15 +875,43 @@ describe('NetWorthView', () => {
     expect(state.store.unarchiveAsset).toHaveBeenCalledWith(91);
   });
 
-  it('opens the expanded timeline modal and updates the visible range', async () => {
+  it('simplifies evolution controls to scope and range only', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Evolución');
-    await wrapper.get('button.btn-ghost').trigger('click');
-    await wrapper.get('.a-nw-range-input').setValue('2');
 
-    expect(wrapper.text()).toContain('enero de 2026 - marzo de 2026');
+    expect(wrapper.text()).toContain('3a');
+    expect(wrapper.text()).toContain('Fechas');
+    expect(wrapper.find('.a-nw-evolution-scope-inline').exists()).toBe(true);
+    expect(wrapper.find('[aria-label="Rango de evolución"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Detalle');
+    expect(wrapper.text()).not.toContain('Personalizado');
+    expect(wrapper.text()).not.toContain('Diaria');
+    expect(
+      wrapper.findAll('.a-nw-evolution-mini-seg .btn').some((button) => button.text() === '1m'),
+    ).toBe(false);
+  });
+
+  it('keeps range controls visible when a custom date range has no data', async () => {
+    mockUseNetWorthViewState.mockReturnValue(makeState());
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Evolución');
+    const datesButton = wrapper
+      .findAll('.a-nw-evolution-mini-seg .btn')
+      .find((button) => button.text() === 'Fechas');
+    if (!datesButton) throw new Error('Fechas button not found');
+
+    await datesButton.trigger('click');
+    await wrapper.get('.a-nw-evolution-date-range input[type="date"]').setValue('2099-01-01');
+
+    expect(wrapper.text()).toContain('No hay historial suficiente');
+    expect(wrapper.find('[aria-label="Rango de evolución"]').exists()).toBe(true);
+    expect(
+      wrapper.findAll('.a-nw-evolution-mini-seg .btn').some((button) => button.text() === '5a'),
+    ).toBe(true);
   });
 });

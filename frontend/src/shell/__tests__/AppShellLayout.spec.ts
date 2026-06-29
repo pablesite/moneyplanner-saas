@@ -58,6 +58,7 @@ describe('AppShellLayout', () => {
     expect(wrapper.get('.topnav-brand-logo').attributes('src')).toContain('svg');
     expect(wrapper.get('.topnav-brand-logo').attributes('alt')).toBe('');
     expect(wrapper.text()).not.toContain('TA');
+    expect(wrapper.find('.ui-shell-footer').exists()).toBe(false);
     expect(tabs).toHaveLength(5);
     expect(tabs.map((tab) => tab.text())).toEqual([
       'Estado',
@@ -85,6 +86,19 @@ describe('AppShellLayout', () => {
     expect(wrapper.find('nav.ui-shell-bottom-nav').exists()).toBe(false);
     expect(wrapper.find('nav.ui-shell-desktop-nav').exists()).toBe(false);
     expect(wrapper.get('.ui-shell-page-chip').text()).toBe('The Arkenstone Admin');
+    expect(wrapper.find('.ui-shell-footer').exists()).toBe(false);
+  });
+
+  it('opens the about dialog from the account menu', async () => {
+    const wrapper = mountShell();
+    await flushPromises();
+
+    await wrapper.get('.ui-shell-account-link').trigger('click');
+    await wrapper.get('.ui-shell-account-dropdown button[role="menuitem"]').trigger('click');
+
+    expect(document.body.textContent).toContain('Acerca de');
+    expect(document.body.textContent).toContain('The Arkenstone');
+    expect(document.body.textContent).toContain('v0.33.0');
   });
 });
 

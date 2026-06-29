@@ -47,11 +47,12 @@ defineProps<{
     :open="showAssetModal"
     title="Nuevo activo"
     variant="sheet"
-    panel-class="ui-sheet-panel dir-a dir-a-sheet"
+    panel-class="ui-sheet-panel dir-a dir-a-sheet a-nw-item-sheet a-nw-asset-sheet"
     body-class="ui-sheet-body"
     @close="onCloseAssetModal"
   >
     <ItemForm
+      class="a-nw-item-form a-nw-asset-form"
       title="Nuevo activo"
       :categories="assetCategories"
       :subcategories="assetSubcategories"
@@ -87,12 +88,17 @@ defineProps<{
     :open="showEditModal"
     :title="editTitle"
     variant="sheet"
-    panel-class="ui-sheet-panel dir-a dir-a-sheet"
+    :panel-class="
+      editKind === 'asset'
+        ? 'ui-sheet-panel dir-a dir-a-sheet a-nw-item-sheet a-nw-asset-sheet'
+        : 'ui-sheet-panel dir-a dir-a-sheet'
+    "
     body-class="ui-sheet-body"
     @close="closeEdit"
   >
     <ItemForm
       v-if="editInitial"
+      :class="['a-nw-item-form', editKind === 'asset' ? 'a-nw-asset-form' : 'a-nw-liability-form']"
       :title="editTitle"
       :categories="editCategories"
       :subcategories="editKind === 'asset' ? assetSubcategories : undefined"

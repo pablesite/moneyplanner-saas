@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, useId } from 'vue';
 
 export type NetWorthEvolutionPoint = {
   date: string;
@@ -15,23 +15,20 @@ type Props = {
   seriesLabel: string;
   seriesColor?: string;
   yAxisMinZero?: boolean;
-  expanded?: boolean;
 };
 
 const props = withDefaults(defineProps<Props>(), {
   seriesColor: 'var(--accent)',
   yAxisMinZero: false,
-  expanded: false,
 });
 
 // Geometría del prototipo (handoff/direction-a.jsx · AInteractiveChart).
-// viewBox fijo y ancho 100%: el SVG escala con el contenedor, así que el modo
-// "expanded" sólo se ve más grande porque su contenedor es más ancho.
+// viewBox fijo y ancho 100%: el SVG escala con el contenedor.
 const W = 1280;
-const padL = 56;
-const padR = 16;
-const padT = 12;
-const padB = 18;
+const padL = 78;
+const padR = 28;
+const padT = 18;
+const padB = 30;
 const gap = 12;
 const lineH = 280;
 const deltaH = 72;
@@ -39,6 +36,9 @@ const totalH = lineH + gap + deltaH;
 
 const wrapRef = ref<HTMLElement | null>(null);
 const hoverIndex = ref<number | null>(null);
+const chartId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+const areaGradientId = `a-nw-evo-grad-${chartId}`;
+const zoneLineGradientId = `a-nw-evo-zone-line-${chartId}`;
 
 const displayUnit = computed(() => (props.unit === 'EUR' ? '€' : props.unit));
 
@@ -59,6 +59,7 @@ function formatCompact(value: number): string {
 
 const values = computed(() => props.points.map((p) => p.value));
 const hasNegative = computed(() => values.value.some((v) => v < 0));
+const hasPositive = computed(() => values.value.some((v) => v > 0));
 
 const bounds = computed(() => {
   if (!values.value.length) return { min: 0, max: 1 };
@@ -85,7 +86,45 @@ function py(v: number): number {
   return padT + (1 - (v - bounds.value.min) / range.value) * (lineH - padT - padB);
 }
 
+function clampPlotY(y: number): number {
+  return Math.max(padT, Math.min(lineH - padB, y));
+}
+
 const pts = computed(() => props.points.map((p, i) => ({ x: px(i), y: py(p.value) })));
+const zeroLineVisible = computed(() => hasNegative.value && hasPositive.value);
+const zeroY = computed(() => py(0));
+
+function zoneColor(value: number): string {
+  if (value < 0) return 'var(--neg)';
+  if (value > 0) return 'var(--pos)';
+  return 'var(--muted)';
+}
+
+const lineStops = computed(() => {
+  const points = props.points;
+  if (!points.length) return [{ offset: 0, color: 'var(--muted)' }];
+  if (points.length === 1) return [{ offset: 0, color: zoneColor(points[0]!.value) }];
+
+  const stops: { offset: number; color: string }[] = [
+    { offset: 0, color: zoneColor(points[0]!.value) },
+  ];
+
+  for (let i = 1; i < points.length; i++) {
+    const previous = points[i - 1]!;
+    const current = points[i]!;
+    if (previous.value === 0 || current.value === 0 || previous.value * current.value >= 0) {
+      continue;
+    }
+
+    const t = Math.abs(previous.value) / (Math.abs(previous.value) + Math.abs(current.value));
+    const offset = (i - 1 + t) / (points.length - 1);
+    stops.push({ offset, color: zoneColor(previous.value) });
+    stops.push({ offset, color: zoneColor(current.value) });
+  }
+
+  stops.push({ offset: 1, color: zoneColor(points[points.length - 1]!.value) });
+  return stops;
+});
 
 // Eje Y: 8 ticks "bonitos" repartidos entre min y max.
 const yTicks = computed(() =>
@@ -108,9 +147,9 @@ const linePath = computed(() => {
     const p2 = p[i + 1]!;
     const p3 = p[i + 2] ?? p2;
     const cp1x = p1.x + (p2.x - p0.x) * tension;
-    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp1y = clampPlotY(p1.y + (p2.y - p0.y) * tension);
     const cp2x = p2.x - (p3.x - p1.x) * tension;
-    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    const cp2y = clampPlotY(p2.y - (p3.y - p1.y) * tension);
     d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
   }
   return d;
@@ -194,9 +233,24 @@ function handleLeave(): void {
       role="img"
     >
       <defs>
-        <linearGradient id="a-nw-evo-grad" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient :id="areaGradientId" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="currentColor" stop-opacity="0.32" />
           <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient
+          :id="zoneLineGradientId"
+          :x1="padL"
+          :x2="W - padR"
+          y1="0"
+          y2="0"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop
+            v-for="(stop, index) in lineStops"
+            :key="`line-stop-${index}`"
+            :offset="`${stop.offset * 100}%`"
+            :stop-color="stop.color"
+          />
         </linearGradient>
       </defs>
 
@@ -215,12 +269,26 @@ function handleLeave(): void {
         </text>
       </g>
 
+      <!-- Cero patrimonial: solo aparece cuando el rango cruza de negativo a positivo. -->
+      <g v-if="zeroLineVisible" class="a-nw-evo-zero">
+        <line
+          :x1="padL"
+          :x2="W - padR"
+          :y1="zeroY"
+          :y2="zeroY"
+          vector-effect="non-scaling-stroke"
+        />
+        <text :x="padL - 8" :y="zeroY - 7" text-anchor="end" class="a-nw-evo-zero-label">
+          0 {{ displayUnit }}
+        </text>
+      </g>
+
       <!-- Área + línea suave (trazo de grosor constante a cualquier escala) -->
-      <path :d="areaPath" fill="url(#a-nw-evo-grad)" />
+      <path :d="areaPath" :fill="`url(#${areaGradientId})`" />
       <path
         :d="linePath"
         fill="none"
-        stroke="currentColor"
+        :stroke="`url(#${zoneLineGradientId})`"
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -234,7 +302,7 @@ function handleLeave(): void {
         :cx="p.x"
         :cy="p.y"
         :r="hoverIndex === i ? 0 : 2"
-        fill="currentColor"
+        :fill="zoneColor(props.points[i]?.value ?? 0)"
         fill-opacity="0.7"
       />
 
@@ -255,7 +323,7 @@ function handleLeave(): void {
           :cy="py(hoverPoint.value)"
           r="6"
           fill="var(--bg)"
-          stroke="currentColor"
+          :stroke="zoneColor(hoverPoint.value)"
           stroke-width="2.5"
           vector-effect="non-scaling-stroke"
         />
@@ -290,7 +358,7 @@ function handleLeave(): void {
         <text
           v-if="entry.show || hoverIndex === i"
           :x="px(i)"
-          :y="totalH - 2"
+          :y="totalH - 8"
           text-anchor="middle"
           class="a-nw-evo-axis"
           :fill-opacity="hoverIndex === i ? 0.95 : 0.5"
