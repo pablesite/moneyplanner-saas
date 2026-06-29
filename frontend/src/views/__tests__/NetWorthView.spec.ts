@@ -409,6 +409,46 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).not.toContain('+ Añadir cuenta');
   });
 
+  it('keeps archived positions inside the page head metadata', () => {
+    mockUseNetWorthViewState.mockReturnValue(
+      makeState({
+        store: {
+          ...makeState().store,
+          assets: [
+            {
+              id: 11,
+              name: 'Cuenta principal',
+              category: 'cash',
+              subcategory: 'bank_account',
+              amount: '1000',
+              amount_base: '1000',
+              currency: 'EUR',
+              is_active: true,
+              ownership_ref: null,
+            },
+            {
+              id: 12,
+              name: 'Cuenta antigua',
+              category: 'cash',
+              subcategory: 'bank_account',
+              amount: '100',
+              amount_base: '100',
+              currency: 'EUR',
+              is_active: false,
+              ownership_ref: null,
+            },
+          ],
+        },
+      }),
+    );
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+
+    const wrapper = mount(NetWorthView);
+
+    expect(wrapper.find('header .a-nw-archived-trigger').text()).toContain('1 archivadas');
+    expect(wrapper.find('.page > .a-nw-archived-trigger').exists()).toBe(false);
+  });
+
   it('calculates hero comparisons inside the selected ownership scope', async () => {
     mockCoreNetWorthApi.getAssetTimeline.mockImplementation(async (id: number) => ({
       data: {

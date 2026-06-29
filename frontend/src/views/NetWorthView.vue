@@ -1369,21 +1369,24 @@ watch(
 <template>
   <div class="page a-nw-page">
     <APageHead title="Patrimonio">
-      <template v-if="asOfLabel !== 'Hoy' || valueMode === 'real'" #meta>
+      <template v-if="archivedItemsCount || asOfLabel !== 'Hoy' || valueMode === 'real'" #meta>
+        <button
+          v-if="archivedItemsCount"
+          class="a-nw-archived-trigger"
+          type="button"
+          @click="showArchivedModal = true"
+        >
+          <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
+        </button>
+        <span
+          v-if="archivedItemsCount && (asOfLabel !== 'Hoy' || valueMode === 'real')"
+          class="dot"
+        ></span>
         <AMetaPill v-if="asOfLabel !== 'Hoy'">{{ asOfLabel }}</AMetaPill>
         <span v-if="asOfLabel !== 'Hoy' && valueMode === 'real'" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
       </template>
     </APageHead>
-
-    <AButton
-      v-if="archivedItemsCount"
-      variant="ghost"
-      class="a-nw-archived-trigger"
-      @click="showArchivedModal = true"
-    >
-      <strong class="mono">{{ archivedItemsCount }}</strong> archivadas
-    </AButton>
 
     <nav class="a-nw-tabs-bar" aria-label="Secciones de patrimonio">
       <div class="tabs">
