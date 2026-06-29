@@ -22,7 +22,6 @@ import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActio
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
 import {
   AButton,
-  AContextBar,
   AHero,
   AInfoHint,
   AMetaPill,
@@ -1422,56 +1421,58 @@ watch(
       </div>
     </nav>
 
-    <AContextBar class="a-nw-read-controls" aria-label="Opciones de lectura de patrimonio">
-      <label class="context-field a-nw-control-chip" data-test="ownership-filter">
-        <span class="a-nw-sr-only">Titularidad</span>
-        <ASelect
-          class="filter-ctrl"
-          aria-label="Titularidad"
-          :model-value="String(ownershipFilter)"
-          :options="ownershipSelectOptions"
-          :disabled="ownershipFilterDisabled"
-          :searchable="false"
-          @update:model-value="(v) => setOwnershipFilter(v === 'all' ? 'all' : Number(v))"
-        />
-      </label>
+    <section class="sect a-nw-read-section" aria-label="Opciones de lectura de patrimonio">
+      <div class="a-nw-read-controls">
+        <label class="context-field a-nw-control-chip" data-test="ownership-filter">
+          <span class="a-nw-sr-only">Titularidad</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Titularidad"
+            :model-value="String(ownershipFilter)"
+            :options="ownershipSelectOptions"
+            :disabled="ownershipFilterDisabled"
+            :searchable="false"
+            @update:model-value="(v) => setOwnershipFilter(v === 'all' ? 'all' : Number(v))"
+          />
+        </label>
 
-      <label class="context-field a-nw-control-chip">
-        <span class="a-nw-sr-only">Moneda</span>
-        <ASelect
-          class="filter-ctrl"
-          aria-label="Moneda"
-          :model-value="store.baseCurrency ?? 'EUR'"
-          :options="currencySelectOptions"
-          :searchable="false"
-          @update:model-value="(v) => store.updateBaseCurrency(String(v))"
-        />
-      </label>
+        <label class="context-field a-nw-control-chip">
+          <span class="a-nw-sr-only">Moneda</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Moneda"
+            :model-value="store.baseCurrency ?? 'EUR'"
+            :options="currencySelectOptions"
+            :searchable="false"
+            @update:model-value="(v) => store.updateBaseCurrency(String(v))"
+          />
+        </label>
 
-      <div class="context-field a-nw-control-chip a-nw-valuation-control">
-        <span class="a-nw-sr-only">Valoración</span>
-        <div class="seg" role="group" aria-label="Valoración">
-          <AButton
-            :aria-pressed="valueMode === 'nominal'"
-            :class="{ on: valueMode === 'nominal' }"
-            @click="setValueMode('nominal')"
-          >
-            Nominal
-          </AButton>
-          <AButton
-            v-if="canShowReal()"
-            :aria-pressed="valueMode === 'real'"
-            :class="{ on: valueMode === 'real' }"
-            @click="setValueMode('real')"
-          >
-            Real
-          </AButton>
+        <div class="context-field a-nw-control-chip a-nw-valuation-control">
+          <span class="a-nw-sr-only">Valoración</span>
+          <div class="seg" role="group" aria-label="Valoración">
+            <AButton
+              :aria-pressed="valueMode === 'nominal'"
+              :class="{ on: valueMode === 'nominal' }"
+              @click="setValueMode('nominal')"
+            >
+              Nominal
+            </AButton>
+            <AButton
+              v-if="canShowReal()"
+              :aria-pressed="valueMode === 'real'"
+              :class="{ on: valueMode === 'real' }"
+              @click="setValueMode('real')"
+            >
+              Real
+            </AButton>
+          </div>
+          <span v-if="valueMode === 'real' && realBaseLabel" class="a-nw-context-note">
+            {{ realBaseLabel }}
+          </span>
         </div>
-        <span v-if="valueMode === 'real' && realBaseLabel" class="a-nw-context-note">
-          {{ realBaseLabel }}
-        </span>
       </div>
-    </AContextBar>
+    </section>
 
     <section v-if="activeNetWorthTab === 'general'" class="sect">
       <div class="hero">

@@ -97,7 +97,11 @@
   background: transparent;
 }
 
-.a-nw-page .context-bar {
+.a-nw-read-section {
+  gap: 0;
+}
+
+.a-nw-read-controls {
   width: 100%;
   max-width: 100%;
   display: flex;
@@ -111,14 +115,7 @@
   scrollbar-width: none;
 }
 
-.dir-a .page.a-nw-page .context-bar.a-nw-read-controls {
-  gap: 10px;
-  margin: 0;
-  padding: 14px 0;
-  border-bottom: 0;
-}
-
-.a-nw-page .context-bar::-webkit-scrollbar {
+.a-nw-read-controls::-webkit-scrollbar {
   display: none;
 }
 
@@ -1280,8 +1277,8 @@
     flex: 0 0 auto;
   }
 
-  /* Context bar: carril compacto de una línea; si no cabe, desplaza horizontal. */
-  .a-nw-page .context-bar {
+  /* Toolbar compacta de una línea; si no cabe, desplaza horizontal. */
+  .a-nw-read-controls {
     gap: 8px;
   }
 
