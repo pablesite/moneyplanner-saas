@@ -375,6 +375,7 @@
 
 .a-nw-evolution-expand {
   justify-self: end;
+  flex: 0 0 auto;
   min-height: 32px;
   padding: 6px 10px;
   border-color: var(--line);
@@ -397,6 +398,14 @@
   flex-wrap: wrap;
   color: var(--muted);
   font-size: 12px;
+}
+
+.a-nw-evolution-summary > div:first-child {
+  min-width: min(100%, 240px);
+}
+
+.a-nw-evolution-summary > span {
+  margin-left: auto;
 }
 
 .a-nw-evolution-summary strong {
@@ -425,12 +434,11 @@
   color: var(--neg);
 }
 
-.a-nw-evolution-controls {
-  display: grid;
-  grid-template-columns: minmax(140px, 0.58fr) minmax(0, 1.42fr);
-  align-items: start;
+.a-nw-evolution-chart-actions {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
   gap: 12px;
-  padding-top: 4px;
 }
 
 .a-nw-evolution-control-group {
@@ -439,6 +447,14 @@
   gap: 6px;
   min-width: 0;
   color: var(--muted);
+}
+
+.a-nw-evolution-scope-group {
+  justify-self: end;
+}
+
+.a-nw-evolution-range-group {
+  flex: 1 1 auto;
 }
 
 .a-nw-evolution-control-group > span {
@@ -1260,9 +1276,15 @@
     font-size: 22px;
   }
 
-  .a-nw-evolution-controls {
-    grid-template-columns: 1fr;
+  .a-nw-evolution-chart-actions {
+    align-items: stretch;
+    flex-direction: column;
     gap: 8px;
+  }
+
+  .a-nw-evolution-expand {
+    justify-self: start;
+    width: fit-content;
   }
 
   .a-nw-evolution-control-group {

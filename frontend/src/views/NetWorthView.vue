@@ -1695,29 +1695,7 @@ watch(
             </p>
           </div>
           <span>{{ activeEvolutionCaption }}</span>
-        </div>
-
-        <div class="a-nw-chart-shell">
-          <NetWorthEvolutionChart
-            :points="activeEvolutionPoints"
-            :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
-            :series-label="activeEvolutionLabel"
-            :series-color="displayedTimelineSeriesColor"
-            :y-axis-min-zero="timelineYAxisStartsAtZero"
-          />
-        </div>
-
-        <AButton
-          v-if="activeEvolutionPoints.length > 1"
-          variant="ghost"
-          class="a-nw-evolution-expand"
-          @click="timelineExpanded = true"
-        >
-          Ampliar gráfico
-        </AButton>
-
-        <div class="a-nw-evolution-controls">
-          <div class="a-nw-evolution-control-group">
+          <div class="a-nw-evolution-control-group a-nw-evolution-scope-group">
             <span>Ámbito</span>
             <div class="a-nw-evolution-mini-seg" aria-label="Ámbito de evolución">
               <AButton
@@ -1732,6 +1710,19 @@ watch(
               </AButton>
             </div>
           </div>
+        </div>
+
+        <div class="a-nw-chart-shell">
+          <NetWorthEvolutionChart
+            :points="activeEvolutionPoints"
+            :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
+            :series-label="activeEvolutionLabel"
+            :series-color="displayedTimelineSeriesColor"
+            :y-axis-min-zero="timelineYAxisStartsAtZero"
+          />
+        </div>
+
+        <div class="a-nw-evolution-chart-actions">
           <div class="a-nw-evolution-control-group a-nw-evolution-range-group">
             <span>Rango</span>
             <div class="a-nw-evolution-mini-seg" aria-label="Rango de evolución">
@@ -1757,6 +1748,14 @@ watch(
               </label>
             </div>
           </div>
+          <AButton
+            v-if="activeEvolutionPoints.length > 1"
+            variant="ghost"
+            class="a-nw-evolution-expand"
+            @click="timelineExpanded = true"
+          >
+            Ampliar gráfico
+          </AButton>
           <AButton
             v-if="
               timelineFilterLabel && timelineScope === 'total' && timelineGranularity === 'monthly'

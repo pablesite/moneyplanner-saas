@@ -788,7 +788,7 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Evolución');
-    await wrapper.get('button.btn-ghost').trigger('click');
+    await wrapper.get('.a-nw-evolution-expand').trigger('click');
     await wrapper.get('.a-nw-range-input').setValue('2');
 
     expect(wrapper.text()).toContain('enero de 2026 - marzo de 2026');
