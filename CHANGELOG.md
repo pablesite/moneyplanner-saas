@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.36.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.35.0...moneyplanner-saas-v0.36.0) (2026-06-30)
+
+
+### Features
+
+* **ui:** add AToast shared component ([96b2df3](https://github.com/pablesite/moneyplanner-saas/commit/96b2df3ed81f27bdc967b2a6ccdf998cd29a3b95))
+* **ui:** add footer slot to BaseModal ([d9936de](https://github.com/pablesite/moneyplanner-saas/commit/d9936de5a359fbb1dd411da00601be7bbbc4b422))
+* **ui:** share ADateRange custom from/to inputs ([4b32d35](https://github.com/pablesite/moneyplanner-saas/commit/4b32d353d0e0ed3aa9b1ec3acb7dcf1b94e2ec2b))
+* **ui:** share collapsible-group chevron and collapse logic ([c256314](https://github.com/pablesite/moneyplanner-saas/commit/c256314ee53b75f9f35cd0646ff105376bbd316d))
+
+
+### Bug Fixes
+
+* **net-worth:** align item-form fields to label/value rows like movements ([656ecd8](https://github.com/pablesite/moneyplanner-saas/commit/656ecd82398f34752a6cc2cd4fac9ec4edd5df9a))
+* **ui:** asset form ordering, notes reachability and movements FAB ([b3a976c](https://github.com/pablesite/moneyplanner-saas/commit/b3a976c550f938eac44c36d76b47c12b34a41ac7))
+
 ## [0.35.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.34.0...moneyplanner-saas-v0.35.0) (2026-06-29)
 
 
