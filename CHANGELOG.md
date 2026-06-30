@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.35.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.34.0...moneyplanner-saas-v0.35.0) (2026-06-29)
+
+
+### Features
+
+* **ui:** make net worth balance groups collapsible ([49d0b88](https://github.com/pablesite/moneyplanner-saas/commit/49d0b88dd953be050e764585c3b275bc32826d75))
+* **ui:** move branding info to about dialog ([15cb8d2](https://github.com/pablesite/moneyplanner-saas/commit/15cb8d206513026614f1d5527405399f55eb524d))
+* **ui:** open net worth evolution from composition ([ca7ede5](https://github.com/pablesite/moneyplanner-saas/commit/ca7ede54aaa0679203884d6daca2a007e565341f))
+
+
+### Bug Fixes
+
+* **ui:** add spacing to net worth filters ([056da61](https://github.com/pablesite/moneyplanner-saas/commit/056da6196035ab35d3fc9fd82b54589c4f919187))
+* **ui:** align net worth asset form sheet ([25fb531](https://github.com/pablesite/moneyplanner-saas/commit/25fb5312f9a5bb72396a7f43326f4bcecf67ae9e))
+* **ui:** align net worth controls with movements toolbar ([c52d640](https://github.com/pablesite/moneyplanner-saas/commit/c52d640e23ead3f6033210dc9062700a336f29c2))
+* **ui:** fine tune net worth toolbar spacing ([0ff557f](https://github.com/pablesite/moneyplanner-saas/commit/0ff557f9c0e1280c8771ad2469cbf8248f1d9013))
+* **ui:** increase net worth controls spacing ([b6715e2](https://github.com/pablesite/moneyplanner-saas/commit/b6715e2eacb0aa48e4984ca66fc15cc03f70a2af))
+* **ui:** keep about version test current ([4706f25](https://github.com/pablesite/moneyplanner-saas/commit/4706f2524635481f9cc027ba22d93b5117d7f0b0))
+* **ui:** keep net worth content above mobile nav ([1fe51c1](https://github.com/pablesite/moneyplanner-saas/commit/1fe51c11df0ff35c8e9458cbe4f1b6d01f74b776))
+* **ui:** match net worth controls rhythm to movements ([5528af4](https://github.com/pablesite/moneyplanner-saas/commit/5528af4224f8cf1466151c23b7c497c81f13c257))
+* **ui:** override net worth context bar spacing ([cb6437d](https://github.com/pablesite/moneyplanner-saas/commit/cb6437d0c19ad2f3f6180efe36f8e7a36e79a10f))
+* **ui:** refine net worth balance mobile actions ([b85b68b](https://github.com/pablesite/moneyplanner-saas/commit/b85b68b457d7c3da9f7293e9e652dcd89d40f6f9))
+* **ui:** separate net worth tabs and controls ([ca7b85c](https://github.com/pablesite/moneyplanner-saas/commit/ca7b85ccae2c11fa1554885c408be8e05ed23c13))
+* **ui:** simplify net worth detail sheet ([fc9428d](https://github.com/pablesite/moneyplanner-saas/commit/fc9428d9b810f2c68420e775626c061d99eddf88))
+* **ui:** streamline net worth asset form ([64b326c](https://github.com/pablesite/moneyplanner-saas/commit/64b326cb188f07d4c2f72bf7cd7b1a66cd4f6808))
+* **ui:** streamline net worth detail actions ([df2b3aa](https://github.com/pablesite/moneyplanner-saas/commit/df2b3aa9b414ea94f6f4d645c92a650057fa8126))
+* **ui:** tune net worth controls spacing ([977c4cf](https://github.com/pablesite/moneyplanner-saas/commit/977c4cfd8ffad81837c4deb06504df9d45c4acdb))
+* **ui:** use toolbar structure for net worth controls ([02ca614](https://github.com/pablesite/moneyplanner-saas/commit/02ca6149987845289536cdd4fcb07b434895ba96))
+
 ## [0.34.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.33.0...moneyplanner-saas-v0.34.0) (2026-06-29)
 
 
