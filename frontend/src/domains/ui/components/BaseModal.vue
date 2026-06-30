@@ -135,10 +135,20 @@ watch(
         </div>
 
         <div
-          class="overflow-y-auto"
+          class="overflow-y-auto min-h-0"
           :class="[props.variant === 'sheet' ? 'ui-modal-body' : 'px-4 py-3.5', bodyClass]"
         >
           <slot />
+        </div>
+
+        <div
+          v-if="$slots.footer"
+          class="shrink-0"
+          :class="
+            props.variant === 'sheet' ? 'ui-modal-foot' : 'border-t border-white/10 px-4 py-3.5'
+          "
+        >
+          <slot name="footer" :close="() => emit('close')" />
         </div>
       </div>
     </div>

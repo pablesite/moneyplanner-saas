@@ -192,6 +192,24 @@ body {
   padding: 8px 24px 20px;
 }
 
+/* Footer fijo del panel (slot #footer de BaseModal), fuera del cuerpo con
+   scroll: las acciones quedan siempre visibles sin tapar el contenido. */
+.ui-modal-foot {
+  padding: 14px 24px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 13, 16, 0.98);
+}
+
+.ui-modal-foot-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ui-modal-foot-actions .btn {
+  min-width: 128px;
+}
+
 .ui-a-kind-chip {
   white-space: nowrap;
 }

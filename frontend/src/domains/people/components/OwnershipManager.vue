@@ -149,8 +149,9 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-
-        <div class="ui-form-actions md:col-span-2">
+      </div>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
           <AButton class="ui-form-action-btn" @click="resetModal">Cancelar</AButton>
           <AButton
             class="ui-form-action-btn"
@@ -160,7 +161,7 @@ onMounted(async () => {
             {{ editId != null ? 'Guardar' : 'Crear' }}
           </AButton>
         </div>
-      </div>
+      </template>
     </BaseModal>
   </div>
 </template>

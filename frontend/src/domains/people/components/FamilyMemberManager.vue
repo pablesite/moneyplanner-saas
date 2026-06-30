@@ -153,8 +153,9 @@ onMounted(async () => {
             @update:model-value="(v) => (form.role = v as 'adult' | 'child')"
           />
         </label>
-
-        <div class="ui-form-actions md:col-span-2">
+      </div>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
           <AButton class="ui-form-action-btn" @click="closeCreate"> Cancelar </AButton>
           <AButton
             variant="primary"
@@ -165,7 +166,7 @@ onMounted(async () => {
             Crear
           </AButton>
         </div>
-      </div>
+      </template>
     </BaseModal>
 
     <!-- Modal editar -->
@@ -192,8 +193,9 @@ onMounted(async () => {
             @update:model-value="(v) => (editForm.role = v as 'adult' | 'child')"
           />
         </label>
-
-        <div class="ui-form-actions md:col-span-2">
+      </div>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
           <AButton class="ui-form-action-btn" @click="closeEdit">Cancelar</AButton>
           <AButton
             class="ui-form-action-btn"
@@ -203,7 +205,7 @@ onMounted(async () => {
             Guardar
           </AButton>
         </div>
-      </div>
+      </template>
     </BaseModal>
   </div>
 </template>

@@ -108,17 +108,27 @@ no-sticky, pero es un parche). Cada modal resuelve sus acciones a mano
 (`ItemForm`, `QuickEntry`, `FamilyMemberManager`, `OwnershipManager`,
 `AccountingMovementsActivationModal`…). 9 usos de `BaseModal` en total.
 
-- [ ] **Añadir `<slot name="footer" />`** a `BaseModal`, fuera del cuerpo con
-      scroll (footer fijo del panel, no del scroll). Mantener compatibilidad:
-      si no se pasa footer, comportamiento actual.
-- [ ] Definir clase compartida de footer de modal (`.ui-modal-footer`) con el
-      patrón Direction A (borde superior, acciones a la derecha, safe-area).
-- [ ] Migrar `ItemForm` al slot de footer (y revisar si conviene recuperar el
-      comportamiento "siempre visible" ahora sin tapar contenido).
-- [ ] Migrar el resto de modales con acciones al mismo patrón.
+- [x] **Añadir `<slot name="footer" />`** a `BaseModal`, fuera del cuerpo con
+      scroll (footer fijo del panel, no del scroll). Compatibilidad: si no se
+      pasa footer, comportamiento actual. El cuerpo lleva `min-h-0` para
+      desplazarse de forma independiente.
+- [x] Clase compartida `.ui-modal-foot` + `.ui-modal-foot-actions` (Direction A:
+      borde superior, acciones a la derecha, safe-area) en `app.css`.
+- [x] Migrados los modales **auto-contenidos sencillos** al slot de footer:
+      `FamilyMemberManager` (crear + editar) y `OwnershipManager` (people).
+- [ ] **Migrar QuickEntry y `AccountingMovementsActivationModal`**: su botón de
+      envío es `type="submit"` dentro de un `<form>` en el slot por defecto.
+      Mover el footer fuera del form requiere dar `id` al `<form>` y `form="<id>"`
+      al botón (atributo HTML `form`), o que `AButton` reenvíe `form`. Acotado
+      pero toca componentes grandes.
+- [ ] **Migrar `ItemForm`**: lo renderiza el wrapper `NetWorthItemModals` (el
+      `BaseModal` vive en el wrapper, `ItemForm` es contenido por defecto y su
+      footer depende de su estado interno). Opciones: exponer un slot con scope
+      desde `ItemForm`, o `Teleport` a un objetivo del panel. Hoy funciona
+      (footer no-sticky), así que es consistencia, no bug.
 
-**DoD**: footer de modal como primitiva; ningún modal mete sus acciones dentro
-del scroll; `ItemForm` y QuickEntry consistentes.
+**DoD parcial**: primitiva entregada y validada con los modales de people. Resto
+pendiente con técnica documentada arriba.
 
 ## E. Pasada por vista (incremental)
 
