@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { computed, reactive, ref } from 'vue';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import FamilyMemberManager from '../FamilyMemberManager.vue';
 
@@ -41,6 +41,10 @@ describe('FamilyMemberManager', () => {
     mockUsePeopleMembers.mockReset();
   });
 
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
   it('shows empty and success states', () => {
     mockUsePeopleMembers.mockReturnValue(
       makeState({
@@ -56,7 +60,7 @@ describe('FamilyMemberManager', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Miembro creado correctamente.');
+    expect(document.body.textContent).toContain('Miembro creado correctamente.');
     expect(wrapper.text()).toContain('No hay miembros');
   });
 

@@ -9,7 +9,15 @@ import {
 } from '@/domains/admin';
 import { authApi, toAuthErrorMessage, type CurrentUser } from '@/domains/auth';
 import { usePortableDataTransfer } from '@/domains/portable-data';
-import { AButton, APageHead, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  APageHead,
+  ASelect,
+  AState,
+  AToast,
+  BaseModal,
+  type ASelectItem,
+} from '@/domains/ui';
 import { coreApi } from '@/lib/api';
 
 const route = useRoute();
@@ -47,6 +55,7 @@ const {
   dataTransferToastKind,
   dataTransferToastMessage,
   importFileInputRef,
+  clearDataTransferToast,
   triggerImportDialog,
   exportDataBundle,
   importDataFromFile,
@@ -79,15 +88,6 @@ type AdminIdentityRow = {
   saasUser: SaasAdminUser | null;
   coreUser: CoreAdminUser | null;
 };
-
-const portableDataToastClass = computed(() =>
-  dataTransferToastKind.value === 'error'
-    ? 'border border-rose-300/30 bg-rose-950/90 text-rose-100'
-    : 'border border-emerald-300/30 bg-emerald-950/90 text-emerald-100',
-);
-const portableDataToastDotClass = computed(() =>
-  dataTransferToastKind.value === 'error' ? 'bg-rose-300' : 'bg-emerald-300',
-);
 
 function roleLabel(role: CurrentUser['role'] | SaasAdminRole): string {
   return role === 'saas_admin' ? 'Admin SaaS' : 'Miembro SaaS';
@@ -321,6 +321,21 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
   <div class="container ui-page-shell">
     <APageHead :title="isAdmin ? 'Admin SaaS' : 'Perfil'" />
 
+    <AToast :open="!!adminUsersSuccess" @close="adminUsersSuccess = null">
+      {{ adminUsersSuccess }}
+    </AToast>
+    <AToast :open="!!baseCurrencySaveMessage" @close="baseCurrencySaveMessage = null">
+      {{ baseCurrencySaveMessage }}
+    </AToast>
+    <AToast
+      :open="!!dataTransferToastMessage"
+      :tone="dataTransferToastKind"
+      :duration="5000"
+      @close="clearDataTransferToast"
+    >
+      {{ dataTransferToastMessage }}
+    </AToast>
+
     <div v-if="error" class="alert mt-3">
       {{ error }}
     </div>
@@ -421,7 +436,6 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
         </p>
 
         <div class="grid gap-3.5 mt-3">
-          <p v-if="adminUsersSuccess" class="subtle m-0">{{ adminUsersSuccess }}</p>
           <p v-if="adminUsersError" class="alert m-0">{{ adminUsersError }}</p>
           <p v-if="adminUsersLoading" class="ui-status-line m-0">Cargando usuarios...</p>
 
@@ -538,7 +552,6 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
       </section>
 
       <template v-else>
-        <p v-if="baseCurrencySaveMessage" class="subtle m-0">{{ baseCurrencySaveMessage }}</p>
         <p v-if="coreAccountError" class="alert m-0">{{ coreAccountError }}</p>
 
         <section class="card ui-section-card grid gap-2.5">
@@ -633,31 +646,6 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
       </div>
     </form>
   </BaseModal>
-
-  <Transition
-    enter-active-class="transition duration-200 ease-out"
-    enter-from-class="-translate-y-2 opacity-0"
-    enter-to-class="translate-y-0 opacity-100"
-    leave-active-class="transition duration-150 ease-in"
-    leave-from-class="translate-y-0 opacity-100"
-    leave-to-class="-translate-y-2 opacity-0"
-  >
-    <div
-      v-if="dataTransferToastMessage"
-      class="fixed right-4 top-4 z-[80] max-w-[min(92vw,560px)] rounded-xl px-4 py-3 text-sm shadow-2xl backdrop-blur"
-      :class="portableDataToastClass"
-      role="status"
-      aria-live="polite"
-    >
-      <div class="flex items-start gap-2.5">
-        <span
-          class="mt-0.5 inline-block h-2.5 w-2.5 rounded-full"
-          :class="portableDataToastDotClass"
-        />
-        <span>{{ dataTransferToastMessage }}</span>
-      </div>
-    </div>
-  </Transition>
 
   <div
     v-if="dataTransferBusy"

@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
-import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, AToast, type ASelectItem } from '@/domains/ui';
 import { usePeopleMembers } from '@/domains/people/composables';
 
 const memberRoleOptions: ASelectItem[] = [
@@ -42,9 +42,7 @@ onMounted(async () => {
     <div v-if="prettyError" class="alert ui-people-alert">
       {{ prettyError }}
     </div>
-    <div v-if="successMessage" class="ui-alert-success">
-      {{ successMessage }}
-    </div>
+    <AToast :open="!!successMessage" @close="successMessage = null">{{ successMessage }}</AToast>
     <!-- Lista -->
     <section class="card">
       <div class="card-header">

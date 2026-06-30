@@ -315,6 +315,7 @@ export function usePortableDataTransfer(options: UsePortableDataTransferOptions 
     dataTransferToastKind,
     dataTransferUiBusy,
     importFileInputRef,
+    clearDataTransferToast,
     triggerImportDialog,
     exportDataBundle,
     importDataFromFile,

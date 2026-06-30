@@ -68,7 +68,7 @@ candidatos nuevos (regla: una primitiva nueva solo si ≥2 pantallas la usarían
 - [ ] Auditar cada vista contra el catálogo de
       [`frontend-visual-contract.md`](frontend-visual-contract.md) (botones,
       selects, estados, heads, pills, chips, menús de fila).
-- [ ] Reusar `AToast` donde hoy haya mensajes de éxito/inline propios.
+- [x] Reusar `AToast` donde hoy haya mensajes de éxito/inline propios.
 - [ ] Reusar `AChevron` + `useCollapsibleGroups` en cualquier lista colapsable
       (budget/monthly-close suelen tener bloques colapsables).
 - [ ] Documentar toda primitiva nueva en el visual-contract.

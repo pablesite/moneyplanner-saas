@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { computed, reactive, ref } from 'vue';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import OwnershipManager from '../OwnershipManager.vue';
 
@@ -38,6 +38,10 @@ describe('OwnershipManager', () => {
     mockUsePeopleOwnerships.mockReset();
   });
 
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
   it('shows success and empty states', () => {
     mockUsePeopleOwnerships.mockReturnValue(
       makeState({
@@ -54,7 +58,7 @@ describe('OwnershipManager', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Titularidad compartida creada correctamente.');
+    expect(document.body.textContent).toContain('Titularidad compartida creada correctamente.');
     expect(wrapper.text()).toContain('No hay titularidades');
   });
 

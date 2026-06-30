@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 import { useAuxDataPage } from '@/domains/aux-data';
 import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
-import { AButton, APageHead } from '@/domains/ui';
+import { AButton, APageHead, AToast } from '@/domains/ui';
 
 const {
   loading,
@@ -48,6 +48,8 @@ function formatTimestamp(value: string | null): string {
 <template>
   <div class="container ui-page-shell">
     <APageHead title="Datos auxiliares" />
+
+    <AToast :open="!!syncSuccess" @close="syncSuccess = null">{{ syncSuccess }}</AToast>
 
     <div v-if="error" class="alert mt-3">{{ error }}</div>
 
@@ -103,9 +105,6 @@ function formatTimestamp(value: string | null): string {
           <AButton :disabled="syncingInflation" @click="syncInflationNow">
             {{ syncingInflation ? 'Sincronizando IPC...' : 'Actualizar IPC ahora' }}
           </AButton>
-          <span v-if="syncSuccess" class="ui-form-help ui-form-help-success">{{
-            syncSuccess
-          }}</span>
           <span v-if="syncError" class="ui-form-help ui-form-help-error">{{ syncError }}</span>
         </div>
 

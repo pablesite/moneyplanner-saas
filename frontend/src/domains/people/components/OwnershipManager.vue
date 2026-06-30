@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
-import { AButton } from '@/domains/ui';
+import { AButton, AToast } from '@/domains/ui';
 import { usePeopleOwnerships } from '@/domains/people/composables';
 import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
 
@@ -35,9 +35,7 @@ onMounted(async () => {
     <div v-if="store.error" class="alert ui-people-alert">
       {{ store.error }}
     </div>
-    <div v-if="successMessage" class="ui-alert-success">
-      {{ successMessage }}
-    </div>
+    <AToast :open="!!successMessage" @close="successMessage = null">{{ successMessage }}</AToast>
 
     <section class="section card">
       <div class="card-header">
