@@ -186,9 +186,7 @@ function goToTodos(accountId: number) {
                 </td>
                 <td>
                   <AButton variant="icon" @click.stop="toggleAccount(account.id)">
-                    <span aria-hidden="true">{{
-                      state.cuentasSelectedAccountId === account.id ? '▾' : '▸'
-                    }}</span>
+                    <AChevron :expanded="state.cuentasSelectedAccountId === account.id" />
                   </AButton>
                 </td>
               </tr>

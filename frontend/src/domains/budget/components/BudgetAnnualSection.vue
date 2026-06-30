@@ -8,7 +8,8 @@ import {
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
-import { AButton, AInfoHint, ASparkline, AState } from '@/domains/ui';
+import { AButton, AChevron, AInfoHint, ASparkline, AState } from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
@@ -109,17 +110,14 @@ const props = defineProps<{
 }>();
 
 const activeContext = ref<ContextPanel | null>(null);
-const expandedGroups = ref<Record<string, boolean>>({});
+const groupCollapse = useCollapsibleGroups({ defaultCollapsed: true });
 
 function isGroupExpanded(categoryKey: string): boolean {
-  return !!expandedGroups.value[categoryKey];
+  return !groupCollapse.isCollapsed(categoryKey);
 }
 
 function toggleGroup(categoryKey: string): void {
-  expandedGroups.value = {
-    ...expandedGroups.value,
-    [categoryKey]: !expandedGroups.value[categoryKey],
-  };
+  groupCollapse.toggle(categoryKey);
 }
 
 function goToMovements(categoryKey: string, subcategoryKey?: string): void {
@@ -695,7 +693,8 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
           :aria-expanded="isSectionExpanded(section.id)"
           @click="toggleSectionExpanded(section.id)"
         >
-          {{ isSectionExpanded(section.id) ? 'Ocultar ↑' : 'Ver desglose ↓' }}
+          {{ isSectionExpanded(section.id) ? 'Ocultar' : 'Ver desglose' }}
+          <AChevron :expanded="isSectionExpanded(section.id)" />
         </AButton>
       </div>
 
@@ -719,7 +718,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                 :title="isGroupExpanded(group.categoryKey) ? 'Contraer' : 'Expandir'"
                 @click="toggleGroup(group.categoryKey)"
               >
-                {{ isGroupExpanded(group.categoryKey) ? '▾' : '▸' }}
+                <AChevron :expanded="isGroupExpanded(group.categoryKey)" />
               </button>
               <div class="bdg-row-lead-body">
                 <div>
@@ -801,13 +800,10 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
             >
               <div class="bdg-row-lead">
                 <span class="bdg-chev">
-                  {{
-                    !row.detectedUnbudgeted && row.itemsCount > 0
-                      ? isContextOpen(section.id, row.key)
-                        ? '▾'
-                        : '▸'
-                      : ''
-                  }}
+                  <AChevron
+                    v-if="!row.detectedUnbudgeted && row.itemsCount > 0"
+                    :expanded="isContextOpen(section.id, row.key)"
+                  />
                 </span>
                 <div class="bdg-row-lead-body">
                   <div>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useAuxDataPage } from '@/domains/aux-data';
 import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
-import { AButton, APageHead, AToast } from '@/domains/ui';
+import { AButton, AChevron, APageHead, AToast } from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 
 const {
   loading,
@@ -26,17 +27,10 @@ const regionLabelMap = computed(
   () => new Map(supportedInflationRegions.value.map((region) => [region.code, region.label])),
 );
 
-const sections = reactive({
-  family: true,
-  ipc: true,
-  fx: true,
-});
+const { isCollapsed: isSectionCollapsed, toggle: toggleSection } = useCollapsibleGroups();
+const isSectionExpanded = (section: string): boolean => !isSectionCollapsed(section);
 type FamilyTab = 'members' | 'ownerships';
 const familyTab = ref<FamilyTab>('members');
-
-function toggleSection(section: 'family' | 'ipc' | 'fx'): void {
-  sections[section] = !sections[section];
-}
 
 function formatTimestamp(value: string | null): string {
   if (!value) return '-';
@@ -57,15 +51,15 @@ function formatTimestamp(value: string | null): string {
       <button
         class="ui-settings-toggle"
         type="button"
-        :aria-expanded="sections.family"
+        :aria-expanded="isSectionExpanded('family')"
         @click="toggleSection('family')"
       >
         <span class="ui-settings-toggle-title">Miembros de la familia</span>
         <span class="ui-settings-toggle-icon" aria-hidden="true">
-          {{ sections.family ? '-' : '+' }}
+          <AChevron :expanded="isSectionExpanded('family')" />
         </span>
       </button>
-      <div v-if="sections.family" class="ui-settings-content">
+      <div v-if="isSectionExpanded('family')" class="ui-settings-content">
         <div class="ui-settings-family-tabs">
           <AButton
             class="opacity-60"
@@ -92,15 +86,15 @@ function formatTimestamp(value: string | null): string {
       <button
         class="ui-settings-toggle"
         type="button"
-        :aria-expanded="sections.ipc"
+        :aria-expanded="isSectionExpanded('ipc')"
         @click="toggleSection('ipc')"
       >
         <span class="ui-settings-toggle-title">Datos IPC</span>
         <span class="ui-settings-toggle-icon" aria-hidden="true">
-          {{ sections.ipc ? '-' : '+' }}
+          <AChevron :expanded="isSectionExpanded('ipc')" />
         </span>
       </button>
-      <div v-if="sections.ipc" class="ui-settings-content">
+      <div v-if="isSectionExpanded('ipc')" class="ui-settings-content">
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <AButton :disabled="syncingInflation" @click="syncInflationNow">
             {{ syncingInflation ? 'Sincronizando IPC...' : 'Actualizar IPC ahora' }}
@@ -151,15 +145,15 @@ function formatTimestamp(value: string | null): string {
       <button
         class="ui-settings-toggle"
         type="button"
-        :aria-expanded="sections.fx"
+        :aria-expanded="isSectionExpanded('fx')"
         @click="toggleSection('fx')"
       >
         <span class="ui-settings-toggle-title">Tasas de conversion</span>
         <span class="ui-settings-toggle-icon" aria-hidden="true">
-          {{ sections.fx ? '-' : '+' }}
+          <AChevron :expanded="isSectionExpanded('fx')" />
         </span>
       </button>
-      <div v-if="sections.fx" class="ui-settings-content">
+      <div v-if="isSectionExpanded('fx')" class="ui-settings-content">
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <AButton :disabled="syncingFx" @click="syncFxHistoryNow">
             {{ syncingFx ? 'Sincronizando FX...' : 'Actualizar FX histórico' }}

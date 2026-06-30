@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ASectHead, ASelect } from '@/domains/ui';
-import { computed } from 'vue';
+import { AChevron, ASectHead, ASelect } from '@/domains/ui';
+import { computed, ref } from 'vue';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
 const state = props.page;
 
 const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, label: String(y) })));
+const technicalAccountsOpen = ref(false);
+
+function syncTechnicalAccountsOpen(event: Event): void {
+  technicalAccountsOpen.value = (event.currentTarget as HTMLDetailsElement).open;
+}
 </script>
 
 <template>
@@ -63,9 +68,13 @@ const yearOptions = computed(() => state.yearOptions.map((y) => ({ value: y, lab
       </p>
     </div>
 
-    <details v-if="state.hasTechnicalAccounts" class="a-mov-technical">
+    <details
+      v-if="state.hasTechnicalAccounts"
+      class="a-mov-technical"
+      @toggle="syncTechnicalAccountsOpen"
+    >
       <summary>
-        <span class="a-mov-technical-chevron">▸</span>
+        <AChevron :expanded="technicalAccountsOpen" />
         Contrapartidas técnicas del sistema
         <span class="chip a-mov-technical-count">{{
           state.technicalAccountTypeOptions.length

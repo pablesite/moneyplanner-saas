@@ -1,13 +1,17 @@
 import { ref } from 'vue';
 
 // Estado de colapso por clave para listas agrupadas (catálogo de cuentas,
-// balance de patrimonio...). Centraliza el patrón de Set de claves plegadas
-// que estaba duplicado por vista.
-export function useCollapsibleGroups() {
+// balance de patrimonio...). Con `defaultCollapsed`, el Set guarda las claves
+// abiertas para poder conservar listas que empiezan plegadas.
+type CollapsibleGroupsOptions = {
+  defaultCollapsed?: boolean;
+};
+
+export function useCollapsibleGroups(options: CollapsibleGroupsOptions = {}) {
   const collapsed = ref<Set<string>>(new Set());
 
   function isCollapsed(key: string): boolean {
-    return collapsed.value.has(key);
+    return options.defaultCollapsed ? !collapsed.value.has(key) : collapsed.value.has(key);
   }
 
   function toggle(key: string): void {

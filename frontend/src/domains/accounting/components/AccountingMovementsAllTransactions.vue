@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { AButton, ADateRange, AKindChip, ARowMenu, ASelect, BaseModal } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  ADateRange,
+  AKindChip,
+  ARowMenu,
+  ASelect,
+  BaseModal,
+} from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 import type { LedgerTransaction } from '@/domains/accounting/models';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
@@ -279,8 +287,8 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
             :aria-expanded="dateDropdownOpen"
             @click="dateDropdownOpen = !dateDropdownOpen"
           >
-            <span>{{ activeDateLabel() }}</span
-            ><span aria-hidden="true">▾</span>
+            <span>{{ activeDateLabel() }}</span>
+            <AChevron :expanded="dateDropdownOpen" />
           </button>
           <div v-if="dateDropdownOpen" class="filter-popover">
             <button

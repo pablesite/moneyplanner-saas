@@ -15,4 +15,12 @@ describe('useCollapsibleGroups', () => {
     toggle('a');
     expect(isCollapsed('a')).toBe(false);
   });
+
+  it('can start keys collapsed by default', () => {
+    const { isCollapsed, toggle } = useCollapsibleGroups({ defaultCollapsed: true });
+    expect(isCollapsed('a')).toBe(true);
+    toggle('a');
+    expect(isCollapsed('a')).toBe(false);
+    expect(isCollapsed('b')).toBe(true);
+  });
 });
