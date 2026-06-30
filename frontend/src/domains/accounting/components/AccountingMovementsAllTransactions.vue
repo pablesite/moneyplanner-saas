@@ -5,6 +5,7 @@ import type { ASelectItem } from '@/domains/ui';
 import type { LedgerTransaction } from '@/domains/accounting/models';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 import { buildMovementPresentation } from '@/domains/accounting/movementPresentation';
+import { movementKindGlyph } from '@/domains/accounting/movementKind';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
 const state = props.page;
@@ -142,18 +143,8 @@ function kindTone(tx: LedgerTransaction): 'default' | 'asset' | 'liability' | 'm
   if (tx.activity_kind === 'expense' || tx.activity_kind === 'debt_payment') return 'liability';
   return 'muted';
 }
-const KIND_GLYPHS: Record<string, string> = {
-  income: '↓',
-  expense: '↑',
-  transfer: '⇄',
-  investment: '↗',
-  debt_payment: '↑',
-  adjustment: '±',
-  opening_balance: '●',
-  revaluation: '↻',
-};
 function kindGlyph(tx: LedgerTransaction): string {
-  return KIND_GLYPHS[tx.activity_kind] ?? '•';
+  return movementKindGlyph(tx.activity_kind);
 }
 function selectDatePreset(preset: (typeof state.datePresetOptions)[number]['value']) {
   state.applyDatePreset(preset);

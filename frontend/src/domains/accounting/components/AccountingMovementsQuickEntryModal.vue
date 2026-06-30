@@ -2,6 +2,7 @@
 /* eslint-disable vue/no-mutating-props */
 import { computed, nextTick, onMounted, ref, watch, type PropType } from 'vue';
 import { AButton, ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
+import { movementKindGlyph } from '@/domains/accounting/movementKind';
 
 const props = defineProps({
   page: {
@@ -90,17 +91,8 @@ type MovementTypeOption = { value: string; label: string };
 const movementTypeOptions = computed<MovementTypeOption[]>(
   () => props.page.quickMovementTypeOptions as MovementTypeOption[],
 );
-const QE_TYPE_GLYPHS: Record<string, string> = {
-  income: '↓',
-  expense: '↑',
-  transfer: '⇄',
-  adjustment: '±',
-  investment: '↗',
-  debt_payment: '↘',
-  revaluation: '↻',
-};
 function typeGlyph(value: string): string {
-  return QE_TYPE_GLYPHS[value] ?? '•';
+  return movementKindGlyph(value);
 }
 function typeTone(value: string): string {
   return value;
