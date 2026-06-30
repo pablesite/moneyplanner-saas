@@ -68,11 +68,12 @@ defineProps<{
     :open="showLiabilityModal"
     title="Nuevo pasivo"
     variant="sheet"
-    panel-class="ui-sheet-panel dir-a dir-a-sheet"
+    panel-class="ui-sheet-panel dir-a dir-a-sheet a-nw-item-sheet"
     body-class="ui-sheet-body"
     @close="onCloseLiabilityModal"
   >
     <ItemForm
+      class="a-nw-item-form a-nw-liability-form"
       title="Nuevo pasivo"
       :categories="liabilityCategories"
       :initial="liabilityCreateInitial"
@@ -91,7 +92,7 @@ defineProps<{
     :panel-class="
       editKind === 'asset'
         ? 'ui-sheet-panel dir-a dir-a-sheet a-nw-item-sheet a-nw-asset-sheet'
-        : 'ui-sheet-panel dir-a dir-a-sheet'
+        : 'ui-sheet-panel dir-a dir-a-sheet a-nw-item-sheet'
     "
     body-class="ui-sheet-body"
     @close="closeEdit"

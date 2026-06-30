@@ -1069,11 +1069,11 @@
   line-height: 1;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-grid {
+.dir-a-sheet .a-nw-item-form .ui-item-form-grid {
   gap: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field {
+.dir-a-sheet .a-nw-item-form .ui-item-form-field {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -1082,104 +1082,107 @@
   padding: 8px 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .ui-item-form-label {
+.dir-a-sheet .a-nw-item-form .ui-item-form-field > .ui-item-form-label {
   flex: 0 0 38%;
   max-width: 132px;
   line-height: 1.2;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .input,
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .select,
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .textarea {
-  flex: 1 1 auto;
+.dir-a-sheet .a-nw-item-form .ui-item-form-field > .input,
+.dir-a-sheet .a-nw-item-form .ui-item-form-field > .select,
+.dir-a-sheet .a-nw-item-form .ui-item-form-field > .textarea {
+  /* basis 0: el campo es flex-wrap (para que .ui-form-help caiga a una línea
+     propia), así que el valor debe partir de 0 y crecer para compartir fila con
+     la etiqueta en vez de envolver debajo (lo que lo hacía parecer apilado). */
+  flex: 1 1 0;
   min-width: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field > .ui-form-help {
+.dir-a-sheet .a-nw-item-form .ui-item-form-field > .ui-form-help {
   flex: 1 0 100%;
   margin-left: min(144px, calc(38% + 12px));
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-money-field {
+.dir-a-sheet .a-nw-item-form .ui-item-form-money-field {
   align-items: center;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-money-controls {
-  flex: 1 1 auto;
+.dir-a-sheet .a-nw-item-form .ui-item-form-money-controls {
+  flex: 1 1 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(74px, auto);
   gap: 12px;
   min-width: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-money-controls .select {
+.dir-a-sheet .a-nw-item-form .ui-item-form-money-controls .select {
   min-width: 70px;
 }
 
-.dir-a-sheet .a-nw-asset-form .input,
-.dir-a-sheet .a-nw-asset-form .select {
+.dir-a-sheet .a-nw-item-form .input,
+.dir-a-sheet .a-nw-item-form .select {
   color: var(--text);
 }
 
-.dir-a-sheet .a-nw-asset-form .a-select-label {
+.dir-a-sheet .a-nw-item-form .a-select-label {
   color: var(--text);
 }
 
-.dir-a-sheet .a-nw-asset-form .a-select-is-placeholder .a-select-label {
+.dir-a-sheet .a-nw-item-form .a-select-is-placeholder .a-select-label {
   color: var(--muted);
 }
 
-.dir-a-sheet .a-nw-asset-form .a-select-caret {
+.dir-a-sheet .a-nw-item-form .a-select-caret {
   opacity: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-advanced,
-.dir-a-sheet .a-nw-asset-form .ui-item-form-notes {
+.dir-a-sheet .a-nw-item-form .ui-item-form-advanced,
+.dir-a-sheet .a-nw-item-form .ui-item-form-notes {
   border-top: 1px solid var(--line);
   padding: 10px 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-advanced-body {
+.dir-a-sheet .a-nw-item-form .ui-item-form-advanced-body {
   display: grid;
   gap: 0;
   padding-top: 6px;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-notes .ui-item-form-field {
+.dir-a-sheet .a-nw-item-form .ui-item-form-notes .ui-item-form-field {
   margin-top: 8px;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field:has(.textarea),
-.dir-a-sheet .a-nw-asset-form .ui-item-form-section,
-.dir-a-sheet .a-nw-asset-form .ui-item-form-feedback {
+.dir-a-sheet .a-nw-item-form .ui-item-form-field:has(.textarea),
+.dir-a-sheet .a-nw-item-form .ui-item-form-section,
+.dir-a-sheet .a-nw-item-form .ui-item-form-feedback {
   display: grid;
   align-items: stretch;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-field:has(.textarea) > .ui-item-form-label {
+.dir-a-sheet .a-nw-item-form .ui-item-form-field:has(.textarea) > .ui-item-form-label {
   flex: none;
   max-width: none;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-section {
+.dir-a-sheet .a-nw-item-form .ui-item-form-section {
   gap: 10px;
   padding: 12px 0;
   border-top: 1px solid var(--line);
   border-bottom: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-section-head {
+.dir-a-sheet .a-nw-item-form .ui-item-form-section-head {
   margin-bottom: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-feedback {
+.dir-a-sheet .a-nw-item-form .ui-item-form-feedback {
   gap: 6px;
   padding: 8px 0;
   border: 0;
   background: transparent;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-footer {
+.dir-a-sheet .a-nw-item-form .ui-item-form-footer {
   position: sticky;
   bottom: 0;
   z-index: 5;
@@ -1192,7 +1195,7 @@
   backdrop-filter: blur(12px);
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-item-form-actions {
+.dir-a-sheet .a-nw-item-form .ui-item-form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -1201,11 +1204,11 @@
   border: 0;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-form-action-btn {
+.dir-a-sheet .a-nw-item-form .ui-form-action-btn {
   min-width: 128px;
 }
 
-.dir-a-sheet .a-nw-asset-form .ui-form-action-btn:disabled {
+.dir-a-sheet .a-nw-item-form .ui-form-action-btn:disabled {
   border-color: var(--line);
   background: transparent;
   color: var(--faint);
