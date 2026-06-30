@@ -31,6 +31,7 @@ import {
   useAnnualExpenseStore,
   useAnnualIncomeStore,
 } from '@/domains/budget/annual-entries';
+import { formatNumber as formatMoney, formatPct } from '@/lib/format';
 
 export type BudgetDashboardMode = 'budget' | 'monthly-close';
 const EXECUTION_TONE_MONEY_TOLERANCE = 0.5;
@@ -2718,7 +2719,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       tone: 'positive' as const,
       meta:
         selectedMonthlyExecutedVolume.value > 0
-          ? `${formatPercent(selectedIncomeMonthExecuted.value / selectedMonthlyExecutedVolume.value, 0)} del volumen`
+          ? `${formatPct(selectedIncomeMonthExecuted.value / selectedMonthlyExecutedVolume.value, 0)} del volumen`
           : undefined,
     },
     {
@@ -2728,7 +2729,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       tone: 'warning' as const,
       meta:
         selectedMonthlyExecutedVolume.value > 0
-          ? `${formatPercent(selectedExpenseMonthExternalExecuted.value / selectedMonthlyExecutedVolume.value, 0)} del volumen`
+          ? `${formatPct(selectedExpenseMonthExternalExecuted.value / selectedMonthlyExecutedVolume.value, 0)} del volumen`
           : undefined,
     },
     ...(selectedPerimeterInternalExpenseTotal.value > 0
@@ -2758,7 +2759,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       meta:
         selectedMonthlyResidualVolumeRatio.value == null
           ? 'Sin volumen ejecutado'
-          : `${formatPercent(selectedMonthlyResidualVolumeRatio.value, 1)} del volumen ejecutado`,
+          : `${formatPct(selectedMonthlyResidualVolumeRatio.value, 1)} del volumen ejecutado`,
     },
     {
       id: 'real-close',
@@ -3009,25 +3010,8 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     }
   }
 
-  function formatMoney(value: number, decimals = 2): string {
-    return new Intl.NumberFormat('es-ES', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-      useGrouping: true,
-    }).format(Number.isFinite(value) ? value : 0);
-  }
-
   function formatSignedMoney(value: number, decimals = 2): string {
     return `${value > 0 ? '+' : ''}${formatMoney(value, decimals)}`;
-  }
-
-  function formatPercent(value: number | null, decimals = 0): string {
-    if (value == null || !Number.isFinite(value)) return '-';
-    return new Intl.NumberFormat('es-ES', {
-      style: 'percent',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(value);
   }
 
   function formatCompactMoney(value: number): string {
@@ -4854,7 +4838,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     refreshBudgetSuggestionData,
     formatMoney,
     formatSignedMoney,
-    formatPercent,
+    formatPercent: formatPct,
     formatCompactMoney,
     clamp,
     hashToUnitInterval,

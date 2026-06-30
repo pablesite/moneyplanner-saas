@@ -37,6 +37,15 @@ export function formatNumber(value: number, decimals = 2): string {
   }).format(value);
 }
 
+export function formatPct(value: number | null, decimals = 0): string {
+  if (value == null || !Number.isFinite(value)) return '-';
+  return new Intl.NumberFormat('es-ES', {
+    style: 'percent',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
 // Notación compacta para ejes de gráficos: 1,2k / 3,4M / 5,6B.
 export function formatCompact(value: number): string {
   const abs = Math.abs(value);

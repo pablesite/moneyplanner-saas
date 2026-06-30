@@ -3,6 +3,7 @@ import { useAccountingPage } from '@/domains/accounting/composables';
 import { coreAccountingApi } from '@/domains/accounting/api';
 import type { LedgerAccount } from '@/domains/accounting/models';
 import { useNetWorthStore } from '@/domains/net-worth/store';
+import { toNumber } from '@/lib/format';
 
 export function useAccountingMovementsPage() {
   const {
@@ -123,14 +124,6 @@ export function useAccountingMovementsPage() {
 
   const netWorthStore = useNetWorthStore();
 
-  function toNumber(raw: string): number {
-    const normalized = String(raw ?? '')
-      .trim()
-      .replace(',', '.');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
   function formatDate(isoDate: string): string {
     const d = new Date(isoDate + 'T00:00:00');
     return new Intl.DateTimeFormat('es-ES', {
@@ -140,7 +133,7 @@ export function useAccountingMovementsPage() {
     }).format(d);
   }
 
-  function formatMoney(value: number, currency = 'EUR'): string {
+  function formatLedgerMoney(value: number, currency = 'EUR'): string {
     const normalizedCurrency = currency.trim().toUpperCase();
     const isCrypto = normalizedCurrency === 'BTC' || normalizedCurrency === 'ETH';
     return new Intl.NumberFormat('es-ES', {
@@ -155,7 +148,7 @@ export function useAccountingMovementsPage() {
   }
 
   function formatCompact(raw: string, currency = 'EUR'): string {
-    return formatMoney(toNumber(raw), currency);
+    return formatLedgerMoney(toNumber(raw), currency);
   }
 
   function accountBalanceInBase(account: (typeof accounts.value)[number]): number {
@@ -371,9 +364,9 @@ export function useAccountingMovementsPage() {
   });
 
   function formatSignedMoney(value: number, currency = 'EUR'): string {
-    if (value > 0) return `+${formatMoney(value, currency)}`;
-    if (value < 0) return `-${formatMoney(Math.abs(value), currency)}`;
-    return formatMoney(0, currency);
+    if (value > 0) return `+${formatLedgerMoney(value, currency)}`;
+    if (value < 0) return `-${formatLedgerMoney(Math.abs(value), currency)}`;
+    return formatLedgerMoney(0, currency);
   }
 
   type DatePreset = 'all' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'custom';
@@ -754,7 +747,7 @@ export function useAccountingMovementsPage() {
     technicalAccountTypeOptions,
     hasTechnicalAccounts,
     formatDate,
-    formatMoney,
+    formatMoney: formatLedgerMoney,
     formatCompact,
     formatSignedMoney,
     monthLabel,

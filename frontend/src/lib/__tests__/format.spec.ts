@@ -5,6 +5,7 @@ import {
   formatCompact,
   formatMoney,
   formatNumber,
+  formatPct,
   getMaxDecimals,
   normalizeNumberInput,
   toNumber,
@@ -45,6 +46,12 @@ describe('format helpers', () => {
   it('formats numbers with fixed decimals and grouping', () => {
     expect(formatNumber(1234.5)).toBe('1.234,50');
     expect(formatNumber(1234.5, 0)).toBe('1.235');
+  });
+
+  it('formats percentage ratios', () => {
+    expect(formatPct(0.1234, 1).replace(/\s/u, ' ')).toBe('12,3 %');
+    expect(formatPct(null)).toBe('-');
+    expect(formatPct(Number.NaN)).toBe('-');
   });
 
   it('formats compact magnitudes', () => {

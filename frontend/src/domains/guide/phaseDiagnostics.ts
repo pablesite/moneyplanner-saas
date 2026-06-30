@@ -1,5 +1,6 @@
 import type { Asset, Liability, Summary } from '@/domains/net-worth/models';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
+import { toNumber } from '@/lib/format';
 
 type SummaryExtended = Summary & {
   liabilities_unbacked?: string | null;
@@ -52,15 +53,6 @@ export type GuidePhaseDiagnostics = {
   phase3GlobalScore: number;
   phase4GlobalScore: number;
 };
-
-function toNumber(raw: unknown): number {
-  const normalized = String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-  const value = Number(normalized);
-  return Number.isFinite(value) ? value : 0;
-}
 
 function hasTextValue(raw: unknown): boolean {
   return String(raw ?? '').trim() !== '';

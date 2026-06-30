@@ -30,7 +30,7 @@ import type {
   QuickLedgerTransactionWritePayload,
 } from '@/domains/accounting/models';
 import type { Asset, Liability } from '@/domains/net-worth/models';
-import { getMaxDecimals } from '@/lib/format';
+import { getMaxDecimals, toNumber } from '@/lib/format';
 import { dateToIso } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 
@@ -171,11 +171,6 @@ const APORTE_SUBCATEGORY_BY_ASSET_SUBCATEGORY: Record<string, string> = {
 
 function formatDecimalInput(raw: string): string {
   return raw.replace(',', '.').trim();
-}
-
-function toNumber(raw: string): number {
-  const parsed = Number(formatDecimalInput(raw));
-  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function round2(value: number): number {

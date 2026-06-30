@@ -36,7 +36,12 @@ import {
   BaseModal,
 } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
-import { currencySymbol as displayCurrencyUnit, formatNumber, toNumber } from '@/lib/format';
+import {
+  currencySymbol as displayCurrencyUnit,
+  formatNumber,
+  formatPct,
+  toNumber,
+} from '@/lib/format';
 import { dateToIso as isoDate, parseIsoToDate as parseDate } from '@/lib/dates';
 import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { toApiErrorMessage } from '@/lib/errors';
@@ -84,15 +89,6 @@ const {
 const annualExpenseStore = useAnnualExpenseStore('core');
 
 const { itemFormProps } = useNetWorthViewExtensions(store);
-
-function formatPct(n: number | null, decimals = 0): string {
-  if (n == null || !Number.isFinite(n)) return '-';
-  return new Intl.NumberFormat('es-ES', {
-    style: 'percent',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
 
 type GeneratedLiabilityExpensePreview = {
   id: number;

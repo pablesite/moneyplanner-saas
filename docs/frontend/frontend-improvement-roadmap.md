@@ -48,14 +48,14 @@ patrón de referencia para el resto.
 
 Reemplazar reimplementaciones locales por los helpers compartidos. Detectado:
 
-- [ ] `domains/guide/composables.ts` — `toNumber`, `formatNumber`, `formatPct`
+- [x] `domains/guide/composables.ts` — `toNumber`, `formatNumber`, `formatPct`
       locales (líneas ~52, ~609–640) → `@/lib/format`.
-- [ ] `domains/guide/phaseDiagnostics.ts` — `toNumber` local → `@/lib/format`.
-- [ ] `views/budget/useBudgetDashboardPage.ts` — `formatNumber`/`formatMoney`
+- [x] `domains/guide/phaseDiagnostics.ts` — `toNumber` local → `@/lib/format`.
+- [x] `views/budget/useBudgetDashboardPage.ts` — `formatNumber`/`formatMoney`
       locales → `@/lib/format`.
-- [ ] **Añadir `formatPct` a `@/lib/format`** (hoy vive local en `NetWorthView`
+- [x] **Añadir `formatPct` a `@/lib/format`** (hoy vive local en `NetWorthView`
       y `guide`); migrar ambos a la versión compartida.
-- [ ] Barrido final: `grep` de `function (toNumber|formatNumber|formatMoney|
+- [x] Barrido final: `grep` de `function (toNumber|formatNumber|formatMoney|
       formatPct|normalizeNumberInput)` fuera de `lib/` debe quedar ~vacío.
 
 **DoD**: sin definiciones locales equivalentes; tests de `guide`/`budget` verdes.

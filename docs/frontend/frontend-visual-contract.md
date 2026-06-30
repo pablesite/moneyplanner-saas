@@ -147,7 +147,7 @@ Reglas: una primitiva nueva solo si ≥2 pantallas la usarían (Change Policy). 
 Helpers compartidos asociados (no son componentes):
 
 - `useCollapsibleGroups` (`@/lib/useCollapsibleGroups`): estado de colapso por Set de claves para listas agrupadas; acompaña a `AChevron`. Usado por catálogo de cuentas y balance de patrimonio.
-- Formato/números: `@/lib/format` (`toNumber`, `formatNumber`, `formatCompact`, `formatAmount`, `formatMoney`, `currencySymbol`, `getMaxDecimals`, `normalizeNumberInput`). Fechas: `@/lib/dates` (`parseIsoToDate`, `dateToIso`, `formatMonthYearLabel`). Preferirlos sobre reimplementaciones locales.
+- Formato/números: `@/lib/format` (`toNumber`, `formatNumber`, `formatPct`, `formatCompact`, `formatAmount`, `formatMoney`, `currencySymbol`, `getMaxDecimals`, `normalizeNumberInput`). Fechas: `@/lib/dates` (`parseIsoToDate`, `dateToIso`, `formatMonthYearLabel`). Preferirlos sobre reimplementaciones locales.
 
 Notas de cierre de Fase 5:
 

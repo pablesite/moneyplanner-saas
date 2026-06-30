@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router';
 import { useAnnualExpenseStore, useAnnualIncomeStore } from '@/domains/budget/annual-entries';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
 import { useNetWorthStore } from '@/domains/net-worth';
+import { formatNumber, formatPct, toNumber } from '@/lib/format';
 import {
   findGuidePhaseById,
   getActiveGuidePhase,
@@ -48,15 +49,6 @@ export function useGuideHomeState(scope: GuideScope) {
   type SummaryExtended = {
     liabilities_unbacked?: string | null;
   };
-
-  function toNumber(raw: unknown): number {
-    const normalized = String(raw ?? '')
-      .trim()
-      .replace(/\s/g, '')
-      .replace(/,/g, '.');
-    const value = Number(normalized);
-    return Number.isFinite(value) ? value : 0;
-  }
 
   function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, value));
@@ -606,38 +598,12 @@ export function useGuidePhaseDetailState(scope: GuideScope) {
     }),
   );
 
-  function toNumber(raw: unknown): number {
-    const normalized = String(raw ?? '')
-      .trim()
-      .replace(/\s/g, '')
-      .replace(/,/g, '.');
-    const value = Number(normalized);
-    return Number.isFinite(value) ? value : 0;
-  }
-
   function hasTextValue(raw: unknown): boolean {
     return String(raw ?? '').trim() !== '';
   }
 
   function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, value));
-  }
-
-  function formatNumber(n: number, decimals = 2): string {
-    return new Intl.NumberFormat('es-ES', {
-      useGrouping: true,
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(n);
-  }
-
-  function formatPct(n: number | null, decimals = 0): string {
-    if (n == null || !Number.isFinite(n)) return '-';
-    return new Intl.NumberFormat('es-ES', {
-      style: 'percent',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(n);
   }
 
   function formatPctFromPercentValue(n: number | null, decimals = 1): string {

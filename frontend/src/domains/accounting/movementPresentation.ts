@@ -5,6 +5,7 @@ import {
   incomeSubcategories,
 } from '@/domains/budget/taxonomy';
 import type { LedgerAccount, LedgerEntry, LedgerTransaction } from '@/domains/accounting/models';
+import { toNumber } from '@/lib/format';
 
 export type MovementClassification = {
   category: string;
@@ -40,11 +41,6 @@ type MovementAmounts = Pick<
 >;
 
 const CLASSIFIABLE_KINDS = new Set(['income', 'expense', 'investment', 'debt_payment']);
-
-function toNumber(value: string | undefined): number {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function signedAccountImpact(account: LedgerAccount, entry: LedgerEntry, useBase = false): number {
   const amount = toNumber(useBase ? (entry.amount_base ?? entry.amount) : entry.amount);

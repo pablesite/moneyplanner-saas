@@ -87,7 +87,7 @@ function formatEditAmount(raw: unknown, currency: string) {
   return isNegative ? `-${out}` : out;
 }
 
-function formatMoney(v?: string | null, decimals = 2) {
+function formatNetWorthMoney(v?: string | null, decimals = 2) {
   if (v == null) return '-';
   const n = Number(normalizeNumberInput(v));
   if (Number.isNaN(n)) return v;
@@ -412,7 +412,7 @@ export function useNetWorthViewState() {
     editCategories,
     editInitial,
     submitEdit,
-    formatMoney,
+    formatMoney: formatNetWorthMoney,
     unitLabel,
     modeLabel,
     realBaseLabel,
