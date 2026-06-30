@@ -95,6 +95,18 @@ vi.mock('@/domains/ui', () => ({
   }),
   AContextBar: makeStub('AContextBar'),
   AChevron: makeStub('AChevron'),
+  ADateRange: defineComponent({
+    name: 'ADateRange',
+    props: {
+      from: { type: String, required: false, default: '' },
+      to: { type: String, required: false, default: '' },
+    },
+    emits: ['update:from', 'update:to'],
+    template: `
+      <label><input type="date" :value="from" @input="$emit('update:from', $event.target.value)" /></label>
+      <label><input type="date" :value="to" @input="$emit('update:to', $event.target.value)" /></label>
+    `,
+  }),
   AMetaPill: makeStub('AMetaPill'),
   AState: makeStub('AState'),
   AHero: defineComponent({

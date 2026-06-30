@@ -12,6 +12,7 @@ export { default as AStepper } from './components/AStepper.vue';
 export { default as ASparkline } from './components/ASparkline.vue';
 export { default as AInfoHint } from './components/AInfoHint.vue';
 export { default as AContextBar } from './components/AContextBar.vue';
+export { default as ADateRange } from './components/ADateRange.vue';
 export { default as AKindChip } from './components/AKindChip.vue';
 export { default as AMetaPill } from './components/AMetaPill.vue';
 export { default as ARowMenu } from './components/ARowMenu.vue';

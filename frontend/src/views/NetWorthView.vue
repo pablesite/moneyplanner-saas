@@ -23,6 +23,7 @@ import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
 import {
   AButton,
   AChevron,
+  ADateRange,
   AHero,
   AInfoHint,
   AMetaPill,
@@ -1757,14 +1758,7 @@ watch(
               </AButton>
             </div>
             <div v-if="selectedTimelinePreset === 'custom'" class="a-nw-evolution-date-range">
-              <label>
-                <span>Desde</span>
-                <input v-model="customTimelineDateFrom" class="filter-ctrl" type="date" />
-              </label>
-              <label>
-                <span>Hasta</span>
-                <input v-model="customTimelineDateTo" class="filter-ctrl" type="date" />
-              </label>
+              <ADateRange v-model:from="customTimelineDateFrom" v-model:to="customTimelineDateTo" />
             </div>
           </div>
           <AButton

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { AButton, AKindChip, ARowMenu, ASelect, BaseModal } from '@/domains/ui';
+import { AButton, ADateRange, AKindChip, ARowMenu, ASelect, BaseModal } from '@/domains/ui';
 import type { ASelectItem } from '@/domains/ui';
 import type { LedgerTransaction } from '@/domains/accounting/models';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
@@ -293,12 +293,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
               {{ preset.label }}
             </button>
             <div v-if="state.todosDatePreset === 'custom'" class="a-mov-popover-custom">
-              <label
-                >Desde <input v-model="state.todosDateFrom" class="filter-ctrl" type="date"
-              /></label>
-              <label
-                >Hasta <input v-model="state.todosDateTo" class="filter-ctrl" type="date"
-              /></label>
+              <ADateRange v-model:from="state.todosDateFrom" v-model:to="state.todosDateTo" />
             </div>
           </div>
         </div>
