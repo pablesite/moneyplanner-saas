@@ -136,10 +136,18 @@ Primitivas reutilizables en `frontend/src/domains/ui` (barrel `@/domains/ui`). P
 | `AStepper`           | Rail de pasos (cierre mensual).                                                   | `steps`, `activeId`, `eyebrowPrefix`; emite `change`.                                                                                                                 |
 | `ASparkline`         | Mini-serie 12 meses.                                                              | serie + mes activo.                                                                                                                                                   |
 | `ARowMenu`           | Menú de fila (editar/archivar/borrar).                                            | `items`; emite `select`.                                                                                                                                              |
+| `AToast`             | Toast de confirmación transitorio (teleport a body, auto-descarte).               | `open`, `message`/slot, `tone` (`success`/`error`), `duration`, `icon`; emite `close`.                                                                                |
+| `AChevron`           | Indicador de colapso ▾/▸ para listas agrupadas.                                   | `expanded`.                                                                                                                                                           |
+| `ADateRange`         | Par de inputs de fecha "Desde/Hasta" para rangos personalizados (presentacional). | `from`, `to`; emite `update:from`/`update:to` (v-model:from/to).                                                                                                      |
 | `BaseModal`          | Chrome de modal compartido.                                                       | `open`, `title`; slot.                                                                                                                                                |
 | `ScoreGrade` (guide) | Nota A–E desde una puntuación.                                                    | `score`, `variant` (`badge` caja / `label` texto), `large`.                                                                                                           |
 
 Reglas: una primitiva nueva solo si ≥2 pantallas la usarían (Change Policy). No acoplar `domains/ui` a dominios (p. ej. `ScoreGrade` se queda en `guide`).
+
+Helpers compartidos asociados (no son componentes):
+
+- `useCollapsibleGroups` (`@/lib/useCollapsibleGroups`): estado de colapso por Set de claves para listas agrupadas; acompaña a `AChevron`. Usado por catálogo de cuentas y balance de patrimonio.
+- Formato/números: `@/lib/format` (`toNumber`, `formatNumber`, `formatCompact`, `formatAmount`, `formatMoney`, `currencySymbol`, `getMaxDecimals`, `normalizeNumberInput`). Fechas: `@/lib/dates` (`parseIsoToDate`, `dateToIso`, `formatMonthYearLabel`). Preferirlos sobre reimplementaciones locales.
 
 Notas de cierre de Fase 5:
 
