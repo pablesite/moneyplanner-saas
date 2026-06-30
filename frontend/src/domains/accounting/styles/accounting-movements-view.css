@@ -503,12 +503,6 @@
   cursor: pointer;
 }
 
-.a-mov-grp-chevron {
-  width: 12px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
 .a-mov-grp-meta {
   margin-left: auto;
   display: flex;

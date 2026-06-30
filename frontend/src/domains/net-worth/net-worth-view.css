@@ -773,12 +773,6 @@
   font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
-.a-nw-group-chevron {
-  color: var(--faint);
-  font-size: 12px;
-  line-height: 1;
-}
-
 .a-nw-balance-table .name {
   display: flex;
   align-items: center;

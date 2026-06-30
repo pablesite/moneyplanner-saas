@@ -94,6 +94,7 @@ vi.mock('@/domains/ui', () => ({
     template: `<span class="info-hint"><slot /></span>`,
   }),
   AContextBar: makeStub('AContextBar'),
+  AChevron: makeStub('AChevron'),
   AMetaPill: makeStub('AMetaPill'),
   AState: makeStub('AState'),
   AHero: defineComponent({

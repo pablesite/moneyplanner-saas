@@ -1424,6 +1424,15 @@ body {
   }
 }
 
+/* AChevron — indicador de colapso compartido para listas agrupadas. */
+.ui-chevron {
+  display: inline-block;
+  width: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+}
+
 /* ================================================================
    AToast — pastilla de confirmación transitoria (teleport a body).
    Centrada abajo, por encima de cualquier modal. Tono success por defecto.

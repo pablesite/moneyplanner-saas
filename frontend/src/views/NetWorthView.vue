@@ -22,6 +22,7 @@ import { useNetWorthPageActions } from '@/domains/net-worth/useNetWorthPageActio
 import { useNetWorthTimeline } from '@/domains/net-worth/useNetWorthTimeline';
 import {
   AButton,
+  AChevron,
   AHero,
   AInfoHint,
   AMetaPill,
@@ -36,6 +37,7 @@ import {
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
 import { currencySymbol as displayCurrencyUnit, formatNumber, toNumber } from '@/lib/format';
 import { dateToIso as isoDate, parseIsoToDate as parseDate } from '@/lib/dates';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { toApiErrorMessage } from '@/lib/errors';
 import { coreAccountingApi } from '@/domains/accounting/api';
 import type { LedgerDailyBalanceSeriesRow } from '@/domains/accounting/models';
@@ -748,7 +750,7 @@ const balanceGroups = computed<BalanceGroup[]>(() => {
 });
 
 const balanceSearch = ref('');
-const collapsedBalanceGroups = ref<Set<string>>(new Set());
+const balanceCollapse = useCollapsibleGroups();
 const mobileCreateMenuOpen = ref(false);
 const selectedBalanceDetailRow = ref<PositionRow | null>(null);
 
@@ -803,15 +805,11 @@ function balanceGroupKey(group: BalanceGroup): string {
 }
 
 function isBalanceGroupCollapsed(group: BalanceGroup): boolean {
-  return collapsedBalanceGroups.value.has(balanceGroupKey(group));
+  return balanceCollapse.isCollapsed(balanceGroupKey(group));
 }
 
 function toggleBalanceGroup(group: BalanceGroup): void {
-  const next = new Set(collapsedBalanceGroups.value);
-  const key = balanceGroupKey(group);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  collapsedBalanceGroups.value = next;
+  balanceCollapse.toggle(balanceGroupKey(group));
 }
 
 type HeroCompositionRow = {
@@ -1841,9 +1839,7 @@ watch(
                     {{ group.kind === 'liability' ? '−' : '' }}{{ formatNumber(group.total, 0) }}
                     {{ heroUnitLabel }}
                   </span>
-                  <span class="a-nw-group-chevron" aria-hidden="true">
-                    {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
-                  </span>
+                  <AChevron :expanded="!isBalanceGroupCollapsed(group)" />
                 </span>
               </button>
 
@@ -1915,9 +1911,7 @@ watch(
                 >
                   <td colspan="3">
                     <div class="grp-name">
-                      <span class="a-nw-group-chevron" aria-hidden="true">
-                        {{ isBalanceGroupCollapsed(group) ? '▸' : '▾' }}
-                      </span>
+                      <AChevron :expanded="!isBalanceGroupCollapsed(group)" />
                       <span>{{ group.label }}</span>
                     </div>
                   </td>

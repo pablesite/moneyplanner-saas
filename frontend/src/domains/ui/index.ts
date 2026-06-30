@@ -1,4 +1,5 @@
 export { default as AButton } from './components/AButton.vue';
+export { default as AChevron } from './components/AChevron.vue';
 export { default as ADonut } from './components/ADonut.vue';
 export type { ADonutSlice } from './components/ADonut.vue';
 export { default as AHero } from './components/AHero.vue';

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { AButton, AKindChip } from '@/domains/ui';
+import { AButton, AChevron, AKindChip } from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import type { AccountingMovementsPageState } from '@/domains/accounting/useAccountingMovementsPage';
 
 const props = defineProps<{ page: AccountingMovementsPageState }>();
@@ -42,15 +43,7 @@ const liabilitiesTotal = computed(() =>
 );
 const netTotal = computed(() => assetsTotal.value - liabilitiesTotal.value);
 
-const collapsedGroups = ref(new Set<string>());
-function isGroupCollapsed(key: string): boolean {
-  return collapsedGroups.value.has(key);
-}
-function toggleGroup(key: string): void {
-  const groups = collapsedGroups.value;
-  if (groups.has(key)) groups.delete(key);
-  else groups.add(key);
-}
+const { isCollapsed: isGroupCollapsed, toggle: toggleGroup } = useCollapsibleGroups();
 
 function toggleAccount(accountId: number) {
   state.cuentasSelectedAccountId = state.cuentasSelectedAccountId === accountId ? null : accountId;
@@ -145,9 +138,7 @@ function goToTodos(accountId: number) {
                   :aria-expanded="!isGroupCollapsed(group.key)"
                   @click="toggleGroup(group.key)"
                 >
-                  <span class="a-mov-grp-chevron" aria-hidden="true">{{
-                    isGroupCollapsed(group.key) ? '▸' : '▾'
-                  }}</span>
+                  <AChevron :expanded="!isGroupCollapsed(group.key)" />
                   <span class="grp-kind" :class="`grp-kind-${group.positionType}`">
                     {{ group.positionType === 'asset' ? 'ACTIVOS' : 'PASIVOS' }}
                   </span>
