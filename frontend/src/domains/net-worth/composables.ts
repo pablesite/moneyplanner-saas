@@ -188,7 +188,6 @@ export function useNetWorthViewState() {
 
   const showAssetModal = ref(false);
   const showLiabilityModal = ref(false);
-  const showBreakdown = ref(false);
   const showEditModal = ref(false);
   const editItem = ref<Asset | Liability | null>(null);
   const editKind = ref<'asset' | 'liability' | null>(null);
@@ -401,7 +400,6 @@ export function useNetWorthViewState() {
     prettyError,
     showAssetModal,
     showLiabilityModal,
-    showBreakdown,
     showEditModal,
     editItem,
     editKind,

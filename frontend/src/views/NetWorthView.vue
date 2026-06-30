@@ -964,10 +964,6 @@ async function deleteBalanceDetail(row: PositionRow): Promise<void> {
   await deleteRow(row);
 }
 
-function resetAccountingActivity(): void {}
-
-async function loadAccountingActivity(): Promise<void> {}
-
 function clearPositionSelection(): void {
   selectedPositionType.value = null;
   selectedPositionId.value = null;
@@ -977,7 +973,6 @@ function clearPositionSelection(): void {
   store.investmentEvents = [];
   store.liquidityEvents = [];
   store.liabilityEvents = [];
-  resetAccountingActivity();
 }
 
 function closeAssetModal(): void {
@@ -1050,8 +1045,6 @@ const {
   timelineWindow,
   submitAsset,
   submitLiability: submitLiabilityWithExpenseReview,
-  resetAccountingActivity,
-  loadAccountingActivity,
 });
 
 const ownershipSelectOptions = computed<ASelectItem[]>(() => [

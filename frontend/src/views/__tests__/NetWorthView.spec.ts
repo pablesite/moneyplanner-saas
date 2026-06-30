@@ -341,7 +341,6 @@ function makeState(overrides: Record<string, unknown> = {}) {
     prettyError: vi.fn(() => 'Error bonito'),
     showAssetModal: ref(false),
     showLiabilityModal: ref(false),
-    showBreakdown: ref(false),
     showEditModal: ref(false),
     editItem: ref(null),
     editKind: ref<'asset' | 'liability' | null>(null),

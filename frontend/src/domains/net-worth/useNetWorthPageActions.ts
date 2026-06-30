@@ -44,8 +44,6 @@ export function useNetWorthPageActions<
   timelineWindow: ComputedRef<{ start: number; end: number }>;
   submitAsset: (payload: TAssetPayload) => Promise<void>;
   submitLiability: (payload: TLiabilityPayload) => Promise<void>;
-  resetAccountingActivity: () => void;
-  loadAccountingActivity: (row: TRow) => Promise<void>;
 }) {
   function resetPositionSelection(): void {
     params.selectedPositionType.value = null;
@@ -56,7 +54,6 @@ export function useNetWorthPageActions<
     params.store.investmentEvents = [];
     params.store.liquidityEvents = [];
     params.store.liabilityEvents = [];
-    params.resetAccountingActivity();
   }
 
   function openCreateModal(type: 'asset' | 'liability', category: string | null = null): void {
@@ -128,7 +125,6 @@ export function useNetWorthPageActions<
         row.id,
         row.type === 'asset' ? row.category : null,
       ),
-      params.loadAccountingActivity(row),
     ]);
   }
 
