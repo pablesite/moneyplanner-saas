@@ -65,13 +65,23 @@ Reemplazar reimplementaciones locales por los helpers compartidos. Detectado:
 Por cada vista que se toque, sustituir markup ad-hoc por primitivas y detectar
 candidatos nuevos (regla: una primitiva nueva solo si ≥2 pantallas la usarían).
 
-- [ ] Auditar cada vista contra el catálogo de
+- [x] Auditar cada vista contra el catálogo de
       [`frontend-visual-contract.md`](frontend-visual-contract.md) (botones,
       selects, estados, heads, pills, chips, menús de fila).
 - [x] Reusar `AToast` donde hoy haya mensajes de éxito/inline propios.
 - [x] Reusar `AChevron` + `useCollapsibleGroups` en cualquier lista colapsable
       (budget/monthly-close suelen tener bloques colapsables).
-- [ ] Documentar toda primitiva nueva en el visual-contract.
+- [x] Documentar toda primitiva nueva en el visual-contract.
+
+**Auditoría ligera cerrada:** no quedan `<select>` nativos en componentes de
+producto; el único `<option>` restante pertenece a un `datalist` de texto libre
+en `AnnualEntryModalForm` (sugerencias de grupo de evento, no selector cerrado).
+Los mensajes de éxito usan `AToast`, los indicadores de expansión usan
+`AChevron`, y los flujos Direction A principales ya consumen `AButton`,
+`ASelect`, `AState`, `APageHead`/`ASectHead`, `AKindChip`, `ARowMenu`,
+`AHero`/`AKpiBand`, `ASparkline`, `ADateRange` y `BaseModal` donde aplica. No
+se creó ninguna primitiva nueva en este bloque; por tanto no hay actualización
+adicional necesaria en el visual-contract.
 
 **DoD**: la vista no reimplementa nada que ya exista en `@/domains/ui`.
 
