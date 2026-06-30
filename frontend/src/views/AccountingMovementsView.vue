@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import '@/domains/accounting/styles/movements.css';
 import '@/domains/accounting/styles/accounting-movements-view.css';
@@ -7,7 +7,7 @@ import { useAccountingMovementsPage } from '@/domains/accounting/useAccountingMo
 import AccountingMovementsAllTransactions from '@/domains/accounting/components/AccountingMovementsAllTransactions.vue';
 import AccountingMovementsQuickEntryModal from '@/domains/accounting/components/AccountingMovementsQuickEntryModal.vue';
 import AccountingTabs from '@/domains/accounting/components/AccountingTabs.vue';
-import { AButton, APageHead, AState } from '@/domains/ui';
+import { AButton, APageHead, AState, AToast } from '@/domains/ui';
 
 const route = useRoute();
 const router = useRouter();
@@ -65,24 +65,6 @@ function reviewPending(): void {
 onMounted(async () => {
   await applyRouteQuery();
   routeReady.value = true;
-});
-
-// El mensaje de éxito se muestra como toast transitorio (no como banner fijo):
-// se auto-descarta a los pocos segundos para no dejar una caja ocupando la lista.
-let successTimer: ReturnType<typeof setTimeout> | null = null;
-watch(
-  () => page.successMessage,
-  (message) => {
-    if (successTimer) clearTimeout(successTimer);
-    if (!message) return;
-    successTimer = setTimeout(() => {
-      page.successMessage = null;
-      successTimer = null;
-    }, 3200);
-  },
-);
-onBeforeUnmount(() => {
-  if (successTimer) clearTimeout(successTimer);
 });
 
 watch(
@@ -150,14 +132,9 @@ watch(
 
     <AState v-if="page.error && !page.showQuickEntryModal" status="error">{{ page.error }}</AState>
 
-    <Teleport to="body">
-      <Transition name="a-mov-toast">
-        <div v-if="page.successMessage" class="a-mov-toast" role="status" aria-live="polite">
-          <span class="a-mov-toast-icon" aria-hidden="true">✓</span>
-          <span>{{ page.successMessage }}</span>
-        </div>
-      </Transition>
-    </Teleport>
+    <AToast :open="!!page.successMessage" @close="page.successMessage = null">{{
+      page.successMessage
+    }}</AToast>
 
     <section class="sect a-mov-ledger-section">
       <AccountingMovementsAllTransactions :page="page" />
