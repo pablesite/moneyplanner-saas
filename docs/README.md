@@ -48,6 +48,7 @@ Core product functionality is documented in `core/README.md` and `core/docs/READ
    - SaaS frontend visual and UX guidance
    - frontend visual contract
    - **domain map** (`domain-map.md`)
+   - **improvement roadmap** (`frontend-improvement-roadmap.md`) — plan vivo de mejoras incrementales por vista
 5. `project-status.md` — implementation status by feature area
 
 ## Usage Rule
