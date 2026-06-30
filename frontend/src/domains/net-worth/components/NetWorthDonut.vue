@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ADonut, type ADonutSlice } from '@/domains/ui';
+import { currencySymbol, formatNumber, toNumber } from '@/lib/format';
 
 // Donut estructural de Patrimonio: capital propio + deuda respaldada + deuda no
 // respaldada (juntas suman el total de activos). Calcula los sectores y delega el
@@ -25,27 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
   thickness: 14,
 });
 
-function normalizeNumberInput(raw: unknown) {
-  return String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-}
-
-function toNumber(v: unknown) {
-  const n = Number(normalizeNumberInput(v));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function formatMoney(n: number, decimals = 2) {
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
-
-const displayUnit = computed(() => (props.unit === 'EUR' ? '€' : props.unit));
+const displayUnit = computed(() => currencySymbol(props.unit));
 
 const assets = computed(() => Math.max(0, toNumber(props.totalAssets)));
 const backedRaw = computed(() => Math.max(0, toNumber(props.assetBackedLiabilities)));
@@ -84,12 +65,12 @@ const slices = computed<ADonutSlice[]>(() =>
     },
   ]
     .filter((s) => s.value > 0)
-    .map((s) => ({ ...s, hoverValue: `${formatMoney(s.value, 0)} ${displayUnit.value}` })),
+    .map((s) => ({ ...s, hoverValue: `${formatNumber(s.value, 0)} ${displayUnit.value}` })),
 );
 
 const centerEyebrow = computed(() => props.centerLabel ?? 'Patrimonio neto');
 const centerValue = computed(
-  () => props.centerValue ?? `${formatMoney(toNumber(props.netWorth), 2)} ${displayUnit.value}`,
+  () => props.centerValue ?? `${formatNumber(toNumber(props.netWorth), 2)} ${displayUnit.value}`,
 );
 </script>
 

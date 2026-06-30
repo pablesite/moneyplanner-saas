@@ -1,5 +1,6 @@
 import { computed, ref, watch, type Ref } from 'vue';
 import type { Ownership } from '@/domains/net-worth/models';
+import { toNumber } from '@/lib/format';
 
 export type OwnershipFilterValue = 'all' | number;
 
@@ -7,15 +8,6 @@ export type OwnershipOption = {
   value: OwnershipFilterValue;
   label: string;
 };
-
-function toNumber(raw: unknown): number {
-  const normalized = String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-  const value = Number(normalized);
-  return Number.isFinite(value) ? value : 0;
-}
 
 function normalizeOwnershipSharePercent(raw: unknown): number {
   const value = toNumber(raw);

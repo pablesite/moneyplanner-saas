@@ -10,6 +10,7 @@ import {
   type ChartData,
   type ChartOptions,
 } from 'chart.js';
+import { formatCompact, formatNumber } from '@/lib/format';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -23,21 +24,6 @@ const props = defineProps<{
   rows: TimelineRow[];
   unit: string;
 }>();
-
-function formatNumber(n: number, decimals = 2): string {
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
-
-function formatCompact(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${formatNumber(value / 1_000_000, 1)}M`;
-  if (abs >= 1_000) return `${formatNumber(value / 1_000, 1)}k`;
-  return formatNumber(value, 0);
-}
 
 type DeltaPoint = {
   label: string;

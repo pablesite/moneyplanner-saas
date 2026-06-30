@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue';
+import { formatCompact, formatNumber } from '@/lib/format';
 
 export type NetWorthEvolutionPoint = {
   date: string;
@@ -41,21 +42,6 @@ const areaGradientId = `a-nw-evo-grad-${chartId}`;
 const zoneLineGradientId = `a-nw-evo-zone-line-${chartId}`;
 
 const displayUnit = computed(() => (props.unit === 'EUR' ? '€' : props.unit));
-
-function formatNumber(n: number, decimals = 2): string {
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
-
-function formatCompact(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${formatNumber(value / 1_000_000, 1)}M`;
-  if (abs >= 1_000) return `${formatNumber(value / 1_000, 0)}k`;
-  return formatNumber(value, 0);
-}
 
 const values = computed(() => props.points.map((p) => p.value));
 const hasNegative = computed(() => values.value.some((v) => v < 0));

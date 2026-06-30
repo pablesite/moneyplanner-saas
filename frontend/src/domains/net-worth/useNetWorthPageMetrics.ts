@@ -6,6 +6,8 @@ import {
   assetSubcategories,
   liabilityCategories,
 } from '@/domains/net-worth/composables';
+import { toNumber } from '@/lib/format';
+import { formatMonthYearLabel } from '@/lib/dates';
 
 function assetSubtitle(category: string, subcategory: string): string {
   const catLabel = assetCategories.find((c) => c.value === category)?.label ?? category;
@@ -41,21 +43,6 @@ export type DisplayedTimelinePoint = {
   label: string;
   value: number;
 };
-
-function toNumber(raw: unknown): number {
-  const normalized = String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-  const value = Number(normalized);
-  return Number.isFinite(value) ? value : 0;
-}
-
-function formatMonthYearLabel(date: string): string {
-  return new Intl.DateTimeFormat('es-ES', { month: 'short', year: '2-digit' }).format(
-    new Date(date),
-  );
-}
 
 function resolvePositionValue(
   item: {

@@ -13,6 +13,7 @@ import {
   type ChartData,
   type ChartOptions,
 } from 'chart.js';
+import { formatCompact, formatNumber } from '@/lib/format';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -40,22 +41,6 @@ const props = withDefaults(defineProps<Props>(), {
   expanded: false,
   yAxisMinZero: false,
 });
-
-function formatNumber(n: number, decimals = 2): string {
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
-
-function formatCompact(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) return `${formatNumber(value / 1_000_000_000, 1)}B`;
-  if (abs >= 1_000_000) return `${formatNumber(value / 1_000_000, 1)}M`;
-  if (abs >= 1_000) return `${formatNumber(value / 1_000, 1)}k`;
-  return formatNumber(value, 0);
-}
 
 const isYearMode = computed(() => props.points.length > 14);
 

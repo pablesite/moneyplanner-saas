@@ -2,6 +2,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useNetWorthStore } from '@/domains/net-worth/store';
 import { buildByCategoryChart } from '@/domains/net-worth/charts';
 import type { Asset, Liability, NetWorthWritePayload, Summary } from '@/domains/net-worth/models';
+import { formatNumber, getMaxDecimals, normalizeNumberInput } from '@/lib/format';
 
 type ByCategoryRow = { key: string; a: number; l: number };
 
@@ -67,22 +68,8 @@ export const liabilityCategories = [
   { value: 'other', label: 'Otros' },
 ];
 
-const decimalsByCurrency: Record<string, number> = {
-  EUR: 2,
-  USD: 2,
-  BTC: 8,
-  ETH: 8,
-};
-
-function normalizeNumberInput(raw: unknown) {
-  return String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-}
-
 function formatEditAmount(raw: unknown, currency: string) {
-  const max = decimalsByCurrency[currency] ?? 2;
+  const max = getMaxDecimals(currency);
   let s = normalizeNumberInput(raw);
   if (!s) return '';
 
@@ -102,15 +89,9 @@ function formatEditAmount(raw: unknown, currency: string) {
 
 function formatMoney(v?: string | null, decimals = 2) {
   if (v == null) return '-';
-  const s = normalizeNumberInput(v);
-  const n = Number(s);
+  const n = Number(normalizeNumberInput(v));
   if (Number.isNaN(n)) return v;
-
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
+  return formatNumber(n, decimals);
 }
 
 function buildEditScheduleFields(item: Asset | Liability) {

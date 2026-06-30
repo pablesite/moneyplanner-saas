@@ -22,6 +22,35 @@ export function getMaxDecimals(currency?: string) {
   return decimalsByCurrency[currency] ?? 2;
 }
 
+// Parse seguro: acepta coma o punto decimal y devuelve 0 ante valores no numéricos.
+export function toNumber(value: unknown): number {
+  const n = Number(normalizeNumberInput(value));
+  return Number.isFinite(n) ? n : 0;
+}
+
+// Número con separador de miles y nº fijo de decimales (sin símbolo de divisa).
+export function formatNumber(value: number, decimals = 2): string {
+  return new Intl.NumberFormat('es-ES', {
+    useGrouping: true,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
+// Notación compacta para ejes de gráficos: 1,2k / 3,4M / 5,6B.
+export function formatCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return `${formatNumber(value / 1_000_000_000, 1)}B`;
+  if (abs >= 1_000_000) return `${formatNumber(value / 1_000_000, 1)}M`;
+  if (abs >= 1_000) return `${formatNumber(value / 1_000, 1)}k`;
+  return formatNumber(value, 0);
+}
+
+// Símbolo corto para mostrar junto a importes: € para EUR, el código en otro caso.
+export function currencySymbol(currency: string | null | undefined): string {
+  return currency === 'EUR' ? '€' : String(currency ?? '').trim();
+}
+
 // Para cantidades (con separador de miles, sin símbolo)
 export function formatAmount(value: unknown, opts: FormatOpts = {}) {
   const s = normalizeNumberInput(value);

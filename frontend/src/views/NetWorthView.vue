@@ -34,6 +34,8 @@ import {
   BaseModal,
 } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
+import { currencySymbol as displayCurrencyUnit, formatNumber, toNumber } from '@/lib/format';
+import { dateToIso as isoDate, parseIsoToDate as parseDate } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import { coreAccountingApi } from '@/domains/accounting/api';
 import type { LedgerDailyBalanceSeriesRow } from '@/domains/accounting/models';
@@ -80,23 +82,6 @@ const annualExpenseStore = useAnnualExpenseStore('core');
 
 const { itemFormProps } = useNetWorthViewExtensions(store);
 
-function toNumber(raw: unknown): number {
-  const normalized = String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-  const value = Number(normalized);
-  return Number.isFinite(value) ? value : 0;
-}
-
-function formatNumber(n: number, decimals = 2): string {
-  return new Intl.NumberFormat('es-ES', {
-    useGrouping: true,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n);
-}
-
 function formatPct(n: number | null, decimals = 0): string {
   if (n == null || !Number.isFinite(n)) return '-';
   return new Intl.NumberFormat('es-ES', {
@@ -104,10 +89,6 @@ function formatPct(n: number | null, decimals = 0): string {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(n);
-}
-
-function displayCurrencyUnit(currency: string | null | undefined): string {
-  return currency === 'EUR' ? '€' : String(currency ?? '').trim();
 }
 
 type GeneratedLiabilityExpensePreview = {
@@ -517,14 +498,6 @@ const {
   matchesOwnershipFilter,
   allocationFractionForNetWorthOwner,
 });
-
-function parseDate(raw: string): Date {
-  return new Date(`${raw}T00:00:00`);
-}
-
-function isoDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);

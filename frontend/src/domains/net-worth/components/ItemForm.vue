@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
+import { getMaxDecimals } from '@/lib/format';
 import type {
   AssetImprovement,
   ContributionInterval,
@@ -167,18 +168,6 @@ const ownershipOptions = computed(() => {
   ];
 });
 
-/** -------------------------
- * Amount handling
- * - Accept thousands separators (1.234,56 or 1,234.56)
- * - Normalize to dot decimal for API
- * - Limit decimals by currency
- * ------------------------- */
-const decimalsByCurrency: Record<string, number> = {
-  EUR: 2,
-  USD: 2,
-  BTC: 8,
-  ETH: 8,
-};
 const ASSET_CASH_SUBCATEGORIES_REQUIRING_TAE = [
   'bank_account',
   'short_term_deposit',
@@ -531,7 +520,7 @@ const showRealEstateUsageField = computed(
     String(form.subcategory ?? '').trim() === 'second_home',
 );
 
-const maxDecimals = computed(() => decimalsByCurrency[form.currency] ?? 2);
+const maxDecimals = computed(() => getMaxDecimals(form.currency));
 const estimatedAverageBalanceCurrencyLabel = computed(() => {
   const currency = String(form.currency ?? '').trim();
   return currency || 'EUR';
@@ -665,7 +654,7 @@ function sanitizeAmount(raw: unknown, decimals: number) {
 }
 
 function formatAmountForEdit(raw: unknown, currency: string): string {
-  const max = decimalsByCurrency[currency] ?? 2;
+  const max = getMaxDecimals(currency);
   const normalized = String(raw ?? '')
     .trim()
     .replace(/\s/g, '')

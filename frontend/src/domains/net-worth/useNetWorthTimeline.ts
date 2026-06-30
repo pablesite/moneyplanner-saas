@@ -5,6 +5,7 @@ import type {
   PositionRow,
   PositionTimelinePoint,
 } from '@/domains/net-worth/useNetWorthPageMetrics';
+import { formatMonthYearLabel } from '@/lib/dates';
 
 type TimelinePoint = {
   date: string;
@@ -28,12 +29,6 @@ type CachedTimelineRows = {
 };
 
 type TimelinePreset = '3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom';
-
-function formatMonthYearLabel(date: string): string {
-  return new Intl.DateTimeFormat('es-ES', { month: 'short', year: '2-digit' }).format(
-    new Date(date),
-  );
-}
 
 export function useNetWorthTimeline(params: {
   ownershipFilter: Ref<'all' | number>;

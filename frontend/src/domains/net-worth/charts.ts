@@ -1,3 +1,5 @@
+import { toNumber } from '@/lib/format';
+
 type SummaryLike = {
   base_currency?: string;
   assets_by_category?: Record<string, string>;
@@ -10,18 +12,6 @@ export type ByCategoryChart = {
   assets: number[];
   liabilities: number[];
 };
-
-function normalizeNumberInput(raw: unknown) {
-  return String(raw ?? '')
-    .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
-}
-
-function toNumber(v: unknown) {
-  const n = Number(normalizeNumberInput(v));
-  return Number.isFinite(n) ? n : 0;
-}
 
 export function buildByCategoryChart(
   summary: SummaryLike | null,

@@ -30,6 +30,8 @@ import type {
   QuickLedgerTransactionWritePayload,
 } from '@/domains/accounting/models';
 import type { Asset, Liability } from '@/domains/net-worth/models';
+import { getMaxDecimals } from '@/lib/format';
+import { dateToIso } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 
 type TransactionFormRow = {
@@ -181,18 +183,13 @@ function round2(value: number): number {
 }
 
 function currencyDecimals(currency: string): number {
-  const code = currency.trim().toUpperCase();
-  return code === 'BTC' || code === 'ETH' ? 8 : 2;
+  return getMaxDecimals(currency.trim().toUpperCase());
 }
 
 function roundByCurrency(value: number, currency: string): number {
   const decimals = currencyDecimals(currency);
   const factor = 10 ** decimals;
   return Math.round(value * factor) / factor;
-}
-
-function toIsoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
 }
 
 export function useAccountingPage() {
@@ -1817,7 +1814,7 @@ export function useAccountingPage() {
     toNumber(accountBalancesSummary.value?.totals_by_account_type.asset ?? '0'),
   );
   const today = new Date();
-  const dailyBalanceDateTo = ref(toIsoDate(today));
+  const dailyBalanceDateTo = ref(dateToIso(today));
   const dailyBalanceDateFrom = ref('');
   const dailyBalanceSeriesRows = ref<LedgerDailyBalanceSeriesRow[]>([]);
   const dailyBalanceSeriesLoading = ref(false);
