@@ -1183,9 +1183,9 @@
 }
 
 .dir-a-sheet .a-nw-item-form .ui-item-form-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
+  /* No sticky: el footer va al final del cuerpo desplazable. Como vive dentro
+     del área con scroll (BaseModal no expone slot de footer), hacerlo sticky
+     dejaba el último campo (Notas desplegado) oculto detrás de él. */
   display: grid;
   gap: 10px;
   margin: 6px -24px -20px;

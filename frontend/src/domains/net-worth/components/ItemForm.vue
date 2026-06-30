@@ -1908,6 +1908,42 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           {{ currencyRequiredError }}
         </div>
       </div>
+      <div
+        v-if="showAssetAmortizationFields"
+        class="ui-item-form-section ui-item-form-field-span-2"
+      >
+        <div class="ui-item-form-section-head">
+          <div class="ui-item-form-section-title">Amortización del activo</div>
+        </div>
+        <div class="ui-item-form-inline-grid">
+          <label class="ui-item-form-field"
+            ><span class="ui-item-form-label">Método</span
+            ><ASelect
+              class="select ui-data-field"
+              :model-value="form.amortization_method"
+              :options="assetAmortizationMethodOptions"
+              @update:model-value="
+                (v) => (form.amortization_method = v as typeof form.amortization_method)
+              "
+          /></label>
+          <label v-if="requiresAssetAmortizationTermInput" class="ui-item-form-field"
+            ><span class="ui-item-form-label">Plazo (años)</span
+            ><input
+              v-model="form.amortization_term_years"
+              inputmode="numeric"
+              placeholder="Ej: 10"
+              class="input ui-data-field"
+          /></label>
+        </div>
+        <div class="ui-form-help">Se usa el Importe como valor de compra inicial del activo.</div>
+        <div v-if="assetAmortizationModelHint" class="ui-form-help">
+          {{ assetAmortizationModelHint }}
+        </div>
+        <div v-if="defaultDegressiveTermYearsForFurnishings != null" class="ui-form-help">
+          Plazo configurado automáticamente para esta subcategoría:
+          {{ defaultDegressiveTermYearsForFurnishings }} años.
+        </div>
+      </div>
       <label v-if="isLiabilityForm" class="ui-item-form-field">
         <span class="ui-item-form-label">Tracking mode</span>
         <ASelect
@@ -1927,6 +1963,18 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
               :model-value="form.tracking_mode"
               :options="TRACKING_MODE_OPTIONS"
               @update:model-value="(v) => (form.tracking_mode = v as typeof form.tracking_mode)"
+            />
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">Titularidad</span>
+            <ASelect
+              :model-value="form.ownership_id"
+              :options="ownershipOptions"
+              :class="[
+                'select ui-data-field',
+                { 'ui-select-placeholder': form.ownership_id == null },
+              ]"
+              @update:model-value="(v) => (form.ownership_id = v as typeof form.ownership_id)"
             />
           </label>
         </div>
@@ -2432,44 +2480,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
         </div>
       </details>
 
-      <div
-        v-if="showAssetAmortizationFields"
-        class="ui-item-form-section ui-item-form-field-span-2"
-      >
-        <div class="ui-item-form-section-head">
-          <div class="ui-item-form-section-title">Amortización del activo</div>
-        </div>
-        <div class="ui-item-form-inline-grid">
-          <label class="ui-item-form-field"
-            ><span class="ui-item-form-label">Método</span
-            ><ASelect
-              class="select ui-data-field"
-              :model-value="form.amortization_method"
-              :options="assetAmortizationMethodOptions"
-              @update:model-value="
-                (v) => (form.amortization_method = v as typeof form.amortization_method)
-              "
-          /></label>
-          <label v-if="requiresAssetAmortizationTermInput" class="ui-item-form-field"
-            ><span class="ui-item-form-label">Plazo (años)</span
-            ><input
-              v-model="form.amortization_term_years"
-              inputmode="numeric"
-              placeholder="Ej: 10"
-              class="input ui-data-field"
-          /></label>
-        </div>
-        <div class="ui-form-help">Se usa el Importe como valor de compra inicial del activo.</div>
-        <div v-if="assetAmortizationModelHint" class="ui-form-help">
-          {{ assetAmortizationModelHint }}
-        </div>
-        <div v-if="defaultDegressiveTermYearsForFurnishings != null" class="ui-form-help">
-          Plazo configurado automáticamente para esta subcategoría:
-          {{ defaultDegressiveTermYearsForFurnishings }} años.
-        </div>
-      </div>
-
-      <label class="ui-item-form-field ui-item-form-field-span-2">
+      <label v-if="isLiabilityForm" class="ui-item-form-field ui-item-form-field-span-2">
         <span class="ui-item-form-label">Titularidad</span>
         <ASelect
           :model-value="form.ownership_id"

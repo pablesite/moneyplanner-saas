@@ -1795,9 +1795,11 @@
      Needs `.dir-a .btn` specificity to override the shared button base. */
   .dir-a .btn.a-mov-mobile-create {
     position: fixed;
-    z-index: 30;
+    z-index: 45;
     right: 24px;
-    bottom: calc(32px + env(safe-area-inset-bottom));
+    /* Por encima de la barra de navegación inferior (68px), igual que el FAB de
+       patrimonio; antes quedaba a 32px y la barra lo tapaba. */
+    bottom: calc(92px + env(safe-area-inset-bottom));
     display: inline-flex;
     align-items: center;
     justify-content: center;
