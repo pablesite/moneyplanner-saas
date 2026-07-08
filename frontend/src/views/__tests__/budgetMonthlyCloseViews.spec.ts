@@ -14,6 +14,13 @@ vi.mock('vue-chartjs', () => ({
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
+function formatTestMoney(value: number): string {
+  const fixed = value.toFixed(2);
+  const [integerPart = '0', decimalPart = '00'] = fixed.split('.');
+  const withThousands = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${withThousands},${decimalPart} €`;
+}
+
 const mockUseRoute = vi.fn(() => ({ name: 'budget', path: '/presupuesto' }));
 const mockUseRouter = vi.fn(() => ({ push: vi.fn() }));
 const mockCoreApiGet = vi.hoisted(() => vi.fn());
@@ -409,8 +416,8 @@ describe('Budget & Monthly close views', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Libro contable activo');
-    expect(wrapper.text()).toContain('Saldo cierre189,44 EUR');
-    expect(wrapper.text()).toContain('Desviación -10,56 EUR');
+    expect(wrapper.text()).toContain('Saldo cierre189,44 €');
+    expect(wrapper.text()).toContain('Desviación -10,56 €');
     expect(wrapper.text()).toContain('Ajustar manualmente');
     expect(wrapper.find('input[placeholder="Saldo real"]').exists()).toBe(false);
     expect(wrapper.find('.ui-budget-checkin-confirm').exists()).toBe(false);
@@ -639,7 +646,7 @@ describe('Budget & Monthly close views', () => {
     const wrapper = mountMonthlyCloseView();
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Saldo cierre10.000,00 EUR');
+    expect(wrapper.text()).toContain('Saldo cierre10.000,00 €');
     expect(wrapper.text()).toContain('Ajustar manualmente');
     expect(wrapper.find('input[placeholder="Saldo real"]').exists()).toBe(false);
     expect(wrapper.find('.ui-budget-checkin-confirm').exists()).toBe(false);
@@ -687,8 +694,8 @@ describe('Budget & Monthly close views', () => {
     const wrapper = mountMonthlyCloseView();
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Perímetro anterior900,00 EUR');
-    expect(wrapper.text()).toContain('Variación perímetro+300,00 EUR');
+    expect(wrapper.text()).toContain('Perímetro anterior900,00 €');
+    expect(wrapper.text()).toContain('Variación perímetro+300,00 €');
 
     await openMonthlyStep(wrapper, 'Resultado');
 
@@ -1093,7 +1100,7 @@ describe('Budget & Monthly close views', () => {
 
     expect(wrapper.text()).toContain('Nomina');
     expect(wrapper.text()).toContain('2 líneas agrupadas');
-    expect(wrapper.text()).toContain('1.500,00 EUR');
+    expect(wrapper.text()).toContain('1.500,00 €');
     expect(wrapper.text()).not.toContain('Nomina A');
     expect(wrapper.text()).not.toContain('Nomina B');
   });
@@ -1216,7 +1223,7 @@ describe('Budget & Monthly close views', () => {
     await flushPromises();
     await openMonthlyStep(wrapper, 'Ingresos');
 
-    expect(wrapper.text()).toContain('Ejecutado14,22 EUR');
+    expect(wrapper.text()).toContain('Ejecutado14,22 €');
 
     await wrapper
       .findAll('button')
@@ -1403,7 +1410,7 @@ describe('Budget & Monthly close views', () => {
     expect(mockAccountingApi.getTransactions).not.toHaveBeenCalledWith(
       expect.objectContaining({ month: currentMonth }),
     );
-    expect(wrapper.text()).toContain('3.000,00 €');
+    expect(wrapper.text()).toContain(formatTestMoney((6000 / 12) * currentMonth));
   });
 
   it('shows unbudgeted detected expense rows with contextual CTA', async () => {
@@ -2226,7 +2233,13 @@ describe('Budget & Monthly close views', () => {
     const wrapper = mountBudgetView();
     await flushPromises();
 
-    const filterButtons = () => wrapper.findAll('button');
+    const selectEntryType = async (label: string) => {
+      const value = label === 'Recurrentes' ? 'recurrent' : 'one_off';
+      const entryTypeSelect = wrapper.findAllComponents({ name: 'ASelect' })[2];
+      if (!entryTypeSelect) throw new Error('Entry type selector not found');
+      entryTypeSelect.vm.$emit('update:modelValue', value);
+      await flushPromises();
+    };
     const expenseSection = () => wrapper.find('.bdg-sect-expense');
     const selectedMonthExecTitle = () => {
       const monthCol = expenseSection().findAll('.bdg-evo-col')[currentMonth - 1];
@@ -2234,17 +2247,11 @@ describe('Budget & Monthly close views', () => {
       return monthCol.find('.bdg-evo-exec').attributes('title');
     };
 
-    await filterButtons()
-      .find((candidate) => candidate.text().includes('Recurrentes'))
-      ?.trigger('click');
-    await flushPromises();
+    await selectEntryType('Recurrentes');
     expect(expenseSection().text()).toContain('1.000,00 €');
     expect(selectedMonthExecTitle()).toContain('1.000,00 €');
 
-    await filterButtons()
-      .find((candidate) => candidate.text().includes('Puntuales'))
-      ?.trigger('click');
-    await flushPromises();
+    await selectEntryType('Puntuales');
     expect(expenseSection().text()).toContain('100,00 €');
     expect(selectedMonthExecTitle()).toContain('100,00 €');
   });
