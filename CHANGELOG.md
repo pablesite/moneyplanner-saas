@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.36.0...moneyplanner-saas-v0.36.1) (2026-07-08)
+
+
+### Bug Fixes
+
+* **frontend:** polish budget and monthly close mobile layouts ([10f4a16](https://github.com/pablesite/moneyplanner-saas/commit/10f4a16999f9801e749dc317a2f72ddafbce6633))
+
 ## [0.36.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.35.0...moneyplanner-saas-v0.36.0) (2026-06-30)
 
 
