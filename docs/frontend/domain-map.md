@@ -119,7 +119,6 @@ Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, l
 | `annual-entries/components/AnnualEntryModalForm.vue` | Formulario/modal reutilizable para crear y editar líneas anuales.                        |
 | `taxonomy/incomeTaxonomy.ts`                         | Taxonomía de categorías de ingresos (ver `docs/architecture/annual-income-taxonomy.md`). |
 | `taxonomy/expenseTaxonomy.ts`                        | Taxonomía de categorías de gastos (ver `docs/architecture/annual-expense-taxonomy.md`).  |
-| `BudgetAnnualEntriesContent.vue`                     | Adaptador visual para renderizar secciones anuales en Presupuesto.                       |
 | `useBudgetAnnualEntriesPage.ts`                      | Composable de la gestión anual contextual usada por Presupuesto.                         |
 | `useBudgetAnnualEntriesFilters.ts`                   | Filtros de titularidad/visibilidad para entradas anuales.                                |
 | `components/`                                        | Componentes Direction A: `BudgetHero`/`BudgetYearStrip`, `BudgetAnnualSection` + `BudgetBarCell` (tabla `bdg-row`), `MonthlyCloseHero` y las 4 secciones `BudgetMonthlyClose{Liquidity,Income,Expense,Result}Section`, además de los modales de líneas. Estilos por vista en `styles/budget.css` y `styles/monthly-close.css`. |

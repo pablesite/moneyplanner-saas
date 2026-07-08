@@ -85,15 +85,15 @@ const props = defineProps<{
 const kpiItems = computed<AKpiItem[]>(() => [
   {
     label: 'Perímetro anterior',
-    value: `${props.formatMoney(props.selectedLiquidityMonthPlanned)} EUR`,
+    value: `${props.formatMoney(props.selectedLiquidityMonthPlanned)} €`,
   },
   {
     label: 'Perímetro real cierre',
-    value: `${props.formatMoney(props.selectedLiquidityMonthExecuted)} EUR`,
+    value: `${props.formatMoney(props.selectedLiquidityMonthExecuted)} €`,
   },
   {
     label: 'Variación perímetro',
-    value: `${props.selectedLiquidityMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedLiquidityMonthDeviation)} EUR`,
+    value: `${props.selectedLiquidityMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedLiquidityMonthDeviation)} €`,
     cellClass: {
       'mc-kpi-dev-danger': props.selectedLiquidityMonthDeviation < 0,
       'mc-kpi-dev-good': props.selectedLiquidityMonthDeviation > 0,
@@ -220,12 +220,12 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
             </span>
           </div>
           <div class="mc-block-kpis">
-            <span>P {{ formatMoney(block.plannedTotal) }} EUR</span>
-            <span>E {{ formatMoney(block.executedTotal) }} EUR</span>
+            <span>P {{ formatMoney(block.plannedTotal) }} €</span>
+            <span>E {{ formatMoney(block.executedTotal) }} €</span>
             <span
               :class="block.deviation > 0 ? 'mc-dev-neg' : block.deviation < 0 ? 'mc-dev-pos' : ''"
             >
-              D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} EUR
+              D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
             </span>
           </div>
         </summary>
@@ -241,7 +241,7 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
                 {{ liquidityCheckinRowSummary(row) }}
                 <span class="mc-row-ref">
                   (Ref. {{ formatMoney(row.planned) }}
-                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }})
+                  {{ row.currency === 'EUR' ? '€' : row.currency }})
                 </span>
               </div>
               <div
@@ -260,7 +260,7 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
                 >
                   Desviación {{ row.executed > row.planned ? '+' : ''
                   }}{{ formatMoney(row.executed - row.planned) }}
-                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
+                  {{ row.currency === 'EUR' ? '€' : row.currency }}
                 </span>
                 <span v-if="isLiquidityLedgerRowUnlocked(row.asset_id)" class="mc-row-note">
                   Ajuste manual abierto. Guarda el saldo o vuelve al libro contable.
@@ -270,14 +270,14 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
                 <strong>Ajuste manual sobre libro contable:</strong>
                 <template v-if="row.executed != null">
                   {{ formatMoney(row.executed) }}
-                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
+                  {{ row.currency === 'EUR' ? '€' : row.currency }}
                 </template>
               </div>
               <div v-else-if="row.checkin" class="mc-row-state">
                 <strong>{{ checkinStatusLabel(row.checkin.status) }}</strong>
                 <template v-if="row.executed != null">
                   ({{ formatMoney(row.executed) }}
-                  {{ row.currency === 'EUR' ? 'EUR' : row.currency }})
+                  {{ row.currency === 'EUR' ? '€' : row.currency }})
                 </template>
               </div>
             </div>
@@ -294,7 +294,7 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
                   <span>Saldo cierre</span>
                   <strong>
                     {{ formatMoney(row.executed) }}
-                    {{ row.currency === 'EUR' ? 'EUR' : row.currency }}
+                    {{ row.currency === 'EUR' ? '€' : row.currency }}
                   </strong>
                 </div>
                 <button

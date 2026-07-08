@@ -172,7 +172,7 @@ const resultBridgeRows = computed(() =>
             {{ selectedMonthlyResidualSeverityLabel }}
           </span>
         </div>
-        <strong>{{ formatSignedMoney(selectedMonthlyCloseResidual) }} EUR</strong>
+        <strong>{{ formatSignedMoney(selectedMonthlyCloseResidual) }} €</strong>
         <small>
           {{ residualReading }} · {{ formatPercent(selectedMonthlyResidualVolumeRatio, 1) }} del
           volumen ejecutado
@@ -180,14 +180,14 @@ const resultBridgeRows = computed(() =>
       </article>
       <article class="mc-result-card">
         <span>Cierre esperado</span>
-        <strong>{{ formatMoney(selectedMonthlyCloseExpected) }} EUR</strong>
+        <strong>{{ formatMoney(selectedMonthlyCloseExpected) }} €</strong>
         <small>Perímetro inicial + ingresos − gastos externos</small>
       </article>
       <article class="mc-result-card">
         <span>Cierre real</span>
-        <strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} EUR</strong>
+        <strong>{{ formatMoney(selectedLiquidityMonthExecuted) }} €</strong>
         <small>
-          {{ formatSignedMoney(selectedMonthlyCloseDelta) }} EUR frente al cierre esperado
+          {{ formatSignedMoney(selectedMonthlyCloseDelta) }} € frente al cierre esperado
         </small>
       </article>
       <article class="mc-result-card">
@@ -205,7 +205,7 @@ const resultBridgeRows = computed(() =>
         <div class="mc-result-panel-head">
           <h3 class="mc-result-panel-title">Conciliación de cierre</h3>
           <div class="mc-result-panel-meta">
-            Volumen ejecutado {{ formatMoney(selectedMonthlyExecutedVolume) }} EUR
+            Volumen ejecutado {{ formatMoney(selectedMonthlyExecutedVolume) }} €
           </div>
         </div>
         <div class="mc-bridge">
@@ -227,7 +227,7 @@ const resultBridgeRows = computed(() =>
             <div class="mc-bridge-track" aria-hidden="true">
               <div class="mc-bridge-fill" :style="{ width: `${row.width}%` }" />
             </div>
-            <strong>{{ formatSignedMoney(row.amount) }} EUR</strong>
+            <strong>{{ formatSignedMoney(row.amount) }} €</strong>
           </div>
         </div>
       </section>
@@ -280,8 +280,8 @@ const resultBridgeRows = computed(() =>
           </article>
         </div>
         <div v-if="selectedPerimeterInternalExpenseTotal > 0" class="mc-result-footnote">
-          {{ formatMoney(selectedPerimeterInternalExpenseTotal) }} EUR movidos dentro del perímetro
-          no cuentan como gasto externo.
+          {{ formatMoney(selectedPerimeterInternalExpenseTotal) }} € movidos dentro del perímetro no
+          cuentan como gasto externo.
         </div>
       </section>
     </div>
@@ -310,10 +310,10 @@ const resultBridgeRows = computed(() =>
                 </div>
               </div>
               <div class="mc-breakdown-kpis">
-                <span>E {{ formatMoney(group.executedTotal) }} EUR</span>
-                <span>P {{ formatMoney(group.plannedTotal) }} EUR</span>
+                <span>E {{ formatMoney(group.executedTotal) }} €</span>
+                <span>P {{ formatMoney(group.plannedTotal) }} €</span>
                 <span :class="group.deviation > 0 ? 'mc-dev-neg' : 'mc-dev-pos'">
-                  D {{ formatSignedMoney(group.deviation) }} EUR
+                  D {{ formatSignedMoney(group.deviation) }} €
                 </span>
                 <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
               </div>
@@ -321,10 +321,10 @@ const resultBridgeRows = computed(() =>
             <div class="mc-breakdown-rows">
               <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="mc-breakdown-row">
                 <span class="mc-breakdown-name">{{ row.subcategoryLabel }}</span>
-                <span>{{ formatMoney(row.executedTotal) }} EUR</span>
+                <span>{{ formatMoney(row.executedTotal) }} €</span>
                 <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
                 <span :class="row.deviation > 0 ? 'mc-dev-neg' : 'mc-dev-pos'">
-                  {{ formatSignedMoney(row.deviation) }} EUR
+                  {{ formatSignedMoney(row.deviation) }} €
                 </span>
               </div>
               <div v-if="group.rows.length > 5" class="mc-breakdown-more">
@@ -358,10 +358,10 @@ const resultBridgeRows = computed(() =>
                 </div>
               </div>
               <div class="mc-breakdown-kpis">
-                <span>E {{ formatMoney(group.executedTotal) }} EUR</span>
-                <span>P {{ formatMoney(group.plannedTotal) }} EUR</span>
+                <span>E {{ formatMoney(group.executedTotal) }} €</span>
+                <span>P {{ formatMoney(group.plannedTotal) }} €</span>
                 <span :class="group.deviation > 0 ? 'mc-dev-pos' : 'mc-dev-neg'">
-                  D {{ formatSignedMoney(group.deviation) }} EUR
+                  D {{ formatSignedMoney(group.deviation) }} €
                 </span>
                 <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
               </div>
@@ -369,10 +369,10 @@ const resultBridgeRows = computed(() =>
             <div class="mc-breakdown-rows">
               <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="mc-breakdown-row">
                 <span class="mc-breakdown-name">{{ row.subcategoryLabel }}</span>
-                <span>{{ formatMoney(row.executedTotal) }} EUR</span>
+                <span>{{ formatMoney(row.executedTotal) }} €</span>
                 <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
                 <span :class="row.deviation > 0 ? 'mc-dev-pos' : 'mc-dev-neg'">
-                  {{ formatSignedMoney(row.deviation) }} EUR
+                  {{ formatSignedMoney(row.deviation) }} €
                 </span>
               </div>
               <div v-if="group.rows.length > 5" class="mc-breakdown-more">

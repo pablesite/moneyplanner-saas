@@ -134,14 +134,14 @@ const props = defineProps<{
 }>();
 
 const kpiItems = computed<AKpiItem[]>(() => [
-  { label: 'Previsto mes', value: `${props.formatMoney(props.selectedExpenseMonthPlanned)} EUR` },
+  { label: 'Previsto mes', value: `${props.formatMoney(props.selectedExpenseMonthPlanned)} €` },
   {
     label: 'Ejecutado mes',
-    value: `${props.formatMoney(props.selectedExpenseMonthExecuted)} EUR`,
+    value: `${props.formatMoney(props.selectedExpenseMonthExecuted)} €`,
   },
   {
     label: 'Desviación del mes',
-    value: `${props.selectedExpenseMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedExpenseMonthDeviation)} EUR`,
+    value: `${props.selectedExpenseMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedExpenseMonthDeviation)} €`,
     cellClass: {
       'mc-kpi-dev-danger': props.selectedExpenseMonthDeviation > 0,
       'mc-kpi-dev-good': props.selectedExpenseMonthDeviation < 0,
@@ -227,12 +227,12 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
             </span>
           </div>
           <div class="mc-block-kpis">
-            <span>P {{ formatMoney(block.plannedTotal) }} EUR</span>
-            <span>E {{ formatMoney(block.executedTotal) }} EUR</span>
+            <span>P {{ formatMoney(block.plannedTotal) }} €</span>
+            <span>E {{ formatMoney(block.executedTotal) }} €</span>
             <span
               :class="block.deviation > 0 ? 'mc-dev-pos' : block.deviation < 0 ? 'mc-dev-neg' : ''"
             >
-              D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} EUR
+              D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
             </span>
           </div>
         </summary>
@@ -241,7 +241,7 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
           <article
             v-for="group in block.groups"
             :key="`expense-checkin-group-${group.key}`"
-            class="mc-row"
+            class="mc-row mc-row-checkin"
           >
             <div class="mc-row-main">
               <div class="mc-row-title" :title="group.subcategoryLabel">
@@ -265,11 +265,11 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
               <div class="mc-metrics">
                 <span>
                   <small>Previsto</small>
-                  <strong>{{ formatMoney(group.plannedTotal) }} EUR</strong>
+                  <strong>{{ formatMoney(group.plannedTotal) }} €</strong>
                 </span>
                 <span>
                   <small>Ejecutado</small>
-                  <strong>{{ formatMoney(group.executedTotal) }} EUR</strong>
+                  <strong>{{ formatMoney(group.executedTotal) }} €</strong>
                 </span>
                 <span
                   :class="
@@ -279,14 +279,14 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
                   <small>Desv.</small>
                   <strong
                     >{{ group.deviation > 0 ? '+' : ''
-                    }}{{ formatMoney(group.deviation) }} EUR</strong
+                    }}{{ formatMoney(group.deviation) }} €</strong
                   >
                 </span>
               </div>
               <div v-if="group.editableRow && !isExpenseGroupUnlocked(group.key)" class="mc-adjust">
                 <div v-if="hasManualExpenseAdjustment(group)" class="mc-ledger-readout">
                   <span>Movimientos</span>
-                  <strong>{{ formatMoney(group.ledgerDetectedTotal) }} EUR</strong>
+                  <strong>{{ formatMoney(group.ledgerDetectedTotal) }} €</strong>
                 </div>
                 <button
                   type="button"
@@ -318,10 +318,10 @@ const expenseCategoryBlocks = computed<ExpenseCategoryBlock[]>(() => {
                   />
                 </label>
               </div>
-              <div v-else-if="group.editableRow" class="mc-adjust">
+              <div v-else-if="group.editableRow" class="mc-adjust mc-adjust-editor">
                 <div class="mc-ledger-readout">
                   <span>Movimientos</span>
-                  <strong>{{ formatMoney(group.ledgerDetectedTotal) }} EUR</strong>
+                  <strong>{{ formatMoney(group.ledgerDetectedTotal) }} €</strong>
                 </div>
                 <input
                   :value="expenseAdjustAmounts[group.editableRow.entry.id] ?? ''"

@@ -2375,3 +2375,7 @@ export function useBudgetAnnualEntriesPage() {
     visibleLiabilities,
   };
 }
+
+// Estado de la gestión anual contextual (modales de alta/edición de líneas),
+// consumido como objeto `annualEntriesPage` por `BudgetAnnualSection`.
+export type BudgetAnnualEntriesPageState = ReturnType<typeof useBudgetAnnualEntriesPage>;

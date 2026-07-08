@@ -118,11 +118,11 @@ const props = defineProps<{
 }>();
 
 const kpiItems = computed<AKpiItem[]>(() => [
-  { label: 'Previsto mes', value: `${props.formatMoney(props.selectedIncomeMonthPlanned)} EUR` },
-  { label: 'Ejecutado mes', value: `${props.formatMoney(props.selectedIncomeMonthExecuted)} EUR` },
+  { label: 'Previsto mes', value: `${props.formatMoney(props.selectedIncomeMonthPlanned)} €` },
+  { label: 'Ejecutado mes', value: `${props.formatMoney(props.selectedIncomeMonthExecuted)} €` },
   {
     label: 'Desviación del mes',
-    value: `${props.selectedIncomeMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedIncomeMonthDeviation)} EUR`,
+    value: `${props.selectedIncomeMonthDeviation > 0 ? '+' : ''}${props.formatMoney(props.selectedIncomeMonthDeviation)} €`,
     cellClass: {
       'mc-kpi-dev-good': props.selectedIncomeMonthDeviation > 0,
       'mc-kpi-dev-danger': props.selectedIncomeMonthDeviation < 0,
@@ -192,8 +192,8 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
       <div v-if="monthlyIncomePendingClassification.amount > 0" class="mc-warn">
         <strong>Sin subcategoría</strong>
         <span>
-          {{ formatMoney(monthlyIncomePendingClassification.amount) }} EUR del libro contable no
-          tiene subcategoría de presupuesto todavía.
+          {{ formatMoney(monthlyIncomePendingClassification.amount) }} € del libro contable no tiene
+          subcategoría de presupuesto todavía.
         </span>
         <small v-if="monthlyIncomePendingClassification.ambiguousRows > 0">
           {{ monthlyIncomePendingClassification.ambiguousRows }} líneas comparten la misma
@@ -217,14 +217,14 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
               </span>
             </div>
             <div class="mc-block-kpis">
-              <span>P {{ formatMoney(block.plannedTotal) }} EUR</span>
-              <span>E {{ formatMoney(block.executedTotal) }} EUR</span>
+              <span>P {{ formatMoney(block.plannedTotal) }} €</span>
+              <span>E {{ formatMoney(block.executedTotal) }} €</span>
               <span
                 :class="
                   block.deviation > 0 ? 'mc-dev-neg' : block.deviation < 0 ? 'mc-dev-pos' : ''
                 "
               >
-                D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} EUR
+                D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
               </span>
             </div>
           </summary>
@@ -233,7 +233,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
             <article
               v-for="group in block.groups"
               :key="`income-checkin-group-${group.key}`"
-              class="mc-row"
+              class="mc-row mc-row-checkin"
             >
               <div class="mc-row-main">
                 <div class="mc-row-title" :title="group.subcategoryLabel">
@@ -257,11 +257,11 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                 <div class="mc-metrics">
                   <span>
                     <small>Previsto</small>
-                    <strong>{{ formatMoney(group.plannedTotal) }} EUR</strong>
+                    <strong>{{ formatMoney(group.plannedTotal) }} €</strong>
                   </span>
                   <span>
                     <small>Ejecutado</small>
-                    <strong>{{ formatMoney(group.executedTotal) }} EUR</strong>
+                    <strong>{{ formatMoney(group.executedTotal) }} €</strong>
                   </span>
                   <span
                     :class="
@@ -271,7 +271,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     <small>Desv.</small>
                     <strong
                       >{{ group.deviation > 0 ? '+' : ''
-                      }}{{ formatMoney(group.deviation) }} EUR</strong
+                      }}{{ formatMoney(group.deviation) }} €</strong
                     >
                   </span>
                 </div>
@@ -281,7 +281,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                 >
                   <div v-if="hasManualIncomeAdjustment(group)" class="mc-ledger-readout">
                     <span>Movimientos</span>
-                    <strong>{{ formatMoney(group.ledgerDetectedTotal) }} EUR</strong>
+                    <strong>{{ formatMoney(group.ledgerDetectedTotal) }} €</strong>
                   </div>
                   <button
                     type="button"
@@ -313,10 +313,10 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     />
                   </label>
                 </div>
-                <div v-else-if="group.editableRow" class="mc-adjust">
+                <div v-else-if="group.editableRow" class="mc-adjust mc-adjust-editor">
                   <div class="mc-ledger-readout">
                     <span>Movimientos</span>
-                    <strong>{{ formatMoney(group.ledgerDetectedTotal) }} EUR</strong>
+                    <strong>{{ formatMoney(group.ledgerDetectedTotal) }} €</strong>
                   </div>
                   <input
                     :value="incomeAdjustAmounts[group.editableRow.entry.id] ?? ''"

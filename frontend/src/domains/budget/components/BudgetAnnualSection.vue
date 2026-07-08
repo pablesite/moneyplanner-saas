@@ -9,23 +9,13 @@ import {
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
 import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
 import { AButton, AChevron, AInfoHint, ASparkline, AState } from '@/domains/ui';
+import { currencySymbol } from '@/lib/format';
 import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
+import type { BudgetPageState } from '@/views/budget/useBudgetView';
+import type { BudgetAnnualEntriesPageState } from '@/views/budget/useBudgetAnnualEntriesPage';
 import BudgetBarCell from './BudgetBarCell.vue';
 
 const router = useRouter();
-
-type BudgetSection = {
-  id: 'income' | 'expense';
-  title: string;
-  subtitle: string;
-  emptyMessage: string;
-  toneClass: string;
-  totalAnnual: number;
-  filterMode: 'all' | 'recurrent' | 'one_off';
-  categoryCount: number;
-  subcategoryCount: number;
-  groups: any[];
-};
 
 type BudgetRow = {
   key: string;
@@ -50,64 +40,55 @@ type BudgetExecutionPreview = {
   tone: BudgetExecutionTone;
   overflow: boolean;
 };
-type BudgetActualExecution = BudgetExecutionPreview & {
-  planned: number;
-  executed: number;
-  deviation: number;
-  completionRatio: number;
-};
 
+// Estado de la vista como objeto único (patrón `:page` de Movimientos/Patrimonio).
+// Los handlers de refresh y el objeto de modales viven fuera del motor y se pasan aparte.
 const props = defineProps<{
-  isMonthlyCloseView: boolean;
-  hasAnyPlannedData: boolean;
-  isLoading: boolean;
-  fiscalYear: number;
-  sections: BudgetSection[];
-  monthLabels: string[];
-  incomeEvolutionMonths: any[];
-  incomeEvolutionBaseMonthly: number;
-  expenseEvolutionMonths: any[];
-  expenseEvolutionBaseMonthly: number;
-  selectedExecutionMonthLabel: string;
-  budgetDetailMonth: number;
-  budgetDetailMonthLabel: string;
-  updateBudgetDetailMonth: (month: number) => void;
-  budgetSectionActualExecution: (sectionId: 'income' | 'expense') => BudgetActualExecution | null;
-  formatMoney: (value: number, decimals?: number) => string;
-  formatCompactMoney: (value: number, decimals?: number) => string;
-  formatPercent: (value: number | null, decimals?: number) => string;
-  formatSignedMoney: (value: number, decimals?: number) => string;
-  isSectionExpanded: (sectionId: 'income' | 'expense') => boolean;
-  toggleSectionExpanded: (sectionId: 'income' | 'expense') => void;
-  budgetCategoryActualExecution: (...args: any[]) => any;
-  budgetSubcategoryActualExecution: (...args: any[]) => any;
-  incomeInvestmentRotationCategoryAdjustment?: (...args: any[]) => number;
-  incomeInvestmentRotationSubcategoryAdjustment?: (...args: any[]) => number;
-  incomeExecutionYtdTotals: {
-    planned: number;
-    executedBudgeted: number;
-    executedUnbudgeted: number;
-    executedTotal: number;
-  };
-  expenseExecutionYtdTotals: {
-    planned: number;
-    executedBudgeted: number;
-    executedUnbudgeted: number;
-    executedTotal: number;
-  };
-  executionPreview: (...args: any[]) => any;
-  updateIncomeViewMode: (mode: 'all' | 'recurrent' | 'one_off') => void;
-  updateExpenseViewMode: (mode: 'all' | 'recurrent' | 'one_off') => void;
+  page: BudgetPageState;
+  annualEntriesPage: BudgetAnnualEntriesPageState;
   onSubmitAnnualIncome?: () => Promise<void> | void;
   onSubmitAnnualExpense?: () => Promise<void> | void;
   onRemoveAnnualIncome?: (entryId: number) => Promise<void> | void;
   onRemoveAnnualExpense?: (entryId: number) => Promise<void> | void;
-  annualEntriesPage: any | null;
-  filteredIncomeEntries: AnnualIncomeEntry[];
-  filteredExpenseEntries: AnnualExpenseEntry[];
-  ownershipFilter: string;
-  selectedOwnershipFilterLabel: string;
 }>();
+
+// Refs/funciones del motor: se desestructuran una vez (referencias estables). Los refs
+// se auto-desenvuelven en template; en script se accede con `.value`.
+const {
+  hasAnyPlannedData,
+  isLoading,
+  fiscalYear,
+  sections,
+  monthLabels,
+  incomeEvolutionMonths,
+  incomeEvolutionBaseMonthly,
+  expenseEvolutionMonths,
+  expenseEvolutionBaseMonthly,
+  budgetDetailMonth,
+  updateBudgetDetailMonth,
+  budgetSectionActualExecution,
+  formatMoney,
+  formatCompactMoney,
+  formatSignedMoney,
+  isSectionExpanded,
+  toggleSectionExpanded,
+  budgetCategoryActualExecution,
+  budgetSubcategoryActualExecution,
+  incomeInvestmentRotationCategoryAdjustment,
+  incomeInvestmentRotationSubcategoryAdjustment,
+  incomeExecutionYtdTotals,
+  expenseExecutionYtdTotals,
+  executionPreview,
+  filteredIncomeEntries,
+  filteredExpenseEntries,
+  ownershipFilter,
+  selectedOwnershipFilterLabel,
+} = props.page;
+
+// Tipos derivados del motor (sin `any`): se infieren del estado desestructurado.
+type BudgetSectionModel = (typeof sections.value)[number];
+type BudgetGroup = BudgetSectionModel['groups'][number];
+type BudgetEvolutionMonth = (typeof incomeEvolutionMonths.value)[number];
 
 const activeContext = ref<ContextPanel | null>(null);
 const groupCollapse = useCollapsibleGroups({ defaultCollapsed: true });
@@ -127,8 +108,8 @@ function goToMovements(categoryKey: string, subcategoryKey?: string): void {
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   };
-  const dateFrom = fmt(new Date(props.fiscalYear, 0, 1));
-  const dateTo = fmt(new Date(props.fiscalYear, props.budgetDetailMonth, 0));
+  const dateFrom = fmt(new Date(fiscalYear.value, 0, 1));
+  const dateTo = fmt(new Date(fiscalYear.value, budgetDetailMonth.value, 0));
   const query: Record<string, string> = {
     tab: 'todos',
     date_from: dateFrom,
@@ -154,12 +135,12 @@ function matchesRowTaxonomy(
 const contextIncomeEntries = computed(() => {
   const context = activeContext.value;
   if (!context || context.sectionId !== 'income') return [];
-  return props.filteredIncomeEntries.filter((entry) => {
+  return filteredIncomeEntries.value.filter((entry) => {
     if (!matchesRowTaxonomy('income', entry, context.row)) return false;
-    if (props.sections.find((section) => section.id === 'income')?.filterMode === 'recurrent') {
+    if (sections.value.find((section) => section.id === 'income')?.filterMode === 'recurrent') {
       return entry.incomeType === 'recurrent';
     }
-    if (props.sections.find((section) => section.id === 'income')?.filterMode === 'one_off') {
+    if (sections.value.find((section) => section.id === 'income')?.filterMode === 'one_off') {
       return entry.incomeType === 'one_off';
     }
     return true;
@@ -169,12 +150,12 @@ const contextIncomeEntries = computed(() => {
 const contextExpenseEntries = computed(() => {
   const context = activeContext.value;
   if (!context || context.sectionId !== 'expense') return [];
-  return props.filteredExpenseEntries.filter((entry) => {
+  return filteredExpenseEntries.value.filter((entry) => {
     if (!matchesRowTaxonomy('expense', entry, context.row)) return false;
-    if (props.sections.find((section) => section.id === 'expense')?.filterMode === 'recurrent') {
+    if (sections.value.find((section) => section.id === 'expense')?.filterMode === 'recurrent') {
       return entry.expenseType === 'recurrent';
     }
-    if (props.sections.find((section) => section.id === 'expense')?.filterMode === 'one_off') {
+    if (sections.value.find((section) => section.id === 'expense')?.filterMode === 'one_off') {
       return entry.expenseType === 'one_off';
     }
     return true;
@@ -206,7 +187,7 @@ type BudgetBarModel = {
 } | null;
 
 function sectionBar(sectionId: 'income' | 'expense'): BudgetBarModel {
-  const exec = props.budgetSectionActualExecution(sectionId);
+  const exec = budgetSectionActualExecution(sectionId);
   if (!exec) return null;
   return {
     tone: exec.tone,
@@ -220,11 +201,8 @@ function sectionBar(sectionId: 'income' | 'expense'): BudgetBarModel {
   };
 }
 
-function categoryBar(
-  sectionId: 'income' | 'expense',
-  group: { categoryKey: string; plannedAnnual: number; rows: any[] },
-): BudgetBarModel {
-  const exec = props.budgetCategoryActualExecution(sectionId, group.categoryKey);
+function categoryBar(sectionId: 'income' | 'expense', group: BudgetGroup): BudgetBarModel {
+  const exec = budgetCategoryActualExecution(sectionId, group.categoryKey);
   if (exec) {
     return {
       tone: exec.tone,
@@ -237,7 +215,7 @@ function categoryBar(
       hasData: true,
     };
   }
-  if (group.plannedAnnual > 0 || group.rows.some((r: any) => r.detectedUnbudgeted)) {
+  if (group.plannedAnnual > 0 || group.rows.some((r) => r.detectedUnbudgeted)) {
     const preview = groupExecutionPreview(sectionId, group);
     return {
       tone: preview.tone,
@@ -254,7 +232,7 @@ function categoryBar(
 }
 
 function subcategoryBar(sectionId: 'income' | 'expense', row: BudgetRow): BudgetBarModel {
-  const exec = props.budgetSubcategoryActualExecution(sectionId, row.key);
+  const exec = budgetSubcategoryActualExecution(sectionId, row.key);
   if (exec) {
     return {
       tone: exec.tone,
@@ -287,15 +265,15 @@ function subcategoryBar(sectionId: 'income' | 'expense', row: BudgetRow): Budget
 // muestran la línea base (placeholder), aprobado como excepción de fidelidad.
 function sectionExecutedSeries(sectionId: 'income' | 'expense'): number[] {
   const months =
-    sectionId === 'income' ? props.incomeEvolutionMonths : props.expenseEvolutionMonths;
-  return months.map((m: any) => Number(m.executed ?? 0));
+    sectionId === 'income' ? incomeEvolutionMonths.value : expenseEvolutionMonths.value;
+  return months.map((m) => Number(m.executed ?? 0));
 }
 
-const sparklineActiveIdx = computed(() => Math.max(0, props.budgetDetailMonth - 1));
+const sparklineActiveIdx = computed(() => Math.max(0, budgetDetailMonth.value - 1));
 
 function openCreateForSection(sectionId: 'income' | 'expense'): void {
   if (!props.annualEntriesPage) return;
-  const owner = props.ownershipFilter === 'all' ? '' : props.selectedOwnershipFilterLabel;
+  const owner = ownershipFilter.value === 'all' ? '' : selectedOwnershipFilterLabel.value;
   if (sectionId === 'income') {
     props.annualEntriesPage.openIncomeModal();
     props.annualEntriesPage.patchAnnualIncomeForm({ owner });
@@ -311,14 +289,14 @@ function openCreateForCategory(sectionId: 'income' | 'expense', categoryKey: str
     props.annualEntriesPage.openIncomeModal();
     props.annualEntriesPage.patchAnnualIncomeForm({
       category: categoryKey,
-      owner: props.ownershipFilter === 'all' ? '' : props.selectedOwnershipFilterLabel,
+      owner: ownershipFilter.value === 'all' ? '' : selectedOwnershipFilterLabel.value,
     });
     return;
   }
   props.annualEntriesPage.openExpenseModal();
   props.annualEntriesPage.patchAnnualExpenseForm({
     category: categoryKey,
-    owner: props.ownershipFilter === 'all' ? '' : props.selectedOwnershipFilterLabel,
+    owner: ownershipFilter.value === 'all' ? '' : selectedOwnershipFilterLabel.value,
   });
 }
 
@@ -329,7 +307,7 @@ function openCreateDirect(sectionId: 'income' | 'expense', row: BudgetRow): void
     props.annualEntriesPage.patchAnnualIncomeForm({
       category: row.categoryKey,
       subcategory: row.subcategoryKey,
-      owner: props.ownershipFilter === 'all' ? '' : props.selectedOwnershipFilterLabel,
+      owner: ownershipFilter.value === 'all' ? '' : selectedOwnershipFilterLabel.value,
     });
     return;
   }
@@ -337,7 +315,7 @@ function openCreateDirect(sectionId: 'income' | 'expense', row: BudgetRow): void
   props.annualEntriesPage.patchAnnualExpenseForm({
     category: row.categoryKey,
     subcategory: row.subcategoryKey,
-    owner: props.ownershipFilter === 'all' ? '' : props.selectedOwnershipFilterLabel,
+    owner: ownershipFilter.value === 'all' ? '' : selectedOwnershipFilterLabel.value,
   });
 }
 
@@ -349,7 +327,7 @@ function isOneOffEntry(entry: RowEntry): boolean {
 function targetMonthLabel(targetMonth?: number | null): string {
   const month = Number(targetMonth ?? 0);
   if (Number.isFinite(month) && month >= 1 && month <= 12) {
-    return props.monthLabels[month - 1] ?? `mes ${month}`;
+    return monthLabels[month - 1] ?? `mes ${month}`;
   }
   return 'mes objetivo';
 }
@@ -370,7 +348,7 @@ function recurringMonthlyPlannedAmount(entry: RowEntry): number {
 
 function entriesForRow(sectionId: 'income' | 'expense', row: BudgetRow): RowEntry[] {
   const source =
-    sectionId === 'income' ? props.filteredIncomeEntries : props.filteredExpenseEntries;
+    sectionId === 'income' ? filteredIncomeEntries.value : filteredExpenseEntries.value;
   return source.filter((entry) => matchesRowTaxonomy(sectionId, entry, row));
 }
 
@@ -383,7 +361,7 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
   const count = entries.length || row.itemsCount;
   const countText = `${count} registro${count === 1 ? '' : 's'}`;
   if (!entries.length) {
-    return `${countText} - ${props.formatMoney(row.plannedAnnual / 12)} EUR/mes previsto`;
+    return `${countText} - ${formatMoney(row.plannedAnnual / 12)} €/mes previsto`;
   }
   const oneOffEntries = entries.filter((entry) => isOneOffEntry(entry));
   if (oneOffEntries.length === entries.length) {
@@ -394,9 +372,9 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
     );
     if (uniqueMonths.size === 1) {
       const month = Array.from(uniqueMonths)[0];
-      return `${countText} - ${props.formatMoney(total)} EUR en ${targetMonthLabel(month)} previsto`;
+      return `${countText} - ${formatMoney(total)} € en ${targetMonthLabel(month)} previsto`;
     }
-    return `${countText} - ${props.formatMoney(total)} EUR puntual previsto`;
+    return `${countText} - ${formatMoney(total)} € puntual previsto`;
   }
   if (oneOffEntries.length > 0) {
     const recurringEntries = entries.filter((entry) => !isOneOffEntry(entry));
@@ -415,10 +393,10 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
     );
     if (recurringMonthly > 0 && uniqueMonths.size === 1) {
       const month = Array.from(uniqueMonths)[0];
-      return `${countText} - ${props.formatMoney(recurringMonthly)} EUR/mes + ${props.formatMoney(oneOffTotal)} EUR en ${targetMonthLabel(month)}`;
+      return `${countText} - ${formatMoney(recurringMonthly)} €/mes + ${formatMoney(oneOffTotal)} € en ${targetMonthLabel(month)}`;
     }
     if (recurringMonthly > 0) {
-      return `${countText} - ${props.formatMoney(recurringMonthly)} EUR/mes + ${props.formatMoney(oneOffTotal)} EUR puntual`;
+      return `${countText} - ${formatMoney(recurringMonthly)} €/mes + ${formatMoney(oneOffTotal)} € puntual`;
     }
   }
   const entriesWithTargetMonth = entries.filter((entry) => entry.targetMonth != null);
@@ -430,28 +408,28 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
     );
     if (uniqueMonths.size === 1) {
       const month = Array.from(uniqueMonths)[0];
-      return `${countText} - ${props.formatMoney(total)} EUR en ${targetMonthLabel(month)} previsto`;
+      return `${countText} - ${formatMoney(total)} € en ${targetMonthLabel(month)} previsto`;
     }
-    return `${countText} - ${props.formatMoney(total)} EUR en meses previstos`;
+    return `${countText} - ${formatMoney(total)} € en meses previstos`;
   }
-  return `${countText} - ${props.formatMoney(total / 12)} EUR/mes previsto`;
+  return `${countText} - ${formatMoney(total / 12)} €/mes previsto`;
 }
 
 function groupExecutionPreview(
   sectionId: 'income' | 'expense',
-  group: { categoryKey: string; plannedAnnual: number },
+  group: BudgetGroup,
 ): BudgetExecutionPreview {
   if ((Number(group.plannedAnnual) || 0) <= 0) {
     return { ratio: 0, widthPct: 0, tone: 'neutral', overflow: false };
   }
-  return props.executionPreview(sectionId, `group:${group.categoryKey}`) as BudgetExecutionPreview;
+  return executionPreview(sectionId, `group:${group.categoryKey}`) as BudgetExecutionPreview;
 }
 
 function sectionYtdTotals(sectionId: 'income' | 'expense') {
-  return sectionId === 'income' ? props.incomeExecutionYtdTotals : props.expenseExecutionYtdTotals;
+  return sectionId === 'income' ? incomeExecutionYtdTotals.value : expenseExecutionYtdTotals.value;
 }
 
-function execBarClass(point: any, sectionId: 'income' | 'expense'): string {
+function execBarClass(point: BudgetEvolutionMonth, sectionId: 'income' | 'expense'): string {
   if (!('hasExecuted' in point) || !point.hasExecuted) return 'bdg-evo-exec-pending';
   const planned = Number(point.planned ?? 0);
   const executed = Number(point.executed ?? 0);
@@ -470,13 +448,13 @@ function execBarClass(point: any, sectionId: 'income' | 'expense'): string {
 
 function visibleEvolutionMonths(sectionId: 'income' | 'expense') {
   const months =
-    sectionId === 'income' ? props.incomeEvolutionMonths : props.expenseEvolutionMonths;
-  const visible = months.slice(0, props.budgetDetailMonth);
+    sectionId === 'income' ? incomeEvolutionMonths.value : expenseEvolutionMonths.value;
+  const visible = months.slice(0, budgetDetailMonth.value);
   const maxVal = Math.max(
     1,
-    ...visible.map((m: any) => Math.max(Number(m.planned ?? 0), Number(m.executed ?? 0))),
+    ...visible.map((m) => Math.max(Number(m.planned ?? 0), Number(m.executed ?? 0))),
   );
-  return visible.map((m: any) => ({
+  return visible.map((m) => ({
     ...m,
     planHeightPct:
       Number(m.planned) > 0 ? Math.max(6, Math.min(100, (Number(m.planned) / maxVal) * 100)) : 0,
@@ -558,15 +536,15 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
       <div class="bdg-coverage">
         <div class="bdg-coverage-kpi">
           <span class="bdg-coverage-label">Ejecutado real (YTD)</span>
-          <strong>{{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR</strong>
+          <strong>{{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} €</strong>
         </div>
         <div class="bdg-coverage-kpi">
           <span class="bdg-coverage-label">Previsto (YTD)</span>
-          <strong>{{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR</strong>
+          <strong>{{ formatMoney(sectionYtdTotals(section.id).planned) }} €</strong>
         </div>
         <div class="bdg-coverage-kpi bdg-coverage-kpi-alert">
           <span class="bdg-coverage-label">Fuera de presupuesto (YTD)</span>
-          <strong>{{ formatMoney(sectionYtdTotals(section.id).executedUnbudgeted) }} EUR</strong>
+          <strong>{{ formatMoney(sectionYtdTotals(section.id).executedUnbudgeted) }} €</strong>
         </div>
       </div>
 
@@ -616,7 +594,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                 "
                 :title="
                   'planned' in point
-                    ? `Previsto ${point.label}: ${formatMoney(Number(point.planned))} EUR`
+                    ? `Previsto ${point.label}: ${formatMoney(Number(point.planned))} €`
                     : undefined
                 "
               />
@@ -628,7 +606,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                 "
                 :title="
                   'executed' in point
-                    ? `Ejecutado ${point.label}: ${formatMoney(Number(point.executed))} EUR`
+                    ? `Ejecutado ${point.label}: ${formatMoney(Number(point.executed))} €`
                     : undefined
                 "
               />
@@ -650,7 +628,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                     : expenseEvolutionBaseMonthly,
                 )
               }}
-              EUR
+              €
             </strong>
           </span>
         </div>
@@ -677,14 +655,14 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
               aria-hidden="true"
             />
             <span class="bdg-richbar-exec">
-              {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR
+              {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} €
             </span>
             <span class="bdg-richbar-plan">
-              {{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR previsto
+              {{ formatMoney(sectionYtdTotals(section.id).planned) }} € previsto
             </span>
           </div>
           <span class="bdg-richbar-dev" :class="`bdg-dev-${sectionBar(section.id)!.tone}`">
-            {{ formatSignedMoney(sectionBar(section.id)!.deviation) }} EUR
+            {{ formatSignedMoney(sectionBar(section.id)!.deviation) }} €
           </span>
         </div>
         <AButton
@@ -757,13 +735,13 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                         0,
                     )
                   }}
-                  EUR
+                  €
                 </p>
               </div>
             </div>
             <div class="bdg-num bdg-num-strong">
               <template v-if="categoryBar(section.id, group)">
-                {{ formatMoney(categoryBar(section.id, group)!.planned) }} EUR
+                {{ formatMoney(categoryBar(section.id, group)!.planned) }} €
               </template>
               <span v-else class="bdg-faint">—</span>
             </div>
@@ -777,7 +755,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
             </div>
             <div class="bdg-num bdg-num-strong">
               <template v-if="categoryBar(section.id, group)?.hasData">
-                {{ formatMoney(categoryBar(section.id, group)!.executed) }} EUR
+                {{ formatMoney(categoryBar(section.id, group)!.executed) }} €
               </template>
               <span v-else class="bdg-faint">—</span>
             </div>
@@ -825,7 +803,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                     <span
                       v-if="row.detectedUnbudgeted"
                       class="pill-unbudgeted"
-                      :title="`${formatMoney(row.detectedExecutedYtd ?? 0)} EUR ejecutado sin presupuestar`"
+                      :title="`${formatMoney(row.detectedExecutedYtd ?? 0)} € ejecutado sin presupuestar`"
                     >
                       +{{ formatMoney(row.detectedExecutedYtd ?? 0) }} fuera
                     </span>
@@ -856,16 +834,16 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                         incomeInvestmentRotationSubcategoryAdjustment?.(section.id, row.key) ?? 0,
                       )
                     }}
-                    EUR
+                    €
                   </p>
                 </div>
               </div>
               <div class="bdg-num bdg-num-muted">
                 <template v-if="subcategoryBar(section.id, row)">
-                  {{ formatMoney(subcategoryBar(section.id, row)!.planned) }} EUR
+                  {{ formatMoney(subcategoryBar(section.id, row)!.planned) }} €
                 </template>
                 <template v-else-if="row.plannedAnnual > 0">
-                  {{ formatMoney(row.plannedAnnual) }} EUR
+                  {{ formatMoney(row.plannedAnnual) }} €
                 </template>
                 <span v-else class="bdg-faint">—</span>
               </div>
@@ -879,10 +857,10 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
               </div>
               <div class="bdg-num">
                 <template v-if="subcategoryBar(section.id, row)?.hasData">
-                  {{ formatMoney(subcategoryBar(section.id, row)!.executed) }} EUR
+                  {{ formatMoney(subcategoryBar(section.id, row)!.executed) }} €
                 </template>
                 <template v-else-if="row.detectedUnbudgeted">
-                  {{ formatMoney(row.detectedExecutedYtd ?? 0) }} EUR
+                  {{ formatMoney(row.detectedExecutedYtd ?? 0) }} €
                 </template>
                 <span v-else class="bdg-faint">—</span>
               </div>
@@ -911,7 +889,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                     </div>
                     <div class="bdg-context-actions">
                       <span class="bdg-context-amount">
-                        {{ formatMoney(entry.amountAnnual) }} {{ entry.currency }}
+                        {{ formatMoney(entry.amountAnnual) }} {{ currencySymbol(entry.currency) }}
                       </span>
                       <div class="bdg-rowmenu">
                         <button type="button" title="Editar" @click="openEditIncome(entry)">
@@ -943,7 +921,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                     </div>
                     <div class="bdg-context-actions">
                       <span class="bdg-context-amount">
-                        {{ formatMoney(entry.amountAnnual) }} {{ entry.currency }}
+                        {{ formatMoney(entry.amountAnnual) }} {{ currencySymbol(entry.currency) }}
                       </span>
                       <div class="bdg-rowmenu">
                         <button type="button" title="Editar" @click="openEditExpense(entry)">
@@ -971,7 +949,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
             <span class="bdg-name bdg-num-strong">Total {{ section.title.toLowerCase() }}</span>
           </div>
           <div class="bdg-num bdg-num-strong">
-            {{ formatMoney(sectionYtdTotals(section.id).planned) }} EUR
+            {{ formatMoney(sectionYtdTotals(section.id).planned) }} €
           </div>
           <BudgetBarCell
             :bar="sectionBar(section.id)"
@@ -985,7 +963,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
             />
           </div>
           <div class="bdg-num bdg-num-strong">
-            {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} EUR
+            {{ formatMoney(sectionYtdTotals(section.id).executedTotal) }} €
           </div>
           <div />
         </div>

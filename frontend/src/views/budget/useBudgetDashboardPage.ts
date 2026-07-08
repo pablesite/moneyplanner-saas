@@ -2739,7 +2739,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
             label: 'Aportes dentro del perímetro',
             amount: 0,
             tone: 'neutral' as const,
-            meta: `${formatMoney(selectedPerimeterInternalExpenseTotal.value)} EUR reclasificados como movimiento interno`,
+            meta: `${formatMoney(selectedPerimeterInternalExpenseTotal.value)} € reclasificados como movimiento interno`,
           },
         ]
       : []),

@@ -1298,7 +1298,7 @@ describe('Budget & Monthly close views', () => {
 
     const toggleSuggestions = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('sugerencias'));
+      .find((candidate) => candidate.text().includes('Sugerencias'));
     await toggleSuggestions?.trigger('click');
     await flushPromises();
 
@@ -1403,7 +1403,7 @@ describe('Budget & Monthly close views', () => {
     expect(mockAccountingApi.getTransactions).not.toHaveBeenCalledWith(
       expect.objectContaining({ month: currentMonth }),
     );
-    expect(wrapper.text()).toContain('3.000,00 EUR');
+    expect(wrapper.text()).toContain('3.000,00 €');
   });
 
   it('shows unbudgeted detected expense rows with contextual CTA', async () => {
@@ -1581,7 +1581,7 @@ describe('Budget & Monthly close views', () => {
     expect(incomeSection.text()).toContain('Ejecutado real (YTD)');
     expect(incomeSection.text()).toContain('Previsto (YTD)');
     expect(incomeSection.text()).toContain('Fuera de presupuesto (YTD)');
-    expect(incomeSection.text()).toContain('45,00 EUR');
+    expect(incomeSection.text()).toContain('45,00 €');
 
     const toggleDetail = incomeSection
       .findAll('button')
@@ -1834,10 +1834,8 @@ describe('Budget & Monthly close views', () => {
     await toggleDetail?.trigger('click');
     await flushPromises();
 
-    expect(incomeSection.text()).toContain(
-      'Cambio neto en depósitos aplicado (YTD): -1.000,00 EUR',
-    );
-    expect(incomeSection.text()).toContain('0,00 EUR');
+    expect(incomeSection.text()).toContain('Cambio neto en depósitos aplicado (YTD): -1.000,00 €');
+    expect(incomeSection.text()).toContain('0,00 €');
   });
 
   it('keeps non-deposit investment sales on the gross income KPI', async () => {
@@ -1981,7 +1979,7 @@ describe('Budget & Monthly close views', () => {
     const incomeSection = wrapper.find('.bdg-sect-income');
     expect(incomeSection.text()).not.toContain('Cambio neto en depósitos aplicado');
     expect(incomeSection.text()).not.toContain('Cambio neto dep. YTD');
-    expect(incomeSection.text()).toContain('1.000,00 EUR');
+    expect(incomeSection.text()).toContain('1.000,00 €');
   });
 
   it('updates income evolution executed bars when switching recurrent/one-off filter', async () => {
@@ -2240,14 +2238,14 @@ describe('Budget & Monthly close views', () => {
       .find((candidate) => candidate.text().includes('Recurrentes'))
       ?.trigger('click');
     await flushPromises();
-    expect(expenseSection().text()).toContain('1.000,00 EUR');
-    expect(selectedMonthExecTitle()).toContain('1.000,00 EUR');
+    expect(expenseSection().text()).toContain('1.000,00 €');
+    expect(selectedMonthExecTitle()).toContain('1.000,00 €');
 
     await filterButtons()
       .find((candidate) => candidate.text().includes('Puntuales'))
       ?.trigger('click');
     await flushPromises();
-    expect(expenseSection().text()).toContain('100,00 EUR');
-    expect(selectedMonthExecTitle()).toContain('100,00 EUR');
+    expect(expenseSection().text()).toContain('100,00 €');
+    expect(selectedMonthExecTitle()).toContain('100,00 €');
   });
 });

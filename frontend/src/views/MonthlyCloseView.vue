@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router';
 import {
   AButton,
   APageHead,
-  AContextBar,
   AMetaPill,
   AStepper,
   ASelect,
@@ -203,45 +202,34 @@ function goToCloseStep(): void {
       </template>
     </APageHead>
 
-    <AContextBar>
-      <label class="context-field">
-        <span class="context-field-label">Mes</span>
-        <ASelect
-          class="filter-ctrl"
-          :model-value="String(selectedExecutionMonth)"
-          :options="monthSelectOptions"
-          @update:model-value="(v) => updateSelectedExecutionMonth(Number(v))"
-        />
-      </label>
+    <section class="mc-read-section" aria-label="Filtros de cierre mensual">
+      <div class="mc-read-controls">
+        <label class="context-field mc-control-chip">
+          <span class="mc-sr-only">Mes</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Mes"
+            :model-value="String(selectedExecutionMonth)"
+            :options="monthSelectOptions"
+            @update:model-value="(v) => updateSelectedExecutionMonth(Number(v))"
+          />
+        </label>
 
-      <div class="context-divider"></div>
+        <label class="context-field mc-control-chip">
+          <span class="mc-sr-only">Titularidad</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Titularidad"
+            :model-value="ownershipFilter"
+            :options="ownershipSelectOptions"
+            :searchable="false"
+            @update:model-value="(v) => selectOwnershipFilterOption(String(v))"
+          />
+        </label>
+      </div>
+    </section>
 
-      <label class="context-field">
-        <span class="context-field-label">Titularidad</span>
-        <ASelect
-          class="filter-ctrl"
-          :model-value="ownershipFilter"
-          :options="ownershipSelectOptions"
-          :searchable="false"
-          @update:model-value="(v) => selectOwnershipFilterOption(String(v))"
-        />
-      </label>
-    </AContextBar>
-
-    <MonthlyCloseHero
-      :month-label="selectedExecutionMonthLabel"
-      :residual="selectedMonthlyCloseResidual"
-      :liquidity-start="selectedLiquidityStartBase"
-      :liquidity-end="selectedLiquidityMonthExecuted"
-      :income-executed="selectedIncomeMonthExecuted"
-      :income-planned="selectedIncomeMonthPlanned"
-      :expense-executed="selectedExpenseMonthExecuted"
-      :expense-planned="selectedExpenseMonthPlanned"
-      :format-money="formatMoney"
-      :format-signed-money="formatSignedMoney"
-    />
-
-    <section class="sect">
+    <section class="sect mc-stepper-section" aria-label="Pasos del cierre mensual">
       <div class="mc-stepper-row">
         <AStepper
           :steps="stepperSteps"
@@ -268,8 +256,21 @@ function goToCloseStep(): void {
       </div>
     </section>
 
-    <div v-if="liquidityExecutionError" class="alert">{{ liquidityExecutionError }}</div>
-    <div v-if="monthlyCloseError" class="alert">{{ monthlyCloseError }}</div>
+    <MonthlyCloseHero
+      :month-label="selectedExecutionMonthLabel"
+      :residual="selectedMonthlyCloseResidual"
+      :liquidity-start="selectedLiquidityStartBase"
+      :liquidity-end="selectedLiquidityMonthExecuted"
+      :income-executed="selectedIncomeMonthExecuted"
+      :income-planned="selectedIncomeMonthPlanned"
+      :expense-executed="selectedExpenseMonthExecuted"
+      :expense-planned="selectedExpenseMonthPlanned"
+      :format-money="formatMoney"
+      :format-signed-money="formatSignedMoney"
+    />
+
+    <AState v-if="liquidityExecutionError" status="error">{{ liquidityExecutionError }}</AState>
+    <AState v-if="monthlyCloseError" status="error">{{ monthlyCloseError }}</AState>
 
     <BudgetMonthlyCloseLiquiditySection
       :is-monthly-close-view="isMonthlyCloseView"

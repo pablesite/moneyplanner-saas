@@ -6,3 +6,7 @@ import { type BudgetDashboardMode, useBudgetDashboardPage } from './useBudgetDas
 export function useBudgetView() {
   return useBudgetDashboardPage(computed<BudgetDashboardMode>(() => 'budget'));
 }
+
+// Estado completo de la vista de Presupuesto, consumido como un único objeto `:page`
+// por los componentes hijos (mismo patrón que `AccountingMovementsPageState`).
+export type BudgetPageState = ReturnType<typeof useBudgetView>;

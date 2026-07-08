@@ -3,11 +3,11 @@ import { computed, ref, watch } from 'vue';
 import {
   AButton,
   APageHead,
-  AContextBar,
   AInfoHint,
   AMetaPill,
   ASelect,
   AState,
+  AToast,
   type ASelectItem,
 } from '@/domains/ui';
 import { BudgetAnnualSection, BudgetHero } from '@/domains/budget';
@@ -16,9 +16,22 @@ import { useBudgetView } from './budget/useBudgetView';
 import { useBudgetAnnualEntriesPage } from './budget/useBudgetAnnualEntriesPage';
 
 // Estado de presentación local (no toca el motor): controla la vista activa.
-type BudgetPresentationView = 'annual' | 'exec' | 'sugg';
+type BudgetPresentationView = 'annual' | 'sugg';
 const presentationView = ref<BudgetPresentationView>('annual');
 
+// Feedback de éxito (patrón AToast de Movimientos/Patrimonio).
+const successMessage = ref<string | null>(null);
+
+// Menú de alta compartido por el botón del head y el FAB móvil (Ingreso/Gasto).
+const createMenuOpen = ref(false);
+function toggleCreateMenu(): void {
+  createMenuOpen.value = !createMenuOpen.value;
+}
+
+// Estado completo de la vista. Se pasa como objeto único `:page` a los hijos pesados
+// (BudgetAnnualSection) y se desestructura solo lo que consume esta vista directamente
+// (head, barra de contexto, hero, sugerencias, feedback y refresh).
+const page = useBudgetView();
 const {
   fiscalYear,
   ownershipFilter,
@@ -28,8 +41,6 @@ const {
   selectedExecutionMonthLabel,
   fiscalYearOptions,
   ownershipOptions,
-  selectedOwnershipFilterLabel,
-  isLoading,
   firstError,
   expenseExecutionError,
   plannedIncomeTotal,
@@ -39,31 +50,11 @@ const {
   expenseExecutionYtdTotals,
   incomeMonthlySummary,
   expenseMonthlySummary,
-  sections,
-  hasAnyPlannedData,
-  incomeEvolutionMonths,
-  incomeEvolutionBaseMonthly,
-  expenseEvolutionMonths,
-  expenseEvolutionBaseMonthly,
-  budgetDetailMonth,
-  budgetDetailMonthLabel,
-  filteredIncomeEntries,
-  filteredExpenseEntries,
   selectFiscalYearOption,
   selectOwnershipFilterOption,
   updateIncomeViewMode,
   updateExpenseViewMode,
-  updateBudgetDetailMonth,
-  budgetSectionActualExecution,
-  budgetCategoryActualExecution,
-  budgetSubcategoryActualExecution,
-  incomeInvestmentRotationCategoryAdjustment,
-  incomeInvestmentRotationSubcategoryAdjustment,
-  executionPreview,
-  isSectionExpanded,
-  toggleSectionExpanded,
   formatMoney,
-  formatCompactMoney,
   formatPercent,
   formatSignedMoney,
   incomeBudgetSuggestions,
@@ -75,7 +66,7 @@ const {
   refreshAccountingExecutionData,
   refreshIncomeExecutionData,
   refreshExpenseExecutionData,
-} = useBudgetView();
+} = page;
 
 const suggestionsCount = computed(
   () => incomeBudgetSuggestions.value.length + expenseBudgetSuggestions.value.length,
@@ -124,26 +115,35 @@ async function refreshAllBudgetData(): Promise<void> {
 
 async function submitAnnualIncomeAndRefresh(): Promise<void> {
   await annualEntriesPage.submitAnnualIncome();
+  // El modal solo se cierra en éxito; si sigue abierto hubo error (visible en el modal).
+  if (annualEntriesPage.showIncomeModal.value) return;
   await refreshAllBudgetData();
+  successMessage.value = 'Partida de ingreso guardada';
 }
 
 async function submitAnnualExpenseAndRefresh(): Promise<void> {
   await annualEntriesPage.submitAnnualExpense();
+  if (annualEntriesPage.showExpenseModal.value) return;
   await refreshAllBudgetData();
+  successMessage.value = 'Partida de gasto guardada';
 }
 
 async function removeAnnualIncomeAndRefresh(entryId: number): Promise<void> {
   await annualEntriesPage.removeAnnualIncome(entryId);
   await refreshAllBudgetData();
+  successMessage.value = 'Partida de ingreso eliminada';
 }
 
 async function removeAnnualExpenseAndRefresh(entryId: number): Promise<void> {
   await annualEntriesPage.removeAnnualExpense(entryId);
   await refreshAllBudgetData();
+  successMessage.value = 'Partida de gasto eliminada';
 }
 
-function openNewEntry(): void {
-  annualEntriesPage.openIncomeModal();
+function openNewEntry(kind: 'income' | 'expense'): void {
+  createMenuOpen.value = false;
+  if (kind === 'income') annualEntriesPage.openIncomeModal();
+  else annualEntriesPage.openExpenseModal();
 }
 
 const fiscalYearSelectOptions = computed<ASelectItem[]>(() =>
@@ -154,6 +154,18 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
   { value: 'all', label: 'Todos' },
   ...ownershipOptions.value.map((option) => ({ value: option.value, label: option.label })),
 ]);
+
+// Tipo de partida como select-chip (multi-opción), coherente con los otros chips de la fila.
+const entryTypeSelectOptions: ASelectItem[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'recurrent', label: 'Recurrentes' },
+  { value: 'one_off', label: 'Puntuales' },
+];
+function setEntryViewMode(mode: string): void {
+  const value = mode as 'all' | 'recurrent' | 'one_off';
+  updateIncomeViewMode(value);
+  updateExpenseViewMode(value);
+}
 </script>
 
 <template>
@@ -163,97 +175,85 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
         <AMetaPill>FY {{ fiscalYear }}</AMetaPill>
         <span class="dot"></span>
         <span>Mes activo · {{ selectedExecutionMonthLabel }}</span>
-        <span class="dot"></span>
-        <span>Base EUR</span>
       </template>
       <template #actions>
-        <AButton variant="ghost" class="bdg-sect-action" @click="presentationView = 'sugg'">
-          {{ suggestionsCount }} sugerencias
-        </AButton>
-        <AButton variant="primary" @click="openNewEntry">+ Nueva partida</AButton>
+        <div class="bdg-create">
+          <div v-if="createMenuOpen" class="bdg-create-menu">
+            <AButton variant="ghost" size="sm" @click="openNewEntry('income')">Ingreso</AButton>
+            <AButton variant="ghost" size="sm" @click="openNewEntry('expense')">Gasto</AButton>
+          </div>
+          <AButton
+            variant="primary"
+            :aria-expanded="createMenuOpen"
+            aria-haspopup="menu"
+            @click="toggleCreateMenu"
+          >
+            + Nueva partida
+          </AButton>
+        </div>
       </template>
     </APageHead>
 
-    <AContextBar>
-      <label class="context-field">
-        <span class="context-field-label">Año fiscal</span>
-        <ASelect
-          class="filter-ctrl"
-          :model-value="String(fiscalYear)"
-          :options="fiscalYearSelectOptions"
-          :searchable="false"
-          @update:model-value="(v) => selectFiscalYearOption(Number(v))"
-        />
-      </label>
-
-      <div class="context-divider"></div>
-
-      <label class="context-field">
-        <span class="context-field-label">Titularidad</span>
-        <ASelect
-          class="filter-ctrl"
-          :model-value="ownershipFilter"
-          :options="ownershipSelectOptions"
-          :searchable="false"
-          @update:model-value="(v) => selectOwnershipFilterOption(String(v))"
-        />
-      </label>
-
-      <div class="context-divider"></div>
-
-      <div class="context-field">
-        <span class="context-field-label">Tipo de partida</span>
-        <div class="seg">
-          <AButton
-            :class="{ on: incomeViewMode === 'all' }"
-            @click="
-              updateIncomeViewMode('all');
-              updateExpenseViewMode('all');
-            "
-          >
-            Todos
-          </AButton>
-          <AButton
-            :class="{ on: incomeViewMode === 'recurrent' }"
-            @click="
-              updateIncomeViewMode('recurrent');
-              updateExpenseViewMode('recurrent');
-            "
-          >
-            Recurrentes
-          </AButton>
-          <AButton
-            :class="{ on: incomeViewMode === 'one_off' }"
-            @click="
-              updateIncomeViewMode('one_off');
-              updateExpenseViewMode('one_off');
-            "
-          >
-            Puntuales
-          </AButton>
-        </div>
+    <nav class="a-budget-tabs-bar" aria-label="Vistas de presupuesto">
+      <div class="tabs">
+        <button
+          class="tab"
+          type="button"
+          :class="{ on: presentationView === 'annual' }"
+          @click="presentationView = 'annual'"
+        >
+          Detalle anual
+        </button>
+        <button
+          class="tab"
+          type="button"
+          :class="{ on: presentationView === 'sugg' }"
+          @click="presentationView = 'sugg'"
+        >
+          Sugerencias<template v-if="suggestionsCount"> · {{ suggestionsCount }}</template>
+        </button>
       </div>
+    </nav>
 
-      <div class="context-divider"></div>
+    <section class="a-budget-read-section" aria-label="Filtros de presupuesto">
+      <div class="a-budget-read-controls">
+        <label class="context-field a-budget-control-chip">
+          <span class="a-budget-sr-only">Año fiscal</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Año fiscal"
+            :model-value="String(fiscalYear)"
+            :options="fiscalYearSelectOptions"
+            :searchable="false"
+            @update:model-value="(v) => selectFiscalYearOption(Number(v))"
+          />
+        </label>
 
-      <div class="context-field">
-        <span class="context-field-label">Vista</span>
-        <div class="seg">
-          <AButton
-            :class="{ on: presentationView === 'annual' }"
-            @click="presentationView = 'annual'"
-          >
-            Anual
-          </AButton>
-          <AButton :class="{ on: presentationView === 'exec' }" @click="presentationView = 'exec'">
-            Ejecución
-          </AButton>
-          <AButton :class="{ on: presentationView === 'sugg' }" @click="presentationView = 'sugg'">
-            Sugerencias
-          </AButton>
-        </div>
+        <label class="context-field a-budget-control-chip">
+          <span class="a-budget-sr-only">Titularidad</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Titularidad"
+            :model-value="ownershipFilter"
+            :options="ownershipSelectOptions"
+            :searchable="false"
+            @update:model-value="(v) => selectOwnershipFilterOption(String(v))"
+          />
+        </label>
+
+        <label class="context-field a-budget-control-chip">
+          <span class="a-budget-sr-only">Tipo de partida</span>
+          <ASelect
+            class="filter-ctrl"
+            aria-label="Tipo de partida"
+            :model-value="incomeViewMode"
+            :options="entryTypeSelectOptions"
+            :searchable="false"
+            @update:model-value="(v) => setEntryViewMode(String(v))"
+          />
+        </label>
       </div>
-    </AContextBar>
+    </section>
 
     <BudgetHero
       :fiscal-year="fiscalYear"
@@ -270,8 +270,8 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
       :format-percent="formatPercent"
     />
 
-    <div v-if="firstError" class="alert mt-3">{{ firstError }}</div>
-    <div v-if="expenseExecutionError" class="alert mt-3">{{ expenseExecutionError }}</div>
+    <AState v-if="firstError" status="error">{{ firstError }}</AState>
+    <AState v-if="expenseExecutionError" status="error">{{ expenseExecutionError }}</AState>
 
     <!-- Divisor de zona: separa el hero del detalle (tabla / sugerencias). -->
     <div class="bdg-zone-divider"></div>
@@ -287,14 +287,9 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
             llegará próximamente.
           </AInfoHint>
         </div>
-        <div class="actions">
-          <AButton variant="ghost" @click="presentationView = 'annual'">
-            ← Volver al detalle
-          </AButton>
-        </div>
       </div>
 
-      <div v-if="budgetSuggestionsError" class="alert">{{ budgetSuggestionsError }}</div>
+      <AState v-if="budgetSuggestionsError" status="error">{{ budgetSuggestionsError }}</AState>
       <AState v-else-if="budgetSuggestionsLoading" status="loading" layout="inline"
         >Calculando sugerencias…</AState
       >
@@ -319,11 +314,11 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
             ejecución
           </div>
           <div class="bdg-num">
-            <div class="bdg-num-muted">{{ formatMoney(row.plannedAnnual) }} EUR</div>
+            <div class="bdg-num-muted">{{ formatMoney(row.plannedAnnual) }} €</div>
             <div class="bdg-pct">previsto</div>
           </div>
           <div class="bdg-num">
-            <div class="bdg-num-strong">{{ formatMoney(row.suggestedAnnual) }} EUR</div>
+            <div class="bdg-num-strong">{{ formatMoney(row.suggestedAnnual) }} €</div>
             <div
               class="bdg-pct"
               :class="
@@ -343,47 +338,33 @@ const ownershipSelectOptions = computed<ASelectItem[]>(() => [
 
     <BudgetAnnualSection
       v-else
-      :is-monthly-close-view="false"
-      :has-any-planned-data="hasAnyPlannedData"
-      :is-loading="isLoading"
-      :fiscal-year="fiscalYear"
-      :sections="sections"
-      :month-labels="monthLabels"
-      :income-evolution-months="incomeEvolutionMonths"
-      :income-evolution-base-monthly="incomeEvolutionBaseMonthly"
-      :expense-evolution-months="expenseEvolutionMonths"
-      :expense-evolution-base-monthly="expenseEvolutionBaseMonthly"
-      :selected-execution-month-label="selectedExecutionMonthLabel"
-      :budget-detail-month="budgetDetailMonth"
-      :budget-detail-month-label="budgetDetailMonthLabel"
-      :update-budget-detail-month="updateBudgetDetailMonth"
-      :budget-section-actual-execution="budgetSectionActualExecution"
-      :format-money="formatMoney"
-      :format-compact-money="formatCompactMoney"
-      :format-percent="formatPercent"
-      :format-signed-money="formatSignedMoney"
-      :is-section-expanded="isSectionExpanded"
-      :toggle-section-expanded="toggleSectionExpanded"
-      :budget-category-actual-execution="budgetCategoryActualExecution"
-      :budget-subcategory-actual-execution="budgetSubcategoryActualExecution"
-      :income-investment-rotation-category-adjustment="incomeInvestmentRotationCategoryAdjustment"
-      :income-investment-rotation-subcategory-adjustment="
-        incomeInvestmentRotationSubcategoryAdjustment
-      "
-      :income-execution-ytd-totals="incomeExecutionYtdTotals"
-      :expense-execution-ytd-totals="expenseExecutionYtdTotals"
-      :execution-preview="executionPreview"
-      :update-income-view-mode="updateIncomeViewMode"
-      :update-expense-view-mode="updateExpenseViewMode"
+      :page="page"
       :annual-entries-page="annualEntriesPage"
       :on-submit-annual-income="submitAnnualIncomeAndRefresh"
       :on-submit-annual-expense="submitAnnualExpenseAndRefresh"
       :on-remove-annual-income="removeAnnualIncomeAndRefresh"
       :on-remove-annual-expense="removeAnnualExpenseAndRefresh"
-      :filtered-income-entries="filteredIncomeEntries"
-      :filtered-expense-entries="filteredExpenseEntries"
-      :ownership-filter="ownershipFilter"
-      :selected-ownership-filter-label="selectedOwnershipFilterLabel"
     />
+
+    <!-- FAB de alta móvil (patrón Patrimonio/Movimientos): menú Ingreso/Gasto. -->
+    <div class="bdg-mobile-create-wrap">
+      <div v-if="createMenuOpen" class="bdg-mobile-create-menu">
+        <AButton variant="ghost" size="sm" @click="openNewEntry('income')">Añadir ingreso</AButton>
+        <AButton variant="ghost" size="sm" @click="openNewEntry('expense')">Añadir gasto</AButton>
+      </div>
+      <AButton
+        class="bdg-mobile-create"
+        variant="primary"
+        :aria-expanded="createMenuOpen"
+        aria-haspopup="menu"
+        aria-label="Nueva partida"
+        @click="toggleCreateMenu"
+      >
+        <span class="bdg-fab-plus" aria-hidden="true">+</span>
+        <span class="bdg-fab-label">Nueva partida</span>
+      </AButton>
+    </div>
+
+    <AToast :open="!!successMessage" @close="successMessage = null">{{ successMessage }}</AToast>
   </div>
 </template>
