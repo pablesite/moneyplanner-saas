@@ -10,7 +10,10 @@ import AccountView from './views/AccountView.vue';
 import PeopleView from './views/PeopleView.vue';
 import AccountingMovementsView from './views/AccountingMovementsView.vue';
 import AccountingAccountsView from './views/AccountingAccountsView.vue';
+import PlanView from './views/PlanView.vue';
+import PlanSetupView from './views/PlanSetupView.vue';
 import { registerAuthGuard } from '@/domains/auth';
+import { canUsePlan } from '@/domains/capabilities';
 
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: LoginView },
@@ -35,6 +38,18 @@ const routes: RouteRecordRaw[] = [
   { path: '/data/ipc', redirect: '/data' },
   { path: '/account', name: 'account', component: AccountView },
   { path: '/people', name: 'people', component: PeopleView },
+  {
+    path: '/plan',
+    name: 'plan',
+    component: PlanView,
+    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+  },
+  {
+    path: '/plan/setup',
+    name: 'plan-setup',
+    component: PlanSetupView,
+    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+  },
   {
     path: '/movimientos',
     redirect: (to) => ({

@@ -26,6 +26,7 @@ export type AppCapabilitiesV2 = {
     familyLogicalModel: boolean;
     coachV1: boolean;
     coachPhase5: boolean;
+    plan: boolean;
     financialSimulatorBasic: boolean;
     localAutomationHooks: boolean;
   };
@@ -95,6 +96,7 @@ export const capabilities: AppCapabilities = {
     familyLogicalModel: true,
     coachV1: true,
     coachPhase5: false,
+    plan: true,
     financialSimulatorBasic: false,
     localAutomationHooks: false,
   },
@@ -153,6 +155,7 @@ export type CapabilityPath =
   | 'core.familyLogicalModel'
   | 'core.coachV1'
   | 'core.coachPhase5'
+  | 'core.plan'
   | 'core.financialSimulatorBasic'
   | 'core.localAutomationHooks'
   | 'familyCloud.memberLogins'
@@ -202,6 +205,10 @@ export function isCloudDeployment(source: AppCapabilities = capabilities): boole
 
 export function canUseGuide(source: AppCapabilities = capabilities): boolean {
   return source.core.coachV1 || source.pro.guide;
+}
+
+export function canUsePlan(source: AppCapabilities = capabilities): boolean {
+  return source.core.plan;
 }
 
 export function canUseFamilyMode(source: AppCapabilities = capabilities): boolean {

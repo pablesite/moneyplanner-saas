@@ -54,11 +54,30 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 | Archivo    | Contenido                                                                                                                                                                                                                           |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts` | Tipos `AppCapabilitiesV2`, `AppCapabilities`. Objeto `capabilities` con la configuración actual. Helpers: `hasCapability()`, `canUseGuide()`, `canUsePeople()`, `canUseOwnership()`, `canUseFamilyMode()`, `canUseAdminInternal()`. |
+| `index.ts` | Tipos `AppCapabilitiesV2`, `AppCapabilities`. Objeto `capabilities` con la configuración actual. Helpers: `hasCapability()`, `canUseGuide()`, `canUsePlan()`, `canUsePeople()`, `canUseOwnership()`, `canUseFamilyMode()`, `canUseAdminInternal()`. |
 
 **Status actual:** `deploymentMode: 'self_hosted'`, `planCode: 'community_core'`. Las capacidades SaaS (`saas.*`) están todas en `false`.
 
 **Regla:** usar siempre los helpers `canUse*()` en lugar de acceder directamente a `capabilities.xxx`. Ver `docs/architecture/capabilities-matrix.md`.
+
+---
+
+### `plan` — Mi Plan
+
+**Origen:** Core-backed
+**Cliente:** `coreApi`
+**Rutas:** `/plan` y `/plan/setup`
+
+| Archivo            | Contenido                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `api.ts`           | Llamadas a Core `/api/plan/*`: plan idempotente, proyección, recálculo, histórico, miembros y overrides de función de activo. |
+| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenario, timeline de patrimonio, estados de carga/error/guardado.      |
+| `composables.ts`   | `usePlan()` para consumir el store desde vistas.                                                                              |
+| `types.ts`         | Tipos TypeScript del contrato Core de Fase 1.                                                                                 |
+| `components/`      | `PlanHero`, `ProductiveCapitalProgress`, `ProjectedDateCard`, `NetWorthTrajectoryChart`, `PlanFoundations`, `DataQualityCard`, `ProjectionAssumptionsDrawer`. |
+| `plan.css`         | Estilos Direction A del dominio, sin tocar `core/frontend/`.                                                                  |
+
+**Requiere:** `canUsePlan()` → `core.plan`. En Fase 2 `/plan` no entra en la navegación primaria para respetar el contrato móvil de cinco tabs; la sustitución de Estado financiero queda para Fase 5.
 
 ---
 

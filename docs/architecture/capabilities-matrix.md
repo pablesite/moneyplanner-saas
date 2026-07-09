@@ -14,7 +14,7 @@ Separar packaging comercial de capacidades t�cnicas.
 3. `core.coachV1` -> gu�a/coach v1 _(sera superseded por `core.plan` al cerrar la fase 5 del modulo `financial-plan`)_
 4. `core.familyLogicalModel` -> base family/ownership
 5. `core.simulatorBasic` -> simulaci�n base (evolutiva)
-6. `core.plan` -> Mi Plan (planificacion financiera: proyeccion, escenarios, recomendaciones). Motor en Core backend (app `plan`); UI del MVP solo en frontend SaaS. Packaging pendiente de decision comercial; durante el desarrollo se expone en el piloto. Specs: `core/docs/tasks/financial-plan/`.
+6. `core.plan` -> Mi Plan (planificacion financiera: proyeccion, escenarios, recomendaciones). Motor en Core backend (app `plan`); UI del MVP solo en frontend SaaS. Packaging pendiente de decision comercial; durante el desarrollo se expone en el piloto mediante `canUsePlan()` en el frontend SaaS. Specs: `core/docs/tasks/financial-plan/`.
 
 ## Capacidades SaaS (infra / extra)
 1. `platform.cloudHosting`
@@ -37,4 +37,3 @@ Separar packaging comercial de capacidades t�cnicas.
 
 ## Nota de migraci�n
 1. Mantener `compat.isPremium`, `compat.people`, `compat.ownership` hasta terminar limpieza de checks legacy.
-
