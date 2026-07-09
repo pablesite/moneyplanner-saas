@@ -101,7 +101,7 @@ services:
     restart: unless-stopped
     command: >
       sh -c "
-      until python -c \"import sys, urllib.request; urllib.request.urlopen('http://core_backend:8000/api/auth/mode/', timeout=5); sys.exit(0)\"; do
+      until python -c \"import sys, urllib.request; req=urllib.request.Request('http://core_backend:8000/api/auth/mode/', headers={'Host': 'localhost'}); urllib.request.urlopen(req, timeout=5); sys.exit(0)\"; do
         sleep 2;
       done;
       while true; do
