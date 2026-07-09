@@ -43,6 +43,20 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 
 ---
 
+## Financial Plan Module Tasks (Mi Plan)
+
+New planning layer on top of net worth / budget / accounting / monthly close. Validated spec and binding design decisions: `core/docs/tasks/financial-plan/README.md` + `spec.md`. Engine lives in Core backend (app `plan`, capability `core.plan`); MVP UI lives only in the SaaS frontend. Phases are sequential.
+
+| Phase | Type  | Status | Description                                                                                                                   | Spec                                                                                      |
+| ----- | ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1     | Agent | ⚪     | Projection engine in Core backend (no UI): `plan` app, deterministic projection, asset classification, data quality, API.     | `core/docs/tasks/financial-plan/phase-1-projection-engine/backend.md`                     |
+| 2     | Agent | ⚪     | Mi Plan UI + onboarding in SaaS frontend: `plan` domain, capability `core.plan`, `/plan` + `/plan/setup`, trajectory chart.   | `docs/tasks/financial-plan/phase-2-mi-plan-ui/frontend.md`                                |
+| 3     | Agent | ⚪     | Scenario lab: backend models/services + UI (`/plan/escenarios`), comparison, accept into plan, markers in Patrimonio.         | `core/docs/tasks/financial-plan/phase-3-scenarios/backend.md` + `docs/tasks/financial-plan/phase-3-scenarios/frontend.md` |
+| 4     | Agent | ⚪     | Foundations + findings/recommendations (guide scoring ported to backend) + monthly close plan-impact, backend + UI.           | `core/docs/tasks/financial-plan/phase-4-findings-close/backend.md` + `docs/tasks/financial-plan/phase-4-findings-close/frontend.md` |
+| 5     | Agent | ⚪     | Mi Plan absorbs Estado financiero: redirect `/estado-financiero` → `/plan`, remove `guide/` domain, capability supersede.     | `docs/tasks/financial-plan/phase-5-absorb-financial-state/frontend.md`                    |
+
+---
+
 ## SaaS Production Deployment Tasks
 
 | Phase | Type  | Status | Description                                                                                                                                                                                                              | Spec                                                                                                                                                         |
