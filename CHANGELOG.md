@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.37.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.36.1...moneyplanner-saas-v0.37.0) (2026-07-09)
+
+
+### Features
+
+* **frontend:** add financial plan UI ([7c9bb48](https://github.com/pablesite/moneyplanner-saas/commit/7c9bb48a5959f5749e340be50426a2b2b0e166db))
+* **plan:** expose core projection engine ([eb13cb3](https://github.com/pablesite/moneyplanner-saas/commit/eb13cb3300f13b79a4ef64559b3791da37d201f5))
+
+
+### Bug Fixes
+
+* **ci:** stabilize trivy scans on main ([27d8202](https://github.com/pablesite/moneyplanner-saas/commit/27d8202c9053a44aca695375b00b05574d19f639))
+* **dev:** use valid host for core sync healthcheck ([ba18584](https://github.com/pablesite/moneyplanner-saas/commit/ba18584b2813e421bcd8f1808def2aae929b81c9))
+* **frontend:** unblock movement save flow with background reloads ([fde05c3](https://github.com/pablesite/moneyplanner-saas/commit/fde05c3420b93712dafd29e8e34f2ebffc80d0d9))
+
 ## [0.36.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.36.0...moneyplanner-saas-v0.36.1) (2026-07-08)
 
 
