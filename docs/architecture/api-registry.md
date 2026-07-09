@@ -85,6 +85,19 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET` | `/api/net-worth/timeline/` | Net worth timeline. Includes monthly `rows` plus `comparisons` baselines (`previous_month_close`, `same_day_previous_month`, `previous_year_close`, `same_day_previous_year`) for summary UIs. |
 | `GET` | `/api/net-worth/liquidity/monthly-summary/` | Monthly liquidity summary; includes cash, cards, and interest-bearing investments. Asset rows include `annual_interest_tae` to identify remunerated liquidity. |
 
+### Financial Plan — `/api/plan/`
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/plan/` | Returns the authenticated user's financial plan. |
+| `POST` | `/api/plan/` | Creates or idempotently updates the user's single financial plan. |
+| `PATCH` | `/api/plan/` | Partially updates the user's financial plan. |
+| `POST` | `/api/plan/recalculate/` | Recalculates the projection and persists an official `ProjectionSnapshot`. Optional `scenario=prudent|expected|favorable`; default `expected`. |
+| `GET` | `/api/plan/projection/` | Calculates a projection without persisting a snapshot. Optional `scenario=prudent|expected|favorable`; default `expected`. |
+| `GET` | `/api/plan/history/` | Returns recent official projection snapshots. |
+| `GET/POST` | `/api/plan/members/` | Lists or creates adult `FamilyMember` rows linked to the plan. MVP allows at most two adults. |
+| `PATCH` | `/api/plan/members/{id}/` | Updates plan-relevant fields on an adult family member owned by the user. |
+| `GET/PUT` | `/api/plan/asset-functions/` | Returns effective asset classification (inferred + override) and updates `PlanAssetFunction` overrides. |
+
 ### Budget — `/api/budget/`
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -150,6 +163,7 @@ These endpoints are canonically defined in `core/docs/`. Frontend domains that c
 | `accounting` | `coreApi` | Accounting movements |
 | `aux-data` | `coreApi` | FX rates, CPI data |
 | `guide` | `coreApi` | Financial-state scopes, scoring |
+| `plan` | `coreApi` | Financial plan, projections, snapshots, members and asset function overrides |
 | `auth` | `api` (SaaS) | Login, me, refresh |
 
 > The `auth` domain uses the SaaS `api` client, not `coreApi`.
@@ -181,5 +195,6 @@ These endpoints are canonically defined in `core/docs/`. Frontend domains that c
 | `/api/net-worth/` | Core backend | Core product API. |
 | `/api/budget/` | Core backend | Core product API. |
 | `/api/accounting/` | Core backend | Core product API. |
+| `/api/plan/` | Core backend | Core financial plan and projection API. |
 | `/api/core/` | Core backend | Auxiliary Core APIs. |
 | `/api/family-members/`, `/api/ownerships/`, `/api/ownership-links/` | Core backend | Membership and ownership APIs. |
