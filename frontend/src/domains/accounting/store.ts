@@ -137,12 +137,15 @@ export const useAccountingStore = defineStore('accounting', {
       }
     },
 
+    // Las mutaciones de movimientos devuelven el control en cuanto el backend
+    // confirma el guardado; cuentas y resumen se refrescan en segundo plano
+    // (refreshAll captura sus propios errores en this.error, nunca lanza).
     async createTransaction(payload: LedgerTransactionWritePayload) {
       this.transactionCreationLoading = true;
       this.error = null;
       try {
         await coreAccountingApi.createTransaction(payload);
-        await this.refreshAll();
+        void this.refreshAll();
       } catch (error: unknown) {
         this.error = toApiErrorMessage(error);
         throw error;
@@ -156,7 +159,7 @@ export const useAccountingStore = defineStore('accounting', {
       this.error = null;
       try {
         await coreAccountingApi.updateTransaction(transactionId, payload);
-        await this.refreshAll();
+        void this.refreshAll();
       } catch (error: unknown) {
         this.error = toApiErrorMessage(error);
         throw error;
@@ -170,7 +173,7 @@ export const useAccountingStore = defineStore('accounting', {
       this.error = null;
       try {
         await coreAccountingApi.deleteTransaction(transactionId);
-        await this.refreshAll();
+        void this.refreshAll();
       } catch (error: unknown) {
         this.error = toApiErrorMessage(error);
         throw error;
@@ -184,7 +187,7 @@ export const useAccountingStore = defineStore('accounting', {
       this.error = null;
       try {
         await coreAccountingApi.createQuickEntry(payload);
-        await this.refreshAll();
+        void this.refreshAll();
       } catch (error: unknown) {
         this.error = toApiErrorMessage(error);
         throw error;

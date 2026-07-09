@@ -34,6 +34,27 @@ import { getMaxDecimals, toNumber } from '@/lib/format';
 import { dateToIso } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 
+type DailyTimelinePreset = '1m' | '3m' | '6m' | '1a' | '5a' | 'all';
+const DEFAULT_DAILY_TIMELINE_PRESET: DailyTimelinePreset = '1a';
+const dailyTimelinePresetPointCount: Record<DailyTimelinePreset, number> = {
+  '1m': 31,
+  '3m': 92,
+  '6m': 183,
+  '1a': 365,
+  '5a': 1825,
+  all: Number.POSITIVE_INFINITY,
+};
+
+// date_from acotado al preset: pedir el historial completo obliga al backend a
+// reconstruir la serie desde la primera transacción en cada recarga.
+function dailyBalanceDateFromForPreset(preset: DailyTimelinePreset, dateTo: string): string {
+  const pointCount = dailyTimelinePresetPointCount[preset];
+  if (!Number.isFinite(pointCount)) return '';
+  const start = new Date(`${dateTo}T00:00:00`);
+  start.setDate(start.getDate() - (pointCount - 1));
+  return dateToIso(start);
+}
+
 type TransactionFormRow = {
   key: number;
   account_id: number | null;
@@ -1810,25 +1831,18 @@ export function useAccountingPage() {
   );
   const today = new Date();
   const dailyBalanceDateTo = ref(dateToIso(today));
-  const dailyBalanceDateFrom = ref('');
+  const dailyBalanceDateFrom = ref(
+    dailyBalanceDateFromForPreset(DEFAULT_DAILY_TIMELINE_PRESET, dateToIso(today)),
+  );
   const dailyBalanceSeriesRows = ref<LedgerDailyBalanceSeriesRow[]>([]);
   const dailyBalanceSeriesLoading = ref(false);
   const dailyBalanceSeriesError = ref<string | null>(null);
   const dailyBalanceSeriesUnit = ref('EUR');
   const dailyBalanceOwnershipFilter = ref<DailyBalanceOwnershipFilter>('all');
-  type DailyTimelinePreset = '1m' | '3m' | '6m' | '1a' | '5a' | 'all';
   const dailyTimelinePresetOptions = ['1m', '3m', '6m', '1a', '5a', 'all'] as const;
-  const selectedDailyTimelinePreset = ref<DailyTimelinePreset>('1a');
+  const selectedDailyTimelinePreset = ref<DailyTimelinePreset>(DEFAULT_DAILY_TIMELINE_PRESET);
   const dailyTimelineCustomWindow = ref<{ start: number; end: number } | null>(null);
   const dailyTimelineExpanded = ref(false);
-  const dailyTimelinePresetPointCount: Record<DailyTimelinePreset, number> = {
-    '1m': 31,
-    '3m': 92,
-    '6m': 183,
-    '1a': 365,
-    '5a': 1825,
-    all: Number.POSITIVE_INFINITY,
-  };
   const dailyBalanceTimelineRows = computed(() => {
     const shortFormatter = new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' });
     return dailyBalanceSeriesRows.value.map((row) => {
@@ -1911,6 +1925,11 @@ export function useAccountingPage() {
   function setDailyTimelinePreset(preset: DailyTimelinePreset): void {
     selectedDailyTimelinePreset.value = preset;
     dailyTimelineCustomWindow.value = null;
+    const nextDateFrom = dailyBalanceDateFromForPreset(preset, dailyBalanceDateTo.value);
+    if (nextDateFrom !== dailyBalanceDateFrom.value) {
+      dailyBalanceDateFrom.value = nextDateFrom;
+      runBackgroundTask(reloadDailyBalanceSeries());
+    }
   }
 
   function updateDailyTimelineWindowStart(rawValue: string): void {
@@ -3500,24 +3519,29 @@ export function useAccountingPage() {
   }
 
   async function reloadMovementPagesAfterMutation(): Promise<void> {
-    const previousTodosLoaded = todosTransactions.value.length;
-    const previousCuentasLoaded = cuentasTransactions.value.length;
-    const hasSelectedAccount = cuentasSelectedAccountId.value != null;
-
-    await fetchTodosPage(true);
-    const desiredTodos = Math.min(previousTodosLoaded, todosTotalCount.value);
-    while (todosHasMore.value && todosTransactions.value.length < desiredTodos) {
-      await fetchTodosPage(false);
+    // Recarga acotada y en paralelo: solo la primera página de cada listado.
+    // Restaurar la profundidad de scroll previa multiplicaba las peticiones
+    // (una por página cargada, en serie) tras cada guardado.
+    const tasks: Promise<void>[] = [fetchTodosPage(true), reloadDailyBalanceSeries()];
+    if (cuentasSelectedAccountId.value != null) {
+      tasks.push(fetchCuentasPage(true));
     }
+    await Promise.all(tasks);
+  }
 
-    if (hasSelectedAccount) {
-      await fetchCuentasPage(true);
-      const desiredCuentas = Math.min(previousCuentasLoaded, cuentasTotalCount.value);
-      while (cuentasHasMore.value && cuentasTransactions.value.length < desiredCuentas) {
-        await fetchCuentasPage(false);
-      }
-    }
-    await reloadDailyBalanceSeries();
+  // El guardado ya se aplicó cuando se invoca: el refresco corre en segundo
+  // plano para no bloquear el cierre del modal, y si falla solo avisa.
+  function reloadMovementPagesInBackground(): void {
+    runBackgroundTask(
+      reloadMovementPagesAfterMutation().catch((error: unknown) => {
+        if (!isCanceledRequestError(error) && !store.error) {
+          store.error =
+            'Movimiento guardado, pero no se pudo refrescar el listado. ' +
+            'Recarga la vista si no ves el cambio.';
+        }
+        throw error;
+      }),
+    );
   }
 
   async function submitTransaction() {
@@ -3538,7 +3562,7 @@ export function useAccountingPage() {
       })),
     };
     await store.createTransaction(payload);
-    await reloadMovementPagesAfterMutation();
+    reloadMovementPagesInBackground();
     resetTransactionForm();
     successMessage.value = 'Movimiento contable registrado.';
   }
@@ -3685,14 +3709,7 @@ export function useAccountingPage() {
       } catch {
         return false;
       }
-      try {
-        await reloadMovementPagesAfterMutation();
-      } catch {
-        if (!store.error) {
-          store.error =
-            'Movimiento guardado, pero no se pudo refrescar el listado. Recarga la vista si no ves el cambio.';
-        }
-      }
+      reloadMovementPagesInBackground();
       resetEditTransactionForm();
       successMessage.value = 'Movimiento multimoneda actualizado (modo compatibilidad legacy).';
       return true;
@@ -3744,15 +3761,7 @@ export function useAccountingPage() {
     } catch {
       return false;
     }
-    try {
-      await reloadMovementPagesAfterMutation();
-    } catch {
-      // El guardado ya se aplico; si falla el refresh no bloqueamos el cierre del modal.
-      if (!store.error) {
-        store.error =
-          'Movimiento guardado, pero no se pudo refrescar el listado. Recarga la vista si no ves el cambio.';
-      }
-    }
+    reloadMovementPagesInBackground();
     resetEditTransactionForm();
     successMessage.value = 'Movimiento contable actualizado.';
     return true;
@@ -3774,7 +3783,7 @@ export function useAccountingPage() {
       return;
     }
     await store.deleteTransaction(transactionId);
-    await reloadMovementPagesAfterMutation();
+    reloadMovementPagesInBackground();
     successMessage.value = 'Movimiento contable eliminado.';
   }
 
@@ -3800,7 +3809,7 @@ export function useAccountingPage() {
       notes: quickEntryForm.notes.trim(),
     };
     await store.createQuickEntry(payload);
-    await reloadMovementPagesAfterMutation();
+    reloadMovementPagesInBackground();
     resetQuickEntryForm();
     successMessage.value = 'Revalorización registrada.';
   }
@@ -3904,7 +3913,7 @@ export function useAccountingPage() {
         : {}),
     };
     await store.createQuickEntry(payload);
-    await reloadMovementPagesAfterMutation();
+    reloadMovementPagesInBackground();
     resetQuickEntryForm();
     successMessage.value = 'Movimiento registrado.';
   }
