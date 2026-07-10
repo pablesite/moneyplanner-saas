@@ -67,10 +67,27 @@
 
 .plan-hero-blockers ul {
   display: grid;
-  gap: 6px;
+  gap: 10px;
   padding-left: 18px;
   margin: 0;
   color: var(--muted);
+}
+
+.plan-hero-blockers li {
+  display: grid;
+  gap: 4px;
+}
+
+.plan-blocker-link {
+  width: fit-content;
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.plan-blocker-link:hover,
+.plan-blocker-link:focus-visible {
+  text-decoration: underline;
 }
 
 .plan-main-grid,

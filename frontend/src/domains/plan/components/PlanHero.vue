@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { RouterLink } from 'vue-router';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
-import type { FinancialPlan, ProjectionResponse } from '@/domains/plan/types';
+import type { FinancialPlan, PlanFoundations, ProjectionResponse } from '@/domains/plan/types';
 import { projectionScenarioLabel } from '@/domains/plan/scenarioTemplates';
 
 const props = defineProps<{
   plan: FinancialPlan;
   projection: ProjectionResponse;
+  foundations?: PlanFoundations | null;
 }>();
 
 const summary = computed(() => props.projection.summary);
@@ -30,14 +32,50 @@ const deltaCopy = computed(() => {
   if (gap.value > 0) return `${gap.value} años después del objetivo`;
   return `${Math.abs(gap.value)} años antes del objetivo`;
 });
-const blockers = computed(() => {
+type Blocker = { text: string; to: string; cta: string };
+
+const blockers = computed<Blocker[]>(() => {
   if (gap.value != null) return [];
-  const items = [];
+  const items: Blocker[] = [];
+  const unknownCapital = Number(props.projection.classification?.unknown_capital ?? 0);
+  const monthlyContribution = Number(props.foundations?.planned_contribution.monthly_amount ?? 0);
+  const committedSurplus = Number(props.foundations?.cash_flow.committed_surplus ?? 0);
   if (productiveCapital.value <= 0) {
-    items.push('No hay capital clasificado como productivo.');
+    items.push({
+      text: 'No hay capital clasificado como productivo: la proyección no tiene base desde la que crecer.',
+      to: '/',
+      cta: 'Revisar patrimonio',
+    });
   }
-  if (!items.length) items.push('Revisa hipótesis y clasificación de activos.');
-  return items;
+  if (unknownCapital > 0) {
+    items.push({
+      text: `Hay ${formatMoney(unknownCapital)} en activos sin clasificar que no cuentan como capital productivo.`,
+      to: '/',
+      cta: 'Revisar activos',
+    });
+  }
+  if (props.foundations && monthlyContribution <= 0) {
+    items.push({
+      text: 'No hay aportación mensual planificada hacia capital productivo.',
+      to: '/presupuesto',
+      cta: 'Planificar aportación',
+    });
+  }
+  if (props.foundations && committedSurplus < 0) {
+    items.push({
+      text: 'El superávit comprometido es negativo: los compromisos consumen más de lo que entra.',
+      to: '/presupuesto',
+      cta: 'Revisar presupuesto',
+    });
+  }
+  if (!items.length) {
+    items.push({
+      text: 'Con los datos actuales el capital no alcanza el objetivo dentro del horizonte proyectado.',
+      to: '/plan/setup',
+      cta: 'Revisar plan e hipótesis',
+    });
+  }
+  return items.slice(0, 3);
 });
 
 const kpis = computed<AKpiItem[]>(() => [
@@ -77,9 +115,12 @@ const kpis = computed<AKpiItem[]>(() => [
         productivo, no patrimonio neto total.
       </p>
       <div v-if="blockers.length" class="plan-hero-blockers">
-        <strong>Qué falta para estimar fecha</strong>
+        <strong>Por qué no hay fecha</strong>
         <ul>
-          <li v-for="item in blockers" :key="item">{{ item }}</li>
+          <li v-for="item in blockers" :key="item.text">
+            <span>{{ item.text }}</span>
+            <RouterLink class="plan-blocker-link" :to="item.to">{{ item.cta }}</RouterLink>
+          </li>
         </ul>
       </div>
     </div>

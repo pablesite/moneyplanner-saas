@@ -104,7 +104,7 @@ onMounted(() => {
         <AButton variant="ghost" @click="assumptionsOpen = true">Hipótesis</AButton>
       </div>
 
-      <PlanHero :plan="plan" :projection="projection" />
+      <PlanHero :plan="plan" :projection="projection" :foundations="store.foundations" />
 
       <div class="plan-main-grid">
         <ProductiveCapitalProgress :projection="projection" />
