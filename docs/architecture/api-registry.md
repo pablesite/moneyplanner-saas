@@ -97,6 +97,13 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET/POST` | `/api/plan/members/` | Lists or creates adult `FamilyMember` rows linked to the plan. MVP allows at most two adults. |
 | `PATCH` | `/api/plan/members/{id}/` | Updates plan-relevant fields on an adult family member owned by the user. |
 | `GET/PUT` | `/api/plan/asset-functions/` | Returns effective asset classification (inferred + override) and updates `PlanAssetFunction` overrides. |
+| `GET/POST` | `/api/plan/scenarios/` | Lists or creates draft financial-plan scenarios with nested scenario events. |
+| `GET/PATCH` | `/api/plan/scenarios/{id}/` | Returns or edits a user-owned draft scenario. Accepted/discarded scenarios are read-only. |
+| `GET` | `/api/plan/scenarios/{id}/comparison/` | Compares the current plan against the simulated scenario. Optional `scenario=prudent|expected|favorable`; default `expected`. Persists only non-official projection snapshots. |
+| `POST` | `/api/plan/scenarios/{id}/accept/` | Accepts a scenario transactionally, creates a `PlanEvent`, creates future budget entries, and recalculates an official projection. |
+| `POST` | `/api/plan/scenarios/{id}/discard/` | Discards a draft scenario without plan, budget, net-worth, or accounting side effects. |
+| `GET` | `/api/plan/events/` | Lists planned/occurred/cancelled plan events for projection markers. |
+| `PATCH` | `/api/plan/events/{id}/` | Updates a user-owned plan event, including actual date/impact when the event has occurred. |
 
 ### Budget — `/api/budget/`
 | Method | Route | Description |
