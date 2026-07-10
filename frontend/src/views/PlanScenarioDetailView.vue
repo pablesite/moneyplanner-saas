@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, AMetaPill, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { ScenarioComparison } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import type { ProjectionScenario } from '@/domains/plan';
@@ -22,6 +22,19 @@ const scenarioOptions: ASelectItem[] = [
   { value: 'expected', label: 'Esperado' },
   { value: 'favorable', label: 'Favorable' },
 ];
+
+function shortDate(value: string): string {
+  return new Date(value).toLocaleDateString('es-ES');
+}
+
+const statusCopy = computed(() => {
+  if (!selected.value) return '';
+  const label = scenarioStatusLabel(selected.value.status);
+  if (selected.value.status === 'accepted' && selected.value.accepted_at) {
+    return `${label} el ${shortDate(selected.value.accepted_at)}`;
+  }
+  return label;
+});
 
 const activeScenario = computed({
   get: () => scenario.value,
@@ -53,7 +66,7 @@ onMounted(async () => {
       :eyebrow="selected ? scenarioTemplateLabel(selected.template_type) : 'Mi Plan'"
     >
       <template #meta>
-        <span v-if="selected">{{ scenarioStatusLabel(selected.status) }}</span>
+        <AMetaPill v-if="selected">{{ statusCopy }}</AMetaPill>
       </template>
       <template #actions>
         <RouterLink class="btn btn-ghost" to="/plan/escenarios">Escenarios</RouterLink>
@@ -82,6 +95,16 @@ onMounted(async () => {
     <AState v-if="error" status="error">{{ error }}</AState>
 
     <template v-if="selected">
+      <section v-if="selected.status === 'discarded'" class="plan-scenario-notice">
+        <p>
+          Este escenario se descartó y no afecta al plan vigente. Se conserva solo como referencia
+          (creado el {{ shortDate(selected.created_at) }}).
+        </p>
+        <RouterLink class="btn btn-ghost btn-sm" to="/plan/escenarios">
+          Crear un escenario nuevo
+        </RouterLink>
+      </section>
+
       <div class="plan-toolbar">
         <label class="context-field">
           <span>Hipótesis</span>

@@ -525,6 +525,31 @@
   color: var(--muted);
 }
 
+.plan-scenario-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.plan-scenario-notice p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.plan-comparison-unchanged {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+
 .plan-comparison-table {
   display: grid;
   gap: 0;
@@ -678,7 +703,8 @@
   .plan-toolbar .context-field,
   .plan-toolbar .btn,
   .plan-setup-actions .btn,
-  .plan-empty-inline .btn {
+  .plan-empty-inline .btn,
+  .plan-scenario-notice .btn {
     width: 100%;
   }
 

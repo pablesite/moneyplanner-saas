@@ -1,11 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { PlanScenarioComparison } from '@/domains/plan/types';
 import { formatMoney } from '@/lib/format';
 
 const props = defineProps<{
   comparison: PlanScenarioComparison;
 }>();
+
+const showTable = ref(false);
+const unchanged = computed(() => {
+  const delta = props.comparison.delta;
+  return (
+    (delta.projected_year == null || delta.projected_year === 0) &&
+    Number(delta.productive_capital) === 0 &&
+    Number(delta.net_worth) === 0 &&
+    Number(delta.target_capital) === 0
+  );
+});
 
 function metricValue(
   key: keyof PlanScenarioComparison['current']['summary'],
@@ -54,7 +65,15 @@ const rows = computed(() => [
       </div>
     </div>
 
-    <div class="plan-comparison-table">
+    <div v-if="unchanged && !showTable" class="plan-comparison-unchanged">
+      <p class="plan-muted">
+        Este escenario no cambia la proyección: los resultados coinciden con el plan vigente.
+      </p>
+      <button class="plan-details-toggle" type="button" @click="showTable = true">
+        Ver comparación completa
+      </button>
+    </div>
+    <div v-else class="plan-comparison-table">
       <div class="plan-comparison-head">
         <span>Métrica</span>
         <span>Vigente</span>
