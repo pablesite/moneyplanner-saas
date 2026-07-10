@@ -624,6 +624,23 @@
   font-weight: 650;
 }
 
+.a-nw-evo-marker line {
+  stroke: color-mix(in oklab, var(--accent) 72%, white);
+  stroke-dasharray: 2 5;
+  stroke-opacity: 0.58;
+}
+
+.a-nw-evo-marker circle {
+  fill: var(--bg);
+  stroke: color-mix(in oklab, var(--accent) 72%, white);
+  stroke-width: 2;
+}
+
+.a-nw-evo-marker.is-occurred line,
+.a-nw-evo-marker.is-occurred circle {
+  stroke: var(--pos);
+}
+
 .a-nw-evo-tip {
   position: absolute;
   pointer-events: none;
@@ -664,6 +681,31 @@
 
 .a-nw-evo-tip-delta.neg {
   color: var(--neg);
+}
+
+.a-nw-evo-tip-markers {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  white-space: normal;
+}
+
+.a-nw-evo-tip-markers > div {
+  display: grid;
+  gap: 1px;
+}
+
+.a-nw-evo-tip-markers span {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.a-nw-evo-tip-markers small {
+  color: var(--muted);
+  font-size: 10px;
 }
 
 /* Estados (.a-nw-state*) migrados a AState (.dir-a .a-state-panel) en design-system.css. */

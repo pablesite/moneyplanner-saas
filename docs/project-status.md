@@ -2,7 +2,7 @@
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 
-**Last review:** 2026-06-23 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
+**Last review:** 2026-07-10 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
 
 ---
 
@@ -51,7 +51,7 @@ New planning layer on top of net worth / budget / accounting / monthly close. Va
 | ----- | ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | 1     | Agent | ✅     | Core backend projection engine delivered: `plan` app, deterministic yearly projection, asset classification, data quality, snapshots and `/api/plan/*`. Scenario-like financial cases are covered as base data; hypothetical scenarios remain Phase 3. | `core/docs/tasks/financial-plan/phase-1-projection-engine/terminados/backend.md` |
 | 2     | Agent | ✅     | Mi Plan UI + onboarding delivered in SaaS frontend: `plan` domain, capability `core.plan`, `/plan` + `/plan/setup`, setup flow, projection dashboard, trajectory chart, data quality and assumptions drawer. Navigation primary remains unchanged until Phase 5. | `docs/tasks/financial-plan/phase-2-mi-plan-ui/terminados/frontend.md` |
-| 3     | Agent | 🔄     | Scenario lab: Core backend delivered (`Scenario`/`ScenarioEvent`/`PlanEvent`, comparison, accept/discard, budget entries); SaaS UI first slice delivered (`/plan/escenarios`, detail comparison, accept/discard, events timeline). Pending: Patrimonio chart markers/tooltips and final end-to-end polish. | `core/docs/tasks/financial-plan/phase-3-scenarios/terminados/backend.md` + `docs/tasks/financial-plan/phase-3-scenarios/frontend.md` |
+| 3     | Agent | ✅     | Scenario lab delivered end-to-end: Core backend (`Scenario`/`ScenarioEvent`/`PlanEvent`, comparison, accept/discard, budget entries), SaaS UI (`/plan/escenarios`, detail comparison, accept/discard, events timeline) and Patrimonio monthly chart markers sourced from accepted plan events. | `core/docs/tasks/financial-plan/phase-3-scenarios/terminados/backend.md` + `docs/tasks/financial-plan/phase-3-scenarios/terminados/frontend.md` |
 | 4     | Agent | ⚪     | Foundations + findings/recommendations (guide scoring ported to backend) + monthly close plan-impact, backend + UI.           | `core/docs/tasks/financial-plan/phase-4-findings-close/backend.md` + `docs/tasks/financial-plan/phase-4-findings-close/frontend.md` |
 | 5     | Agent | ⚪     | Mi Plan absorbs Estado financiero: redirect `/estado-financiero` → `/plan`, remove `guide/` domain, capability supersede.     | `docs/tasks/financial-plan/phase-5-absorb-financial-state/frontend.md`                    |
 

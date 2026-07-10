@@ -10,17 +10,27 @@ export type NetWorthEvolutionPoint = {
   isCurrent?: boolean;
 };
 
+export type NetWorthEvolutionMarker = {
+  id: number | string;
+  date: string;
+  label: string;
+  detail?: string;
+  status?: 'planned' | 'occurred' | 'cancelled';
+};
+
 type Props = {
   points: NetWorthEvolutionPoint[];
   unit: string;
   seriesLabel: string;
   seriesColor?: string;
   yAxisMinZero?: boolean;
+  markers?: NetWorthEvolutionMarker[];
 };
 
 const props = withDefaults(defineProps<Props>(), {
   seriesColor: 'var(--accent)',
   yAxisMinZero: false,
+  markers: () => [],
 });
 
 // Geometría del prototipo (handoff/direction-a.jsx · AInteractiveChart).
@@ -79,6 +89,10 @@ function clampPlotY(y: number): number {
 const pts = computed(() => props.points.map((p, i) => ({ x: px(i), y: py(p.value) })));
 const zeroLineVisible = computed(() => hasNegative.value && hasPositive.value);
 const zeroY = computed(() => py(0));
+
+function monthKey(date: string): string {
+  return /^\d{4}-\d{2}/.test(date) ? date.slice(0, 7) : date;
+}
 
 function zoneColor(value: number): string {
   if (value < 0) return 'var(--neg)';
@@ -161,6 +175,30 @@ function deltaOffset(delta: number): number {
 
 const barWidth = computed(() => ((W - padL - padR) / Math.max(1, props.points.length)) * 0.4);
 
+const positionedMarkers = computed(() => {
+  const indexByMonth = new Map(props.points.map((point, index) => [monthKey(point.date), index]));
+  return props.markers
+    .map((marker) => {
+      const index = indexByMonth.get(monthKey(marker.date));
+      if (index == null) return null;
+      return {
+        ...marker,
+        index,
+        x: px(index),
+        y: py(props.points[index]?.value ?? 0),
+      };
+    })
+    .filter((marker): marker is NonNullable<typeof marker> => marker !== null);
+});
+
+const markersByIndex = computed(() => {
+  const byIndex = new Map<number, typeof positionedMarkers.value>();
+  for (const marker of positionedMarkers.value) {
+    byIndex.set(marker.index, [...(byIndex.get(marker.index) ?? []), marker]);
+  }
+  return byIndex;
+});
+
 // Calcula etiquetas del eje X. En períodos cortos (≤14 puntos) usa el mes; en períodos
 // largos muestra solo la primera aparición de cada año.
 // ≤12 puntos (hasta 1a): todos los meses. >12 puntos (5a, all): una etiqueta por año.
@@ -184,6 +222,9 @@ const hoverPoint = computed(() =>
 );
 const hoverDelta = computed(() =>
   hoverIndex.value != null ? (deltas.value[hoverIndex.value] ?? 0) : 0,
+);
+const hoverMarkers = computed(() =>
+  hoverIndex.value != null ? (markersByIndex.value.get(hoverIndex.value) ?? []) : [],
 );
 const hoverLeftPct = computed(() =>
   hoverIndex.value != null ? (px(hoverIndex.value) / W) * 100 : 0,
@@ -281,6 +322,24 @@ function handleLeave(): void {
         vector-effect="non-scaling-stroke"
       />
 
+      <!-- Marcadores de eventos aceptados del plan: anotaciones, no una segunda serie. -->
+      <g
+        v-for="marker in positionedMarkers"
+        :key="`marker-${marker.id}`"
+        class="a-nw-evo-marker"
+        :class="`is-${marker.status ?? 'planned'}`"
+      >
+        <line
+          :x1="marker.x"
+          :x2="marker.x"
+          :y1="padT"
+          :y2="lineH - padB"
+          vector-effect="non-scaling-stroke"
+        />
+        <circle :cx="marker.x" :cy="marker.y" r="5" vector-effect="non-scaling-stroke" />
+        <title>{{ marker.label }}</title>
+      </g>
+
       <!-- Puntos sutiles -->
       <circle
         v-for="(p, i) in pts"
@@ -366,6 +425,12 @@ function handleLeave(): void {
         :class="hoverDelta >= 0 ? 'pos' : 'neg'"
       >
         {{ hoverDelta >= 0 ? '+' : '' }}{{ formatNumber(hoverDelta, 0) }} {{ displayUnit }}
+      </div>
+      <div v-if="hoverMarkers.length" class="a-nw-evo-tip-markers">
+        <div v-for="marker in hoverMarkers" :key="`tip-marker-${marker.id}`">
+          <span>{{ marker.label }}</span>
+          <small>{{ marker.detail }}</small>
+        </div>
       </div>
     </div>
   </div>

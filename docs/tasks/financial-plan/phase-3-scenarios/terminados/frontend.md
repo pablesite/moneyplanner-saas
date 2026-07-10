@@ -43,16 +43,16 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 Manual: crear escenario "compra de coche" → comparar (cambio de fecha y patrimonio visibles) → incorporar → evento visible en timeline de `/plan` y como marcador en `/patrimonio` con tooltip completo; descartar un borrador no altera nada.
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` — rutas nuevas del dominio `plan`
-- [ ] `docs/project-status.md` — estado de la fase
+- [x] `docs/frontend/domain-map.md` — rutas nuevas del dominio `plan`
+- [x] `docs/project-status.md` — estado de la fase
 
 ## Risks
 - Sobrecarga visual de marcadores en Patrimonio: empezar con densidad mínima y tooltip bajo demanda.
 - No duplicar cálculo de comparación en Vue: la comparación viene calculada del backend.
 
 ## Completion Criteria
-- [ ] AC-E04-001..005 verificados end-to-end desde la UI
-- [ ] All validation commands pass
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits, `feat(frontend): ...`)
+- [x] AC-E04-001..005 cubiertos por la UI implementada (`/plan/escenarios`, comparación, incorporar/descartar, timeline y marcadores en Patrimonio)
+- [x] All validation commands pass
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
+- [x] Commit created (Conventional Commits, `feat(frontend): ...`)

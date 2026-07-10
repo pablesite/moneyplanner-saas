@@ -39,4 +39,28 @@ describe('NetWorthEvolutionChart', () => {
 
     expect(wrapper.find('.a-nw-evo-zero').exists()).toBe(false);
   });
+
+  it('renders plan markers on the matching month', () => {
+    const wrapper = mount(NetWorthEvolutionChart, {
+      props: {
+        ...baseProps,
+        points: [
+          { date: '2028-01-31', shortLabel: 'ene 28', fullLabel: 'enero 2028', value: 120 },
+          { date: '2028-02-29', shortLabel: 'feb 28', fullLabel: 'febrero 2028', value: 180 },
+        ],
+        markers: [
+          {
+            id: 1,
+            date: '2028-02-01',
+            label: 'Comprar coche',
+            detail: 'Vehículo · 1 partida de presupuesto',
+            status: 'planned',
+          },
+        ],
+      },
+    });
+
+    expect(wrapper.find('.a-nw-evo-marker').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Comprar coche');
+  });
 });

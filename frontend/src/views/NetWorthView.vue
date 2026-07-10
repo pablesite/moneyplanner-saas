@@ -13,6 +13,7 @@ import type {
   TimelineComparisons,
 } from '@/domains/net-worth/models';
 import '@/domains/net-worth/net-worth-view.css';
+import { usePlanEvents } from '@/domains/plan';
 import { useNetWorthOwnership } from '@/domains/net-worth/useNetWorthOwnership';
 import {
   useNetWorthPageMetrics,
@@ -87,6 +88,11 @@ const {
   editError,
 } = useNetWorthViewState();
 const annualExpenseStore = useAnnualExpenseStore('core');
+const {
+  markers: planTimelineMarkers,
+  loading: planTimelineMarkersLoading,
+  error: planTimelineMarkersError,
+} = usePlanEvents();
 
 const { itemFormProps } = useNetWorthViewExtensions(store);
 
@@ -1255,6 +1261,16 @@ const activeEvolutionPoints = computed(() => {
   if (timelineScope.value !== 'total') return scopedMonthlyVisiblePoints.value;
   return filterTimelinePointsByCustomDates(timelineChartPoints.value);
 });
+const canShowPlanTimelineMarkers = computed(() => {
+  if (timelineGranularity.value !== 'monthly') return false;
+  if (timelineScope.value !== 'total') return false;
+  if (ownershipFilter.value !== 'all') return false;
+  if (selectedPosition.value || selectedTimelineCategory.value) return false;
+  return true;
+});
+const activeEvolutionMarkers = computed(() =>
+  canShowPlanTimelineMarkers.value ? planTimelineMarkers.value : [],
+);
 const activeEvolutionLoading = computed(
   () =>
     scopedTimelineLoading.value ||
@@ -1724,7 +1740,20 @@ watch(
               :series-label="activeEvolutionLabel"
               :series-color="displayedTimelineSeriesColor"
               :y-axis-min-zero="timelineYAxisStartsAtZero"
+              :markers="activeEvolutionMarkers"
             />
+            <p
+              v-if="canShowPlanTimelineMarkers && planTimelineMarkersLoading"
+              class="a-nw-evolution-caption"
+            >
+              Cargando hitos del plan...
+            </p>
+            <p
+              v-else-if="canShowPlanTimelineMarkers && planTimelineMarkersError"
+              class="a-nw-evolution-caption"
+            >
+              No se pudieron cargar los hitos del plan.
+            </p>
           </div>
         </template>
 
