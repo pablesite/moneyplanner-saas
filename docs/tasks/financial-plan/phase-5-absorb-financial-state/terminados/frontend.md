@@ -20,6 +20,11 @@ Fase final del MVP `financial-plan` (ver `core/docs/tasks/financial-plan/README.
 3. Capabilities: marcar `core.coachV1` como superseded por `core.plan` en `frontend/src/domains/capabilities/index.ts` y en `docs/architecture/capabilities-matrix.md` (regla: matriz primero si cambia packaging).
 4. Verificar que ninguna funcionalidad exclusiva del Estado financiero se pierde: comparar sus diagnósticos con los cimientos + findings visibles en `/plan`; documentar cualquier hueco aceptado.
 
+### Closure notes
+- Los diagnósticos de flujo de caja, fondo de emergencia, deuda, aportación, salud patrimonial y calidad de datos quedan cubiertos por `GET /api/plan/foundations/` y visibles en `/plan`.
+- Las alertas accionables quedan cubiertas por findings/recommendations (`negative_cash_flow`, `emergency_fund_below_target`, `high_cost_debt`, `retirement_target_off_track`, `productive_capital_stagnant`, `data_incomplete`).
+- Hueco aceptado: SaaS deja de mostrar la puntuación A–E por ámbito como pantalla independiente; el valor de decisión se concentra en cimientos, hallazgos y próximas acciones de Mi Plan.
+
 ### Out of scope
 - `core/frontend/` (su guía sigue intacta; el OSS decide su propio camino post-MVP).
 - Cambios de backend.
@@ -38,17 +43,17 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 Manual: `/estado-financiero` y `/estado-financiero/ambitos/3` redirigen a `/plan`; la navegación no muestra la entrada antigua; `/plan` cubre los diagnósticos que antes daba el Estado financiero; build sin referencias muertas.
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` — retirar dominio `guide`, anotar redirect
-- [ ] `docs/architecture/capabilities-matrix.md` — `core.coachV1` superseded por `core.plan`
-- [ ] `docs/project-status.md` — Estado financiero absorbido por Mi Plan
+- [x] `docs/frontend/domain-map.md` — retirar dominio `guide`, anotar redirect
+- [x] `docs/architecture/capabilities-matrix.md` — `core.coachV1` superseded por `core.plan`
+- [x] `docs/project-status.md` — Estado financiero absorbido por Mi Plan
 
 ## Risks
 - Pérdida funcional inadvertida: mitigar con el inventario comparativo del paso 4 antes de borrar.
 - Deep-links guardados por usuarios: cubiertos por los redirects.
 
 ## Completion Criteria
-- [ ] Redirects verificados y dominio retirado sin referencias muertas
-- [ ] All validation commands pass
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits, `feat(frontend)!:` o `refactor(frontend):` según impacto de contrato)
+- [x] Redirects verificados y dominio retirado sin referencias muertas
+- [x] All validation commands pass
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
+- [x] Commit created (Conventional Commits, `feat(frontend)!:` o `refactor(frontend):` según impacto de contrato)

@@ -176,8 +176,7 @@ These endpoints are canonically defined in `core/docs/`. Frontend domains that c
 | `data-input` | `coreApi` | Annual income/expense entries |
 | `accounting` | `coreApi` | Accounting movements |
 | `aux-data` | `coreApi` | FX rates, CPI data |
-| `guide` | `coreApi` | Financial-state scopes, scoring |
-| `plan` | `coreApi` | Financial plan, projections, snapshots, members and asset function overrides |
+| `plan` | `coreApi` | Financial plan, projections, snapshots, members, asset function overrides, scenarios, events, foundations, findings and recommendations |
 | `auth` | `api` (SaaS) | Login, me, refresh |
 
 > The `auth` domain uses the SaaS `api` client, not `coreApi`.

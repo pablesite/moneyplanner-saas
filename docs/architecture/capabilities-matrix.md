@@ -11,10 +11,10 @@ Separar packaging comercial de capacidades t�cnicas.
 ## Baseline Core (sin bloqueo artificial)
 1. `core.netWorth` -> patrimonio
 2. `core.budget` -> budget and monthly closing
-3. `core.coachV1` -> gu�a/coach v1 _(sera superseded por `core.plan` al cerrar la fase 5 del modulo `financial-plan`)_
+3. `core.coachV1` -> guía/coach v1 legacy. Superseded by `core.plan` in SaaS after Financial Plan Phase 5; keep only as historical/compat capability while Core standalone decides its own path.
 4. `core.familyLogicalModel` -> base family/ownership
 5. `core.simulatorBasic` -> simulaci�n base (evolutiva)
-6. `core.plan` -> Mi Plan (planificacion financiera: proyeccion, escenarios, recomendaciones). Motor en Core backend (app `plan`); UI del MVP solo en frontend SaaS. Packaging pendiente de decision comercial; durante el desarrollo se expone en el piloto mediante `canUsePlan()` en el frontend SaaS. Specs: `core/docs/tasks/financial-plan/`.
+6. `core.plan` -> Mi Plan (planificación financiera: proyección, escenarios, cimientos, hallazgos y recomendaciones). Motor en Core backend (app `plan`); UI del MVP solo en frontend SaaS. Desde la fase 5 sustituye la navegación de Estado financiero en SaaS y gobierna el antiguo helper compatible `canUseGuide()`. Packaging pendiente de decisión comercial; durante el desarrollo se expone en el piloto mediante `canUsePlan()` en el frontend SaaS. Specs: `core/docs/tasks/financial-plan/`.
 
 ## Capacidades SaaS (infra / extra)
 1. `platform.cloudHosting`

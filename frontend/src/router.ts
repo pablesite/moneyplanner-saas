@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import NetWorthView from './views/NetWorthView.vue';
 import LoginView from './views/LoginView.vue';
-import HomeView from './views/HomeView.vue';
-import GuidePhaseDetailView from './views/GuidePhaseDetailView.vue';
 import BudgetView from './views/BudgetView.vue';
 import MonthlyCloseView from './views/MonthlyCloseView.vue';
 import AuxDataView from './views/AuxDataView.vue';
@@ -20,17 +18,13 @@ import { canUsePlan } from '@/domains/capabilities';
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/', name: 'root', component: NetWorthView },
-  { path: '/estado-financiero', name: 'home', component: HomeView },
-  { path: '/guia', redirect: '/estado-financiero' },
-  { path: '/inicio', redirect: '/estado-financiero' },
-  {
-    path: '/estado-financiero/ambitos/:phaseId',
-    name: 'guide-phase',
-    component: GuidePhaseDetailView,
-  },
+  { path: '/estado-financiero', redirect: '/plan' },
+  { path: '/guia', redirect: '/plan' },
+  { path: '/inicio', redirect: '/plan' },
+  { path: '/estado-financiero/ambitos/:phaseId', redirect: '/plan' },
   {
     path: '/guia/fases/:phaseId',
-    redirect: (to) => `/estado-financiero/ambitos/${to.params.phaseId}`,
+    redirect: '/plan',
   },
   { path: '/patrimonio', redirect: '/' },
   { path: '/presupuesto', name: 'budget-dashboard', component: BudgetView },
@@ -44,25 +38,25 @@ const routes: RouteRecordRaw[] = [
     path: '/plan',
     name: 'plan',
     component: PlanView,
-    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+    beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {
     path: '/plan/setup',
     name: 'plan-setup',
     component: PlanSetupView,
-    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+    beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {
     path: '/plan/escenarios',
     name: 'plan-scenarios',
     component: PlanScenariosView,
-    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+    beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {
     path: '/plan/escenarios/:id',
     name: 'plan-scenario-detail',
     component: PlanScenarioDetailView,
-    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+    beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {
     path: '/movimientos',

@@ -94,7 +94,7 @@ export const capabilities: AppCapabilities = {
     dataPortabilityBasic: true,
     onboardingAssisted: false,
     familyLogicalModel: true,
-    coachV1: true,
+    coachV1: false,
     coachPhase5: false,
     plan: true,
     financialSimulatorBasic: false,
@@ -113,7 +113,7 @@ export const capabilities: AppCapabilities = {
     smartNotifications: false,
   },
   pro: {
-    guide: true,
+    guide: false,
     guidanceBasic: false,
     goals: false,
     simulatorBasic: false,
@@ -204,7 +204,7 @@ export function isCloudDeployment(source: AppCapabilities = capabilities): boole
 }
 
 export function canUseGuide(source: AppCapabilities = capabilities): boolean {
-  return source.core.coachV1 || source.pro.guide;
+  return canUsePlan(source);
 }
 
 export function canUsePlan(source: AppCapabilities = capabilities): boolean {

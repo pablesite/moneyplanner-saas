@@ -59,13 +59,8 @@ export function useAppShell() {
   }
 
   function isNavItemActive(item: NavItem): boolean {
-    if (item.id === 'home') {
-      return (
-        route.path === '/estado-financiero' ||
-        route.path.startsWith('/estado-financiero/') ||
-        route.path === '/guia' ||
-        route.path.startsWith('/guia/')
-      );
+    if (item.id === 'plan') {
+      return route.path === item.to || route.path.startsWith(`${item.to}/`);
     }
     if (item.id === 'net-worth') {
       return route.path === '/' || route.path === item.to || route.path.startsWith(`${item.to}/`);

@@ -37,6 +37,12 @@ describe('router (core)', () => {
           expect.objectContaining({ path: '/contabilidad' }),
           expect.objectContaining({ path: '/contabilidad/cuentas' }),
           expect.objectContaining({ path: '/movimientos' }),
+          expect.objectContaining({ path: '/estado-financiero', redirect: '/plan' }),
+          expect.objectContaining({
+            path: '/estado-financiero/ambitos/:phaseId',
+            redirect: '/plan',
+          }),
+          expect.objectContaining({ path: '/plan' }),
         ]),
       }),
     );

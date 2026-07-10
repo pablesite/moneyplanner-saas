@@ -9,19 +9,19 @@ export type NavItem = {
 
 export const appShellNavItems: NavItem[] = [
   {
-    id: 'home',
+    id: 'plan',
     iconKey: 'status',
-    label: 'Estado financiero',
-    mobileLabel: 'Estado',
-    hint: 'Diagnóstico por ámbitos',
-    to: '/estado-financiero',
+    label: 'Mi Plan',
+    mobileLabel: 'Plan',
+    hint: 'Proyección, cimientos y próximos pasos',
+    to: '/plan',
   },
   {
     id: 'net-worth',
     iconKey: 'wealth',
     label: 'Patrimonio',
     mobileLabel: 'Patrimonio',
-    hint: 'Estado financiero',
+    hint: 'Activos, pasivos y evolución',
     to: '/patrimonio',
   },
   {

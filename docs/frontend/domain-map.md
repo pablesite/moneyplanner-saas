@@ -54,7 +54,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 | Archivo    | Contenido                                                                                                                                                                                                                           |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts` | Tipos `AppCapabilitiesV2`, `AppCapabilities`. Objeto `capabilities` con la configuración actual. Helpers: `hasCapability()`, `canUseGuide()`, `canUsePlan()`, `canUsePeople()`, `canUseOwnership()`, `canUseFamilyMode()`, `canUseAdminInternal()`. |
+| `index.ts` | Tipos `AppCapabilitiesV2`, `AppCapabilities`. Objeto `capabilities` con la configuración actual. Helpers: `hasCapability()`, `canUsePlan()`, `canUseGuide()` (alias compatible hacia `core.plan`), `canUsePeople()`, `canUseOwnership()`, `canUseFamilyMode()`, `canUseAdminInternal()`. |
 
 **Status actual:** `deploymentMode: 'self_hosted'`, `planCode: 'community_core'`. Las capacidades SaaS (`saas.*`) están todas en `false`.
 
@@ -79,7 +79,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 | `components/`      | `PlanHero`, `ProductiveCapitalProgress`, `ProjectedDateCard`, `NetWorthTrajectoryChart`, `PlanFoundations`, `DataQualityCard`, `ProjectionAssumptionsDrawer`, `PlanEventsTimeline`, `PlanRecommendationCard`, `ScenarioComparison`. |
 | `plan.css`         | Estilos Direction A del dominio, sin tocar `core/frontend/`.                                                                  |
 
-**Requiere:** `canUsePlan()` → `core.plan`. En Fase 2 `/plan` no entra en la navegación primaria para respetar el contrato móvil de cinco tabs; la sustitución de Estado financiero queda para Fase 5.
+**Requiere:** `canUsePlan()` → `core.plan`. Desde Fase 5 ocupa la primera entrada de navegación primaria ("Mi Plan") y absorbe el antiguo Estado financiero del SaaS. Los deep-links `/estado-financiero` y `/estado-financiero/ambitos/:phaseId` redirigen a `/plan`.
 
 ---
 
@@ -182,22 +182,6 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 
 ---
 
-### `guide` — Estado financiero
-
-**Origen:** Core-backed
-**Cliente:** `coreApi`
-**Ruta:** `/estado-financiero` y `/estado-financiero/ambitos/:phaseId`
-
-| Archivo               | Contenido                               |
-| --------------------- | --------------------------------------- |
-| `phases.ts`           | Definición de ámbitos financieros.        |
-| `scoreVisuals.ts`     | Visualizaciones de puntuación por ámbito. |
-| `phaseDiagnostics.ts` | Lógica de diagnóstico del ámbito actual.  |
-
-**Requiere:** `canUseGuide()` → `core.coachV1 || pro.guide`. Actualmente `true`.
-
----
-
 ### `aux-data` — Datos auxiliares (FX, IPC)
 
 **Origen:** Core-backed
@@ -249,15 +233,15 @@ Soporte PWA: registro del service worker, instalación y resiliencia offline del
 | Ruta                   | Nombre                 | Vista                                      | Dominio principal                                                                                                                                                                                                                                                            |
 | ---------------------- | ---------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/login`               | `login`                | `LoginView`                                | `auth`                                                                                                                                                                                                                                                                       |
-| `/estado-financiero`   | `home`                 | `HomeView`                                 | `guide`                                                                                                                                                                                                                                                                      |
-| `/estado-financiero/ambitos/:phaseId` | `guide-phase`          | `GuidePhaseDetailView`                     | `guide`                                                                                                                                                                                                                                                                      |
+| `/estado-financiero`   | —                      | redirect                                   | Alias compatible hacia `/plan`; Estado financiero queda absorbido por Mi Plan. |
+| `/estado-financiero/ambitos/:phaseId` | —                      | redirect                                   | Deep-link compatible hacia `/plan`; los antiguos ámbitos quedan representados por cimientos, hallazgos y recomendaciones. |
 | `/patrimonio`          | `networth`             | `NetWorthView`                             | `net-worth`                                                                                                                                                                                                                                                                  |
 | `/presupuesto`         | `budget-dashboard`     | `BudgetView`                               | Vista Direction A independiente sobre `useBudgetView` (fija mode `budget` del motor compartido `useBudgetDashboardPage`). Hero + context-bar + tab Sugerencias + tabla `bdg-row` con gestión anual contextual, modales de líneas, cobertura YTD y CTA para subcategorías detectadas |
 | `/cierre-mensual`      | `monthly-close`        | `MonthlyCloseView`                         | Vista Direction A independiente sobre `useMonthlyCloseView` (fija mode `monthly-close`). `APageHead` + `AStepper` (4 pasos) + `MonthlyCloseHero` + secciones Liquidez/Ingresos/Gastos/Resultado                                                                              |
 | `/data`                | `aux-data`             | `AuxDataView`                              | `aux-data`                                                                                                                                                                                                                                                                   |
 | `/account`             | `account`              | `AccountView`                              | `auth` + `admin` para `saas_admin` + portable data para `saas_member`                                                                                                                                                                                                        |
 | `/people`              | `people`               | `PeopleView`                               | `people`                                                                                                                                                                                                                                                                     |
-| `/plan`                | `plan`                 | `PlanView`                                 | Mi Plan: dashboard de proyección Core, trayectoria, calidad de datos, cimientos placeholder y acontecimientos incorporados. |
+| `/plan`                | `plan`                 | `PlanView`                                 | Mi Plan: dashboard de proyección Core, trayectoria, calidad de datos, cimientos reales, hallazgos/recomendaciones y acontecimientos incorporados. |
 | `/plan/setup`          | `plan-setup`           | `PlanSetupView`                            | Onboarding/edición del plan financiero. |
 | `/plan/escenarios`     | `plan-scenarios`       | `PlanScenariosView`                        | Laboratorio de escenarios: lista y creación de simulaciones. |
 | `/plan/escenarios/:id` | `plan-scenario-detail` | `PlanScenarioDetailView`                   | Detalle, comparación plan vigente vs simulado e incorporación/descartado. |

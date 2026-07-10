@@ -48,17 +48,15 @@ patrón de referencia para el resto.
 
 Reemplazar reimplementaciones locales por los helpers compartidos. Detectado:
 
-- [x] `domains/guide/composables.ts` — `toNumber`, `formatNumber`, `formatPct`
-      locales (líneas ~52, ~609–640) → `@/lib/format`.
-- [x] `domains/guide/phaseDiagnostics.ts` — `toNumber` local → `@/lib/format`.
+- [x] `domains/guide/*` — retirado del frontend SaaS en Financial Plan Phase 5;
+      los diagnósticos equivalentes viven en `plan`/backend.
 - [x] `views/budget/useBudgetDashboardPage.ts` — `formatNumber`/`formatMoney`
       locales → `@/lib/format`.
-- [x] **Añadir `formatPct` a `@/lib/format`** (hoy vive local en `NetWorthView`
-      y `guide`); migrar ambos a la versión compartida.
+- [x] **Añadir `formatPct` a `@/lib/format`** y migrar consumidores vivos.
 - [x] Barrido final: `grep` de `function (toNumber|formatNumber|formatMoney|
       formatPct|normalizeNumberInput)` fuera de `lib/` debe quedar ~vacío.
 
-**DoD**: sin definiciones locales equivalentes; tests de `guide`/`budget` verdes.
+**DoD**: sin definiciones locales equivalentes; tests de dominios vivos verdes.
 
 ## B. Adopción y crecimiento de la librería UI
 
@@ -149,9 +147,8 @@ esfuerzo/impacto (ajustable):
       formatters locales; buen primer candidato.
 - [ ] **Cierre mensual** (`MonthlyCloseView`, `monthly-close.css`) — bloques
       colapsables y KPI bands reutilizables.
-- [ ] **Estado / Home** (`HomeView`) — vista de resumen, revisar reuso de hero/
-      KPI/sparkline.
-- [ ] **Guía** (`domains/guide`, `guide-*.css`) — formatters locales (sección A).
+- [x] **Estado / Home / Guía** — retirado del SaaS en Financial Plan Phase 5;
+      `/estado-financiero` redirige a `/plan`.
 - [ ] **Personas** (`domains/people`) — modales (sección D).
 - [ ] **Datos auxiliares** (`domains/aux-data`).
 

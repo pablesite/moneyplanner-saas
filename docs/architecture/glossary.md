@@ -99,7 +99,7 @@ Core module for recording daily movements. Added in phase 3. Frontend in domain 
 Core module for entering annual income and expenses. Frontend in domain `data-input`.
 
 **Financial State / Coach v1**
-Financial scoring module by scopes. Frontend in internal domain `guide`, user-facing routes `/estado-financiero` y `/estado-financiero/ambitos/:phaseId`.
+Legacy financial scoring module by scopes. In SaaS it was absorbed by Mi Plan in Financial Plan Phase 5: legacy routes `/estado-financiero` and `/estado-financiero/ambitos/:phaseId` now redirect to `/plan`, where Core-backed foundations, findings and recommendations carry the diagnostic.
 
 **Family Logical Model**
 Core model that represents the user's family structure: `FamilyMember` (people) and ownership (ownership of assets/liabilities). Base for the `people` module in frontend.

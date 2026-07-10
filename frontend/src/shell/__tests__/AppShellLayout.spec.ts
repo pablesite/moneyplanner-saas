@@ -62,7 +62,7 @@ describe('AppShellLayout', () => {
     expect(wrapper.find('.ui-shell-footer').exists()).toBe(false);
     expect(tabs).toHaveLength(5);
     expect(tabs.map((tab) => tab.text())).toEqual([
-      'Estado',
+      'Plan',
       'Patrimonio',
       'Presupuesto',
       'Movimientos',
