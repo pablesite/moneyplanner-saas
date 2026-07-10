@@ -572,6 +572,25 @@
   gap: 14px;
 }
 
+.plan-form-group {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0 0 4px;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.plan-form-group legend {
+  float: left;
+  width: 100%;
+  padding: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .plan-form-grid label {
   display: grid;
   gap: 6px;

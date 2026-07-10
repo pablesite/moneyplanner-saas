@@ -47,6 +47,29 @@ const selectedTemplate = computed(
   () => scenarioTemplates.find((item) => item.value === form.template) ?? scenarioTemplates[0]!,
 );
 
+const show = computed(() => {
+  const fields = new Set(selectedTemplate.value.fields);
+  return {
+    endDate: fields.has('endDate'),
+    initialOutflow: fields.has('initialOutflow'),
+    newAsset: fields.has('newAsset'),
+    monthlyExpense: fields.has('monthlyExpense'),
+    monthlyIncome: fields.has('monthlyIncome'),
+    monthlyContribution: fields.has('monthlyContribution'),
+    debt: fields.has('debt'),
+    initialGroup: fields.has('initialOutflow') || fields.has('newAsset'),
+    monthlyGroup:
+      fields.has('monthlyExpense') ||
+      fields.has('monthlyIncome') ||
+      fields.has('monthlyContribution'),
+  };
+});
+
+const incomeAsReduction = computed(() => selectedTemplate.value.incomeAsReduction === true);
+const incomeLabel = computed(() =>
+  incomeAsReduction.value ? 'Reducción de ingreso mensual' : 'Cambio de ingreso mensual',
+);
+
 function hydrateTemplate(template: PlanScenarioTemplate): void {
   const event = defaultScenarioEvent(template);
   form.name = scenarioTemplateLabel(template);
@@ -73,6 +96,13 @@ function nullableMoney(value: string): string | null {
   return money(value);
 }
 
+function signedIncomeDelta(): string {
+  const value = money(form.monthlyIncomeDelta);
+  if (!incomeAsReduction.value) return value;
+  const parsed = Number(value);
+  return (parsed > 0 ? -parsed : parsed).toFixed(2);
+}
+
 function payload(): PlanScenarioPayload {
   return {
     name: form.name.trim() || scenarioTemplateLabel(form.template),
@@ -83,7 +113,7 @@ function payload(): PlanScenarioPayload {
         end_date: form.endDate || null,
         initial_outflow: money(form.initialOutflow),
         monthly_expense_delta: money(form.monthlyExpenseDelta),
-        monthly_income_delta: money(form.monthlyIncomeDelta),
+        monthly_income_delta: signedIncomeDelta(),
         monthly_contribution_delta: money(form.monthlyContributionDelta),
         new_asset_value: money(form.newAssetValue),
         new_asset_type: form.newAssetType,
@@ -156,88 +186,119 @@ onMounted(async () => {
             <span>Nombre</span>
             <input v-model="form.name" class="input" type="text" />
           </label>
-          <label>
-            <span>Fecha inicio</span>
-            <input v-model="form.startDate" class="input" type="date" required />
-          </label>
-          <label>
-            <span>Fecha fin</span>
-            <input v-model="form.endDate" class="input" type="date" />
-          </label>
-          <label>
-            <span>Pago inicial</span>
-            <input v-model="form.initialOutflow" class="input" type="number" min="0" step="0.01" />
-          </label>
-          <label>
-            <span>Valor activo nuevo</span>
-            <input v-model="form.newAssetValue" class="input" type="number" min="0" step="0.01" />
-          </label>
-          <label>
-            <span>Clasificación activo</span>
-            <ASelect
-              v-model="form.newAssetType"
-              :options="assetOptions"
-              class="filter-ctrl"
-              :searchable="false"
-            />
-          </label>
-          <label>
-            <span>Gasto mensual</span>
-            <input
-              v-model="form.monthlyExpenseDelta"
-              class="input"
-              type="number"
-              min="0"
-              step="0.01"
-            />
-          </label>
-          <label>
-            <span>Ingreso mensual adicional</span>
-            <input
-              v-model="form.monthlyIncomeDelta"
-              class="input"
-              type="number"
-              min="0"
-              step="0.01"
-            />
-          </label>
-          <label>
-            <span>Aportación mensual adicional</span>
-            <input
-              v-model="form.monthlyContributionDelta"
-              class="input"
-              type="number"
-              min="0"
-              step="0.01"
-            />
-          </label>
-          <label>
-            <span>Deuda nueva</span>
-            <input
-              v-model="form.newDebtPrincipal"
-              class="input"
-              type="number"
-              min="0"
-              step="0.01"
-            />
-          </label>
-          <label>
-            <span>Interés anual deuda</span>
-            <input
-              v-model="form.newDebtInterestRate"
-              class="input"
-              type="number"
-              min="0"
-              max="1"
-              step="0.0001"
-              placeholder="0.0700"
-            />
-          </label>
-          <label>
-            <span>Plazo deuda (meses)</span>
-            <input v-model="form.newDebtTermMonths" class="input" type="number" min="1" />
-          </label>
         </div>
+
+        <fieldset class="plan-form-group">
+          <legend>Cuándo</legend>
+          <div class="plan-form-grid">
+            <label>
+              <span>Fecha inicio</span>
+              <input v-model="form.startDate" class="input" type="date" required />
+            </label>
+            <label v-if="show.endDate">
+              <span>Fecha fin</span>
+              <input v-model="form.endDate" class="input" type="date" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset v-if="show.initialGroup" class="plan-form-group">
+          <legend>Impacto inicial</legend>
+          <div class="plan-form-grid">
+            <label v-if="show.initialOutflow">
+              <span>Pago inicial</span>
+              <input
+                v-model="form.initialOutflow"
+                class="input"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </label>
+            <label v-if="show.newAsset">
+              <span>Valor activo nuevo</span>
+              <input v-model="form.newAssetValue" class="input" type="number" min="0" step="0.01" />
+            </label>
+            <label v-if="show.newAsset">
+              <span>Clasificación activo</span>
+              <ASelect
+                v-model="form.newAssetType"
+                :options="assetOptions"
+                class="filter-ctrl"
+                :searchable="false"
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset v-if="show.monthlyGroup" class="plan-form-group">
+          <legend>Cambios mensuales</legend>
+          <div class="plan-form-grid">
+            <label v-if="show.monthlyExpense">
+              <span>Gasto mensual adicional</span>
+              <input
+                v-model="form.monthlyExpenseDelta"
+                class="input"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </label>
+            <label v-if="show.monthlyIncome">
+              <span>{{ incomeLabel }}</span>
+              <input
+                v-model="form.monthlyIncomeDelta"
+                class="input"
+                type="number"
+                :min="incomeAsReduction ? 0 : undefined"
+                step="0.01"
+              />
+            </label>
+            <label v-if="show.monthlyContribution">
+              <span>Aportación mensual adicional</span>
+              <input
+                v-model="form.monthlyContributionDelta"
+                class="input"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset v-if="show.debt" class="plan-form-group">
+          <legend>Financiación</legend>
+          <div class="plan-form-grid">
+            <label>
+              <span>Deuda nueva</span>
+              <input
+                v-model="form.newDebtPrincipal"
+                class="input"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </label>
+            <label>
+              <span>Interés anual deuda</span>
+              <input
+                v-model="form.newDebtInterestRate"
+                class="input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.0001"
+                placeholder="0.0700"
+              />
+            </label>
+            <label>
+              <span>Plazo deuda (meses)</span>
+              <input v-model="form.newDebtTermMonths" class="input" type="number" min="1" />
+            </label>
+          </div>
+        </fieldset>
+
         <div class="plan-setup-actions">
           <span class="plan-muted">Al incorporar, solo se actualiza el presupuesto futuro.</span>
           <AButton variant="primary" type="submit" :loading="store.saving">Crear escenario</AButton>

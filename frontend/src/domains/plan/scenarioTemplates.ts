@@ -7,11 +7,22 @@ import type {
   ScenarioEventPayload,
 } from '@/domains/plan/types';
 
+export type ScenarioFieldKey =
+  | 'endDate'
+  | 'initialOutflow'
+  | 'newAsset'
+  | 'monthlyExpense'
+  | 'monthlyIncome'
+  | 'monthlyContribution'
+  | 'debt';
+
 export type ScenarioTemplateDefinition = {
   value: PlanScenarioTemplate;
   label: string;
   description: string;
   assetFunction: PlanAssetFunction | null;
+  fields: ScenarioFieldKey[];
+  incomeAsReduction?: boolean;
   budgetDefaults: Pick<
     PlanBudgetLinePayload,
     'kind' | 'category' | 'subcategory' | 'cashflow_role'
@@ -24,6 +35,7 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Coche',
     description: 'Compra de vehículo con entrada, financiación y gasto de uso.',
     assetFunction: 'family_use',
+    fields: ['initialOutflow', 'newAsset', 'monthlyExpense', 'debt'],
     budgetDefaults: {
       kind: 'expense',
       category: 'tangible_assets',
@@ -36,6 +48,7 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Vivienda',
     description: 'Compra de inmueble o segunda vivienda con posible financiación.',
     assetFunction: 'productive',
+    fields: ['initialOutflow', 'newAsset', 'monthlyExpense', 'debt'],
     budgetDefaults: {
       kind: 'expense',
       category: 'real_estate_assets',
@@ -48,6 +61,7 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Reforma',
     description: 'Desembolso de mejora o reforma con impacto temporal.',
     assetFunction: 'family_use',
+    fields: ['endDate', 'initialOutflow', 'newAsset', 'monthlyExpense', 'debt'],
     budgetDefaults: {
       kind: 'expense',
       category: 'real_estate_assets',
@@ -60,6 +74,7 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Estudios',
     description: 'Formación con gasto temporal o cambio de ingresos.',
     assetFunction: null,
+    fields: ['endDate', 'initialOutflow', 'monthlyExpense', 'monthlyIncome'],
     budgetDefaults: {
       kind: 'expense',
       category: 'consumption_expenses',
@@ -72,6 +87,8 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Excedencia',
     description: 'Pausa laboral con reducción de ingresos durante un periodo.',
     assetFunction: null,
+    fields: ['endDate', 'monthlyExpense', 'monthlyIncome'],
+    incomeAsReduction: true,
     budgetDefaults: {
       kind: 'expense',
       category: 'consumption_expenses',
@@ -84,6 +101,8 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Reducción jornada',
     description: 'Menos ingresos laborales de forma temporal o indefinida.',
     assetFunction: null,
+    fields: ['endDate', 'monthlyIncome'],
+    incomeAsReduction: true,
     budgetDefaults: {
       kind: 'expense',
       category: 'consumption_expenses',
@@ -96,6 +115,14 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Negocio',
     description: 'Inversión o cambio recurrente asociado a actividad propia.',
     assetFunction: 'productive',
+    fields: [
+      'initialOutflow',
+      'newAsset',
+      'monthlyExpense',
+      'monthlyIncome',
+      'monthlyContribution',
+      'debt',
+    ],
     budgetDefaults: {
       kind: 'expense',
       category: 'financial_investments',
@@ -108,6 +135,7 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Amortizar deuda',
     description: 'Cancelación o reducción de una deuda prevista.',
     assetFunction: null,
+    fields: ['initialOutflow', 'monthlyContribution'],
     budgetDefaults: {
       kind: 'expense',
       category: 'consumption_expenses',
@@ -120,6 +148,15 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
     label: 'Genérico',
     description: 'Decisión financiera sin plantilla específica.',
     assetFunction: 'unknown',
+    fields: [
+      'endDate',
+      'initialOutflow',
+      'newAsset',
+      'monthlyExpense',
+      'monthlyIncome',
+      'monthlyContribution',
+      'debt',
+    ],
     budgetDefaults: {
       kind: 'expense',
       category: 'consumption_expenses',
