@@ -15,10 +15,23 @@ const emit = defineEmits<{
 }>();
 
 const expanded = ref(false);
+const confirming = ref<'accept' | 'dismiss' | null>(null);
 const title = computed(() => props.recommendation.action_json.title ?? 'Siguiente acción');
 const summary = computed(() => props.recommendation.action_json.summary ?? 'Acción recomendada');
 const reason = computed(() => props.recommendation.action_json.reason ?? null);
 const rule = computed(() => props.recommendation.action_json.rule ?? props.recommendation.code);
+
+const confirmCopy = computed(() =>
+  confirming.value === 'accept'
+    ? 'Se marcará como aceptada y dejará de aparecer aquí. No cambia el plan por sí sola: usa Simular si quieres ver su impacto antes.'
+    : 'Se descartará y dejará de aparecer en Mi Plan.',
+);
+
+function confirmAction(): void {
+  if (confirming.value === 'accept') emit('accept', props.recommendation.id);
+  if (confirming.value === 'dismiss') emit('dismiss', props.recommendation.id);
+  confirming.value = null;
+}
 </script>
 
 <template>
@@ -28,16 +41,21 @@ const rule = computed(() => props.recommendation.action_json.rule ?? props.recom
       <h3>{{ title }}</h3>
       <p>{{ summary }}</p>
     </div>
-    <div class="plan-recommendation-actions">
+    <div v-if="confirming" class="plan-recommendation-confirm">
+      <p>{{ confirmCopy }}</p>
+      <div class="plan-recommendation-actions">
+        <AButton size="sm" variant="primary" @click="confirmAction">
+          {{ confirming === 'accept' ? 'Confirmar aceptación' : 'Confirmar descarte' }}
+        </AButton>
+        <AButton size="sm" variant="ghost" @click="confirming = null">Cancelar</AButton>
+      </div>
+    </div>
+    <div v-else class="plan-recommendation-actions">
       <AButton size="sm" variant="primary" @click="emit('simulate', recommendation.id)">
         Simular
       </AButton>
-      <AButton size="sm" variant="ghost" @click="emit('accept', recommendation.id)">
-        Aceptar
-      </AButton>
-      <AButton size="sm" variant="ghost" @click="emit('dismiss', recommendation.id)">
-        Descartar
-      </AButton>
+      <AButton size="sm" variant="ghost" @click="confirming = 'accept'">Aceptar</AButton>
+      <AButton size="sm" variant="ghost" @click="confirming = 'dismiss'">Descartar</AButton>
     </div>
     <button class="plan-details-toggle" type="button" @click="expanded = !expanded">
       {{ expanded ? 'Ocultar explicación' : 'Ver explicación' }}

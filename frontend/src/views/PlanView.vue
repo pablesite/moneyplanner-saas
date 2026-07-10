@@ -106,18 +106,6 @@ onMounted(() => {
 
       <PlanHero :plan="plan" :projection="projection" :foundations="store.foundations" />
 
-      <div class="plan-main-grid">
-        <ProductiveCapitalProgress :projection="projection" />
-        <ProjectedDateCard :projection="projection" />
-      </div>
-
-      <NetWorthTrajectoryChart :timeline="netWorthTimeline" :projection="projection" />
-
-      <div class="plan-side-grid">
-        <DataQualityCard :projection="projection" />
-        <PlanFoundations :foundations="store.foundations" />
-      </div>
-
       <section v-if="visibleRecommendations.length" class="sect plan-recommendations">
         <div class="sect-head">
           <div>
@@ -140,6 +128,18 @@ onMounted(() => {
           />
         </div>
       </section>
+
+      <div class="plan-main-grid">
+        <ProductiveCapitalProgress :projection="projection" />
+        <ProjectedDateCard :projection="projection" />
+      </div>
+
+      <NetWorthTrajectoryChart :timeline="netWorthTimeline" :projection="projection" />
+
+      <div class="plan-side-grid">
+        <DataQualityCard :projection="projection" />
+        <PlanFoundations :foundations="store.foundations" />
+      </div>
 
       <PlanEventsTimeline :events="store.events" />
 
