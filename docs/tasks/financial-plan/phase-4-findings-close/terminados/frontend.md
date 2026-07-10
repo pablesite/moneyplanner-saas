@@ -38,15 +38,15 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 Manual: finalizar un cierre mensual en dev → sección de impacto visible con ≤2 hallazgos y 1 acción; "simular" desde una recomendación abre el escenario preconfigurado; `/plan` muestra cimientos reales; usuario sin plan → cierre mensual intacto sin sección.
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` — integración plan ↔ cierre mensual
-- [ ] `docs/project-status.md` — estado de la fase
+- [x] `docs/frontend/domain-map.md` — integración plan ↔ cierre mensual
+- [x] `docs/project-status.md` — estado de la fase
 
 ## Risks
 - `/cierre-mensual` es un flujo validado manualmente: la sección nueva debe ser aditiva y no alterar pasos existentes; smoke manual del cierre completo tras el cambio.
 
 ## Completion Criteria
-- [ ] AC-E05-001..004 verificados end-to-end desde la UI
-- [ ] All validation commands pass
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits, `feat(frontend): ...`)
+- [x] AC-E05-001..004 cubiertos por UI conectada a backend (`/plan` y `/cierre-mensual`)
+- [x] All validation commands pass
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
+- [x] Commit created (Conventional Commits, `feat(frontend): ...`)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, AMetaPill, type ASelectItem } from '@/domains/ui';
 import {
   DataQualityCard,
@@ -11,6 +11,7 @@ import {
   ProductiveCapitalProgress,
   ProjectedDateCard,
   ProjectionAssumptionsDrawer,
+  PlanRecommendationCard,
 } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import type { ProjectionScenario } from '@/domains/plan';
@@ -18,6 +19,7 @@ import '@/domains/plan/plan.css';
 
 const { store, loading, error, plan, planMissing, projection, netWorthTimeline, scenario } =
   usePlan();
+const router = useRouter();
 const assumptionsOpen = ref(false);
 
 const scenarioOptions: ASelectItem[] = [
@@ -32,6 +34,15 @@ const activeScenario = computed({
     void store.fetchProjection(value as ProjectionScenario);
   },
 });
+
+const visibleRecommendations = computed(() =>
+  store.recommendations.filter((item) => item.status === 'open').slice(0, 2),
+);
+
+async function simulateRecommendation(id: number): Promise<void> {
+  const scenario = await store.simulateRecommendation(id);
+  await router.push({ name: 'plan-scenario-detail', params: { id: scenario.id } });
+}
 
 onMounted(() => {
   void store.loadDashboard();
@@ -104,8 +115,31 @@ onMounted(() => {
 
       <div class="plan-side-grid">
         <DataQualityCard :projection="projection" />
-        <PlanFoundations />
+        <PlanFoundations :foundations="store.foundations" />
       </div>
+
+      <section v-if="visibleRecommendations.length" class="sect plan-recommendations">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Recomendaciones</p>
+            <h2 class="sect-title">Siguiente acción</h2>
+            <p class="sect-sub">
+              Máximo una acción principal y una secundaria, generadas por reglas.
+            </p>
+          </div>
+        </div>
+        <div class="plan-recommendation-list">
+          <PlanRecommendationCard
+            v-for="(recommendation, index) in visibleRecommendations"
+            :key="recommendation.id"
+            :recommendation="recommendation"
+            :secondary="index > 0"
+            @accept="store.acceptRecommendation"
+            @dismiss="store.dismissRecommendation"
+            @simulate="simulateRecommendation"
+          />
+        </div>
+      </section>
 
       <PlanEventsTimeline :events="store.events" />
 

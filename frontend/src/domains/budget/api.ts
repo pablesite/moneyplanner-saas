@@ -1,5 +1,5 @@
 import { coreApi } from '@/lib/api';
-import type { MonthlyCloseStateResponse } from './types';
+import type { MonthlyClosePlanImpact, MonthlyCloseStateResponse } from './types';
 
 export const budgetApi = coreApi;
 export { toApiErrorMessage as toBudgetErrorMessage } from '@/lib/errors';
@@ -36,4 +36,14 @@ export async function reopenMonthlyClose(year: number, month: number): Promise<v
 
 export async function lockMonthlyClose(year: number, month: number): Promise<void> {
   await coreApi.post(`/api/budget/monthly-close/${year}/${month}/lock/`);
+}
+
+export async function getMonthlyClosePlanImpact(
+  monthlyCloseId: number,
+): Promise<MonthlyClosePlanImpact | null> {
+  const response = await coreApi.get<MonthlyClosePlanImpact>(
+    `/api/budget/monthly-closes/${monthlyCloseId}/plan-impact/`,
+    { validateStatus: (status) => status === 200 || status === 204 },
+  );
+  return response.status === 204 ? null : response.data;
 }

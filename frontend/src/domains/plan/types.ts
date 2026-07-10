@@ -235,3 +235,75 @@ export type PlanEvent = {
   created_at: string;
   updated_at: string;
 };
+
+export type PlanFoundations = {
+  period: string;
+  cash_flow: {
+    score: number;
+    structural_annual_income: string;
+    structural_operating_expense: string;
+    operating_surplus: string;
+    committed_surplus: string;
+    operating_surplus_ratio: string | null;
+  };
+  emergency_fund: {
+    score: number;
+    eligible_liquidity: string;
+    coverage_months_base: string | null;
+    coverage_months_committed: string | null;
+    target_months: string;
+  };
+  debt: {
+    score: number;
+    total_debt: string;
+    unbacked_debt: string;
+    high_cost_debt: string;
+    weighted_tae_pct: string | null;
+    debt_payment_to_income: string | null;
+  };
+  net_worth_health: {
+    score: number;
+    assets_value: string;
+    illiquid_assets_share: string | null;
+    top_asset_share: string | null;
+    diversification_index: string | null;
+  };
+  planned_contribution: {
+    annual_amount: string;
+    monthly_amount: string;
+  };
+  data_quality: {
+    score: number;
+    flags: Record<string, boolean>;
+  };
+};
+
+export type PlanFinding = {
+  id: number;
+  code: string;
+  severity: 'info' | 'warning' | 'critical';
+  period: string;
+  evidence_json: Record<string, unknown>;
+  status: 'open' | 'resolved' | 'dismissed';
+  created_at: string;
+  updated_at: string;
+};
+
+export type PlanRecommendation = {
+  id: number;
+  finding: number;
+  code: string;
+  priority: number;
+  action_json: {
+    title?: string;
+    summary?: string;
+    reason?: string;
+    rule?: string;
+    [key: string]: unknown;
+  };
+  impact_json: Record<string, unknown>;
+  alternatives_json: string[];
+  status: 'open' | 'accepted' | 'dismissed' | 'snoozed';
+  created_at: string;
+  updated_at: string;
+};

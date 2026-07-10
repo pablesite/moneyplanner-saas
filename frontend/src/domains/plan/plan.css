@@ -64,7 +64,8 @@
 .plan-foundations,
 .plan-trajectory,
 .plan-form-section,
-.plan-date-card {
+.plan-date-card,
+.plan-recommendations {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -324,8 +325,7 @@
 }
 
 .plan-foundation-grid article {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
   gap: 12px;
   padding-block: 10px;
   border-top: 1px solid var(--line);
@@ -333,6 +333,57 @@
 
 .plan-foundation-grid span {
   color: var(--muted);
+}
+
+.plan-foundation-grid small {
+  color: var(--muted);
+}
+
+.plan-recommendation-list {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-recommendation {
+  display: grid;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.plan-recommendation h3,
+.plan-recommendation p {
+  margin: 0;
+}
+
+.plan-recommendation p {
+  color: var(--muted);
+}
+
+.plan-recommendation-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.plan-details-toggle {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.plan-recommendation-detail {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .plan-muted {

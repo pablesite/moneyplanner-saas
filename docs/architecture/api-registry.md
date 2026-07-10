@@ -104,6 +104,12 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `POST` | `/api/plan/scenarios/{id}/discard/` | Discards a draft scenario without plan, budget, net-worth, or accounting side effects. |
 | `GET` | `/api/plan/events/` | Lists planned/occurred/cancelled plan events for projection markers. |
 | `PATCH` | `/api/plan/events/{id}/` | Updates a user-owned plan event, including actual date/impact when the event has occurred. |
+| `GET` | `/api/plan/foundations/` | Returns backend-owned plan foundations: cash flow, emergency fund, debt, net-worth health, planned contribution and data quality. |
+| `GET` | `/api/plan/findings/` | Evaluates and returns current deterministic plan findings. |
+| `GET` | `/api/plan/recommendations/` | Evaluates and returns deterministic recommendations with explanation payloads. |
+| `POST` | `/api/plan/recommendations/{id}/accept/` | Marks a user-owned recommendation as accepted. |
+| `POST` | `/api/plan/recommendations/{id}/dismiss/` | Marks a user-owned recommendation as dismissed. |
+| `POST` | `/api/plan/recommendations/{id}/simulate/` | Creates a draft scenario preconfigured from the recommendation and returns it. |
 
 ### Budget — `/api/budget/`
 | Method | Route | Description |
@@ -114,6 +120,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET` | `/api/budget/annual-expense/monthly-summary/` | Monthly planned vs executed expense + budget coverage (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) and category/subcategory `expense_execution_breakdown`. |
 | `GET/POST` | `/api/budget/annual-income-checkins/` | Monthly income check-ins |
 | `GET/POST` | `/api/budget/annual-expense-checkins/` | Monthly expense check-ins |
+| `GET` | `/api/budget/monthly-closes/{id}/plan-impact/` | Returns plan impact for a user-owned finalized/locked monthly close, or `204` when the user has no plan. |
 
 ### Accounting — `/api/accounting/`
 | Method | Route | Description |

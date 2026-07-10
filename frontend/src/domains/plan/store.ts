@@ -6,8 +6,11 @@ import type {
   FinancialPlan,
   FinancialPlanPayload,
   PlanEvent,
+  PlanFinding,
+  PlanFoundations,
   PlanMember,
   PlanMemberPayload,
+  PlanRecommendation,
   PlanScenario,
   PlanScenarioComparison,
   PlanScenarioPayload,
@@ -31,10 +34,14 @@ export const usePlanStore = defineStore('plan', {
     selectedScenario: null as PlanScenario | null,
     scenarioComparison: null as PlanScenarioComparison | null,
     events: [] as PlanEvent[],
+    foundations: null as PlanFoundations | null,
+    findings: [] as PlanFinding[],
+    recommendations: [] as PlanRecommendation[],
     scenario: 'expected' as ProjectionScenario,
     loading: false,
     scenariosLoading: false,
     comparisonLoading: false,
+    recommendationsLoading: false,
     saving: false,
     recalculating: false,
     error: null as string | null,
@@ -107,6 +114,36 @@ export const usePlanStore = defineStore('plan', {
       }
     },
 
+    async fetchFoundations() {
+      try {
+        const { data } = await planApi.getFoundations();
+        this.foundations = data;
+      } catch {
+        this.foundations = null;
+      }
+    },
+
+    async fetchFindings() {
+      try {
+        const { data } = await planApi.getFindings();
+        this.findings = data;
+      } catch {
+        this.findings = [];
+      }
+    },
+
+    async fetchRecommendations() {
+      this.recommendationsLoading = true;
+      try {
+        const { data } = await planApi.getRecommendations();
+        this.recommendations = data;
+      } catch {
+        this.recommendations = [];
+      } finally {
+        this.recommendationsLoading = false;
+      }
+    },
+
     async loadDashboard(scenario?: ProjectionScenario) {
       await this.fetchPlan();
       if (!this.plan) return;
@@ -114,6 +151,9 @@ export const usePlanStore = defineStore('plan', {
         this.fetchProjection(scenario ?? this.scenario),
         this.fetchTimeline(),
         this.fetchEvents(),
+        this.fetchFoundations(),
+        this.fetchFindings(),
+        this.fetchRecommendations(),
       ]);
     },
 
@@ -245,6 +285,25 @@ export const usePlanStore = defineStore('plan', {
       } finally {
         this.saving = false;
       }
+    },
+
+    async acceptRecommendation(id: number) {
+      const { data } = await planApi.acceptRecommendation(id);
+      this.recommendations = this.recommendations.map((item) => (item.id === id ? data : item));
+      return data;
+    },
+
+    async dismissRecommendation(id: number) {
+      const { data } = await planApi.dismissRecommendation(id);
+      this.recommendations = this.recommendations.map((item) => (item.id === id ? data : item));
+      return data;
+    },
+
+    async simulateRecommendation(id: number) {
+      const { data } = await planApi.simulateRecommendation(id);
+      this.selectedScenario = data;
+      await this.fetchScenarios();
+      return data;
     },
   },
 });

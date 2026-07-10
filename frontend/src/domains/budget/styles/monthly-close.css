@@ -5,6 +5,48 @@
   gap: 12px;
 }
 
+.mc-plan-impact {
+  display: grid;
+  gap: 14px;
+}
+
+.mc-plan-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mc-plan-impact-grid article,
+.mc-plan-impact-action,
+.mc-plan-impact-list {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mc-plan-impact-grid span,
+.mc-plan-impact-grid small,
+.mc-plan-impact-action p,
+.mc-plan-impact-list p:not(.eyebrow) {
+  color: var(--muted);
+}
+
+.mc-plan-impact-grid strong,
+.mc-plan-impact-action h3,
+.mc-plan-impact-action p,
+.mc-plan-impact-list p {
+  margin: 0;
+}
+
+@container page (max-width: 820px) {
+  .mc-plan-impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .dir-a .page.mc-page {
     padding-bottom: 88px;

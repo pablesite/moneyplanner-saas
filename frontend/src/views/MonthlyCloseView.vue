@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   AButton,
@@ -17,6 +17,7 @@ import {
   BudgetMonthlyCloseResultSection,
   MonthlyCloseHero,
 } from '@/domains/budget';
+import { getMonthlyClosePlanImpact, type MonthlyClosePlanImpact } from '@/domains/budget';
 import '@/domains/budget/styles/monthly-close.css';
 import { useMonthlyCloseView } from './budget/useMonthlyCloseView';
 
@@ -137,6 +138,7 @@ const {
   closeStatus,
   isCloseLocked,
   monthlyCloseActionBusy,
+  monthlyCloseData,
   hasDistributionSuggestion,
   handleFinalizeClose,
   handleReopenClose,
@@ -147,6 +149,41 @@ const {
   formatPercent,
   formatSignedMoney,
 } = useMonthlyCloseView();
+
+const planImpact = ref<MonthlyClosePlanImpact | null>(null);
+const planImpactLoading = ref(false);
+
+const planTrajectoryLabel = computed(() => {
+  if (!planImpact.value) return '';
+  if (planImpact.value.trajectory.status === 'on_track') return 'En trayectoria';
+  if (planImpact.value.trajectory.status === 'delayed') return 'Con retraso estimado';
+  return 'Fuera de trayectoria';
+});
+
+async function refreshPlanImpact(): Promise<void> {
+  const closeId = monthlyCloseData.value?.monthly_close.id;
+  const status = monthlyCloseData.value?.monthly_close.status;
+  if (!closeId || status === 'draft') {
+    planImpact.value = null;
+    return;
+  }
+  planImpactLoading.value = true;
+  try {
+    planImpact.value = await getMonthlyClosePlanImpact(closeId);
+  } catch {
+    planImpact.value = null;
+  } finally {
+    planImpactLoading.value = false;
+  }
+}
+
+watch(
+  () => [monthlyCloseData.value?.monthly_close.id, monthlyCloseData.value?.monthly_close.status],
+  () => {
+    void refreshPlanImpact();
+  },
+  { immediate: true },
+);
 
 type MonthlyCloseStepId = Parameters<typeof setActiveMonthlyCloseStep>[0];
 
@@ -406,6 +443,58 @@ function goToCloseStep(): void {
       :on-lock-close="handleLockClose"
       :on-apply-distribution="handleApplyDistribution"
     />
+
+    <section v-if="planImpact || planImpactLoading" class="sect mc-plan-impact">
+      <div class="sect-head">
+        <div>
+          <p class="eyebrow">Impacto en Mi Plan</p>
+          <h2 class="sect-title">Lectura del cierre mensual</h2>
+          <p class="sect-sub">
+            Se muestra solo cuando existe un plan financiero y el cierre ya está finalizado.
+          </p>
+        </div>
+      </div>
+      <AState v-if="planImpactLoading" status="loading" layout="inline">
+        Calculando impacto en el plan...
+      </AState>
+      <template v-else-if="planImpact">
+        <div class="mc-plan-impact-grid">
+          <article>
+            <span>Capital productivo</span>
+            <strong>{{ formatMoney(Number(planImpact.capital.productive_capital)) }} €</strong>
+            <small v-if="planImpact.capital.productive_capital_delta">
+              {{ formatSignedMoney(Number(planImpact.capital.productive_capital_delta)) }}
+            </small>
+          </article>
+          <article>
+            <span>Patrimonio</span>
+            <strong>{{ formatMoney(Number(planImpact.capital.net_worth)) }} €</strong>
+            <small v-if="planImpact.capital.net_worth_delta">
+              {{ formatSignedMoney(Number(planImpact.capital.net_worth_delta)) }}
+            </small>
+          </article>
+          <article>
+            <span>Trayectoria</span>
+            <strong>{{ planTrajectoryLabel }}</strong>
+            <small v-if="planImpact.trajectory.projected_year_delta">
+              Cambio material: {{ planImpact.trajectory.projected_year_delta > 0 ? '+' : ''
+              }}{{ planImpact.trajectory.projected_year_delta }} año(s)
+            </small>
+          </article>
+        </div>
+        <div v-if="planImpact.findings.length" class="mc-plan-impact-list">
+          <p class="eyebrow">Atención</p>
+          <p v-for="finding in planImpact.findings" :key="finding.id">
+            {{ finding.code.replace(/_/g, ' ') }}
+          </p>
+        </div>
+        <div v-if="planImpact.recommended_action" class="mc-plan-impact-action">
+          <p class="eyebrow">Acción propuesta</p>
+          <h3>{{ planImpact.recommended_action.action_json.title ?? 'Siguiente acción' }}</h3>
+          <p>{{ planImpact.recommended_action.action_json.summary }}</p>
+        </div>
+      </template>
+    </section>
 
     <AState v-if="isLoading" status="loading" layout="inline">Cargando cierre mensual…</AState>
   </div>

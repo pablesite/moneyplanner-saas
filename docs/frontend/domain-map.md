@@ -70,13 +70,13 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 | Archivo            | Contenido                                                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `api.ts`           | Llamadas a Core `/api/plan/*`: plan idempotente, proyección, recálculo, histórico, miembros, overrides, escenarios y eventos. |
-| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenarios, comparación, eventos, timeline de patrimonio y estados de carga/error/guardado. |
+| `api.ts`           | Llamadas a Core `/api/plan/*`: plan idempotente, proyección, recálculo, histórico, miembros, overrides, escenarios, eventos, cimientos, hallazgos y recomendaciones. |
+| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenarios, comparación, eventos, cimientos, hallazgos, recomendaciones, timeline de patrimonio y estados de carga/error/guardado. |
 | `composables.ts`   | `usePlan()` para consumir el store desde vistas.                                                                              |
 | `usePlanEvents.ts` | Composable compartido y ligero para leer `GET /api/plan/events/` y exponer marcadores de timeline sin acoplar otros dominios al store del plan. |
 | `types.ts`         | Tipos TypeScript del contrato Core de plan, proyección, escenarios y eventos.                                                  |
 | `scenarioTemplates.ts` | Plantillas frontend para defaults editables de escenarios; el cálculo final vive en backend.                              |
-| `components/`      | `PlanHero`, `ProductiveCapitalProgress`, `ProjectedDateCard`, `NetWorthTrajectoryChart`, `PlanFoundations`, `DataQualityCard`, `ProjectionAssumptionsDrawer`, `PlanEventsTimeline`, `ScenarioComparison`. |
+| `components/`      | `PlanHero`, `ProductiveCapitalProgress`, `ProjectedDateCard`, `NetWorthTrajectoryChart`, `PlanFoundations`, `DataQualityCard`, `ProjectionAssumptionsDrawer`, `PlanEventsTimeline`, `PlanRecommendationCard`, `ScenarioComparison`. |
 | `plan.css`         | Estilos Direction A del dominio, sin tocar `core/frontend/`.                                                                  |
 
 **Requiere:** `canUsePlan()` → `core.plan`. En Fase 2 `/plan` no entra en la navegación primaria para respetar el contrato móvil de cinco tabs; la sustitución de Estado financiero queda para Fase 5.
@@ -129,7 +129,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 **Cliente:** `coreApi`
 **Ruta:** `/presupuesto` y `/cierre-mensual`
 
-Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, las líneas anuales de ingresos/gastos y sus taxonomías. Las entradas anuales viven en `budget/annual-entries` porque ya se editan desde Presupuesto y Patrimonio, no desde la antigua ruta de Introducción de Datos.
+Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, las líneas anuales de ingresos/gastos y sus taxonomías. Las entradas anuales viven en `budget/annual-entries` porque ya se editan desde Presupuesto y Patrimonio, no desde la antigua ruta de Introducción de Datos. En Fase 4 de Mi Plan, `/cierre-mensual` consume `GET /api/budget/monthly-closes/{id}/plan-impact/` de forma aditiva: si el usuario no tiene plan, la sección no aparece y el flujo de cierre queda intacto.
 
 | Archivo                                              | Contenido                                                                                |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |

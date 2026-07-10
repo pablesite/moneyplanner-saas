@@ -7,9 +7,12 @@ import type {
   PlanMember,
   PlanMemberPayload,
   PlanEvent,
+  PlanFinding,
+  PlanFoundations,
   ProjectionResponse,
   ProjectionScenario,
   ProjectionSnapshot,
+  PlanRecommendation,
   PlanScenario,
   PlanScenarioComparison,
   PlanScenarioPayload,
@@ -77,5 +80,23 @@ export const planApi = {
   },
   getEvents() {
     return coreApi.get<PlanEvent[]>('/api/plan/events/');
+  },
+  getFoundations() {
+    return coreApi.get<PlanFoundations>('/api/plan/foundations/');
+  },
+  getFindings() {
+    return coreApi.get<PlanFinding[]>('/api/plan/findings/');
+  },
+  getRecommendations() {
+    return coreApi.get<PlanRecommendation[]>('/api/plan/recommendations/');
+  },
+  acceptRecommendation(id: number) {
+    return coreApi.post<PlanRecommendation>(`/api/plan/recommendations/${id}/accept/`, {});
+  },
+  dismissRecommendation(id: number) {
+    return coreApi.post<PlanRecommendation>(`/api/plan/recommendations/${id}/dismiss/`, {});
+  },
+  simulateRecommendation(id: number) {
+    return coreApi.post<PlanScenario>(`/api/plan/recommendations/${id}/simulate/`, {});
   },
 };
