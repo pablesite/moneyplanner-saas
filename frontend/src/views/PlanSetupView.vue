@@ -159,7 +159,7 @@ onMounted(() => {
           <div>
             <p class="eyebrow">Unidad financiera</p>
             <h2 class="sect-title">Adultos del plan</h2>
-            <p class="sect-sub">MVP: uno o dos adultos consolidados en una sola unidad.</p>
+            <p class="sect-sub">Uno o dos adultos consolidados en una sola unidad financiera.</p>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
 import type { PlanEvent } from '@/domains/plan/types';
 import { scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
 
@@ -16,7 +17,10 @@ defineProps<{
       </div>
     </div>
 
-    <p v-if="!events.length" class="plan-muted">Todavía no hay decisiones incorporadas.</p>
+    <div v-if="!events.length" class="plan-empty-inline">
+      <p class="plan-muted">Todavía no hay decisiones incorporadas.</p>
+      <RouterLink class="btn btn-ghost btn-sm" to="/plan/escenarios">Crear escenario</RouterLink>
+    </div>
     <ol v-else class="plan-event-list">
       <li v-for="event in events" :key="event.id">
         <span class="plan-event-date mono">{{ event.planned_date.slice(0, 7) }}</span>

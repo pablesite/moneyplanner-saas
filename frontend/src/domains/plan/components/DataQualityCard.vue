@@ -36,7 +36,9 @@ const missingFactors = computed(() =>
         <h2 class="sect-title">
           {{ levelLabel[projection.quality_level] ?? projection.quality_level }}
         </h2>
-        <p class="sect-sub">Cuanto más completos estén los datos, más útil será la proyección.</p>
+        <p class="sect-sub">
+          La proyección ya puede apoyarse en los datos clave. Mantenerlos al día mejora la lectura.
+        </p>
       </div>
     </div>
 

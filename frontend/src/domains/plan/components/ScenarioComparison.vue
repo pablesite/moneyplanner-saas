@@ -26,21 +26,21 @@ const rows = computed(() => [
   },
   {
     label: 'Capital productivo',
-    current: `${formatMoney(Number(metricValue('productive_capital', 'current')))} €`,
-    simulated: `${formatMoney(Number(metricValue('productive_capital', 'simulated')))} €`,
-    delta: `${formatMoney(Number(props.comparison.delta.productive_capital))} €`,
+    current: formatMoney(Number(metricValue('productive_capital', 'current'))),
+    simulated: formatMoney(Number(metricValue('productive_capital', 'simulated'))),
+    delta: formatMoney(Number(props.comparison.delta.productive_capital)),
   },
   {
     label: 'Patrimonio neto',
-    current: `${formatMoney(Number(metricValue('net_worth', 'current')))} €`,
-    simulated: `${formatMoney(Number(metricValue('net_worth', 'simulated')))} €`,
-    delta: `${formatMoney(Number(props.comparison.delta.net_worth))} €`,
+    current: formatMoney(Number(metricValue('net_worth', 'current'))),
+    simulated: formatMoney(Number(metricValue('net_worth', 'simulated'))),
+    delta: formatMoney(Number(props.comparison.delta.net_worth)),
   },
   {
     label: 'Capital objetivo',
-    current: `${formatMoney(Number(metricValue('target_capital', 'current')))} €`,
-    simulated: `${formatMoney(Number(metricValue('target_capital', 'simulated')))} €`,
-    delta: `${formatMoney(Number(props.comparison.delta.target_capital))} €`,
+    current: formatMoney(Number(metricValue('target_capital', 'current'))),
+    simulated: formatMoney(Number(metricValue('target_capital', 'simulated'))),
+    delta: formatMoney(Number(props.comparison.delta.target_capital)),
   },
 ]);
 </script>

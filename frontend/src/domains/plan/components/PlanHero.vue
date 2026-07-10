@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import type { FinancialPlan, ProjectionResponse } from '@/domains/plan/types';
+import { projectionScenarioLabel } from '@/domains/plan/scenarioTemplates';
 
 const props = defineProps<{
   plan: FinancialPlan;
@@ -19,6 +20,7 @@ const gap = computed(() =>
 const targetCopy = computed(
   () => `${formatMoney(props.plan.target_monthly_income_today_eur)} / mes`,
 );
+const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
 const projectedCopy = computed(() =>
   projectedYear.value == null ? 'Sin fecha estimada' : String(projectedYear.value),
 );
@@ -27,6 +29,15 @@ const deltaCopy = computed(() => {
   if (gap.value === 0) return 'Alineado con la fecha objetivo';
   if (gap.value > 0) return `${gap.value} años después del objetivo`;
   return `${Math.abs(gap.value)} años antes del objetivo`;
+});
+const blockers = computed(() => {
+  if (gap.value != null) return [];
+  const items = [];
+  if (productiveCapital.value <= 0) {
+    items.push('No hay capital clasificado como productivo.');
+  }
+  if (!items.length) items.push('Revisa hipótesis y clasificación de activos.');
+  return items;
 });
 
 const kpis = computed<AKpiItem[]>(() => [
@@ -42,8 +53,8 @@ const kpis = computed<AKpiItem[]>(() => [
   },
   {
     label: 'Escenario',
-    value: props.projection.scenario,
-    meta: 'Hipótesis globales MVP',
+    value: projectionScenarioLabel(props.projection.scenario),
+    meta: 'Hipótesis globales',
   },
 ]);
 </script>
@@ -65,6 +76,12 @@ const kpis = computed<AKpiItem[]>(() => [
         Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
         productivo, no patrimonio neto total.
       </p>
+      <div v-if="blockers.length" class="plan-hero-blockers">
+        <strong>Qué falta para estimar fecha</strong>
+        <ul>
+          <li v-for="item in blockers" :key="item">{{ item }}</li>
+        </ul>
+      </div>
     </div>
   </section>
 </template>

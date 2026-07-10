@@ -52,6 +52,27 @@
   line-height: 1.5;
 }
 
+.plan-hero-blockers {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.plan-hero-blockers strong {
+  font-size: 0.9rem;
+}
+
+.plan-hero-blockers ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+  margin: 0;
+  color: var(--muted);
+}
+
 .plan-main-grid,
 .plan-side-grid {
   display: grid;
@@ -391,6 +412,19 @@
   color: var(--muted);
 }
 
+.plan-empty-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+}
+
+.plan-empty-inline span {
+  color: var(--muted);
+}
+
 .plan-events,
 .plan-scenario-list,
 .plan-scenario-summary,
@@ -591,7 +625,12 @@
 
   .plan-toolbar .context-field,
   .plan-toolbar .btn,
-  .plan-setup-actions .btn {
+  .plan-setup-actions .btn,
+  .plan-empty-inline .btn {
     width: 100%;
+  }
+
+  .plan-page {
+    padding-bottom: 84px;
   }
 }

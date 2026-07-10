@@ -25,8 +25,7 @@ const rows: Array<{ key: keyof ProjectionAssumptions; label: string }> = [
   <BaseModal :open="open" title="Hipótesis del escenario" variant="sheet" @close="$emit('close')">
     <div class="plan-assumptions">
       <p>
-        Valores globales MVP de solo lectura. Cada snapshot congela las hipótesis usadas en el
-        cálculo.
+        Valores globales de solo lectura. Cada snapshot congela las hipótesis usadas en el cálculo.
       </p>
       <dl>
         <div v-for="row in rows" :key="row.key">

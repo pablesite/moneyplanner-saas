@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PlanFoundations } from '@/domains/plan/types';
-import { formatNumber, formatPct, toNumber } from '@/lib/format';
+import { formatMoney, formatNumber, formatPct, toNumber } from '@/lib/format';
 
 defineProps<{
   foundations: PlanFoundations | null;
@@ -13,7 +13,7 @@ function scoreLabel(score: number | null | undefined): string {
 
 function money(value: string | null | undefined): string {
   if (value == null) return '-';
-  return `${formatNumber(toNumber(value), 0)} EUR`;
+  return formatMoney(toNumber(value));
 }
 
 function months(value: string | null | undefined): string {
@@ -29,7 +29,7 @@ function months(value: string | null | undefined): string {
         <p class="eyebrow">Cimientos</p>
         <h2 class="sect-title">Diagnóstico compacto</h2>
         <p class="sect-sub">
-          Lectura backend de flujo de caja, fondo de emergencia, deuda, aportación y calidad.
+          Flujo de caja, fondo de emergencia, deuda, aportación y calidad de datos.
         </p>
       </div>
     </div>

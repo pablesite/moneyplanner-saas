@@ -1,7 +1,9 @@
 import type {
   PlanAssetFunction,
   PlanBudgetLinePayload,
+  PlanScenarioStatus,
   PlanScenarioTemplate,
+  ProjectionScenario,
   ScenarioEventPayload,
 } from '@/domains/plan/types';
 
@@ -129,6 +131,24 @@ export const scenarioTemplates: ScenarioTemplateDefinition[] = [
 
 export function scenarioTemplateLabel(value: PlanScenarioTemplate): string {
   return scenarioTemplates.find((item) => item.value === value)?.label ?? value;
+}
+
+export function projectionScenarioLabel(value: ProjectionScenario): string {
+  const labels: Record<ProjectionScenario, string> = {
+    prudent: 'Prudente',
+    expected: 'Esperado',
+    favorable: 'Favorable',
+  };
+  return labels[value] ?? value;
+}
+
+export function scenarioStatusLabel(value: PlanScenarioStatus): string {
+  const labels: Record<PlanScenarioStatus, string> = {
+    draft: 'Borrador',
+    accepted: 'Incorporado',
+    discarded: 'Descartado',
+  };
+  return labels[value] ?? value;
 }
 
 export function defaultScenarioEvent(template: PlanScenarioTemplate): ScenarioEventPayload {

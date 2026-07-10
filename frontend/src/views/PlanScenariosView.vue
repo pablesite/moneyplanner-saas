@@ -6,6 +6,7 @@ import { usePlan } from '@/domains/plan';
 import type { PlanAssetFunction, PlanScenarioPayload, PlanScenarioTemplate } from '@/domains/plan';
 import {
   defaultScenarioEvent,
+  scenarioStatusLabel,
   scenarioTemplateLabel,
   scenarioTemplates,
 } from '@/domains/plan/scenarioTemplates';
@@ -238,9 +239,7 @@ onMounted(async () => {
           </label>
         </div>
         <div class="plan-setup-actions">
-          <span class="plan-muted"
-            >Aceptar incorporará presupuesto futuro, no patrimonio real.</span
-          >
+          <span class="plan-muted">Al incorporar, solo se actualiza el presupuesto futuro.</span>
           <AButton variant="primary" type="submit" :loading="store.saving">Crear escenario</AButton>
         </div>
       </form>
@@ -253,7 +252,10 @@ onMounted(async () => {
           <h2 class="sect-title">Escenarios guardados</h2>
         </div>
       </div>
-      <p v-if="!store.scenarios.length" class="plan-muted">Aún no hay escenarios.</p>
+      <div v-if="!store.scenarios.length" class="plan-empty-inline">
+        <p class="plan-muted">Aún no hay escenarios.</p>
+        <span>Simula una decisión para comparar su impacto antes de incorporarla al plan.</span>
+      </div>
       <RouterLink
         v-for="scenario in store.scenarios"
         v-else
@@ -265,7 +267,7 @@ onMounted(async () => {
           <strong>{{ scenario.name }}</strong>
           <span>{{ scenarioTemplateLabel(scenario.template_type) }}</span>
         </div>
-        <span class="mono">{{ scenario.status }}</span>
+        <span class="mono">{{ scenarioStatusLabel(scenario.status) }}</span>
       </RouterLink>
     </section>
   </main>

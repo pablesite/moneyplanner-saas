@@ -5,7 +5,7 @@ import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains
 import { ScenarioComparison } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import type { ProjectionScenario } from '@/domains/plan';
-import { scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
+import { scenarioStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
 import { formatMoney } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
@@ -53,7 +53,7 @@ onMounted(async () => {
       :eyebrow="selected ? scenarioTemplateLabel(selected.template_type) : 'Mi Plan'"
     >
       <template #meta>
-        <span v-if="selected">{{ selected.status }}</span>
+        <span v-if="selected">{{ scenarioStatusLabel(selected.status) }}</span>
       </template>
       <template #actions>
         <RouterLink class="btn btn-ghost" to="/plan/escenarios">Escenarios</RouterLink>
@@ -108,15 +108,15 @@ onMounted(async () => {
           </article>
           <article>
             <span>Pago inicial</span>
-            <strong>{{ formatMoney(Number(firstEvent.initial_outflow)) }} €</strong>
+            <strong>{{ formatMoney(Number(firstEvent.initial_outflow)) }}</strong>
           </article>
           <article>
             <span>Activo nuevo</span>
-            <strong>{{ formatMoney(Number(firstEvent.new_asset_value)) }} €</strong>
+            <strong>{{ formatMoney(Number(firstEvent.new_asset_value)) }}</strong>
           </article>
           <article>
             <span>Deuda nueva</span>
-            <strong>{{ formatMoney(Number(firstEvent.new_debt_principal)) }} €</strong>
+            <strong>{{ formatMoney(Number(firstEvent.new_debt_principal)) }}</strong>
           </article>
         </div>
       </section>
