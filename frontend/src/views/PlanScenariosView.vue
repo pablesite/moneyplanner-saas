@@ -5,6 +5,7 @@ import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains
 import { usePlan } from '@/domains/plan';
 import type { PlanAssetFunction, PlanScenarioPayload, PlanScenarioTemplate } from '@/domains/plan';
 import {
+  assetFunctionLabels,
   defaultScenarioEvent,
   scenarioStatusLabel,
   scenarioTemplateLabel,
@@ -19,13 +20,10 @@ const templateOptions: ASelectItem[] = scenarioTemplates.map((item) => ({
   value: item.value,
   label: item.label,
 }));
-const assetOptions: ASelectItem[] = [
-  { value: 'productive', label: 'Productivo' },
-  { value: 'security', label: 'Seguridad' },
-  { value: 'short_term_goal', label: 'Objetivo corto plazo' },
-  { value: 'family_use', label: 'Uso familiar' },
-  { value: 'unknown', label: 'Desconocido' },
-];
+const assetOptions: ASelectItem[] = Object.entries(assetFunctionLabels).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 const form = reactive({
   name: '',

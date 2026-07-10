@@ -3,8 +3,10 @@ import { coreNetWorthApi } from '@/domains/net-worth/api';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import { planApi } from '@/domains/plan/api';
 import type {
+  AssetFunctionResponse,
   FinancialPlan,
   FinancialPlanPayload,
+  PlanAssetFunction,
   PlanEvent,
   PlanFinding,
   PlanFoundations,
@@ -35,6 +37,8 @@ export const usePlanStore = defineStore('plan', {
     scenarioComparison: null as PlanScenarioComparison | null,
     events: [] as PlanEvent[],
     foundations: null as PlanFoundations | null,
+    assetFunctions: null as AssetFunctionResponse | null,
+    assetFunctionsLoading: false,
     findings: [] as PlanFinding[],
     recommendations: [] as PlanRecommendation[],
     scenario: 'expected' as ProjectionScenario,
@@ -120,6 +124,34 @@ export const usePlanStore = defineStore('plan', {
         this.foundations = data;
       } catch {
         this.foundations = null;
+      }
+    },
+
+    async fetchAssetFunctions() {
+      this.assetFunctionsLoading = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.getAssetFunctions();
+        this.assetFunctions = data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+      } finally {
+        this.assetFunctionsLoading = false;
+      }
+    },
+
+    async updateAssetFunction(assetId: number, fn: PlanAssetFunction | null) {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.updateAssetFunctions([{ asset_id: assetId, function: fn }]);
+        this.assetFunctions = data;
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
       }
     },
 

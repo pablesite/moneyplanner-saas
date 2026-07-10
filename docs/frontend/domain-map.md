@@ -66,12 +66,12 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 **Origen:** Core-backed
 **Cliente:** `coreApi`
-**Rutas:** `/plan`, `/plan/setup`, `/plan/escenarios`, `/plan/escenarios/:id`
+**Rutas:** `/plan`, `/plan/setup`, `/plan/activos`, `/plan/escenarios`, `/plan/escenarios/:id`
 
 | Archivo            | Contenido                                                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `api.ts`           | Llamadas a Core `/api/plan/*`: plan idempotente, proyección, recálculo, histórico, miembros, overrides, escenarios, eventos, cimientos, hallazgos y recomendaciones. |
-| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenarios, comparación, eventos, cimientos, hallazgos, recomendaciones, timeline de patrimonio y estados de carga/error/guardado. |
+| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenarios, comparación, eventos, cimientos, hallazgos, recomendaciones, clasificación de activos, timeline de patrimonio y estados de carga/error/guardado. |
 | `composables.ts`   | `usePlan()` para consumir el store desde vistas.                                                                              |
 | `usePlanEvents.ts` | Composable compartido y ligero para leer `GET /api/plan/events/` y exponer marcadores de timeline sin acoplar otros dominios al store del plan. |
 | `types.ts`         | Tipos TypeScript del contrato Core de plan, proyección, escenarios y eventos.                                                  |
@@ -243,6 +243,7 @@ Soporte PWA: registro del service worker, instalación y resiliencia offline del
 | `/people`              | `people`               | `PeopleView`                               | `people`                                                                                                                                                                                                                                                                     |
 | `/plan`                | `plan`                 | `PlanView`                                 | Mi Plan: dashboard de proyección Core, trayectoria, calidad de datos, cimientos reales, hallazgos/recomendaciones y acontecimientos incorporados. |
 | `/plan/setup`          | `plan-setup`           | `PlanSetupView`                            | Onboarding/edición del plan financiero. |
+| `/plan/activos`        | `plan-assets`          | `PlanAssetsView`                           | Clasificación de funciones de activos (`GET/PUT /api/plan/asset-functions/`): resumen de capital por función y override manual por activo con vuelta a la inferida. |
 | `/plan/escenarios`     | `plan-scenarios`       | `PlanScenariosView`                        | Laboratorio de escenarios: lista y creación de simulaciones. |
 | `/plan/escenarios/:id` | `plan-scenario-detail` | `PlanScenarioDetailView`                   | Detalle, comparación plan vigente vs simulado e incorporación/descartado. |
 | `/contabilidad`        | `accounting-movements` | `AccountingMovementsView`                  | Libro diario operativo: búsqueda, filtros URL, revisión de clasificación y alta/edición. |

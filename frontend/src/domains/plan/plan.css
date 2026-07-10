@@ -525,6 +525,75 @@
   color: var(--muted);
 }
 
+.plan-assets-summary-sect,
+.plan-assets-list-sect {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.plan-assets-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plan-assets-summary article {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.plan-assets-summary span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.plan-assets-list {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.plan-asset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-asset-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.plan-asset-info span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.plan-asset-fn {
+  display: grid;
+  gap: 4px;
+  min-width: 240px;
+}
+
+.plan-asset-fn > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .plan-scenario-notice {
   display: flex;
   align-items: center;
@@ -669,6 +738,15 @@
   .plan-form-grid,
   .plan-scenario-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .plan-assets-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-asset-fn {
+    width: 100%;
+    min-width: 0;
   }
 
   .plan-comparison-head,

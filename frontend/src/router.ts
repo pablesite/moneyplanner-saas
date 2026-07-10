@@ -9,6 +9,7 @@ import PeopleView from './views/PeopleView.vue';
 import AccountingMovementsView from './views/AccountingMovementsView.vue';
 import AccountingAccountsView from './views/AccountingAccountsView.vue';
 import PlanView from './views/PlanView.vue';
+import PlanAssetsView from './views/PlanAssetsView.vue';
 import PlanSetupView from './views/PlanSetupView.vue';
 import PlanScenariosView from './views/PlanScenariosView.vue';
 import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
@@ -44,6 +45,12 @@ const routes: RouteRecordRaw[] = [
     path: '/plan/setup',
     name: 'plan-setup',
     component: PlanSetupView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
+    path: '/plan/activos',
+    name: 'plan-assets',
+    component: PlanAssetsView,
     beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {

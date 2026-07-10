@@ -43,15 +43,15 @@ const blockers = computed<Blocker[]>(() => {
   if (productiveCapital.value <= 0) {
     items.push({
       text: 'No hay capital clasificado como productivo: la proyección no tiene base desde la que crecer.',
-      to: '/',
-      cta: 'Revisar patrimonio',
+      to: '/plan/activos',
+      cta: 'Clasificar activos',
     });
   }
   if (unknownCapital > 0) {
     items.push({
       text: `Hay ${formatMoney(unknownCapital)} en activos sin clasificar que no cuentan como capital productivo.`,
-      to: '/',
-      cta: 'Revisar activos',
+      to: '/plan/activos',
+      cta: 'Clasificar activos',
     });
   }
   if (props.foundations && monthlyContribution <= 0) {

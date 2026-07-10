@@ -170,6 +170,18 @@ export function scenarioTemplateLabel(value: PlanScenarioTemplate): string {
   return scenarioTemplates.find((item) => item.value === value)?.label ?? value;
 }
 
+export const assetFunctionLabels: Record<PlanAssetFunction, string> = {
+  productive: 'Productivo',
+  security: 'Seguridad',
+  short_term_goal: 'Objetivo corto plazo',
+  family_use: 'Uso familiar',
+  unknown: 'Sin clasificar',
+};
+
+export function assetFunctionLabel(value: PlanAssetFunction): string {
+  return assetFunctionLabels[value] ?? value;
+}
+
 export function projectionScenarioLabel(value: ProjectionScenario): string {
   const labels: Record<ProjectionScenario, string> = {
     prudent: 'Prudente',
