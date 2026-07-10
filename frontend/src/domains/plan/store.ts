@@ -5,8 +5,12 @@ import { planApi } from '@/domains/plan/api';
 import type {
   FinancialPlan,
   FinancialPlanPayload,
+  PlanEvent,
   PlanMember,
   PlanMemberPayload,
+  PlanScenario,
+  PlanScenarioComparison,
+  PlanScenarioPayload,
   ProjectionResponse,
   ProjectionScenario,
 } from '@/domains/plan/types';
@@ -23,8 +27,14 @@ export const usePlanStore = defineStore('plan', {
     plan: null as FinancialPlan | null,
     projection: null as ProjectionResponse | null,
     netWorthTimeline: null as NetWorthTimeline | null,
+    scenarios: [] as PlanScenario[],
+    selectedScenario: null as PlanScenario | null,
+    scenarioComparison: null as PlanScenarioComparison | null,
+    events: [] as PlanEvent[],
     scenario: 'expected' as ProjectionScenario,
     loading: false,
+    scenariosLoading: false,
+    comparisonLoading: false,
     saving: false,
     recalculating: false,
     error: null as string | null,
@@ -88,10 +98,23 @@ export const usePlanStore = defineStore('plan', {
       }
     },
 
+    async fetchEvents() {
+      try {
+        const { data } = await planApi.getEvents();
+        this.events = data;
+      } catch {
+        this.events = [];
+      }
+    },
+
     async loadDashboard(scenario?: ProjectionScenario) {
       await this.fetchPlan();
       if (!this.plan) return;
-      await Promise.all([this.fetchProjection(scenario ?? this.scenario), this.fetchTimeline()]);
+      await Promise.all([
+        this.fetchProjection(scenario ?? this.scenario),
+        this.fetchTimeline(),
+        this.fetchEvents(),
+      ]);
     },
 
     async recalculate(scenario?: ProjectionScenario) {
@@ -132,6 +155,96 @@ export const usePlanStore = defineStore('plan', {
       }
       const { data } = await planApi.createMember(member);
       return data;
+    },
+
+    async fetchScenarios() {
+      this.scenariosLoading = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.getScenarios();
+        this.scenarios = data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+      } finally {
+        this.scenariosLoading = false;
+      }
+    },
+
+    async createScenario(payload: PlanScenarioPayload): Promise<PlanScenario> {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.createScenario(payload);
+        this.selectedScenario = data;
+        await this.fetchScenarios();
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async fetchScenario(id: number) {
+      this.scenariosLoading = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.getScenario(id);
+        this.selectedScenario = data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+      } finally {
+        this.scenariosLoading = false;
+      }
+    },
+
+    async fetchScenarioComparison(id: number, scenario?: ProjectionScenario) {
+      const selectedScenario = scenario ?? this.scenario;
+      this.comparisonLoading = true;
+      this.error = null;
+      this.scenario = selectedScenario;
+      try {
+        const { data } = await planApi.getScenarioComparison(id, selectedScenario);
+        this.scenarioComparison = data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+      } finally {
+        this.comparisonLoading = false;
+      }
+    },
+
+    async acceptScenario(id: number, scenario?: ProjectionScenario) {
+      const selectedScenario = scenario ?? this.scenario;
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.acceptScenario(id, selectedScenario);
+        this.projection = data.projection;
+        await Promise.all([this.fetchScenario(id), this.fetchScenarios(), this.fetchEvents()]);
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async discardScenario(id: number) {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.discardScenario(id);
+        this.selectedScenario = data;
+        await this.fetchScenarios();
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
     },
   },
 });

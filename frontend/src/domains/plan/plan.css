@@ -335,6 +335,97 @@
   color: var(--muted);
 }
 
+.plan-muted {
+  margin: 0;
+  color: var(--muted);
+}
+
+.plan-events,
+.plan-scenario-list,
+.plan-scenario-summary,
+.plan-comparison {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.plan-event-list,
+.plan-scenario-list {
+  display: grid;
+  gap: 10px;
+}
+
+.plan-event-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.plan-event-list li,
+.plan-scenario-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.plan-event-list li > div,
+.plan-scenario-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.plan-event-list span,
+.plan-scenario-row span {
+  color: var(--muted);
+}
+
+.plan-event-date {
+  flex: 0 0 auto;
+}
+
+.plan-scenario-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plan-scenario-metrics article {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.plan-scenario-metrics span,
+.plan-comparison-head {
+  color: var(--muted);
+}
+
+.plan-comparison-table {
+  display: grid;
+  gap: 0;
+}
+
+.plan-comparison-head,
+.plan-comparison-row {
+  display: grid;
+  grid-template-columns: 1.1fr repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-comparison-row span {
+  font-family: var(--font-mono);
+}
+
 .plan-assumptions {
   display: grid;
   gap: 18px;
@@ -414,7 +505,13 @@
   .plan-hero,
   .plan-main-grid,
   .plan-side-grid,
-  .plan-form-grid {
+  .plan-form-grid,
+  .plan-scenario-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-comparison-head,
+  .plan-comparison-row {
     grid-template-columns: 1fr;
   }
 

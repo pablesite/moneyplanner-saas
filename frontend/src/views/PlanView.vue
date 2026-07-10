@@ -7,6 +7,7 @@ import {
   NetWorthTrajectoryChart,
   PlanFoundations,
   PlanHero,
+  PlanEventsTimeline,
   ProductiveCapitalProgress,
   ProjectedDateCard,
   ProjectionAssumptionsDrawer,
@@ -44,6 +45,7 @@ onMounted(() => {
         <span>Motor Core</span><span class="dot"></span><span>Estimaciones deterministas</span>
       </template>
       <template #actions>
+        <RouterLink class="btn btn-ghost" to="/plan/escenarios">Escenarios</RouterLink>
         <RouterLink class="btn btn-ghost" to="/plan/setup">Editar plan</RouterLink>
         <AButton
           v-if="projection"
@@ -104,6 +106,8 @@ onMounted(() => {
         <DataQualityCard :projection="projection" />
         <PlanFoundations />
       </div>
+
+      <PlanEventsTimeline :events="store.events" />
 
       <ProjectionAssumptionsDrawer
         :open="assumptionsOpen"

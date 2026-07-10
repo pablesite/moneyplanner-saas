@@ -66,15 +66,16 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 **Origen:** Core-backed
 **Cliente:** `coreApi`
-**Rutas:** `/plan` y `/plan/setup`
+**Rutas:** `/plan`, `/plan/setup`, `/plan/escenarios`, `/plan/escenarios/:id`
 
 | Archivo            | Contenido                                                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `api.ts`           | Llamadas a Core `/api/plan/*`: plan idempotente, proyección, recálculo, histórico, miembros y overrides de función de activo. |
-| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenario, timeline de patrimonio, estados de carga/error/guardado.      |
+| `api.ts`           | Llamadas a Core `/api/plan/*`: plan idempotente, proyección, recálculo, histórico, miembros, overrides, escenarios y eventos. |
+| `store.ts`         | Pinia store `usePlanStore`: plan, proyección activa, escenarios, comparación, eventos, timeline de patrimonio y estados de carga/error/guardado. |
 | `composables.ts`   | `usePlan()` para consumir el store desde vistas.                                                                              |
-| `types.ts`         | Tipos TypeScript del contrato Core de Fase 1.                                                                                 |
-| `components/`      | `PlanHero`, `ProductiveCapitalProgress`, `ProjectedDateCard`, `NetWorthTrajectoryChart`, `PlanFoundations`, `DataQualityCard`, `ProjectionAssumptionsDrawer`. |
+| `types.ts`         | Tipos TypeScript del contrato Core de plan, proyección, escenarios y eventos.                                                  |
+| `scenarioTemplates.ts` | Plantillas frontend para defaults editables de escenarios; el cálculo final vive en backend.                              |
+| `components/`      | `PlanHero`, `ProductiveCapitalProgress`, `ProjectedDateCard`, `NetWorthTrajectoryChart`, `PlanFoundations`, `DataQualityCard`, `ProjectionAssumptionsDrawer`, `PlanEventsTimeline`, `ScenarioComparison`. |
 | `plan.css`         | Estilos Direction A del dominio, sin tocar `core/frontend/`.                                                                  |
 
 **Requiere:** `canUsePlan()` → `core.plan`. En Fase 2 `/plan` no entra en la navegación primaria para respetar el contrato móvil de cinco tabs; la sustitución de Estado financiero queda para Fase 5.
@@ -255,6 +256,10 @@ Soporte PWA: registro del service worker, instalación y resiliencia offline del
 | `/data`                | `aux-data`             | `AuxDataView`                              | `aux-data`                                                                                                                                                                                                                                                                   |
 | `/account`             | `account`              | `AccountView`                              | `auth` + `admin` para `saas_admin` + portable data para `saas_member`                                                                                                                                                                                                        |
 | `/people`              | `people`               | `PeopleView`                               | `people`                                                                                                                                                                                                                                                                     |
+| `/plan`                | `plan`                 | `PlanView`                                 | Mi Plan: dashboard de proyección Core, trayectoria, calidad de datos, cimientos placeholder y acontecimientos incorporados. |
+| `/plan/setup`          | `plan-setup`           | `PlanSetupView`                            | Onboarding/edición del plan financiero. |
+| `/plan/escenarios`     | `plan-scenarios`       | `PlanScenariosView`                        | Laboratorio de escenarios: lista y creación de simulaciones. |
+| `/plan/escenarios/:id` | `plan-scenario-detail` | `PlanScenarioDetailView`                   | Detalle, comparación plan vigente vs simulado e incorporación/descartado. |
 | `/contabilidad`        | `accounting-movements` | `AccountingMovementsView`                  | Libro diario operativo: búsqueda, filtros URL, revisión de clasificación y alta/edición. |
 | `/contabilidad/cuentas` | `accounting-accounts` | `AccountingAccountsView`                   | Catálogo de cuentas operativo y técnico con retorno al libro conservando contexto. |
 | `/movimientos`         | —                      | redirect                                   | Alias compatible hacia `/contabilidad`; `tab=cuentas` se traduce a `/contabilidad/cuentas`. |

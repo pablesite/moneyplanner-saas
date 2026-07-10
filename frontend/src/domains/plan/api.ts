@@ -6,9 +6,13 @@ import type {
   FinancialPlanPayload,
   PlanMember,
   PlanMemberPayload,
+  PlanEvent,
   ProjectionResponse,
   ProjectionScenario,
   ProjectionSnapshot,
+  PlanScenario,
+  PlanScenarioComparison,
+  PlanScenarioPayload,
 } from '@/domains/plan/types';
 
 export const planApi = {
@@ -43,5 +47,35 @@ export const planApi = {
   },
   updateAssetFunctions(items: AssetFunctionUpdate[]) {
     return coreApi.put<AssetFunctionResponse>('/api/plan/asset-functions/', items);
+  },
+  getScenarios() {
+    return coreApi.get<PlanScenario[]>('/api/plan/scenarios/');
+  },
+  createScenario(payload: PlanScenarioPayload) {
+    return coreApi.post<PlanScenario>('/api/plan/scenarios/', payload);
+  },
+  updateScenario(id: number, payload: Partial<PlanScenarioPayload>) {
+    return coreApi.patch<PlanScenario>(`/api/plan/scenarios/${id}/`, payload);
+  },
+  getScenario(id: number) {
+    return coreApi.get<PlanScenario>(`/api/plan/scenarios/${id}/`);
+  },
+  getScenarioComparison(id: number, scenario: ProjectionScenario = 'expected') {
+    return coreApi.get<PlanScenarioComparison>(`/api/plan/scenarios/${id}/comparison/`, {
+      params: { scenario },
+    });
+  },
+  acceptScenario(id: number, scenario: ProjectionScenario = 'expected') {
+    return coreApi.post<{
+      event: PlanEvent;
+      projection: ProjectionResponse;
+      budget_entries_created: number;
+    }>(`/api/plan/scenarios/${id}/accept/`, { scenario });
+  },
+  discardScenario(id: number) {
+    return coreApi.post<PlanScenario>(`/api/plan/scenarios/${id}/discard/`, {});
+  },
+  getEvents() {
+    return coreApi.get<PlanEvent[]>('/api/plan/events/');
   },
 };

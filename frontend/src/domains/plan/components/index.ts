@@ -5,3 +5,5 @@ export { default as PlanHero } from './PlanHero.vue';
 export { default as ProductiveCapitalProgress } from './ProductiveCapitalProgress.vue';
 export { default as ProjectedDateCard } from './ProjectedDateCard.vue';
 export { default as ProjectionAssumptionsDrawer } from './ProjectionAssumptionsDrawer.vue';
+export { default as PlanEventsTimeline } from './PlanEventsTimeline.vue';
+export { default as ScenarioComparison } from './ScenarioComparison.vue';

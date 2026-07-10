@@ -2,6 +2,17 @@ export type HouseholdType = 'single' | 'family';
 export type PlanProfile = 'security' | 'balanced' | 'growth';
 export type ProjectionScenario = 'prudent' | 'expected' | 'favorable';
 export type DataQualityLevel = 'initial' | 'medium' | 'high' | 'needs_review';
+export type PlanScenarioTemplate =
+  | 'housing'
+  | 'vehicle'
+  | 'studies'
+  | 'renovation'
+  | 'sabbatical'
+  | 'reduced_hours'
+  | 'business'
+  | 'debt_payoff'
+  | 'generic';
+export type PlanScenarioStatus = 'draft' | 'accepted' | 'discarded';
 
 export type PlanMember = {
   id: number;
@@ -147,4 +158,80 @@ export type ProjectionSnapshot = {
   quality_level: DataQualityLevel;
   is_official: boolean;
   result_json: ProjectionResponse;
+};
+
+export type PlanBudgetLinePayload = {
+  kind: 'expense' | 'income';
+  name: string;
+  category: string;
+  subcategory: string;
+  amount: string;
+  fiscal_year: number;
+  target_month: number | null;
+  term_start_month: number | null;
+  term_end_year: number | null;
+  term_end_month: number | null;
+  cashflow_role: string;
+};
+
+export type ScenarioEventPayload = {
+  start_date: string;
+  end_date: string | null;
+  initial_outflow: string;
+  monthly_expense_delta: string;
+  monthly_income_delta: string;
+  monthly_contribution_delta: string;
+  new_asset_value: string;
+  new_asset_type: PlanAssetFunction | null;
+  new_debt_principal: string;
+  new_debt_interest_rate: string | null;
+  new_debt_term_months: number | null;
+  metadata_json: {
+    budget_lines?: PlanBudgetLinePayload[];
+    [key: string]: unknown;
+  };
+};
+
+export type PlanScenario = {
+  id: number;
+  name: string;
+  template_type: PlanScenarioTemplate;
+  status: PlanScenarioStatus;
+  events: (ScenarioEventPayload & { id: number })[];
+  created_at: string;
+  accepted_at: string | null;
+};
+
+export type PlanScenarioPayload = {
+  name: string;
+  template_type: PlanScenarioTemplate;
+  events: ScenarioEventPayload[];
+};
+
+export type PlanScenarioComparison = {
+  scenario: Pick<PlanScenario, 'id' | 'name' | 'template_type' | 'status'>;
+  assumption_set: ProjectionScenario;
+  current: ProjectionResponse;
+  simulated: ProjectionResponse;
+  delta: {
+    projected_year: number | null;
+    productive_capital: string;
+    net_worth: string;
+    target_capital: string;
+  };
+  snapshot_id: number;
+};
+
+export type PlanEvent = {
+  id: number;
+  source_scenario: number | null;
+  name: string;
+  event_type: PlanScenarioTemplate;
+  planned_date: string;
+  actual_date: string | null;
+  status: 'planned' | 'occurred' | 'cancelled';
+  planned_impact_json: Record<string, unknown>;
+  actual_impact_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 };

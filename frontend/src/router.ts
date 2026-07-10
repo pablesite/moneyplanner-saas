@@ -12,6 +12,8 @@ import AccountingMovementsView from './views/AccountingMovementsView.vue';
 import AccountingAccountsView from './views/AccountingAccountsView.vue';
 import PlanView from './views/PlanView.vue';
 import PlanSetupView from './views/PlanSetupView.vue';
+import PlanScenariosView from './views/PlanScenariosView.vue';
+import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
 import { registerAuthGuard } from '@/domains/auth';
 import { canUsePlan } from '@/domains/capabilities';
 
@@ -48,6 +50,18 @@ const routes: RouteRecordRaw[] = [
     path: '/plan/setup',
     name: 'plan-setup',
     component: PlanSetupView,
+    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+  },
+  {
+    path: '/plan/escenarios',
+    name: 'plan-scenarios',
+    component: PlanScenariosView,
+    beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
+  },
+  {
+    path: '/plan/escenarios/:id',
+    name: 'plan-scenario-detail',
+    component: PlanScenarioDetailView,
     beforeEnter: () => (canUsePlan() ? true : '/estado-financiero'),
   },
   {
