@@ -584,17 +584,72 @@
   gap: 10px;
 }
 
-.plan-assets-summary article {
+.plan-assets-summary-card {
   display: grid;
   gap: 6px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-assets-summary-card:hover {
+  background: var(--hover);
+}
+
+.plan-assets-summary-card.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
 }
 
 .plan-assets-summary span {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.plan-assets-summary small {
+  color: var(--faint);
+  font-size: 0.8rem;
+}
+
+.plan-assets-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  padding-block: 8px;
+  background: var(--panel);
+}
+
+.plan-assets-toolbar .input {
+  flex: 1;
+  max-width: 360px;
+}
+
+.plan-assets-group {
+  margin-top: 14px;
+}
+
+.plan-assets-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.plan-assets-group-head span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
 }
 
 .plan-assets-list {
