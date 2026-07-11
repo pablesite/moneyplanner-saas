@@ -26,15 +26,9 @@ const productiveCapital = computed(() => Number(summary.value.productive_capital
 const projectedCopy = computed(() =>
   projectedYear.value == null ? 'Sin fecha estimada' : String(projectedYear.value),
 );
-const deltaCopy = computed(() => {
-  if (gap.value == null) return 'Completa datos o ajusta hipótesis para estimar fecha';
-  if (gap.value === 0) return 'Alineado con la fecha objetivo';
-  if (gap.value > 0) return `${gap.value} años después del objetivo`;
-  return `${Math.abs(gap.value)} años antes del objetivo`;
-});
 type Blocker = { text: string; to: string; cta: string };
 
-const blockers = computed<Blocker[]>(() => {
+const specificBlockers = computed<Blocker[]>(() => {
   if (gap.value != null) return [];
   const items: Blocker[] = [];
   const unknownCapital = Number(props.projection.classification?.unknown_capital ?? 0);
@@ -68,14 +62,31 @@ const blockers = computed<Blocker[]>(() => {
       cta: 'Revisar presupuesto',
     });
   }
-  if (!items.length) {
-    items.push({
+  return items.slice(0, 3);
+});
+
+const blockers = computed<Blocker[]>(() => {
+  if (gap.value != null) return [];
+  if (specificBlockers.value.length) return specificBlockers.value;
+  return [
+    {
       text: 'Con los datos actuales el capital no alcanza el objetivo dentro del horizonte proyectado.',
       to: '/plan/setup',
-      cta: 'Revisar plan e hipótesis',
-    });
+      cta: 'Revisar objetivo y horizonte',
+    },
+  ];
+});
+
+const deltaCopy = computed(() => {
+  if (gap.value == null) {
+    const count = specificBlockers.value.length;
+    if (count === 1) return 'El plan actual no llega al objetivo: hay 1 causa identificada';
+    if (count > 1) return `El plan actual no llega al objetivo: hay ${count} causas identificadas`;
+    return 'El capital proyectado no alcanza el objetivo dentro del horizonte';
   }
-  return items.slice(0, 3);
+  if (gap.value === 0) return 'Alineado con la fecha objetivo';
+  if (gap.value > 0) return `${gap.value} años después del objetivo`;
+  return `${Math.abs(gap.value)} años antes del objetivo`;
 });
 
 const kpis = computed<AKpiItem[]>(() => [
@@ -106,14 +117,6 @@ const kpis = computed<AKpiItem[]>(() => [
           label="La fecha es una estimación calculada con capital productivo, hipótesis y datos actuales. No es una garantía."
         />
       </template>
-    </AHero>
-
-    <div class="plan-hero-side">
-      <AKpiBand :items="kpis" />
-      <p class="plan-hero-note">
-        Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
-        productivo, no patrimonio neto total.
-      </p>
       <div v-if="blockers.length" class="plan-hero-blockers">
         <strong>Por qué no hay fecha</strong>
         <ul>
@@ -123,6 +126,14 @@ const kpis = computed<AKpiItem[]>(() => [
           </li>
         </ul>
       </div>
+    </AHero>
+
+    <div class="plan-hero-side">
+      <AKpiBand :items="kpis" />
+      <p class="plan-hero-note">
+        Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
+        productivo, no patrimonio neto total.
+      </p>
     </div>
   </section>
 </template>

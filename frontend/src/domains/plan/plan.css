@@ -55,6 +55,7 @@
 .plan-hero-blockers {
   display: grid;
   gap: 8px;
+  margin-top: 16px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
