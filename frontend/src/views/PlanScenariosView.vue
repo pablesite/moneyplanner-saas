@@ -89,9 +89,12 @@ function money(value: string): string {
   return Number.isFinite(parsed) ? parsed.toFixed(2) : '0.00';
 }
 
-function nullableMoney(value: string): string | null {
+// El usuario introduce el interés en % (7 = 7 %); el backend espera fracción.
+function nullableRateFromPct(value: string): string | null {
   if (!String(value).trim()) return null;
-  return money(value);
+  const parsed = Number(String(value).replace(',', '.'));
+  if (!Number.isFinite(parsed)) return null;
+  return (parsed / 100).toFixed(4);
 }
 
 function signedIncomeDelta(): string {
@@ -116,7 +119,7 @@ function payload(): PlanScenarioPayload {
         new_asset_value: money(form.newAssetValue),
         new_asset_type: form.newAssetType,
         new_debt_principal: money(form.newDebtPrincipal),
-        new_debt_interest_rate: nullableMoney(form.newDebtInterestRate),
+        new_debt_interest_rate: nullableRateFromPct(form.newDebtInterestRate),
         new_debt_term_months: form.newDebtTermMonths ? Number(form.newDebtTermMonths) : null,
         metadata_json: {
           budget_lines: [],
@@ -279,15 +282,15 @@ onMounted(async () => {
               />
             </label>
             <label>
-              <span>Interés anual deuda</span>
+              <span>Interés anual deuda (%)</span>
               <input
                 v-model="form.newDebtInterestRate"
                 class="input"
                 type="number"
                 min="0"
-                max="1"
-                step="0.0001"
-                placeholder="0.0700"
+                max="100"
+                step="0.01"
+                placeholder="7"
               />
             </label>
             <label>

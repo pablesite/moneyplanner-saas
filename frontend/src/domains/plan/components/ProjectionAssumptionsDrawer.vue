@@ -22,10 +22,11 @@ const rows: Array<{ key: keyof ProjectionAssumptions; label: string }> = [
 </script>
 
 <template>
-  <BaseModal :open="open" title="Hipótesis del escenario" variant="sheet" @close="$emit('close')">
+  <BaseModal :open="open" title="Supuestos del cálculo" variant="sheet" @close="$emit('close')">
     <div class="plan-assumptions">
       <p>
-        Valores globales de solo lectura. Cada snapshot congela las hipótesis usadas en el cálculo.
+        Valores globales de solo lectura de la hipótesis activa. Cada snapshot congela los supuestos
+        usados en el cálculo.
       </p>
       <dl>
         <div v-for="row in rows" :key="row.key">

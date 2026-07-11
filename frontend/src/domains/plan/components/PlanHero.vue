@@ -98,12 +98,12 @@ const kpis = computed<AKpiItem[]>(() => [
   {
     label: 'Renta sostenible',
     value: formatMoney(summary.value.monthly_sustainable_income.value),
-    meta: 'Aproximada, según hipótesis',
+    meta: 'Con tu capital productivo actual',
   },
   {
-    label: 'Escenario',
+    label: 'Hipótesis',
     value: projectionScenarioLabel(props.projection.scenario),
-    meta: 'Hipótesis globales',
+    meta: 'Globales del cálculo',
   },
 ]);
 </script>

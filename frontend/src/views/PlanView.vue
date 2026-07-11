@@ -93,7 +93,7 @@ onMounted(() => {
       <div class="plan-toolbar">
         <AMetaPill>Objetivo {{ plan.target_date.slice(0, 4) }}</AMetaPill>
         <label class="context-field">
-          <span>Escenario</span>
+          <span>Hipótesis</span>
           <ASelect
             v-model="activeScenario"
             :options="scenarioOptions"
@@ -101,7 +101,9 @@ onMounted(() => {
             :searchable="false"
           />
         </label>
-        <AButton variant="ghost" @click="assumptionsOpen = true">Hipótesis</AButton>
+        <span v-if="loading && projection" class="plan-muted" role="status">Actualizando…</span>
+        <AButton variant="ghost" @click="assumptionsOpen = true">Supuestos</AButton>
+        <RouterLink class="btn btn-ghost" to="/plan/activos">Clasificar activos</RouterLink>
       </div>
 
       <PlanHero :plan="plan" :projection="projection" :foundations="store.foundations" />
