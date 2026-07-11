@@ -202,6 +202,7 @@
 .plan-progress-meta,
 .plan-chart-legend {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   color: var(--muted);
@@ -280,6 +281,41 @@
   stroke-dasharray: 9 8;
 }
 
+.plan-chart-line.prod {
+  stroke: var(--accent-strong);
+  stroke-width: 2;
+  stroke-dasharray: 3 5;
+}
+
+.plan-chart-line.target {
+  stroke: var(--faint);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 5;
+}
+
+.plan-chart-x-label {
+  text-anchor: middle;
+}
+
+.plan-chart-marker line {
+  stroke: var(--line-strong);
+  stroke-dasharray: 4 4;
+}
+
+.plan-chart-marker line.projected {
+  stroke: var(--pos);
+}
+
+.plan-chart-marker text {
+  text-anchor: middle;
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.plan-chart-marker text.projected {
+  fill: var(--pos);
+}
+
 .plan-chart-hover-line {
   stroke: rgba(255, 255, 255, 0.2);
 }
@@ -336,7 +372,15 @@
 }
 
 .plan-chart-legend .proj {
-  background: var(--pos);
+  background: repeating-linear-gradient(90deg, var(--pos) 0 5px, transparent 5px 9px);
+}
+
+.plan-chart-legend .prod {
+  background: repeating-linear-gradient(90deg, var(--accent-strong) 0 3px, transparent 3px 7px);
+}
+
+.plan-chart-legend .target {
+  background: repeating-linear-gradient(90deg, var(--faint) 0 2px, transparent 2px 6px);
 }
 
 .plan-quality {
@@ -770,6 +814,15 @@
   .plan-recommendations,
   .plan-date-card {
     padding: 14px;
+  }
+
+  /* El SVG no escala por debajo de un ancho legible: scroll horizontal propio. */
+  .plan-chart-wrap {
+    overflow-x: auto;
+  }
+
+  .plan-chart {
+    min-width: 640px;
   }
 
   .plan-toolbar,
