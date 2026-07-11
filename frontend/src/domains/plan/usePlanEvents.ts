@@ -59,6 +59,22 @@ function markerDetail(event: PlanEvent): string {
   return details.join(' · ');
 }
 
+// Mapeo puro reutilizable: el gráfico de trayectoria consume los eventos ya
+// cargados en el store del plan sin abrir un segundo fetch ni duplicar el
+// formateo del detalle.
+export function planEventMarkers(events: PlanEvent[]): PlanTimelineMarker[] {
+  return events
+    .filter((event) => event.status !== 'cancelled')
+    .map((event) => ({
+      id: event.id,
+      date: event.actual_date ?? event.planned_date,
+      label: event.name,
+      detail: markerDetail(event),
+      status: event.status,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function usePlanEvents() {
   const events = ref<PlanEvent[]>([]);
   const loading = ref(false);
@@ -77,18 +93,7 @@ export function usePlanEvents() {
     }
   }
 
-  const markers = computed<PlanTimelineMarker[]>(() =>
-    events.value
-      .filter((event) => event.status !== 'cancelled')
-      .map((event) => ({
-        id: event.id,
-        date: event.actual_date ?? event.planned_date,
-        label: event.name,
-        detail: markerDetail(event),
-        status: event.status,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date)),
-  );
+  const markers = computed<PlanTimelineMarker[]>(() => planEventMarkers(events.value));
 
   void refresh();
 

@@ -316,6 +316,22 @@
   fill: var(--pos);
 }
 
+.plan-chart-event line {
+  stroke: var(--accent);
+  stroke-dasharray: 3 3;
+  opacity: 0.7;
+}
+
+.plan-chart-event circle {
+  fill: var(--accent);
+}
+
+.plan-chart-event text {
+  fill: var(--accent);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
 .plan-chart-hover-line {
   stroke: rgba(255, 255, 255, 0.2);
 }
@@ -381,6 +397,10 @@
 
 .plan-chart-legend .target {
   background: repeating-linear-gradient(90deg, var(--faint) 0 2px, transparent 2px 6px);
+}
+
+.plan-chart-legend .event {
+  background: repeating-linear-gradient(90deg, var(--accent) 0 3px, transparent 3px 6px);
 }
 
 .plan-quality {

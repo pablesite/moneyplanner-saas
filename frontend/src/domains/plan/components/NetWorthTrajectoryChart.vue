@@ -4,11 +4,16 @@ import { formatCompact, formatMoney } from '@/lib/format';
 import { formatMonthYearLabel } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import type { ProjectionResponse } from '@/domains/plan/types';
+import type { PlanTimelineMarker } from '@/domains/plan/usePlanEvents';
 
-const props = defineProps<{
-  timeline: NetWorthTimeline | null;
-  projection: ProjectionResponse;
-}>();
+const props = withDefaults(
+  defineProps<{
+    timeline: NetWorthTimeline | null;
+    projection: ProjectionResponse;
+    events?: PlanTimelineMarker[];
+  }>(),
+  { events: () => [] },
+);
 
 const W = 960;
 const H = 280;
@@ -148,6 +153,30 @@ const yearMarkers = computed<YearMarker[]>(() => {
   return markers;
 });
 
+type EventMarker = {
+  id: number;
+  x: number;
+  label: string;
+  detail: string;
+  status: PlanTimelineMarker['status'];
+};
+
+// Acontecimientos incorporados al plan como anotaciones sobre el eje temporal,
+// recortados al rango visible; no son una serie más.
+const eventMarkers = computed<EventMarker[]>(() => {
+  const { min, max } = timeBounds.value;
+  return props.events
+    .map((marker) => ({ marker, t: Date.parse(marker.date) }))
+    .filter((entry) => Number.isFinite(entry.t) && entry.t >= min && entry.t <= max)
+    .map(({ marker, t }) => ({
+      id: marker.id,
+      x: tx(t),
+      label: marker.label,
+      detail: marker.detail,
+      status: marker.status,
+    }));
+});
+
 const hoverPoint = computed(() =>
   hoverIndex.value == null ? null : (points.value[hoverIndex.value] ?? null),
 );
@@ -196,6 +225,7 @@ function onMove(event: MouseEvent): void {
         <span><i class="proj"></i> Proyección</span>
         <span><i class="prod"></i> Capital productivo</span>
         <span><i class="target"></i> Capital objetivo</span>
+        <span v-if="eventMarkers.length"><i class="event"></i> Acontecimiento</span>
       </div>
     </div>
 
@@ -236,6 +266,12 @@ function onMove(event: MouseEvent): void {
         <g v-for="marker in yearMarkers" :key="marker.label" class="plan-chart-marker">
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" :class="marker.kind" />
           <text :x="marker.x" :y="padT - 8" :class="marker.kind">{{ marker.label }}</text>
+        </g>
+        <g v-for="marker in eventMarkers" :key="`event-${marker.id}`" class="plan-chart-event">
+          <title>{{ marker.label }} · {{ marker.detail }}</title>
+          <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" />
+          <circle :cx="marker.x" :cy="H - padB" r="4" />
+          <text :x="marker.x" :y="H - padB - 8">{{ marker.label }}</text>
         </g>
         <path v-if="targetPath" class="plan-chart-line target" :d="targetPath" />
         <path v-if="productivePath" class="plan-chart-line prod" :d="productivePath" />

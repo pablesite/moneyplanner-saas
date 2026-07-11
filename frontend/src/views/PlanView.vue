@@ -14,6 +14,7 @@ import {
   PlanRecommendationCard,
 } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
+import { planEventMarkers } from '@/domains/plan/usePlanEvents';
 import type { ProjectionScenario } from '@/domains/plan';
 import '@/domains/plan/plan.css';
 
@@ -38,6 +39,8 @@ const activeScenario = computed({
 const visibleRecommendations = computed(() =>
   store.recommendations.filter((item) => item.status === 'open').slice(0, 2),
 );
+
+const eventMarkers = computed(() => planEventMarkers(store.events));
 
 async function simulateRecommendation(id: number): Promise<void> {
   const scenario = await store.simulateRecommendation(id);
@@ -136,7 +139,11 @@ onMounted(() => {
         <ProjectedDateCard :projection="projection" />
       </div>
 
-      <NetWorthTrajectoryChart :timeline="netWorthTimeline" :projection="projection" />
+      <NetWorthTrajectoryChart
+        :timeline="netWorthTimeline"
+        :projection="projection"
+        :events="eventMarkers"
+      />
 
       <div class="plan-side-grid">
         <DataQualityCard :projection="projection" />
