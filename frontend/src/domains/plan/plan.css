@@ -711,6 +711,21 @@
   color: var(--muted);
 }
 
+.plan-scenario-notice.success {
+  border-color: var(--accent-line);
+  background: var(--pos-soft);
+}
+
+.plan-scenario-notice.success p {
+  color: var(--text);
+}
+
+.plan-scenario-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .plan-comparison-unchanged {
   display: grid;
   gap: 10px;

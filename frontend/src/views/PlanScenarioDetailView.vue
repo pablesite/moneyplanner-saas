@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, AMetaPill, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { ScenarioComparison } from '@/domains/plan/components';
@@ -77,13 +77,31 @@ const activeScenario = computed({
   },
 });
 
-async function accept(): Promise<void> {
-  await store.acceptScenario(scenarioId.value, scenario.value);
-}
+const confirming = ref<'accept' | 'discard' | null>(null);
+const acceptedBudgetEntries = ref<number | null>(null);
 
-async function discard(): Promise<void> {
-  await store.discardScenario(scenarioId.value);
-  await router.push('/plan/escenarios');
+const confirmCopy = computed(() =>
+  confirming.value === 'accept'
+    ? 'El escenario pasará a formar parte del plan vigente: se creará un acontecimiento y se añadirán sus líneas al presupuesto futuro. No modifica movimientos ni datos reales.'
+    : 'El escenario se descartará de forma definitiva y quedará solo como referencia. No afecta al plan vigente.',
+);
+
+async function confirmAction(): Promise<void> {
+  try {
+    if (confirming.value === 'accept') {
+      const result = await store.acceptScenario(scenarioId.value, scenario.value);
+      acceptedBudgetEntries.value = result.budget_entries_created;
+    }
+    if (confirming.value === 'discard') {
+      await store.discardScenario(scenarioId.value);
+      confirming.value = null;
+      await router.push('/plan/escenarios');
+      return;
+    }
+    confirming.value = null;
+  } catch {
+    // El error queda visible vía store.error; la confirmación sigue abierta para reintentar.
+  }
 }
 
 onMounted(async () => {
@@ -107,16 +125,16 @@ onMounted(async () => {
         <AButton
           v-if="selected?.status === 'draft'"
           variant="ghost"
-          :loading="store.saving"
-          @click="discard"
+          :disabled="store.saving"
+          @click="confirming = 'discard'"
         >
           Descartar
         </AButton>
         <AButton
           v-if="selected?.status === 'draft'"
           variant="primary"
-          :loading="store.saving"
-          @click="accept"
+          :disabled="store.saving"
+          @click="confirming = 'accept'"
         >
           Incorporar al plan
         </AButton>
@@ -137,6 +155,37 @@ onMounted(async () => {
         <RouterLink class="btn btn-ghost btn-sm" to="/plan/escenarios">
           Crear un escenario nuevo
         </RouterLink>
+      </section>
+
+      <section v-if="confirming" class="plan-scenario-notice">
+        <p>{{ confirmCopy }}</p>
+        <div class="plan-scenario-notice-actions">
+          <AButton size="sm" variant="primary" :loading="store.saving" @click="confirmAction">
+            {{ confirming === 'accept' ? 'Confirmar incorporación' : 'Confirmar descarte' }}
+          </AButton>
+          <AButton size="sm" variant="ghost" :disabled="store.saving" @click="confirming = null">
+            Cancelar
+          </AButton>
+        </div>
+      </section>
+
+      <section
+        v-else-if="acceptedBudgetEntries !== null"
+        class="plan-scenario-notice success"
+        role="status"
+      >
+        <p>
+          Escenario incorporado al plan vigente<template v-if="acceptedBudgetEntries"
+            >: {{ acceptedBudgetEntries }} línea{{ acceptedBudgetEntries === 1 ? '' : 's' }} de
+            presupuesto futuro creada{{ acceptedBudgetEntries === 1 ? '' : 's' }}</template
+          >.
+        </p>
+        <div class="plan-scenario-notice-actions">
+          <RouterLink class="btn btn-primary btn-sm" to="/plan">Ver Mi Plan</RouterLink>
+          <RouterLink v-if="acceptedBudgetEntries" class="btn btn-ghost btn-sm" to="/presupuesto">
+            Ver presupuesto
+          </RouterLink>
+        </div>
       </section>
 
       <div class="plan-toolbar">
