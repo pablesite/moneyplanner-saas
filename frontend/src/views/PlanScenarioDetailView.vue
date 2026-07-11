@@ -6,7 +6,7 @@ import { ScenarioComparison } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import type { ProjectionScenario } from '@/domains/plan';
 import { scenarioStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, toNumber } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
 const route = useRoute();
@@ -35,6 +35,40 @@ const statusCopy = computed(() => {
   }
   return label;
 });
+
+type ImpactMetric = { label: string; value: string };
+
+function signedMonthly(value: string): string {
+  const amount = toNumber(value);
+  return `${amount > 0 ? '+' : ''}${formatMoney(amount)}/mes`;
+}
+
+const impactMetrics = computed<ImpactMetric[]>(() => {
+  const event = firstEvent.value;
+  if (!event) return [];
+  const metrics: ImpactMetric[] = [{ label: 'Inicio', value: shortDate(event.start_date) }];
+  if (event.end_date) metrics.push({ label: 'Fin', value: shortDate(event.end_date) });
+  const moneyRows: Array<{ label: string; value: string; monthly?: boolean }> = [
+    { label: 'Pago inicial', value: event.initial_outflow },
+    { label: 'Activo nuevo', value: event.new_asset_value },
+    { label: 'Deuda nueva', value: event.new_debt_principal },
+    { label: 'Gasto mensual', value: event.monthly_expense_delta, monthly: true },
+    { label: 'Ingreso mensual', value: event.monthly_income_delta, monthly: true },
+    { label: 'Aportación mensual', value: event.monthly_contribution_delta, monthly: true },
+  ];
+  for (const row of moneyRows) {
+    if (toNumber(row.value) === 0) continue;
+    metrics.push({
+      label: row.label,
+      value: row.monthly ? signedMonthly(row.value) : formatMoney(toNumber(row.value)),
+    });
+  }
+  return metrics;
+});
+
+const hasQuantitativeImpact = computed(() =>
+  impactMetrics.value.some((metric) => !['Inicio', 'Fin'].includes(metric.label)),
+);
 
 const activeScenario = computed({
   get: () => scenario.value,
@@ -125,23 +159,14 @@ onMounted(async () => {
           </div>
         </div>
         <div v-if="firstEvent" class="plan-scenario-metrics">
-          <article>
-            <span>Inicio</span>
-            <strong>{{ firstEvent.start_date }}</strong>
-          </article>
-          <article>
-            <span>Pago inicial</span>
-            <strong>{{ formatMoney(Number(firstEvent.initial_outflow)) }}</strong>
-          </article>
-          <article>
-            <span>Activo nuevo</span>
-            <strong>{{ formatMoney(Number(firstEvent.new_asset_value)) }}</strong>
-          </article>
-          <article>
-            <span>Deuda nueva</span>
-            <strong>{{ formatMoney(Number(firstEvent.new_debt_principal)) }}</strong>
+          <article v-for="metric in impactMetrics" :key="metric.label">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
           </article>
         </div>
+        <p v-if="firstEvent && !hasQuantitativeImpact" class="plan-muted">
+          Este escenario no define importes: la comparación coincidirá con el plan vigente.
+        </p>
       </section>
 
       <AState v-if="store.comparisonLoading && !store.scenarioComparison" status="loading">

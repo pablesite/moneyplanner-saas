@@ -20,10 +20,14 @@ import type {
   ProjectionScenario,
 } from '@/domains/plan/types';
 
-function toErrorMessage(error: unknown): string {
+function isNotFound(error: unknown): boolean {
+  return (error as { response?: { status?: number } })?.response?.status === 404;
+}
+
+function toErrorMessage(error: unknown, notFoundMessage = 'No se pudo cargar Mi Plan.'): string {
   const response = (error as { response?: { status?: number; data?: { detail?: string } } })
     ?.response;
-  if (response?.status === 404) return 'not_found';
+  if (response?.status === 404) return notFoundMessage;
   return response?.data?.detail ?? 'No se pudo cargar Mi Plan.';
 }
 
@@ -71,13 +75,12 @@ export const usePlanStore = defineStore('plan', {
         this.plan = data;
         this.planMissing = false;
       } catch (error) {
-        const message = toErrorMessage(error);
-        if (message === 'not_found') {
+        if (isNotFound(error)) {
           this.plan = null;
           this.projection = null;
           this.planMissing = true;
         } else {
-          this.error = message;
+          this.error = toErrorMessage(error);
         }
       } finally {
         this.loading = false;
@@ -265,7 +268,7 @@ export const usePlanStore = defineStore('plan', {
         const { data } = await planApi.getScenario(id);
         this.selectedScenario = data;
       } catch (error) {
-        this.error = toErrorMessage(error);
+        this.error = toErrorMessage(error, 'No se encontró el escenario.');
       } finally {
         this.scenariosLoading = false;
       }
@@ -280,7 +283,7 @@ export const usePlanStore = defineStore('plan', {
         const { data } = await planApi.getScenarioComparison(id, selectedScenario);
         this.scenarioComparison = data;
       } catch (error) {
-        this.error = toErrorMessage(error);
+        this.error = toErrorMessage(error, 'No se encontró el escenario.');
       } finally {
         this.comparisonLoading = false;
       }
@@ -296,7 +299,7 @@ export const usePlanStore = defineStore('plan', {
         await Promise.all([this.fetchScenario(id), this.fetchScenarios(), this.fetchEvents()]);
         return data;
       } catch (error) {
-        this.error = toErrorMessage(error);
+        this.error = toErrorMessage(error, 'No se encontró el escenario.');
         throw error;
       } finally {
         this.saving = false;
@@ -312,7 +315,7 @@ export const usePlanStore = defineStore('plan', {
         await this.fetchScenarios();
         return data;
       } catch (error) {
-        this.error = toErrorMessage(error);
+        this.error = toErrorMessage(error, 'No se encontró el escenario.');
         throw error;
       } finally {
         this.saving = false;

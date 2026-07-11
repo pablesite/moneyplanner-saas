@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 import type { PlanEvent } from '@/domains/plan/types';
-import { scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
+import { planEventStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
 
 defineProps<{
   events: PlanEvent[];
@@ -26,7 +26,9 @@ defineProps<{
         <span class="plan-event-date mono">{{ event.planned_date.slice(0, 7) }}</span>
         <div>
           <strong>{{ event.name }}</strong>
-          <span>{{ scenarioTemplateLabel(event.event_type) }} · {{ event.status }}</span>
+          <span>
+            {{ scenarioTemplateLabel(event.event_type) }} · {{ planEventStatusLabel(event.status) }}
+          </span>
         </div>
       </li>
     </ol>

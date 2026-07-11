@@ -151,7 +151,7 @@ onMounted(() => {
     </APageHead>
 
     <AState v-if="loading && !plan" status="loading">Cargando configuración...</AState>
-    <AState v-if="error && error !== 'not_found'" status="error">{{ error }}</AState>
+    <AState v-if="error" status="error">{{ error }}</AState>
 
     <form class="plan-setup" @submit.prevent="submit">
       <section class="sect plan-form-section">

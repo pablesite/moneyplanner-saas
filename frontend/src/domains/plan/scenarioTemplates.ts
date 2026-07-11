@@ -1,6 +1,7 @@
 import type {
   PlanAssetFunction,
   PlanBudgetLinePayload,
+  PlanEvent,
   PlanScenarioStatus,
   PlanScenarioTemplate,
   ProjectionScenario,
@@ -196,6 +197,15 @@ export function scenarioStatusLabel(value: PlanScenarioStatus): string {
     draft: 'Borrador',
     accepted: 'Incorporado',
     discarded: 'Descartado',
+  };
+  return labels[value] ?? value;
+}
+
+export function planEventStatusLabel(value: PlanEvent['status']): string {
+  const labels: Record<PlanEvent['status'], string> = {
+    planned: 'Previsto',
+    occurred: 'Ocurrido',
+    cancelled: 'Cancelado',
   };
   return labels[value] ?? value;
 }

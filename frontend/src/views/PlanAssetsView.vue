@@ -110,7 +110,9 @@ onMounted(() => {
 
         <div v-if="!assets.length" class="plan-empty-inline">
           <p class="plan-muted">No hay activos registrados todavía.</p>
-          <RouterLink class="btn btn-ghost btn-sm" to="/">Registrar en Patrimonio</RouterLink>
+          <RouterLink class="btn btn-ghost btn-sm" to="/patrimonio"
+            >Registrar en Patrimonio</RouterLink
+          >
         </div>
 
         <ul v-else class="plan-assets-list">
