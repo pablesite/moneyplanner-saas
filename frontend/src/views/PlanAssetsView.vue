@@ -15,6 +15,7 @@ const assets = computed(() => classification.value?.assets ?? []);
 
 const search = ref('');
 const activeFunction = ref<PlanAssetFunction | null>(null);
+const collapsedGroups = ref<Set<PlanAssetFunction>>(new Set(['family_use']));
 
 // Sin clasificar primero: es lo único que bloquea la proyección.
 const functionOrder: PlanAssetFunction[] = [
@@ -80,6 +81,13 @@ function toggleFunction(fn: PlanAssetFunction): void {
 function clearFilters(): void {
   search.value = '';
   activeFunction.value = null;
+}
+
+function toggleGroup(fn: PlanAssetFunction): void {
+  const next = new Set(collapsedGroups.value);
+  if (next.has(fn)) next.delete(fn);
+  else next.add(fn);
+  collapsedGroups.value = next;
 }
 
 function functionOptions(asset: ClassifiedPlanAsset): ASelectItem[] {
@@ -202,14 +210,20 @@ onMounted(() => {
 
         <template v-else>
           <div v-for="group in groups" :key="group.fn" class="plan-assets-group">
-            <h3 class="plan-assets-group-head">
-              {{ group.label }}
+            <button
+              type="button"
+              class="plan-assets-group-head"
+              :aria-expanded="!collapsedGroups.has(group.fn)"
+              @click="toggleGroup(group.fn)"
+            >
+              <strong>{{ group.label }}</strong>
               <span>
                 {{ group.items.length }} activo{{ group.items.length === 1 ? '' : 's' }} ·
-                {{ formatMoney(group.total) }}
+                {{ formatMoney(group.total) }} ·
+                {{ collapsedGroups.has(group.fn) ? 'Ver' : 'Ocultar' }}
               </span>
-            </h3>
-            <ul class="plan-assets-list">
+            </button>
+            <ul v-if="!collapsedGroups.has(group.fn)" class="plan-assets-list">
               <li v-for="asset in group.items" :key="asset.asset_id" class="plan-asset-row">
                 <div class="plan-asset-info">
                   <strong>{{ asset.name }}</strong>

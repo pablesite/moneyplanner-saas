@@ -236,6 +236,21 @@ export type PlanEvent = {
   updated_at: string;
 };
 
+export type PlanManagedBudgetLine = {
+  id: number;
+  name: string;
+  fiscal_year: number;
+  amount_annual: string;
+  time_profile: string;
+  cashflow_role: string;
+};
+
+export type PlanEventBudgetLines = {
+  event: { id: number; name: string };
+  income: PlanManagedBudgetLine[];
+  expenses: PlanManagedBudgetLine[];
+};
+
 export type PlanFoundations = {
   period: string;
   cash_flow: {

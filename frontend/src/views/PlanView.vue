@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, AMetaPill, type ASelectItem } from '@/domains/ui';
 import {
-  DataQualityCard,
   NetWorthTrajectoryChart,
   PlanFoundations,
   PlanHero,
@@ -22,6 +21,7 @@ const { store, loading, error, plan, planMissing, projection, netWorthTimeline, 
   usePlan();
 const router = useRouter();
 const assumptionsOpen = ref(false);
+const detailsOpen = ref(false);
 
 const scenarioOptions: ASelectItem[] = [
   { value: 'prudent', label: 'Prudente' },
@@ -123,10 +123,9 @@ onMounted(() => {
         </div>
         <div class="plan-recommendation-list">
           <PlanRecommendationCard
-            v-for="(recommendation, index) in visibleRecommendations"
+            v-for="recommendation in visibleRecommendations.slice(0, 1)"
             :key="recommendation.id"
             :recommendation="recommendation"
-            :secondary="index > 0"
             @accept="store.acceptRecommendation"
             @dismiss="store.dismissRecommendation"
             @simulate="simulateRecommendation"
@@ -134,23 +133,39 @@ onMounted(() => {
         </div>
       </section>
 
-      <div class="plan-main-grid">
-        <ProductiveCapitalProgress :projection="projection" />
-        <ProjectedDateCard :projection="projection" />
-      </div>
-
       <NetWorthTrajectoryChart
         :timeline="netWorthTimeline"
         :projection="projection"
         :events="eventMarkers"
       />
 
-      <div class="plan-side-grid">
-        <DataQualityCard :projection="projection" />
-        <PlanFoundations :foundations="store.foundations" />
-      </div>
+      <AButton class="plan-diagnosis-toggle" variant="ghost" @click="detailsOpen = !detailsOpen">
+        {{ detailsOpen ? 'Ocultar diagnóstico completo' : 'Ver el diagnóstico completo' }}
+      </AButton>
 
-      <PlanEventsTimeline :events="store.events" />
+      <div v-if="detailsOpen" class="plan-diagnosis-detail">
+        <div class="plan-main-grid">
+          <ProductiveCapitalProgress :projection="projection" />
+          <ProjectedDateCard :projection="projection" />
+        </div>
+        <section v-if="visibleRecommendations.length > 1" class="sect plan-recommendations">
+          <div class="sect-head">
+            <div>
+              <p class="eyebrow">Alternativa</p>
+              <h2 class="sect-title">Acción secundaria</h2>
+            </div>
+          </div>
+          <PlanRecommendationCard
+            :recommendation="visibleRecommendations[1]!"
+            secondary
+            @accept="store.acceptRecommendation"
+            @dismiss="store.dismissRecommendation"
+            @simulate="simulateRecommendation"
+          />
+        </section>
+        <PlanFoundations :foundations="store.foundations" />
+        <PlanEventsTimeline :events="store.events" />
+      </div>
 
       <ProjectionAssumptionsDrawer
         :open="assumptionsOpen"

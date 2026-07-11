@@ -72,10 +72,10 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 Validación en navegador real con datos de `pablesite`, en 1440×900 **y** 390×844 (receta en la memoria de proyecto `playwright-browser-validation`): `/plan`, `/plan/escenarios`, `/plan/escenarios/:id`, `/plan/activos`. Comprobar que ningún error de API se muestra ya como «No se pudo cargar Mi Plan.» cuando no lo es, y que la consola queda limpia de promesas sin manejar.
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` — si cambia la estructura de vistas/componentes del dominio `plan`
-- [ ] `docs/frontend/frontend-visual-guide.md` — patrones nuevos que se consoliden (revelación progresiva, chips de estado)
-- [ ] `docs/project-status.md` — estado de la fase
-- [ ] `docs/tasks/financial-plan/browser-audit-2026-07-11.md` — marcar A-6 y A-9..A-14 como resueltos
+- [x] `docs/frontend/domain-map.md` — si cambia la estructura de vistas/componentes del dominio `plan`
+- [x] `docs/frontend/frontend-visual-guide.md` — patrones nuevos que se consoliden (revelación progresiva, chips de estado)
+- [x] `docs/project-status.md` — estado de la fase
+- [x] `docs/tasks/financial-plan/browser-audit-2026-07-11.md` — marcar A-6 y A-9..A-14 como resueltos
 
 ## Risks
 - Esconder información puede quitarle a un usuario avanzado datos que ya usaba: colapsar no es borrar; el detalle debe estar siempre a un clic y ser enlazable.
@@ -83,8 +83,15 @@ Validación en navegador real con datos de `pablesite`, en 1440×900 **y** 390×
 - Ejecutar esta fase antes de la 7 daría una interfaz más clara sobre un diagnóstico falso: **no adelantarla**.
 
 ## Completion Criteria
-- [ ] All validation commands pass
-- [ ] Validación en navegador real (desktop + móvil) ejecutada
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits)
+- [x] All validation commands pass
+- [x] Validación en navegador real (desktop + móvil) ejecutada
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
+- [x] Commit created (Conventional Commits)
+
+## Completion note (2026-07-11)
+
+- `/plan` baja de una pantalla inicial de diagnóstico completo a titular, acción principal y trayectoria; el resto permanece a un clic.
+- El parser compartido extrae el contrato `{error:{code,message,details}}`, incluidos campos anidados de `events`, y el submit de escenarios captura el rechazo.
+- El detalle incorporado enlaza el `PlanEvent` y lista sus líneas reales; el hueco para cerrar el acontecimiento queda explícito para la Fase 6.
+- En móvil, «Uso familiar» nace colapsado, el buscador sigue sticky, la leyenda elimina series redundantes y la subnavegación usa un control compacto de dos columnas.

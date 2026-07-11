@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
@@ -11,10 +11,16 @@ import {
   scenarioTemplateLabel,
   scenarioTemplates,
 } from '@/domains/plan/scenarioTemplates';
+import { formatMoney } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
 const router = useRouter();
 const { store, error } = usePlan();
+const formOpen = ref(false);
+const submitError = ref<string | null>(null);
+const validationSummary = computed(
+  () => submitError.value ?? Object.values(store.scenarioFieldErrors)[0] ?? null,
+);
 
 const templateOptions: ASelectItem[] = scenarioTemplates.map((item) => ({
   value: item.value,
@@ -131,8 +137,34 @@ function payload(): PlanScenarioPayload {
 }
 
 async function submit(): Promise<void> {
-  const scenario = await store.createScenario(payload());
-  await router.push(`/plan/escenarios/${scenario.id}`);
+  submitError.value = null;
+  try {
+    const scenario = await store.createScenario(payload());
+    await router.push(`/plan/escenarios/${scenario.id}`);
+  } catch {
+    submitError.value = error.value;
+  }
+}
+
+function fieldError(field: string): string | null {
+  return store.scenarioFieldErrors[field] ?? null;
+}
+
+function scenarioImpact(scenario: (typeof store.scenarios)[number]): string {
+  const event = scenario.events[0];
+  if (!event) return 'Sin impacto cuantificado';
+  const parts: string[] = [];
+  if (Number(event.initial_outflow))
+    parts.push(`${formatMoney(Number(event.initial_outflow))} inicial`);
+  if (Number(event.monthly_expense_delta))
+    parts.push(`+${formatMoney(Number(event.monthly_expense_delta))}/mes de gasto`);
+  if (Number(event.monthly_income_delta))
+    parts.push(`${formatMoney(Number(event.monthly_income_delta))}/mes de ingreso`);
+  return parts.join(' · ') || 'Sin impacto monetario';
+}
+
+function shortDate(value: string): string {
+  return new Date(value).toLocaleDateString('es-ES');
 }
 
 watch(
@@ -154,6 +186,9 @@ onMounted(async () => {
         <span>Simulaciones sin contaminar datos reales</span>
       </template>
       <template #actions>
+        <AButton variant="primary" @click="formOpen = !formOpen">
+          {{ formOpen ? 'Cerrar simulador' : 'Simular una decisión' }}
+        </AButton>
         <RouterLink class="btn btn-ghost" to="/plan">Volver a Mi Plan</RouterLink>
       </template>
     </APageHead>
@@ -163,7 +198,7 @@ onMounted(async () => {
     </AState>
     <AState v-if="error" status="error">{{ error }}</AState>
 
-    <section class="sect plan-form-section">
+    <section v-if="formOpen" class="sect plan-form-section">
       <div class="sect-head">
         <div>
           <p class="eyebrow">Nuevo escenario</p>
@@ -186,6 +221,9 @@ onMounted(async () => {
           <label>
             <span>Nombre</span>
             <input v-model="form.name" class="input" type="text" />
+            <small v-if="fieldError('name')" class="plan-field-error">{{
+              fieldError('name')
+            }}</small>
           </label>
         </div>
 
@@ -195,6 +233,9 @@ onMounted(async () => {
             <label>
               <span>Fecha inicio</span>
               <input v-model="form.startDate" class="input" type="date" required />
+              <small v-if="fieldError('start_date')" class="plan-field-error">{{
+                fieldError('start_date')
+              }}</small>
             </label>
             <label v-if="show.endDate">
               <span>Fecha fin</span>
@@ -215,10 +256,12 @@ onMounted(async () => {
                 min="0"
                 step="0.01"
               />
+              <small>Importe en euros que sale de tu capital al comenzar.</small>
             </label>
             <label v-if="show.newAsset">
               <span>Valor activo nuevo</span>
               <input v-model="form.newAssetValue" class="input" type="number" min="0" step="0.01" />
+              <small>Valor estimado en euros en la fecha de inicio.</small>
             </label>
             <label v-if="show.newAsset">
               <span>Clasificación activo</span>
@@ -290,7 +333,7 @@ onMounted(async () => {
                 min="0"
                 max="100"
                 step="0.01"
-                placeholder="7"
+                placeholder="4,5"
               />
             </label>
             <label>
@@ -301,9 +344,15 @@ onMounted(async () => {
         </fieldset>
 
         <div class="plan-setup-actions">
-          <span class="plan-muted">Al incorporar, solo se actualiza el presupuesto futuro.</span>
+          <span class="plan-muted">
+            Crear el escenario no cambia tus datos. Solo al incorporarlo pasará a Mi Plan y generará
+            sus partidas futuras de presupuesto.
+          </span>
           <AButton variant="primary" type="submit" :loading="store.saving">Crear escenario</AButton>
         </div>
+        <AState v-if="validationSummary" status="error" layout="inline">
+          {{ validationSummary }}
+        </AState>
       </form>
     </section>
 
@@ -327,9 +376,15 @@ onMounted(async () => {
       >
         <div>
           <strong>{{ scenario.name }}</strong>
-          <span>{{ scenarioTemplateLabel(scenario.template_type) }}</span>
+          <span>
+            {{ scenarioTemplateLabel(scenario.template_type) }} ·
+            {{ shortDate(scenario.events[0]?.start_date || scenario.created_at) }}
+          </span>
+          <small>{{ scenarioImpact(scenario) }}</small>
         </div>
-        <span class="mono">{{ scenarioStatusLabel(scenario.status) }}</span>
+        <span class="plan-status-chip" :class="`is-${scenario.status}`">
+          {{ scenarioStatusLabel(scenario.status) }}
+        </span>
       </RouterLink>
     </section>
   </main>

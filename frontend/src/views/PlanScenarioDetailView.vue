@@ -4,9 +4,11 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, AMetaPill, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { ScenarioComparison } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
-import type { ProjectionScenario } from '@/domains/plan';
+import { planApi } from '@/domains/plan';
+import type { PlanEventBudgetLines, ProjectionScenario } from '@/domains/plan';
 import { scenarioStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
 import { formatMoney, toNumber } from '@/lib/format';
+import { toApiErrorMessage } from '@/lib/errors';
 import '@/domains/plan/plan.css';
 
 const route = useRoute();
@@ -79,6 +81,10 @@ const activeScenario = computed({
 
 const confirming = ref<'accept' | 'discard' | null>(null);
 const acceptedBudgetEntries = ref<number | null>(null);
+const eventTrace = ref<PlanEventBudgetLines | null>(null);
+const linkedEvent = computed(() =>
+  store.events.find((event) => event.source_scenario === scenarioId.value),
+);
 
 const confirmCopy = computed(() =>
   confirming.value === 'accept'
@@ -107,10 +113,18 @@ async function confirmAction(): Promise<void> {
 onMounted(async () => {
   await store.fetchPlan();
   await store.fetchScenario(scenarioId.value);
+  await store.fetchEvents();
   // Un escenario incorporado ya forma parte del plan vigente: la comparación
   // en vivo lo aplicaría por segunda vez sobre sí mismo.
   if (store.selectedScenario?.status !== 'accepted') {
     await store.fetchScenarioComparison(scenarioId.value, scenario.value);
+  } else if (linkedEvent.value) {
+    try {
+      const { data } = await planApi.getEventBudgetLines(linkedEvent.value.id);
+      eventTrace.value = data;
+    } catch (error) {
+      store.error = toApiErrorMessage(error);
+    }
   }
 });
 </script>
@@ -228,6 +242,33 @@ onMounted(async () => {
           reflejan su impacto, por lo que no hay comparación pendiente.
         </p>
         <RouterLink class="btn btn-ghost btn-sm" to="/plan">Ver Mi Plan</RouterLink>
+      </section>
+      <section v-if="selected.status === 'accepted'" class="sect plan-scenario-trace">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Rastro real</p>
+            <h2 class="sect-title">Acontecimiento y presupuesto</h2>
+            <p class="sect-sub">
+              Estas partidas fueron creadas al incorporar la decisión y se gestionan desde Mi Plan.
+            </p>
+          </div>
+        </div>
+        <RouterLink v-if="linkedEvent" class="plan-event-link" to="/plan">
+          Acontecimiento: {{ linkedEvent.name }} · {{ shortDate(linkedEvent.planned_date) }}
+        </RouterLink>
+        <div v-if="eventTrace" class="plan-budget-trace">
+          <article v-for="line in [...eventTrace.income, ...eventTrace.expenses]" :key="line.id">
+            <div>
+              <strong>{{ line.name }}</strong>
+              <span>FY {{ line.fiscal_year }} · {{ line.time_profile }}</span>
+            </div>
+            <strong>{{ formatMoney(toNumber(line.amount_annual)) }}</strong>
+          </article>
+          <p v-if="!eventTrace.income.length && !eventTrace.expenses.length" class="plan-muted">
+            Este acontecimiento no generó partidas de presupuesto.
+          </p>
+        </div>
+        <p class="plan-muted">La acción para cerrar este acontecimiento llegará en la Fase 6.</p>
       </section>
       <template v-else>
         <AState v-if="store.comparisonLoading && !store.scenarioComparison" status="loading">

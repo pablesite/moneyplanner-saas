@@ -7,6 +7,7 @@ import type {
   PlanMember,
   PlanMemberPayload,
   PlanEvent,
+  PlanEventBudgetLines,
   PlanFinding,
   PlanFoundations,
   ProjectionResponse,
@@ -80,6 +81,9 @@ export const planApi = {
   },
   getEvents() {
     return coreApi.get<PlanEvent[]>('/api/plan/events/');
+  },
+  getEventBudgetLines(id: number) {
+    return coreApi.get<PlanEventBudgetLines>(`/api/plan/events/${id}/budget-lines/`);
   },
   getFoundations() {
     return coreApi.get<PlanFoundations>('/api/plan/foundations/');

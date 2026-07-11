@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { coreNetWorthApi } from '@/domains/net-worth/api';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import { planApi } from '@/domains/plan/api';
+import { getApiErrorFieldMessages, toApiErrorMessage } from '@/lib/errors';
 import type {
   AssetFunctionResponse,
   FinancialPlan,
@@ -25,10 +26,9 @@ function isNotFound(error: unknown): boolean {
 }
 
 function toErrorMessage(error: unknown, notFoundMessage = 'No se pudo cargar Mi Plan.'): string {
-  const response = (error as { response?: { status?: number; data?: { detail?: string } } })
-    ?.response;
+  const response = (error as { response?: { status?: number } })?.response;
   if (response?.status === 404) return notFoundMessage;
-  return response?.data?.detail ?? 'No se pudo cargar Mi Plan.';
+  return toApiErrorMessage(error);
 }
 
 export const usePlanStore = defineStore('plan', {
@@ -53,6 +53,7 @@ export const usePlanStore = defineStore('plan', {
     saving: false,
     recalculating: false,
     error: null as string | null,
+    scenarioFieldErrors: {} as Record<string, string>,
     planMissing: false,
   }),
 
@@ -253,13 +254,15 @@ export const usePlanStore = defineStore('plan', {
     async createScenario(payload: PlanScenarioPayload): Promise<PlanScenario> {
       this.saving = true;
       this.error = null;
+      this.scenarioFieldErrors = {};
       try {
         const { data } = await planApi.createScenario(payload);
         this.selectedScenario = data;
         await this.fetchScenarios();
         return data;
       } catch (error) {
-        this.error = toErrorMessage(error);
+        this.scenarioFieldErrors = getApiErrorFieldMessages(error);
+        this.error = Object.keys(this.scenarioFieldErrors).length ? null : toErrorMessage(error);
         throw error;
       } finally {
         this.saving = false;

@@ -8,6 +8,19 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.plan-diagnosis-toggle {
+  width: fit-content;
+}
+
+.plan-diagnosis-detail {
+  display: grid;
+  gap: 18px;
 }
 
 .plan-toolbar .context-field {
@@ -538,6 +551,14 @@
   gap: 10px;
 }
 
+.plan-scenarios-page .plan-scenario-list {
+  order: 1;
+}
+
+.plan-scenarios-page .plan-form-section {
+  order: 2;
+}
+
 .plan-event-list {
   padding: 0;
   margin: 0;
@@ -565,6 +586,27 @@
 .plan-event-list span,
 .plan-scenario-row span {
   color: var(--muted);
+}
+
+.plan-scenario-row small {
+  color: var(--faint);
+}
+
+.plan-status-chip {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.plan-status-chip.is-accepted {
+  border-color: var(--accent-line);
+  background: var(--pos-soft);
+  color: var(--text);
+}
+
+.plan-status-chip.is-discarded {
+  opacity: 0.65;
 }
 
 .plan-event-date {
@@ -664,6 +706,46 @@
   gap: 12px;
   margin: 0 0 4px;
   font-size: 0.95rem;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-scenario-trace {
+  padding: 18px;
+}
+
+.plan-event-link {
+  color: var(--accent);
+}
+
+.plan-budget-trace {
+  display: grid;
+}
+
+.plan-budget-trace article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-budget-trace article > div {
+  display: grid;
+  gap: 3px;
+}
+
+.plan-budget-trace span {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .plan-assets-group-head span {
@@ -922,7 +1004,12 @@
   }
 
   .plan-chart {
-    min-width: 640px;
+    min-width: 520px;
+  }
+
+  .plan-chart-legend span:nth-child(1),
+  .plan-chart-legend span:nth-child(2) {
+    display: none;
   }
 
   /* Tres KPIs en 3 columnas no caben a 390px sin que los valores se toquen. */
@@ -935,6 +1022,15 @@
   .plan-progress-meta {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .plan-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-toolbar > * {
+    min-width: 0;
   }
 
   .plan-toolbar .context-field,

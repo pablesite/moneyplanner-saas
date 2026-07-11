@@ -31,6 +31,8 @@ Rutas navegadas: `/plan`, `/plan/escenarios`, `/plan/escenarios/:id`, `/plan/act
 
 **Resolución Fase 8:** A-7 y A-8 quedan resueltos en su alcance presupuesto/plan. El prefijo `plan_event:` es reservado, las partidas gestionadas exponen su acontecimiento y rechazan edición/borrado, `/presupuesto` las marca como «Mi Plan» y el formulario manual retira el linaje interno y desplaza la clasificación técnica a opciones avanzadas. La auditoría de datos reportó ocho líneas heredadas de «Coche Ana» con ID de escenario; se repararon de forma explícita al ID real del `PlanEvent` y una segunda auditoría devolvió cero huérfanas.
 
+**Resolución Fase 9:** A-6 y A-9…A-14 quedan resueltos. El dominio usa el parser canónico de errores y extrae detalles anidados por campo; `/plan` reduce el primer nivel a titular, acción principal y trayectoria; escenarios guardados preceden al simulador y el detalle incorporado muestra su rastro presupuestario; el interés por defecto se alinea en 4,5 %; Activos colapsa grupos extensos; la trayectoria y subnavegación tienen tratamiento móvil específico. Validación Playwright ejecutada en 1440×900 y 390×844 sobre las cuatro rutas; los errores de consola observados al reemitir `/api/auth/me/` pertenecen al proxy CORS de validación, no a promesas de la aplicación.
+
 ---
 
 ## A-1 · Los Cimientos suman todos los años fiscales

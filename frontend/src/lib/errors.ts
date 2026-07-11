@@ -12,6 +12,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+export function getApiErrorFieldMessages(error: unknown): Record<string, string> {
+  if (!axios.isAxiosError(error)) return {};
+  const data = error.response?.data;
+  if (!isRecord(data)) return {};
+  const envelope = data as ApiErrorEnvelope;
+  const details = envelope.error?.details;
+  if (!isRecord(details)) return {};
+  const messages: Record<string, string> = {};
+  const visit = (value: unknown, path: string[]): void => {
+    if (typeof value === 'string' && value.trim()) {
+      const key = [...path].reverse().find((part) => !/^\d+$/.test(part)) ?? 'form';
+      messages[key] ??= value.trim();
+      messages[path.join('.')] ??= value.trim();
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => visit(item, [...path, String(index)]));
+      return;
+    }
+    if (isRecord(value)) {
+      Object.entries(value).forEach(([key, item]) => visit(item, [...path, key]));
+    }
+  };
+  visit(details, []);
+  return messages;
+}
+
 export function getApiErrorCode(error: unknown): string | null {
   if (!axios.isAxiosError(error)) return null;
   const data = error.response?.data;

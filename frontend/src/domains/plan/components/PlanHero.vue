@@ -22,6 +22,11 @@ const gap = computed(() =>
 const targetCopy = computed(
   () => `${formatMoney(props.plan.target_monthly_income_today_eur)} / mes`,
 );
+const sustainableShare = computed(() => {
+  const target = Number(props.plan.target_monthly_income_today_eur || 0);
+  const sustainable = Number(summary.value.monthly_sustainable_income.value || 0);
+  return target > 0 ? Math.round((sustainable / target) * 100) : 0;
+});
 const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
 const projectedCopy = computed(() =>
   projectedYear.value == null ? 'Sin fecha estimada' : String(projectedYear.value),
@@ -98,7 +103,7 @@ const kpis = computed<AKpiItem[]>(() => [
   {
     label: 'Renta sostenible',
     value: formatMoney(summary.value.monthly_sustainable_income.value),
-    meta: 'Con tu capital productivo actual',
+    meta: `${sustainableShare.value} % de tu objetivo mensual`,
   },
   {
     label: 'Hipótesis',

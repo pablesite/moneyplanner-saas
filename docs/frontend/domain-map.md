@@ -81,6 +81,8 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 **Requiere:** `canUsePlan()` → `core.plan`. Desde Fase 5 ocupa la primera entrada de navegación primaria ("Mi Plan") y absorbe el antiguo Estado financiero del SaaS. Los deep-links `/estado-financiero` y `/estado-financiero/ambitos/:phaseId` redirigen a `/plan`.
 
+Desde la Fase 9, `/plan` aplica revelación progresiva: fecha proyectada, acción principal y trayectoria forman el primer nivel; progreso, acción secundaria, Cimientos/calidad y acontecimientos quedan en «Ver el diagnóstico completo». `/plan/escenarios` prioriza la lista navegable y abre el simulador bajo demanda; el detalle incorporado consume `GET /api/plan/events/{id}/budget-lines/`. `/plan/activos` mantiene búsqueda sticky y grupos colapsables para móvil.
+
 ---
 
 ### `net-worth` — Patrimonio neto

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { describe, expect, it, vi } from 'vitest';
-import { getApiErrorCode, toApiErrorMessage } from '@/lib/errors';
+import { getApiErrorCode, getApiErrorFieldMessages, toApiErrorMessage } from '@/lib/errors';
 
 describe('core api error helper', () => {
   it('extracts API code from axios envelope', () => {
@@ -88,6 +88,25 @@ describe('core api error helper', () => {
   it('returns null code for non axios errors', () => {
     const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(false);
     expect(getApiErrorCode(new Error('x'))).toBeNull();
+    spy.mockRestore();
+  });
+
+  it('extracts nested canonical validation details by field', () => {
+    const err = {
+      response: {
+        data: {
+          error: {
+            code: 'validation_error',
+            message: 'Request failed.',
+            details: { events: [{ start_date: ['La fecha es obligatoria.'] }] },
+          },
+        },
+      },
+    };
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    expect(getApiErrorFieldMessages(err)).toMatchObject({
+      start_date: 'La fecha es obligatoria.',
+    });
     spy.mockRestore();
   });
 });
