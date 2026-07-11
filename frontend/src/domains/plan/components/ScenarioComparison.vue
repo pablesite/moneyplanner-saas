@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { PlanScenarioComparison } from '@/domains/plan/types';
+import type { PlanScenarioComparison, ProjectionTrajectoryRow } from '@/domains/plan/types';
 import { formatMoney } from '@/lib/format';
 
 const props = defineProps<{
@@ -8,52 +8,86 @@ const props = defineProps<{
 }>();
 
 const showTable = ref(false);
+
+type Side = 'current' | 'simulated';
+type Row = { label: string; current: string; simulated: string; delta: string };
+
+// La comparación se hace sobre la trayectoria: las métricas del summary son
+// valores de hoy y un escenario futuro nunca las cambia.
 const unchanged = computed(() => {
-  const delta = props.comparison.delta;
-  return (
-    (delta.projected_year == null || delta.projected_year === 0) &&
-    Number(delta.productive_capital) === 0 &&
-    Number(delta.net_worth) === 0 &&
-    Number(delta.target_capital) === 0
-  );
+  const current = props.comparison.current.trajectory;
+  const simulated = props.comparison.simulated.trajectory;
+  if (current.length !== simulated.length) return false;
+  return current.every((row, index) => {
+    const other = simulated[index];
+    return (
+      other != null &&
+      row.net_worth === other.net_worth &&
+      row.productive_capital === other.productive_capital
+    );
+  });
 });
 
-function metricValue(
-  key: keyof PlanScenarioComparison['current']['summary'],
-  side: 'current' | 'simulated',
-) {
-  return props.comparison[side].summary[key].value;
+function trajectoryRow(side: Side, year: number): ProjectionTrajectoryRow | null {
+  return props.comparison[side].trajectory.find((row) => row.year === year) ?? null;
 }
 
-const rows = computed(() => [
-  {
-    label: 'Fecha proyectada',
-    current: metricValue('projected_year', 'current') ?? 'Sin fecha',
-    simulated: metricValue('projected_year', 'simulated') ?? 'Sin fecha',
-    delta:
-      props.comparison.delta.projected_year == null
-        ? 'Sin variación calculable'
-        : `${props.comparison.delta.projected_year > 0 ? '+' : ''}${props.comparison.delta.projected_year} años`,
-  },
-  {
-    label: 'Capital productivo',
-    current: formatMoney(Number(metricValue('productive_capital', 'current'))),
-    simulated: formatMoney(Number(metricValue('productive_capital', 'simulated'))),
-    delta: formatMoney(Number(props.comparison.delta.productive_capital)),
-  },
-  {
-    label: 'Patrimonio neto',
-    current: formatMoney(Number(metricValue('net_worth', 'current'))),
-    simulated: formatMoney(Number(metricValue('net_worth', 'simulated'))),
-    delta: formatMoney(Number(props.comparison.delta.net_worth)),
-  },
-  {
-    label: 'Capital objetivo',
-    current: formatMoney(Number(metricValue('target_capital', 'current'))),
-    simulated: formatMoney(Number(metricValue('target_capital', 'simulated'))),
-    delta: formatMoney(Number(props.comparison.delta.target_capital)),
-  },
-]);
+const milestoneYears = computed<number[]>(() => {
+  const years: number[] = [];
+  const target = Number(props.comparison.current.summary.target_year.value);
+  const trajectory = props.comparison.current.trajectory;
+  const horizon = trajectory.length ? trajectory[trajectory.length - 1]!.year : null;
+  if (Number.isFinite(target) && trajectoryRow('current', target)) years.push(target);
+  if (horizon != null && horizon !== target) years.push(horizon);
+  return years;
+});
+
+function signedMoney(value: number): string {
+  if (value === 0) return 'Sin variación';
+  return `${value > 0 ? '+' : ''}${formatMoney(value)}`;
+}
+
+function moneyRow(
+  label: string,
+  year: number,
+  key: 'net_worth' | 'productive_capital',
+): Row | null {
+  const current = trajectoryRow('current', year);
+  const simulated = trajectoryRow('simulated', year);
+  if (!current || !simulated) return null;
+  const currentValue = Number(current[key]);
+  const simulatedValue = Number(simulated[key]);
+  return {
+    label: `${label} en ${year}`,
+    current: formatMoney(currentValue),
+    simulated: formatMoney(simulatedValue),
+    delta: signedMoney(simulatedValue - currentValue),
+  };
+}
+
+const rows = computed<Row[]>(() => {
+  const projectedDelta = props.comparison.delta.projected_year;
+  const result: Row[] = [
+    {
+      label: 'Fecha proyectada',
+      current: String(props.comparison.current.summary.projected_year.value ?? 'Sin fecha'),
+      simulated: String(props.comparison.simulated.summary.projected_year.value ?? 'Sin fecha'),
+      delta:
+        projectedDelta == null
+          ? 'Sin variación calculable'
+          : projectedDelta === 0
+            ? 'Sin variación'
+            : `${projectedDelta > 0 ? '+' : ''}${projectedDelta} años`,
+    },
+  ];
+  for (const year of milestoneYears.value) {
+    const netWorth = moneyRow('Patrimonio neto', year, 'net_worth');
+    const productive = moneyRow('Capital productivo', year, 'productive_capital');
+    if (netWorth) result.push(netWorth);
+    if (productive) result.push(productive);
+  }
+  return result;
+});
 </script>
 
 <template>
@@ -62,6 +96,10 @@ const rows = computed(() => [
       <div>
         <p class="eyebrow">Comparación</p>
         <h2 class="sect-title">Plan vigente vs escenario</h2>
+        <p class="sect-sub">
+          Impacto sobre la trayectoria proyectada, medido en el año objetivo y al final del
+          horizonte.
+        </p>
       </div>
     </div>
 

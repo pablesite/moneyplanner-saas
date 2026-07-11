@@ -107,7 +107,11 @@ async function confirmAction(): Promise<void> {
 onMounted(async () => {
   await store.fetchPlan();
   await store.fetchScenario(scenarioId.value);
-  await store.fetchScenarioComparison(scenarioId.value, scenario.value);
+  // Un escenario incorporado ya forma parte del plan vigente: la comparación
+  // en vivo lo aplicaría por segunda vez sobre sí mismo.
+  if (store.selectedScenario?.status !== 'accepted') {
+    await store.fetchScenarioComparison(scenarioId.value, scenario.value);
+  }
 });
 </script>
 
@@ -188,7 +192,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <div class="plan-toolbar">
+      <div v-if="selected.status !== 'accepted'" class="plan-toolbar">
         <label class="context-field">
           <span>Hipótesis</span>
           <ASelect
@@ -218,13 +222,22 @@ onMounted(async () => {
         </p>
       </section>
 
-      <AState v-if="store.comparisonLoading && !store.scenarioComparison" status="loading">
-        Calculando comparación...
-      </AState>
-      <ScenarioComparison
-        v-else-if="store.scenarioComparison"
-        :comparison="store.scenarioComparison"
-      />
+      <section v-if="selected.status === 'accepted'" class="plan-scenario-notice">
+        <p>
+          Este escenario ya forma parte del plan vigente: la proyección y el presupuesto de Mi Plan
+          reflejan su impacto, por lo que no hay comparación pendiente.
+        </p>
+        <RouterLink class="btn btn-ghost btn-sm" to="/plan">Ver Mi Plan</RouterLink>
+      </section>
+      <template v-else>
+        <AState v-if="store.comparisonLoading && !store.scenarioComparison" status="loading">
+          Calculando comparación...
+        </AState>
+        <ScenarioComparison
+          v-else-if="store.scenarioComparison"
+          :comparison="store.scenarioComparison"
+        />
+      </template>
     </template>
   </main>
 </template>
