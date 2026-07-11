@@ -135,6 +135,12 @@ Clasificación de un `LedgerTransaction` que conecta accounting (ejecución) con
 **AnnualIncomeEntry / AnnualExpenseEntry**
 Entradas de ingresos y gastos planificados anualmente. Pertenecen al dominio `budget`. Son el "plan"; los `LedgerTransaction` son la "ejecución".
 
+**Presupuesto recurrente**
+Partidas manuales que describen la base estable de ingresos y gastos. Se crean y ajustan en `/presupuesto`; Core deriva su clasificación normal desde la taxonomía.
+
+**Partida de plan**
+Partida anual generada al incorporar una decisión de Mi Plan. Lleva linaje reservado `plan_event:<id>`, aparece marcada como «Mi Plan» y es de solo lectura fuera del ciclo de vida del acontecimiento.
+
 **Monthly Checkin / Cierre mensual**
 Revisión mensual del presupuesto donde se registra lo real vs. lo planificado. Genera `AnnualIncomeMonthlyCheckin` y `AnnualExpenseMonthlyCheckin`. El accounting puede alimentar el cierre vía ledger o como fallback legacy.
 

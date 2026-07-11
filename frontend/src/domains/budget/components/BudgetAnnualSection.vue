@@ -464,14 +464,17 @@ function visibleEvolutionMonths(sectionId: 'income' | 'expense') {
 }
 
 function openEditIncome(entry: AnnualIncomeEntry): void {
+  if (entry.isPlanManaged) return;
   props.annualEntriesPage?.openIncomeModal(entry);
 }
 
 function openEditExpense(entry: AnnualExpenseEntry): void {
+  if (entry.isPlanManaged) return;
   props.annualEntriesPage?.openExpenseModal(entry);
 }
 
 async function removeIncome(entry: AnnualIncomeEntry): Promise<void> {
+  if (entry.isPlanManaged) return;
   if (!props.annualEntriesPage) return;
   if (props.onRemoveAnnualIncome) {
     await props.onRemoveAnnualIncome(entry.id);
@@ -481,6 +484,7 @@ async function removeIncome(entry: AnnualIncomeEntry): Promise<void> {
 }
 
 async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
+  if (entry.isPlanManaged) return;
   if (!props.annualEntriesPage) return;
   if (props.onRemoveAnnualExpense) {
     await props.onRemoveAnnualExpense(entry.id);
@@ -496,6 +500,11 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     <h2>Sin presupuesto anual para {{ fiscalYear }}</h2>
     <p>Usa «+ Nueva partida» para añadir ingresos y gastos previstos para {{ fiscalYear }}.</p>
   </div>
+
+  <p class="bdg-plan-boundary-copy">
+    Aquí ajustas tu presupuesto recurrente. Las partidas puntuales y los compromisos nacidos de
+    decisiones se gestionan desde Mi Plan.
+  </p>
 
   <div v-show="sections.some((s) => s.groups.length > 0)" class="bdg-month-bar">
     <span class="bdg-month-bar-label">Ver acumulado hasta</span>
@@ -882,6 +891,15 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                   >
                     <div class="bdg-context-main">
                       <strong>{{ entry.name }}</strong>
+                      <button
+                        v-if="entry.isPlanManaged"
+                        type="button"
+                        class="bdg-plan-chip"
+                        :title="`Gestionada por ${entry.planEventName || 'Mi Plan'}`"
+                        @click="router.push('/plan')"
+                      >
+                        Mi Plan
+                      </button>
                       <small>
                         {{ entry.incomeType === 'recurrent' ? 'Recurrente' : 'Puntual' }}
                         <template v-if="entry.owner"> · {{ entry.owner }}</template>
@@ -891,7 +909,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                       <span class="bdg-context-amount">
                         {{ formatMoney(entry.amountAnnual) }} {{ currencySymbol(entry.currency) }}
                       </span>
-                      <div class="bdg-rowmenu">
+                      <div v-if="!entry.isPlanManaged" class="bdg-rowmenu">
                         <button type="button" title="Editar" @click="openEditIncome(entry)">
                           &#9998;
                         </button>
@@ -914,6 +932,15 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                   >
                     <div class="bdg-context-main">
                       <strong>{{ entry.name }}</strong>
+                      <button
+                        v-if="entry.isPlanManaged"
+                        type="button"
+                        class="bdg-plan-chip"
+                        :title="`Gestionada por ${entry.planEventName || 'Mi Plan'}`"
+                        @click="router.push('/plan')"
+                      >
+                        Mi Plan
+                      </button>
                       <small>
                         {{ entry.expenseType === 'recurrent' ? 'Recurrente' : 'Puntual' }}
                         <template v-if="entry.owner"> · {{ entry.owner }}</template>
@@ -923,7 +950,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
                       <span class="bdg-context-amount">
                         {{ formatMoney(entry.amountAnnual) }} {{ currencySymbol(entry.currency) }}
                       </span>
-                      <div class="bdg-rowmenu">
+                      <div v-if="!entry.isPlanManaged" class="bdg-rowmenu">
                         <button type="button" title="Editar" @click="openEditExpense(entry)">
                           &#9998;
                         </button>
@@ -1025,7 +1052,7 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     time-profile-field-label="Tipo de salida"
     :cashflow-role-options="annualEntriesPage.filteredExpenseCashflowRoleOptions.value"
     :show-cashflow-role-field="annualEntriesPage.showExpenseCashflowRoleField.value"
-    :show-event-group-field="!annualEntriesPage.editingSystemGeneratedLiabilityExpense.value"
+    :show-event-group-field="false"
     :show-term-end-year-field="!annualEntriesPage.editingSystemGeneratedLiabilityExpense.value"
     :event-group-options="annualEntriesPage.annualEventGroupOptions.value"
     event-group-datalist-id="budget-expense-event-groups"

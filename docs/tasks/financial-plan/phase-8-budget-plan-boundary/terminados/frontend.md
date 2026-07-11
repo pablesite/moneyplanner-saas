@@ -68,10 +68,10 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 Validación en navegador real con el usuario `pablesite` (receta en la memoria de proyecto `playwright-browser-validation`): las partidas del «Coche Ana» aparecen marcadas y no editables en `/presupuesto`; crear una partida recurrente a mano sigue siendo un flujo de dos campos y aparece en los cimientos de Mi Plan.
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` — relación budget ↔ plan y campos de linaje
-- [ ] `docs/architecture/glossary.md` — «presupuesto recurrente» vs «partida de plan»
-- [ ] `docs/project-status.md` — estado de la fase
-- [ ] `docs/tasks/financial-plan/browser-audit-2026-07-11.md` — marcar A-7 y A-8 como resueltos
+- [x] `docs/frontend/domain-map.md` — relación budget ↔ plan y campos de linaje
+- [x] `docs/architecture/glossary.md` — «presupuesto recurrente» vs «partida de plan»
+- [x] `docs/project-status.md` — estado de la fase
+- [x] `docs/tasks/financial-plan/browser-audit-2026-07-11.md` — marcar A-7 y A-8 como resueltos
 
 ## Risks
 - Bloquear la edición sin ofrecer salida frustra al usuario: el enlace «gestionar en Mi Plan» debe llevar a un sitio donde **realmente** pueda hacer algo (hoy, descartar; con la fase 6, cerrar).
@@ -79,8 +79,14 @@ Validación en navegador real con el usuario `pablesite` (receta en la memoria d
 - Ojo con asumir que todo `event_group` con prefijo `plan_event:` tiene un evento vivo detrás (puede haber huérfanos; el backend los reporta).
 
 ## Completion Criteria
-- [ ] All validation commands pass
-- [ ] Validación en navegador real ejecutada
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits)
+- [x] All validation commands pass
+- [x] Validación en navegador real ejecutada
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
+- [x] Commit created (Conventional Commits)
+
+## Completion note (2026-07-11)
+
+- `/presupuesto` identifica las líneas gestionadas con badge «Mi Plan», elimina sus acciones y mantiene un enlace al plan.
+- El formulario manual no envía `event_group`; el camino normal delega perfil y rol en Core y las opciones técnicas quedan bajo «Opciones avanzadas».
+- Playwright verificó el flujo real de `/presupuesto`, el selector FY2027 y la carga autenticada a través del proxy local; la respuesta Core de las líneas «Coche Ana» expone el linaje reparado.

@@ -29,6 +29,8 @@ Rutas navegadas: `/plan`, `/plan/escenarios`, `/plan/escenarios/:id`, `/plan/act
 
 **Resolución 2026-07-11:** A-1…A-5 quedan resueltos por la Fase 7. El motor usa el FY natural actual, excluye `one_off` de la renta estructural, aplica el corte laboral agregado, comparte una taxonomía exhaustiva de gasto y elimina el input muerto. Con los datos auditados, `committed_surplus` pasa de `-78.834,58 €` a `-31.771,75 €`; no se fuerza la paridad con el balance total FY2026 (`+44.579,57 €`) porque este último incluye `159.304,40 €` de ingresos puntuales que, por decisión de producto, no son renta recurrente. La fecha proyectada deja de aparecer al retirar la renta puntual perpetua y aplicar el corte de 2049, que es el cambio conservador esperado.
 
+**Resolución Fase 8:** A-7 y A-8 quedan resueltos en su alcance presupuesto/plan. El prefijo `plan_event:` es reservado, las partidas gestionadas exponen su acontecimiento y rechazan edición/borrado, `/presupuesto` las marca como «Mi Plan» y el formulario manual retira el linaje interno y desplaza la clasificación técnica a opciones avanzadas. La auditoría de datos reportó ocho líneas heredadas de «Coche Ana» con ID de escenario; se repararon de forma explícita al ID real del `PlanEvent` y una segunda auditoría devolvió cero huérfanas.
+
 ---
 
 ## A-1 · Los Cimientos suman todos los años fiscales

@@ -626,6 +626,23 @@
 }
 
 /* Acciones por fila (editar / eliminar) */
+.bdg-plan-boundary-copy {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.bdg-plan-chip {
+  margin-left: var(--space-2);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
 .dir-a .bdg-rowmenu {
   display: inline-flex;
   gap: 2px;

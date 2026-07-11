@@ -104,6 +104,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `POST` | `/api/plan/scenarios/{id}/discard/` | Discards a draft scenario without plan, budget, net-worth, or accounting side effects. |
 | `GET` | `/api/plan/events/` | Lists planned/occurred/cancelled plan events for projection markers. |
 | `PATCH` | `/api/plan/events/{id}/` | Updates a user-owned plan event, including actual date/impact when the event has occurred. |
+| `GET` | `/api/plan/events/{id}/budget-lines/` | Returns the user-owned event and its exact annual income/expense lines. |
 | `GET` | `/api/plan/foundations/` | Returns backend-owned plan foundations: cash flow, emergency fund, debt, net-worth health, planned contribution and data quality. |
 | `GET` | `/api/plan/findings/` | Evaluates and returns current deterministic plan findings. |
 | `GET` | `/api/plan/recommendations/` | Evaluates and returns deterministic recommendations with explanation payloads. |
@@ -114,8 +115,8 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 ### Budget — `/api/budget/`
 | Method | Route | Description |
 |--------|-------|-------------|
-| `GET/POST` | `/api/budget/annual-income/` | Annual income entries |
-| `GET/POST` | `/api/budget/annual-expense/` | Annual expense entries |
+| `GET/POST` | `/api/budget/annual-income/` | Annual income entries. Rows expose `is_plan_managed`, `plan_event_id`, and `plan_event_name`; manual writes cannot reserve `plan_event:` lineage. |
+| `GET/POST` | `/api/budget/annual-expense/` | Annual expense entries with the same plan-lineage fields and reserved-prefix rule. Managed rows reject `PUT`/`PATCH`/`DELETE` with `403 plan_managed_entry`. |
 | `GET` | `/api/budget/annual-income/monthly-summary/` | Monthly planned vs executed income + budget coverage (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) and category/subcategory `income_execution_breakdown`. |
 | `GET` | `/api/budget/annual-expense/monthly-summary/` | Monthly planned vs executed expense + budget coverage (`executed_budgeted`, `executed_unbudgeted`, `executed_total`) and category/subcategory `expense_execution_breakdown`. |
 | `GET/POST` | `/api/budget/annual-income-checkins/` | Monthly income check-ins |

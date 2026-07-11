@@ -84,6 +84,10 @@ describe('annual income store (core)', () => {
         fiscal_year: 2026,
       }),
     );
+    const createPayload = mocks.api.post.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(createPayload).not.toHaveProperty('event_group');
+    expect(createPayload).not.toHaveProperty('time_profile');
+    expect(createPayload).not.toHaveProperty('cashflow_role');
 
     const updateResult = await store.updateEntry(
       1,

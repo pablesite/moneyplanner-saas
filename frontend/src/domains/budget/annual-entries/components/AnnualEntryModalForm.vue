@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { AButton, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import AmountPeriodCurrencyRow from './AmountPeriodCurrencyRow.vue';
 
@@ -87,6 +87,13 @@ const emit = defineEmits<{
   submit: [];
   patch: [patch: Partial<AnnualEntryModalFormModel>];
 }>();
+const advancedOpen = ref(false);
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) advancedOpen.value = false;
+  },
+);
 
 const categorySelectOptions = computed<ASelectItem[]>(() =>
   props.categoryOptions.map((option) => ({ value: option.value, label: option.label })),
@@ -115,7 +122,17 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
     @close="emit('close')"
   >
     <div class="ui-item-form-grid">
-      <label class="ui-item-form-field">
+      <div class="ui-item-form-field md:col-span-2">
+        <AButton variant="ghost" size="sm" @click="advancedOpen = !advancedOpen">
+          {{ advancedOpen ? 'Ocultar opciones avanzadas' : 'Opciones avanzadas' }}
+        </AButton>
+        <p class="ui-section-subtitle">
+          Por defecto, la partida es recurrente estructural. Los compromisos puntuales se gestionan
+          desde Mi Plan.
+        </p>
+      </div>
+
+      <label v-if="advancedOpen" class="ui-item-form-field">
         <span class="ui-item-form-label">Categoría</span>
         <ASelect
           class="select"
@@ -167,7 +184,7 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
         />
       </label>
 
-      <label v-if="showCashflowRoleField" class="ui-item-form-field">
+      <label v-if="advancedOpen && showCashflowRoleField" class="ui-item-form-field">
         <span class="ui-item-form-label">Rol en flujo de caja</span>
         <ASelect
           class="select"
@@ -177,26 +194,8 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
         />
       </label>
 
-      <label v-if="showEventGroupField" class="ui-item-form-field">
-        <span class="ui-item-form-label">Grupo de evento</span>
-        <input
-          :value="form.eventGroup"
-          class="input"
-          :list="eventGroupOptions.length ? eventGroupDatalistId : undefined"
-          :placeholder="eventGroupPlaceholder"
-          @input="
-            emit('patch', { eventGroup: String(($event.target as HTMLInputElement).value ?? '') })
-          "
-        />
-      </label>
-      <datalist v-if="showEventGroupField && eventGroupOptions.length" :id="eventGroupDatalistId">
-        <option v-for="eventGroup in eventGroupOptions" :key="eventGroup" :value="eventGroup">
-          {{ eventGroup }}
-        </option>
-      </datalist>
-
       <label
-        v-if="form.timeProfile === 'one_off' || showRecurringTargetMonthField"
+        v-if="advancedOpen && (form.timeProfile === 'one_off' || showRecurringTargetMonthField)"
         class="ui-item-form-field"
       >
         <span class="ui-item-form-label">{{
@@ -218,7 +217,7 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
       </label>
 
       <label
-        v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
+        v-if="advancedOpen && showTermEndYearField && form.timeProfile === 'term_recurrent'"
         class="ui-item-form-field"
       >
         <span class="ui-item-form-label">Mes fin compromiso</span>
@@ -234,7 +233,7 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
       </label>
 
       <label
-        v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
+        v-if="advancedOpen && showTermEndYearField && form.timeProfile === 'term_recurrent'"
         class="ui-item-form-field"
       >
         <span class="ui-item-form-label">Año fin compromiso</span>

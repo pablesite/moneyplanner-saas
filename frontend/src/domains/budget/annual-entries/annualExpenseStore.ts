@@ -35,6 +35,9 @@ export type AnnualExpenseEntry = {
   timeProfile: AnnualTimeProfile;
   cashflowRole: AnnualExpenseCashflowRole;
   eventGroup: string;
+  isPlanManaged: boolean;
+  planEventId: number | null;
+  planEventName: string | null;
   targetMonth: number | null;
   termStartMonth: number | null;
   termEndMonth: number | null;
@@ -83,6 +86,9 @@ type AnnualExpenseApiItem = {
   time_profile?: AnnualTimeProfile;
   cashflow_role?: AnnualExpenseCashflowRole;
   event_group?: string;
+  is_plan_managed?: boolean;
+  plan_event_id?: number | null;
+  plan_event_name?: string | null;
   target_month?: number | null;
   term_start_month?: number | null;
   term_end_month?: number | null;
@@ -121,6 +127,9 @@ function mapApiItem(item: AnnualExpenseApiItem): AnnualExpenseEntry {
     timeProfile,
     cashflowRole: item.cashflow_role ?? 'operating',
     eventGroup: item.event_group ?? '',
+    isPlanManaged: Boolean(item.is_plan_managed),
+    planEventId: item.plan_event_id == null ? null : Number(item.plan_event_id),
+    planEventName: item.plan_event_name ?? null,
     targetMonth: item.target_month == null ? null : Number(item.target_month),
     termStartMonth: item.term_start_month == null ? null : Number(item.term_start_month),
     termEndMonth: item.term_end_month == null ? null : Number(item.term_end_month),
@@ -185,11 +194,12 @@ function createAnnualExpenseStore() {
         subcategory: draft.subcategory,
         owner_name: normalizeOwnerName(draft.owner ?? ''),
         expense_type: draft.expenseType,
-        time_profile:
-          draft.timeProfile ??
-          (draft.expenseType === 'one_off' ? 'one_off' : 'structural_recurrent'),
-        cashflow_role: draft.cashflowRole ?? 'operating',
-        event_group: (draft.eventGroup ?? '').trim(),
+        ...(draft.timeProfile && draft.timeProfile !== 'structural_recurrent'
+          ? { time_profile: draft.timeProfile }
+          : {}),
+        ...(draft.cashflowRole && draft.cashflowRole !== 'operating'
+          ? { cashflow_role: draft.cashflowRole }
+          : {}),
         target_month: draft.targetMonth ?? null,
         term_start_month: draft.termStartMonth ?? null,
         term_end_month: draft.termEndMonth ?? null,
@@ -243,7 +253,6 @@ function createAnnualExpenseStore() {
           draft.timeProfile ??
           (draft.expenseType === 'one_off' ? 'one_off' : 'structural_recurrent'),
         cashflow_role: draft.cashflowRole ?? 'operating',
-        event_group: (draft.eventGroup ?? '').trim(),
         target_month: draft.targetMonth ?? null,
         term_start_month: draft.termStartMonth ?? null,
         term_end_month: draft.termEndMonth ?? null,

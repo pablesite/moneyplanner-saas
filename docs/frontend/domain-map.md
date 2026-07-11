@@ -131,6 +131,8 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 Gestiona el presupuesto anual por categoría/subcategoría, el cierre mensual, las líneas anuales de ingresos/gastos y sus taxonomías. Las entradas anuales viven en `budget/annual-entries` porque ya se editan desde Presupuesto y Patrimonio, no desde la antigua ruta de Introducción de Datos. En Fase 4 de Mi Plan, `/cierre-mensual` consume `GET /api/budget/monthly-closes/{id}/plan-impact/` de forma aditiva: si el usuario no tiene plan, la sección no aparece y el flujo de cierre queda intacto.
 
+Desde la Fase 8, las líneas con `is_plan_managed` pertenecen a Mi Plan: Presupuesto las identifica mediante `plan_event_id`/`plan_event_name`, las muestra sin acciones de edición/borrado y enlaza de vuelta a `/plan`. El formulario manual no expone `event_group`; su camino normal deja que Core derive el perfil estructural y el rol desde la taxonomía, manteniendo la clasificación avanzada bajo revelación progresiva.
+
 | Archivo                                              | Contenido                                                                                |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `api.ts`                                             | Llamadas a Core para presupuesto, summaries mensuales y cierre.                          |
