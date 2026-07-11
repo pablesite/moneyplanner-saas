@@ -224,12 +224,17 @@ export const usePlanStore = defineStore('plan', {
     },
 
     async saveMember(member: Partial<PlanMember> & PlanMemberPayload): Promise<PlanMember> {
-      if (member.id) {
-        const { data } = await planApi.updateMember(member.id, member);
+      try {
+        if (member.id) {
+          const { data } = await planApi.updateMember(member.id, member);
+          return data;
+        }
+        const { data } = await planApi.createMember(member);
         return data;
+      } catch (error) {
+        this.error = toErrorMessage(error, 'No se pudo guardar un adulto del plan.');
+        throw error;
       }
-      const { data } = await planApi.createMember(member);
-      return data;
     },
 
     async fetchScenarios() {

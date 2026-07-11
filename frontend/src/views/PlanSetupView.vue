@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
@@ -39,14 +39,25 @@ const profileOptions: ASelectItem[] = [
   { value: 'growth', label: 'Crecimiento' },
 ];
 
+const submitting = ref(false);
+const validationError = ref('');
+
 const maxMembers = computed(() => (form.household_type === 'family' ? 2 : 1));
 const canAddMember = computed(() => members.length < maxMembers.value);
+const datesInOrder = computed(
+  () =>
+    !form.target_date || !form.projection_end_date || form.target_date < form.projection_end_date,
+);
 const canSubmit = computed(
   () =>
-    form.target_date &&
-    form.target_monthly_income_today_eur &&
-    form.projection_end_date &&
-    members.some((member) => member.name.trim()),
+    Boolean(
+      form.target_date &&
+      form.target_monthly_income_today_eur &&
+      form.projection_end_date &&
+      members.some((member) => member.name.trim()),
+    ) &&
+    datesInOrder.value &&
+    !submitting.value,
 );
 
 function emptyMember(): MemberDraft {
@@ -110,22 +121,40 @@ function removeMember(index: number): void {
 }
 
 async function submit(): Promise<void> {
-  const savedMembers = [];
-  for (const member of members.slice(0, maxMembers.value).filter((row) => row.name.trim())) {
-    savedMembers.push(await store.saveMember({ id: member.id, ...toPayload(member) }));
+  if (submitting.value) return;
+  validationError.value = '';
+  if (!datesInOrder.value) {
+    validationError.value = 'La fecha objetivo debe ser anterior al fin de proyección.';
+    return;
   }
-  await store.savePlan({
-    household_type: form.household_type,
-    target_date: form.target_date,
-    target_monthly_income_today_eur: form.target_monthly_income_today_eur,
-    projection_end_date: form.projection_end_date,
-    preservation_target_eur: form.preservation_target_eur || null,
-    preserved_asset_ids: null,
-    profile: form.profile,
-    member_ids: savedMembers.map((member) => member.id),
-  });
-  await store.recalculate();
-  await router.push('/plan');
+  submitting.value = true;
+  store.clearError();
+  try {
+    const savedMembers = [];
+    for (const member of members.slice(0, maxMembers.value).filter((row) => row.name.trim())) {
+      savedMembers.push(await store.saveMember({ id: member.id, ...toPayload(member) }));
+    }
+    await store.savePlan({
+      household_type: form.household_type,
+      target_date: form.target_date,
+      target_monthly_income_today_eur: form.target_monthly_income_today_eur,
+      projection_end_date: form.projection_end_date,
+      preservation_target_eur: form.preservation_target_eur || null,
+      preserved_asset_ids: null,
+      profile: form.profile,
+      member_ids: savedMembers.map((member) => member.id),
+    });
+    await store.recalculate();
+    await router.push('/plan');
+  } catch {
+    // saveMember/savePlan ya dejan store.error con el detalle; garantizamos un
+    // mensaje si el fallo no lo trajo y no navegamos con el guardado a medias.
+    if (!store.error) {
+      store.error = 'No se pudo guardar el plan. Revisa los datos e inténtalo de nuevo.';
+    }
+  } finally {
+    submitting.value = false;
+  }
 }
 
 watch(
@@ -256,7 +285,16 @@ onMounted(() => {
           </label>
           <label>
             <span>Fin de proyección</span>
-            <input v-model="form.projection_end_date" class="input" type="date" required />
+            <input
+              v-model="form.projection_end_date"
+              class="input"
+              type="date"
+              required
+              :aria-invalid="!datesInOrder"
+            />
+            <small v-if="!datesInOrder" class="plan-field-error">
+              Debe ser posterior a la fecha objetivo.
+            </small>
           </label>
           <label>
             <span>Nivel de vida mensual</span>
@@ -282,9 +320,11 @@ onMounted(() => {
         </div>
       </section>
 
+      <p v-if="validationError" class="plan-field-error plan-setup-error">{{ validationError }}</p>
+
       <div class="plan-setup-actions">
         <RouterLink class="btn btn-ghost" to="/plan">Cancelar</RouterLink>
-        <AButton type="submit" variant="primary" :loading="store.saving" :disabled="!canSubmit">
+        <AButton type="submit" variant="primary" :loading="submitting" :disabled="!canSubmit">
           Guardar y calcular
         </AButton>
       </div>
