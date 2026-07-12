@@ -99,16 +99,24 @@ function toDraft(member: PlanMember): MemberDraft {
 }
 
 function toPayload(member: MemberDraft): PlanMemberPayload {
+  const retirementDate = member.birth_date ? dateAtAge(member.birth_date, 67) : null;
   return {
     name: member.name.trim(),
     role: 'adult',
     is_active: true,
     birth_date: member.birth_date || null,
-    employment_income_end_date: member.employment_income_end_date || null,
-    pension_start_date: member.pension_start_date || null,
+    employment_income_end_date: retirementDate,
+    pension_start_date: retirementDate,
     estimated_monthly_pension_today_eur: member.estimated_monthly_pension_today_eur || null,
     other_future_income_today_eur: member.other_future_income_today_eur || null,
   };
+}
+
+function dateAtAge(birthDate: string, age: number): string {
+  const [year, month, day] = birthDate.split('-').map(Number);
+  const candidate = new Date(Date.UTC(year! + age, month! - 1, day));
+  if (candidate.getUTCMonth() !== month! - 1) candidate.setUTCDate(0);
+  return candidate.toISOString().slice(0, 10);
 }
 
 function addMember(): void {
@@ -235,14 +243,14 @@ onMounted(() => {
                 <span>Fecha de nacimiento</span>
                 <input v-model="member.birth_date" class="input" type="date" />
               </label>
-              <label>
-                <span>Fin de ingresos laborales</span>
-                <input v-model="member.employment_income_end_date" class="input" type="date" />
-              </label>
-              <label>
-                <span>Inicio de pensión</span>
-                <input v-model="member.pension_start_date" class="input" type="date" />
-              </label>
+              <p v-if="member.birth_date" class="plan-derived-field">
+                <span>Jubilación calculada</span>
+                <strong>{{ dateAtAge(member.birth_date, 67) }}</strong>
+                <small
+                  >A los 67 años; determina el fin del ingreso laboral y el inicio de la
+                  pensión.</small
+                >
+              </p>
               <label>
                 <span>Pensión mensual estimada</span>
                 <input

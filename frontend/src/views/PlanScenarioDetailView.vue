@@ -18,6 +18,7 @@ const { store, error, scenario } = usePlan();
 const scenarioId = computed(() => Number(route.params.id));
 const selected = computed(() => store.selectedScenario);
 const firstEvent = computed(() => selected.value?.events[0] ?? null);
+const oneOffItems = computed(() => firstEvent.value?.metadata_json.one_off_items ?? []);
 
 const scenarioOptions: ASelectItem[] = [
   { value: 'prudent', label: 'Prudente' },
@@ -51,7 +52,10 @@ const impactMetrics = computed<ImpactMetric[]>(() => {
   const metrics: ImpactMetric[] = [{ label: 'Inicio', value: shortDate(event.start_date) }];
   if (event.end_date) metrics.push({ label: 'Fin', value: shortDate(event.end_date) });
   const moneyRows: Array<{ label: string; value: string; monthly?: boolean }> = [
-    { label: 'Pago inicial', value: event.initial_outflow },
+    {
+      label: oneOffItems.value.length ? 'Total puntual' : 'Pago inicial',
+      value: event.initial_outflow,
+    },
     { label: 'Activo nuevo', value: event.new_asset_value },
     { label: 'Deuda nueva', value: event.new_debt_principal },
     { label: 'Gasto mensual', value: event.monthly_expense_delta, monthly: true },
@@ -247,6 +251,12 @@ onMounted(async () => {
             <strong>{{ metric.value }}</strong>
           </article>
         </div>
+        <div v-if="oneOffItems.length" class="plan-one-off-summary">
+          <div v-for="item in oneOffItems" :key="item.name">
+            <span>{{ item.name }}</span>
+            <strong>{{ formatMoney(toNumber(item.amount)) }}</strong>
+          </div>
+        </div>
         <p v-if="firstEvent && !hasQuantitativeImpact" class="plan-muted">
           Este escenario no define importes: la comparación coincidirá con el plan vigente.
         </p>
@@ -307,7 +317,6 @@ onMounted(async () => {
             Este acontecimiento no generó partidas de presupuesto.
           </p>
         </div>
-        <p class="plan-muted">La acción para cerrar este acontecimiento llegará en la Fase 6.</p>
       </section>
       <template v-else>
         <AState v-if="store.comparisonLoading && !store.scenarioComparison" status="loading">
@@ -316,6 +325,7 @@ onMounted(async () => {
         <ScenarioComparison
           v-else-if="store.scenarioComparison"
           :comparison="store.scenarioComparison"
+          :members="store.plan?.members"
         />
       </template>
     </template>

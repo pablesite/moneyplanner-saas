@@ -188,6 +188,7 @@ onMounted(() => {
         v-if="activeTab === 'trajectory'"
         :timeline="netWorthTimeline"
         :projection="projection"
+        :members="plan.members"
         :events="eventMarkers"
       />
 
@@ -240,7 +241,7 @@ onMounted(() => {
       <div v-if="activeTab === 'diagnosis'" class="plan-diagnosis-detail">
         <div class="plan-main-grid">
           <ProductiveCapitalProgress :projection="projection" />
-          <ProjectedDateCard :projection="projection" />
+          <ProjectedDateCard :projection="projection" :members="plan.members" />
         </div>
         <section v-if="visibleRecommendations.length > 1" class="sect plan-recommendations">
           <div class="sect-head">

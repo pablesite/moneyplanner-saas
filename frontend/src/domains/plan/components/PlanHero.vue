@@ -5,6 +5,7 @@ import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import type { FinancialPlan, PlanFoundations, ProjectionResponse } from '@/domains/plan/types';
 import { projectionScenarioLabel } from '@/domains/plan/scenarioTemplates';
+import { yearWithAges } from '@/domains/plan/age';
 
 const props = defineProps<{
   plan: FinancialPlan;
@@ -29,7 +30,9 @@ const sustainableShare = computed(() => {
 });
 const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
 const projectedCopy = computed(() =>
-  projectedYear.value == null ? 'Sin fecha estimada' : String(projectedYear.value),
+  projectedYear.value == null
+    ? 'Sin fecha estimada'
+    : yearWithAges(projectedYear.value, props.plan.members),
 );
 type Blocker = { text: string; to: string; cta: string };
 

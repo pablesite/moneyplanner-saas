@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { PlanScenarioComparison, ProjectionTrajectoryRow } from '@/domains/plan/types';
+import type {
+  PlanMember,
+  PlanScenarioComparison,
+  ProjectionTrajectoryRow,
+} from '@/domains/plan/types';
 import { formatMoney } from '@/lib/format';
+import { yearWithAges } from '@/domains/plan/age';
 
 const props = defineProps<{
   comparison: PlanScenarioComparison;
+  members?: PlanMember[];
 }>();
 
 const showTable = ref(false);
@@ -58,7 +64,7 @@ function moneyRow(
   const currentValue = Number(current[key]);
   const simulatedValue = Number(simulated[key]);
   return {
-    label: `${label} en ${year}`,
+    label: `${label} en ${yearWithAges(year, props.members ?? [])}`,
     current: formatMoney(currentValue),
     simulated: formatMoney(simulatedValue),
     delta: signedMoney(simulatedValue - currentValue),
@@ -70,8 +76,14 @@ const rows = computed<Row[]>(() => {
   const result: Row[] = [
     {
       label: 'Fecha proyectada',
-      current: String(props.comparison.current.summary.projected_year.value ?? 'Sin fecha'),
-      simulated: String(props.comparison.simulated.summary.projected_year.value ?? 'Sin fecha'),
+      current: yearWithAges(
+        props.comparison.current.summary.projected_year.value,
+        props.members ?? [],
+      ),
+      simulated: yearWithAges(
+        props.comparison.simulated.summary.projected_year.value,
+        props.members ?? [],
+      ),
       delta:
         projectedDelta == null
           ? 'Sin variación calculable'

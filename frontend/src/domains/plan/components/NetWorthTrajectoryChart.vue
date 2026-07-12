@@ -3,16 +3,18 @@ import { computed, ref } from 'vue';
 import { formatCompact, formatMoney } from '@/lib/format';
 import { formatMonthYearLabel } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
-import type { ProjectionResponse } from '@/domains/plan/types';
+import type { PlanMember, ProjectionResponse } from '@/domains/plan/types';
+import { compactYearWithAges } from '@/domains/plan/age';
 import type { PlanTimelineMarker } from '@/domains/plan/usePlanEvents';
 
 const props = withDefaults(
   defineProps<{
     timeline: NetWorthTimeline | null;
     projection: ProjectionResponse;
+    members?: PlanMember[];
     events?: PlanTimelineMarker[];
   }>(),
-  { events: () => [] },
+  { events: () => [], members: () => [] },
 );
 
 const W = 960;
@@ -53,7 +55,7 @@ const projectedRows = computed(() => {
 const projectedPoints = computed<Point[]>(() =>
   projectedRows.value.map(({ row, t }) => ({
     t,
-    label: String(row.year),
+    label: compactYearWithAges(row.year, props.members),
     value: Number(row.net_worth),
     kind: 'projected' as const,
     year: row.year,
@@ -124,11 +126,11 @@ const xTicks = computed(() => {
   const lastYear = new Date(max).getFullYear();
   const span = Math.max(1, lastYear - firstYear);
   const step = Math.max(1, Math.ceil(span / 7));
-  const ticks: Array<{ x: number; label: number }> = [];
+  const ticks: Array<{ x: number; label: string }> = [];
   for (let year = Math.ceil(firstYear / step) * step; year <= lastYear; year += step) {
     const t = Date.parse(`${year}-01-01`);
     if (t < min || t > max) continue;
-    ticks.push({ x: tx(t), label: year });
+    ticks.push({ x: tx(t), label: compactYearWithAges(year, props.members) });
   }
   return ticks;
 });

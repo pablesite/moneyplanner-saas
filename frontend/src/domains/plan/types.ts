@@ -188,6 +188,7 @@ export type ScenarioEventPayload = {
   new_debt_term_months: number | null;
   metadata_json: {
     budget_lines?: PlanBudgetLinePayload[];
+    one_off_items?: Array<{ name: string; amount: string }>;
     [key: string]: unknown;
   };
 };

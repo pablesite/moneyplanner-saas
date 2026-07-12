@@ -37,7 +37,6 @@ const form = reactive({
   template: 'vehicle' as PlanScenarioTemplate,
   startDate: '',
   endDate: '',
-  initialOutflow: '',
   monthlyExpenseDelta: '',
   monthlyIncomeDelta: '',
   monthlyContributionDelta: '',
@@ -47,6 +46,8 @@ const form = reactive({
   newDebtInterestRate: '',
   newDebtTermMonths: '',
 });
+type OneOffItem = { name: string; amount: string };
+const oneOffItems = reactive<OneOffItem[]>([]);
 
 const selectedTemplate = computed(
   () => scenarioTemplates.find((item) => item.value === form.template) ?? scenarioTemplates[0]!,
@@ -80,7 +81,6 @@ function hydrateTemplate(template: PlanScenarioTemplate): void {
   form.name = scenarioTemplateLabel(template);
   form.startDate = event.start_date;
   form.endDate = '';
-  form.initialOutflow = '';
   form.monthlyExpenseDelta = '';
   form.monthlyIncomeDelta = '';
   form.monthlyContributionDelta = '';
@@ -89,7 +89,24 @@ function hydrateTemplate(template: PlanScenarioTemplate): void {
   form.newDebtPrincipal = '';
   form.newDebtInterestRate = '';
   form.newDebtTermMonths = '';
+  oneOffItems.splice(0, oneOffItems.length, { name: 'Pago inicial', amount: '' });
 }
+
+function addOneOffItem(): void {
+  oneOffItems.push({ name: '', amount: '' });
+}
+
+function removeOneOffItem(index: number): void {
+  if (oneOffItems.length > 1) oneOffItems.splice(index, 1);
+}
+
+const validOneOffItems = computed(() =>
+  oneOffItems.filter((item) => item.name.trim() && Number(money(item.amount)) > 0),
+);
+
+const oneOffTotal = computed(() =>
+  validOneOffItems.value.reduce((total, item) => total + Number(money(item.amount)), 0),
+);
 
 function money(value: string): string {
   const parsed = Number(String(value || '0').replace(',', '.'));
@@ -119,7 +136,7 @@ function payload(): PlanScenarioPayload {
       {
         start_date: form.startDate,
         end_date: form.endDate || null,
-        initial_outflow: money(form.initialOutflow),
+        initial_outflow: oneOffTotal.value.toFixed(2),
         monthly_expense_delta: money(form.monthlyExpenseDelta),
         monthly_income_delta: signedIncomeDelta(),
         monthly_contribution_delta: money(form.monthlyContributionDelta),
@@ -129,7 +146,10 @@ function payload(): PlanScenarioPayload {
         new_debt_interest_rate: nullableRateFromPct(form.newDebtInterestRate),
         new_debt_term_months: form.newDebtTermMonths ? Number(form.newDebtTermMonths) : null,
         metadata_json: {
-          budget_lines: [],
+          one_off_items: validOneOffItems.value.map((item) => ({
+            name: item.name.trim(),
+            amount: money(item.amount),
+          })),
           budget_defaults: selectedTemplate.value.budgetDefaults,
         },
       },
@@ -249,17 +269,38 @@ onMounted(async () => {
         <fieldset v-if="show.initialGroup" class="plan-form-group">
           <legend>Impacto inicial</legend>
           <div class="plan-form-grid">
-            <label v-if="show.initialOutflow">
-              <span>Pago inicial</span>
-              <input
-                v-model="form.initialOutflow"
-                class="input"
-                type="number"
-                min="0"
-                step="0.01"
-              />
-              <small>Importe en euros que sale de tu capital al comenzar.</small>
-            </label>
+            <div v-if="show.initialOutflow" class="plan-one-off-editor">
+              <div class="plan-one-off-head">
+                <div>
+                  <span>Desembolsos puntuales</span>
+                  <small>Entrada, impuestos, muebles u otros conceptos pagados al inicio.</small>
+                </div>
+                <AButton size="sm" variant="ghost" type="button" @click="addOneOffItem">
+                  Añadir concepto
+                </AButton>
+              </div>
+              <div v-for="(item, index) in oneOffItems" :key="index" class="plan-one-off-row">
+                <input v-model="item.name" class="input" type="text" placeholder="Concepto" />
+                <input
+                  v-model="item.amount"
+                  class="input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Importe"
+                />
+                <AButton
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                  :disabled="oneOffItems.length === 1"
+                  @click="removeOneOffItem(index)"
+                >
+                  Quitar
+                </AButton>
+              </div>
+              <strong v-if="oneOffTotal">Total puntual {{ formatMoney(oneOffTotal) }}</strong>
+            </div>
             <label v-if="show.newAsset">
               <span>Valor activo nuevo</span>
               <input v-model="form.newAssetValue" class="input" type="number" min="0" step="0.01" />
