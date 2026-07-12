@@ -16,8 +16,14 @@ const projectedCopy = computed(() => yearWithAges(projectedYear.value, props.mem
 const statusCopy = computed(() => {
   if (difference.value == null) return 'Todavía no hay una fecha sostenible estimada.';
   if (difference.value === 0) return 'La proyección llega en el año objetivo.';
-  if (difference.value > 0) return `La proyección queda ${difference.value} años por detrás.`;
-  return `La proyección va ${Math.abs(difference.value)} años por delante.`;
+  const years = Math.abs(difference.value) === 1 ? 'año' : 'años';
+  if (difference.value > 0) return `La proyección queda ${difference.value} ${years} por detrás.`;
+  return `La proyección va ${Math.abs(difference.value)} ${years} por delante.`;
+});
+
+const statusTone = computed(() => {
+  if (difference.value == null) return null;
+  return difference.value > 0 ? 'neg' : 'pos';
 });
 </script>
 
@@ -32,7 +38,7 @@ const statusCopy = computed(() => {
       <h3>{{ projectedCopy }}</h3>
     </div>
     <p>
-      {{ statusCopy }}
+      <span :class="statusTone">{{ statusCopy }}</span>
       <AInfoHint
         label="La fecha estimada exige capital suficiente y sostenibilidad hasta el final del horizonte."
       />

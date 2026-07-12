@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
@@ -18,6 +18,8 @@ const router = useRouter();
 const route = useRoute();
 const { store, error } = usePlan();
 const formOpen = ref(false);
+// El formulario se renderiza después de la lista: sin scroll, abrirlo puede pasar desapercibido.
+const formSection = ref<HTMLElement | null>(null);
 const submitError = ref<string | null>(null);
 const validationSummary = computed(
   () => submitError.value ?? Object.values(store.scenarioFieldErrors)[0] ?? null,
@@ -194,6 +196,12 @@ watch(
   { immediate: true },
 );
 
+watch(formOpen, async (open) => {
+  if (!open) return;
+  await nextTick();
+  formSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 onMounted(async () => {
   formOpen.value = route.query.create === '1';
   await store.fetchPlan();
@@ -209,7 +217,7 @@ onMounted(async () => {
       </template>
       <template #actions>
         <AButton variant="primary" @click="formOpen = !formOpen">
-          {{ formOpen ? 'Cerrar simulador' : 'Simular una decisión' }}
+          {{ formOpen ? 'Cerrar simulador' : 'Simular decisión' }}
         </AButton>
         <RouterLink class="btn btn-ghost" to="/plan">Volver a Mi Plan</RouterLink>
       </template>
@@ -220,11 +228,11 @@ onMounted(async () => {
     </AState>
     <AState v-if="error" status="error">{{ error }}</AState>
 
-    <section v-if="formOpen" class="sect plan-form-section">
+    <section v-if="formOpen" ref="formSection" class="sect plan-form-section">
       <div class="sect-head">
         <div>
           <p class="eyebrow">Nuevo escenario</p>
-          <h2 class="sect-title">Simular una decisión</h2>
+          <h2 class="sect-title">Simular decisión</h2>
           <p class="sect-sub">{{ selectedTemplate.description }}</p>
         </div>
       </div>

@@ -968,6 +968,17 @@
   font-family: var(--font-mono);
 }
 
+/* Tono semántico por mejora/empeoramiento, como los deltas de Patrimonio. */
+.plan-comparison-row .pos,
+.plan-date-card .pos {
+  color: var(--pos);
+}
+
+.plan-comparison-row .neg,
+.plan-date-card .neg {
+  color: var(--neg);
+}
+
 .plan-assumptions {
   display: grid;
   gap: 18px;

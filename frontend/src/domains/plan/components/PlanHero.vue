@@ -93,8 +93,16 @@ const deltaCopy = computed(() => {
     return 'El capital proyectado no alcanza el objetivo dentro del horizonte';
   }
   if (gap.value === 0) return 'Alineado con la fecha objetivo';
-  if (gap.value > 0) return `${gap.value} años después del objetivo`;
-  return `${Math.abs(gap.value)} años antes del objetivo`;
+  const years = Math.abs(gap.value) === 1 ? 'año' : 'años';
+  if (gap.value > 0) return `${gap.value} ${years} después del objetivo`;
+  return `${Math.abs(gap.value)} ${years} antes del objetivo`;
+});
+
+// El dato más importante del plan merece la misma señal semántica que los deltas de Patrimonio.
+// Sin fecha estimada no se colorea: el bloque de causas ya carga ese peso.
+const deltaTone = computed(() => {
+  if (gap.value == null) return null;
+  return gap.value > 0 ? 'neg' : 'pos';
 });
 
 const kpis = computed<AKpiItem[]>(() => [
@@ -120,7 +128,7 @@ const kpis = computed<AKpiItem[]>(() => [
   <section class="plan-hero a-hero-shell">
     <AHero eyebrow="Fecha proyectada" :value="projectedCopy">
       <template #delta>
-        <span>{{ deltaCopy }}</span>
+        <span :class="deltaTone">{{ deltaCopy }}</span>
         <AInfoHint
           label="La fecha es una estimación calculada con capital productivo, hipótesis y datos actuales. No es una garantía."
         />

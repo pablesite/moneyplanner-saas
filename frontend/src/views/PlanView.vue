@@ -95,9 +95,10 @@ onMounted(() => {
           Simular decisión
         </RouterLink>
         <RouterLink class="btn btn-ghost" to="/plan/setup">Editar plan</RouterLink>
+        <!-- Acción de mantenimiento: no compite con la primaria de la cabecera. -->
         <AButton
           v-if="projection"
-          variant="primary"
+          variant="ghost"
           :loading="store.recalculating"
           @click="store.recalculate()"
         >
@@ -154,7 +155,8 @@ onMounted(() => {
           />
         </label>
         <span v-if="loading && projection" class="plan-muted" role="status">Actualizando…</span>
-        <AButton variant="ghost" @click="assumptionsOpen = true">Supuestos</AButton>
+        <!-- "Parámetros" y no "Supuestos": convivía con el selector "Hipótesis" y eran casi sinónimos. -->
+        <AButton variant="ghost" @click="assumptionsOpen = true">Parámetros</AButton>
         <RouterLink class="btn btn-ghost" to="/plan/activos">Clasificar activos</RouterLink>
       </div>
 
@@ -207,8 +209,9 @@ onMounted(() => {
               <RouterLink class="btn btn-ghost" to="/plan/decisiones/registrar">
                 Registrar decisión tomada
               </RouterLink>
-              <RouterLink class="btn btn-primary" to="/plan/escenarios?create=1">
-                Nueva simulación
+              <!-- Ghost: la primaria de la pantalla es el "Simular decisión" de la cabecera. -->
+              <RouterLink class="btn btn-ghost" to="/plan/escenarios?create=1">
+                Simular decisión
               </RouterLink>
             </div>
           </div>

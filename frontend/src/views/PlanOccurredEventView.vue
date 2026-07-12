@@ -46,6 +46,14 @@ const search = ref('');
 const positionSearch = ref('');
 const submitting = ref(false);
 const loadingLines = ref(false);
+// Las partidas bloqueadas (gestionadas por el plan o generadas por Patrimonio) no se
+// pueden adoptar: fuera de la lista por defecto para que no la dominen.
+const showLocked = ref(false);
+// Con años de historia, la lista completa es inabarcable: cada año empieza plegado
+// y la búsqueda despliega solo lo que coincide.
+const expandedYears = ref<Set<number>>(new Set());
+// Mismo trato para las posiciones de Patrimonio: decenas de filas plegadas por grupo.
+const expandedPositionGroups = ref<Set<'liabilities' | 'assets'>>(new Set());
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -79,12 +87,21 @@ const lines = computed<AdoptableLine[]>(() => [
   })),
 ]);
 
-const visibleLines = computed(() => {
-  const term = search.value.trim().toLowerCase();
-  return lines.value
-    .filter((line) => !term || line.name.toLowerCase().includes(term))
-    .sort((a, b) => a.fiscalYear - b.fiscalYear || a.name.localeCompare(b.name));
-});
+const searchTerm = computed(() => search.value.trim().toLowerCase());
+
+const matchingLines = computed(() =>
+  lines.value.filter(
+    (line) => !searchTerm.value || line.name.toLowerCase().includes(searchTerm.value),
+  ),
+);
+
+const lockedMatchCount = computed(() => matchingLines.value.filter(isLocked).length);
+
+const visibleLines = computed(() =>
+  matchingLines.value
+    .filter((line) => showLocked.value || !isLocked(line))
+    .sort((a, b) => a.fiscalYear - b.fiscalYear || a.name.localeCompare(b.name)),
+);
 
 const groupedLines = computed(() => {
   const groups = new Map<number, AdoptableLine[]>();
@@ -95,6 +112,30 @@ const groupedLines = computed(() => {
   }
   return [...groups.entries()].sort((a, b) => a[0] - b[0]);
 });
+
+function isYearOpen(year: number): boolean {
+  if (searchTerm.value) return true;
+  return expandedYears.value.has(year);
+}
+
+function toggleYear(year: number): void {
+  const next = new Set(expandedYears.value);
+  if (next.has(year)) next.delete(year);
+  else next.add(year);
+  expandedYears.value = next;
+}
+
+function isPositionGroupOpen(kind: 'liabilities' | 'assets'): boolean {
+  if (positionSearch.value.trim()) return true;
+  return expandedPositionGroups.value.has(kind);
+}
+
+function togglePositionGroup(kind: 'liabilities' | 'assets'): void {
+  const next = new Set(expandedPositionGroups.value);
+  if (next.has(kind)) next.delete(kind);
+  else next.add(kind);
+  expandedPositionGroups.value = next;
+}
 
 const selectedLines = computed(() => lines.value.filter((line) => selected.has(key(line))));
 const selectedTotal = computed(() =>
@@ -280,35 +321,65 @@ onMounted(async () => {
       </div>
 
       <AState v-if="loadingLines" status="loading" layout="inline">Cargando partidas...</AState>
-      <AState v-else-if="!visibleLines.length" status="empty" layout="inline">
+      <AState v-else-if="!matchingLines.length" status="empty" layout="inline">
         No hay partidas que coincidan con la búsqueda.
       </AState>
+      <AState v-else-if="!visibleLines.length" status="empty" layout="inline">
+        Las partidas que coinciden no se pueden adoptar: ya las gestiona el plan o Patrimonio.
+      </AState>
+
+      <button
+        v-if="lockedMatchCount"
+        type="button"
+        class="plan-details-toggle"
+        @click="showLocked = !showLocked"
+      >
+        {{ showLocked ? 'Ocultar' : 'Mostrar' }} {{ lockedMatchCount }} partida{{
+          lockedMatchCount === 1 ? '' : 's'
+        }}
+        no adoptable{{ lockedMatchCount === 1 ? '' : 's' }}
+      </button>
 
       <div v-for="[year, group] in groupedLines" :key="year" class="plan-adopt-year">
-        <p class="eyebrow">{{ year }}</p>
         <button
-          v-for="line in group"
-          :key="`${line.kind}:${line.id}`"
           type="button"
-          class="plan-adopt-line"
-          :class="{
-            'is-on': selected.has(`${line.kind}:${line.id}`),
-            'is-locked': isLocked(line),
-          }"
-          :aria-pressed="selected.has(`${line.kind}:${line.id}`)"
-          :disabled="isLocked(line)"
-          @click="toggle(line)"
+          class="plan-assets-group-head"
+          :aria-expanded="isYearOpen(year)"
+          @click="toggleYear(year)"
         >
-          <span class="plan-adopt-name">
-            <strong>{{ line.name }}</strong>
-            <small v-if="line.isPlanManaged">Ya gestionada por «{{ line.planEventName }}»</small>
-            <small v-else-if="line.isSourceOwned">La genera un activo o pasivo de Patrimonio</small>
-            <small v-else-if="line.eventGroup">{{ line.eventGroup }}</small>
-          </span>
-          <span class="plan-adopt-amount mono" :class="{ pos: line.kind === 'income' }">
-            {{ formatMoney(line.amountAnnual) }}
+          <strong>{{ year }}</strong>
+          <span>
+            {{ group.length }} partida{{ group.length === 1 ? '' : 's' }} ·
+            {{ isYearOpen(year) ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
+        <template v-if="isYearOpen(year)">
+          <button
+            v-for="line in group"
+            :key="`${line.kind}:${line.id}`"
+            type="button"
+            class="plan-adopt-line"
+            :class="{
+              'is-on': selected.has(`${line.kind}:${line.id}`),
+              'is-locked': isLocked(line),
+            }"
+            :aria-pressed="selected.has(`${line.kind}:${line.id}`)"
+            :disabled="isLocked(line)"
+            @click="toggle(line)"
+          >
+            <span class="plan-adopt-name">
+              <strong>{{ line.name }}</strong>
+              <small v-if="line.isPlanManaged">Ya gestionada por «{{ line.planEventName }}»</small>
+              <small v-else-if="line.isSourceOwned">
+                La genera un activo o pasivo de Patrimonio
+              </small>
+              <small v-else-if="line.eventGroup">{{ line.eventGroup }}</small>
+            </span>
+            <span class="plan-adopt-amount mono" :class="{ pos: line.kind === 'income' }">
+              {{ formatMoney(line.amountAnnual) }}
+            </span>
+          </button>
+        </template>
       </div>
     </section>
 
@@ -338,39 +409,67 @@ onMounted(async () => {
       </div>
 
       <div v-if="visiblePositions.liabilities.length" class="plan-adopt-year">
-        <p class="eyebrow">Pasivos</p>
         <button
-          v-for="liability in visiblePositions.liabilities"
-          :key="`liability:${liability.id}`"
           type="button"
-          class="plan-adopt-line"
-          :class="{ 'is-on': selectedLiabilities.has(liability.id) }"
-          :aria-pressed="selectedLiabilities.has(liability.id)"
-          @click="toggleLiability(liability.id)"
+          class="plan-assets-group-head"
+          :aria-expanded="isPositionGroupOpen('liabilities')"
+          @click="togglePositionGroup('liabilities')"
         >
-          <span class="plan-adopt-name">
-            <strong>{{ liability.name }}</strong>
+          <strong>Pasivos</strong>
+          <span>
+            {{ visiblePositions.liabilities.length }}
+            {{ visiblePositions.liabilities.length === 1 ? 'posición' : 'posiciones' }}
+            · {{ isPositionGroupOpen('liabilities') ? 'Ocultar' : 'Ver' }}
           </span>
-          <span class="plan-adopt-amount mono">{{ formatMoney(liability.amount) }}</span>
         </button>
+        <template v-if="isPositionGroupOpen('liabilities')">
+          <button
+            v-for="liability in visiblePositions.liabilities"
+            :key="`liability:${liability.id}`"
+            type="button"
+            class="plan-adopt-line"
+            :class="{ 'is-on': selectedLiabilities.has(liability.id) }"
+            :aria-pressed="selectedLiabilities.has(liability.id)"
+            @click="toggleLiability(liability.id)"
+          >
+            <span class="plan-adopt-name">
+              <strong>{{ liability.name }}</strong>
+            </span>
+            <span class="plan-adopt-amount mono">{{ formatMoney(liability.amount) }}</span>
+          </button>
+        </template>
       </div>
 
       <div v-if="visiblePositions.assets.length" class="plan-adopt-year">
-        <p class="eyebrow">Activos</p>
         <button
-          v-for="asset in visiblePositions.assets"
-          :key="`asset:${asset.id}`"
           type="button"
-          class="plan-adopt-line"
-          :class="{ 'is-on': selectedAssets.has(asset.id) }"
-          :aria-pressed="selectedAssets.has(asset.id)"
-          @click="toggleAsset(asset.id)"
+          class="plan-assets-group-head"
+          :aria-expanded="isPositionGroupOpen('assets')"
+          @click="togglePositionGroup('assets')"
         >
-          <span class="plan-adopt-name">
-            <strong>{{ asset.name }}</strong>
+          <strong>Activos</strong>
+          <span>
+            {{ visiblePositions.assets.length }}
+            {{ visiblePositions.assets.length === 1 ? 'posición' : 'posiciones' }}
+            · {{ isPositionGroupOpen('assets') ? 'Ocultar' : 'Ver' }}
           </span>
-          <span class="plan-adopt-amount mono">{{ formatMoney(asset.amount) }}</span>
         </button>
+        <template v-if="isPositionGroupOpen('assets')">
+          <button
+            v-for="asset in visiblePositions.assets"
+            :key="`asset:${asset.id}`"
+            type="button"
+            class="plan-adopt-line"
+            :class="{ 'is-on': selectedAssets.has(asset.id) }"
+            :aria-pressed="selectedAssets.has(asset.id)"
+            @click="toggleAsset(asset.id)"
+          >
+            <span class="plan-adopt-name">
+              <strong>{{ asset.name }}</strong>
+            </span>
+            <span class="plan-adopt-amount mono">{{ formatMoney(asset.amount) }}</span>
+          </button>
+        </template>
       </div>
     </section>
 

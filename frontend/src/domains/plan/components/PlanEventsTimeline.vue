@@ -163,6 +163,13 @@ async function confirmClose(): Promise<void> {
 function shortDate(value: string): string {
   return new Date(`${value}T12:00:00`).toLocaleDateString('es-ES');
 }
+
+// "2024-02-01" -> "feb 2024": la columna de fecha hablaba en ISO crudo.
+function monthYear(value: string): string {
+  return new Intl.DateTimeFormat('es-ES', { month: 'short', year: 'numeric' }).format(
+    new Date(`${value}T12:00:00`),
+  );
+}
 </script>
 
 <template>
@@ -240,7 +247,7 @@ function shortDate(value: string): string {
     </div>
     <ol v-else class="plan-event-list">
       <li v-for="event in events" :key="event.id">
-        <span class="plan-event-date mono">{{ event.planned_date.slice(0, 7) }}</span>
+        <span class="plan-event-date mono">{{ monthYear(event.planned_date) }}</span>
         <button
           type="button"
           class="plan-event-summary"
@@ -259,45 +266,49 @@ function shortDate(value: string): string {
             </span>
           </span>
         </button>
-        <!-- Una previsión se hace realidad o se cancela; lo ya ocurrido se da de baja. -->
-        <div v-if="isForecast(event)" class="plan-event-actions">
-          <AButton
-            v-if="materializeEvent"
-            variant="ghost"
-            size="sm"
-            @click="beginMaterialize(event)"
-          >
-            Ya ha ocurrido
-          </AButton>
-          <AButton
-            v-if="cancelEvent"
-            variant="ghost"
-            size="sm"
-            :loading="saving && cancellingId === event.id"
-            @click="cancel(event)"
-          >
-            {{ cancellingId === event.id ? 'Confirmar cancelación' : 'Cancelar previsión' }}
-          </AButton>
-        </div>
-        <div v-else class="plan-event-actions">
-          <AButton
-            v-if="isRegistered(event) && releaseEvent"
-            variant="ghost"
-            size="sm"
-            :loading="saving && releasingId === event.id"
-            @click="release(event)"
-          >
-            {{ releasingId === event.id ? 'Confirmar deshacer' : 'Deshacer registro' }}
-          </AButton>
-          <AButton
-            v-if="!event.effective_end_date && closeEvent"
-            variant="ghost"
-            size="sm"
-            @click="beginClose(event)"
-          >
-            Dar de baja
-          </AButton>
-        </div>
+        <!-- Una previsión se hace realidad o se cancela; lo ya ocurrido se da de baja.
+             Las acciones viven en la fila expandida: se decide viendo el impacto completo
+             y la lista deja de repetir los mismos enlaces fila a fila. -->
+        <template v-if="expandedId === event.id">
+          <div v-if="isForecast(event)" class="plan-event-actions">
+            <AButton
+              v-if="materializeEvent"
+              variant="ghost"
+              size="sm"
+              @click="beginMaterialize(event)"
+            >
+              Ya ha ocurrido
+            </AButton>
+            <AButton
+              v-if="cancelEvent"
+              variant="ghost"
+              size="sm"
+              :loading="saving && cancellingId === event.id"
+              @click="cancel(event)"
+            >
+              {{ cancellingId === event.id ? 'Confirmar cancelación' : 'Cancelar previsión' }}
+            </AButton>
+          </div>
+          <div v-else class="plan-event-actions">
+            <AButton
+              v-if="isRegistered(event) && releaseEvent"
+              variant="ghost"
+              size="sm"
+              :loading="saving && releasingId === event.id"
+              @click="release(event)"
+            >
+              {{ releasingId === event.id ? 'Confirmar deshacer' : 'Deshacer registro' }}
+            </AButton>
+            <AButton
+              v-if="!event.effective_end_date && closeEvent"
+              variant="ghost"
+              size="sm"
+              @click="beginClose(event)"
+            >
+              Dar de baja
+            </AButton>
+          </div>
+        </template>
         <PlanEventImpact v-if="expandedId === event.id" :key="event.id" :event-id="event.id" />
       </li>
     </ol>

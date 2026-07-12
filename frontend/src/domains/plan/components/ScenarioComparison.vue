@@ -16,7 +16,14 @@ const props = defineProps<{
 const showTable = ref(false);
 
 type Side = 'current' | 'simulated';
-type Row = { label: string; current: string; simulated: string; delta: string };
+type Row = {
+  label: string;
+  current: string;
+  simulated: string;
+  delta: string;
+  // Tono por mejora, no por signo: adelantar la fecha es 'pos' aunque el delta sea negativo.
+  deltaTone?: 'pos' | 'neg' | null;
+};
 
 // La comparación se hace sobre la trayectoria: las métricas del summary son
 // valores de hoy y un escenario futuro nunca las cambia.
@@ -63,11 +70,13 @@ function moneyRow(
   if (!current || !simulated) return null;
   const currentValue = Number(current[key]);
   const simulatedValue = Number(simulated[key]);
+  const delta = simulatedValue - currentValue;
   return {
     label: `${label} en ${yearWithAges(year, props.members ?? [])}`,
     current: formatMoney(currentValue),
     simulated: formatMoney(simulatedValue),
-    delta: signedMoney(simulatedValue - currentValue),
+    delta: signedMoney(delta),
+    deltaTone: delta === 0 ? null : delta > 0 ? 'pos' : 'neg',
   };
 }
 
@@ -90,6 +99,8 @@ const rows = computed<Row[]>(() => {
           : projectedDelta === 0
             ? 'Sin variación'
             : `${projectedDelta > 0 ? '+' : ''}${projectedDelta} ${Math.abs(projectedDelta) === 1 ? 'año' : 'años'}`,
+      deltaTone:
+        projectedDelta == null || projectedDelta === 0 ? null : projectedDelta < 0 ? 'pos' : 'neg',
     },
   ];
   for (const year of milestoneYears.value) {
@@ -134,7 +145,7 @@ const rows = computed<Row[]>(() => {
         <strong>{{ row.label }}</strong>
         <span>{{ row.current }}</span>
         <span>{{ row.simulated }}</span>
-        <span>{{ row.delta }}</span>
+        <span :class="row.deltaTone">{{ row.delta }}</span>
       </div>
     </div>
   </section>

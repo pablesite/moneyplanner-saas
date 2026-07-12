@@ -34,6 +34,18 @@ async function clickByLabel(wrapper: VueWrapper, label: string): Promise<void> {
   await button!.trigger('click');
 }
 
+/** Las acciones viven en la fila expandida: hay que desplegarla antes de actuar. */
+async function expandRow(wrapper: VueWrapper, index = 0): Promise<void> {
+  await wrapper.findAll('button.plan-event-summary')[index]!.trigger('click');
+}
+
+const globalMountOptions = {
+  stubs: {
+    RouterLink: { template: '<a><slot /></a>' },
+    PlanEventImpact: true,
+  },
+};
+
 describe('PlanEventsTimeline', () => {
   it('requires inline confirmation before closing an event', async () => {
     const closeEvent = vi.fn().mockResolvedValue({
@@ -43,9 +55,10 @@ describe('PlanEventsTimeline', () => {
     } as unknown as PlanEventCloseResponse);
     const wrapper = mount(PlanEventsTimeline, {
       props: { events: [occurred], closeEvent },
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+      global: globalMountOptions,
     });
 
+    await expandRow(wrapper);
     await clickByLabel(wrapper, 'Dar de baja');
     expect(wrapper.text()).toContain('El histórico se conserva');
     expect(closeEvent).not.toHaveBeenCalled();
@@ -61,13 +74,14 @@ describe('PlanEventsTimeline', () => {
     expect(wrapper.text()).toContain('1 partida ajustada y 2 retiradas');
   });
 
-  it('shows closed status and removes the destructive action', () => {
+  it('shows closed status and removes the destructive action', async () => {
     const wrapper = mount(PlanEventsTimeline, {
       props: { events: [{ ...event, effective_end_date: '2030-07-01' }] },
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+      global: globalMountOptions,
     });
 
     expect(wrapper.text()).toContain('Cerrado el');
+    await expandRow(wrapper);
     expect(wrapper.text()).not.toContain('Dar de baja');
   });
 
@@ -81,9 +95,14 @@ describe('PlanEventsTimeline', () => {
     };
     const wrapper = mount(PlanEventsTimeline, {
       props: { events: [event, registered], releaseEvent },
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+      global: globalMountOptions,
     });
 
+    // La previsión expandida no ofrece deshacer: no fue un registro retrospectivo.
+    await expandRow(wrapper, 0);
+    expect(wrapper.text()).not.toContain('Deshacer registro');
+
+    await expandRow(wrapper, 1);
     const undo = wrapper
       .findAll('button')
       .filter((button) => button.text() === 'Deshacer registro');
@@ -112,9 +131,10 @@ describe('PlanEventsTimeline', () => {
     } as unknown as PlanEventMaterializeResponse);
     const wrapper = mount(PlanEventsTimeline, {
       props: { events: [event], materializeEvent, cancelEvent: vi.fn(), closeEvent: vi.fn() },
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+      global: globalMountOptions,
     });
 
+    await expandRow(wrapper);
     const labels = wrapper.findAll('button').map((button) => button.text());
     expect(labels).toContain('Ya ha ocurrido');
     expect(labels).toContain('Cancelar previsión');
@@ -139,9 +159,10 @@ describe('PlanEventsTimeline', () => {
       .mockResolvedValue({ budget_lines_deleted: [{}, {}], projection: {} });
     const wrapper = mount(PlanEventsTimeline, {
       props: { events: [event], cancelEvent },
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+      global: globalMountOptions,
     });
 
+    await expandRow(wrapper);
     await clickByLabel(wrapper, 'Cancelar previsión');
     expect(cancelEvent).not.toHaveBeenCalled();
 

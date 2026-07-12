@@ -606,11 +606,13 @@ onMounted(() => {
       <dl class="plan-summary-facts">
         <div>
           <dt>Fecha objetivo</dt>
-          <dd class="mono">{{ targetDate || '—' }}</dd>
+          <dd class="mono">{{ targetDate ? formatLongMonthYear(targetDate) : '—' }}</dd>
         </div>
         <div>
           <dt>Fin de proyección</dt>
-          <dd class="mono">{{ projectionEndDate || '—' }}</dd>
+          <dd class="mono">
+            {{ projectionEndDate ? formatLongMonthYear(projectionEndDate) : '—' }}
+          </dd>
         </div>
         <div>
           <dt>Nivel de vida</dt>
