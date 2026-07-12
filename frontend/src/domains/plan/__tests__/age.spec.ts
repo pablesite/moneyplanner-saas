@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ageInYear, compactYearWithAges, yearWithAges } from '@/domains/plan/age';
+import {
+  ageAtDate,
+  ageInYear,
+  compactYearWithAges,
+  dateAtAge,
+  yearWithAges,
+} from '@/domains/plan/age';
 import type { PlanMember } from '@/domains/plan/types';
 
 function member(name: string, birthDate: string | null): PlanMember {
@@ -31,5 +37,23 @@ describe('plan age labels', () => {
   it('keeps the year readable when birth dates are missing', () => {
     expect(yearWithAges(2049, [member('Pablo', null)])).toBe('2049');
     expect(yearWithAges(null, [])).toBe('Sin fecha');
+  });
+});
+
+describe('plan age <-> date derivation', () => {
+  it('derives the date at a target age', () => {
+    expect(dateAtAge('1984-10-12', 55)).toBe('2039-10-12');
+    expect(dateAtAge('2000-02-29', 1)).toBe('2001-02-28');
+    expect(dateAtAge('', 55)).toBe('');
+  });
+
+  it('derives the age reached at a date', () => {
+    expect(ageAtDate('1984-10-12', '2039-10-12')).toBe(55);
+    expect(ageAtDate('1984-10-12', '2039-10-11')).toBe(54);
+    expect(ageAtDate('1984-10-12', '')).toBeNull();
+  });
+
+  it('round-trips age and date', () => {
+    expect(ageAtDate('1984-10-12', dateAtAge('1984-10-12', 67))).toBe(67);
   });
 });

@@ -26,7 +26,12 @@ export type PlanMember = {
   other_future_income_today_eur: string | null;
 };
 
-export type PlanMemberPayload = Omit<PlanMember, 'id'>;
+// Core deriva `employment_income_end_date` y `pension_start_date` desde `birth_date`
+// con la edad legal de jubilación, e ignora lo que mande el cliente: no se envían.
+export type PlanMemberPayload = Omit<
+  PlanMember,
+  'id' | 'employment_income_end_date' | 'pension_start_date'
+>;
 
 export type FinancialPlan = {
   id: number;

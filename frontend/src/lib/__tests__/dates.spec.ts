@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dateToIso, formatMonthYearLabel, parseIsoToDate } from '@/lib/dates';
+import { dateToIso, formatLongMonthYear, formatMonthYearLabel, parseIsoToDate } from '@/lib/dates';
 
 describe('date helpers', () => {
   it('parses an ISO date as local midnight and round-trips back', () => {
@@ -12,5 +12,10 @@ describe('date helpers', () => {
 
   it('formats a short month/year label', () => {
     expect(formatMonthYearLabel('2026-01-01')).toMatch(/26/);
+  });
+
+  it('formats a long month/year label with a full year', () => {
+    expect(formatLongMonthYear('2039-10-12')).toBe('octubre de 2039');
+    expect(formatLongMonthYear('')).toBe('');
   });
 });

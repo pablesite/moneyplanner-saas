@@ -17,3 +17,12 @@ export function formatMonthYearLabel(date: string): string {
     new Date(date),
   );
 }
+
+// "YYYY-MM-DD" -> "enero de 2039". Para horizontes lejanos, donde el año de dos
+// digitos de `formatMonthYearLabel` deja de ser legible ("oct 39").
+export function formatLongMonthYear(date: string): string {
+  if (!date) return '';
+  return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(
+    parseIsoToDate(date),
+  );
+}
