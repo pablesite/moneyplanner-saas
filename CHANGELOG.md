@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.38.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.37.0...moneyplanner-saas-v0.38.0) (2026-07-12)
+
+
+### Features
+
+* **frontend:** absorb financial state into plan ([c626233](https://github.com/pablesite/moneyplanner-saas/commit/c62623317bacabe166a5f3063b8e62351ffb61a6))
+* **frontend:** add asset function classification screen ([08b050e](https://github.com/pablesite/moneyplanner-saas/commit/08b050e66f3c5d34e78d5f62fdb6660b1bfce0ea))
+* **frontend:** add plan scenario lab ([d11510e](https://github.com/pablesite/moneyplanner-saas/commit/d11510eaeb9ffbcff8efd0c5141d0c64e04d9d35))
+* **frontend:** close plan events safely ([99629cd](https://github.com/pablesite/moneyplanner-saas/commit/99629cd43584280abbafc538f0f8a10bc4014bca))
+* **frontend:** colorear el diagnóstico de cimientos con la banda que decide Core ([0d766da](https://github.com/pablesite/moneyplanner-saas/commit/0d766dacd95aea914dd83402475730d5357c8429))
+* **frontend:** complete plan scenario markers ([0315dbb](https://github.com/pablesite/moneyplanner-saas/commit/0315dbb6d11b16b35c15d1f0c5895db48c918a89))
+* **frontend:** confirm scenario accept/discard and show next steps ([993ceee](https://github.com/pablesite/moneyplanner-saas/commit/993ceee6b64b98e29790417273a6e0e1ec7ce340))
+* **frontend:** connect plan recommendations and close impact ([2a81571](https://github.com/pablesite/moneyplanner-saas/commit/2a815711b1e64c0cd64069fa986f4e70ec4e991f))
+* **frontend:** distinguish plan-managed budget lines ([7f8cf10](https://github.com/pablesite/moneyplanner-saas/commit/7f8cf10ed3fa39cc839d9ea5e023c6aa332db5e0))
+* **frontend:** enrich plan scenarios and age context ([d92db69](https://github.com/pablesite/moneyplanner-saas/commit/d92db692c754b18ffd74477962d29d95fa57123f))
+* **frontend:** give a forecast its two ways out — happen, or be cancelled ([4a8d24d](https://github.com/pablesite/moneyplanner-saas/commit/4a8d24def7b20d949c1b87c050768c0e9c3d03ed))
+* **frontend:** hacer legible y accionable Mi Plan sin ruido ([9035187](https://github.com/pablesite/moneyplanner-saas/commit/9035187fd29265c54bda094072de27627179f079))
+* **frontend:** link a registered decision to its assets and liabilities ([c8871e9](https://github.com/pablesite/moneyplanner-saas/commit/c8871e9ba47455edbf926397519ef930de2d7522))
+* **frontend:** make plan hero diagnosis actionable ([ba44959](https://github.com/pablesite/moneyplanner-saas/commit/ba44959f09c01097c0faf74b512169f03a9cec51))
+* **frontend:** organize plan decisions into tabs ([597befa](https://github.com/pablesite/moneyplanner-saas/commit/597befa2374f83d053c40096b8a6c687faaebf97))
+* **frontend:** plan event markers on the trajectory chart ([ab60d2b](https://github.com/pablesite/moneyplanner-saas/commit/ab60d2b73f38bbb4775dfa7eb5baf9bb60764438))
+* **frontend:** plan trajectory chart with real time axis and target context ([b1f30cd](https://github.com/pablesite/moneyplanner-saas/commit/b1f30cd9831d99cf3428c19286ff819ae7bf567a))
+* **frontend:** progressive scenario form driven by template ([57fe1bb](https://github.com/pablesite/moneyplanner-saas/commit/57fe1bb12efc249067ea1574c188341cf01b9a36))
+* **frontend:** register decisions already taken from Mi Plan ([d4a6431](https://github.com/pablesite/moneyplanner-saas/commit/d4a64317916f1a662c178b89c63cc82c1001c9d4))
+* **frontend:** reorder plan dashboard and guard recommendation actions ([ffe0337](https://github.com/pablesite/moneyplanner-saas/commit/ffe0337ffce1e0ccc191e7fd3df3c1932dbf79ee))
+* **frontend:** replace plan setup form with a guided six-question flow ([3863fae](https://github.com/pablesite/moneyplanner-saas/commit/3863fae2f1a723f1ad9f034c9b15fda5e08c72b9))
+* **frontend:** searchable grouped asset-function classification ([66d7345](https://github.com/pablesite/moneyplanner-saas/commit/66d7345cc51426f2fb161af035d7c517cd58a6dc))
+* **frontend:** show what a decision really cost ([7d503d5](https://github.com/pablesite/moneyplanner-saas/commit/7d503d5c9a1758aa00ff735b9cc9376894d662c7))
+* **frontend:** simplify plan diagnosis and scenarios ([4f328e7](https://github.com/pablesite/moneyplanner-saas/commit/4f328e733824d538cf9dfef22756d5b6f0f8e002))
+* **frontend:** useful reading for discarded scenario detail ([16b82c3](https://github.com/pablesite/moneyplanner-saas/commit/16b82c37ca588e7ee740ef71ba3f27c8e912fd7b))
+
+
+### Bug Fixes
+
+* **deps:** bump Django to 6.0.7 to close PYSEC-2026-2090/91/92 ([5c1dd3c](https://github.com/pablesite/moneyplanner-saas/commit/5c1dd3cf0a0c2dabf258939a7fb0f399054c7c59))
+* **frontend:** coherent plan hero diagnosis when no projected date ([676a3a9](https://github.com/pablesite/moneyplanner-saas/commit/676a3a966a078c95a145d4a118463b889d40f235))
+* **frontend:** harden Mi Plan setup submit ([246235b](https://github.com/pablesite/moneyplanner-saas/commit/246235b3a119c9b777df27697d9929e3953813b1))
+* **frontend:** pulido final de Mi Plan — cabeceras, hero móvil y campos ([a222208](https://github.com/pablesite/moneyplanner-saas/commit/a2222081eca605f21a6a38478aadf5fee746d5f1))
+* **frontend:** pulir la lectura de Mi Plan donde confundía o desbordaba ([d99f6af](https://github.com/pablesite/moneyplanner-saas/commit/d99f6af297cd4ff03ea2f378197ed7d021ed4827))
+* **frontend:** repair MI Plan UX issues and duplicate currency symbols ([c1ae0e9](https://github.com/pablesite/moneyplanner-saas/commit/c1ae0e9139a3fe998dc64d48c36523857e8b6576))
+* **frontend:** scenario comparison measures trajectory impact ([e792369](https://github.com/pablesite/moneyplanner-saas/commit/e792369cc3e88d383ca549da0288aef56f26e6ca))
+* **frontend:** surface real scenario impact and readable plan errors ([3961424](https://github.com/pablesite/moneyplanner-saas/commit/3961424b4e066dbae108d161abfc63bbf8c6e22b))
+* **frontend:** unify plan terminology and polish scenario/detail UX ([bf7b172](https://github.com/pablesite/moneyplanner-saas/commit/bf7b1728345207e00db4479e0cf44cef56069bdf))
+* **plan:** complete engine correctness phase ([7330692](https://github.com/pablesite/moneyplanner-saas/commit/733069280e3707cb80999fa5fe30d86d222b8f05))
+
 ## [0.37.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.36.1...moneyplanner-saas-v0.37.0) (2026-07-09)
 
 
