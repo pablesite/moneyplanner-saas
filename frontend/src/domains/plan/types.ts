@@ -239,6 +239,8 @@ export type PlanEvent = {
   status: 'planned' | 'occurred' | 'cancelled';
   planned_impact_json: Record<string, unknown>;
   actual_impact_json: Record<string, unknown>;
+  linked_asset_ids: number[];
+  linked_liability_ids: number[];
   created_at: string;
   updated_at: string;
 };
@@ -250,6 +252,9 @@ export type OccurredEventPayload = {
   decision_date: string;
   expense_entry_ids: number[];
   income_entry_ids: number[];
+  /** Se enlazan, no se adoptan: Patrimonio sigue generando sus líneas. */
+  asset_ids: number[];
+  liability_ids: number[];
   note?: string;
 };
 

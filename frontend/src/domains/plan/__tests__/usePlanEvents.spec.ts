@@ -13,6 +13,8 @@ function event(overrides: Partial<PlanEvent> & { id: number }): PlanEvent {
     status: 'planned',
     planned_impact_json: {},
     actual_impact_json: {},
+    linked_asset_ids: [],
+    linked_liability_ids: [],
     created_at: '2026-07-11T00:00:00Z',
     updated_at: '2026-07-11T00:00:00Z',
     ...overrides,

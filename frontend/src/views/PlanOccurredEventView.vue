@@ -7,6 +7,8 @@ import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type { PlanScenarioTemplate } from '@/domains/plan';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries/annualExpenseStore';
 import { useAnnualIncomeStore } from '@/domains/budget/annual-entries/annualIncomeStore';
+import { coreNetWorthApi } from '@/domains/net-worth/api';
+import type { Asset } from '@/domains/net-worth/models';
 import { formatMoney } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
@@ -36,7 +38,12 @@ const form = reactive({
   note: '',
 });
 const selected = reactive(new Set<string>());
+const selectedAssets = reactive(new Set<number>());
+const selectedLiabilities = reactive(new Set<number>());
+const assets = ref<Asset[]>([]);
+const liabilities = ref<Asset[]>([]);
 const search = ref('');
+const positionSearch = ref('');
 const submitting = ref(false);
 const loadingLines = ref(false);
 
@@ -128,6 +135,25 @@ const existingGroups = computed(() => {
   return [...groups.entries()].sort((a, b) => b[1] - a[1]);
 });
 
+const visiblePositions = computed(() => {
+  const term = positionSearch.value.trim().toLowerCase();
+  const match = (item: Asset) => !term || item.name.toLowerCase().includes(term);
+  return {
+    liabilities: liabilities.value.filter(match),
+    assets: assets.value.filter(match),
+  };
+});
+
+function toggleAsset(id: number): void {
+  if (selectedAssets.has(id)) selectedAssets.delete(id);
+  else selectedAssets.add(id);
+}
+
+function toggleLiability(id: number): void {
+  if (selectedLiabilities.has(id)) selectedLiabilities.delete(id);
+  else selectedLiabilities.add(id);
+}
+
 async function submit(): Promise<void> {
   if (!canSubmit.value) return;
   submitting.value = true;
@@ -143,6 +169,8 @@ async function submit(): Promise<void> {
       income_entry_ids: selectedLines.value
         .filter((line) => line.kind === 'income')
         .map((line) => line.id),
+      asset_ids: [...selectedAssets],
+      liability_ids: [...selectedLiabilities],
       note: form.note.trim(),
     });
     await router.push('/plan?tab=decisions');
@@ -156,7 +184,14 @@ async function submit(): Promise<void> {
 onMounted(async () => {
   loadingLines.value = true;
   try {
-    await Promise.all([expenseStore.loadAll(), incomeStore.loadAll()]);
+    const [, , assetsRes, liabilitiesRes] = await Promise.all([
+      expenseStore.loadAll(),
+      incomeStore.loadAll(),
+      coreNetWorthApi.getAssets(),
+      coreNetWorthApi.getLiabilities(),
+    ]);
+    assets.value = assetsRes.data ?? [];
+    liabilities.value = liabilitiesRes.data ?? [];
   } finally {
     loadingLines.value = false;
   }
@@ -277,7 +312,72 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section v-if="selectedLines.length" class="sect plan-form-section">
+    <section class="sect plan-form-section">
+      <div class="sect-head">
+        <div>
+          <p class="eyebrow">Paso 3</p>
+          <h2 class="sect-title">¿Qué activos o pasivos trajo esta decisión?</h2>
+          <p class="sect-sub">
+            Aquí no se adopta nada: la decisión solo apunta a ellos. Patrimonio sigue siendo su
+            dueño y quien genera sus cuotas. Enlazarlos es lo que permite ver el impacto completo de
+            la decisión, no solo el de las partidas que escribiste a mano.
+          </p>
+        </div>
+      </div>
+
+      <div class="plan-form-grid">
+        <label>
+          <span>Buscar en Patrimonio</span>
+          <input
+            v-model="positionSearch"
+            class="input"
+            type="search"
+            placeholder="Préstamo, vivienda..."
+          />
+        </label>
+      </div>
+
+      <div v-if="visiblePositions.liabilities.length" class="plan-adopt-year">
+        <p class="eyebrow">Pasivos</p>
+        <button
+          v-for="liability in visiblePositions.liabilities"
+          :key="`liability:${liability.id}`"
+          type="button"
+          class="plan-adopt-line"
+          :class="{ 'is-on': selectedLiabilities.has(liability.id) }"
+          :aria-pressed="selectedLiabilities.has(liability.id)"
+          @click="toggleLiability(liability.id)"
+        >
+          <span class="plan-adopt-name">
+            <strong>{{ liability.name }}</strong>
+          </span>
+          <span class="plan-adopt-amount mono">{{ formatMoney(liability.amount) }}</span>
+        </button>
+      </div>
+
+      <div v-if="visiblePositions.assets.length" class="plan-adopt-year">
+        <p class="eyebrow">Activos</p>
+        <button
+          v-for="asset in visiblePositions.assets"
+          :key="`asset:${asset.id}`"
+          type="button"
+          class="plan-adopt-line"
+          :class="{ 'is-on': selectedAssets.has(asset.id) }"
+          :aria-pressed="selectedAssets.has(asset.id)"
+          @click="toggleAsset(asset.id)"
+        >
+          <span class="plan-adopt-name">
+            <strong>{{ asset.name }}</strong>
+          </span>
+          <span class="plan-adopt-amount mono">{{ formatMoney(asset.amount) }}</span>
+        </button>
+      </div>
+    </section>
+
+    <section
+      v-if="selectedLines.length || selectedAssets.size || selectedLiabilities.size"
+      class="sect plan-form-section"
+    >
       <div class="sect-head">
         <div>
           <p class="eyebrow">Resumen</p>
@@ -286,8 +386,19 @@ onMounted(async () => {
             {{ formatMoney(selectedTotal) }}
           </h2>
           <p class="sect-sub">
-            Se vincularán a «{{ form.name.trim() || 'esta decisión' }}». Ni los importes ni las
-            fechas cambian: solo pasan a colgar de la decisión.
+            Las partidas pasan a colgar de «{{ form.name.trim() || 'esta decisión' }}»; sus importes
+            y fechas no cambian.
+            <template v-if="selectedLiabilities.size || selectedAssets.size">
+              Además queda enlazada a
+              <template v-if="selectedLiabilities.size">
+                {{ selectedLiabilities.size }} pasivo{{ selectedLiabilities.size === 1 ? '' : 's' }}
+              </template>
+              <template v-if="selectedLiabilities.size && selectedAssets.size"> y </template>
+              <template v-if="selectedAssets.size">
+                {{ selectedAssets.size }} activo{{ selectedAssets.size === 1 ? '' : 's' }}
+              </template>
+              de Patrimonio, que siguen gestionándose allí.
+            </template>
           </p>
         </div>
       </div>

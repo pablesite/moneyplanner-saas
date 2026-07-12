@@ -1172,8 +1172,18 @@
 .plan-decision-actions,
 .plan-event-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+/* Dos acciones en la cabecera: no deben encogerse hasta partir su etiqueta. */
+.plan-decision-actions {
+  flex-shrink: 0;
+}
+
+.plan-decision-actions .btn {
+  white-space: nowrap;
 }
 
 .plan-adopt-year {
