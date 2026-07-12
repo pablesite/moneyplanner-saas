@@ -20,6 +20,15 @@ function months(value: string | null | undefined): string {
   if (value == null) return '-';
   return `${formatNumber(toNumber(value), 1)} meses`;
 }
+
+// Un "superávit" negativo se lee como contradicción: se etiqueta como déficit.
+function surplusText(value: string | null | undefined): string {
+  if (value == null) return 'Superávit -';
+  const amount = toNumber(value);
+  return amount < 0
+    ? `Déficit ${formatMoney(Math.abs(amount))}`
+    : `Superávit ${formatMoney(amount)}`;
+}
 </script>
 
 <template>
@@ -37,7 +46,7 @@ function months(value: string | null | undefined): string {
       <article>
         <span>Flujo de caja</span>
         <strong>{{ scoreLabel(foundations.cash_flow.score) }}</strong>
-        <small>Superávit {{ money(foundations.cash_flow.committed_surplus) }}</small>
+        <small>{{ surplusText(foundations.cash_flow.committed_surplus) }}</small>
       </article>
       <article>
         <span>Fondo de emergencia</span>

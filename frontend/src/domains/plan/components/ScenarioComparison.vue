@@ -89,7 +89,7 @@ const rows = computed<Row[]>(() => {
           ? 'Sin variación calculable'
           : projectedDelta === 0
             ? 'Sin variación'
-            : `${projectedDelta > 0 ? '+' : ''}${projectedDelta} años`,
+            : `${projectedDelta > 0 ? '+' : ''}${projectedDelta} ${Math.abs(projectedDelta) === 1 ? 'año' : 'años'}`,
     },
   ];
   for (const year of milestoneYears.value) {

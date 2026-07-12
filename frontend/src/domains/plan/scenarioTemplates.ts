@@ -201,6 +201,16 @@ export function scenarioStatusLabel(value: PlanScenarioStatus): string {
   return labels[value] ?? value;
 }
 
+// Perfiles temporales de partidas de presupuesto (contrato Core `time_profile`).
+export function timeProfileLabel(value: string): string {
+  const labels: Record<string, string> = {
+    one_off: 'Puntual',
+    term_recurrent: 'Cuotas con plazo',
+    structural_recurrent: 'Recurrente estructural',
+  };
+  return labels[value] ?? value;
+}
+
 export function planEventStatusLabel(value: PlanEvent['status']): string {
   const labels: Record<PlanEvent['status'], string> = {
     planned: 'Previsto',

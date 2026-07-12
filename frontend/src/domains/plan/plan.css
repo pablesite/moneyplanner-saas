@@ -365,12 +365,6 @@
   fill: var(--accent);
 }
 
-.plan-chart-event text {
-  fill: var(--accent);
-  font-size: 11px;
-  text-anchor: middle;
-}
-
 .plan-chart-hover-line {
   stroke: rgba(255, 255, 255, 0.2);
 }
@@ -1388,6 +1382,13 @@
 }
 
 @container page (max-width: 560px) {
+  /* Las acciones del laboratorio bajan a su propia fila: en línea con el texto
+     lo comprimen a una columna ilegible y desbordan el viewport. */
+  .plan-decision-intro .sect-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .plan-hero,
   .plan-progress,
   .plan-quality,

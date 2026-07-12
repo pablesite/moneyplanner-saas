@@ -76,7 +76,9 @@ describe('NetWorthTrajectoryChart', () => {
     });
     const eventGroups = wrapper.findAll('.plan-chart-event');
     expect(eventGroups).toHaveLength(1);
-    expect(wrapper.find('.plan-chart-event text').text()).toBe('Coche Ana');
+    // Sin <text> visible: el nombre vive en el tooltip nativo, como en Patrimonio.
+    expect(wrapper.find('.plan-chart-event text').exists()).toBe(false);
+    expect(wrapper.find('.plan-chart-event title').text()).toContain('Coche Ana');
     expect(wrapper.find('.plan-chart-event title').text()).toContain('Vehículo');
     expect(wrapper.find('.plan-chart-legend').text()).toContain('Acontecimiento');
   });

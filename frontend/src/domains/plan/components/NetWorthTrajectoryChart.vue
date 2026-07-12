@@ -269,11 +269,11 @@ function onMove(event: MouseEvent): void {
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" :class="marker.kind" />
           <text :x="marker.x" :y="padT - 8" :class="marker.kind">{{ marker.label }}</text>
         </g>
+        <!-- Sin etiqueta de texto: varios acontecimientos próximos se solapan; el nombre vive en el tooltip, como en Patrimonio. -->
         <g v-for="marker in eventMarkers" :key="`event-${marker.id}`" class="plan-chart-event">
           <title>{{ marker.label }} · {{ marker.detail }}</title>
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" />
           <circle :cx="marker.x" :cy="H - padB" r="4" />
-          <text :x="marker.x" :y="H - padB - 8">{{ marker.label }}</text>
         </g>
         <path v-if="targetPath" class="plan-chart-line target" :d="targetPath" />
         <path v-if="productivePath" class="plan-chart-line prod" :d="productivePath" />

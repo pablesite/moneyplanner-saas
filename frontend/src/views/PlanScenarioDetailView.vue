@@ -6,7 +6,11 @@ import { ScenarioComparison } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import { planApi } from '@/domains/plan';
 import type { PlanEventBudgetLines, ProjectionScenario } from '@/domains/plan';
-import { scenarioStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
+import {
+  scenarioStatusLabel,
+  scenarioTemplateLabel,
+  timeProfileLabel,
+} from '@/domains/plan/scenarioTemplates';
 import { formatMoney, toNumber } from '@/lib/format';
 import { toApiErrorMessage } from '@/lib/errors';
 import '@/domains/plan/plan.css';
@@ -309,7 +313,7 @@ onMounted(async () => {
           <article v-for="line in [...eventTrace.income, ...eventTrace.expenses]" :key="line.id">
             <div>
               <strong>{{ line.name }}</strong>
-              <span>FY {{ line.fiscal_year }} · {{ line.time_profile }}</span>
+              <span>FY {{ line.fiscal_year }} · {{ timeProfileLabel(line.time_profile) }}</span>
             </div>
             <strong>{{ formatMoney(toNumber(line.amount_annual)) }}</strong>
           </article>

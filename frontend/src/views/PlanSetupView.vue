@@ -598,7 +598,9 @@ onMounted(() => {
           Además quieres preservar {{ formatMoney(form.legacy_amount) }} de patrimonio.
         </template>
         <template v-else> No necesitas dejar patrimonio al final. </template>
-        <template v-if="summaryAges"> Para entonces, {{ summaryAges }}. </template>
+        <template v-if="summaryAges && activeMembers.length > 1">
+          En la fecha objetivo, {{ summaryAges }}.
+        </template>
       </p>
 
       <dl class="plan-summary-facts">
