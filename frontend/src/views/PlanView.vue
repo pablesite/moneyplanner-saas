@@ -241,6 +241,8 @@ onMounted(() => {
           :saving="store.saving"
           :close-event="store.closePlanEvent"
           :release-event="store.releaseEvent"
+          :materialize-event="store.materializeEvent"
+          :cancel-event="store.cancelEvent"
         />
       </div>
 

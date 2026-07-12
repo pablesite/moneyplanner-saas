@@ -2,7 +2,11 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import PlanEventsTimeline from '@/domains/plan/components/PlanEventsTimeline.vue';
-import type { PlanEvent, PlanEventCloseResponse } from '@/domains/plan/types';
+import type {
+  PlanEvent,
+  PlanEventCloseResponse,
+  PlanEventMaterializeResponse,
+} from '@/domains/plan/types';
 
 const event: PlanEvent = {
   id: 1,
@@ -21,15 +25,18 @@ const event: PlanEvent = {
   updated_at: '2026-01-01T00:00:00Z',
 };
 
+/** Dar de baja solo aplica a lo que ya ocurrió: una previsión se materializa o se cancela. */
+const occurred: PlanEvent = { ...event, status: 'occurred', actual_date: '2027-06-01' };
+
 describe('PlanEventsTimeline', () => {
   it('requires inline confirmation before closing an event', async () => {
     const closeEvent = vi.fn().mockResolvedValue({
-      event: { ...event, effective_end_date: '2030-07-01' },
+      event: { ...occurred, effective_end_date: '2030-07-01' },
       projection: {},
       budget_changes: { changed: [{}], deleted: [{}, {}] },
     } as unknown as PlanEventCloseResponse);
     const wrapper = mount(PlanEventsTimeline, {
-      props: { events: [event], closeEvent },
+      props: { events: [occurred], closeEvent },
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     });
 
@@ -86,5 +93,55 @@ describe('PlanEventsTimeline', () => {
 
     expect(releaseEvent).toHaveBeenCalledWith(9);
     expect(wrapper.text()).toContain('Registro deshecho');
+  });
+
+  it('offers a forecast the two ways out of a forecast: happen or be cancelled', async () => {
+    const materializeEvent = vi.fn().mockResolvedValue({
+      event: { ...event, status: 'occurred' },
+      projection: {},
+      created_assets: [{ id: 1, name: 'Coche Ana' }],
+      created_liabilities: [{ id: 2, name: 'Coche Ana' }],
+      budget_lines_dropped: [{}],
+      budget_lines_released: [{}, {}],
+    } as unknown as PlanEventMaterializeResponse);
+    const wrapper = mount(PlanEventsTimeline, {
+      props: { events: [event], materializeEvent, cancelEvent: vi.fn(), closeEvent: vi.fn() },
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    });
+
+    const labels = wrapper.findAll('button').map((button) => button.text());
+    expect(labels).toContain('Ya ha ocurrido');
+    expect(labels).toContain('Cancelar previsión');
+    // Dar de baja retira efectos de algo real: no aplica a lo que aún no ha pasado.
+    expect(labels).not.toContain('Dar de baja');
+
+    await wrapper.findAll('button')[0]!.trigger('click');
+    await wrapper.get('input[type="date"]').setValue('2027-06-15');
+    const confirm = wrapper.findAll('button').find((button) => button.text() === 'Confirmar');
+    await confirm!.trigger('click');
+
+    expect(materializeEvent).toHaveBeenCalledWith(1, {
+      actual_date: '2027-06-15',
+      note: undefined,
+    });
+    expect(wrapper.text()).toContain('Creado en Patrimonio: Coche Ana, Coche Ana');
+  });
+
+  it('asks for confirmation before cancelling a forecast', async () => {
+    const cancelEvent = vi
+      .fn()
+      .mockResolvedValue({ budget_lines_deleted: [{}, {}], projection: {} });
+    const wrapper = mount(PlanEventsTimeline, {
+      props: { events: [event], cancelEvent },
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    });
+
+    await wrapper.get('button').trigger('click');
+    expect(cancelEvent).not.toHaveBeenCalled();
+
+    await wrapper.get('button').trigger('click');
+
+    expect(cancelEvent).toHaveBeenCalledWith(1);
+    expect(wrapper.text()).toContain('2 partidas futuras eliminadas');
   });
 });

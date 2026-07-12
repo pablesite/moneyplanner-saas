@@ -267,6 +267,21 @@ export type PlanEventCloseResponse = {
   };
 };
 
+/** La previsión se hace realidad: nace el activo/pasivo y el plan suelta el presupuesto. */
+export type PlanEventMaterializeResponse = {
+  event: PlanEvent;
+  projection: ProjectionResponse;
+  created_assets: Array<{ id: number; name: string }>;
+  created_liabilities: Array<{ id: number; name: string }>;
+  budget_lines_dropped: Array<Record<string, unknown>>;
+  budget_lines_released: Array<Record<string, unknown>>;
+};
+
+export type PlanEventCancelResponse = {
+  budget_lines_deleted: Array<Record<string, unknown>>;
+  projection: ProjectionResponse;
+};
+
 export type PlanManagedBudgetLine = {
   id: number;
   name: string;

@@ -139,6 +139,39 @@ export const usePlanStore = defineStore('plan', {
       }
     },
 
+    async materializeEvent(id: number, payload: { actual_date: string; note?: string }) {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.materializeEvent(id, payload);
+        this.events = this.events.map((event) => (event.id === id ? data.event : event));
+        this.projection = data.projection;
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async cancelEvent(id: number) {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.cancelEvent(id);
+        this.events = this.events.filter((event) => event.id !== id);
+        this.projection = data.projection;
+        await this.fetchScenarios();
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
     async registerOccurredEvent(payload: OccurredEventPayload) {
       this.saving = true;
       this.error = null;

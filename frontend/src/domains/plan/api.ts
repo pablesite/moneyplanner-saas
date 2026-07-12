@@ -9,7 +9,9 @@ import type {
   PlanMemberPayload,
   PlanEvent,
   PlanEventBudgetLines,
+  PlanEventCancelResponse,
   PlanEventCloseResponse,
+  PlanEventMaterializeResponse,
   PlanFinding,
   PlanFoundations,
   ProjectionResponse,
@@ -92,6 +94,15 @@ export const planApi = {
   },
   registerOccurredEvent(payload: OccurredEventPayload) {
     return coreApi.post<PlanEvent>('/api/plan/events/occurred/', payload);
+  },
+  materializeEvent(id: number, payload: { actual_date: string; note?: string }) {
+    return coreApi.post<PlanEventMaterializeResponse>(
+      `/api/plan/events/${id}/materialize/`,
+      payload,
+    );
+  },
+  cancelEvent(id: number) {
+    return coreApi.post<PlanEventCancelResponse>(`/api/plan/events/${id}/cancel/`, {});
   },
   releaseEvent(id: number) {
     return coreApi.delete<{ released_lines: unknown[] }>(`/api/plan/events/${id}/`);

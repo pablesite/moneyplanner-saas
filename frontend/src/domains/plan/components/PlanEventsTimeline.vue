@@ -2,7 +2,12 @@
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AButton, AState } from '@/domains/ui';
-import type { PlanEvent, PlanEventCloseResponse } from '@/domains/plan/types';
+import type {
+  PlanEvent,
+  PlanEventCancelResponse,
+  PlanEventCloseResponse,
+  PlanEventMaterializeResponse,
+} from '@/domains/plan/types';
 import { planEventStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
 import { toApiErrorMessage } from '@/lib/errors';
 
@@ -14,6 +19,11 @@ const props = defineProps<{
     payload: { effective_date: string; note?: string },
   ) => Promise<PlanEventCloseResponse>;
   releaseEvent?: (id: number) => Promise<void>;
+  materializeEvent?: (
+    id: number,
+    payload: { actual_date: string; note?: string },
+  ) => Promise<PlanEventMaterializeResponse>;
+  cancelEvent?: (id: number) => Promise<PlanEventCancelResponse>;
 }>();
 
 const closingId = ref<number | null>(null);
@@ -22,12 +32,71 @@ const note = ref('');
 const closeError = ref<string | null>(null);
 const closeSuccess = ref<string | null>(null);
 const releasingId = ref<number | null>(null);
+const materializingId = ref<number | null>(null);
+const actualDate = ref('');
+const cancellingId = ref<number | null>(null);
 
 const closingEvent = computed(() => props.events.find((event) => event.id === closingId.value));
+const materializingEvent = computed(() =>
+  props.events.find((event) => event.id === materializingId.value),
+);
 
 /** Solo los registros retrospectivos pueden deshacerse: devuelven las partidas adoptadas. */
 function isRegistered(event: PlanEvent): boolean {
   return Boolean((event.actual_impact_json as { registration?: unknown })?.registration);
+}
+
+/** Una previsión: aún no ha pasado, así que puede hacerse realidad o cancelarse. */
+function isForecast(event: PlanEvent): boolean {
+  return event.status === 'planned' && !event.effective_end_date;
+}
+
+function beginMaterialize(event: PlanEvent): void {
+  materializingId.value = event.id;
+  actualDate.value = todayIso();
+  note.value = '';
+  closeError.value = null;
+  closeSuccess.value = null;
+}
+
+async function confirmMaterialize(): Promise<void> {
+  if (!materializingEvent.value || !props.materializeEvent) return;
+  closeError.value = null;
+  try {
+    const result = await props.materializeEvent(materializingEvent.value.id, {
+      actual_date: actualDate.value,
+      note: note.value.trim() || undefined,
+    });
+    const created = [...result.created_liabilities, ...result.created_assets]
+      .map((item) => item.name)
+      .join(', ');
+    const released = result.budget_lines_released.length;
+    closeSuccess.value = created
+      ? `Creado en Patrimonio: ${created}. ${released} partida${released === 1 ? '' : 's'} vuelve${released === 1 ? '' : 'n'} a ser tuya${released === 1 ? '' : 's'} en Presupuesto.`
+      : 'Decisión marcada como ocurrida.';
+    materializingId.value = null;
+  } catch (error) {
+    closeError.value = toApiErrorMessage(error);
+  }
+}
+
+async function cancel(event: PlanEvent): Promise<void> {
+  if (!props.cancelEvent) return;
+  closeError.value = null;
+  closeSuccess.value = null;
+  if (cancellingId.value !== event.id) {
+    cancellingId.value = event.id;
+    return;
+  }
+  try {
+    const result = await props.cancelEvent(event.id);
+    const deleted = result.budget_lines_deleted.length;
+    closeSuccess.value = `Previsión cancelada: ${deleted} partida${deleted === 1 ? '' : 's'} futura${deleted === 1 ? '' : 's'} eliminada${deleted === 1 ? '' : 's'}. Tu realidad de hoy no cambia.`;
+  } catch (error) {
+    closeError.value = toApiErrorMessage(error);
+  } finally {
+    cancellingId.value = null;
+  }
 }
 
 async function release(event: PlanEvent): Promise<void> {
@@ -135,6 +204,33 @@ function shortDate(value: string): string {
         </AButton>
       </div>
     </div>
+    <div v-else-if="materializingEvent" class="plan-scenario-notice plan-event-close-confirm">
+      <div>
+        <strong>«{{ materializingEvent.name }}» ya ha ocurrido</strong>
+        <p>
+          Se creará en Patrimonio el activo y el pasivo reales, precargados con lo que simulaste, y
+          será el pasivo quien genere sus cuotas a partir de ahora. La previsión de financiación se
+          retira para no duplicarla; el resto de partidas vuelven a ser tuyas en Presupuesto.
+        </p>
+      </div>
+      <label>
+        <span>Fecha real</span>
+        <input v-model="actualDate" class="input" type="date" />
+      </label>
+      <label>
+        <span>Nota opcional</span>
+        <textarea v-model="note" class="textarea" rows="2" maxlength="500" />
+      </label>
+      <AState v-if="closeError" status="error" layout="inline">{{ closeError }}</AState>
+      <div class="plan-scenario-notice-actions">
+        <AButton variant="primary" size="sm" :loading="saving" @click="confirmMaterialize">
+          Confirmar
+        </AButton>
+        <AButton variant="ghost" size="sm" :disabled="saving" @click="materializingId = null">
+          Cancelar
+        </AButton>
+      </div>
+    </div>
     <ol v-else class="plan-event-list">
       <li v-for="event in events" :key="event.id">
         <span class="plan-event-date mono">{{ event.planned_date.slice(0, 7) }}</span>
@@ -148,7 +244,27 @@ function shortDate(value: string): string {
             <template v-else>{{ planEventStatusLabel(event.status) }}</template>
           </span>
         </div>
-        <div class="plan-event-actions">
+        <!-- Una previsión se hace realidad o se cancela; lo ya ocurrido se da de baja. -->
+        <div v-if="isForecast(event)" class="plan-event-actions">
+          <AButton
+            v-if="materializeEvent"
+            variant="ghost"
+            size="sm"
+            @click="beginMaterialize(event)"
+          >
+            Ya ha ocurrido
+          </AButton>
+          <AButton
+            v-if="cancelEvent"
+            variant="ghost"
+            size="sm"
+            :loading="saving && cancellingId === event.id"
+            @click="cancel(event)"
+          >
+            {{ cancellingId === event.id ? 'Confirmar cancelación' : 'Cancelar previsión' }}
+          </AButton>
+        </div>
+        <div v-else class="plan-event-actions">
           <AButton
             v-if="isRegistered(event) && releaseEvent"
             variant="ghost"
