@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import type { PlanFoundations } from '@/domains/plan/types';
+import type { PlanFoundations, PlanFoundationStatus } from '@/domains/plan/types';
 import { formatMoney, formatNumber, formatPct, toNumber } from '@/lib/format';
 
 defineProps<{
   foundations: PlanFoundations | null;
 }>();
+
+// La banda la decide Core (health_status); aquí solo se traduce a color.
+function tone(status: PlanFoundationStatus | undefined): string | null {
+  if (status === 'good') return 'pos';
+  if (status === 'warning') return 'warn';
+  if (status === 'critical') return 'neg';
+  return null;
+}
 
 function scoreLabel(score: number | null | undefined): string {
   if (score == null) return '-';
@@ -45,17 +53,23 @@ function surplusText(value: string | null | undefined): string {
     <div v-if="foundations" class="plan-foundation-grid">
       <article>
         <span>Flujo de caja</span>
-        <strong>{{ scoreLabel(foundations.cash_flow.score) }}</strong>
+        <strong :class="tone(foundations.cash_flow.status)">
+          {{ scoreLabel(foundations.cash_flow.score) }}
+        </strong>
         <small>{{ surplusText(foundations.cash_flow.committed_surplus) }}</small>
       </article>
       <article>
         <span>Fondo de emergencia</span>
-        <strong>{{ months(foundations.emergency_fund.coverage_months_base) }}</strong>
+        <strong :class="tone(foundations.emergency_fund.status)">
+          {{ months(foundations.emergency_fund.coverage_months_base) }}
+        </strong>
         <small>Objetivo {{ months(foundations.emergency_fund.target_months) }}</small>
       </article>
       <article>
         <span>Deuda</span>
-        <strong>{{ scoreLabel(foundations.debt.score) }}</strong>
+        <strong :class="tone(foundations.debt.status)">
+          {{ scoreLabel(foundations.debt.score) }}
+        </strong>
         <small>Deuda cara {{ money(foundations.debt.high_cost_debt) }}</small>
       </article>
       <article>
@@ -64,7 +78,9 @@ function surplusText(value: string | null | undefined): string {
       </article>
       <article>
         <span>Calidad de datos</span>
-        <strong>{{ scoreLabel(foundations.data_quality.score) }}</strong>
+        <strong :class="tone(foundations.data_quality.status)">
+          {{ scoreLabel(foundations.data_quality.score) }}
+        </strong>
         <small v-if="foundations.cash_flow.operating_surplus_ratio">
           Margen {{ formatPct(toNumber(foundations.cash_flow.operating_surplus_ratio), 1) }}
         </small>

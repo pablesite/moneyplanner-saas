@@ -970,13 +970,20 @@
 
 /* Tono semántico por mejora/empeoramiento, como los deltas de Patrimonio. */
 .plan-comparison-row .pos,
-.plan-date-card .pos {
+.plan-date-card .pos,
+.plan-foundation-grid .pos {
   color: var(--pos);
 }
 
 .plan-comparison-row .neg,
-.plan-date-card .neg {
+.plan-date-card .neg,
+.plan-foundation-grid .neg {
   color: var(--neg);
+}
+
+/* Banda intermedia de cimientos: mismo ámbar que los avisos de Presupuesto. */
+.plan-foundation-grid .warn {
+  color: oklch(0.78 0.13 80);
 }
 
 .plan-assumptions {

@@ -309,10 +309,14 @@ export type PlanEventBudgetLines = {
   };
 };
 
+/** Banda de producto que Core calcula junto al score: el frontend colorea, no decide. */
+export type PlanFoundationStatus = 'good' | 'warning' | 'critical';
+
 export type PlanFoundations = {
   period: string;
   cash_flow: {
     score: number;
+    status?: PlanFoundationStatus;
     structural_annual_income: string;
     structural_operating_expense: string;
     operating_surplus: string;
@@ -321,6 +325,7 @@ export type PlanFoundations = {
   };
   emergency_fund: {
     score: number;
+    status?: PlanFoundationStatus;
     eligible_liquidity: string;
     coverage_months_base: string | null;
     coverage_months_committed: string | null;
@@ -328,6 +333,7 @@ export type PlanFoundations = {
   };
   debt: {
     score: number;
+    status?: PlanFoundationStatus;
     total_debt: string;
     unbacked_debt: string;
     high_cost_debt: string;
@@ -336,6 +342,7 @@ export type PlanFoundations = {
   };
   net_worth_health: {
     score: number;
+    status?: PlanFoundationStatus;
     assets_value: string;
     illiquid_assets_share: string | null;
     top_asset_share: string | null;
@@ -347,6 +354,7 @@ export type PlanFoundations = {
   };
   data_quality: {
     score: number;
+    status?: PlanFoundationStatus;
     flags: Record<string, boolean>;
   };
 };

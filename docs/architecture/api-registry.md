@@ -110,7 +110,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `POST` | `/api/plan/events/{id}/close/` | Closes an active event from `effective_date`, retires/shortens its managed recurrent budget rows, records trace details and returns the recalculated official projection. |
 | `POST` | `/api/plan/events/{id}/materialize/` | The forecast became real: creates the `Asset`/`Liability` prefilled from the scenario (principal, rate, term), deletes the plan's forecast financing rows (the liability regenerates them) and releases the rest back to the user. The event becomes `occurred` and stops feeding the projection. Only valid while `planned`. |
 | `POST` | `/api/plan/events/{id}/cancel/` | Changed your mind about something that has not happened: deletes the forecast budget rows whole, deletes the event, returns the source scenario to `draft` and restores the projection. Present-day reality is untouched. Only valid while `planned`. |
-| `GET` | `/api/plan/foundations/` | Returns backend-owned plan foundations: cash flow, emergency fund, debt, net-worth health, planned contribution and data quality. |
+| `GET` | `/api/plan/foundations/` | Returns backend-owned plan foundations: cash flow, emergency fund, debt, net-worth health, planned contribution and data quality. Scored blocks include a `status` band (`good`/`warning`/`critical`) so the frontend colors without owning thresholds. |
 | `GET` | `/api/plan/findings/` | Evaluates and returns current deterministic plan findings. |
 | `GET` | `/api/plan/recommendations/` | Evaluates and returns deterministic recommendations with explanation payloads. |
 | `POST` | `/api/plan/recommendations/{id}/accept/` | Marks a user-owned recommendation as accepted. |
