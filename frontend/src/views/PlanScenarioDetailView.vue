@@ -238,8 +238,15 @@ onMounted(async () => {
 
       <section v-if="selected.status === 'accepted'" class="plan-scenario-notice">
         <p>
-          Este escenario ya forma parte del plan vigente: la proyección y el presupuesto de Mi Plan
-          reflejan su impacto, por lo que no hay comparación pendiente.
+          <template v-if="linkedEvent?.effective_end_date">
+            Este acontecimiento se cerró el {{ shortDate(linkedEvent.effective_end_date) }}. Su
+            histórico se conserva y sus efectos recurrentes posteriores ya no forman parte de la
+            proyección.
+          </template>
+          <template v-else>
+            Este escenario ya forma parte del plan vigente: la proyección y el presupuesto de Mi
+            Plan reflejan su impacto, por lo que no hay comparación pendiente.
+          </template>
         </p>
         <RouterLink class="btn btn-ghost btn-sm" to="/plan">Ver Mi Plan</RouterLink>
       </section>

@@ -44,16 +44,22 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 ```
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` — acción de cierre en el dominio `plan`
-- [ ] `docs/architecture/api-registry.md` — consumo del endpoint de cierre
-- [ ] `docs/project-status.md` — estado de la fase
+- [x] `docs/frontend/domain-map.md` — acción de cierre en el dominio `plan`
+- [x] `docs/architecture/api-registry.md` — consumo del endpoint de cierre
+- [x] `docs/project-status.md` — estado de la fase
 
 ## Risks
 - Acción destructiva sobre presupuesto real: la confirmación debe explicitar consecuencias y el flujo no debe ejecutarse a un click (regla del bloque UX 8).
 - Desincronización con marcadores de Patrimonio: verificar en navegador con un evento cerrado.
 
 ## Completion Criteria
-- [ ] All validation commands pass
-- [ ] All required documentation updates done
-- [ ] Spec moved to `terminados/`
-- [ ] Commit created (Conventional Commits)
+- [x] All validation commands pass
+- [x] All required documentation updates done
+- [x] Spec moved to `terminados/`
+- [x] Commit created (Conventional Commits)
+
+## Completion note (2026-07-12)
+
+- Confirmación inline con fecha mínima, nota, consecuencias explícitas, reintento y resumen de líneas ajustadas/retiradas.
+- Los eventos cerrados mantienen marcador histórico y muestran «Cerrado el …» sin volver a ofrecer la acción.
+- Playwright validó apertura y cancelación sobre «Coche Ana» sin mutar sus datos; éxito y error quedan cubiertos por tests de componente/API.

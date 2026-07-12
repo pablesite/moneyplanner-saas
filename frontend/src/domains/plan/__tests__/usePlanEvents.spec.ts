@@ -16,6 +16,7 @@ function event(overrides: Partial<PlanEvent> & { id: number }): PlanEvent {
     created_at: '2026-07-11T00:00:00Z',
     updated_at: '2026-07-11T00:00:00Z',
     ...overrides,
+    effective_end_date: overrides.effective_end_date ?? null,
   };
 }
 
@@ -64,5 +65,13 @@ describe('planEventMarkers', () => {
       }),
     ]);
     expect(markers[0]!.detail).toBe('Vehículo');
+  });
+
+  it('keeps a closed event as a historical marker', () => {
+    const markers = planEventMarkers([
+      event({ id: 1, planned_date: '2027-01-01', effective_end_date: '2030-07-01' }),
+    ]);
+    expect(markers).toHaveLength(1);
+    expect(markers[0]!.date).toBe('2027-01-01');
   });
 });

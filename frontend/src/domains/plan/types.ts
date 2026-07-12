@@ -229,11 +229,21 @@ export type PlanEvent = {
   event_type: PlanScenarioTemplate;
   planned_date: string;
   actual_date: string | null;
+  effective_end_date: string | null;
   status: 'planned' | 'occurred' | 'cancelled';
   planned_impact_json: Record<string, unknown>;
   actual_impact_json: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+};
+
+export type PlanEventCloseResponse = {
+  event: PlanEvent;
+  projection: ProjectionResponse;
+  budget_changes: {
+    changed: Array<Record<string, unknown>>;
+    deleted: Array<Record<string, unknown>>;
+  };
 };
 
 export type PlanManagedBudgetLine = {

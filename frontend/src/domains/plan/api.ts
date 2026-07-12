@@ -8,6 +8,7 @@ import type {
   PlanMemberPayload,
   PlanEvent,
   PlanEventBudgetLines,
+  PlanEventCloseResponse,
   PlanFinding,
   PlanFoundations,
   ProjectionResponse,
@@ -84,6 +85,9 @@ export const planApi = {
   },
   getEventBudgetLines(id: number) {
     return coreApi.get<PlanEventBudgetLines>(`/api/plan/events/${id}/budget-lines/`);
+  },
+  closeEvent(id: number, payload: { effective_date: string; note?: string }) {
+    return coreApi.post<PlanEventCloseResponse>(`/api/plan/events/${id}/close/`, payload);
   },
   getFoundations() {
     return coreApi.get<PlanFoundations>('/api/plan/foundations/');

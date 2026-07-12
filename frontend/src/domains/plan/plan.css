@@ -828,6 +828,34 @@
   gap: 8px;
 }
 
+.plan-event-close-confirm {
+  display: grid;
+  align-items: stretch;
+}
+
+.plan-event-close-confirm > div:first-child {
+  display: grid;
+  gap: 6px;
+}
+
+.plan-event-close-confirm label {
+  display: grid;
+  gap: 6px;
+}
+
+.plan-event-close-confirm label > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.plan-event-close-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .plan-comparison-unchanged {
   display: grid;
   gap: 10px;

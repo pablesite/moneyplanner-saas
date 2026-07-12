@@ -83,6 +83,8 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 Desde la Fase 9, `/plan` aplica revelación progresiva: fecha proyectada, acción principal y trayectoria forman el primer nivel; progreso, acción secundaria, Cimientos/calidad y acontecimientos quedan en «Ver el diagnóstico completo». `/plan/escenarios` prioriza la lista navegable y abre el simulador bajo demanda; el detalle incorporado consume `GET /api/plan/events/{id}/budget-lines/`. `/plan/activos` mantiene búsqueda sticky y grupos colapsables para móvil.
 
+La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja mediante `POST /api/plan/events/{id}/close/`, actualiza evento y proyección desde el store y conserva el marcador histórico. El detalle del escenario refleja `effective_end_date`; la baja del activo real sigue haciéndose en Patrimonio.
+
 ---
 
 ### `net-worth` — Patrimonio neto

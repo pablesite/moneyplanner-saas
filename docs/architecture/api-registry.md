@@ -105,6 +105,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET` | `/api/plan/events/` | Lists planned/occurred/cancelled plan events for projection markers. |
 | `PATCH` | `/api/plan/events/{id}/` | Updates a user-owned plan event, including actual date/impact when the event has occurred. |
 | `GET` | `/api/plan/events/{id}/budget-lines/` | Returns the user-owned event and its exact annual income/expense lines. |
+| `POST` | `/api/plan/events/{id}/close/` | Closes an active event from `effective_date`, retires/shortens its managed recurrent budget rows, records trace details and returns the recalculated official projection. |
 | `GET` | `/api/plan/foundations/` | Returns backend-owned plan foundations: cash flow, emergency fund, debt, net-worth health, planned contribution and data quality. |
 | `GET` | `/api/plan/findings/` | Evaluates and returns current deterministic plan findings. |
 | `GET` | `/api/plan/recommendations/` | Evaluates and returns deterministic recommendations with explanation payloads. |

@@ -164,7 +164,11 @@ onMounted(() => {
           />
         </section>
         <PlanFoundations :foundations="store.foundations" />
-        <PlanEventsTimeline :events="store.events" />
+        <PlanEventsTimeline
+          :events="store.events"
+          :saving="store.saving"
+          :close-event="store.closePlanEvent"
+        />
       </div>
 
       <ProjectionAssumptionsDrawer
