@@ -200,12 +200,17 @@ onMounted(() => {
               <h2 class="sect-title">¿Qué quieres probar?</h2>
               <p class="sect-sub">
                 Simula una compra, una vivienda, una excedencia u otro cambio antes de incorporarlo
-                al plan.
+                al plan. Si la decisión ya la tomaste, regístrala en retrospectiva.
               </p>
             </div>
-            <RouterLink class="btn btn-primary" to="/plan/escenarios?create=1">
-              Nueva simulación
-            </RouterLink>
+            <div class="plan-decision-actions">
+              <RouterLink class="btn btn-ghost" to="/plan/decisiones/registrar">
+                Registrar decisión tomada
+              </RouterLink>
+              <RouterLink class="btn btn-primary" to="/plan/escenarios?create=1">
+                Nueva simulación
+              </RouterLink>
+            </div>
           </div>
         </section>
         <section class="sect plan-scenario-list">
@@ -235,6 +240,7 @@ onMounted(() => {
           :events="store.events"
           :saving="store.saving"
           :close-event="store.closePlanEvent"
+          :release-event="store.releaseEvent"
         />
       </div>
 

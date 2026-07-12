@@ -11,6 +11,7 @@ import AccountingAccountsView from './views/AccountingAccountsView.vue';
 import PlanView from './views/PlanView.vue';
 import PlanAssetsView from './views/PlanAssetsView.vue';
 import PlanSetupView from './views/PlanSetupView.vue';
+import PlanOccurredEventView from './views/PlanOccurredEventView.vue';
 import PlanScenariosView from './views/PlanScenariosView.vue';
 import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
 import { registerAuthGuard } from '@/domains/auth';
@@ -51,6 +52,12 @@ const routes: RouteRecordRaw[] = [
     path: '/plan/activos',
     name: 'plan-assets',
     component: PlanAssetsView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
+    path: '/plan/decisiones/registrar',
+    name: 'plan-occurred-event',
+    component: PlanOccurredEventView,
     beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {

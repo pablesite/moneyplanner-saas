@@ -4,6 +4,7 @@ import type {
   AssetFunctionUpdate,
   FinancialPlan,
   FinancialPlanPayload,
+  OccurredEventPayload,
   PlanMember,
   PlanMemberPayload,
   PlanEvent,
@@ -88,6 +89,12 @@ export const planApi = {
   },
   closeEvent(id: number, payload: { effective_date: string; note?: string }) {
     return coreApi.post<PlanEventCloseResponse>(`/api/plan/events/${id}/close/`, payload);
+  },
+  registerOccurredEvent(payload: OccurredEventPayload) {
+    return coreApi.post<PlanEvent>('/api/plan/events/occurred/', payload);
+  },
+  releaseEvent(id: number) {
+    return coreApi.delete<{ released_lines: unknown[] }>(`/api/plan/events/${id}/`);
   },
   getFoundations() {
     return coreApi.get<PlanFoundations>('/api/plan/foundations/');

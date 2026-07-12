@@ -55,4 +55,34 @@ describe('PlanEventsTimeline', () => {
     expect(wrapper.text()).toContain('Cerrado el');
     expect(wrapper.text()).not.toContain('Dar de baja');
   });
+
+  it('only offers to undo events registered retrospectively, and confirms first', async () => {
+    const releaseEvent = vi.fn().mockResolvedValue(undefined);
+    const registered: PlanEvent = {
+      ...event,
+      id: 9,
+      status: 'occurred',
+      actual_impact_json: { registration: { adopted_lines: [{ id: 7 }] } },
+    };
+    const wrapper = mount(PlanEventsTimeline, {
+      props: { events: [event, registered], releaseEvent },
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    });
+
+    const undo = wrapper
+      .findAll('button')
+      .filter((button) => button.text() === 'Deshacer registro');
+    expect(undo).toHaveLength(1);
+
+    await undo[0]!.trigger('click');
+    expect(releaseEvent).not.toHaveBeenCalled();
+
+    const confirm = wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Confirmar deshacer');
+    await confirm!.trigger('click');
+
+    expect(releaseEvent).toHaveBeenCalledWith(9);
+    expect(wrapper.text()).toContain('Registro deshecho');
+  });
 });

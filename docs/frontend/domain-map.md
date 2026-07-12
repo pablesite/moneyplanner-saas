@@ -66,7 +66,7 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 
 **Origen:** Core-backed
 **Cliente:** `coreApi`
-**Rutas:** `/plan`, `/plan/setup`, `/plan/activos`, `/plan/escenarios`, `/plan/escenarios/:id`
+**Rutas:** `/plan`, `/plan/setup`, `/plan/decisiones/registrar`, `/plan/activos`, `/plan/escenarios`, `/plan/escenarios/:id`
 
 | Archivo            | Contenido                                                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -81,6 +81,8 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 | `plan.css`         | Estilos Direction A del dominio, sin tocar `core/frontend/`.                                                                  |
 
 **Requiere:** `canUsePlan()` → `core.plan`. Desde Fase 5 ocupa la primera entrada de navegación primaria ("Mi Plan") y absorbe el antiguo Estado financiero del SaaS. Los deep-links `/estado-financiero` y `/estado-financiero/ambitos/:phaseId` redirigen a `/plan`.
+
+Una decisión puede entrar al plan por dos vías. **Simulándola** (escenario → aceptar → el plan crea las partidas) o **registrándola en retrospectiva** (`/plan/decisiones/registrar`) cuando ya se tomó: ahí el plan no crea nada, adopta las partidas que el usuario ya tenía. El registro retrospectivo queda como evento `occurred`, fuera de la proyección, y puede deshacerse desde la timeline ("Deshacer registro"), lo que devuelve las partidas a su estado anterior. Las partidas generadas por un activo o pasivo no son adoptables: su linaje es Patrimonio.
 
 `/plan/setup` no es un formulario: es un asistente de seis preguntas (`AStepper`) que recoge las decisiones en lenguaje natural — quiénes sois, a qué edad dejas de depender del trabajo, hasta qué edad debe durarte el dinero, con cuánto quieres vivir, con qué ingresos contarás y cómo reaccionas ante una caída — y deriva de ahí los campos técnicos del plan (`target_date`, `projection_end_date`). El nivel de vida se propone desde el gasto estructural real (`foundations.cash_flow`), no desde una caja vacía. El último paso resume el plan en prosa antes de calcular.
 
@@ -252,6 +254,7 @@ Soporte PWA: registro del service worker, instalación y resiliencia offline del
 | `/people`              | `people`               | `PeopleView`                               | `people`                                                                                                                                                                                                                                                                     |
 | `/plan`                | `plan`                 | `PlanView`                                 | Mi Plan: vista principal por pestañas (`Resumen`, `Trayectoria`, `Decisiones`, `Diagnóstico`) con acceso visible a la simulación de decisiones. |
 | `/plan/setup`          | `plan-setup`           | `PlanSetupView`                            | Onboarding/edición del plan financiero: asistente de 6 preguntas (`AStepper`) que deriva fechas desde edades y propone el nivel de vida desde el gasto real. |
+| `/plan/decisiones/registrar` | `plan-occurred-event` | `PlanOccurredEventView`               | Registro retrospectivo: alta de una decisión ya tomada (`POST /api/plan/events/occurred/`) adoptando partidas de presupuesto existentes. No crea presupuesto. |
 | `/plan/activos`        | `plan-assets`          | `PlanAssetsView`                           | Clasificación de funciones de activos (`GET/PUT /api/plan/asset-functions/`): resumen de capital por función y override manual por activo con vuelta a la inferida. |
 | `/plan/escenarios`     | `plan-scenarios`       | `PlanScenariosView`                        | Laboratorio de escenarios: lista y creación de simulaciones. |
 | `/plan/escenarios/:id` | `plan-scenario-detail` | `PlanScenarioDetailView`                   | Detalle, comparación plan vigente vs simulado e incorporación/descartado. |

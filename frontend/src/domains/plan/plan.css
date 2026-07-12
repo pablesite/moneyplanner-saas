@@ -1168,6 +1168,63 @@
   margin: 0;
 }
 
+/* Registro retrospectivo: selección de partidas ya existentes. */
+.plan-decision-actions,
+.plan-event-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-adopt-year {
+  display: grid;
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.plan-adopt-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-adopt-line:hover:not(:disabled) {
+  border-color: var(--line-strong);
+}
+
+.plan-adopt-line.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.plan-adopt-line.is-locked {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.plan-adopt-name {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plan-adopt-name small {
+  color: var(--muted);
+}
+
+.plan-adopt-amount {
+  white-space: nowrap;
+}
+
 .plan-field-error {
   color: var(--neg);
   font-size: 0.82rem;

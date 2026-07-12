@@ -7,6 +7,7 @@ import type {
   AssetFunctionResponse,
   FinancialPlan,
   FinancialPlanPayload,
+  OccurredEventPayload,
   PlanAssetFunction,
   PlanEvent,
   PlanFinding,
@@ -130,6 +131,35 @@ export const usePlanStore = defineStore('plan', {
         this.events = this.events.map((event) => (event.id === id ? data.event : event));
         this.projection = data.projection;
         return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async registerOccurredEvent(payload: OccurredEventPayload) {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.registerOccurredEvent(payload);
+        this.events = [...this.events, data];
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async releaseEvent(id: number) {
+      this.saving = true;
+      this.error = null;
+      try {
+        await planApi.releaseEvent(id);
+        this.events = this.events.filter((event) => event.id !== id);
       } catch (error) {
         this.error = toErrorMessage(error);
         throw error;

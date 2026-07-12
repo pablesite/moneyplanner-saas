@@ -243,6 +243,16 @@ export type PlanEvent = {
   updated_at: string;
 };
 
+/** Decisión ya tomada: no genera presupuesto, adopta el que ya existe. */
+export type OccurredEventPayload = {
+  name: string;
+  event_type: PlanScenarioTemplate;
+  decision_date: string;
+  expense_entry_ids: number[];
+  income_entry_ids: number[];
+  note?: string;
+};
+
 export type PlanEventCloseResponse = {
   event: PlanEvent;
   projection: ProjectionResponse;

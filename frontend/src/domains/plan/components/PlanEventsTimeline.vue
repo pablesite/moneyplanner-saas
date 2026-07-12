@@ -13,6 +13,7 @@ const props = defineProps<{
     id: number,
     payload: { effective_date: string; note?: string },
   ) => Promise<PlanEventCloseResponse>;
+  releaseEvent?: (id: number) => Promise<void>;
 }>();
 
 const closingId = ref<number | null>(null);
@@ -20,8 +21,32 @@ const effectiveDate = ref('');
 const note = ref('');
 const closeError = ref<string | null>(null);
 const closeSuccess = ref<string | null>(null);
+const releasingId = ref<number | null>(null);
 
 const closingEvent = computed(() => props.events.find((event) => event.id === closingId.value));
+
+/** Solo los registros retrospectivos pueden deshacerse: devuelven las partidas adoptadas. */
+function isRegistered(event: PlanEvent): boolean {
+  return Boolean((event.actual_impact_json as { registration?: unknown })?.registration);
+}
+
+async function release(event: PlanEvent): Promise<void> {
+  if (!props.releaseEvent) return;
+  closeError.value = null;
+  closeSuccess.value = null;
+  if (releasingId.value !== event.id) {
+    releasingId.value = event.id;
+    return;
+  }
+  try {
+    await props.releaseEvent(event.id);
+    closeSuccess.value = 'Registro deshecho: las partidas vuelven a ser tuyas en Presupuesto.';
+  } catch (error) {
+    closeError.value = toApiErrorMessage(error);
+  } finally {
+    releasingId.value = null;
+  }
+}
 
 function todayIso(): string {
   const now = new Date();
@@ -123,14 +148,25 @@ function shortDate(value: string): string {
             <template v-else>{{ planEventStatusLabel(event.status) }}</template>
           </span>
         </div>
-        <AButton
-          v-if="!event.effective_end_date && closeEvent"
-          variant="ghost"
-          size="sm"
-          @click="beginClose(event)"
-        >
-          Dar de baja
-        </AButton>
+        <div class="plan-event-actions">
+          <AButton
+            v-if="isRegistered(event) && releaseEvent"
+            variant="ghost"
+            size="sm"
+            :loading="saving && releasingId === event.id"
+            @click="release(event)"
+          >
+            {{ releasingId === event.id ? 'Confirmar deshacer' : 'Deshacer registro' }}
+          </AButton>
+          <AButton
+            v-if="!event.effective_end_date && closeEvent"
+            variant="ghost"
+            size="sm"
+            @click="beginClose(event)"
+          >
+            Dar de baja
+          </AButton>
+        </div>
       </li>
     </ol>
   </section>
