@@ -35,12 +35,18 @@ const summary = computed(() => {
     family_use: classification.value.family_use_capital,
     unknown: classification.value.unknown_capital,
   };
-  return functionOrder.map((fn) => ({
-    fn,
-    label: assetFunctionLabels[fn],
-    value: capital[fn],
-    count: assets.value.filter((asset) => asset.function === fn).length,
-  }));
+  return (
+    functionOrder
+      .map((fn) => ({
+        fn,
+        label: assetFunctionLabels[fn],
+        value: capital[fn],
+        count: assets.value.filter((asset) => asset.function === fn).length,
+      }))
+      // "Sin clasificar 0" es la meta cumplida, no un dato: el tile vacío solo mete ruido.
+      // Un "Productivo 0" sí se muestra: es una alerta real.
+      .filter((item) => item.fn !== 'unknown' || item.count > 0)
+  );
 });
 
 const filteredAssets = computed(() => {

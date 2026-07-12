@@ -168,9 +168,7 @@ onMounted(() => {
             <div>
               <p class="eyebrow">Recomendaciones</p>
               <h2 class="sect-title">Siguiente acción</h2>
-              <p class="sect-sub">
-                Máximo una acción principal y una secundaria, generadas por reglas.
-              </p>
+              <p class="sect-sub">Derivada del diagnóstico de tus cimientos.</p>
             </div>
           </div>
           <div class="plan-recommendation-list">

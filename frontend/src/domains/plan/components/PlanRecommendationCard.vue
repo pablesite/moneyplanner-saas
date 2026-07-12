@@ -19,7 +19,6 @@ const confirming = ref<'accept' | 'dismiss' | null>(null);
 const title = computed(() => props.recommendation.action_json.title ?? 'Siguiente acción');
 const summary = computed(() => props.recommendation.action_json.summary ?? 'Acción recomendada');
 const reason = computed(() => props.recommendation.action_json.reason ?? null);
-const rule = computed(() => props.recommendation.action_json.rule ?? props.recommendation.code);
 
 const confirmCopy = computed(() =>
   confirming.value === 'accept'
@@ -35,9 +34,10 @@ function confirmAction(): void {
 </script>
 
 <template>
+  <!-- Sin eyebrow propio: la sección que la envuelve ya titula "Siguiente acción"
+       o "Acción secundaria" y la tarjeta lo duplicaba justo debajo. -->
   <article class="plan-recommendation" :class="{ secondary }">
     <div>
-      <p class="eyebrow">{{ secondary ? 'Acción secundaria' : 'Siguiente acción' }}</p>
       <h3>{{ title }}</h3>
       <p>{{ summary }}</p>
     </div>
@@ -60,9 +60,9 @@ function confirmAction(): void {
     <button class="plan-details-toggle" type="button" @click="expanded = !expanded">
       {{ expanded ? 'Ocultar explicación' : 'Ver explicación' }}
     </button>
+    <!-- Sin la línea "Regla": era el enum interno (p. ej. EMERGENCY_FUND_BELOW_TARGET). -->
     <div v-if="expanded" class="plan-recommendation-detail">
       <p v-if="reason"><strong>Motivo:</strong> {{ reason }}</p>
-      <p><strong>Regla:</strong> {{ rule }}</p>
       <p v-if="recommendation.alternatives_json.length">
         <strong>Alternativas:</strong> {{ recommendation.alternatives_json.join(' · ') }}
       </p>

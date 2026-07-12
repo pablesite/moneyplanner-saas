@@ -457,7 +457,17 @@ onMounted(() => {
       <div class="plan-form-grid">
         <label>
           <span>O la cifra que prefieras</span>
-          <input v-model="form.monthly_income" class="input" type="number" min="0" step="50" />
+          <div class="plan-money-field">
+            <input
+              v-model="form.monthly_income"
+              class="input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="50"
+            />
+            <span aria-hidden="true">€/mes</span>
+          </div>
         </label>
       </div>
     </section>
@@ -486,23 +496,31 @@ onMounted(() => {
           <div class="plan-form-grid">
             <label>
               <span>Pensión pública estimada (al mes)</span>
-              <input
-                v-model="member.estimated_monthly_pension_today_eur"
-                class="input"
-                type="number"
-                min="0"
-                step="50"
-              />
+              <div class="plan-money-field">
+                <input
+                  v-model="member.estimated_monthly_pension_today_eur"
+                  class="input"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="50"
+                />
+                <span aria-hidden="true">€/mes</span>
+              </div>
             </label>
             <label>
               <span>Otros ingresos futuros (al mes)</span>
-              <input
-                v-model="member.other_future_income_today_eur"
-                class="input"
-                type="number"
-                min="0"
-                step="50"
-              />
+              <div class="plan-money-field">
+                <input
+                  v-model="member.other_future_income_today_eur"
+                  class="input"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="50"
+                />
+                <span aria-hidden="true">€/mes</span>
+              </div>
             </label>
           </div>
         </article>
@@ -543,7 +561,17 @@ onMounted(() => {
       <div v-if="form.wants_legacy" class="plan-form-grid">
         <label>
           <span>Patrimonio mínimo a preservar</span>
-          <input v-model="form.legacy_amount" class="input" type="number" min="0" step="1000" />
+          <div class="plan-money-field">
+            <input
+              v-model="form.legacy_amount"
+              class="input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="1000"
+            />
+            <span aria-hidden="true">€</span>
+          </div>
         </label>
       </div>
     </section>

@@ -1335,6 +1335,24 @@
   text-align: right;
 }
 
+/* Importe + unidad: el número desnudo ("3400.00") no decía en qué habla el campo. */
+.plan-money-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-money-field .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-money-field > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
 @container page (max-width: 820px) {
   .plan-hero,
   .plan-main-grid,
@@ -1392,7 +1410,24 @@
   }
 }
 
+/* El hero muestra el nombre en escritorio; en estrecho basta "2049 · 65 años". */
+.plan-hero .plan-hero-value-compact {
+  display: none;
+}
+
 @container page (max-width: 560px) {
+  .plan-hero .plan-hero-value-full {
+    display: none;
+  }
+
+  /* Triple selector: `.dir-a .hero-value` (56px) va después en el documento
+     y ganaría un empate de especificidad. */
+  .plan-hero .hero-value.plan-hero-value-compact {
+    display: block;
+    /* Una sola línea también con dos adultos ("2049 · 65/62 años"). */
+    font-size: 32px;
+  }
+
   /* Las acciones del laboratorio bajan a su propia fila: en línea con el texto
      lo comprimen a una columna ilegible y desbordan el viewport. */
   .plan-decision-intro .sect-head {

@@ -5,7 +5,7 @@ import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import type { FinancialPlan, PlanFoundations, ProjectionResponse } from '@/domains/plan/types';
 import { projectionScenarioLabel } from '@/domains/plan/scenarioTemplates';
-import { yearWithAges } from '@/domains/plan/age';
+import { compactYearWithAges, yearWithAges } from '@/domains/plan/age';
 
 const props = defineProps<{
   plan: FinancialPlan;
@@ -33,6 +33,12 @@ const projectedCopy = computed(() =>
   projectedYear.value == null
     ? 'Sin fecha estimada'
     : yearWithAges(projectedYear.value, props.plan.members),
+);
+// En pantallas estrechas el nombre sobra (ya es tu plan): "2049 · 65 años".
+const projectedCompactCopy = computed(() =>
+  projectedYear.value == null
+    ? 'Sin fecha estimada'
+    : compactYearWithAges(projectedYear.value, props.plan.members),
 );
 type Blocker = { text: string; to: string; cta: string };
 
@@ -126,7 +132,11 @@ const kpis = computed<AKpiItem[]>(() => [
 
 <template>
   <section class="plan-hero a-hero-shell">
-    <AHero eyebrow="Fecha proyectada" :value="projectedCopy">
+    <AHero eyebrow="Fecha proyectada">
+      <template #value>
+        <div class="hero-value mono plan-hero-value-full">{{ projectedCopy }}</div>
+        <div class="hero-value mono plan-hero-value-compact">{{ projectedCompactCopy }}</div>
+      </template>
       <template #delta>
         <span :class="deltaTone">{{ deltaCopy }}</span>
         <AInfoHint
