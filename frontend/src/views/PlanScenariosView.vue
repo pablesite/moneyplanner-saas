@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import type { PlanAssetFunction, PlanScenarioPayload, PlanScenarioTemplate } from '@/domains/plan';
@@ -15,6 +15,7 @@ import { formatMoney } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
 const router = useRouter();
+const route = useRoute();
 const { store, error } = usePlan();
 const formOpen = ref(false);
 const submitError = ref<string | null>(null);
@@ -174,6 +175,7 @@ watch(
 );
 
 onMounted(async () => {
+  formOpen.value = route.query.create === '1';
   await store.fetchPlan();
   await store.fetchScenarios();
 });

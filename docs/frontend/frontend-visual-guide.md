@@ -75,7 +75,7 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 14. Los antiguos ámbitos del Estado financiero ya no tienen pantalla propia en SaaS. Si en el futuro se reintroduce una lectura por ámbitos, debe nacer desde `core.plan` y no desde el dominio retirado `guide/`.
 15. El cierre transversal de Direction A deja una librería de primitivas compartidas en `@/domains/ui`; antes de crear markup/CSS local para botones, selects, heroes, estados o KPI bands, hay que intentar composición sobre esas primitivas.
 16. Si un control necesita comportamiento especial y no puede ser `ASelect` (por ejemplo un rango de fechas), debe seguir el mismo lenguaje visual del resto de filtros: mismo trigger, mismo borde/radio, misma tipografía y mismo tratamiento del popover.
-17. Mi Plan usa revelación progresiva: el primer viewport reserva la jerarquía para titular, una acción principal y trayectoria. Diagnóstico, calidad, acontecimientos y alternativas permanecen disponibles en un bloque explícitamente colapsable; colapsar nunca significa eliminar ni esconder sin etiqueta.
+17. Mi Plan sigue el patrón de vista principal de Patrimonio y Movimientos: una única cabecera y pestañas `Resumen`, `Trayectoria`, `Decisiones` y `Diagnóstico`, sincronizadas con la URL. La simulación de decisiones debe ser visible desde la cabecera y desde su pestaña; diagnóstico, calidad y acontecimientos se agrupan por intención, no en una secuencia vertical indiferenciada.
 18. Los estados de escenarios se expresan con chips semánticos discretos (`draft`, `accepted`, `discarded`) dentro de una fila completa navegable. El chip informa; no sustituye el enlace ni añade una acción competidora.
 
 ## Styling Rules

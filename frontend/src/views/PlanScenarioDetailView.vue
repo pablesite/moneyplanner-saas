@@ -72,6 +72,22 @@ const hasQuantitativeImpact = computed(() =>
   impactMetrics.value.some((metric) => !['Inicio', 'Fin'].includes(metric.label)),
 );
 
+const debtMonthlyPayment = computed(() => {
+  const event = firstEvent.value;
+  if (!event) return 0;
+  const principal = toNumber(event.new_debt_principal);
+  const months = Number(event.new_debt_term_months || 0);
+  if (principal <= 0 || months <= 0) return 0;
+  const monthlyRate = toNumber(event.new_debt_interest_rate) / 12;
+  if (monthlyRate <= 0) return principal / months;
+  return (principal * monthlyRate) / (1 - (1 + monthlyRate) ** -months);
+});
+
+const recurringMonthlyExpense = computed(() => toNumber(firstEvent.value?.monthly_expense_delta));
+const combinedMonthlyImpact = computed(
+  () => debtMonthlyPayment.value + recurringMonthlyExpense.value,
+);
+
 const activeScenario = computed({
   get: () => scenario.value,
   set: (value) => {
@@ -234,6 +250,20 @@ onMounted(async () => {
         <p v-if="firstEvent && !hasQuantitativeImpact" class="plan-muted">
           Este escenario no define importes: la comparación coincidirá con el plan vigente.
         </p>
+        <div v-if="firstEvent && recurringMonthlyExpense" class="plan-impact-explanation">
+          <strong>Cómo se calcula el gasto de este escenario</strong>
+          <p>
+            El gasto recurrente de {{ formatMoney(recurringMonthlyExpense) }}/mes no es una
+            estimación automática: es el importe introducido al crear el escenario y continúa
+            mientras el coche exista.
+          </p>
+          <p v-if="debtMonthlyPayment">
+            Durante los {{ firstEvent.new_debt_term_months }} meses del préstamo se añaden
+            aproximadamente {{ formatMoney(debtMonthlyPayment) }}/mes de financiación. En ese
+            periodo, el impacto conjunto ronda {{ formatMoney(combinedMonthlyImpact) }}/mes, además
+            del pago inicial.
+          </p>
+        </div>
       </section>
 
       <section v-if="selected.status === 'accepted'" class="plan-scenario-notice">
@@ -257,6 +287,8 @@ onMounted(async () => {
             <h2 class="sect-title">Acontecimiento y presupuesto</h2>
             <p class="sect-sub">
               Estas partidas fueron creadas al incorporar la decisión y se gestionan desde Mi Plan.
+              Las filas de distintos años son tramos de una misma obligación, no gastos que se sumen
+              todos en el mismo ejercicio.
             </p>
           </div>
         </div>
