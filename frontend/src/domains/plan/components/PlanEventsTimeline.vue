@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, AState } from '@/domains/ui';
+import { AButton, AChevron, AState } from '@/domains/ui';
+import PlanEventImpact from '@/domains/plan/components/PlanEventImpact.vue';
 import type {
   PlanEvent,
   PlanEventCancelResponse,
@@ -35,6 +36,12 @@ const releasingId = ref<number | null>(null);
 const materializingId = ref<number | null>(null);
 const actualDate = ref('');
 const cancellingId = ref<number | null>(null);
+const expandedId = ref<number | null>(null);
+
+/** El impacto real de la decisión: sus partidas y lo que trajo a Patrimonio. */
+function toggleImpact(event: PlanEvent): void {
+  expandedId.value = expandedId.value === event.id ? null : event.id;
+}
 
 const closingEvent = computed(() => props.events.find((event) => event.id === closingId.value));
 const materializingEvent = computed(() =>
@@ -234,16 +241,24 @@ function shortDate(value: string): string {
     <ol v-else class="plan-event-list">
       <li v-for="event in events" :key="event.id">
         <span class="plan-event-date mono">{{ event.planned_date.slice(0, 7) }}</span>
-        <div>
-          <strong>{{ event.name }}</strong>
+        <button
+          type="button"
+          class="plan-event-summary"
+          :aria-expanded="expandedId === event.id"
+          @click="toggleImpact(event)"
+        >
+          <AChevron :expanded="expandedId === event.id" />
           <span>
-            {{ scenarioTemplateLabel(event.event_type) }} ·
-            <template v-if="event.effective_end_date">
-              Cerrado el {{ shortDate(event.effective_end_date) }}
-            </template>
-            <template v-else>{{ planEventStatusLabel(event.status) }}</template>
+            <strong>{{ event.name }}</strong>
+            <span>
+              {{ scenarioTemplateLabel(event.event_type) }} ·
+              <template v-if="event.effective_end_date">
+                Cerrado el {{ shortDate(event.effective_end_date) }}
+              </template>
+              <template v-else>{{ planEventStatusLabel(event.status) }}</template>
+            </span>
           </span>
-        </div>
+        </button>
         <!-- Una previsión se hace realidad o se cancela; lo ya ocurrido se da de baja. -->
         <div v-if="isForecast(event)" class="plan-event-actions">
           <AButton
@@ -283,6 +298,7 @@ function shortDate(value: string): string {
             Dar de baja
           </AButton>
         </div>
+        <PlanEventImpact v-if="expandedId === event.id" :key="event.id" :event-id="event.id" />
       </li>
     </ol>
   </section>

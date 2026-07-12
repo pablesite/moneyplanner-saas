@@ -291,10 +291,22 @@ export type PlanManagedBudgetLine = {
   cashflow_role: string;
 };
 
+/** Activo o pasivo que trajo la decisión. Lo gobierna Patrimonio; el evento solo apunta. */
+export type PlanEventLinkedPosition = {
+  id: number;
+  name: string;
+  amount: string;
+  generated_expense_annual: string;
+};
+
 export type PlanEventBudgetLines = {
   event: { id: number; name: string };
   income: PlanManagedBudgetLine[];
   expenses: PlanManagedBudgetLine[];
+  linked: {
+    assets: PlanEventLinkedPosition[];
+    liabilities: PlanEventLinkedPosition[];
+  };
 };
 
 export type PlanFoundations = {

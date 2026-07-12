@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { mount } from '@vue/test-utils';
+import { mount, type VueWrapper } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import PlanEventsTimeline from '@/domains/plan/components/PlanEventsTimeline.vue';
 import type {
@@ -28,6 +28,12 @@ const event: PlanEvent = {
 /** Dar de baja solo aplica a lo que ya ocurrió: una previsión se materializa o se cancela. */
 const occurred: PlanEvent = { ...event, status: 'occurred', actual_date: '2027-06-01' };
 
+/** La fila es un desplegable de impacto, así que las acciones se buscan por su etiqueta. */
+async function clickByLabel(wrapper: VueWrapper, label: string): Promise<void> {
+  const button = wrapper.findAll('button').find((item) => item.text() === label);
+  await button!.trigger('click');
+}
+
 describe('PlanEventsTimeline', () => {
   it('requires inline confirmation before closing an event', async () => {
     const closeEvent = vi.fn().mockResolvedValue({
@@ -40,7 +46,7 @@ describe('PlanEventsTimeline', () => {
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     });
 
-    await wrapper.get('button').trigger('click');
+    await clickByLabel(wrapper, 'Dar de baja');
     expect(wrapper.text()).toContain('El histórico se conserva');
     expect(closeEvent).not.toHaveBeenCalled();
 
@@ -115,7 +121,7 @@ describe('PlanEventsTimeline', () => {
     // Dar de baja retira efectos de algo real: no aplica a lo que aún no ha pasado.
     expect(labels).not.toContain('Dar de baja');
 
-    await wrapper.findAll('button')[0]!.trigger('click');
+    await clickByLabel(wrapper, 'Ya ha ocurrido');
     await wrapper.get('input[type="date"]').setValue('2027-06-15');
     const confirm = wrapper.findAll('button').find((button) => button.text() === 'Confirmar');
     await confirm!.trigger('click');
@@ -136,10 +142,10 @@ describe('PlanEventsTimeline', () => {
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     });
 
-    await wrapper.get('button').trigger('click');
+    await clickByLabel(wrapper, 'Cancelar previsión');
     expect(cancelEvent).not.toHaveBeenCalled();
 
-    await wrapper.get('button').trigger('click');
+    await clickByLabel(wrapper, 'Confirmar cancelación');
 
     expect(cancelEvent).toHaveBeenCalledWith(1);
     expect(wrapper.text()).toContain('2 partidas futuras eliminadas');
