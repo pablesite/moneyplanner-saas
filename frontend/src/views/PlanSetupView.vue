@@ -5,6 +5,13 @@ import { AButton, APageHead, AState, AStepper } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import { ageAtDate, dateAtAge } from '@/domains/plan/age';
 import type { HouseholdType, PlanMember, PlanMemberPayload, PlanProfile } from '@/domains/plan';
+import {
+  useAnnualIncomeStore,
+  useAnnualExpenseStore,
+  type AnnualIncomeDraft,
+  type AnnualExpenseDraft,
+} from '@/domains/budget/annual-entries';
+import { expenseSubcategories } from '@/domains/budget/taxonomy/expenseTaxonomy';
 import { formatMoney } from '@/lib/format';
 import { formatLongMonthYear } from '@/lib/dates';
 import '@/domains/plan/plan.css';
@@ -17,7 +24,37 @@ type MemberDraft = {
   other_future_income_today_eur: string;
 };
 
-type StepId = 'household' | 'horizon' | 'lifestyle' | 'future' | 'profile' | 'summary';
+type StepId =
+  | 'household'
+  | 'income'
+  | 'expenses'
+  | 'horizon'
+  | 'lifestyle'
+  | 'future'
+  | 'profile'
+  | 'summary';
+
+/** Subcategorías de "Gastos de consumo" cubiertas por la siembra de Presupuesto. */
+const EXPENSE_SEED_SUBCATEGORIES = [
+  'housing_home',
+  'living_expenses',
+  'family_childcare',
+  'transport_mobility',
+  'health_wellbeing',
+  'education_growth',
+  'leisure_lifestyle',
+  'gifts_donations',
+  'financial_commitments',
+  'personal_loan_repayment',
+] as const;
+
+const expenseSeedFields = EXPENSE_SEED_SUBCATEGORIES.map((value) => ({
+  value,
+  label:
+    expenseSubcategories.find(
+      (row) => row.category === 'consumption_expenses' && row.value === value,
+    )?.label ?? value,
+}));
 
 /** Core deriva la jubilación a esta edad y no acepta otra: aquí solo se muestra. */
 const LEGAL_RETIREMENT_AGE = 67;
@@ -26,10 +63,27 @@ const DEFAULT_LONGEVITY_AGE = 95;
 
 const router = useRouter();
 const { store, plan, loading, error } = usePlan();
+const incomeStore = useAnnualIncomeStore();
+const expenseStore = useAnnualExpenseStore();
 
-const stepIds: StepId[] = ['household', 'horizon', 'lifestyle', 'future', 'profile', 'summary'];
+/** Solo se ofrece sembrar Presupuesto si el usuario todavía no tiene ninguna partida real. */
+const budgetSeedChecked = ref(false);
+const hasExistingBudgetData = ref(false);
+const showBudgetSeedSteps = computed(() => budgetSeedChecked.value && !hasExistingBudgetData.value);
+
+const stepIds = computed<StepId[]>(() => [
+  'household',
+  ...(showBudgetSeedSteps.value ? (['income', 'expenses'] as StepId[]) : []),
+  'horizon',
+  'lifestyle',
+  'future',
+  'profile',
+  'summary',
+]);
 const stepLabels: Record<StepId, string> = {
   household: 'Quiénes sois',
+  income: 'Tus ingresos',
+  expenses: 'Tus gastos',
   horizon: 'Cuándo',
   lifestyle: 'Con cuánto',
   future: 'Ingresos y legado',
@@ -40,6 +94,7 @@ const stepLabels: Record<StepId, string> = {
 const stepIndex = ref(0);
 const furthestIndex = ref(0);
 const submitting = ref(false);
+const seedSubmitting = ref(false);
 
 const form = reactive({
   household_type: 'single' as HouseholdType,
@@ -51,9 +106,16 @@ const form = reactive({
   profile: 'balanced' as PlanProfile,
 });
 const members = reactive<MemberDraft[]>([emptyMember()]);
+const incomeSeedForm = reactive({
+  salary_monthly: '',
+  other_monthly: '',
+});
+const expenseSeedForm = reactive<Record<string, string>>(
+  Object.fromEntries(expenseSeedFields.map((field) => [field.value, ''])),
+);
 
-const currentStep = computed<StepId>(() => stepIds[stepIndex.value]!);
-const isLastStep = computed(() => stepIndex.value === stepIds.length - 1);
+const currentStep = computed<StepId>(() => stepIds.value[stepIndex.value]!);
+const isLastStep = computed(() => stepIndex.value === stepIds.value.length - 1);
 const maxMembers = computed(() => (form.household_type === 'family' ? 2 : 1));
 const activeMembers = computed(() => members.slice(0, maxMembers.value));
 
@@ -115,6 +177,8 @@ const futureComplete = computed(() => !form.wants_legacy || Number(form.legacy_a
 
 const stepComplete = computed<Record<StepId, boolean>>(() => ({
   household: householdComplete.value,
+  income: true,
+  expenses: true,
   horizon: horizonComplete.value,
   lifestyle: lifestyleComplete.value,
   future: futureComplete.value,
@@ -124,7 +188,7 @@ const stepComplete = computed<Record<StepId, boolean>>(() => ({
 const canAdvance = computed(() => stepComplete.value[currentStep.value]);
 
 const steps = computed(() =>
-  stepIds.map((id, index) => ({
+  stepIds.value.map((id, index) => ({
     id,
     label: stepLabels[id],
     status: (index === stepIndex.value
@@ -208,16 +272,104 @@ function selectHousehold(value: HouseholdType): void {
 }
 
 function goTo(index: number): void {
-  if (index < 0 || index >= stepIds.length || index > furthestIndex.value) return;
+  if (index < 0 || index >= stepIds.value.length || index > furthestIndex.value) return;
   stepIndex.value = index;
 }
 
 function goToId(id: string): void {
-  goTo(stepIds.indexOf(id as StepId));
+  goTo(stepIds.value.indexOf(id as StepId));
 }
 
-function next(): void {
+type SeedResult = { ok: true } | { ok: false; error: string };
+
+/** Upsert por categoría/subcategoría: evita duplicar partidas si el usuario vuelve atrás
+ * y reenvía el paso (mismo criterio que la reutilización de FamilyMember por nombre). */
+async function createIncomeSeedEntries(): Promise<SeedResult> {
+  const year = new Date().getFullYear();
+  const drafts: AnnualIncomeDraft[] = [];
+  const salary = Number(incomeSeedForm.salary_monthly);
+  if (salary > 0) {
+    drafts.push({
+      name: 'Nómina',
+      category: 'salary',
+      subcategory: 'employee_salary',
+      incomeType: 'recurrent',
+      amountAnnual: String(salary * 12),
+      fiscalYear: year,
+      currency: 'EUR',
+      notes: '',
+    });
+  }
+  const other = Number(incomeSeedForm.other_monthly);
+  if (other > 0) {
+    drafts.push({
+      name: 'Otros ingresos',
+      category: 'other_income',
+      subcategory: 'other',
+      incomeType: 'recurrent',
+      amountAnnual: String(other * 12),
+      fiscalYear: year,
+      currency: 'EUR',
+      notes: '',
+    });
+  }
+  for (const draft of drafts) {
+    const existing = incomeStore.entries.value.find(
+      (entry) => entry.category === draft.category && entry.subcategory === draft.subcategory,
+    );
+    const result = existing
+      ? await incomeStore.updateEntry(existing.id, draft, year)
+      : await incomeStore.addEntry(draft, year);
+    if (!result.ok) return result;
+  }
+  return { ok: true };
+}
+
+async function createExpenseSeedEntries(): Promise<SeedResult> {
+  const year = new Date().getFullYear();
+  const drafts: AnnualExpenseDraft[] = expenseSeedFields
+    .map((field): AnnualExpenseDraft | null => {
+      const amount = Number(expenseSeedForm[field.value]);
+      if (!(amount > 0)) return null;
+      return {
+        name: field.label,
+        category: 'consumption_expenses',
+        subcategory: field.value,
+        expenseType: 'recurrent',
+        amountAnnual: String(amount * 12),
+        fiscalYear: year,
+        currency: 'EUR',
+        notes: '',
+      };
+    })
+    .filter((draft): draft is AnnualExpenseDraft => draft !== null);
+  for (const draft of drafts) {
+    const existing = expenseStore.entries.value.find(
+      (entry) => entry.category === draft.category && entry.subcategory === draft.subcategory,
+    );
+    const result = existing
+      ? await expenseStore.updateEntry(existing.id, draft, year)
+      : await expenseStore.addEntry(draft, year);
+    if (!result.ok) return result;
+  }
+  return { ok: true };
+}
+
+async function next(): Promise<void> {
   if (!canAdvance.value || isLastStep.value) return;
+  const leavingStep = currentStep.value;
+  if (leavingStep === 'income' || leavingStep === 'expenses') {
+    seedSubmitting.value = true;
+    store.clearError();
+    const result =
+      leavingStep === 'income' ? await createIncomeSeedEntries() : await createExpenseSeedEntries();
+    if (leavingStep === 'expenses' && result.ok) await store.fetchFoundations();
+    seedSubmitting.value = false;
+    if (!result.ok) {
+      store.error = result.error;
+      return;
+    }
+  }
   stepIndex.value += 1;
   furthestIndex.value = Math.max(furthestIndex.value, stepIndex.value);
 }
@@ -263,9 +415,17 @@ watch(
 
 watch(plan, syncFromPlan, { immediate: true });
 
+async function checkExistingBudgetData(): Promise<void> {
+  await Promise.all([incomeStore.loadAll(), expenseStore.loadAll()]);
+  hasExistingBudgetData.value =
+    incomeStore.entries.value.length > 0 || expenseStore.entries.value.length > 0;
+  budgetSeedChecked.value = true;
+}
+
 onMounted(() => {
   void store.fetchPlan();
   void store.fetchFoundations();
+  void checkExistingBudgetData();
 });
 </script>
 
@@ -331,6 +491,81 @@ onMounted(() => {
             </label>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section v-else-if="currentStep === 'income'" class="sect plan-form-section">
+      <div class="sect-head">
+        <div>
+          <p class="eyebrow">Antes de seguir</p>
+          <h2 class="sect-title">¿Cuánto ingresas al mes ahora mismo?</h2>
+          <p class="sect-sub">
+            Aún no tienes presupuesto cargado. Con esto sembramos tu Presupuesto para que el plan
+            calcule tu capacidad de ahorro real, no solo lo que aspiras a gastar. Puedes dejarlo en
+            blanco y añadirlo luego en Presupuesto.
+          </p>
+        </div>
+      </div>
+
+      <div class="plan-form-grid">
+        <label>
+          <span>Tu nómina (al mes)</span>
+          <div class="plan-money-field">
+            <input
+              v-model="incomeSeedForm.salary_monthly"
+              class="input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="50"
+            />
+            <span aria-hidden="true">€/mes</span>
+          </div>
+        </label>
+        <label>
+          <span>Otros ingresos recurrentes (al mes)</span>
+          <div class="plan-money-field">
+            <input
+              v-model="incomeSeedForm.other_monthly"
+              class="input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="50"
+            />
+            <span aria-hidden="true">€/mes</span>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <section v-else-if="currentStep === 'expenses'" class="sect plan-form-section">
+      <div class="sect-head">
+        <div>
+          <p class="eyebrow">Antes de seguir</p>
+          <h2 class="sect-title">¿Cuánto gastas al mes en cada categoría?</h2>
+          <p class="sect-sub">
+            Aproximado basta. Cada categoría que rellenes se guarda como partida en Presupuesto; las
+            que dejes en blanco no se crean, puedes añadirlas luego.
+          </p>
+        </div>
+      </div>
+
+      <div class="plan-form-grid">
+        <label v-for="field in expenseSeedFields" :key="field.value">
+          <span>{{ field.label }}</span>
+          <div class="plan-money-field">
+            <input
+              v-model="expenseSeedForm[field.value]"
+              class="input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="10"
+            />
+            <span aria-hidden="true">€/mes</span>
+          </div>
+        </label>
       </div>
     </section>
 
@@ -656,7 +891,13 @@ onMounted(() => {
     <div class="plan-setup-actions">
       <AButton v-if="stepIndex > 0" variant="ghost" @click="goTo(stepIndex - 1)">Atrás</AButton>
       <RouterLink v-else class="btn btn-ghost" to="/plan">Cancelar</RouterLink>
-      <AButton v-if="!isLastStep" variant="primary" :disabled="!canAdvance" @click="next">
+      <AButton
+        v-if="!isLastStep"
+        variant="primary"
+        :disabled="!canAdvance"
+        :loading="seedSubmitting"
+        @click="next"
+      >
         Continuar
       </AButton>
       <AButton v-else variant="primary" :loading="submitting" @click="submit">
