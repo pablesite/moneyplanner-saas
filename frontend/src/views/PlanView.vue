@@ -86,9 +86,11 @@ onMounted(() => {
 
 <template>
   <main class="page plan-page">
-    <APageHead title="Mi Plan" eyebrow="Planificación financiera">
+    <APageHead title="Mi Plan">
       <template #meta>
-        <span>Motor Core</span><span class="dot"></span><span>Estimaciones deterministas</span>
+        <AMetaPill>Motor Core</AMetaPill>
+        <span class="dot"></span>
+        <span>Estimaciones deterministas</span>
       </template>
       <template #actions>
         <RouterLink class="btn btn-primary" to="/plan/escenarios?create=1">
