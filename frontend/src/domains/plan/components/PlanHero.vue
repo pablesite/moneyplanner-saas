@@ -46,8 +46,8 @@ const specificBlockers = computed<Blocker[]>(() => {
   if (gap.value != null) return [];
   const items: Blocker[] = [];
   const unknownCapital = Number(props.projection.classification?.unknown_capital ?? 0);
-  const monthlyContribution = Number(props.foundations?.planned_contribution.monthly_amount ?? 0);
-  const committedSurplus = Number(props.foundations?.cash_flow.committed_surplus ?? 0);
+  const monthlyContribution = Number(props.foundations?.planned_contribution?.monthly_amount ?? 0);
+  const committedSurplus = Number(props.foundations?.cash_flow?.committed_surplus ?? 0);
   if (productiveCapital.value <= 0) {
     items.push({
       text: 'No hay capital clasificado como productivo: la proyección no tiene base desde la que crecer.',

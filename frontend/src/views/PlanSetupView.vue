@@ -71,7 +71,7 @@ const yearsToTarget = computed(() => {
 });
 
 const suggestedMonthly = computed(() => {
-  const annual = Number(store.foundations?.cash_flow.structural_operating_expense ?? '');
+  const annual = Number(store.foundations?.cash_flow?.structural_operating_expense ?? '');
   return Number.isFinite(annual) && annual > 0 ? Math.round(annual / 12) : null;
 });
 const lifestyleChoices = computed(() => {
