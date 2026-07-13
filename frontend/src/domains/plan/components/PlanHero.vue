@@ -42,6 +42,10 @@ const projectedCompactCopy = computed(() =>
 );
 type Blocker = { text: string; to: string; cta: string };
 
+const hasAnyAssets = computed(
+  () => Number(props.foundations?.net_worth_health?.assets_value ?? 0) > 0,
+);
+
 const specificBlockers = computed<Blocker[]>(() => {
   if (gap.value != null) return [];
   const items: Blocker[] = [];
@@ -49,11 +53,19 @@ const specificBlockers = computed<Blocker[]>(() => {
   const monthlyContribution = Number(props.foundations?.planned_contribution?.monthly_amount ?? 0);
   const committedSurplus = Number(props.foundations?.cash_flow?.committed_surplus ?? 0);
   if (productiveCapital.value <= 0) {
-    items.push({
-      text: 'No hay capital clasificado como productivo: la proyección no tiene base desde la que crecer.',
-      to: '/plan/activos',
-      cta: 'Clasificar activos',
-    });
+    items.push(
+      hasAnyAssets.value
+        ? {
+            text: 'No hay capital clasificado como productivo: la proyección no tiene base desde la que crecer.',
+            to: '/plan/activos',
+            cta: 'Clasificar activos',
+          }
+        : {
+            text: 'Aún no has cargado ningún activo o pasivo en Patrimonio: la proyección arranca desde 0 € aunque tengas patrimonio real (cartera, hipoteca...).',
+            to: '/patrimonio',
+            cta: 'Añadir mi patrimonio',
+          },
+    );
   }
   if (unknownCapital > 0) {
     items.push({
