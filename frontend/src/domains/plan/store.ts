@@ -324,7 +324,11 @@ export const usePlanStore = defineStore('plan', {
         const { data } = await planApi.getScenarios();
         this.scenarios = data;
       } catch (error) {
-        this.error = toErrorMessage(error);
+        if (isNotFound(error)) {
+          this.scenarios = [];
+        } else {
+          this.error = toErrorMessage(error);
+        }
       } finally {
         this.scenariosLoading = false;
       }
