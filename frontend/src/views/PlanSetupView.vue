@@ -128,6 +128,19 @@ const contributionSeedForm = reactive({
   monthly: '',
 });
 
+/** Sugerencia a validar por el usuario, no relleno silencioso: mismo patrón que
+ * lifestyleChoices en el paso "Con cuánto". */
+const estimatedMonthlySurplus = computed(() => {
+  const income =
+    Number(incomeSeedForm.salary_monthly || 0) + Number(incomeSeedForm.other_monthly || 0);
+  const expenses = expenseSeedFields.reduce(
+    (sum, field) => sum + Number(expenseSeedForm[field.value] || 0),
+    0,
+  );
+  const surplus = Math.round(income - expenses);
+  return surplus > 0 ? surplus : null;
+});
+
 const currentStep = computed<StepId>(() => stepIds.value[stepIndex.value]!);
 const isLastStep = computed(() => stepIndex.value === stepIds.value.length - 1);
 const maxMembers = computed(() => (form.household_type === 'family' ? 2 : 1));
@@ -625,6 +638,19 @@ onMounted(() => {
             inversión, no el superávit entero si no lo inviertes todo.
           </p>
         </div>
+      </div>
+
+      <div v-if="estimatedMonthlySurplus" class="plan-choice-grid">
+        <button
+          type="button"
+          class="plan-choice"
+          :class="{ 'is-on': Number(contributionSeedForm.monthly) === estimatedMonthlySurplus }"
+          :aria-pressed="Number(contributionSeedForm.monthly) === estimatedMonthlySurplus"
+          @click="contributionSeedForm.monthly = String(estimatedMonthlySurplus)"
+        >
+          <strong>{{ formatMoney(estimatedMonthlySurplus) }}/mes</strong>
+          <small>Tu superávit: lo que declaraste de ingresos menos gastos</small>
+        </button>
       </div>
 
       <div class="plan-form-grid">
