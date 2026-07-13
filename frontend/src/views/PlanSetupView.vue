@@ -28,6 +28,7 @@ type StepId =
   | 'household'
   | 'income'
   | 'expenses'
+  | 'contribution'
   | 'horizon'
   | 'lifestyle'
   | 'future'
@@ -66,14 +67,23 @@ const { store, plan, loading, error } = usePlan();
 const incomeStore = useAnnualIncomeStore();
 const expenseStore = useAnnualExpenseStore();
 
-/** Solo se ofrece sembrar Presupuesto si el usuario todavía no tiene ninguna partida real. */
+/** Cada paso de siembra se gatea por separado: un usuario puede ya tener ingresos/gastos
+ * (p. ej. sembrados en una visita anterior) pero seguir sin aportación planificada, y
+ * necesita poder cerrar solo ese hueco sin que el wizard le repita lo que ya tiene. */
 const budgetSeedChecked = ref(false);
-const hasExistingBudgetData = ref(false);
-const showBudgetSeedSteps = computed(() => budgetSeedChecked.value && !hasExistingBudgetData.value);
+const hasExistingIncomeOrExpenseData = ref(false);
+const hasExistingContributionData = ref(false);
+const showIncomeExpenseSeedSteps = computed(
+  () => budgetSeedChecked.value && !hasExistingIncomeOrExpenseData.value,
+);
+const showContributionSeedStep = computed(
+  () => budgetSeedChecked.value && !hasExistingContributionData.value,
+);
 
 const stepIds = computed<StepId[]>(() => [
   'household',
-  ...(showBudgetSeedSteps.value ? (['income', 'expenses'] as StepId[]) : []),
+  ...(showIncomeExpenseSeedSteps.value ? (['income', 'expenses'] as StepId[]) : []),
+  ...(showContributionSeedStep.value ? (['contribution'] as StepId[]) : []),
   'horizon',
   'lifestyle',
   'future',
@@ -84,6 +94,7 @@ const stepLabels: Record<StepId, string> = {
   household: 'Quiénes sois',
   income: 'Tus ingresos',
   expenses: 'Tus gastos',
+  contribution: 'Ahorro e inversión',
   horizon: 'Cuándo',
   lifestyle: 'Con cuánto',
   future: 'Ingresos y legado',
@@ -113,6 +124,9 @@ const incomeSeedForm = reactive({
 const expenseSeedForm = reactive<Record<string, string>>(
   Object.fromEntries(expenseSeedFields.map((field) => [field.value, ''])),
 );
+const contributionSeedForm = reactive({
+  monthly: '',
+});
 
 const currentStep = computed<StepId>(() => stepIds.value[stepIndex.value]!);
 const isLastStep = computed(() => stepIndex.value === stepIds.value.length - 1);
@@ -179,6 +193,7 @@ const stepComplete = computed<Record<StepId, boolean>>(() => ({
   household: householdComplete.value,
   income: true,
   expenses: true,
+  contribution: true,
   horizon: horizonComplete.value,
   lifestyle: lifestyleComplete.value,
   future: futureComplete.value,
@@ -355,15 +370,41 @@ async function createExpenseSeedEntries(): Promise<SeedResult> {
   return { ok: true };
 }
 
+async function createContributionSeedEntry(): Promise<SeedResult> {
+  const year = new Date().getFullYear();
+  const monthly = Number(contributionSeedForm.monthly);
+  if (!(monthly > 0)) return { ok: true };
+  const draft: AnnualExpenseDraft = {
+    name: 'Ahorro e inversión',
+    category: 'financial_investments',
+    subcategory: 'other_financial_investments',
+    expenseType: 'recurrent',
+    cashflowRole: 'investment',
+    amountAnnual: String(monthly * 12),
+    fiscalYear: year,
+    currency: 'EUR',
+    notes: '',
+  };
+  const existing = expenseStore.entries.value.find(
+    (entry) => entry.category === draft.category && entry.subcategory === draft.subcategory,
+  );
+  return existing
+    ? expenseStore.updateEntry(existing.id, draft, year)
+    : expenseStore.addEntry(draft, year);
+}
+
 async function next(): Promise<void> {
   if (!canAdvance.value || isLastStep.value) return;
   const leavingStep = currentStep.value;
-  if (leavingStep === 'income' || leavingStep === 'expenses') {
+  if (leavingStep === 'income' || leavingStep === 'expenses' || leavingStep === 'contribution') {
     seedSubmitting.value = true;
     store.clearError();
-    const result =
-      leavingStep === 'income' ? await createIncomeSeedEntries() : await createExpenseSeedEntries();
-    if (leavingStep === 'expenses' && result.ok) await store.fetchFoundations();
+    let result: SeedResult;
+    if (leavingStep === 'income') result = await createIncomeSeedEntries();
+    else if (leavingStep === 'expenses') result = await createExpenseSeedEntries();
+    else result = await createContributionSeedEntry();
+    const nextStepId = stepIds.value[stepIndex.value + 1];
+    if (result.ok && nextStepId === 'horizon') await store.fetchFoundations();
     seedSubmitting.value = false;
     if (!result.ok) {
       store.error = result.error;
@@ -417,8 +458,12 @@ watch(plan, syncFromPlan, { immediate: true });
 
 async function checkExistingBudgetData(): Promise<void> {
   await Promise.all([incomeStore.loadAll(), expenseStore.loadAll()]);
-  hasExistingBudgetData.value =
-    incomeStore.entries.value.length > 0 || expenseStore.entries.value.length > 0;
+  const isContributionEntry = (entry: { cashflowRole: string }) =>
+    entry.cashflowRole === 'savings' || entry.cashflowRole === 'investment';
+  hasExistingIncomeOrExpenseData.value =
+    incomeStore.entries.value.length > 0 ||
+    expenseStore.entries.value.some((entry) => !isContributionEntry(entry));
+  hasExistingContributionData.value = expenseStore.entries.value.some(isContributionEntry);
   budgetSeedChecked.value = true;
 }
 
@@ -562,6 +607,37 @@ onMounted(() => {
               inputmode="decimal"
               min="0"
               step="10"
+            />
+            <span aria-hidden="true">€/mes</span>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <section v-else-if="currentStep === 'contribution'" class="sect plan-form-section">
+      <div class="sect-head">
+        <div>
+          <p class="eyebrow">Antes de seguir</p>
+          <h2 class="sect-title">¿Cuánto ahorras o inviertes al mes ahora mismo?</h2>
+          <p class="sect-sub">
+            Esto es lo que hace crecer tu capital: sin una aportación planificada, la proyección se
+            queda plana aunque tengas superávit. Cuenta solo lo que ya destinas a ahorro o
+            inversión, no el superávit entero si no lo inviertes todo.
+          </p>
+        </div>
+      </div>
+
+      <div class="plan-form-grid">
+        <label>
+          <span>Aportación mensual a ahorro/inversión</span>
+          <div class="plan-money-field">
+            <input
+              v-model="contributionSeedForm.monthly"
+              class="input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="25"
             />
             <span aria-hidden="true">€/mes</span>
           </div>
