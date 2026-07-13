@@ -53,16 +53,23 @@
   min-width: 180px;
 }
 
+.plan-onboarding.a-state-panel {
+  padding: 40px 32px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018));
+}
+
 .plan-empty {
   display: grid;
   gap: 12px;
-  justify-items: start;
-  max-width: 560px;
+  justify-items: center;
+  max-width: 480px;
+  text-align: center;
 }
 
 .plan-empty h2 {
   margin: 0;
-  font-size: 1.4rem;
+  color: var(--text);
+  font-size: 1.5rem;
 }
 
 .plan-empty p {

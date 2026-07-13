@@ -117,7 +117,7 @@ onMounted(() => {
       {{ error }}
     </AState>
 
-    <AState v-else-if="planMissing || !plan" status="empty">
+    <AState v-else-if="planMissing || !plan" status="empty" class="plan-onboarding">
       <div class="plan-empty">
         <p class="eyebrow">Primer paso</p>
         <h2>Crea tu plan financiero</h2>
