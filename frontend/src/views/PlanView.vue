@@ -93,10 +93,12 @@ onMounted(() => {
         <span>Estimaciones deterministas</span>
       </template>
       <template #actions>
-        <RouterLink class="btn btn-primary" to="/plan/escenarios?create=1">
-          Simular decisión
-        </RouterLink>
-        <RouterLink class="btn btn-ghost" to="/plan/setup">Editar plan</RouterLink>
+        <template v-if="plan && !planMissing">
+          <RouterLink class="btn btn-primary" to="/plan/escenarios?create=1">
+            Simular decisión
+          </RouterLink>
+          <RouterLink class="btn btn-ghost" to="/plan/setup">Editar plan</RouterLink>
+        </template>
         <!-- Acción de mantenimiento: no compite con la primaria de la cabecera. -->
         <AButton
           v-if="projection"
