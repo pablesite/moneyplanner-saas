@@ -195,7 +195,7 @@ services:
       - traefik.http.services.moneyplanner-core-backend.loadbalancer.server.port=8000
       - traefik.http.routers.moneyplanner-core-backend-auth.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/auth/settings`) || PathPrefix(`/api/auth/link-token`))
       - traefik.http.routers.moneyplanner-core-backend-auth.priority=120
-      - traefik.http.routers.moneyplanner-core-backend.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/net-worth`) || PathPrefix(`/api/budget`) || PathPrefix(`/api/accounting`) || PathPrefix(`/api/core`) || PathPrefix(`/api/family-members`) || PathPrefix(`/api/ownerships`) || PathPrefix(`/api/ownership-links`))
+      - traefik.http.routers.moneyplanner-core-backend.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/net-worth`) || PathPrefix(`/api/budget`) || PathPrefix(`/api/accounting`) || PathPrefix(`/api/core`) || PathPrefix(`/api/family-members`) || PathPrefix(`/api/ownerships`) || PathPrefix(`/api/ownership-links`) || PathPrefix(`/api/plan`))
       - traefik.http.routers.moneyplanner-core-backend.priority=110
     networks:
       - moneyplanner-internal
