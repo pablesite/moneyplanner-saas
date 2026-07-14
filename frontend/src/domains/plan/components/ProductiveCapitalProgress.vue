@@ -18,6 +18,12 @@ const targetCapital = computed(() => props.projection.summary.target_capital.val
 
 const withdrawalRate = computed(() => Number(props.projection.assumptions?.withdrawal_rate ?? 0));
 
+// Parte del capital requerido que es patrimonio a preservar (no financia la renta).
+const preservationAmount = computed(() => {
+  const amount = Number(props.projection.summary.preservation_target_eur?.value ?? 0);
+  return amount > 0 ? amount : null;
+});
+
 // Hitos anclados al presupuesto real: se cargan las partidas del año en curso
 // y los tramos se recalculan cada vez que el presupuesto cambia.
 const expenseStore = useAnnualExpenseStore();
@@ -166,7 +172,11 @@ const milestonesHint = computed(() => {
 
     <div class="plan-progress-meta">
       <span>{{ formatMoney(productiveCapital) }} productivos</span>
-      <span>{{ formatMoney(targetCapital) }} requeridos</span>
+      <span>
+        {{ formatMoney(targetCapital) }} requeridos<template v-if="preservationAmount">
+          · incluye {{ formatMoney(preservationAmount) }} a preservar</template
+        >
+      </span>
     </div>
 
     <div class="plan-milestones-head">

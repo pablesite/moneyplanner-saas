@@ -15,6 +15,7 @@ import { usePlan } from '@/domains/plan';
 import { planEventMarkers } from '@/domains/plan/usePlanEvents';
 import type { ProjectionScenario } from '@/domains/plan';
 import { scenarioStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scenarioTemplates';
+import { formatMoney } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
 const { store, loading, error, plan, planMissing, projection, netWorthTimeline, scenario } =
@@ -64,6 +65,12 @@ const visibleRecommendations = computed(() =>
 );
 
 const eventMarkers = computed(() => planEventMarkers(store.events));
+
+// El patrimonio a preservar exige capital extra: si está definido, se ve.
+const preservationCopy = computed(() => {
+  const amount = Number(plan.value?.preservation_target_eur ?? 0);
+  return amount > 0 ? `Preserva ${formatMoney(amount)}` : null;
+});
 
 // Trazabilidad del cálculo: sin esto, "Recalcular" no dice si hace falta.
 const calculatedCopy = computed(() => {
@@ -154,6 +161,14 @@ onMounted(() => {
           title="Editar objetivo y horizonte del plan"
         >
           Objetivo {{ plan.target_date.slice(0, 4) }}
+        </RouterLink>
+        <RouterLink
+          v-if="preservationCopy"
+          class="meta-pill plan-objective-link"
+          to="/plan/setup"
+          title="Patrimonio que no se toca: se exige además del capital que sostiene tu renta"
+        >
+          {{ preservationCopy }}
         </RouterLink>
         <label class="context-field">
           <span>Hipótesis</span>
