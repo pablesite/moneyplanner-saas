@@ -309,6 +309,17 @@ export type PlanEventBudgetLines = {
   };
 };
 
+/** Capital requerido por necesidad mensual: misma matemática que el capital objetivo. */
+export type CapitalRequirementsResponse = {
+  scenario: string;
+  target_year: number;
+  assumptions: ProjectionAssumptions;
+  requirements: Array<{
+    monthly_amount_today_eur: string;
+    capital_required_eur: string;
+  }>;
+};
+
 /** Banda de producto que Core calcula junto al score: el frontend colorea, no decide. */
 export type PlanFoundationStatus = 'good' | 'warning' | 'critical';
 

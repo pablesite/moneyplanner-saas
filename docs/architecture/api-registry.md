@@ -94,6 +94,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `POST` | `/api/plan/recalculate/` | Recalculates the projection and persists an official `ProjectionSnapshot`. Optional `scenario=prudent|expected|favorable`; default `expected`. |
 | `GET` | `/api/plan/projection/` | Calculates a projection without persisting a snapshot. Optional `scenario=prudent|expected|favorable`; default `expected`. |
 | `GET` | `/api/plan/history/` | Returns recent official projection snapshots. |
+| `GET` | `/api/plan/capital-requirements/` | Capital required at the target date to sustain each requested monthly need (`monthly_amounts=a,b,...` in today's EUR, 1–8 values; optional `scenario`). Same math as the projection's target capital (inflation, pension offsets, bridge period, withdrawal rate) without plan-event deltas. Used by the SaaS "Qué cubre ya tu capital" milestones. |
 | `GET/POST` | `/api/plan/members/` | Lists or creates adult `FamilyMember` rows linked to the plan. MVP allows at most two adults. |
 | `PATCH` | `/api/plan/members/{id}/` | Updates plan-relevant fields on an adult family member owned by the user. |
 | `GET/PUT` | `/api/plan/asset-functions/` | Returns effective asset classification (inferred + override) and updates `PlanAssetFunction` overrides. |

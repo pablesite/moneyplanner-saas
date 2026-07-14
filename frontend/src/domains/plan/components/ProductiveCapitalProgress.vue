@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AInfoHint } from '@/domains/ui';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
-import { budgetCapitalMilestones } from '@/domains/plan/budgetMilestones';
+import { planApi } from '@/domains/plan/api';
+import { budgetExpenseTiers, mergeTierCapitals } from '@/domains/plan/budgetMilestones';
 import { formatMoney, formatNumber, formatPct } from '@/lib/format';
-import type { ProjectionResponse } from '@/domains/plan/types';
+import type { CapitalRequirementsResponse, ProjectionResponse } from '@/domains/plan/types';
 
 const props = defineProps<{ projection: ProjectionResponse }>();
 
@@ -15,8 +16,6 @@ const progress = computed(() =>
 const productiveCapital = computed(() => props.projection.summary.productive_capital.value);
 const targetCapital = computed(() => props.projection.summary.target_capital.value);
 
-// La renta sostenible de Core es exactamente capital × tasa de retirada / 12:
-// con esa fórmula, cada grupo de gasto se traduce al capital que lo paga.
 const withdrawalRate = computed(() => Number(props.projection.assumptions?.withdrawal_rate ?? 0));
 
 // Hitos anclados al presupuesto real: se cargan las partidas del año en curso
@@ -24,6 +23,39 @@ const withdrawalRate = computed(() => Number(props.projection.assumptions?.withd
 const expenseStore = useAnnualExpenseStore();
 const fiscalYear = new Date().getFullYear();
 onMounted(() => void expenseStore.loadAll(fiscalYear));
+
+const tiers = computed(() => budgetExpenseTiers(expenseStore.entries.value, fiscalYear));
+
+// El capital de cada tramo lo calcula Core con la misma matemática que el
+// capital objetivo (pensiones, periodo puente, inflación): hitos y barra
+// comparten eje. La perpetuidad local (gasto/tasa) sobreestimaba siempre.
+const requirements = ref<CapitalRequirementsResponse['requirements'] | null>(null);
+const requestKey = computed(
+  () =>
+    `${tiers.value.map((tier) => tier.monthlyExpense.toFixed(2)).join(',')}|${props.projection.scenario}`,
+);
+
+watch(
+  requestKey,
+  async () => {
+    requirements.value = null;
+    if (!tiers.value.length) return;
+    const requested = requestKey.value;
+    try {
+      const { data } = await planApi.getCapitalRequirements(
+        tiers.value.map((tier) => tier.monthlyExpense),
+        props.projection.scenario,
+      );
+      // Si presupuesto o hipótesis cambiaron mientras respondía, esta respuesta ya no vale.
+      if (requestKey.value !== requested) return;
+      requirements.value = data.requirements;
+    } catch {
+      // Sin capitales de Core se cae al fallback de cuartos: referencia antes que error.
+      if (requestKey.value === requested) requirements.value = null;
+    }
+  },
+  { immediate: true },
+);
 
 type ProgressMilestone = {
   label: string;
@@ -34,10 +66,9 @@ type ProgressMilestone = {
 };
 
 const budgetMilestones = computed<ProgressMilestone[]>(() =>
-  budgetCapitalMilestones({
-    entries: expenseStore.entries.value,
-    fiscalYear,
-    withdrawalRate: withdrawalRate.value,
+  mergeTierCapitals({
+    tiers: tiers.value,
+    requirements: requirements.value ?? [],
     productiveCapital: Number(productiveCapital.value || 0),
     targetCapital: Number(targetCapital.value || 0),
   }).map((milestone) => ({
@@ -89,7 +120,7 @@ function markerLeft(milestone: ProgressMilestone): string {
 const milestonesHint = computed(() => {
   const rate = withdrawalRate.value > 0 ? formatPct(withdrawalRate.value, 1) : null;
   if (usingBudgetMilestones.value) {
-    return `Tramos acumulados de tu presupuesto de gastos recurrentes del año en curso: si el presupuesto cambia, los hitos cambian. Capital necesario = gasto anual / tasa de retirada${rate ? ` (${rate})` : ''}, la misma fórmula que la renta sostenible.`;
+    return 'Tramos acumulados de tu presupuesto de gastos recurrentes del año en curso: si el presupuesto cambia, los hitos cambian. El capital de cada tramo se calcula igual que tu capital objetivo (inflación, pensiones y periodo puente incluidos), así que es comparable con la barra.';
   }
   const base =
     'Marcas a cuartos del capital requerido, como referencia de avance. Se anclarán a tus gastos reales cuando tengas presupuesto cargado.';

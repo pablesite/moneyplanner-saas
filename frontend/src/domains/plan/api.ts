@@ -2,6 +2,7 @@ import { coreApi } from '@/lib/api';
 import type {
   AssetFunctionResponse,
   AssetFunctionUpdate,
+  CapitalRequirementsResponse,
   FinancialPlan,
   FinancialPlanPayload,
   OccurredEventPayload,
@@ -43,6 +44,14 @@ export const planApi = {
   },
   getHistory() {
     return coreApi.get<ProjectionSnapshot[]>('/api/plan/history/');
+  },
+  getCapitalRequirements(monthlyAmounts: number[], scenario: ProjectionScenario = 'expected') {
+    return coreApi.get<CapitalRequirementsResponse>('/api/plan/capital-requirements/', {
+      params: {
+        monthly_amounts: monthlyAmounts.map((amount) => amount.toFixed(2)).join(','),
+        scenario,
+      },
+    });
   },
   createMember(payload: PlanMemberPayload) {
     return coreApi.post<PlanMember>('/api/plan/members/', payload);
