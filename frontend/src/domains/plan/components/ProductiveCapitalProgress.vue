@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AInfoHint } from '@/domains/ui';
-import { formatMoney, formatNumber } from '@/lib/format';
+import { formatMoney, formatNumber, formatPct } from '@/lib/format';
 import type { ProjectionResponse } from '@/domains/plan/types';
 
 const props = defineProps<{ projection: ProjectionResponse }>();
@@ -13,24 +13,40 @@ const progress = computed(() =>
 const productiveCapital = computed(() => props.projection.summary.productive_capital.value);
 const targetCapital = computed(() => props.projection.summary.target_capital.value);
 
+// La renta sostenible de Core es exactamente capital × tasa de retirada / 12:
+// con la misma fórmula, cada hito puede decir qué renta mensual sostiene.
+const withdrawalRate = computed(() => Number(props.projection.assumptions?.withdrawal_rate ?? 0));
+
 const milestones = computed(() => {
   const target = Number(targetCapital.value || 0);
   const capital = Number(productiveCapital.value || 0);
+  // Cuartos del capital requerido: marcas de regla sin pretensión semántica.
+  // Los antiguos nombres ("Base flexible", "Vida completa") sugerían cálculos
+  // que no existían; el significado real de cada marca es la renta que da.
   const rows = [
-    { label: 'Base flexible', ratio: 0.25 },
-    { label: 'Gastos esenciales', ratio: 0.5 },
-    { label: 'Vida completa', ratio: 0.75 },
+    { label: '1/4 del objetivo', ratio: 0.25 },
+    { label: 'Mitad del objetivo', ratio: 0.5 },
+    { label: '3/4 del objetivo', ratio: 0.75 },
     { label: 'Objetivo completo', ratio: 1 },
   ];
-  // Cada hito lleva su % y su importe: sin eso, los puntos de la barra y las
-  // etiquetas de la leyenda eran dos listas sin relación visible entre sí.
-  return rows.map((row) => ({
-    ...row,
-    pct: Math.round(row.ratio * 100),
-    amount: target > 0 ? target * row.ratio : null,
-    reached: target > 0 && capital >= target * row.ratio,
-    markerClass: `m-${Math.round(row.ratio * 100)}`,
-  }));
+  return rows.map((row) => {
+    const amount = target > 0 ? target * row.ratio : null;
+    return {
+      ...row,
+      pct: Math.round(row.ratio * 100),
+      amount,
+      monthlyIncome:
+        amount != null && withdrawalRate.value > 0 ? (amount * withdrawalRate.value) / 12 : null,
+      reached: target > 0 && capital >= target * row.ratio,
+      markerClass: `m-${Math.round(row.ratio * 100)}`,
+    };
+  });
+});
+
+const milestonesHint = computed(() => {
+  const base = 'Marcas a cuartos del capital requerido, como referencia de avance.';
+  if (withdrawalRate.value <= 0) return base;
+  return `${base} La renta de cada hito aplica tu tasa de retirada del escenario activo (${formatPct(withdrawalRate.value, 1)}), la misma fórmula que la renta sostenible.`;
 });
 </script>
 
@@ -75,9 +91,7 @@ const milestones = computed(() => {
 
     <div class="plan-milestones-head">
       <span>Hitos del camino</span>
-      <AInfoHint
-        label="Cortes orientativos al 25, 50, 75 y 100 % del capital requerido. Los nombres son referencias de avance, no cálculos: el único hito con significado exacto es el 100 %."
-      />
+      <AInfoHint :label="milestonesHint" />
     </div>
     <ol class="plan-milestones">
       <li
@@ -88,12 +102,13 @@ const milestones = computed(() => {
         <span></span>
         <div class="plan-milestone-copy">
           <strong>{{ milestone.label }}</strong>
-          <small>
-            {{ milestone.pct }} %
-            <template v-if="milestone.amount != null">
-              · {{ formatMoney(milestone.amount) }}</template
+          <small v-if="milestone.amount != null">
+            {{ formatMoney(milestone.amount) }}
+            <template v-if="milestone.monthlyIncome != null">
+              · renta de {{ formatMoney(milestone.monthlyIncome) }}/mes</template
             >
           </small>
+          <small v-else>{{ milestone.pct }} % del capital requerido</small>
         </div>
       </li>
     </ol>
