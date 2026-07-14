@@ -1422,6 +1422,12 @@ watch(
         <span v-if="asOfLabel !== 'Hoy' && valueMode === 'real'" class="dot"></span>
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
       </template>
+      <template #actions>
+        <AButton variant="ghost" @click="openCreateModal('liability', null)">
+          Añadir pasivo
+        </AButton>
+        <AButton variant="primary" @click="openCreateModal('asset', null)"> Añadir activo </AButton>
+      </template>
     </APageHead>
 
     <nav class="a-nw-tabs-bar" aria-label="Secciones de patrimonio">
