@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
+import { AInfoHint } from '@/domains/ui';
 import { formatMoney, formatNumber } from '@/lib/format';
 import type { ProjectionResponse } from '@/domains/plan/types';
 
@@ -21,8 +22,12 @@ const milestones = computed(() => {
     { label: 'Vida completa', ratio: 0.75 },
     { label: 'Objetivo completo', ratio: 1 },
   ];
+  // Cada hito lleva su % y su importe: sin eso, los puntos de la barra y las
+  // etiquetas de la leyenda eran dos listas sin relación visible entre sí.
   return rows.map((row) => ({
     ...row,
+    pct: Math.round(row.ratio * 100),
+    amount: target > 0 ? target * row.ratio : null,
     reached: target > 0 && capital >= target * row.ratio,
     markerClass: `m-${Math.round(row.ratio * 100)}`,
   }));
@@ -58,7 +63,8 @@ const milestones = computed(() => {
         :key="milestone.label"
         class="plan-progress-mark"
         :class="[{ reached: milestone.reached }, milestone.markerClass]"
-        :title="milestone.label"
+        :title="`${milestone.label} · ${milestone.pct} %`"
+        aria-hidden="true"
       ></span>
     </div>
 
@@ -67,6 +73,12 @@ const milestones = computed(() => {
       <span>{{ formatMoney(targetCapital) }} requeridos</span>
     </div>
 
+    <div class="plan-milestones-head">
+      <span>Hitos del camino</span>
+      <AInfoHint
+        label="Cortes orientativos al 25, 50, 75 y 100 % del capital requerido. Los nombres son referencias de avance, no cálculos: el único hito con significado exacto es el 100 %."
+      />
+    </div>
     <ol class="plan-milestones">
       <li
         v-for="milestone in milestones"
@@ -74,7 +86,15 @@ const milestones = computed(() => {
         :class="{ reached: milestone.reached }"
       >
         <span></span>
-        {{ milestone.label }}
+        <div class="plan-milestone-copy">
+          <strong>{{ milestone.label }}</strong>
+          <small>
+            {{ milestone.pct }} %
+            <template v-if="milestone.amount != null">
+              · {{ formatMoney(milestone.amount) }}</template
+            >
+          </small>
+        </div>
       </li>
     </ol>
   </section>

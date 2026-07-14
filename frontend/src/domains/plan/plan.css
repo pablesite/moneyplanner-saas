@@ -279,22 +279,53 @@
   font-size: 0.9rem;
 }
 
+/* Título de la leyenda de hitos, con el hint que explica que son cortes orientativos. */
+.plan-milestones-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .plan-milestones {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   padding: 0;
-  margin: 16px 0 0;
+  margin: 8px 0 0;
   list-style: none;
 }
 
 .plan-milestones li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   min-width: 0;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+/* El punto acompaña a la primera línea del hito, no al centro del bloque. */
+.plan-milestones li > span {
+  margin-top: 4px;
+}
+
+.plan-milestone-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plan-milestone-copy strong {
+  font-weight: 500;
+}
+
+/* El % y el importe conectan cada etiqueta con su punto de la barra. */
+.plan-milestone-copy small {
+  color: var(--faint);
+  font-family: var(--font-mono);
 }
 
 .plan-milestones li span,
