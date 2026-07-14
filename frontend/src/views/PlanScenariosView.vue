@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
@@ -12,14 +12,15 @@ import {
   scenarioTemplates,
 } from '@/domains/plan/scenarioTemplates';
 import { formatMoney } from '@/lib/format';
+import { formatShortMonthYear } from '@/lib/dates';
 import '@/domains/plan/plan.css';
 
 const router = useRouter();
 const route = useRoute();
 const { store, error } = usePlan();
+// El formulario abierto se renderiza antes de la lista: la acción pedida va primero,
+// sin depender de un scroll automático que en móvil dejaba el CTA a dos pantallas.
 const formOpen = ref(false);
-// El formulario se renderiza después de la lista: sin scroll, abrirlo puede pasar desapercibido.
-const formSection = ref<HTMLElement | null>(null);
 const submitError = ref<string | null>(null);
 const validationSummary = computed(
   () => submitError.value ?? Object.values(store.scenarioFieldErrors)[0] ?? null,
@@ -186,21 +187,11 @@ function scenarioImpact(scenario: (typeof store.scenarios)[number]): string {
   return parts.join(' · ') || 'Sin impacto monetario';
 }
 
-function shortDate(value: string): string {
-  return new Date(value).toLocaleDateString('es-ES');
-}
-
 watch(
   () => form.template,
   (template) => hydrateTemplate(template),
   { immediate: true },
 );
-
-watch(formOpen, async (open) => {
-  if (!open) return;
-  await nextTick();
-  formSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
 
 onMounted(async () => {
   formOpen.value = route.query.create === '1';
@@ -394,16 +385,18 @@ onMounted(async () => {
           </div>
         </fieldset>
 
-        <div class="plan-setup-actions">
-          <span class="plan-muted">
-            Crear el escenario no cambia tus datos. Solo al incorporarlo pasará a Mi Plan y generará
-            sus partidas futuras de presupuesto.
-          </span>
-          <AButton variant="primary" type="submit" :loading="store.saving">Crear escenario</AButton>
-        </div>
+        <p class="plan-muted plan-scenario-reassurance">
+          Crear el escenario no cambia tus datos. Solo al incorporarlo pasará a Mi Plan y generará
+          sus partidas futuras de presupuesto.
+        </p>
         <AState v-if="validationSummary" status="error" layout="inline">
           {{ validationSummary }}
         </AState>
+        <!-- Sticky en móvil: el CTA queda siempre a la vista aunque el formulario sea largo. -->
+        <div class="plan-setup-actions plan-scenario-submit">
+          <AButton variant="ghost" type="button" @click="formOpen = false">Cerrar</AButton>
+          <AButton variant="primary" type="submit" :loading="store.saving">Crear escenario</AButton>
+        </div>
       </form>
     </section>
 
@@ -429,7 +422,7 @@ onMounted(async () => {
           <strong>{{ scenario.name }}</strong>
           <span>
             {{ scenarioTemplateLabel(scenario.template_type) }} ·
-            {{ shortDate(scenario.events[0]?.start_date || scenario.created_at) }}
+            {{ formatShortMonthYear(scenario.events[0]?.start_date || scenario.created_at) }}
           </span>
           <small>{{ scenarioImpact(scenario) }}</small>
         </div>

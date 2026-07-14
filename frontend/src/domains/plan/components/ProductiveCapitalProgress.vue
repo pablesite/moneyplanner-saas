@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { RouterLink } from 'vue-router';
 import { formatMoney, formatNumber } from '@/lib/format';
 import type { ProjectionResponse } from '@/domains/plan/types';
 
@@ -38,7 +39,11 @@ const milestones = computed(() => {
           Denominador: capital objetivo del escenario activo, incluyendo periodo puente si aplica.
         </p>
       </div>
-      <strong class="plan-progress-percent mono">{{ formatNumber(progress, 0) }}%</strong>
+      <div class="plan-progress-head-side">
+        <strong class="plan-progress-percent mono">{{ formatNumber(progress, 0) }}%</strong>
+        <!-- La clasificación vive junto al dato que altera: qué cuenta como productivo. -->
+        <RouterLink class="btn btn-ghost btn-sm" to="/plan/activos">Clasificar activos</RouterLink>
+      </div>
     </div>
 
     <div class="plan-progress-track">

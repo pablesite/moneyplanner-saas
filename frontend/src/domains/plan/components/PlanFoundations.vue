@@ -36,6 +36,12 @@ function monthlyMoney(value: string | null | undefined): string {
   return formatMoney(toNumber(value) / 12);
 }
 
+// Score 0 en rojo sin deuda alguna se lee como contradicción: sin pasivos no hay
+// nada que puntuar, así que el cimiento lo dice en palabras y sin tono crítico.
+function hasDebt(debt: PlanFoundations['debt']): boolean {
+  return toNumber(debt.total_debt) > 0;
+}
+
 // Un "superávit" negativo se lee como contradicción: se etiqueta como déficit.
 function surplusText(value: string | null | undefined): string {
   if (value == null) return 'Superávit -';
@@ -78,10 +84,16 @@ function surplusText(value: string | null | undefined): string {
       </article>
       <article>
         <span>Deuda</span>
-        <strong :class="tone(foundations.debt.status)">
-          {{ scoreLabel(foundations.debt.score) }}
-        </strong>
-        <small>Deuda cara {{ money(foundations.debt.high_cost_debt) }}</small>
+        <template v-if="hasDebt(foundations.debt)">
+          <strong :class="tone(foundations.debt.status)">
+            {{ scoreLabel(foundations.debt.score) }}
+          </strong>
+          <small>Deuda cara {{ money(foundations.debt.high_cost_debt) }}</small>
+        </template>
+        <template v-else>
+          <strong>Sin deuda</strong>
+          <small>No hay pasivos registrados que vigilar</small>
+        </template>
       </article>
       <article>
         <span>Aportación planificada</span>

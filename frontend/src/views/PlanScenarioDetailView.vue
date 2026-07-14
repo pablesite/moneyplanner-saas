@@ -12,6 +12,7 @@ import {
   timeProfileLabel,
 } from '@/domains/plan/scenarioTemplates';
 import { formatMoney, toNumber } from '@/lib/format';
+import { formatShortMonthYear } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import '@/domains/plan/plan.css';
 
@@ -53,8 +54,12 @@ function signedMonthly(value: string): string {
 const impactMetrics = computed<ImpactMetric[]>(() => {
   const event = firstEvent.value;
   if (!event) return [];
-  const metrics: ImpactMetric[] = [{ label: 'Inicio', value: shortDate(event.start_date) }];
-  if (event.end_date) metrics.push({ label: 'Fin', value: shortDate(event.end_date) });
+  // Mismo formato que la timeline ("jun 2027"): un hito se piensa en meses,
+  // y el "1/7/2026" de antes se leía ambiguo.
+  const metrics: ImpactMetric[] = [
+    { label: 'Inicio', value: formatShortMonthYear(event.start_date) },
+  ];
+  if (event.end_date) metrics.push({ label: 'Fin', value: formatShortMonthYear(event.end_date) });
   const moneyRows: Array<{ label: string; value: string; monthly?: boolean }> = [
     {
       label: oneOffItems.value.length ? 'Total puntual' : 'Pago inicial',
@@ -104,6 +109,13 @@ const activeScenario = computed({
 });
 
 const confirming = ref<'accept' | 'discard' | null>(null);
+
+// El panel de confirmación vive bajo la cabecera: si se llega desde el CTA del
+// final de la comparación, hay que volver a él para que la pregunta se vea.
+function beginConfirm(kind: 'accept' | 'discard'): void {
+  confirming.value = kind;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 const acceptedBudgetEntries = ref<number | null>(null);
 const eventTrace = ref<PlanEventBudgetLines | null>(null);
 const linkedEvent = computed(() =>
@@ -168,7 +180,7 @@ onMounted(async () => {
           v-if="selected?.status === 'draft'"
           variant="ghost"
           :disabled="store.saving"
-          @click="confirming = 'discard'"
+          @click="beginConfirm('discard')"
         >
           Descartar
         </AButton>
@@ -176,7 +188,7 @@ onMounted(async () => {
           v-if="selected?.status === 'draft'"
           variant="primary"
           :disabled="store.saving"
-          @click="confirming = 'accept'"
+          @click="beginConfirm('accept')"
         >
           Incorporar al plan
         </AButton>
@@ -326,11 +338,22 @@ onMounted(async () => {
         <AState v-if="store.comparisonLoading && !store.scenarioComparison" status="loading">
           Calculando comparación...
         </AState>
-        <ScenarioComparison
-          v-else-if="store.scenarioComparison"
-          :comparison="store.scenarioComparison"
-          :members="store.plan?.members"
-        />
+        <template v-else-if="store.scenarioComparison">
+          <ScenarioComparison
+            :comparison="store.scenarioComparison"
+            :members="store.plan?.members"
+          />
+          <!-- La decisión se toma tras leer la evidencia: se repiten las acciones al
+               final para no obligar a volver a la cabecera (clave en móvil). -->
+          <div v-if="selected.status === 'draft' && !confirming" class="plan-scenario-decide">
+            <AButton variant="ghost" :disabled="store.saving" @click="beginConfirm('discard')">
+              Descartar
+            </AButton>
+            <AButton variant="primary" :disabled="store.saving" @click="beginConfirm('accept')">
+              Incorporar al plan
+            </AButton>
+          </div>
+        </template>
       </template>
     </template>
   </main>

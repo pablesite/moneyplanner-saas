@@ -23,19 +23,18 @@ const { store, loading, error, plan, planMissing, projection, netWorthTimeline, 
 const router = useRouter();
 const route = useRoute();
 const assumptionsOpen = ref(false);
-type PlanTab = 'summary' | 'trajectory' | 'decisions' | 'diagnosis';
+type PlanTab = 'summary' | 'trajectory' | 'decisions';
 const planTabs: Array<{ id: PlanTab; label: string }> = [
   { id: 'summary', label: 'Resumen' },
   { id: 'trajectory', label: 'Trayectoria' },
   { id: 'decisions', label: 'Decisiones' },
-  { id: 'diagnosis', label: 'Diagnóstico' },
 ];
 
+// 'diagnosis' era un tab propio hasta la revisión UX de julio 2026: sus URLs
+// guardadas caen en Resumen, que ahora absorbe el diagnóstico completo.
 function parsePlanTab(raw: unknown): PlanTab {
   const value = Array.isArray(raw) ? raw[0] : raw;
-  return value === 'trajectory' || value === 'decisions' || value === 'diagnosis'
-    ? value
-    : 'summary';
+  return value === 'trajectory' || value === 'decisions' ? value : 'summary';
 }
 
 const activeTab = ref<PlanTab>(parsePlanTab(route.query.tab));
@@ -66,6 +65,14 @@ const visibleRecommendations = computed(() =>
 );
 
 const eventMarkers = computed(() => planEventMarkers(store.events));
+
+// Trazabilidad del cálculo: sin esto, "Recalcular" no dice si hace falta.
+const calculatedCopy = computed(() => {
+  const raw = projection.value?.calculated_at;
+  if (!raw) return null;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : `Calculado el ${date.toLocaleDateString('es-ES')}`;
+});
 
 async function simulateRecommendation(id: number): Promise<void> {
   const scenario = await store.simulateRecommendation(id);
@@ -99,15 +106,6 @@ onMounted(() => {
           </RouterLink>
           <RouterLink class="btn btn-ghost" to="/plan/setup">Editar plan</RouterLink>
         </template>
-        <!-- Acción de mantenimiento: no compite con la primaria de la cabecera. -->
-        <AButton
-          v-if="projection"
-          variant="ghost"
-          :loading="store.recalculating"
-          @click="store.recalculate()"
-        >
-          Recalcular
-        </AButton>
       </template>
     </APageHead>
 
@@ -147,8 +145,17 @@ onMounted(() => {
         </div>
       </nav>
 
+      <!-- La toolbar agrupa el contexto del cálculo: objetivo, hipótesis, parámetros
+           y recálculo con su fecha. Las navegaciones (clasificar activos) viven en la
+           sección de capital productivo del Resumen, junto al dato que explican. -->
       <div class="plan-toolbar">
-        <AMetaPill>Objetivo {{ plan.target_date.slice(0, 4) }}</AMetaPill>
+        <RouterLink
+          class="meta-pill plan-objective-link"
+          to="/plan/setup"
+          title="Editar objetivo y horizonte del plan"
+        >
+          Objetivo {{ plan.target_date.slice(0, 4) }}
+        </RouterLink>
         <label class="context-field">
           <span>Hipótesis</span>
           <ASelect
@@ -158,14 +165,22 @@ onMounted(() => {
             :searchable="false"
           />
         </label>
-        <span v-if="loading && projection" class="plan-muted" role="status">Actualizando…</span>
         <!-- "Parámetros" y no "Supuestos": convivía con el selector "Hipótesis" y eran casi sinónimos. -->
         <AButton variant="ghost" @click="assumptionsOpen = true">Parámetros</AButton>
-        <RouterLink class="btn btn-ghost" to="/plan/activos">Clasificar activos</RouterLink>
+        <AButton variant="ghost" :loading="store.recalculating" @click="store.recalculate()">
+          Recalcular
+        </AButton>
+        <span v-if="loading && projection" class="plan-muted" role="status">Actualizando…</span>
+        <AMetaPill v-else-if="calculatedCopy">{{ calculatedCopy }}</AMetaPill>
       </div>
 
       <template v-if="activeTab === 'summary'">
         <PlanHero :plan="plan" :projection="projection" :foundations="store.foundations" />
+
+        <div class="plan-main-grid">
+          <ProductiveCapitalProgress :projection="projection" />
+          <ProjectedDateCard :projection="projection" :members="plan.members" />
+        </div>
 
         <section v-if="visibleRecommendations.length" class="sect plan-recommendations">
           <div class="sect-head">
@@ -177,15 +192,18 @@ onMounted(() => {
           </div>
           <div class="plan-recommendation-list">
             <PlanRecommendationCard
-              v-for="recommendation in visibleRecommendations.slice(0, 1)"
+              v-for="(recommendation, index) in visibleRecommendations"
               :key="recommendation.id"
               :recommendation="recommendation"
+              :secondary="index > 0"
               @accept="store.acceptRecommendation"
               @dismiss="store.dismissRecommendation"
               @simulate="simulateRecommendation"
             />
           </div>
         </section>
+
+        <PlanFoundations :foundations="store.foundations" />
       </template>
 
       <NetWorthTrajectoryChart
@@ -249,29 +267,6 @@ onMounted(() => {
           :materialize-event="store.materializeEvent"
           :cancel-event="store.cancelEvent"
         />
-      </div>
-
-      <div v-if="activeTab === 'diagnosis'" class="plan-diagnosis-detail">
-        <div class="plan-main-grid">
-          <ProductiveCapitalProgress :projection="projection" />
-          <ProjectedDateCard :projection="projection" :members="plan.members" />
-        </div>
-        <section v-if="visibleRecommendations.length > 1" class="sect plan-recommendations">
-          <div class="sect-head">
-            <div>
-              <p class="eyebrow">Alternativa</p>
-              <h2 class="sect-title">Acción secundaria</h2>
-            </div>
-          </div>
-          <PlanRecommendationCard
-            :recommendation="visibleRecommendations[1]!"
-            secondary
-            @accept="store.acceptRecommendation"
-            @dismiss="store.dismissRecommendation"
-            @simulate="simulateRecommendation"
-          />
-        </section>
-        <PlanFoundations :foundations="store.foundations" />
       </div>
 
       <ProjectionAssumptionsDrawer

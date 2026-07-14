@@ -141,11 +141,15 @@ const rows = computed<Row[]>(() => {
         <span>Simulado</span>
         <span>Diferencia</span>
       </div>
+      <!-- Los tags solo se muestran cuando la fila se apila (móvil): sin la cabecera
+           de columnas, tres valores sin etiqueta no dicen cuál es cuál. -->
       <div v-for="row in rows" :key="row.label" class="plan-comparison-row">
         <strong>{{ row.label }}</strong>
-        <span>{{ row.current }}</span>
-        <span>{{ row.simulated }}</span>
-        <span :class="row.deltaTone">{{ row.delta }}</span>
+        <span><small class="plan-comparison-tag">Vigente</small>{{ row.current }}</span>
+        <span><small class="plan-comparison-tag">Simulado</small>{{ row.simulated }}</span>
+        <span :class="row.deltaTone">
+          <small class="plan-comparison-tag">Diferencia</small>{{ row.delta }}
+        </span>
       </div>
     </div>
   </section>

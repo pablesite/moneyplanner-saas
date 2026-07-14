@@ -202,6 +202,14 @@ const horizonComplete = computed(
 const lifestyleComplete = computed(() => Number(form.monthly_income) > 0);
 const futureComplete = computed(() => !form.wants_legacy || Number(form.legacy_amount) > 0);
 
+// Un "Continuar" deshabilitado sin explicación deja al usuario adivinando qué falta.
+const stepHints: Partial<Record<StepId, string>> = {
+  household: 'Para continuar, añade el nombre y la fecha de nacimiento de cada adulto.',
+  horizon: 'Revisa las edades: el dinero tiene que durar más allá de la edad de independencia.',
+  lifestyle: 'Indica con cuánto quieres vivir al mes para poder continuar.',
+  future: 'Escribe el patrimonio a preservar o marca que no hace falta.',
+};
+
 const stepComplete = computed<Record<StepId, boolean>>(() => ({
   household: householdComplete.value,
   income: true,
@@ -214,6 +222,9 @@ const stepComplete = computed<Record<StepId, boolean>>(() => ({
   summary: true,
 }));
 const canAdvance = computed(() => stepComplete.value[currentStep.value]);
+const pendingHint = computed(() =>
+  canAdvance.value ? null : (stepHints[currentStep.value] ?? null),
+);
 
 const steps = computed(() =>
   stepIds.value.map((id, index) => ({
@@ -990,9 +1001,13 @@ onMounted(() => {
       </dl>
     </section>
 
+    <p v-if="pendingHint" class="plan-setup-hint" role="status">{{ pendingHint }}</p>
+
     <div class="plan-setup-actions">
       <AButton v-if="stepIndex > 0" variant="ghost" @click="goTo(stepIndex - 1)">Atrás</AButton>
-      <RouterLink v-else class="btn btn-ghost" to="/plan">Cancelar</RouterLink>
+      <!-- Salida visible en todos los pasos: lo respondido hasta aquí no se pierde
+           (los pasos de siembra ya guardaron en Presupuesto al avanzar). -->
+      <RouterLink class="btn btn-ghost plan-setup-exit" to="/plan">Salir</RouterLink>
       <AButton
         v-if="!isLastStep"
         variant="primary"

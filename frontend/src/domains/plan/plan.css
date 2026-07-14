@@ -3,9 +3,14 @@
   gap: 18px;
 }
 
+/* Sticky: cambiar de sección en una página larga nunca exige volver arriba. */
 .plan-tabs-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   overflow-x: auto;
   border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 
 .plan-tabs-bar .tabs {
@@ -185,6 +190,25 @@
 
 .plan-progress-percent {
   font-size: 2rem;
+}
+
+.plan-progress-head-side {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  align-content: start;
+}
+
+/* La pill "Objetivo" es enlace al setup: mismo chrome que meta-pill + affordance. */
+.plan-objective-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.plan-objective-link:hover,
+.plan-objective-link:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .plan-progress-track {
@@ -578,12 +602,32 @@
   gap: 10px;
 }
 
-.plan-scenarios-page .plan-scenario-list {
-  order: 1;
+/* El simulador abierto va primero (orden DOM): la acción pedida no se esconde
+   tras la lista. Cerrado, la lista es lo único visible. */
+
+.plan-scenario-reassurance {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
-.plan-scenarios-page .plan-form-section {
-  order: 2;
+/* En móvil el CTA de crear escenario queda fijo sobre la bottom-nav. */
+@container page (max-width: 560px) {
+  .plan-scenarios-page .plan-scenario-submit {
+    position: sticky;
+    bottom: 84px;
+    z-index: 15;
+    flex-direction: row;
+    align-items: center;
+    margin-inline: -14px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+  }
+
+  .plan-scenarios-page .plan-scenario-submit .btn {
+    width: auto;
+    flex: 1;
+  }
 }
 
 .plan-event-list {
@@ -788,6 +832,10 @@
   max-width: 360px;
 }
 
+.plan-assets-back {
+  flex: 0 0 auto;
+}
+
 .plan-assets-group {
   margin-top: 14px;
 }
@@ -803,11 +851,15 @@
   padding: 10px 0;
   border: 0;
   border-top: 1px solid var(--line);
-  background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  /* Debajo de la barra de búsqueda sticky: el grupo se sabe siempre dónde estás. */
+  position: sticky;
+  top: 58px;
+  z-index: 1;
+  background: var(--panel);
 }
 
 .plan-scenario-trace {
@@ -926,6 +978,12 @@
   align-items: stretch;
 }
 
+/* Paneles inline de la fila (confirmación o éxito): ocupan su propia línea
+   dentro del li flex sin que la lista desaparezca. */
+.plan-event-list li > .plan-event-row-panel {
+  flex: 1 0 100%;
+}
+
 .plan-event-close-confirm > div:first-child {
   display: grid;
   gap: 6px;
@@ -957,6 +1015,19 @@
   border-top: 1px solid var(--line);
 }
 
+/* Acciones repetidas tras la evidencia de la comparación (detalle de escenario). */
+.plan-scenario-decide {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@container page (max-width: 560px) {
+  .plan-scenario-decide .btn {
+    flex: 1;
+  }
+}
+
 .plan-comparison-table {
   display: grid;
   gap: 0;
@@ -973,6 +1044,11 @@
 
 .plan-comparison-row span {
   font-family: var(--font-mono);
+}
+
+/* Solo existen cuando la fila se apila sin cabecera de columnas (md hacia abajo). */
+.plan-comparison-tag {
+  display: none;
 }
 
 /* Tono semántico por mejora/empeoramiento, como los deltas de Patrimonio. */
@@ -1124,6 +1200,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+/* "Salir" queda con la navegación (izquierda); "Continuar" conserva la derecha. */
+.plan-setup-actions .plan-setup-exit {
+  margin-right: auto;
+}
+
+/* Qué falta para poder continuar, en palabras y pegado a las acciones. */
+.plan-setup-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: right;
 }
 
 .plan-member-meta {
@@ -1385,9 +1474,28 @@
     min-width: 0;
   }
 
-  .plan-comparison-head,
+  /* Apilada, la cabecera de columnas ya no aplica: cada valor lleva su etiqueta. */
+  .plan-comparison-head {
+    display: none;
+  }
+
   .plan-comparison-row {
     grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .plan-comparison-row span {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .plan-comparison-tag {
+    display: inline;
+    color: var(--muted);
+    font-family: var(--font-sans, inherit);
+    font-size: 0.85rem;
   }
 
   .plan-milestones {
@@ -1469,9 +1577,11 @@
     min-width: 520px;
   }
 
-  .plan-chart-legend span:nth-child(1),
-  .plan-chart-legend span:nth-child(2) {
-    display: none;
+  /* Todas las series siguen teniendo leyenda: se compacta en rejilla, no se oculta. */
+  .plan-chart-legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 14px;
   }
 
   /* Tres KPIs en 3 columnas no caben a 390px sin que los valores se toquen. */
@@ -1479,28 +1589,48 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .plan-toolbar,
   .plan-setup-actions,
   .plan-progress-meta {
     align-items: stretch;
     flex-direction: column;
   }
 
+  /* Context rail de una fila con scroll horizontal (mismo patrón que Patrimonio):
+     el chrome previo al contenido se queda en una franja, no en tres filas. */
   .plan-toolbar {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 
   .plan-toolbar > * {
+    flex: 0 0 auto;
     min-width: 0;
   }
 
-  .plan-toolbar .context-field,
-  .plan-toolbar .btn,
+  .plan-toolbar .context-field {
+    min-width: 150px;
+  }
+
   .plan-setup-actions .btn,
   .plan-empty-inline .btn,
   .plan-scenario-notice .btn {
     width: 100%;
+  }
+
+  /* Objetivo táctil mínimo de 44px para toda la interacción del plan en móvil. */
+  .plan-page .btn,
+  .plan-page .filter-ctrl,
+  .plan-page .plan-details-toggle,
+  .plan-page .input {
+    min-height: 44px;
+  }
+
+  .plan-tabs-bar .tab {
+    padding: 14px 2px;
+  }
+
+  .plan-tabs-bar .tabs {
+    gap: 18px;
   }
 
   .plan-page {

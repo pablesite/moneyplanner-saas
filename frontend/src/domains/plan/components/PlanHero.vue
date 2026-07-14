@@ -20,9 +20,8 @@ const gap = computed(() =>
   projectedYear.value == null ? null : Number(projectedYear.value) - Number(targetYear.value),
 );
 
-const targetCopy = computed(
-  () => `${formatMoney(props.plan.target_monthly_income_today_eur)} / mes`,
-);
+// Sin "/ mes" en el valor: a 390px partía la cifra en dos líneas a mitad de unidad.
+const targetCopy = computed(() => formatMoney(props.plan.target_monthly_income_today_eur));
 const sustainableShare = computed(() => {
   const target = Number(props.plan.target_monthly_income_today_eur || 0);
   const sustainable = Number(summary.value.monthly_sustainable_income.value || 0);
@@ -46,8 +45,9 @@ const hasAnyAssets = computed(
   () => Number(props.foundations?.net_worth_health?.assets_value ?? 0) > 0,
 );
 
+// También con fecha proyectada: si la salud es crítica (0 activos, capital sin
+// clasificar, déficit), el "por qué" del desvío debe leerse sin cambiar de pantalla.
 const specificBlockers = computed<Blocker[]>(() => {
-  if (gap.value != null) return [];
   const items: Blocker[] = [];
   const unknownCapital = Number(props.projection.classification?.unknown_capital ?? 0);
   const monthlyContribution = Number(props.foundations?.planned_contribution?.monthly_amount ?? 0);
@@ -92,8 +92,8 @@ const specificBlockers = computed<Blocker[]>(() => {
 });
 
 const blockers = computed<Blocker[]>(() => {
-  if (gap.value != null) return [];
   if (specificBlockers.value.length) return specificBlockers.value;
+  if (gap.value != null) return [];
   return [
     {
       text: 'Con los datos actuales el capital no alcanza el objetivo dentro del horizonte proyectado.',
@@ -102,6 +102,10 @@ const blockers = computed<Blocker[]>(() => {
     },
   ];
 });
+
+const blockersTitle = computed(() =>
+  gap.value == null ? 'Por qué no hay fecha' : 'Qué está frenando el plan',
+);
 
 const deltaCopy = computed(() => {
   if (gap.value == null) {
@@ -123,16 +127,20 @@ const deltaTone = computed(() => {
   return gap.value > 0 ? 'neg' : 'pos';
 });
 
+// La renta sostenible hereda la señal semántica de los deltas: por debajo del
+// objetivo es el aviso más accionable del hero, no un metadato neutro.
+const sustainableTone = computed(() => (sustainableShare.value >= 100 ? 'pos' : 'neg'));
+const sustainableMeta = computed(() => `${sustainableShare.value} % de tu objetivo mensual`);
+
 const kpis = computed<AKpiItem[]>(() => [
   {
     label: 'Nivel de vida objetivo',
     value: targetCopy.value,
-    meta: 'Euros actuales',
+    meta: 'Al mes, en euros de hoy',
   },
   {
     label: 'Renta sostenible',
     value: formatMoney(summary.value.monthly_sustainable_income.value),
-    meta: `${sustainableShare.value} % de tu objetivo mensual`,
   },
   {
     label: 'Hipótesis',
@@ -156,7 +164,7 @@ const kpis = computed<AKpiItem[]>(() => [
         />
       </template>
       <div v-if="blockers.length" class="plan-hero-blockers">
-        <strong>Por qué no hay fecha</strong>
+        <strong>{{ blockersTitle }}</strong>
         <ul>
           <li v-for="item in blockers" :key="item.text">
             <span>{{ item.text }}</span>
@@ -167,7 +175,11 @@ const kpis = computed<AKpiItem[]>(() => [
     </AHero>
 
     <div class="plan-hero-side">
-      <AKpiBand :items="kpis" />
+      <AKpiBand :items="kpis">
+        <template #meta-1>
+          <span :class="sustainableTone">{{ sustainableMeta }}</span>
+        </template>
+      </AKpiBand>
       <p class="plan-hero-note">
         Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
         productivo, no patrimonio neto total.

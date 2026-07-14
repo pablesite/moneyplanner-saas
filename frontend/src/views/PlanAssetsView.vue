@@ -15,7 +15,6 @@ const assets = computed(() => classification.value?.assets ?? []);
 
 const search = ref('');
 const activeFunction = ref<PlanAssetFunction | null>(null);
-const collapsedGroups = ref<Set<PlanAssetFunction>>(new Set(['family_use']));
 
 // Sin clasificar primero: es lo único que bloquea la proyección.
 const functionOrder: PlanAssetFunction[] = [
@@ -25,6 +24,12 @@ const functionOrder: PlanAssetFunction[] = [
   'short_term_goal',
   'family_use',
 ];
+
+// Todo plegado salvo "Sin clasificar" (lo único accionable de entrada): con
+// decenas de posiciones, la página pasaba de las 9.000px en móvil.
+const collapsedGroups = ref<Set<PlanAssetFunction>>(
+  new Set(functionOrder.filter((fn) => fn !== 'unknown')),
+);
 
 const summary = computed(() => {
   if (!classification.value) return [];
@@ -75,6 +80,11 @@ const groups = computed(() =>
 );
 
 const hasActiveFilter = computed(() => Boolean(search.value.trim() || activeFunction.value));
+
+// Buscar o filtrar expande las coincidencias: un grupo plegado haría invisible el resultado.
+function isGroupCollapsed(fn: PlanAssetFunction): boolean {
+  return collapsedGroups.value.has(fn) && !hasActiveFilter.value;
+}
 
 const unknownCount = computed(
   () => assets.value.filter((asset) => asset.function === 'unknown').length,
@@ -141,7 +151,21 @@ onMounted(() => {
     </AState>
     <AState v-if="error" status="error">{{ error }}</AState>
 
-    <template v-if="classification">
+    <!-- Sin activos no hay nada que clasificar: fuera tiles a 0,00 € y buscador
+         vacío; una sola acción clara hacia Patrimonio. -->
+    <AState v-if="classification && !assets.length" status="empty" class="plan-onboarding">
+      <div class="plan-empty">
+        <p class="eyebrow">Sin activos</p>
+        <h2>Aún no hay nada que clasificar</h2>
+        <p>
+          Registra tus activos y pasivos en Patrimonio. Después podrás asignar aquí la función de
+          cada uno y la proyección tendrá una base real desde la que crecer.
+        </p>
+        <RouterLink class="btn btn-primary" to="/patrimonio">Registrar en Patrimonio</RouterLink>
+      </div>
+    </AState>
+
+    <template v-else-if="classification">
       <section class="sect plan-assets-summary-sect">
         <div class="sect-head">
           <div>
@@ -183,6 +207,8 @@ onMounted(() => {
         </div>
 
         <div class="plan-assets-toolbar">
+          <!-- La barra es sticky: la vuelta a Mi Plan viaja con el scroll en listas largas. -->
+          <RouterLink class="btn btn-ghost btn-sm plan-assets-back" to="/plan">Mi Plan</RouterLink>
           <input
             v-model="search"
             class="input"
@@ -200,14 +226,7 @@ onMounted(() => {
           </button>
         </div>
 
-        <div v-if="!assets.length" class="plan-empty-inline">
-          <p class="plan-muted">No hay activos registrados todavía.</p>
-          <RouterLink class="btn btn-ghost btn-sm" to="/patrimonio"
-            >Registrar en Patrimonio</RouterLink
-          >
-        </div>
-
-        <div v-else-if="!groups.length" class="plan-empty-inline">
+        <div v-if="!groups.length" class="plan-empty-inline">
           <p class="plan-muted">Ningún activo coincide con el filtro actual.</p>
           <button type="button" class="btn btn-ghost btn-sm" @click="clearFilters">
             Limpiar filtros
@@ -219,17 +238,17 @@ onMounted(() => {
             <button
               type="button"
               class="plan-assets-group-head"
-              :aria-expanded="!collapsedGroups.has(group.fn)"
+              :aria-expanded="!isGroupCollapsed(group.fn)"
               @click="toggleGroup(group.fn)"
             >
               <strong>{{ group.label }}</strong>
               <span>
                 {{ group.items.length }} activo{{ group.items.length === 1 ? '' : 's' }} ·
                 {{ formatMoney(group.total) }} ·
-                {{ collapsedGroups.has(group.fn) ? 'Ver' : 'Ocultar' }}
+                {{ isGroupCollapsed(group.fn) ? 'Ver' : 'Ocultar' }}
               </span>
             </button>
-            <ul v-if="!collapsedGroups.has(group.fn)" class="plan-assets-list">
+            <ul v-if="!isGroupCollapsed(group.fn)" class="plan-assets-list">
               <li v-for="asset in group.items" :key="asset.asset_id" class="plan-asset-row">
                 <div class="plan-asset-info">
                   <strong>{{ asset.name }}</strong>
