@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { AButton, APageHead, AState, AStepper } from '@/domains/ui';
+import { PlanExpenseEqualizer } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import { ageAtDate, dateAtAge } from '@/domains/plan/age';
 import type { HouseholdType, PlanMember, PlanMemberPayload, PlanProfile } from '@/domains/plan';
@@ -128,18 +129,27 @@ const contributionSeedForm = reactive({
   monthly: '',
 });
 
+/** Ingresos declarados en el paso anterior: tope del ecualizador de gastos. */
+const seedMonthlyIncome = computed(() => {
+  const income =
+    Number(incomeSeedForm.salary_monthly || 0) + Number(incomeSeedForm.other_monthly || 0);
+  return income > 0 ? income : null;
+});
+
 /** Sugerencia a validar por el usuario, no relleno silencioso: mismo patrón que
  * lifestyleChoices en el paso "Con cuánto". */
 const estimatedMonthlySurplus = computed(() => {
-  const income =
-    Number(incomeSeedForm.salary_monthly || 0) + Number(incomeSeedForm.other_monthly || 0);
   const expenses = expenseSeedFields.reduce(
     (sum, field) => sum + Number(expenseSeedForm[field.value] || 0),
     0,
   );
-  const surplus = Math.round(income - expenses);
+  const surplus = Math.round((seedMonthlyIncome.value ?? 0) - expenses);
   return surplus > 0 ? surplus : null;
 });
+
+function onExpenseSeedUpdate(next: Record<string, string>): void {
+  Object.assign(expenseSeedForm, next);
+}
 
 const currentStep = computed<StepId>(() => stepIds.value[stepIndex.value]!);
 const isLastStep = computed(() => stepIndex.value === stepIds.value.length - 1);
@@ -612,30 +622,21 @@ onMounted(() => {
       <div class="sect-head">
         <div>
           <p class="eyebrow">Antes de seguir</p>
-          <h2 class="sect-title">¿Cuánto gastas al mes en cada categoría?</h2>
+          <h2 class="sect-title">Reparte tus ingresos entre categorías</h2>
           <p class="sect-sub">
-            Aproximado basta. Cada categoría que rellenes se guarda como partida en Presupuesto; las
-            que dejes en blanco no se crean, puedes añadirlas luego.
+            Aproximado basta: sube cada barra hasta lo que gastas al mes. Las barras no pueden
+            superar tus ingresos, y lo que quede libre será tu capacidad de ahorro. Cada categoría
+            con importe se guarda como partida en Presupuesto.
           </p>
         </div>
       </div>
 
-      <div class="plan-form-grid">
-        <label v-for="field in expenseSeedFields" :key="field.value">
-          <span>{{ field.label }}</span>
-          <div class="plan-money-field">
-            <input
-              v-model="expenseSeedForm[field.value]"
-              class="input"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="10"
-            />
-            <span aria-hidden="true">€/mes</span>
-          </div>
-        </label>
-      </div>
+      <PlanExpenseEqualizer
+        :fields="expenseSeedFields"
+        :model-value="expenseSeedForm"
+        :monthly-income="seedMonthlyIncome"
+        @update:model-value="onExpenseSeedUpdate"
+      />
     </section>
 
     <section v-else-if="currentStep === 'contribution'" class="sect plan-form-section">

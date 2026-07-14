@@ -1474,6 +1474,78 @@
   white-space: nowrap;
 }
 
+/* Ecualizador de gastos del asistente: una barra vertical por categoría,
+   con los ingresos como escala común y el restante siempre a la vista. */
+.plan-eq {
+  display: grid;
+  gap: 16px;
+}
+
+.plan-eq-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.plan-eq-summary strong {
+  color: var(--text);
+}
+
+.plan-eq-summary strong.pos {
+  color: var(--pos);
+}
+
+.plan-eq-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(76px, 1fr);
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.plan-eq-col {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  align-content: end;
+}
+
+.plan-eq-amount {
+  min-height: 1.2em;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.plan-eq-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 32px;
+  height: 150px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.plan-eq-input {
+  width: 100%;
+  max-width: 92px;
+  min-height: 36px;
+  padding: 4px 6px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.plan-eq-label {
+  min-height: 2.3em;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.15;
+  text-align: center;
+}
+
 @container page (max-width: 820px) {
   .plan-hero,
   .plan-main-grid,
