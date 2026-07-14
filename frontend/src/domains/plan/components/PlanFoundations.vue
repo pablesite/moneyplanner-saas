@@ -52,6 +52,33 @@ function surplusText(value: string | null | undefined): string {
     ? `Déficit ${formatMoney(Math.abs(amount))}/mes`
     : `Superávit ${formatMoney(amount)}/mes`;
 }
+
+// Los factores de calidad vienen del motor (DataQualityService); aquí solo
+// se traducen para que "faltan: contabilidad, pensiones" sea legible.
+const QUALITY_FACTOR_LABELS: Record<string, string> = {
+  assets: 'activos',
+  liabilities_reviewed: 'pasivos revisados',
+  budget: 'presupuesto de ingresos y gastos',
+  accounting_history: 'histórico contable',
+  pensions: 'pensiones estimadas',
+  contributions: 'aportación planificada',
+  fresh_data: 'datos recientes',
+  employment_income_end_dates: 'fin de ingresos laborales',
+  expenses_classified: 'gastos clasificados',
+  one_off_income_excluded: 'ingresos puntuales excluidos',
+};
+
+function qualitySummary(flags: Record<string, boolean>): string {
+  const entries = Object.entries(flags);
+  if (!entries.length) return '';
+  const missing = entries
+    .filter(([, passed]) => !passed)
+    .map(([key]) => QUALITY_FACTOR_LABELS[key] ?? key);
+  if (!missing.length) return `${entries.length} de ${entries.length} factores cubiertos`;
+  const shown = missing.slice(0, 3).join(', ');
+  const extra = missing.length > 3 ? ` y ${missing.length - 3} más` : '';
+  return `Faltan: ${shown}${extra}`;
+}
 </script>
 
 <template>
@@ -75,14 +102,22 @@ function surplusText(value: string | null | undefined): string {
           Ingresos {{ monthlyMoney(foundations.cash_flow.structural_annual_income) }}/mes · Gastos
           {{ monthlyMoney(foundations.cash_flow.structural_operating_expense) }}/mes
         </small>
-        <small>{{ surplusText(foundations.cash_flow.committed_surplus) }}</small>
+        <small>
+          {{ surplusText(foundations.cash_flow.committed_surplus)
+          }}<template v-if="foundations.cash_flow.operating_surplus_ratio">
+            · margen {{ formatPct(toNumber(foundations.cash_flow.operating_surplus_ratio), 1) }}
+          </template>
+        </small>
       </article>
       <article>
         <span>Fondo de emergencia</span>
         <strong :class="tone(foundations.emergency_fund.status)">
           {{ months(foundations.emergency_fund.coverage_months_base) }}
         </strong>
-        <small>Objetivo {{ months(foundations.emergency_fund.target_months) }}</small>
+        <small>
+          Objetivo {{ months(foundations.emergency_fund.target_months) }} · caja y depósitos
+          {{ money(foundations.emergency_fund.eligible_liquidity) }}
+        </small>
       </article>
       <article>
         <span>Deuda</span>
@@ -106,8 +141,9 @@ function surplusText(value: string | null | undefined): string {
         <strong :class="tone(foundations.data_quality.status)">
           {{ scoreLabel(foundations.data_quality.score) }}
         </strong>
-        <small v-if="foundations.cash_flow.operating_surplus_ratio">
-          Margen {{ formatPct(toNumber(foundations.cash_flow.operating_surplus_ratio), 1) }}
+        <!-- Antes aquí se mostraba el margen del flujo de caja: era de otro cimiento. -->
+        <small v-if="qualitySummary(foundations.data_quality.flags)">
+          {{ qualitySummary(foundations.data_quality.flags) }}
         </small>
       </article>
     </div>
