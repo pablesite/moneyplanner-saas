@@ -29,13 +29,20 @@ function months(value: string | null | undefined): string {
   return `${formatNumber(toNumber(value), 1)} meses`;
 }
 
+// Los campos de cash_flow vienen en anual; aquí se muestran en mensual para
+// que se lean junto a "Aportación planificada" y el resto de cifras del plan.
+function monthlyMoney(value: string | null | undefined): string {
+  if (value == null) return '-';
+  return formatMoney(toNumber(value) / 12);
+}
+
 // Un "superávit" negativo se lee como contradicción: se etiqueta como déficit.
 function surplusText(value: string | null | undefined): string {
   if (value == null) return 'Superávit -';
-  const amount = toNumber(value);
+  const amount = toNumber(value) / 12;
   return amount < 0
-    ? `Déficit ${formatMoney(Math.abs(amount))}`
-    : `Superávit ${formatMoney(amount)}`;
+    ? `Déficit ${formatMoney(Math.abs(amount))}/mes`
+    : `Superávit ${formatMoney(amount)}/mes`;
 }
 </script>
 
@@ -56,6 +63,10 @@ function surplusText(value: string | null | undefined): string {
         <strong :class="tone(foundations.cash_flow.status)">
           {{ scoreLabel(foundations.cash_flow.score) }}
         </strong>
+        <small>
+          Ingresos {{ monthlyMoney(foundations.cash_flow.structural_annual_income) }}/mes · Gastos
+          {{ monthlyMoney(foundations.cash_flow.structural_operating_expense) }}/mes
+        </small>
         <small>{{ surplusText(foundations.cash_flow.committed_surplus) }}</small>
       </article>
       <article>
