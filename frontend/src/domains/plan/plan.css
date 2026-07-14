@@ -154,7 +154,6 @@
 .plan-foundations,
 .plan-trajectory,
 .plan-form-section,
-.plan-date-card,
 .plan-recommendations {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -168,24 +167,6 @@
 .plan-form-section,
 .plan-recommendations {
   padding: 18px;
-}
-
-.plan-date-card {
-  display: grid;
-  align-content: start;
-  gap: 14px;
-  padding: 18px;
-}
-
-.plan-date-card h3 {
-  margin: 0;
-  font-size: clamp(1.8rem, 3vw, 3rem);
-  line-height: 1;
-}
-
-.plan-date-card p {
-  margin: 0;
-  color: var(--muted);
 }
 
 .plan-progress-percent {
@@ -530,6 +511,24 @@
 
 .plan-foundation-grid small {
   color: var(--muted);
+}
+
+/* Variante compacta (tarjeta lateral del Resumen): etiqueta y valor en una
+   fila, metas debajo a ancho completo. El diagnóstico cabe junto al progreso. */
+.plan-foundations.is-compact .plan-foundation-grid article {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: baseline;
+}
+
+.plan-foundations.is-compact .plan-foundation-grid strong {
+  font-size: 1rem;
+  text-align: right;
+}
+
+.plan-foundations.is-compact .plan-foundation-grid small {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
 }
 
 .plan-recommendation-list {
@@ -1074,13 +1073,11 @@
 
 /* Tono semántico por mejora/empeoramiento, como los deltas de Patrimonio. */
 .plan-comparison-row .pos,
-.plan-date-card .pos,
 .plan-foundation-grid .pos {
   color: var(--pos);
 }
 
 .plan-comparison-row .neg,
-.plan-date-card .neg,
 .plan-foundation-grid .neg {
   color: var(--neg);
 }
@@ -1584,8 +1581,7 @@
   .plan-foundations,
   .plan-trajectory,
   .plan-form-section,
-  .plan-recommendations,
-  .plan-date-card {
+  .plan-recommendations {
     padding: 14px;
   }
 

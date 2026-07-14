@@ -8,7 +8,6 @@ import {
   PlanHero,
   PlanEventsTimeline,
   ProductiveCapitalProgress,
-  ProjectedDateCard,
   ProjectionAssumptionsDrawer,
   PlanRecommendationCard,
 } from '@/domains/plan/components';
@@ -177,9 +176,12 @@ onMounted(() => {
       <template v-if="activeTab === 'summary'">
         <PlanHero :plan="plan" :projection="projection" :foundations="store.foundations" />
 
+        <!-- La tarjeta de fechas se retiró: el hero ya da fecha proyectada y desvío,
+             y la pill "Objetivo" el año objetivo. Su hueco es de los cimientos,
+             que son el porqué del plan y estaban enterrados al fondo. -->
         <div class="plan-main-grid">
           <ProductiveCapitalProgress :projection="projection" />
-          <ProjectedDateCard :projection="projection" :members="plan.members" />
+          <PlanFoundations :foundations="store.foundations" compact />
         </div>
 
         <section v-if="visibleRecommendations.length" class="sect plan-recommendations">
@@ -202,8 +204,6 @@ onMounted(() => {
             />
           </div>
         </section>
-
-        <PlanFoundations :foundations="store.foundations" />
       </template>
 
       <NetWorthTrajectoryChart

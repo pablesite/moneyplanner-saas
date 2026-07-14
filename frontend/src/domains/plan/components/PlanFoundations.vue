@@ -4,6 +4,8 @@ import { formatMoney, formatNumber, formatPct, toNumber } from '@/lib/format';
 
 defineProps<{
   foundations: PlanFoundations | null;
+  /** Variante de tarjeta lateral: filas etiqueta-valor en vez de bloques apilados. */
+  compact?: boolean;
 }>();
 
 // La banda la decide Core (health_status); aquí solo se traduce a color.
@@ -53,12 +55,12 @@ function surplusText(value: string | null | undefined): string {
 </script>
 
 <template>
-  <section class="sect plan-foundations">
+  <section class="sect plan-foundations" :class="{ 'is-compact': compact }">
     <div class="sect-head">
       <div>
         <p class="eyebrow">Cimientos</p>
-        <h2 class="sect-title">Diagnóstico compacto</h2>
-        <p class="sect-sub">
+        <h2 class="sect-title">{{ compact ? 'Diagnóstico' : 'Diagnóstico compacto' }}</h2>
+        <p v-if="!compact" class="sect-sub">
           Flujo de caja, fondo de emergencia, deuda, aportación y calidad de datos.
         </p>
       </div>
