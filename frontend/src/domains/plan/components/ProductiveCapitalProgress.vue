@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AInfoHint } from '@/domains/ui';
+import { useAnnualExpenseStore } from '@/domains/budget/annual-entries';
+import { budgetCapitalMilestones } from '@/domains/plan/budgetMilestones';
 import { formatMoney, formatNumber, formatPct } from '@/lib/format';
 import type { ProjectionResponse } from '@/domains/plan/types';
 
@@ -14,15 +16,44 @@ const productiveCapital = computed(() => props.projection.summary.productive_cap
 const targetCapital = computed(() => props.projection.summary.target_capital.value);
 
 // La renta sostenible de Core es exactamente capital × tasa de retirada / 12:
-// con la misma fórmula, cada hito puede decir qué renta mensual sostiene.
+// con esa fórmula, cada grupo de gasto se traduce al capital que lo paga.
 const withdrawalRate = computed(() => Number(props.projection.assumptions?.withdrawal_rate ?? 0));
 
-const milestones = computed(() => {
+// Hitos anclados al presupuesto real: se cargan las partidas del año en curso
+// y los tramos se recalculan cada vez que el presupuesto cambia.
+const expenseStore = useAnnualExpenseStore();
+const fiscalYear = new Date().getFullYear();
+onMounted(() => void expenseStore.loadAll(fiscalYear));
+
+type ProgressMilestone = {
+  label: string;
+  detail: string;
+  positionPct: number | null;
+  beyondTarget: boolean;
+  reached: boolean;
+};
+
+const budgetMilestones = computed<ProgressMilestone[]>(() =>
+  budgetCapitalMilestones({
+    entries: expenseStore.entries.value,
+    fiscalYear,
+    withdrawalRate: withdrawalRate.value,
+    productiveCapital: Number(productiveCapital.value || 0),
+    targetCapital: Number(targetCapital.value || 0),
+  }).map((milestone) => ({
+    label: milestone.label,
+    detail: `${formatMoney(milestone.monthlyExpense)}/mes · necesita ${formatMoney(milestone.capitalNeeded)}`,
+    positionPct: milestone.positionPct,
+    beyondTarget: milestone.positionPct != null && milestone.positionPct > 100,
+    reached: milestone.reached,
+  })),
+);
+
+// Sin presupuesto que ancle los tramos, los cuartos del objetivo siguen dando
+// una referencia de avance honesta (marcas de regla, sin pretensión semántica).
+const fallbackMilestones = computed<ProgressMilestone[]>(() => {
   const target = Number(targetCapital.value || 0);
   const capital = Number(productiveCapital.value || 0);
-  // Cuartos del capital requerido: marcas de regla sin pretensión semántica.
-  // Los antiguos nombres ("Base flexible", "Vida completa") sugerían cálculos
-  // que no existían; el significado real de cada marca es la renta que da.
   const rows = [
     { label: '1/4 del objetivo', ratio: 0.25 },
     { label: 'Mitad del objetivo', ratio: 0.5 },
@@ -31,22 +62,39 @@ const milestones = computed(() => {
   ];
   return rows.map((row) => {
     const amount = target > 0 ? target * row.ratio : null;
+    const income =
+      amount != null && withdrawalRate.value > 0 ? (amount * withdrawalRate.value) / 12 : null;
     return {
-      ...row,
-      pct: Math.round(row.ratio * 100),
-      amount,
-      monthlyIncome:
-        amount != null && withdrawalRate.value > 0 ? (amount * withdrawalRate.value) / 12 : null,
+      label: row.label,
+      detail:
+        amount != null
+          ? `${formatMoney(amount)}${income != null ? ` · renta de ${formatMoney(income)}/mes` : ''}`
+          : `${Math.round(row.ratio * 100)} % del capital requerido`,
+      positionPct: row.ratio * 100,
+      beyondTarget: false,
       reached: target > 0 && capital >= target * row.ratio,
-      markerClass: `m-${Math.round(row.ratio * 100)}`,
     };
   });
 });
 
+const usingBudgetMilestones = computed(() => budgetMilestones.value.length > 0);
+const milestones = computed(() =>
+  usingBudgetMilestones.value ? budgetMilestones.value : fallbackMilestones.value,
+);
+
+function markerLeft(milestone: ProgressMilestone): string {
+  return `${Math.min(milestone.positionPct ?? 100, 100)}%`;
+}
+
 const milestonesHint = computed(() => {
-  const base = 'Marcas a cuartos del capital requerido, como referencia de avance.';
-  if (withdrawalRate.value <= 0) return base;
-  return `${base} La renta de cada hito aplica tu tasa de retirada del escenario activo (${formatPct(withdrawalRate.value, 1)}), la misma fórmula que la renta sostenible.`;
+  const rate = withdrawalRate.value > 0 ? formatPct(withdrawalRate.value, 1) : null;
+  if (usingBudgetMilestones.value) {
+    return `Tramos acumulados de tu presupuesto de gastos recurrentes del año en curso: si el presupuesto cambia, los hitos cambian. Capital necesario = gasto anual / tasa de retirada${rate ? ` (${rate})` : ''}, la misma fórmula que la renta sostenible.`;
+  }
+  const base =
+    'Marcas a cuartos del capital requerido, como referencia de avance. Se anclarán a tus gastos reales cuando tengas presupuesto cargado.';
+  if (!rate) return base;
+  return `${base} La renta de cada hito aplica tu tasa de retirada del escenario activo (${rate}).`;
 });
 </script>
 
@@ -78,8 +126,9 @@ const milestonesHint = computed(() => {
         v-for="milestone in milestones"
         :key="milestone.label"
         class="plan-progress-mark"
-        :class="[{ reached: milestone.reached }, milestone.markerClass]"
-        :title="`${milestone.label} · ${milestone.pct} %`"
+        :class="{ reached: milestone.reached, beyond: milestone.beyondTarget }"
+        :style="{ left: markerLeft(milestone) }"
+        :title="milestone.label"
         aria-hidden="true"
       ></span>
     </div>
@@ -90,7 +139,7 @@ const milestonesHint = computed(() => {
     </div>
 
     <div class="plan-milestones-head">
-      <span>Hitos del camino</span>
+      <span>{{ usingBudgetMilestones ? 'Qué cubre ya tu capital' : 'Hitos del camino' }}</span>
       <AInfoHint :label="milestonesHint" />
     </div>
     <ol class="plan-milestones">
@@ -102,13 +151,10 @@ const milestonesHint = computed(() => {
         <span></span>
         <div class="plan-milestone-copy">
           <strong>{{ milestone.label }}</strong>
-          <small v-if="milestone.amount != null">
-            {{ formatMoney(milestone.amount) }}
-            <template v-if="milestone.monthlyIncome != null">
-              · renta de {{ formatMoney(milestone.monthlyIncome) }}/mes</template
-            >
+          <small>
+            {{ milestone.detail
+            }}<template v-if="milestone.beyondTarget"> · por encima de tu objetivo</template>
           </small>
-          <small v-else>{{ milestone.pct }} % del capital requerido</small>
         </div>
       </li>
     </ol>

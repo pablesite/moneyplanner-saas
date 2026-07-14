@@ -253,20 +253,10 @@
   background: var(--pos);
 }
 
-.plan-progress-mark.m-25 {
-  left: 25%;
-}
-
-.plan-progress-mark.m-50 {
-  left: 50%;
-}
-
-.plan-progress-mark.m-75 {
-  left: 75%;
-}
-
-.plan-progress-mark.m-100 {
-  left: 100%;
+/* Hito cuyo capital necesario supera el objetivo: punto hueco pegado al final. */
+.plan-progress-mark.beyond {
+  background: var(--panel);
+  border-color: var(--muted);
 }
 
 .plan-progress-meta,
