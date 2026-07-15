@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.39.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.38.0...moneyplanner-saas-v0.39.0) (2026-07-15)
+
+
+### Features
+
+* **frontend:** añadir paso de ahorro/inversión al asistente de Mi Plan ([6e148e6](https://github.com/pablesite/moneyplanner-saas/commit/6e148e61c16e9670197572c413eff56df13f2375))
+* **frontend:** ecualizador de gastos por categoría en el setup del plan ([fbd6ae2](https://github.com/pablesite/moneyplanner-saas/commit/fbd6ae2345fb3c4be6bfc93bf2db5947c8516266))
+* **frontend:** hacer visible el patrimonio a preservar en Mi Plan ([b2a36a3](https://github.com/pablesite/moneyplanner-saas/commit/b2a36a3462e41c3e7f2b7827ee2533fbf74cf4dc))
+* **frontend:** hitos de capital anclados al presupuesto real del usuario ([8dc0c0e](https://github.com/pablesite/moneyplanner-saas/commit/8dc0c0e95bf8a1c6c012a02afee469627cc30dce))
+* **frontend:** hitos de capital coherentes con la proyección (Core-backed) ([c2e9b80](https://github.com/pablesite/moneyplanner-saas/commit/c2e9b80891849b3c2cc3a167be3320538263cf6a))
+* **frontend:** mostrar ingresos/gastos/superávit reales en Mi Plan ([73b9a7e](https://github.com/pablesite/moneyplanner-saas/commit/73b9a7e44f736119357752df1bbd4a37347b9e37))
+* **frontend:** revisión UX integral de Mi Plan (3 tabs, causas visibles, móvil) ([1267cf0](https://github.com/pablesite/moneyplanner-saas/commit/1267cf033403a592840fbc964f377c4287011a48))
+* **frontend:** sembrar Presupuesto desde el asistente de Mi Plan ([9a63d4e](https://github.com/pablesite/moneyplanner-saas/commit/9a63d4eff09f9da565f8be630b432dc4d21ea2d1))
+* **frontend:** sugerir el superávit como aportación en Mi Plan ([dae8400](https://github.com/pablesite/moneyplanner-saas/commit/dae84004527876c3a3112061dc94cadc8ff6660a))
+
+
+### Bug Fixes
+
+* **deploy:** enrutar /api/plan al backend de Core en producción ([5843caf](https://github.com/pablesite/moneyplanner-saas/commit/5843cafc9dec8b13a6f9f8e01f94b364a40e5773))
+* **frontend:** añadir botones de crear activo/pasivo en escritorio en Patrimonio ([bbe0c2f](https://github.com/pablesite/moneyplanner-saas/commit/bbe0c2fb5d8ab0285a4f6c4fb63a737bf49a56b4))
+* **frontend:** cimientos al lado del progreso; fuera la tarjeta de fechas duplicada ([a637fd1](https://github.com/pablesite/moneyplanner-saas/commit/a637fd192fcef2c92256a7065557ecbed8576413))
+* **frontend:** cimientos trazables — liquidez de emergencia y calidad real ([96abf2c](https://github.com/pablesite/moneyplanner-saas/commit/96abf2c50ba3eac917e174ec2efe06b933103ded))
+* **frontend:** dar jerarquía visual a la tarjeta de onboarding de Mi Plan ([2fbe083](https://github.com/pablesite/moneyplanner-saas/commit/2fbe083671cf10f292dfdd2dc6eac5c086217f89))
+* **frontend:** dirigir a Patrimonio cuando no hay ningún activo cargado ([e146597](https://github.com/pablesite/moneyplanner-saas/commit/e146597f3e493a2090670581cd9bbcc6b5c241bb))
+* **frontend:** evitar crash en Mi Plan por encadenamiento opcional incompleto ([d680fb3](https://github.com/pablesite/moneyplanner-saas/commit/d680fb341da5dca3419d0449d5f8638ed953b6ef))
+* **frontend:** explicar los hitos del progreso de capital en Mi Plan ([ef63603](https://github.com/pablesite/moneyplanner-saas/commit/ef63603d57e61627125ed83ebb76d9d2e41216e8))
+* **frontend:** hitos del capital productivo con significado real (renta/mes) ([b35980b](https://github.com/pablesite/moneyplanner-saas/commit/b35980b1edbf2ad17263cd3d65b008b4ebdc1a78))
+* **frontend:** igualar la cabecera de Mi Plan al resto de vistas ([b01ff3a](https://github.com/pablesite/moneyplanner-saas/commit/b01ff3a5eafa782ec13c190eab3dc8728bf43e25))
+* **frontend:** mostrar onboarding de Mi Plan en vez de error para usuarios nuevos ([4e3e60a](https://github.com/pablesite/moneyplanner-saas/commit/4e3e60a721c0f6fc9cce8b23fa14750566cf55d5))
+* **frontend:** ocultar acciones de escenario/editar en Mi Plan sin plan ([299a627](https://github.com/pablesite/moneyplanner-saas/commit/299a627ef98cd45081e537e1e152f69486d8331b))
+
 ## [0.38.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.37.0...moneyplanner-saas-v0.38.0) (2026-07-12)
 
 
