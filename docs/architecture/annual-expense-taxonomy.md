@@ -79,8 +79,12 @@ This document describes the `category` and `subcategory` layer of the contract. 
    - `real_estate_assets` or `tangible_assets` -> `asset_purchase`
    - `real_estate_fees_taxes` -> `tax_fee`
    - otherwise -> `operating`
-4. `term_recurrent` expenses are normalized to `temporary_commitment`.
+4. `term_recurrent` expenses entered by the user are normalized to `temporary_commitment`.
 5. `one_off` expenses accept a narrower set of cashflow roles than structural recurrent entries.
+6. **System-generated entries carry their role by economic nature, not by `time_profile`, and are the only exception to rule 4:**
+   - Periodic investment contributions mirrored from an asset (`Aportacion inversion: …`) use `investment` — they are a savings destination, not a commitment that consumes income. The plan counts them once, through the asset's `InvestmentContributionInterval`, never through this mirror entry.
+   - Early principal cancellation of a liability (`Cancelacion anticipada principal: …`, `one_off`) uses `transfer` — it is a balance-sheet movement (cash down / liability down), not recurring consumption.
+   - Consequence for the foundations engine: `committed_surplus = structural_income − (operating + temporary_commitment)` therefore excludes both, so it measures only recurring flows (permanent + genuine temporary commitments), never one-off patrimonio movements.
 
 ## Usage rules
 1. Keep this document synchronized with backend taxonomy validation and frontend taxonomy constants.
