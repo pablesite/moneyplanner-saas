@@ -650,6 +650,159 @@
   }
 }
 
+.plan-next-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 24px;
+  align-items: center;
+  border-left: 4px solid var(--accent);
+}
+
+.plan-next-action-impact {
+  display: grid;
+  gap: 3px;
+}
+
+.plan-next-action-impact strong {
+  font-size: 18px;
+}
+
+.plan-next-action-impact span,
+.plan-improvement-facts dt,
+.plan-impact-grid span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.plan-foundation-summary .plan-foundations {
+  border: 0;
+  padding: 0;
+}
+
+.plan-calculation-settings summary,
+.plan-chart-table summary {
+  cursor: pointer;
+  font-weight: 650;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.plan-improvement-list {
+  display: grid;
+  gap: 14px;
+}
+
+.plan-improvement-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.plan-improvement-card.is-muted {
+  opacity: 0.68;
+}
+
+.plan-improvement-order {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.plan-improvement-content,
+.plan-improvement-heading {
+  display: grid;
+  gap: 14px;
+}
+
+.plan-improvement-heading {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.plan-improvement-facts,
+.plan-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.plan-improvement-facts > div,
+.plan-impact-grid > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  background: color-mix(in oklab, var(--panel) 90%, var(--accent));
+  border-radius: 10px;
+}
+
+.plan-improvement-facts dd {
+  margin: 0;
+}
+
+.plan-impact-preview {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  box-shadow: 0 20px 50px rgba(21, 28, 24, 0.16);
+}
+
+.plan-chart-table {
+  margin-top: 16px;
+}
+
+.plan-table-scroll {
+  overflow-x: auto;
+}
+
+.plan-chart-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.plan-chart-table th,
+.plan-chart-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.plan-chart-table th:first-child {
+  text-align: left;
+}
+
+.plan-page :is(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 70%, white);
+  outline-offset: 3px;
+}
+
+@container page (max-width: 720px) {
+  .plan-next-action,
+  .plan-improvement-facts,
+  .plan-impact-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-next-action .btn {
+    width: 100%;
+  }
+
+  .plan-improvement-heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-impact-preview {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
 .plan-event-list {
   padding: 0;
   margin: 0;

@@ -3,13 +3,19 @@ import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
-import type { FinancialPlan, PlanFoundations, ProjectionResponse } from '@/domains/plan/types';
+import type {
+  FinancialPlan,
+  PlanFoundations,
+  PlanOverview,
+  ProjectionResponse,
+} from '@/domains/plan/types';
 import { projectionScenarioLabel } from '@/domains/plan/scenarioTemplates';
 import { compactYearWithAges, yearWithAges } from '@/domains/plan/age';
 
 const props = defineProps<{
   plan: FinancialPlan;
   projection: ProjectionResponse;
+  overview?: PlanOverview | null;
   foundations?: PlanFoundations | null;
 }>();
 
@@ -28,11 +34,17 @@ const sustainableShare = computed(() => {
   return target > 0 ? Math.round((sustainable / target) * 100) : 0;
 });
 const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
-const projectedCopy = computed(() =>
-  projectedYear.value == null
+const projectedCopy = computed(() => {
+  const range = props.overview?.range;
+  if (range?.prudent_year && range.favorable_year) {
+    const first = Math.min(range.prudent_year, range.favorable_year);
+    const last = Math.max(range.prudent_year, range.favorable_year);
+    return `Entre ${first} y ${last}`;
+  }
+  return projectedYear.value == null
     ? 'Sin fecha estimada'
-    : yearWithAges(projectedYear.value, props.plan.members),
-);
+    : yearWithAges(projectedYear.value, props.plan.members);
+});
 // En pantallas estrechas el nombre sobra (ya es tu plan): "2049 · 65 años".
 const projectedCompactCopy = computed(() =>
   projectedYear.value == null
@@ -120,6 +132,14 @@ const deltaCopy = computed(() => {
   return `${Math.abs(gap.value)} ${years} antes del objetivo`;
 });
 
+const statusCopy = computed(() => {
+  const status = props.overview?.status;
+  if (status === 'on_track') return 'Tu plan avanza dentro del plazo';
+  if (status === 'off_track') return 'Tu plan necesita ajustes';
+  if (status === 'incomplete') return 'Faltan datos para afinar el plan';
+  return 'El objetivo aún no es alcanzable';
+});
+
 // El dato más importante del plan merece la misma señal semántica que los deltas de Patrimonio.
 // Sin fecha estimada no se colorea: el bloque de causas ya carga ese peso.
 const deltaTone = computed(() => {
@@ -143,22 +163,27 @@ const kpis = computed<AKpiItem[]>(() => [
     value: formatMoney(summary.value.monthly_sustainable_income.value),
   },
   {
-    label: 'Hipótesis',
+    label: 'Escenario central',
     value: projectionScenarioLabel(props.projection.scenario),
-    meta: 'Globales del cálculo',
+    meta: 'Puedes cambiarlo en Ajustes',
   },
 ]);
 </script>
 
 <template>
   <section class="plan-hero a-hero-shell">
-    <AHero eyebrow="Fecha proyectada">
+    <AHero :eyebrow="statusCopy">
       <template #value>
         <div class="hero-value mono plan-hero-value-full">{{ projectedCopy }}</div>
         <div class="hero-value mono plan-hero-value-compact">{{ projectedCompactCopy }}</div>
       </template>
       <template #delta>
-        <span :class="deltaTone">{{ deltaCopy }}</span>
+        <span :class="deltaTone">
+          {{ deltaCopy }}
+          <template v-if="overview?.range.central_year">
+            · estimación central {{ overview.range.central_year }}
+          </template>
+        </span>
         <AInfoHint
           label="La fecha es una estimación calculada con capital productivo, hipótesis y datos actuales. No es una garantía."
         />
