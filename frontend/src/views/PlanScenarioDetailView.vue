@@ -137,7 +137,7 @@ async function confirmAction(): Promise<void> {
     if (confirming.value === 'discard') {
       await store.discardScenario(scenarioId.value);
       confirming.value = null;
-      await router.push('/plan/escenarios');
+      await router.push('/plan/decisiones');
       return;
     }
     confirming.value = null;
@@ -175,7 +175,7 @@ onMounted(async () => {
         <AMetaPill v-if="selected">{{ statusCopy }}</AMetaPill>
       </template>
       <template #actions>
-        <RouterLink class="btn btn-ghost" to="/plan/escenarios">Escenarios</RouterLink>
+        <RouterLink class="btn btn-ghost" to="/plan/decisiones">Decisiones</RouterLink>
         <AButton
           v-if="selected?.status === 'draft'"
           variant="ghost"
@@ -206,8 +206,8 @@ onMounted(async () => {
           Este escenario se descartó y no afecta al plan vigente. Se conserva solo como referencia
           (creado el {{ shortDate(selected.created_at) }}).
         </p>
-        <RouterLink class="btn btn-ghost btn-sm" to="/plan/escenarios">
-          Crear un escenario nuevo
+        <RouterLink class="btn btn-ghost btn-sm" to="/plan/decisiones/nueva">
+          Crear una decisión nueva
         </RouterLink>
       </section>
 
