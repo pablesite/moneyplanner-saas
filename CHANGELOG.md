@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.40.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.39.0...moneyplanner-saas-v0.40.0) (2026-07-26)
+
+
+### Features
+
+* **frontend:** jubilación sostenible, detalle de superávit y paleta del gráfico ([e51c67d](https://github.com/pablesite/moneyplanner-saas/commit/e51c67da1f8c99df743ee3b67a04380a8c8af153))
+* **plan:** completar setup accesibilidad y trazabilidad UX ([327b1f0](https://github.com/pablesite/moneyplanner-saas/commit/327b1f00b2436fed096210f4b602ebc4a493de9a))
+* **plan:** conectar overview y plan de mejoras ([a5f3e9d](https://github.com/pablesite/moneyplanner-saas/commit/a5f3e9d53345f0b81173c326fc50d934e0990a9f))
+* **plan:** rehacer el resumen como guia accionable ([718c726](https://github.com/pablesite/moneyplanner-saas/commit/718c7263372764c5d58e6d3d5e92f56860359abf))
+* **plan:** unificar escenarios y ciclo de decisiones ([609b349](https://github.com/pablesite/moneyplanner-saas/commit/609b3494e3a5eba6ab4ccc452ce98816741cd53a))
+
+
+### Bug Fixes
+
+* **deps:** actualizar axios y postcss para resolver vulnerabilidades altas (npm audit) ([e9ac973](https://github.com/pablesite/moneyplanner-saas/commit/e9ac97335cc92c2b0f4b9ba132de0f7f9c3e3f48))
+* **plan:** actualizar reconciliacion de miembros ([8770771](https://github.com/pablesite/moneyplanner-saas/commit/877077155ffa4471a3c83d4ba26a42351ac3a138))
+
 ## [0.39.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.38.0...moneyplanner-saas-v0.39.0) (2026-07-15)
 
 
