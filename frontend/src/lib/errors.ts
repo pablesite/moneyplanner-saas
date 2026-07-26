@@ -142,7 +142,21 @@ export function toApiErrorMessage(error: unknown): string {
     const validation = firstValidationMessage(data);
     if (validation) return validation;
   }
-  if (typeof data === 'string') return data;
-  if (maybe?.message) return maybe.message;
-  return 'Error';
+  if (typeof data === 'string') {
+    const normalized = data.trim();
+    const looksTechnical =
+      normalized.length > 500 ||
+      /<(?:!doctype|html|head|body|style|script)\b/i.test(normalized) ||
+      /traceback|stack trace|django/i.test(normalized);
+    if (looksTechnical) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      return `No se pudo completar la operación.${status ? ` Referencia: HTTP ${status}.` : ''}`;
+    }
+    if (normalized && !looksTechnical) return normalized;
+  }
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  if (maybe?.message && maybe.message.length <= 300) return maybe.message;
+  if (!status) return 'Error';
+  const reference = status ? ` Referencia: HTTP ${status}.` : '';
+  return `No se pudo completar la operación.${reference}`;
 }
