@@ -193,7 +193,9 @@ function shortDate(value: string): string {
 
     <div v-if="!events.length" class="plan-empty-inline">
       <p class="plan-muted">Todavía no hay decisiones incorporadas.</p>
-      <RouterLink class="btn btn-ghost btn-sm" to="/plan/escenarios">Crear escenario</RouterLink>
+      <RouterLink class="btn btn-ghost btn-sm" to="/plan/decisiones/nueva">
+        Crear previsión
+      </RouterLink>
     </div>
     <!-- Fallback: éxito de una fila que ya no existe (p. ej. previsión cancelada). -->
     <AState v-if="closeSuccess && !successRowVisible" status="success" layout="inline">

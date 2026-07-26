@@ -2,11 +2,13 @@ import { coreApi } from '@/lib/api';
 import type {
   AssetFunctionResponse,
   AssetFunctionUpdate,
+  ActionImpactPreview,
   CapitalRequirementsResponse,
   FinancialPlan,
   FinancialPlanPayload,
   OccurredEventPayload,
   PlanMember,
+  PlanOverview,
   PlanMemberPayload,
   PlanEvent,
   PlanEventBudgetLines,
@@ -37,6 +39,11 @@ export const planApi = {
   getProjection(scenario: ProjectionScenario = 'expected') {
     return coreApi.get<ProjectionResponse>('/api/plan/projection/', {
       params: { scenario },
+    });
+  },
+  getOverview(scenario?: ProjectionScenario) {
+    return coreApi.get<PlanOverview>('/api/plan/overview/', {
+      params: scenario ? { scenario } : undefined,
     });
   },
   recalculate(scenario: ProjectionScenario = 'expected') {
@@ -130,6 +137,16 @@ export const planApi = {
   },
   dismissRecommendation(id: number) {
     return coreApi.post<PlanRecommendation>(`/api/plan/recommendations/${id}/dismiss/`, {});
+  },
+  snoozeRecommendation(id: number, snoozedUntil: string) {
+    return coreApi.post<PlanRecommendation>(`/api/plan/recommendations/${id}/snooze/`, {
+      snoozed_until: snoozedUntil,
+    });
+  },
+  previewRecommendation(id: number, scenario: ProjectionScenario = 'expected') {
+    return coreApi.get<ActionImpactPreview>(`/api/plan/recommendations/${id}/preview/`, {
+      params: { scenario },
+    });
   },
   simulateRecommendation(id: number) {
     return coreApi.post<PlanScenario>(`/api/plan/recommendations/${id}/simulate/`, {});

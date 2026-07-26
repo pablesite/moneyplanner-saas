@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   registerAuthGuard: vi.fn(),
   createRouter: vi.fn(),
   createWebHistory: vi.fn(() => 'history'),
+  afterEach: vi.fn(),
 }));
 
 vi.mock('vue-router', () => ({
@@ -19,13 +20,13 @@ describe('router (core)', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    mocks.createRouter.mockReturnValue({ __router: true });
+    mocks.createRouter.mockReturnValue({ __router: true, afterEach: mocks.afterEach });
   });
 
   it('registers auth guard and mounts core routes', async () => {
     const mod = await import('./router');
 
-    expect(mod.router).toEqual({ __router: true });
+    expect(mod.router).toEqual({ __router: true, afterEach: mocks.afterEach });
     expect(mocks.createRouter).toHaveBeenCalledWith(
       expect.objectContaining({
         history: 'history',
@@ -43,9 +44,17 @@ describe('router (core)', () => {
             redirect: '/plan',
           }),
           expect.objectContaining({ path: '/plan' }),
+          expect.objectContaining({ path: '/plan/mejoras' }),
+          expect.objectContaining({ path: '/plan/decisiones' }),
+          expect.objectContaining({ path: '/plan/decisiones/nueva' }),
+          expect.objectContaining({ path: '/plan/decisiones/eventos/:id' }),
         ]),
       }),
     );
-    expect(mocks.registerAuthGuard).toHaveBeenCalledWith({ __router: true });
+    expect(mocks.registerAuthGuard).toHaveBeenCalledWith({
+      __router: true,
+      afterEach: mocks.afterEach,
+    });
+    expect(mocks.afterEach).toHaveBeenCalledOnce();
   }, 20000);
 });

@@ -15,6 +15,8 @@ const assets = computed(() => classification.value?.assets ?? []);
 
 const search = ref('');
 const activeFunction = ref<PlanAssetFunction | null>(null);
+const reviewFilter = ref<'all' | 'review' | 'manual'>('all');
+const savedAssetId = ref<number | null>(null);
 
 // Sin clasificar primero: es lo único que bloquea la proyección.
 const functionOrder: PlanAssetFunction[] = [
@@ -59,7 +61,10 @@ const filteredAssets = computed(() => {
   return assets.value.filter(
     (asset) =>
       (!query || asset.name.toLowerCase().includes(query)) &&
-      (!activeFunction.value || asset.function === activeFunction.value),
+      (!activeFunction.value || asset.function === activeFunction.value) &&
+      (reviewFilter.value === 'all' ||
+        (reviewFilter.value === 'review' && asset.function === 'unknown') ||
+        (reviewFilter.value === 'manual' && Boolean(asset.override_function))),
   );
 });
 
@@ -79,7 +84,9 @@ const groups = computed(() =>
     .filter((group) => group.items.length),
 );
 
-const hasActiveFilter = computed(() => Boolean(search.value.trim() || activeFunction.value));
+const hasActiveFilter = computed(() =>
+  Boolean(search.value.trim() || activeFunction.value || reviewFilter.value !== 'all'),
+);
 
 // Buscar o filtrar expande las coincidencias: un grupo plegado haría invisible el resultado.
 function isGroupCollapsed(fn: PlanAssetFunction): boolean {
@@ -97,6 +104,7 @@ function toggleFunction(fn: PlanAssetFunction): void {
 function clearFilters(): void {
   search.value = '';
   activeFunction.value = null;
+  reviewFilter.value = 'all';
 }
 
 function toggleGroup(fn: PlanAssetFunction): void {
@@ -124,6 +132,10 @@ async function onFunctionChange(
   const fn = value === 'auto' ? null : (value as PlanAssetFunction);
   if (fn === asset.override_function) return;
   await store.updateAssetFunction(asset.asset_id, fn);
+  savedAssetId.value = asset.asset_id;
+  window.setTimeout(() => {
+    if (savedAssetId.value === asset.asset_id) savedAssetId.value = null;
+  }, 1800);
 }
 
 function money(value: string): string {
@@ -131,6 +143,7 @@ function money(value: string): string {
 }
 
 onMounted(() => {
+  document.title = 'Clasificar activos · The Arkenstone';
   void store.fetchAssetFunctions();
 });
 </script>
@@ -217,6 +230,22 @@ onMounted(() => {
             aria-label="Buscar activo"
           />
           <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            :class="{ active: reviewFilter === 'review' }"
+            @click="reviewFilter = reviewFilter === 'review' ? 'all' : 'review'"
+          >
+            Requieren revisión
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            :class="{ active: reviewFilter === 'manual' }"
+            @click="reviewFilter = reviewFilter === 'manual' ? 'all' : 'manual'"
+          >
+            Modificados manualmente
+          </button>
+          <button
             v-if="hasActiveFilter"
             type="button"
             class="btn btn-ghost btn-sm"
@@ -260,7 +289,9 @@ onMounted(() => {
                   </span>
                 </div>
                 <label class="plan-asset-fn">
-                  <span v-if="asset.override_function">Manual</span>
+                  <span v-if="savedAssetId === asset.asset_id" role="status">Guardado</span>
+                  <span v-else-if="asset.override_function">Manual</span>
+                  <span v-else>Inferida por su categoría</span>
                   <ASelect
                     :model-value="currentValue(asset)"
                     :options="functionOptions(asset)"

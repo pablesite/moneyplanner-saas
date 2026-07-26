@@ -93,6 +93,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `PATCH` | `/api/plan/` | Partially updates the user's financial plan. |
 | `POST` | `/api/plan/recalculate/` | Recalculates the projection and persists an official `ProjectionSnapshot`. Optional `scenario=prudent|expected|favorable`; default `expected`. |
 | `GET` | `/api/plan/projection/` | Calculates a projection without persisting a snapshot. Optional `scenario=prudent|expected|favorable`; default `expected`. |
+| `GET` | `/api/plan/overview/` | UX aggregate: status, projection, prudent-to-favorable range, confidence, compact foundations and highest-priority next action. Without `scenario`, the profile selects prudent/expected/favorable. |
 | `GET` | `/api/plan/history/` | Returns recent official projection snapshots. |
 | `GET` | `/api/plan/capital-requirements/` | Capital required at the target date to sustain each requested monthly need (`monthly_amounts=a,b,...` in today's EUR, 1–8 values; optional `scenario`). Same math as the projection's target capital (inflation, pension offsets, bridge period, withdrawal rate) without plan-event deltas. Used by the SaaS "Qué cubre ya tu capital" milestones. |
 | `GET/POST` | `/api/plan/members/` | Lists or creates adult `FamilyMember` rows linked to the plan. MVP allows at most two adults. |
@@ -114,9 +115,11 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET` | `/api/plan/foundations/` | Returns backend-owned plan foundations: cash flow, emergency fund, debt, net-worth health, planned contribution and data quality. Scored blocks include a `status` band (`good`/`warning`/`critical`) so the frontend colors without owning thresholds. |
 | `GET` | `/api/plan/findings/` | Evaluates and returns current deterministic plan findings. |
 | `GET` | `/api/plan/recommendations/` | Evaluates and returns deterministic recommendations with explanation payloads. |
-| `POST` | `/api/plan/recommendations/{id}/accept/` | Marks a user-owned recommendation as accepted. |
+| `POST` | `/api/plan/recommendations/{id}/accept/` | Compatibility endpoint. New clients accept by incorporating the linked scenario. |
 | `POST` | `/api/plan/recommendations/{id}/dismiss/` | Marks a user-owned recommendation as dismissed. |
 | `POST` | `/api/plan/recommendations/{id}/simulate/` | Creates a draft scenario preconfigured from the recommendation and returns it. |
+| `GET` | `/api/plan/recommendations/{id}/preview/` | Returns before/after impact without creating scenarios, snapshots or budget rows. |
+| `POST` | `/api/plan/recommendations/{id}/snooze/` | Postpones a recommendation until a future `snoozed_until` date. |
 
 ### Budget — `/api/budget/`
 | Method | Route | Description |

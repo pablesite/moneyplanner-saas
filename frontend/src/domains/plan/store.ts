@@ -13,6 +13,7 @@ import type {
   PlanFinding,
   PlanFoundations,
   PlanMember,
+  PlanOverview,
   PlanMemberPayload,
   PlanRecommendation,
   PlanScenario,
@@ -36,6 +37,7 @@ export const usePlanStore = defineStore('plan', {
   state: () => ({
     plan: null as FinancialPlan | null,
     projection: null as ProjectionResponse | null,
+    overview: null as PlanOverview | null,
     netWorthTimeline: null as NetWorthTimeline | null,
     scenarios: [] as PlanScenario[],
     selectedScenario: null as PlanScenario | null,
@@ -51,6 +53,7 @@ export const usePlanStore = defineStore('plan', {
     scenariosLoading: false,
     comparisonLoading: false,
     recommendationsLoading: false,
+    overviewLoading: false,
     saving: false,
     recalculating: false,
     error: null as string | null,
@@ -102,6 +105,20 @@ export const usePlanStore = defineStore('plan', {
         this.error = toErrorMessage(error);
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchOverview(scenario?: ProjectionScenario) {
+      this.overviewLoading = true;
+      try {
+        const { data } = await planApi.getOverview(scenario);
+        this.overview = data;
+        this.projection = data.projection;
+        this.scenario = data.scenario;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+      } finally {
+        this.overviewLoading = false;
       }
     },
 
@@ -263,7 +280,7 @@ export const usePlanStore = defineStore('plan', {
       await this.fetchPlan();
       if (!this.plan) return;
       await Promise.all([
-        this.fetchProjection(scenario ?? this.scenario),
+        this.fetchOverview(scenario),
         this.fetchTimeline(),
         this.fetchEvents(),
         this.fetchFoundations(),
@@ -422,6 +439,15 @@ export const usePlanStore = defineStore('plan', {
     async dismissRecommendation(id: number) {
       const { data } = await planApi.dismissRecommendation(id);
       this.recommendations = this.recommendations.map((item) => (item.id === id ? data : item));
+      return data;
+    },
+
+    async snoozeRecommendation(id: number, snoozedUntil: string) {
+      const { data } = await planApi.snoozeRecommendation(id, snoozedUntil);
+      this.recommendations = this.recommendations.map((item) => (item.id === id ? data : item));
+      if (this.overview?.next_action?.recommendation_id === id) {
+        await this.fetchOverview(this.scenario);
+      }
       return data;
     },
 

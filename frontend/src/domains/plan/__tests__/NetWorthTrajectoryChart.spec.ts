@@ -89,4 +89,14 @@ describe('NetWorthTrajectoryChart', () => {
     });
     expect(wrapper.find('.plan-chart-legend').text()).not.toContain('Acontecimiento');
   });
+
+  it('offers the projected data as an accessible table', () => {
+    const wrapper = mount(NetWorthTrajectoryChart, {
+      props: { timeline: baseTimeline, projection: baseProjection },
+    });
+    expect(wrapper.find('.plan-chart-table').exists()).toBe(true);
+    expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(3);
+    expect(wrapper.find('.plan-chart-table').text()).toContain('Capital productivo');
+    expect(wrapper.find('.plan-chart-table').text()).toContain('Patrimonio neto');
+  });
 });

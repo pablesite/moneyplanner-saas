@@ -1,6 +1,7 @@
 export type HouseholdType = 'single' | 'family';
 export type PlanProfile = 'security' | 'balanced' | 'growth';
 export type ProjectionScenario = 'prudent' | 'expected' | 'favorable';
+export type ContributionDestination = 'security' | 'productive' | 'debt';
 export type DataQualityLevel = 'initial' | 'medium' | 'high' | 'needs_review';
 export type PlanScenarioTemplate =
   | 'housing'
@@ -31,7 +32,10 @@ export type PlanMember = {
 export type PlanMemberPayload = Omit<
   PlanMember,
   'id' | 'employment_income_end_date' | 'pension_start_date'
->;
+> & {
+  employment_end_age?: number;
+  pension_start_age?: number;
+};
 
 export type FinancialPlan = {
   id: number;
@@ -186,6 +190,7 @@ export type ScenarioEventPayload = {
   monthly_expense_delta: string;
   monthly_income_delta: string;
   monthly_contribution_delta: string;
+  monthly_contribution_destination?: ContributionDestination;
   new_asset_value: string;
   new_asset_type: PlanAssetFunction | null;
   new_debt_principal: string;
@@ -201,6 +206,7 @@ export type ScenarioEventPayload = {
 export type PlanScenario = {
   id: number;
   name: string;
+  source_recommendation?: number | null;
   template_type: PlanScenarioTemplate;
   status: PlanScenarioStatus;
   events: (ScenarioEventPayload & { id: number })[];
@@ -330,6 +336,7 @@ export type PlanFoundations = {
     status?: PlanFoundationStatus;
     structural_annual_income: string;
     structural_operating_expense: string;
+    temporary_commitment_expense: string;
     operating_surplus: string;
     committed_surplus: string;
     operating_surplus_ratio: string | null;
@@ -391,11 +398,79 @@ export type PlanRecommendation = {
     summary?: string;
     reason?: string;
     rule?: string;
+    action_type?: 'preview_scenario' | 'review_budget' | 'complete_data';
+    destination?: string;
     [key: string]: unknown;
   };
   impact_json: Record<string, unknown>;
   alternatives_json: string[];
   status: 'open' | 'accepted' | 'dismissed' | 'snoozed';
+  snoozed_until?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ProjectionRange = {
+  prudent_year: number | null;
+  central_year: number | null;
+  favorable_year: number | null;
+};
+
+export type PlanGuidanceAction = {
+  recommendation_id: number;
+  code: string;
+  title: string;
+  summary: string;
+  reason: string;
+  action_type: 'preview_scenario' | 'review_budget' | 'complete_data';
+  destination: string;
+  monthly_commitment: string | null;
+  confidence: 'estimated';
+};
+
+export type PlanOverview = {
+  status: 'on_track' | 'off_track' | 'unreachable' | 'incomplete';
+  scenario: ProjectionScenario;
+  target_date: string;
+  desired_year: number;
+  sustainable_year: number | null;
+  sustainable_range: ProjectionRange;
+  gap_years: number | null;
+  projection: ProjectionResponse;
+  range: ProjectionRange;
+  quality: {
+    level: DataQualityLevel;
+    factors: Record<string, boolean>;
+    confidence: 'low' | 'medium';
+  };
+  foundations: Record<
+    'cash_flow' | 'emergency_fund' | 'debt' | 'net_worth_health' | 'data_quality',
+    { status: PlanFoundationStatus; score: number }
+  >;
+  next_action: PlanGuidanceAction | null;
+  input_hash: string;
+};
+
+export type ActionImpactMetrics = {
+  projected_year: number | null;
+  monthly_sustainable_income: string;
+  productive_capital: string;
+  net_worth: string;
+  target_capital: string;
+  progress_percent: string;
+};
+
+export type ActionImpactPreview = {
+  recommendation_id: number;
+  actionable: boolean;
+  action_type: string;
+  destination: string;
+  monthly_commitment?: string;
+  duration_months?: number | null;
+  before: ActionImpactMetrics;
+  after: ActionImpactMetrics | null;
+  years_gained?: number | null;
+  reaches_target?: boolean;
+  confidence?: 'low' | 'medium';
+  delta: PlanScenarioComparison['delta'] | null;
 };
