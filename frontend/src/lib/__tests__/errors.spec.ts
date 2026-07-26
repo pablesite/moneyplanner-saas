@@ -85,6 +85,18 @@ describe('core api error helper', () => {
     spy.mockRestore();
   });
 
+  it('never exposes HTML or oversized technical response bodies', () => {
+    const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+    const html = `<!doctype html><html><body>${'traceback '.repeat(100)}</body></html>`;
+    expect(
+      toApiErrorMessage({
+        response: { status: 500, data: html },
+        message: 'Request failed with status code 500',
+      }),
+    ).toBe('No se pudo completar la operación. Referencia: HTTP 500.');
+    spy.mockRestore();
+  });
+
   it('returns null code for non axios errors', () => {
     const spy = vi.spyOn(axios, 'isAxiosError').mockReturnValue(false);
     expect(getApiErrorCode(new Error('x'))).toBeNull();

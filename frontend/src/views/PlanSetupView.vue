@@ -21,6 +21,8 @@ type MemberDraft = {
   id?: number;
   name: string;
   birth_date: string;
+  employment_end_age: number;
+  pension_start_age: number;
   estimated_monthly_pension_today_eur: string;
   other_future_income_today_eur: string;
 };
@@ -58,8 +60,7 @@ const expenseSeedFields = EXPENSE_SEED_SUBCATEGORIES.map((value) => ({
     )?.label ?? value,
 }));
 
-/** Core deriva la jubilación a esta edad y no acepta otra: aquí solo se muestra. */
-const LEGAL_RETIREMENT_AGE = 67;
+const DEFAULT_PENSION_AGE = 67;
 const DEFAULT_INDEPENDENCE_AGE = 60;
 const DEFAULT_LONGEVITY_AGE = 95;
 
@@ -268,6 +269,8 @@ function emptyMember(): MemberDraft {
   return {
     name: '',
     birth_date: '',
+    employment_end_age: DEFAULT_INDEPENDENCE_AGE,
+    pension_start_age: DEFAULT_PENSION_AGE,
     estimated_monthly_pension_today_eur: '',
     other_future_income_today_eur: '',
   };
@@ -278,6 +281,16 @@ function toDraft(member: PlanMember): MemberDraft {
     id: member.id,
     name: member.name,
     birth_date: member.birth_date ?? '',
+    employment_end_age:
+      (member.birth_date &&
+        member.employment_income_end_date &&
+        ageAtDate(member.birth_date, member.employment_income_end_date)) ||
+      DEFAULT_INDEPENDENCE_AGE,
+    pension_start_age:
+      (member.birth_date &&
+        member.pension_start_date &&
+        ageAtDate(member.birth_date, member.pension_start_date)) ||
+      DEFAULT_PENSION_AGE,
     estimated_monthly_pension_today_eur: member.estimated_monthly_pension_today_eur ?? '',
     other_future_income_today_eur: member.other_future_income_today_eur ?? '',
   };
@@ -289,6 +302,8 @@ function toPayload(member: MemberDraft): PlanMemberPayload {
     role: 'adult',
     is_active: true,
     birth_date: member.birth_date || null,
+    employment_end_age: member.employment_end_age,
+    pension_start_age: member.pension_start_age,
     estimated_monthly_pension_today_eur: member.estimated_monthly_pension_today_eur || null,
     other_future_income_today_eur: member.other_future_income_today_eur || null,
   };
@@ -838,11 +853,32 @@ onMounted(() => {
           <div class="plan-member-head">
             <strong>{{ member.name.trim() || `Adulto ${index + 1}` }}</strong>
             <span v-if="member.birth_date" class="plan-member-meta">
-              Se jubila a los {{ LEGAL_RETIREMENT_AGE }} en
-              {{ formatLongMonthYear(dateAtAge(member.birth_date, LEGAL_RETIREMENT_AGE)) }}
+              Pensión prevista a los {{ member.pension_start_age }} en
+              {{ formatLongMonthYear(dateAtAge(member.birth_date, member.pension_start_age)) }}
             </span>
           </div>
           <div class="plan-form-grid">
+            <label>
+              <span>Edad de inicio de la pensión</span>
+              <input
+                v-model.number="member.pension_start_age"
+                class="input"
+                type="number"
+                min="18"
+                max="100"
+              />
+            </label>
+            <label>
+              <span>Edad a la que dejarías el ingreso laboral</span>
+              <input
+                v-model.number="member.employment_end_age"
+                class="input"
+                type="number"
+                min="18"
+                max="100"
+              />
+              <small>El plan deja de contar salario desde tu fecha objetivo.</small>
+            </label>
             <label>
               <span>Pensión pública estimada (al mes)</span>
               <div class="plan-money-field">
@@ -879,7 +915,8 @@ onMounted(() => {
         <div>
           <h2 class="sect-title">¿Quieres dejar patrimonio al final del camino?</h2>
           <p class="sect-sub">
-            Si dices que sí, el plan no dará por bueno un futuro en el que el dinero llegue justo.
+            Es el capital que no quieres consumir. Cuanto mayor sea, más puede retrasarse la fecha
+            estimada.
           </p>
         </div>
       </div>

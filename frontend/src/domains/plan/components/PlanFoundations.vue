@@ -21,6 +21,13 @@ function scoreLabel(score: number | null | undefined): string {
   return `${score}/100`;
 }
 
+function statusLabel(status: PlanFoundationStatus | undefined): string {
+  if (status === 'good') return 'Sólido';
+  if (status === 'warning') return 'Necesita atención';
+  if (status === 'critical') return 'Bloquea el plan';
+  return 'Pendiente de revisar';
+}
+
 function money(value: string | null | undefined): string {
   if (value == null) return '-';
   return formatMoney(toNumber(value));
@@ -96,7 +103,7 @@ function qualitySummary(flags: Record<string, boolean>): string {
       <article>
         <span>Flujo de caja</span>
         <strong :class="tone(foundations.cash_flow.status)">
-          {{ scoreLabel(foundations.cash_flow.score) }}
+          {{ statusLabel(foundations.cash_flow.status) }}
         </strong>
         <small>
           Ingresos {{ monthlyMoney(foundations.cash_flow.structural_annual_income) }}/mes · Gastos
@@ -108,6 +115,7 @@ function qualitySummary(flags: Record<string, boolean>): string {
             · margen {{ formatPct(toNumber(foundations.cash_flow.operating_surplus_ratio), 1) }}
           </template>
         </small>
+        <small>Detalle: {{ scoreLabel(foundations.cash_flow.score) }}</small>
       </article>
       <article>
         <span>Fondo de emergencia</span>
@@ -123,9 +131,12 @@ function qualitySummary(flags: Record<string, boolean>): string {
         <span>Deuda</span>
         <template v-if="hasDebt(foundations.debt)">
           <strong :class="tone(foundations.debt.status)">
-            {{ scoreLabel(foundations.debt.score) }}
+            {{ statusLabel(foundations.debt.status) }}
           </strong>
-          <small>Deuda cara {{ money(foundations.debt.high_cost_debt) }}</small>
+          <small>
+            Deuda cara {{ money(foundations.debt.high_cost_debt) }} · detalle
+            {{ scoreLabel(foundations.debt.score) }}
+          </small>
         </template>
         <template v-else>
           <strong>Sin deuda</strong>
@@ -139,11 +150,12 @@ function qualitySummary(flags: Record<string, boolean>): string {
       <article>
         <span>Calidad de datos</span>
         <strong :class="tone(foundations.data_quality.status)">
-          {{ scoreLabel(foundations.data_quality.score) }}
+          {{ statusLabel(foundations.data_quality.status) }}
         </strong>
         <!-- Antes aquí se mostraba el margen del flujo de caja: era de otro cimiento. -->
         <small v-if="qualitySummary(foundations.data_quality.flags)">
-          {{ qualitySummary(foundations.data_quality.flags) }}
+          {{ qualitySummary(foundations.data_quality.flags) }} · detalle
+          {{ scoreLabel(foundations.data_quality.score) }}
         </small>
       </article>
     </div>

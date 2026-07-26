@@ -18,6 +18,11 @@ import '@/domains/plan/plan.css';
 const router = useRouter();
 const route = useRoute();
 const { store, error } = usePlan();
+const eventStatusLabels = {
+  planned: 'Prevista',
+  occurred: 'Ocurrida',
+  cancelled: 'Cancelada',
+} as const;
 // El formulario abierto se renderiza antes de la lista: la acción pedida va primero,
 // sin depender de un scroll automático que en móvil dejaba el CTA a dos pantallas.
 const formOpen = ref(false);
@@ -164,7 +169,7 @@ async function submit(): Promise<void> {
   submitError.value = null;
   try {
     const scenario = await store.createScenario(payload());
-    await router.push(`/plan/escenarios/${scenario.id}`);
+    await router.push(`/plan/decisiones/${scenario.id}`);
   } catch {
     submitError.value = error.value;
   }
@@ -194,25 +199,33 @@ watch(
 );
 
 onMounted(async () => {
+  document.title = 'Decisiones de Mi Plan · The Arkenstone';
   formOpen.value = route.query.create === '1';
   await store.fetchPlan();
-  await store.fetchScenarios();
+  await Promise.all([store.fetchScenarios(), store.fetchEvents()]);
 });
 </script>
 
 <template>
   <main class="page plan-page plan-scenarios-page">
-    <APageHead title="Escenarios" eyebrow="Mi Plan">
+    <APageHead title="Decisiones" eyebrow="Mi Plan">
       <template #meta>
         <span>Simulaciones sin contaminar datos reales</span>
       </template>
       <template #actions>
         <AButton variant="primary" @click="formOpen = !formOpen">
-          {{ formOpen ? 'Cerrar simulador' : 'Simular decisión' }}
+          {{ formOpen ? 'Cerrar' : 'Nueva decisión' }}
         </AButton>
         <RouterLink class="btn btn-ghost" to="/plan">Volver a Mi Plan</RouterLink>
       </template>
     </APageHead>
+    <nav class="plan-tabs-bar" aria-label="Secciones de Mi Plan">
+      <div class="tabs">
+        <RouterLink class="tab" to="/plan">Resumen</RouterLink>
+        <RouterLink class="tab" to="/plan/mejoras">Mejoras</RouterLink>
+        <RouterLink class="tab on" to="/plan/decisiones" aria-current="page">Decisiones</RouterLink>
+      </div>
+    </nav>
 
     <AState v-if="store.scenariosLoading && !store.scenarios.length" status="loading">
       Cargando escenarios...
@@ -222,8 +235,8 @@ onMounted(async () => {
     <section v-if="formOpen" ref="formSection" class="sect plan-form-section">
       <div class="sect-head">
         <div>
-          <p class="eyebrow">Nuevo escenario</p>
-          <h2 class="sect-title">Simular decisión</h2>
+          <p class="eyebrow">Nueva previsión</p>
+          <h2 class="sect-title">¿Qué decisión quieres valorar?</h2>
           <p class="sect-sub">{{ selectedTemplate.description }}</p>
         </div>
       </div>
@@ -386,7 +399,7 @@ onMounted(async () => {
         </fieldset>
 
         <p class="plan-muted plan-scenario-reassurance">
-          Crear el escenario no cambia tus datos. Solo al incorporarlo pasará a Mi Plan y generará
+          Guardar el borrador no cambia tus datos. Solo al incorporarlo pasará a Mi Plan y generará
           sus partidas futuras de presupuesto.
         </p>
         <AState v-if="validationSummary" status="error" layout="inline">
@@ -395,7 +408,7 @@ onMounted(async () => {
         <!-- Sticky en móvil: el CTA queda siempre a la vista aunque el formulario sea largo. -->
         <div class="plan-setup-actions plan-scenario-submit">
           <AButton variant="ghost" type="button" @click="formOpen = false">Cerrar</AButton>
-          <AButton variant="primary" type="submit" :loading="store.saving">Crear escenario</AButton>
+          <AButton variant="primary" type="submit" :loading="store.saving">Ver resultado</AButton>
         </div>
       </form>
     </section>
@@ -404,11 +417,11 @@ onMounted(async () => {
       <div class="sect-head">
         <div>
           <p class="eyebrow">Laboratorio</p>
-          <h2 class="sect-title">Escenarios guardados</h2>
+          <h2 class="sect-title">Borradores y previsiones</h2>
         </div>
       </div>
       <div v-if="!store.scenarios.length" class="plan-empty-inline">
-        <p class="plan-muted">Aún no hay escenarios.</p>
+        <p class="plan-muted">Aún no has guardado ninguna decisión.</p>
         <span>Simula una decisión para comparar su impacto antes de incorporarla al plan.</span>
       </div>
       <RouterLink
@@ -416,7 +429,7 @@ onMounted(async () => {
         v-else
         :key="scenario.id"
         class="plan-scenario-row"
-        :to="`/plan/escenarios/${scenario.id}`"
+        :to="`/plan/decisiones/${scenario.id}`"
       >
         <div>
           <strong>{{ scenario.name }}</strong>
@@ -428,6 +441,36 @@ onMounted(async () => {
         </div>
         <span class="plan-status-chip" :class="`is-${scenario.status}`">
           {{ scenarioStatusLabel(scenario.status) }}
+        </span>
+      </RouterLink>
+    </section>
+
+    <section class="sect plan-scenario-list">
+      <div class="sect-head">
+        <div>
+          <p class="eyebrow">Seguimiento</p>
+          <h2 class="sect-title">Decisiones incorporadas y ocurridas</h2>
+        </div>
+        <RouterLink class="btn btn-ghost btn-sm" to="/plan/decisiones/registrar">
+          Registrar que ya ocurrió
+        </RouterLink>
+      </div>
+      <div v-if="!store.events.length" class="plan-empty-inline">
+        <p class="plan-muted">Todavía no hay decisiones en seguimiento.</p>
+      </div>
+      <RouterLink
+        v-for="event in store.events"
+        v-else
+        :key="event.id"
+        class="plan-scenario-row"
+        :to="`/plan/decisiones/eventos/${event.id}`"
+      >
+        <div>
+          <strong>{{ event.name }}</strong>
+          <span>{{ formatShortMonthYear(event.actual_date || event.planned_date) }}</span>
+        </div>
+        <span class="plan-status-chip" :class="`is-${event.status}`">
+          {{ eventStatusLabels[event.status] }}
         </span>
       </RouterLink>
     </section>

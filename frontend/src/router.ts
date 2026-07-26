@@ -1,3 +1,4 @@
+import { nextTick } from 'vue';
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import NetWorthView from './views/NetWorthView.vue';
 import LoginView from './views/LoginView.vue';
@@ -14,6 +15,8 @@ import PlanSetupView from './views/PlanSetupView.vue';
 import PlanOccurredEventView from './views/PlanOccurredEventView.vue';
 import PlanScenariosView from './views/PlanScenariosView.vue';
 import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
+import PlanImprovementsView from './views/PlanImprovementsView.vue';
+import PlanEventDetailView from './views/PlanEventDetailView.vue';
 import { registerAuthGuard } from '@/domains/auth';
 import { canUsePlan } from '@/domains/capabilities';
 
@@ -55,6 +58,37 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {
+    path: '/plan/mejoras',
+    name: 'plan-improvements',
+    component: PlanImprovementsView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
+    path: '/plan/decisiones',
+    name: 'plan-decisions',
+    component: PlanScenariosView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
+    path: '/plan/decisiones/nueva',
+    redirect: (to) => ({
+      path: '/plan/decisiones',
+      query: { ...to.query, create: '1' },
+    }),
+  },
+  {
+    path: '/plan/decisiones/eventos/:id',
+    name: 'plan-event-detail',
+    component: PlanEventDetailView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
+    path: '/plan/decisiones/:id',
+    name: 'plan-decision-detail',
+    component: PlanScenarioDetailView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
     path: '/plan/decisiones/registrar',
     name: 'plan-occurred-event',
     component: PlanOccurredEventView,
@@ -62,15 +96,14 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/plan/escenarios',
-    name: 'plan-scenarios',
-    component: PlanScenariosView,
-    beforeEnter: () => (canUsePlan() ? true : '/'),
+    redirect: (to) => ({ path: '/plan/decisiones', query: to.query }),
   },
   {
     path: '/plan/escenarios/:id',
-    name: 'plan-scenario-detail',
-    component: PlanScenarioDetailView,
-    beforeEnter: () => (canUsePlan() ? true : '/'),
+    redirect: (to) => ({
+      path: `/plan/decisiones/${String(to.params.id)}`,
+      query: to.query,
+    }),
   },
   {
     path: '/movimientos',
@@ -93,3 +126,12 @@ export const router = createRouter({
 });
 
 registerAuthGuard(router);
+
+router.afterEach(async () => {
+  await nextTick();
+  const main = document.querySelector<HTMLElement>('main');
+  if (!main) return;
+  main.setAttribute('tabindex', '-1');
+  main.focus({ preventScroll: true });
+  main.addEventListener('blur', () => main.removeAttribute('tabindex'), { once: true });
+});
