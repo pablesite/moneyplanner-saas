@@ -13,6 +13,8 @@ const props = withDefaults(
     projection: ProjectionResponse;
     members?: PlanMember[];
     events?: PlanTimelineMarker[];
+    sustainableYear?: number | null;
+    desiredYear?: number | null;
   }>(),
   { events: () => [], members: () => [] },
 );
@@ -135,22 +137,55 @@ const xTicks = computed(() => {
   return ticks;
 });
 
-type YearMarker = { x: number; label: string; kind: 'target' | 'projected' };
+type YearMarker = {
+  x: number;
+  labelX: number;
+  label: string;
+  kind: 'target' | 'projected';
+  anchorClass: '' | 'anchor-start' | 'anchor-end';
+};
 
 const yearMarkers = computed<YearMarker[]>(() => {
   const markers: YearMarker[] = [];
   const { min, max } = timeBounds.value;
-  const targetYear = props.projection.summary.target_year.value;
-  const projectedYear = props.projection.summary.projected_year.value;
-  const targetT = Date.parse(`${targetYear}-12-31`);
-  if (targetT >= min && targetT <= max) {
-    markers.push({ x: tx(targetT), label: `Objetivo ${targetYear}`, kind: 'target' });
-  }
-  if (projectedYear != null) {
-    const projectedT = Date.parse(`${projectedYear}-12-31`);
-    if (projectedT >= min && projectedT <= max) {
-      markers.push({ x: tx(projectedT), label: `Estimada ${projectedYear}`, kind: 'projected' });
+  // Objetivo = aspiración del usuario; Sostenible = jubilación más temprana viable.
+  const desiredYear = props.desiredYear ?? props.projection.summary.target_year.value;
+  const sustainableYear = props.sustainableYear ?? props.projection.summary.projected_year.value;
+  if (desiredYear != null) {
+    const desiredT = Date.parse(`${desiredYear}-12-31`);
+    if (desiredT >= min && desiredT <= max) {
+      markers.push({
+        x: tx(desiredT),
+        labelX: tx(desiredT),
+        label: `Objetivo ${desiredYear}`,
+        kind: 'target',
+        anchorClass: '',
+      });
     }
+  }
+  if (sustainableYear != null) {
+    const sustainableT = Date.parse(`${sustainableYear}-12-31`);
+    if (sustainableT >= min && sustainableT <= max) {
+      markers.push({
+        x: tx(sustainableT),
+        labelX: tx(sustainableT),
+        label: `Sostenible ${sustainableYear}`,
+        kind: 'projected',
+        anchorClass: '',
+      });
+    }
+  }
+  // Objetivo y Sostenible pueden caer muy juntos (p. ej. 2039 vs 2042): sus
+  // etiquetas se solapan. Cuando están cerca, se anclan en direcciones opuestas
+  // (la de menor x hacia la izquierda, la de mayor x hacia la derecha) para separarlas.
+  const [first, second] = markers;
+  if (first && second && Math.abs(first.x - second.x) < 120) {
+    const left = first.x <= second.x ? first : second;
+    const right = left === first ? second : first;
+    left.anchorClass = 'anchor-end';
+    left.labelX = left.x - 5;
+    right.anchorClass = 'anchor-start';
+    right.labelX = right.x + 5;
   }
   return markers;
 });
@@ -267,7 +302,9 @@ function onMove(event: MouseEvent): void {
         </g>
         <g v-for="marker in yearMarkers" :key="marker.label" class="plan-chart-marker">
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" :class="marker.kind" />
-          <text :x="marker.x" :y="padT - 8" :class="marker.kind">{{ marker.label }}</text>
+          <text :x="marker.labelX" :y="padT - 8" :class="[marker.kind, marker.anchorClass]">
+            {{ marker.label }}
+          </text>
         </g>
         <!-- Sin etiqueta de texto: varios acontecimientos próximos se solapan; el nombre vive en el tooltip, como en Patrimonio. -->
         <g v-for="marker in eventMarkers" :key="`event-${marker.id}`" class="plan-chart-event">

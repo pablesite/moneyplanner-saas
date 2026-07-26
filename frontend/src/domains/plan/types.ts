@@ -336,6 +336,7 @@ export type PlanFoundations = {
     status?: PlanFoundationStatus;
     structural_annual_income: string;
     structural_operating_expense: string;
+    temporary_commitment_expense: string;
     operating_surplus: string;
     committed_surplus: string;
     operating_surplus_ratio: string | null;
@@ -431,6 +432,10 @@ export type PlanOverview = {
   status: 'on_track' | 'off_track' | 'unreachable' | 'incomplete';
   scenario: ProjectionScenario;
   target_date: string;
+  desired_year: number;
+  sustainable_year: number | null;
+  sustainable_range: ProjectionRange;
+  gap_years: number | null;
   projection: ProjectionResponse;
   range: ProjectionRange;
   quality: {

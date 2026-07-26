@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
@@ -20,11 +20,12 @@ const props = defineProps<{
 }>();
 
 const summary = computed(() => props.projection.summary);
-const projectedYear = computed(() => summary.value.projected_year.value);
-const targetYear = computed(() => summary.value.target_year.value);
-const gap = computed(() =>
-  projectedYear.value == null ? null : Number(projectedYear.value) - Number(targetYear.value),
-);
+// El titular pasa a ser la jubilación sostenible más temprana (cuándo puedes
+// dejar de trabajar sin quedarte sin dinero), no la vieja "fecha estimada".
+const sustainableYear = computed(() => props.overview?.sustainable_year ?? null);
+const desiredYear = computed(() => props.overview?.desired_year ?? null);
+// gap_years > 0 = tu objetivo deseado aún no es sostenible; <= 0 = lo logras en/antes.
+const gapYears = computed(() => props.overview?.gap_years ?? null);
 
 // Sin "/ mes" en el valor: a 390px partía la cifra en dos líneas a mitad de unidad.
 const targetCopy = computed(() => formatMoney(props.plan.target_monthly_income_today_eur));
@@ -34,28 +35,63 @@ const sustainableShare = computed(() => {
   return target > 0 ? Math.round((sustainable / target) * 100) : 0;
 });
 const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
-const projectedCopy = computed(() => {
-  const range = props.overview?.range;
-  if (range?.prudent_year && range.favorable_year) {
-    const first = Math.min(range.prudent_year, range.favorable_year);
-    const last = Math.max(range.prudent_year, range.favorable_year);
-    return `Entre ${first} y ${last}`;
-  }
-  return projectedYear.value == null
-    ? 'Sin fecha estimada'
-    : yearWithAges(projectedYear.value, props.plan.members);
-});
-// En pantallas estrechas el nombre sobra (ya es tu plan): "2049 · 65 años".
-const projectedCompactCopy = computed(() =>
-  projectedYear.value == null
-    ? 'Sin fecha estimada'
-    : compactYearWithAges(projectedYear.value, props.plan.members),
+const projectedCopy = computed(() =>
+  sustainableYear.value == null
+    ? 'Sin fecha sostenible'
+    : yearWithAges(sustainableYear.value, props.plan.members),
 );
-type Blocker = { text: string; to: string; cta: string };
+// En pantallas estrechas el nombre sobra (ya es tu plan): "2045 · 61 años".
+const projectedCompactCopy = computed(() =>
+  sustainableYear.value == null
+    ? 'Sin fecha sostenible'
+    : compactYearWithAges(sustainableYear.value, props.plan.members),
+);
+// Banda de escenarios (prudente–favorable) como subtexto, no como titular.
+const rangeCopy = computed(() => {
+  const range = props.overview?.sustainable_range;
+  if (!range?.prudent_year || !range.favorable_year) return null;
+  const first = Math.min(range.prudent_year, range.favorable_year);
+  const last = Math.max(range.prudent_year, range.favorable_year);
+  return first === last ? null : `entre ${first} y ${last}`;
+});
+type BlockerRow = { label: string; value: string; kind?: 'sub' | 'total' };
+type Blocker = {
+  text: string;
+  to: string;
+  cta: string;
+  detail?: BlockerRow[];
+  detailNote?: string;
+};
 
 const hasAnyAssets = computed(
   () => Number(props.foundations?.net_worth_health?.assets_value ?? 0) > 0,
 );
+
+// Un desplegable por blocker (identificado por su texto): el detalle numérico se
+// lee sin salir del hero; "Revisar presupuesto" queda para cuando toque modificar.
+const openDetails = ref<Set<string>>(new Set());
+const toggleDetail = (key: string) => {
+  const next = new Set(openDetails.value);
+  if (next.has(key)) {
+    next.delete(key);
+  } else {
+    next.add(key);
+  }
+  openDetails.value = next;
+};
+
+// Cascada del superávit comprometido con los números que ya publica cimientos.
+const committedBreakdown = computed<BlockerRow[]>(() => {
+  const cf = props.foundations?.cash_flow;
+  if (!cf) return [];
+  return [
+    { label: 'Ingresos estructurales', value: formatMoney(cf.structural_annual_income) },
+    { label: 'Gasto operativo', value: `− ${formatMoney(cf.structural_operating_expense)}` },
+    { label: 'Superávit operativo', value: formatMoney(cf.operating_surplus), kind: 'sub' },
+    { label: 'Compromisos temporales', value: `− ${formatMoney(cf.temporary_commitment_expense)}` },
+    { label: 'Superávit comprometido', value: formatMoney(cf.committed_surplus), kind: 'total' },
+  ];
+});
 
 // También con fecha proyectada: si la salud es crítica (0 activos, capital sin
 // clasificar, déficit), el "por qué" del desvío debe leerse sin cambiar de pantalla.
@@ -98,6 +134,9 @@ const specificBlockers = computed<Blocker[]>(() => {
       text: 'El superávit comprometido es negativo: los compromisos consumen más de lo que entra.',
       to: '/presupuesto',
       cta: 'Revisar presupuesto',
+      detail: committedBreakdown.value,
+      detailNote:
+        'Los compromisos temporales terminan al vencer cada deuda; no son gasto permanente como el operativo.',
     });
   }
   return items.slice(0, 3);
@@ -105,10 +144,10 @@ const specificBlockers = computed<Blocker[]>(() => {
 
 const blockers = computed<Blocker[]>(() => {
   if (specificBlockers.value.length) return specificBlockers.value;
-  if (gap.value != null) return [];
+  if (sustainableYear.value != null) return [];
   return [
     {
-      text: 'Con los datos actuales el capital no alcanza el objetivo dentro del horizonte proyectado.',
+      text: 'Ni trabajando hasta el fin del horizonte el capital sostiene tu nivel de vida sin agotarse.',
       to: '/plan/setup',
       cta: 'Revisar objetivo y horizonte',
     },
@@ -116,20 +155,26 @@ const blockers = computed<Blocker[]>(() => {
 });
 
 const blockersTitle = computed(() =>
-  gap.value == null ? 'Por qué no hay fecha' : 'Qué está frenando el plan',
+  sustainableYear.value == null ? 'Por qué no hay fecha' : 'Qué está frenando el plan',
 );
 
+// El objetivo que fija el usuario es una aspiración; el delta compara esa
+// aspiración con la jubilación sostenible más temprana que calcula el motor.
+const desiredCopy = computed(() =>
+  desiredYear.value == null ? 'tu objetivo' : `tu objetivo (${desiredYear.value})`,
+);
 const deltaCopy = computed(() => {
-  if (gap.value == null) {
+  if (sustainableYear.value == null) {
     const count = specificBlockers.value.length;
-    if (count === 1) return 'El plan actual no llega al objetivo: hay 1 causa identificada';
-    if (count > 1) return `El plan actual no llega al objetivo: hay ${count} causas identificadas`;
-    return 'El capital proyectado no alcanza el objetivo dentro del horizonte';
+    if (count === 1) return 'Tu plan aún no es sostenible: hay 1 causa identificada';
+    if (count > 1) return `Tu plan aún no es sostenible: hay ${count} causas identificadas`;
+    return 'Con los datos actuales no hay una jubilación sostenible en el horizonte';
   }
-  if (gap.value === 0) return 'Alineado con la fecha objetivo';
-  const years = Math.abs(gap.value) === 1 ? 'año' : 'años';
-  if (gap.value > 0) return `${gap.value} ${years} después del objetivo`;
-  return `${Math.abs(gap.value)} ${years} antes del objetivo`;
+  if (gapYears.value == null || gapYears.value === 0) return `Coincide con ${desiredCopy.value}`;
+  const years = Math.abs(gapYears.value) === 1 ? 'año' : 'años';
+  if (gapYears.value > 0)
+    return `${desiredCopy.value} aún no es sostenible · ${gapYears.value} ${years} más`;
+  return `${Math.abs(gapYears.value)} ${years} antes de ${desiredCopy.value}`;
 });
 
 const statusCopy = computed(() => {
@@ -143,8 +188,8 @@ const statusCopy = computed(() => {
 // El dato más importante del plan merece la misma señal semántica que los deltas de Patrimonio.
 // Sin fecha estimada no se colorea: el bloque de causas ya carga ese peso.
 const deltaTone = computed(() => {
-  if (gap.value == null) return null;
-  return gap.value > 0 ? 'neg' : 'pos';
+  if (sustainableYear.value == null) return null;
+  return gapYears.value != null && gapYears.value > 0 ? 'neg' : 'pos';
 });
 
 // La renta sostenible hereda la señal semántica de los deltas: por debajo del
@@ -180,9 +225,7 @@ const kpis = computed<AKpiItem[]>(() => [
       <template #delta>
         <span :class="deltaTone">
           {{ deltaCopy }}
-          <template v-if="overview?.range.central_year">
-            · estimación central {{ overview.range.central_year }}
-          </template>
+          <template v-if="rangeCopy"> · {{ rangeCopy }} </template>
         </span>
         <AInfoHint
           label="La fecha es una estimación calculada con capital productivo, hipótesis y datos actuales. No es una garantía."
@@ -193,6 +236,26 @@ const kpis = computed<AKpiItem[]>(() => [
         <ul>
           <li v-for="item in blockers" :key="item.text">
             <span>{{ item.text }}</span>
+            <button
+              v-if="item.detail && item.detail.length"
+              class="plan-details-toggle"
+              type="button"
+              :aria-expanded="openDetails.has(item.text)"
+              @click="toggleDetail(item.text)"
+            >
+              {{ openDetails.has(item.text) ? 'Ocultar detalle' : 'Ver detalle' }}
+            </button>
+            <div v-if="item.detail && openDetails.has(item.text)" class="plan-blocker-breakdown">
+              <dl>
+                <div v-for="row in item.detail" :key="row.label" :class="row.kind">
+                  <dt>{{ row.label }}</dt>
+                  <dd class="mono">{{ row.value }}</dd>
+                </div>
+              </dl>
+              <p v-if="item.detailNote" class="plan-blocker-breakdown-note">
+                {{ item.detailNote }}
+              </p>
+            </div>
             <RouterLink class="plan-blocker-link" :to="item.to">{{ item.cta }}</RouterLink>
           </li>
         </ul>

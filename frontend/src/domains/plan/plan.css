@@ -142,6 +142,61 @@
   text-decoration: underline;
 }
 
+.plan-blocker-breakdown {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.plan-blocker-breakdown dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.plan-blocker-breakdown dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.85rem;
+}
+
+.plan-blocker-breakdown dt {
+  margin: 0;
+  color: var(--muted);
+}
+
+.plan-blocker-breakdown dd {
+  margin: 0;
+  color: var(--text);
+}
+
+.plan-blocker-breakdown dl > div.sub,
+.plan-blocker-breakdown dl > div.total {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-blocker-breakdown dl > div.sub dt,
+.plan-blocker-breakdown dl > div.sub dd,
+.plan-blocker-breakdown dl > div.total dt,
+.plan-blocker-breakdown dl > div.total dd {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.plan-blocker-breakdown dl > div.total dd {
+  color: var(--neg);
+  font-weight: 700;
+}
+
+.plan-blocker-breakdown-note {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .plan-main-grid,
 .plan-side-grid {
   display: grid;
@@ -318,6 +373,16 @@
   background: var(--pos);
 }
 
+/* Paleta categórica del gráfico: hues bien separados para que las series no se
+   confundan (verde patrimonio 148°, azul capital productivo 250°, ámbar
+   acontecimientos 85°, gris objetivo). Validada CVD: ΔE adyacente ≥ 20 (skill
+   dataviz). El objetivo/capital objetivo usan gris achromático (referencia). */
+.plan-trajectory {
+  --chart-networth: var(--pos);
+  --chart-productive: oklch(0.7 0.14 250);
+  --chart-event: oklch(0.8 0.11 85);
+}
+
 .plan-chart-wrap {
   position: relative;
   overflow: hidden;
@@ -345,16 +410,16 @@
 }
 
 .plan-chart-line.hist {
-  stroke: var(--accent);
+  stroke: var(--chart-networth);
 }
 
 .plan-chart-line.proj {
-  stroke: var(--pos);
+  stroke: var(--chart-networth);
   stroke-dasharray: 9 8;
 }
 
 .plan-chart-line.prod {
-  stroke: var(--accent-strong);
+  stroke: var(--chart-productive);
   stroke-width: 2;
   stroke-dasharray: 3 5;
 }
@@ -375,7 +440,7 @@
 }
 
 .plan-chart-marker line.projected {
-  stroke: var(--pos);
+  stroke: var(--chart-networth);
 }
 
 .plan-chart-marker text {
@@ -385,17 +450,25 @@
 }
 
 .plan-chart-marker text.projected {
-  fill: var(--pos);
+  fill: var(--chart-networth);
+}
+
+.plan-chart-marker text.anchor-start {
+  text-anchor: start;
+}
+
+.plan-chart-marker text.anchor-end {
+  text-anchor: end;
 }
 
 .plan-chart-event line {
-  stroke: var(--accent);
+  stroke: var(--chart-event);
   stroke-dasharray: 3 3;
   opacity: 0.7;
 }
 
 .plan-chart-event circle {
-  fill: var(--accent);
+  fill: var(--chart-event);
 }
 
 .plan-chart-hover-line {
@@ -450,15 +523,15 @@
 }
 
 .plan-chart-legend .hist {
-  background: var(--accent);
+  background: var(--chart-networth);
 }
 
 .plan-chart-legend .proj {
-  background: repeating-linear-gradient(90deg, var(--pos) 0 5px, transparent 5px 9px);
+  background: repeating-linear-gradient(90deg, var(--chart-networth) 0 5px, transparent 5px 9px);
 }
 
 .plan-chart-legend .prod {
-  background: repeating-linear-gradient(90deg, var(--accent-strong) 0 3px, transparent 3px 7px);
+  background: repeating-linear-gradient(90deg, var(--chart-productive) 0 3px, transparent 3px 7px);
 }
 
 .plan-chart-legend .target {
@@ -466,7 +539,7 @@
 }
 
 .plan-chart-legend .event {
-  background: repeating-linear-gradient(90deg, var(--accent) 0 3px, transparent 3px 6px);
+  background: repeating-linear-gradient(90deg, var(--chart-event) 0 3px, transparent 3px 6px);
 }
 
 .plan-quality {

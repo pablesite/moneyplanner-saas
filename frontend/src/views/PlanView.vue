@@ -164,6 +164,8 @@ onMounted(() => {
           :projection="projection"
           :members="plan.members"
           :events="eventMarkers"
+          :sustainable-year="store.overview?.sustainable_year ?? null"
+          :desired-year="store.overview?.desired_year ?? null"
         />
       </section>
 
