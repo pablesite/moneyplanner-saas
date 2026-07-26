@@ -305,5 +305,28 @@ function onMove(event: MouseEvent): void {
         <em>{{ hoverPoint.kind === 'historical' ? 'Histórico' : 'Proyección' }}</em>
       </div>
     </div>
+    <details v-if="projection.trajectory.length" class="plan-chart-table">
+      <summary>Ver los datos en una tabla</summary>
+      <div class="plan-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Año</th>
+              <th scope="col">Capital productivo</th>
+              <th scope="col">Capital objetivo</th>
+              <th scope="col">Patrimonio neto</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in projection.trajectory" :key="row.year">
+              <th scope="row">{{ row.year }}</th>
+              <td>{{ formatMoney(row.productive_capital) }}</td>
+              <td>{{ formatMoney(row.target_capital) }}</td>
+              <td>{{ formatMoney(row.net_worth) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
   </section>
 </template>
