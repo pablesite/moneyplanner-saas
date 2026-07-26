@@ -6,16 +6,9 @@ import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries';
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type IncomeResetMode = 'zero' | 'planned';
 type IncomeExecutionOrigin =
-  | 'categorized_ledger'
-  | 'user_override'
-  | 'legacy_checkin'
-  | 'ambiguous_taxonomy'
-  | 'none';
+  'categorized_ledger' | 'user_override' | 'legacy_checkin' | 'ambiguous_taxonomy' | 'none';
 type IncomeExecutionSource =
-  | 'categorized_ledger'
-  | 'legacy_fallback'
-  | 'pending_classification'
-  | 'none';
+  'categorized_ledger' | 'legacy_fallback' | 'pending_classification' | 'none';
 
 type IncomeCheckin = {
   id: number;
@@ -106,15 +99,19 @@ const props = defineProps<{
   isCloseLocked?: boolean;
   checkinStatusLabel: (status: 'confirmed' | 'adjusted' | 'skipped' | 'estimated') => string;
   isIncomeGroupUnlocked: (groupKey: string) => boolean;
-  resetIncomeGroupCheckinDraftValue: (
+  // Sintaxis de método (bivariante) en los callbacks: el grupo que provee el
+  // composable padre y el `IncomeGroup` local han divergido levemente (tipo de
+  // fila), y vue-tsc >=3.3 rechaza la varianza estricta de la flecha. Los
+  // handlers guardan `editableRow` internamente, así que es seguro.
+  resetIncomeGroupCheckinDraftValue(
     group: IncomeGroup,
     mode: IncomeResetMode,
-  ) => void | Promise<void>;
-  ensureIncomeGroupAdjustAmountPrefilled: (group: IncomeGroup) => void;
-  saveIncomeGroupCheckinFromInput: (group: IncomeGroup) => void | Promise<void>;
-  onIncomeGroupReviewedToggle: (group: IncomeGroup, checked: boolean) => void | Promise<void>;
-  unlockIncomeGroupManualAdjustment: (group: IncomeGroup) => void | Promise<void>;
-  relockIncomeGroupManualAdjustment: (group: IncomeGroup) => void | Promise<void>;
+  ): void | Promise<void>;
+  ensureIncomeGroupAdjustAmountPrefilled(group: IncomeGroup): void;
+  saveIncomeGroupCheckinFromInput(group: IncomeGroup): void | Promise<void>;
+  onIncomeGroupReviewedToggle(group: IncomeGroup, checked: boolean): void | Promise<void>;
+  unlockIncomeGroupManualAdjustment(group: IncomeGroup): void | Promise<void>;
+  relockIncomeGroupManualAdjustment(group: IncomeGroup): void | Promise<void>;
 }>();
 
 const kpiItems = computed<AKpiItem[]>(() => [

@@ -252,16 +252,9 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   type BudgetEntryViewMode = 'all' | 'recurrent' | 'one_off';
   type BudgetExecutionTone = 'neutral' | 'good' | 'warn' | 'danger';
   type BudgetExecutionSource =
-    | 'categorized_ledger'
-    | 'legacy_fallback'
-    | 'pending_classification'
-    | 'none';
+    'categorized_ledger' | 'legacy_fallback' | 'pending_classification' | 'none';
   type BudgetExecutionOrigin =
-    | 'categorized_ledger'
-    | 'user_override'
-    | 'legacy_checkin'
-    | 'ambiguous_taxonomy'
-    | 'none';
+    'categorized_ledger' | 'user_override' | 'legacy_checkin' | 'ambiguous_taxonomy' | 'none';
   type BudgetExecutionPreview = {
     ratio: number;
     widthPct: number;

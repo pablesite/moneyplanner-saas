@@ -194,9 +194,7 @@ const stepperSteps = computed(() => {
     id: step.id,
     label: step.label,
     status: (index < activeIdx ? 'done' : index === activeIdx ? 'current' : 'pending') as
-      | 'done'
-      | 'current'
-      | 'pending',
+      'done' | 'current' | 'pending',
   }));
 });
 

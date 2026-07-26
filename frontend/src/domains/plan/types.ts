@@ -124,11 +124,7 @@ export type ClassifiedPlanAsset = {
 };
 
 export type PlanAssetFunction =
-  | 'productive'
-  | 'security'
-  | 'short_term_goal'
-  | 'family_use'
-  | 'unknown';
+  'productive' | 'security' | 'short_term_goal' | 'family_use' | 'unknown';
 
 export type AssetFunctionResponse = {
   productive_capital: string;
