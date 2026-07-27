@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.41.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.40.0...moneyplanner-saas-v0.41.0) (2026-07-27)
+
+
+### Features
+
+* **plan:** reprogramar movimientos puntuales y reencuadrar el apretón transitorio ([4feac55](https://github.com/pablesite/moneyplanner-saas/commit/4feac55b1b082b802e85edb0a8fbd9c64a279d85))
+
 ## [0.40.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.39.0...moneyplanner-saas-v0.40.0) (2026-07-26)
 
 
