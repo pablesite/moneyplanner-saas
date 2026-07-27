@@ -34,7 +34,9 @@ export function yearWithAges(year: number | null, members: PlanMember[]): string
   const ages = members
     .map((member) => {
       const age = ageInYear(member.birth_date, year);
-      return age == null ? null : `${member.name} ${age} años`;
+      // Nombre de pila: el apellido completo desbordaba el hero a 3 líneas.
+      const firstName = member.name.split(' ')[0] ?? member.name;
+      return age == null ? null : `${firstName} ${age} años`;
     })
     .filter((value): value is string => Boolean(value));
   return ages.length ? `${year} · ${ages.join(' · ')}` : String(year);

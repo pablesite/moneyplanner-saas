@@ -336,6 +336,14 @@ export type PlanFoundations = {
     operating_surplus: string;
     committed_surplus: string;
     operating_surplus_ratio: string | null;
+    committed_status: 'healthy' | 'transient' | 'structural';
+    committed_recovery_year: number | null;
+    temporary_commitments: {
+      name: string;
+      amount: string;
+      end_year: number | null;
+      end_month: number | null;
+    }[];
   };
   emergency_fund: {
     score: number;

@@ -6,6 +6,7 @@ import {
   NetWorthTrajectoryChart,
   PlanFoundations,
   PlanHero,
+  PlanOneOffMovementsPlanner,
   ProductiveCapitalProgress,
   ProjectionAssumptionsDrawer,
 } from '@/domains/plan/components';
@@ -34,7 +35,14 @@ const activeScenario = computed({
 });
 
 const eventMarkers = computed(() => planEventMarkers(store.events));
-const nextAction = computed(() => store.overview?.next_action ?? null);
+// En un apretón transitorio no hay acción de mejora real (los compromisos vencen
+// solos); el diagnóstico del hero ya lo explica, así que ocultamos la tarjeta.
+const isTransientSqueeze = computed(
+  () => store.foundations?.cash_flow?.committed_status === 'transient',
+);
+const nextAction = computed(() =>
+  isTransientSqueeze.value ? null : (store.overview?.next_action ?? null),
+);
 const monthlyAction = computed(() => {
   const amount = Number(nextAction.value?.monthly_commitment ?? 0);
   return amount > 0 ? `${formatMoney(amount)} al mes` : null;
@@ -98,6 +106,8 @@ onMounted(() => {
         :overview="store.overview"
         :foundations="store.foundations"
       />
+
+      <PlanOneOffMovementsPlanner />
 
       <section v-if="nextAction" class="sect plan-next-action" aria-labelledby="next-action-title">
         <div>

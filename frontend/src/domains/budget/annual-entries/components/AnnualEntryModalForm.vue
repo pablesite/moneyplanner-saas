@@ -23,6 +23,7 @@ type AnnualEntryModalFormModel = {
   targetMonth: string;
   termEndMonth: string;
   termEndYear: string;
+  fiscalYear: string;
   amountInputPeriod: 'annual' | 'monthly';
   amountAnnual: string;
   currency: string;
@@ -127,8 +128,8 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
           {{ advancedOpen ? 'Ocultar opciones avanzadas' : 'Opciones avanzadas' }}
         </AButton>
         <p class="ui-section-subtitle">
-          Por defecto, la partida es recurrente estructural. Los compromisos puntuales se gestionan
-          desde Mi Plan.
+          Por defecto, la partida es recurrente estructural. Usa las opciones avanzadas para
+          marcarla como puntual o temporal.
         </p>
       </div>
 
@@ -195,7 +196,7 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
       </label>
 
       <label
-        v-if="advancedOpen && (form.timeProfile === 'one_off' || showRecurringTargetMonthField)"
+        v-if="form.timeProfile === 'one_off' || (advancedOpen && showRecurringTargetMonthField)"
         class="ui-item-form-field"
       >
         <span class="ui-item-form-label">{{
@@ -212,6 +213,19 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
           "
           @input="
             emit('patch', { targetMonth: String(($event.target as HTMLInputElement).value ?? '') })
+          "
+        />
+      </label>
+
+      <label v-if="form.timeProfile === 'one_off'" class="ui-item-form-field">
+        <span class="ui-item-form-label">Año previsto</span>
+        <input
+          :value="form.fiscalYear"
+          class="input"
+          inputmode="numeric"
+          placeholder="Año (ej: 2026)"
+          @input="
+            emit('patch', { fiscalYear: String(($event.target as HTMLInputElement).value ?? '') })
           "
         />
       </label>
