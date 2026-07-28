@@ -101,9 +101,9 @@ const isSale = computed(() => form.kind === 'sale');
 const purchaseNetWorthGain = computed(() => {
   if (isSale.value) return 0;
   return (
-    parseAnnualAmount(impact.new_asset_value) -
-    parseAnnualAmount(impact.new_debt_principal) -
-    parseAnnualAmount(impact.initial_outflow)
+    amountNum(impact.new_asset_value) -
+    amountNum(impact.new_debt_principal) -
+    amountNum(impact.initial_outflow)
   );
 });
 const purchaseDoubleCountWarning = computed(
@@ -113,9 +113,7 @@ const purchaseDoubleCountWarning = computed(
 // el plazo es obligatorio cuando hay principal.
 const debtNeedsTerm = computed(
   () =>
-    !isSale.value &&
-    parseAnnualAmount(impact.new_debt_principal) > 0 &&
-    !impact.new_debt_term_years.trim(),
+    !isSale.value && amountNum(impact.new_debt_principal) > 0 && !impact.new_debt_term_years.trim(),
 );
 
 const lines = computed<AdoptableLine[]>(() => [
@@ -277,19 +275,25 @@ watch(selectedLiabilityTotal, (total) => {
   if (!isSale.value && !impact.new_debt_principal) impact.new_debt_principal = String(total);
 });
 
-// Los importes se escriben libres (formato español, decimales…); se normalizan a un
-// decimal limpio que el backend (DecimalField) acepta. `parseAnnualAmount` resuelve
-// coma/punto igual que el resto de la app.
+// Un punto entre grupos de 3 ("80.420", "282.176", "1.234.567") es separador de miles,
+// no decimal: se quita antes de parsear. No toca decimales ("80,50", "80.42") ni tasas.
+function normalizeMoneyInput(raw: string): string {
+  const trimmed = String(raw ?? '').trim();
+  return /^\d{1,3}(\.\d{3})+$/.test(trimmed) ? trimmed.replace(/\./g, '') : trimmed;
+}
+// Importe libre (formato español/decimales) → número, resolviendo el punto de miles.
+function amountNum(raw: string): number {
+  return parseAnnualAmount(normalizeMoneyInput(raw));
+}
 function money(raw: string): string {
-  return parseAnnualAmount(raw).toFixed(2);
+  return amountNum(raw).toFixed(2);
 }
 function rate(raw: string): string {
   return parseAnnualAmount(raw).toFixed(4);
 }
-// Preview del importe tal y como se interpretará (evita la trampa del punto de miles:
-// "282.176" → 282,18 €). Solo se muestra si difiere de lo tecleado o hay ambigüedad.
+// Preview del importe tal y como se interpretará (evita la trampa del punto de miles).
 function preview(raw: string): string {
-  const value = parseAnnualAmount(raw);
+  const value = amountNum(raw);
   return value > 0 ? `${formatMoney(value)} €` : '';
 }
 
