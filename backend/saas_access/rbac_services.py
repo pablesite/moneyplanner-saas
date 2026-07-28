@@ -60,18 +60,17 @@ def assign_role(*, user, role: str) -> SaasAccessProfile:
 
 
 def list_admin_users_with_roles() -> tuple[
-    list[Any], dict[int, str], dict[int, SaasCoreAccountLink]
+    list[Any], dict[int, str], dict[int, SaasCoreAccountLink], dict[int, SaasAccessProfile]
 ]:
     user_model = get_user_model()
     users = list(user_model.objects.all().order_by("id"))
-    roles = SaasAccessProfile.objects.filter(user_id__in=[u.id for u in users]).values_list(
-        "user_id", "role"
-    )
+    profiles = list(SaasAccessProfile.objects.filter(user_id__in=[u.id for u in users]))
+    roles = {profile.user_id: profile.role for profile in profiles}
     links = {
         link.user_id: link
         for link in SaasCoreAccountLink.objects.filter(user_id__in=[u.id for u in users])
     }
-    return users, dict(roles), links
+    return users, roles, links, {profile.user_id: profile for profile in profiles}
 
 
 def list_core_users_with_saas_links(
@@ -79,7 +78,9 @@ def list_core_users_with_saas_links(
     role_by_user_id: dict[int, str] | None = None,
     link_by_user_id: dict[int, SaasCoreAccountLink] | None = None,
 ) -> list[dict[str, object]]:
-    users, resolved_role_by_user_id, resolved_link_by_user_id = list_admin_users_with_roles()
+    users, resolved_role_by_user_id, resolved_link_by_user_id, _profiles = (
+        list_admin_users_with_roles()
+    )
     role_by_user_id = role_by_user_id or resolved_role_by_user_id
     link_by_user_id = link_by_user_id or resolved_link_by_user_id
 
@@ -158,6 +159,8 @@ def create_admin_user(
         is_active=is_active,
     )
     profile = assign_role(user=user, role=role)
+    profile.must_change_password = True
+    profile.save(update_fields=["role", "must_change_password", "updated_at"])
     if profile.role == SaasAccessProfile.Role.MEMBER:
         ensure_primary_family_member_in_core_for_saas_user(user=user)
 

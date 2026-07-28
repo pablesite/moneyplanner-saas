@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from urllib import error, request
 
 from django.conf import settings
@@ -26,7 +27,10 @@ def _core_bootstrap_timeout_seconds() -> float:
 
 
 def _auth_headers_for_user(*, user) -> dict[str, str]:
-    token = str(AccessToken.for_user(user))
+    access_token = AccessToken.for_user(user)
+    access_token["core_bootstrap"] = True
+    access_token.set_exp(lifetime=timedelta(minutes=2))
+    token = str(access_token)
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",

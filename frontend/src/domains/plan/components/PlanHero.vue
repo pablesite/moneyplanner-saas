@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
@@ -46,51 +46,59 @@ const projectedCompactCopy = computed(() =>
     ? 'Sin fecha sostenible'
     : compactYearWithAges(sustainableYear.value, props.plan.members),
 );
-// Banda de escenarios (prudente–favorable) como subtexto, no como titular.
-const rangeCopy = computed(() => {
+// Extremos del rango etiquetados para la ⓘ: favorable (optimista, antes) y
+// prudente (conservador, después). Null si no hay spread (coinciden).
+const rangeDetail = computed(() => {
   const range = props.overview?.sustainable_range;
   if (!range?.prudent_year || !range.favorable_year) return null;
-  const first = Math.min(range.prudent_year, range.favorable_year);
-  const last = Math.max(range.prudent_year, range.favorable_year);
-  return first === last ? null : `entre ${first} y ${last}`;
+  if (range.prudent_year === range.favorable_year) return null;
+  return { favorable: range.favorable_year, prudent: range.prudent_year };
 });
-type BlockerRow = { label: string; value: string; kind?: 'sub' | 'total' };
-type Blocker = {
-  text: string;
-  to: string;
-  cta: string;
-  detail?: BlockerRow[];
-  detailNote?: string;
-};
+type Blocker = { text: string; to: string; cta: string };
 
 const hasAnyAssets = computed(
   () => Number(props.foundations?.net_worth_health?.assets_value ?? 0) > 0,
 );
 
-// Un desplegable por blocker (identificado por su texto): el detalle numérico se
-// lee sin salir del hero; "Revisar presupuesto" queda para cuando toque modificar.
-const openDetails = ref<Set<string>>(new Set());
-const toggleDetail = (key: string) => {
-  const next = new Set(openDetails.value);
-  if (next.has(key)) {
-    next.delete(key);
-  } else {
-    next.add(key);
-  }
-  openDetails.value = next;
+// Diagnóstico del flujo comprometido en dos niveles: la base recurrente permanente
+// y el esfuerzo temporal de compromisos, con el vencimiento de cada uno para que
+// se vea cuándo se libera. Solo se construye cuando no es "healthy".
+const MONTH_ABBR = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+];
+const cleanCommitmentName = (name: string) => name.replace(/^Compromiso pasivo:\s*/i, '').trim();
+const commitmentEnd = (endYear: number | null, endMonth: number | null) => {
+  if (endYear == null) return 'sin fecha';
+  if (endMonth == null) return String(endYear);
+  return `${MONTH_ABBR[endMonth - 1] ?? ''} ${endYear}`.trim();
 };
-
-// Cascada del superávit comprometido con los números que ya publica cimientos.
-const committedBreakdown = computed<BlockerRow[]>(() => {
+const committedDiagnosis = computed(() => {
   const cf = props.foundations?.cash_flow;
-  if (!cf) return [];
-  return [
-    { label: 'Ingresos estructurales', value: formatMoney(cf.structural_annual_income) },
-    { label: 'Gasto operativo', value: `− ${formatMoney(cf.structural_operating_expense)}` },
-    { label: 'Superávit operativo', value: formatMoney(cf.operating_surplus), kind: 'sub' },
-    { label: 'Compromisos temporales', value: `− ${formatMoney(cf.temporary_commitment_expense)}` },
-    { label: 'Superávit comprometido', value: formatMoney(cf.committed_surplus), kind: 'total' },
-  ];
+  if (!cf || cf.committed_status === 'healthy') return null;
+  return {
+    transient: cf.committed_status === 'transient',
+    operatingSurplus: formatMoney(cf.operating_surplus),
+    structuralIncome: formatMoney(cf.structural_annual_income),
+    operatingExpense: formatMoney(cf.structural_operating_expense),
+    committedSurplus: formatMoney(cf.committed_surplus),
+    recoveryYear: cf.committed_recovery_year,
+    commitments: cf.temporary_commitments.map((c) => ({
+      name: cleanCommitmentName(c.name),
+      amount: formatMoney(c.amount),
+      end: commitmentEnd(c.end_year, c.end_month),
+    })),
+  };
 });
 
 // También con fecha proyectada: si la salud es crítica (0 activos, capital sin
@@ -99,7 +107,6 @@ const specificBlockers = computed<Blocker[]>(() => {
   const items: Blocker[] = [];
   const unknownCapital = Number(props.projection.classification?.unknown_capital ?? 0);
   const monthlyContribution = Number(props.foundations?.planned_contribution?.monthly_amount ?? 0);
-  const committedSurplus = Number(props.foundations?.cash_flow?.committed_surplus ?? 0);
   if (productiveCapital.value <= 0) {
     items.push(
       hasAnyAssets.value
@@ -129,16 +136,6 @@ const specificBlockers = computed<Blocker[]>(() => {
       cta: 'Planificar aportación',
     });
   }
-  if (props.foundations && committedSurplus < 0) {
-    items.push({
-      text: 'El superávit comprometido es negativo: los compromisos consumen más de lo que entra.',
-      to: '/presupuesto',
-      cta: 'Revisar presupuesto',
-      detail: committedBreakdown.value,
-      detailNote:
-        'Los compromisos temporales terminan al vencer cada deuda; no son gasto permanente como el operativo.',
-    });
-  }
   return items.slice(0, 3);
 });
 
@@ -154,42 +151,55 @@ const blockers = computed<Blocker[]>(() => {
   ];
 });
 
-const blockersTitle = computed(() =>
-  sustainableYear.value == null ? 'Por qué no hay fecha' : 'Qué está frenando el plan',
-);
+// Solo hablamos de "frenar" cuando hay un problema de fondo (blockers reales o un
+// déficit estructural); un esfuerzo temporal es "tu situación este año", no una traba.
+const diagnosisTitle = computed(() => {
+  if (sustainableYear.value == null) return 'Por qué no hay fecha';
+  const hardProblem =
+    specificBlockers.value.length > 0 ||
+    (committedDiagnosis.value != null && !committedDiagnosis.value.transient);
+  return hardProblem ? 'Qué está frenando el plan' : 'Tu situación este año';
+});
 
 // El objetivo que fija el usuario es una aspiración; el delta compara esa
 // aspiración con la jubilación sostenible más temprana que calcula el motor.
-const desiredCopy = computed(() =>
-  desiredYear.value == null ? 'tu objetivo' : `tu objetivo (${desiredYear.value})`,
+const objetivoCopy = computed(() =>
+  desiredYear.value == null ? 'tu objetivo' : `tu objetivo de ${desiredYear.value}`,
 );
 const deltaCopy = computed(() => {
   if (sustainableYear.value == null) {
     const count = specificBlockers.value.length;
-    if (count === 1) return 'Tu plan aún no es sostenible: hay 1 causa identificada';
-    if (count > 1) return `Tu plan aún no es sostenible: hay ${count} causas identificadas`;
+    if (count >= 1) {
+      return `Aún no es sostenible · ${count} ${count === 1 ? 'causa a revisar' : 'causas a revisar'}`;
+    }
     return 'Con los datos actuales no hay una jubilación sostenible en el horizonte';
   }
-  if (gapYears.value == null || gapYears.value === 0) return `Coincide con ${desiredCopy.value}`;
+  if (gapYears.value == null || gapYears.value === 0) return `Justo en ${objetivoCopy.value}`;
   const years = Math.abs(gapYears.value) === 1 ? 'año' : 'años';
-  if (gapYears.value > 0)
-    return `${desiredCopy.value} aún no es sostenible · ${gapYears.value} ${years} más`;
-  return `${Math.abs(gapYears.value)} ${years} antes de ${desiredCopy.value}`;
+  if (gapYears.value > 0) return `${gapYears.value} ${years} más tarde que ${objetivoCopy.value}`;
+  return `${Math.abs(gapYears.value)} ${years} antes que ${objetivoCopy.value}`;
 });
 
 const statusCopy = computed(() => {
   const status = props.overview?.status;
   if (status === 'on_track') return 'Tu plan avanza dentro del plazo';
-  if (status === 'off_track') return 'Tu plan necesita ajustes';
   if (status === 'incomplete') return 'Faltan datos para afinar el plan';
+  if (status === 'off_track') {
+    // Cerca del objetivo no es "necesita ajustes": es "casi".
+    return gapYears.value != null && gapYears.value <= 3
+      ? 'Casi en objetivo'
+      : 'Tu plan necesita ajustes';
+  }
   return 'El objetivo aún no es alcanzable';
 });
 
-// El dato más importante del plan merece la misma señal semántica que los deltas de Patrimonio.
-// Sin fecha estimada no se colorea: el bloque de causas ya carga ese peso.
+// Sin alarma roja para un desvío pequeño: solo un desfase grande (>3 años) es
+// negativo; en/antes del objetivo es positivo; el resto, neutro.
 const deltaTone = computed(() => {
   if (sustainableYear.value == null) return null;
-  return gapYears.value != null && gapYears.value > 0 ? 'neg' : 'pos';
+  if (gapYears.value != null && gapYears.value <= 0) return 'pos';
+  if (gapYears.value != null && gapYears.value > 3) return 'neg';
+  return null;
 });
 
 // La renta sostenible hereda la señal semántica de los deltas: por debajo del
@@ -216,62 +226,99 @@ const kpis = computed<AKpiItem[]>(() => [
 </script>
 
 <template>
-  <section class="plan-hero a-hero-shell">
-    <AHero :eyebrow="statusCopy">
-      <template #value>
-        <div class="hero-value mono plan-hero-value-full">{{ projectedCopy }}</div>
-        <div class="hero-value mono plan-hero-value-compact">{{ projectedCompactCopy }}</div>
-      </template>
-      <template #delta>
-        <span :class="deltaTone">
-          {{ deltaCopy }}
-          <template v-if="rangeCopy"> · {{ rangeCopy }} </template>
-        </span>
-        <AInfoHint
-          label="La fecha es una estimación calculada con capital productivo, hipótesis y datos actuales. No es una garantía."
-        />
-      </template>
-      <div v-if="blockers.length" class="plan-hero-blockers">
-        <strong>{{ blockersTitle }}</strong>
-        <ul>
-          <li v-for="item in blockers" :key="item.text">
-            <span>{{ item.text }}</span>
-            <button
-              v-if="item.detail && item.detail.length"
-              class="plan-details-toggle"
-              type="button"
-              :aria-expanded="openDetails.has(item.text)"
-              @click="toggleDetail(item.text)"
+  <section class="plan-hero">
+    <div class="plan-hero-top">
+      <AHero class="plan-hero-headline" :eyebrow="statusCopy">
+        <template #value>
+          <div class="hero-value mono plan-hero-value-full">{{ projectedCopy }}</div>
+          <div class="hero-value mono plan-hero-value-compact">{{ projectedCompactCopy }}</div>
+        </template>
+        <template #delta>
+          <span class="plan-delta-main" :class="deltaTone">{{ deltaCopy }}</span>
+          <AInfoHint label="Sobre la fecha sostenible">
+            Estimación central.<template v-if="rangeDetail">
+              Según las hipótesis, entre {{ rangeDetail.favorable }} (favorable) y
+              {{ rangeDetail.prudent }} (prudente).</template
             >
-              {{ openDetails.has(item.text) ? 'Ocultar detalle' : 'Ver detalle' }}
-            </button>
-            <div v-if="item.detail && openDetails.has(item.text)" class="plan-blocker-breakdown">
-              <dl>
-                <div v-for="row in item.detail" :key="row.label" :class="row.kind">
-                  <dt>{{ row.label }}</dt>
-                  <dd class="mono">{{ row.value }}</dd>
-                </div>
-              </dl>
-              <p v-if="item.detailNote" class="plan-blocker-breakdown-note">
-                {{ item.detailNote }}
+            No es una garantía: se calcula con capital productivo, hipótesis y datos actuales.
+          </AInfoHint>
+        </template>
+      </AHero>
+
+      <div class="plan-hero-side">
+        <AKpiBand :items="kpis">
+          <template #meta-1>
+            <span :class="sustainableTone">{{ sustainableMeta }}</span>
+          </template>
+        </AKpiBand>
+        <p class="plan-hero-note">
+          Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
+          productivo, no patrimonio neto total.
+        </p>
+      </div>
+    </div>
+
+    <div
+      v-if="blockers.length || committedDiagnosis"
+      class="plan-diagnosis"
+      :class="{ 'is-transient': committedDiagnosis?.transient && !blockers.length }"
+    >
+      <p class="plan-diagnosis-title">{{ diagnosisTitle }}</p>
+      <ul v-if="blockers.length" class="plan-diagnosis-blockers">
+        <li v-for="item in blockers" :key="item.text">
+          <span>{{ item.text }}</span>
+          <RouterLink class="plan-blocker-link" :to="item.to">{{ item.cta }}</RouterLink>
+        </li>
+      </ul>
+      <div v-if="committedDiagnosis" class="plan-committed">
+        <div class="plan-diag-tiers">
+          <div class="plan-diag-tier">
+            <span class="tier-mark tier-mark-ok" aria-hidden="true"></span>
+            <div class="tier-body">
+              <div class="tier-head">
+                <span class="tier-label">Base recurrente sana</span>
+                <span class="tier-value pos mono"
+                  >{{ committedDiagnosis.operatingSurplus }} /año</span
+                >
+              </div>
+              <p class="tier-sub">
+                Ingresos {{ committedDiagnosis.structuralIncome }} − gastos operativos
+                {{ committedDiagnosis.operatingExpense }}
               </p>
             </div>
-            <RouterLink class="plan-blocker-link" :to="item.to">{{ item.cta }}</RouterLink>
-          </li>
-        </ul>
+          </div>
+          <div class="plan-diag-tier">
+            <span class="tier-mark tier-mark-warn" aria-hidden="true"></span>
+            <div class="tier-body">
+              <div class="tier-head">
+                <span class="tier-label">{{
+                  committedDiagnosis.transient
+                    ? 'Esfuerzo temporal de este año'
+                    : 'Déficit estructural'
+                }}</span>
+                <span class="tier-value neg mono">{{ committedDiagnosis.committedSurplus }}</span>
+              </div>
+              <p class="tier-sub">
+                <template v-if="committedDiagnosis.transient && committedDiagnosis.recoveryYear">
+                  Vuelve a positivo en {{ committedDiagnosis.recoveryYear }}, al vencer estos
+                  compromisos:
+                </template>
+                <template v-else-if="committedDiagnosis.transient">
+                  Estos compromisos vencen y liberan tu superávit:
+                </template>
+                <template v-else>Los compromisos superan tu base recurrente:</template>
+              </p>
+              <ul class="plan-commitment-list">
+                <li v-for="c in committedDiagnosis.commitments" :key="c.name">
+                  <span class="c-name">{{ c.name }}</span>
+                  <span class="c-end">{{ c.end }}</span>
+                  <span class="c-amount mono">{{ c.amount }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
-    </AHero>
-
-    <div class="plan-hero-side">
-      <AKpiBand :items="kpis">
-        <template #meta-1>
-          <span :class="sustainableTone">{{ sustainableMeta }}</span>
-        </template>
-      </AKpiBand>
-      <p class="plan-hero-note">
-        Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
-        productivo, no patrimonio neto total.
-      </p>
     </div>
   </section>
 </template>

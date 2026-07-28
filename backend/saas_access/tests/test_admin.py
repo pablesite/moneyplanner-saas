@@ -16,6 +16,8 @@ from saas_access.rbac_services import (
     update_admin_user_status,
 )
 
+TEST_VALID_PASSWORD = "Basalt" + "-Pass-42!"
+
 
 class SaasAdminUsersApiTests(APITestCase):
     def setUp(self):
@@ -46,6 +48,7 @@ class SaasAdminUsersApiTests(APITestCase):
         by_username = {item["username"]: item for item in response.data["saas_users"]}
         self.assertEqual(by_username["rbac_admin"]["role"], SaasAccessProfile.Role.ADMIN)
         self.assertEqual(by_username["rbac_member_user"]["role"], SaasAccessProfile.Role.MEMBER)
+        self.assertFalse(by_username["rbac_admin"]["must_change_password"])
 
     def test_admin_users_list_returns_manual_core_link_metadata(self):
         SaasCoreAccountLink.objects.create(
@@ -136,7 +139,7 @@ class SaasAdminUsersApiTests(APITestCase):
                 "/api/admin/users/",
                 {
                     "username": "new_from_admin",
-                    "password": "pass12345",
+                    "password": TEST_VALID_PASSWORD,
                     "email": "new_from_admin@example.com",
                     "role": SaasAccessProfile.Role.ADMIN,
                     "is_active": True,
@@ -158,7 +161,7 @@ class SaasAdminUsersApiTests(APITestCase):
                 "/api/admin/users/",
                 {
                     "username": "new_member_user",
-                    "password": "pass12345",
+                    "password": TEST_VALID_PASSWORD,
                     "email": "new_member_user@example.com",
                     "role": SaasAccessProfile.Role.MEMBER,
                     "is_active": True,
@@ -168,6 +171,22 @@ class SaasAdminUsersApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created = get_user_model().objects.get(username="new_member_user")
         bootstrap.assert_called_once_with(user=created)
+        self.assertTrue(response.data["must_change_password"])
+
+    def test_admin_create_user_rejects_common_temporary_password(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            "/api/admin/users/",
+            {
+                "username": "weak_temporary_user",
+                "password": "password",
+                "email": "weak@example.com",
+                "role": SaasAccessProfile.Role.MEMBER,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data["details"])
 
     def test_admin_create_user_rejects_duplicate_username(self):
         self.client.force_authenticate(user=self.admin)
@@ -175,7 +194,7 @@ class SaasAdminUsersApiTests(APITestCase):
             "/api/admin/users/",
             {
                 "username": self.member.username,
-                "password": "pass12345",
+                "password": TEST_VALID_PASSWORD,
                 "email": "dup@example.com",
                 "role": SaasAccessProfile.Role.MEMBER,
             },
@@ -194,7 +213,7 @@ class SaasAdminUsersApiTests(APITestCase):
                 "/api/admin/users/",
                 {
                     "username": "member_with_bootstrap_failure",
-                    "password": "pass12345",
+                    "password": TEST_VALID_PASSWORD,
                     "email": "bootstrap@example.com",
                     "role": SaasAccessProfile.Role.MEMBER,
                     "is_active": True,
@@ -356,11 +375,12 @@ class SaasAdminServicesTests(TestCase):
         get_or_create_access_profile(user=self.member)
 
     def test_list_admin_users_with_roles_returns_role_map(self):
-        users, role_map, link_map = list_admin_users_with_roles()
+        users, role_map, link_map, profile_map = list_admin_users_with_roles()
         self.assertEqual(len(users), 2)
         self.assertEqual(role_map[self.admin.id], SaasAccessProfile.Role.ADMIN)
         self.assertEqual(role_map[self.member.id], SaasAccessProfile.Role.MEMBER)
         self.assertEqual(link_map, {})
+        self.assertFalse(profile_map[self.admin.id].must_change_password)
 
     def test_create_admin_user_returns_user_and_role(self):
         with patch(
@@ -369,13 +389,14 @@ class SaasAdminServicesTests(TestCase):
             user, role = create_admin_user(
                 actor_user=self.admin,
                 username="svc_created",
-                password="pass12345",
+                password=TEST_VALID_PASSWORD,
                 email="svc_created@example.com",
                 role=SaasAccessProfile.Role.MEMBER,
                 is_active=True,
             )
         self.assertEqual(role, SaasAccessProfile.Role.MEMBER)
         bootstrap.assert_called_once_with(user=user)
+        self.assertTrue(get_or_create_access_profile(user=user).must_change_password)
 
     def test_update_admin_user_role_returns_updated_role(self):
         user, role = update_admin_user_role(

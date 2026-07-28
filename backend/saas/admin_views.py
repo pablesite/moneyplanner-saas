@@ -32,11 +32,15 @@ class SaasAdminUserListCreateAPIView(APIView):
 
     def get(self, request):
         # Keep SaaS and Core identities in one response for the unified admin view.
-        users, role_by_user_id, link_by_user_id = list_admin_users_with_roles()
+        users, role_by_user_id, link_by_user_id, profile_by_user_id = list_admin_users_with_roles()
         saas_users = SaasAdminUserSerializer(
             users,
             many=True,
-            context={"role_by_user_id": role_by_user_id, "link_by_user_id": link_by_user_id},
+            context={
+                "role_by_user_id": role_by_user_id,
+                "link_by_user_id": link_by_user_id,
+                "profile_by_user_id": profile_by_user_id,
+            },
         )
         core_users = list_core_users_with_saas_links(
             role_by_user_id=role_by_user_id,

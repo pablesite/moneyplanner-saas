@@ -187,6 +187,7 @@ export function useBudgetAnnualEntriesPage() {
     termStartMonth: '',
     termEndMonth: '',
     termEndYear: '',
+    fiscalYear: '',
     amountInputPeriod: 'annual' as 'annual' | 'monthly',
     amountAnnual: '',
     currency: 'EUR',
@@ -205,6 +206,7 @@ export function useBudgetAnnualEntriesPage() {
     termStartMonth: '',
     termEndMonth: '',
     termEndYear: '',
+    fiscalYear: '',
     amountInputPeriod: 'annual' as 'annual' | 'monthly',
     amountAnnual: '',
     currency: 'EUR',
@@ -223,6 +225,7 @@ export function useBudgetAnnualEntriesPage() {
     termStartMonth: string;
     termEndMonth: string;
     termEndYear: string;
+    fiscalYear: string;
     amountInputPeriod: 'annual' | 'monthly';
     amountAnnual: string;
     currency: string;
@@ -455,6 +458,14 @@ export function useBudgetAnnualEntriesPage() {
   } = useBudgetAnnualEntriesFilters(globalOwnershipFilterOptions);
   const showOwnerField = computed(() => ownerOptions.value.length > 1);
   const fiscalYear = ref(2026);
+  // Para partidas puntuales el año se puede reprogramar desde el propio form
+  // (paridad con Mi Plan); las recurrentes siguen ancladas al año en curso.
+  function resolveDraftFiscalYear(timeProfile: string, formYear: string): number {
+    const trimmed = String(formYear).trim();
+    return timeProfile === 'one_off' && /^\d{4}$/.test(trimmed)
+      ? Number(trimmed)
+      : fiscalYear.value;
+  }
   const fiscalYearOptions = computed(() => {
     const current = new Date().getFullYear();
     const years = new Set<number>([current - 1, current, current + 1, 2026]);
@@ -1092,6 +1103,7 @@ export function useBudgetAnnualEntriesPage() {
     annualIncomeForm.termStartMonth = '';
     annualIncomeForm.termEndMonth = '';
     annualIncomeForm.termEndYear = '';
+    annualIncomeForm.fiscalYear = String(fiscalYear.value);
     annualIncomeForm.amountInputPeriod = 'annual';
     annualIncomeForm.amountAnnual = '';
     annualIncomeForm.currency = 'EUR';
@@ -1114,6 +1126,7 @@ export function useBudgetAnnualEntriesPage() {
     annualExpenseForm.termStartMonth = '';
     annualExpenseForm.termEndMonth = '';
     annualExpenseForm.termEndYear = '';
+    annualExpenseForm.fiscalYear = String(fiscalYear.value);
     annualExpenseForm.amountInputPeriod = 'annual';
     annualExpenseForm.amountAnnual = '';
     annualExpenseForm.currency = 'EUR';
@@ -1141,6 +1154,7 @@ export function useBudgetAnnualEntriesPage() {
         entry.termEndMonth == null ? '' : String(Number(entry.termEndMonth));
       annualIncomeForm.termEndYear =
         entry.termEndYear == null ? '' : String(Number(entry.termEndYear));
+      annualIncomeForm.fiscalYear = String(entry.fiscalYear);
       annualIncomeForm.amountInputPeriod = entry.amountInputPeriod ?? 'annual';
       annualIncomeForm.amountAnnual = amountInputValueFromStoredAnnual(
         entry,
@@ -1183,6 +1197,7 @@ export function useBudgetAnnualEntriesPage() {
         sourceEntry.termEndMonth == null ? '' : String(Number(sourceEntry.termEndMonth));
       annualExpenseForm.termEndYear =
         sourceEntry.termEndYear == null ? '' : String(Number(sourceEntry.termEndYear));
+      annualExpenseForm.fiscalYear = String(sourceEntry.fiscalYear);
       annualExpenseForm.amountInputPeriod = sourceEntry.amountInputPeriod ?? 'annual';
       annualExpenseForm.amountAnnual = amountInputValueFromStoredAnnual(
         sourceEntry,
@@ -1826,7 +1841,7 @@ export function useBudgetAnnualEntriesPage() {
           : null,
       amountInputPeriod: annualIncomeForm.amountInputPeriod,
       amountAnnual: String(normalizedAmount),
-      fiscalYear: fiscalYear.value,
+      fiscalYear: resolveDraftFiscalYear(annualIncomeForm.timeProfile, annualIncomeForm.fiscalYear),
       currency: annualIncomeForm.currency,
       notes: annualIncomeForm.notes,
     };
@@ -1887,7 +1902,10 @@ export function useBudgetAnnualEntriesPage() {
           : null,
       amountInputPeriod: annualExpenseForm.amountInputPeriod,
       amountAnnual: String(normalizedAmount),
-      fiscalYear: fiscalYear.value,
+      fiscalYear: resolveDraftFiscalYear(
+        annualExpenseForm.timeProfile,
+        annualExpenseForm.fiscalYear,
+      ),
       currency: annualExpenseForm.currency,
       notes: annualExpenseForm.notes,
     };
