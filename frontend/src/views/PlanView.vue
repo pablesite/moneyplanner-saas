@@ -6,7 +6,7 @@ import {
   NetWorthTrajectoryChart,
   PlanFoundations,
   PlanHero,
-  PlanOneOffMovementsPlanner,
+  PlanSituationSection,
   ProductiveCapitalProgress,
   ProjectionAssumptionsDrawer,
 } from '@/domains/plan/components';
@@ -107,7 +107,7 @@ onMounted(() => {
         :foundations="store.foundations"
       />
 
-      <PlanOneOffMovementsPlanner />
+      <PlanSituationSection :foundations="store.foundations" />
 
       <section v-if="nextAction" class="sect plan-next-action" aria-labelledby="next-action-title">
         <div>

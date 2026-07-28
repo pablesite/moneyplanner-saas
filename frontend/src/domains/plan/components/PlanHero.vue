@@ -60,47 +60,6 @@ const hasAnyAssets = computed(
   () => Number(props.foundations?.net_worth_health?.assets_value ?? 0) > 0,
 );
 
-// Diagnóstico del flujo comprometido en dos niveles: la base recurrente permanente
-// y el esfuerzo temporal de compromisos, con el vencimiento de cada uno para que
-// se vea cuándo se libera. Solo se construye cuando no es "healthy".
-const MONTH_ABBR = [
-  'ene',
-  'feb',
-  'mar',
-  'abr',
-  'may',
-  'jun',
-  'jul',
-  'ago',
-  'sep',
-  'oct',
-  'nov',
-  'dic',
-];
-const cleanCommitmentName = (name: string) => name.replace(/^Compromiso pasivo:\s*/i, '').trim();
-const commitmentEnd = (endYear: number | null, endMonth: number | null) => {
-  if (endYear == null) return 'sin fecha';
-  if (endMonth == null) return String(endYear);
-  return `${MONTH_ABBR[endMonth - 1] ?? ''} ${endYear}`.trim();
-};
-const committedDiagnosis = computed(() => {
-  const cf = props.foundations?.cash_flow;
-  if (!cf || cf.committed_status === 'healthy') return null;
-  return {
-    transient: cf.committed_status === 'transient',
-    operatingSurplus: formatMoney(cf.operating_surplus),
-    structuralIncome: formatMoney(cf.structural_annual_income),
-    operatingExpense: formatMoney(cf.structural_operating_expense),
-    committedSurplus: formatMoney(cf.committed_surplus),
-    recoveryYear: cf.committed_recovery_year,
-    commitments: cf.temporary_commitments.map((c) => ({
-      name: cleanCommitmentName(c.name),
-      amount: formatMoney(c.amount),
-      end: commitmentEnd(c.end_year, c.end_month),
-    })),
-  };
-});
-
 // También con fecha proyectada: si la salud es crítica (0 activos, capital sin
 // clasificar, déficit), el "por qué" del desvío debe leerse sin cambiar de pantalla.
 const specificBlockers = computed<Blocker[]>(() => {
@@ -151,15 +110,11 @@ const blockers = computed<Blocker[]>(() => {
   ];
 });
 
-// Solo hablamos de "frenar" cuando hay un problema de fondo (blockers reales o un
-// déficit estructural); un esfuerzo temporal es "tu situación este año", no una traba.
-const diagnosisTitle = computed(() => {
-  if (sustainableYear.value == null) return 'Por qué no hay fecha';
-  const hardProblem =
-    specificBlockers.value.length > 0 ||
-    (committedDiagnosis.value != null && !committedDiagnosis.value.transient);
-  return hardProblem ? 'Qué está frenando el plan' : 'Tu situación este año';
-});
+// El hero solo diagnostica problemas de fondo (blockers). La base recurrente, el
+// esfuerzo temporal y los movimientos puntuales viven en PlanSituationSection.
+const diagnosisTitle = computed(() =>
+  specificBlockers.value.length > 0 ? 'Qué está frenando el plan' : 'Por qué no hay fecha',
+);
 
 // El objetivo que fija el usuario es una aspiración; el delta compara esa
 // aspiración con la jubilación sostenible más temprana que calcula el motor.
@@ -258,67 +213,14 @@ const kpis = computed<AKpiItem[]>(() => [
       </div>
     </div>
 
-    <div
-      v-if="blockers.length || committedDiagnosis"
-      class="plan-diagnosis"
-      :class="{ 'is-transient': committedDiagnosis?.transient && !blockers.length }"
-    >
+    <div v-if="blockers.length" class="plan-diagnosis">
       <p class="plan-diagnosis-title">{{ diagnosisTitle }}</p>
-      <ul v-if="blockers.length" class="plan-diagnosis-blockers">
+      <ul class="plan-diagnosis-blockers">
         <li v-for="item in blockers" :key="item.text">
           <span>{{ item.text }}</span>
           <RouterLink class="plan-blocker-link" :to="item.to">{{ item.cta }}</RouterLink>
         </li>
       </ul>
-      <div v-if="committedDiagnosis" class="plan-committed">
-        <div class="plan-diag-tiers">
-          <div class="plan-diag-tier">
-            <span class="tier-mark tier-mark-ok" aria-hidden="true"></span>
-            <div class="tier-body">
-              <div class="tier-head">
-                <span class="tier-label">Base recurrente sana</span>
-                <span class="tier-value pos mono"
-                  >{{ committedDiagnosis.operatingSurplus }} /año</span
-                >
-              </div>
-              <p class="tier-sub">
-                Ingresos {{ committedDiagnosis.structuralIncome }} − gastos operativos
-                {{ committedDiagnosis.operatingExpense }}
-              </p>
-            </div>
-          </div>
-          <div class="plan-diag-tier">
-            <span class="tier-mark tier-mark-warn" aria-hidden="true"></span>
-            <div class="tier-body">
-              <div class="tier-head">
-                <span class="tier-label">{{
-                  committedDiagnosis.transient
-                    ? 'Esfuerzo temporal de este año'
-                    : 'Déficit estructural'
-                }}</span>
-                <span class="tier-value neg mono">{{ committedDiagnosis.committedSurplus }}</span>
-              </div>
-              <p class="tier-sub">
-                <template v-if="committedDiagnosis.transient && committedDiagnosis.recoveryYear">
-                  Vuelve a positivo en {{ committedDiagnosis.recoveryYear }}, al vencer estos
-                  compromisos:
-                </template>
-                <template v-else-if="committedDiagnosis.transient">
-                  Estos compromisos vencen y liberan tu superávit:
-                </template>
-                <template v-else>Los compromisos superan tu base recurrente:</template>
-              </p>
-              <ul class="plan-commitment-list">
-                <li v-for="c in committedDiagnosis.commitments" :key="c.name">
-                  <span class="c-name">{{ c.name }}</span>
-                  <span class="c-end">{{ c.end }}</span>
-                  <span class="c-amount mono">{{ c.amount }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 </template>

@@ -2,9 +2,10 @@
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, ref } from 'vue';
-import PlanOneOffMovementsPlanner from '@/domains/plan/components/PlanOneOffMovementsPlanner.vue';
+import PlanSituationSection from '@/domains/plan/components/PlanSituationSection.vue';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries/annualIncomeStore';
 import type { AnnualExpenseEntry } from '@/domains/budget/annual-entries/annualExpenseStore';
+import type { PlanFoundations } from '@/domains/plan/types';
 
 // Ambos stores pegan al backend; los mockeamos para controlar los datos y verificar
 // que "Guardar" traduce el modo edición a un updateEntry con importe + mes + año.
@@ -104,6 +105,29 @@ const expenseEntries = [
   }),
 ];
 
+// Solo se lee `cash_flow`; el resto de cimientos no los usa este componente.
+const transientFoundations = {
+  cash_flow: {
+    score: 60,
+    structural_annual_income: '56434.08',
+    structural_operating_expense: '36610.00',
+    temporary_commitment_expense: '27582.54',
+    operating_surplus: '19824.08',
+    committed_surplus: '-7758.46',
+    operating_surplus_ratio: '0.35',
+    committed_status: 'transient',
+    committed_recovery_year: 2027,
+    temporary_commitments: [
+      {
+        name: 'Compromiso pasivo: Cuotas de casa Atrio',
+        amount: '16488.00',
+        end_year: 2026,
+        end_month: 9,
+      },
+    ],
+  },
+} as unknown as PlanFoundations;
+
 // Stub de ASelect: un botón que al pulsar emite el valor siguiente (mes o año + 1).
 const ASelectStub = defineComponent({
   props: { modelValue: { type: Number, required: true } },
@@ -112,17 +136,22 @@ const ASelectStub = defineComponent({
     '<button class="aselect-stub" @click="$emit(\'update:modelValue\', Number(modelValue) + 1)">{{ modelValue }}</button>',
 });
 
-function mountPlanner() {
-  return mount(PlanOneOffMovementsPlanner, {
+function mountSection(props: Record<string, unknown> = {}) {
+  return mount(PlanSituationSection, {
+    props,
     global: { stubs: { ASelect: ASelectStub, RouterLink: true } },
   });
+}
+
+async function openOneOff(wrapper: VueWrapper): Promise<void> {
+  await wrapper.find('.plan-tier-toggle').trigger('click');
 }
 
 function rowByName(wrapper: VueWrapper, name: string) {
   return wrapper.findAll('tbody tr').find((tr) => tr.text().includes(name))!;
 }
 
-describe('PlanOneOffMovementsPlanner', () => {
+describe('PlanSituationSection', () => {
   beforeEach(() => {
     fake.income = {
       entries: ref([...incomeEntries]),
@@ -142,8 +171,9 @@ describe('PlanOneOffMovementsPlanner', () => {
     };
   });
 
-  it('lista solo movimientos puntuales próximos (ingresos y gastos) en modo lectura', () => {
-    const wrapper = mountPlanner();
+  it('lista solo movimientos puntuales próximos (ingresos y gastos) en modo lectura', async () => {
+    const wrapper = mountSection();
+    await openOneOff(wrapper);
 
     const text = wrapper.text();
     expect(text).toContain('Tito Ángel');
@@ -157,12 +187,13 @@ describe('PlanOneOffMovementsPlanner', () => {
     // Modo lectura: sin selectores ni inputs hasta pulsar Editar.
     expect(wrapper.findAll('.aselect-stub')).toHaveLength(0);
     expect(wrapper.findAll('.plan-oneoff-amount')).toHaveLength(0);
-    // Resumen de conteos.
+    // Resumen de conteos en la cabecera de la capa.
     expect(text).toContain('2 ingresos · 1 gasto');
   });
 
   it('editar un ingreso guarda importe + mes + año vía updateEntry del store de ingresos', async () => {
-    const wrapper = mountPlanner();
+    const wrapper = mountSection();
+    await openOneOff(wrapper);
     const store = fake.income as { updateEntry: ReturnType<typeof vi.fn> };
 
     const row = rowByName(wrapper, 'Tito Ángel');
@@ -180,7 +211,7 @@ describe('PlanOneOffMovementsPlanner', () => {
       .trigger('click');
 
     expect(store.updateEntry).toHaveBeenCalledTimes(1);
-    const [id, draft] = store.updateEntry.mock.calls[0];
+    const [id, draft] = store.updateEntry.mock.calls[0]!;
     expect(id).toBe(1);
     expect(draft).toMatchObject({
       name: 'Tito Ángel',
@@ -191,7 +222,8 @@ describe('PlanOneOffMovementsPlanner', () => {
   });
 
   it('editar un gasto usa el store de gastos', async () => {
-    const wrapper = mountPlanner();
+    const wrapper = mountSection();
+    await openOneOff(wrapper);
     const store = fake.expense as { updateEntry: ReturnType<typeof vi.fn> };
 
     const row = rowByName(wrapper, 'Reforma baño');
@@ -206,14 +238,26 @@ describe('PlanOneOffMovementsPlanner', () => {
       .trigger('click');
 
     expect(store.updateEntry).toHaveBeenCalledTimes(1);
-    const [id, draft] = store.updateEntry.mock.calls[0];
+    const [id, draft] = store.updateEntry.mock.calls[0]!;
     expect(id).toBe(1);
     expect(draft).toMatchObject({ name: 'Reforma baño', amountAnnual: '4500', targetMonth: 3 });
   });
 
-  it('una partida gestionada por el plan no ofrece edición', () => {
-    const wrapper = mountPlanner();
+  it('una partida gestionada por el plan no ofrece edición', async () => {
+    const wrapper = mountSection();
+    await openOneOff(wrapper);
     const row = rowByName(wrapper, 'Venta gestionada');
     expect(row.findAll('button').some((b) => b.text() === 'Editar')).toBe(false);
+  });
+
+  it('con cash-flow transitorio muestra base recurrente, esfuerzo temporal y el neto', () => {
+    const wrapper = mountSection({ foundations: transientFoundations });
+    const text = wrapper.text();
+    expect(text).toContain('Base recurrente sana');
+    expect(text).toContain('Esfuerzo temporal de este año');
+    expect(text).toContain('Cuotas de casa Atrio');
+    expect(text).toContain('Vuelve a positivo en 2027');
+    // Pie con el flujo recurrente neto del año.
+    expect(text).toContain('Flujo recurrente neto');
   });
 });
