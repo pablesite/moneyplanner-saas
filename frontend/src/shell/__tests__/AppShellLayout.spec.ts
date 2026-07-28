@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
     push: vi.fn(),
   },
   validateSession: vi.fn(),
+  logoutAuthSession: vi.fn(),
 }));
 
 vi.mock('vue-router', () => ({
@@ -32,6 +33,10 @@ vi.mock('@/domains/auth', () => ({
   },
 }));
 
+vi.mock('@/lib/api', () => ({
+  logoutAuthSession: mocks.logoutAuthSession,
+}));
+
 describe('AppShellLayout', () => {
   beforeEach(() => {
     mocks.hasAccessToken.value = true;
@@ -44,6 +49,7 @@ describe('AppShellLayout', () => {
       data: {
         username: 'Pablo Perez',
         role: 'saas_member',
+        must_change_password: false,
         subscription_status: 'trial',
       },
     });
@@ -77,6 +83,7 @@ describe('AppShellLayout', () => {
       data: {
         username: 'Admin',
         role: 'saas_admin',
+        must_change_password: false,
         subscription_status: 'trial',
       },
     });

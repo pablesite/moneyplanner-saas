@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { authApi, type CurrentUser } from '@/domains/auth';
 import { clearAuthTokens, hasAccessToken } from '@/domains/auth/session';
+import { logoutAuthSession } from '@/lib/api';
 import { appShellNavItems, type NavItem } from './appShellNav';
 
 export function useAppShell() {
@@ -76,10 +77,14 @@ export function useAppShell() {
     accountMenuOpen.value = false;
   }
 
-  function logout(): void {
-    clearAuthTokens();
+  async function logout(): Promise<void> {
     closeAccountMenu();
-    void router.push('/login');
+    try {
+      await logoutAuthSession();
+    } finally {
+      clearAuthTokens();
+      await router.push('/login');
+    }
   }
 
   function handleGlobalKeydown(event: KeyboardEvent): void {

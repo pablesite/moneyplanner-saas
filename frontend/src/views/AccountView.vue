@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, type ComponentPublicInstance } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {
   saasAdminApi,
   type CoreAdminUser,
@@ -18,9 +18,12 @@ import {
   BaseModal,
   type ASelectItem,
 } from '@/domains/ui';
+import { updateAuthGuardSnapshot } from '@/domains/auth/guard';
+import { setAccessToken } from '@/domains/auth/session';
 import { coreApi } from '@/lib/api';
 
 const route = useRoute();
+const router = useRouter();
 
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -37,6 +40,9 @@ const adminUsersError = ref<string | null>(null);
 const adminUsersSuccess = ref<string | null>(null);
 const adminActionBusy = ref(false);
 const showCreateUserModal = ref(false);
+const passwordChangeBusy = ref(false);
+const passwordChangeError = ref<string | null>(null);
+const passwordChangeSuccess = ref<string | null>(null);
 
 const createUserForm = reactive({
   username: '',
@@ -44,6 +50,12 @@ const createUserForm = reactive({
   email: '',
   role: 'saas_member' as SaasAdminRole,
   is_active: true,
+});
+
+const passwordChangeForm = reactive({
+  current_password: '',
+  new_password: '',
+  confirm_password: '',
 });
 
 const {
@@ -64,13 +76,20 @@ const {
   onImportCompleted: load,
 });
 
-const permissionNotice =
+const permissionNotice = computed(() =>
   route.query.reason === 'permission_denied'
     ? 'No tienes permisos para acceder a esa seccion.'
-    : null;
+    : null,
+);
+const passwordChangeNotice = computed(() =>
+  route.query.reason === 'password_change_required'
+    ? 'Debes cambiar tu contraseña temporal antes de continuar.'
+    : null,
+);
 
 const isAdmin = computed(() => currentUser.value?.role === 'saas_admin');
 const isMember = computed(() => currentUser.value?.role === 'saas_member');
+const mustChangePassword = computed(() => currentUser.value?.must_change_password === true);
 const baseCurrencyOptions = ['EUR', 'USD'];
 const baseCurrencySelectOptions: ASelectItem[] = baseCurrencyOptions.map((currency) => ({
   value: currency,
@@ -102,6 +121,10 @@ function subscriptionLabel(status: CurrentUser['subscription_status']): string {
 
 function statusLabel(isActive: boolean): string {
   return isActive ? 'Activa' : 'Desactivada';
+}
+
+function passwordChangeLabel(required: boolean): string {
+  return required ? 'Pendiente' : 'Completado';
 }
 
 function coreUserOriginLabel(user: CoreAdminUser): string {
@@ -229,11 +252,58 @@ async function load() {
   try {
     const res = await authApi.validateSession();
     currentUser.value = res.data ?? null;
+    if (currentUser.value) {
+      updateAuthGuardSnapshot(currentUser.value);
+    }
+    if (mustChangePassword.value) {
+      return;
+    }
     await Promise.all([loadCoreAccountSummary(), loadAdminUsers()]);
   } catch (e: unknown) {
     error.value = toAuthErrorMessage(e);
   } finally {
     loading.value = false;
+  }
+}
+
+function resetPasswordChangeForm(): void {
+  passwordChangeForm.current_password = '';
+  passwordChangeForm.new_password = '';
+  passwordChangeForm.confirm_password = '';
+}
+
+async function changePassword(): Promise<void> {
+  passwordChangeBusy.value = true;
+  passwordChangeError.value = null;
+  passwordChangeSuccess.value = null;
+
+  if (passwordChangeForm.new_password !== passwordChangeForm.confirm_password) {
+    passwordChangeError.value = 'La confirmación de la nueva contraseña no coincide.';
+    passwordChangeBusy.value = false;
+    return;
+  }
+
+  try {
+    const wasRequired = mustChangePassword.value;
+    const response = await authApi.changePassword({
+      current_password: passwordChangeForm.current_password,
+      new_password: passwordChangeForm.new_password,
+    });
+    setAccessToken(response.data.access);
+    currentUser.value = response.data;
+    updateAuthGuardSnapshot(response.data);
+    resetPasswordChangeForm();
+    passwordChangeSuccess.value = wasRequired
+      ? 'Contraseña actualizada. Ya puedes usar la aplicación con normalidad.'
+      : 'Contraseña actualizada.';
+    if (route.query.reason === 'password_change_required') {
+      await router.replace({ path: '/account' });
+    }
+    await Promise.all([loadCoreAccountSummary(), loadAdminUsers()]);
+  } catch (e: unknown) {
+    passwordChangeError.value = toAuthErrorMessage(e);
+  } finally {
+    passwordChangeBusy.value = false;
   }
 }
 
@@ -327,6 +397,9 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
     <AToast :open="!!baseCurrencySaveMessage" @close="baseCurrencySaveMessage = null">
       {{ baseCurrencySaveMessage }}
     </AToast>
+    <AToast :open="!!passwordChangeSuccess" @close="passwordChangeSuccess = null">
+      {{ passwordChangeSuccess }}
+    </AToast>
     <AToast
       :open="!!dataTransferToastMessage"
       :tone="dataTransferToastKind"
@@ -342,6 +415,10 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
 
     <div v-if="permissionNotice" class="alert mt-3">
       {{ permissionNotice }}
+    </div>
+
+    <div v-if="passwordChangeNotice" class="alert mt-3">
+      {{ passwordChangeNotice }}
     </div>
 
     <div v-if="loading" class="ui-status-line mt-3">Cargando cuenta...</div>
@@ -379,14 +456,14 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
                   class="select"
                   :model-value="baseCurrency"
                   :options="baseCurrencySelectOptions"
-                  :disabled="baseCurrencySaveBusy || loading"
+                  :disabled="baseCurrencySaveBusy || loading || mustChangePassword"
                   :searchable="false"
                   @update:model-value="(v) => (baseCurrency = String(v))"
                 />
                 <AButton
                   variant="ghost"
                   size="sm"
-                  :disabled="baseCurrencySaveBusy || loading"
+                  :disabled="baseCurrencySaveBusy || loading || mustChangePassword"
                   @click="saveBaseCurrency"
                 >
                   {{ baseCurrencySaveBusy ? 'Guardando...' : 'Guardar' }}
@@ -397,7 +474,9 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
 
           <aside v-if="!isAdmin" class="ui-profile-aside">
             <span class="ui-profile-aside-label">Preferencias</span>
-            <span class="badge ui-profile-badge-on">Cuenta activa</span>
+            <span class="badge ui-profile-badge-on">
+              {{ mustChangePassword ? 'Cambio de contraseña pendiente' : 'Cuenta activa' }}
+            </span>
             <span class="subtle">
               Ajusta la moneda base para ver tus totales con la referencia que uses a diario.
             </span>
@@ -413,7 +492,77 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
         </div>
       </section>
 
-      <section v-if="isAdmin" id="users" class="card ui-section-card ui-profile-panel">
+      <section class="card ui-section-card ui-profile-panel">
+        <div class="ui-profile-head">
+          <h2 class="ui-profile-head-title">Seguridad</h2>
+        </div>
+        <div class="grid gap-3">
+          <p v-if="passwordChangeError" class="alert m-0">{{ passwordChangeError }}</p>
+          <p class="subtle m-0">
+            {{
+              mustChangePassword
+                ? 'Estás usando una contraseña temporal. Define una nueva antes de seguir.'
+                : 'Puedes actualizar tu contraseña cuando quieras.'
+            }}
+          </p>
+          <form class="grid gap-3 md:grid-cols-2" @submit.prevent="changePassword">
+            <label class="grid gap-1">
+              <span class="subtle">Contraseña actual</span>
+              <input
+                v-model="passwordChangeForm.current_password"
+                type="password"
+                autocomplete="current-password"
+                class="input"
+              />
+            </label>
+            <div class="hidden md:block" />
+            <label class="grid gap-1">
+              <span class="subtle">Nueva contraseña</span>
+              <input
+                v-model="passwordChangeForm.new_password"
+                type="password"
+                autocomplete="new-password"
+                class="input"
+              />
+            </label>
+            <label class="grid gap-1">
+              <span class="subtle">Confirmar nueva contraseña</span>
+              <input
+                v-model="passwordChangeForm.confirm_password"
+                type="password"
+                autocomplete="new-password"
+                class="input"
+              />
+            </label>
+            <div class="actions">
+              <span
+                class="badge"
+                :class="mustChangePassword ? 'ui-profile-badge-off' : 'ui-profile-badge-on'"
+              >
+                {{ passwordChangeLabel(mustChangePassword) }}
+              </span>
+              <AButton
+                variant="primary"
+                type="submit"
+                :disabled="
+                  passwordChangeBusy ||
+                  !passwordChangeForm.current_password ||
+                  !passwordChangeForm.new_password ||
+                  !passwordChangeForm.confirm_password
+                "
+              >
+                {{ passwordChangeBusy ? 'Guardando...' : 'Cambiar contraseña' }}
+              </AButton>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section
+        v-if="isAdmin && !mustChangePassword"
+        id="users"
+        class="card ui-section-card ui-profile-panel"
+      >
         <div class="ui-profile-head">
           <h2 class="ui-profile-head-title">Usuarios</h2>
           <div class="actions">
@@ -454,6 +603,21 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
                     {{ row.saasUser ? 'En SaaS' : 'Solo Core' }}
                   </span>
                   <span
+                    v-if="row.saasUser"
+                    class="badge"
+                    :class="
+                      row.saasUser.must_change_password
+                        ? 'ui-profile-badge-off'
+                        : 'ui-profile-badge-on'
+                    "
+                  >
+                    {{
+                      row.saasUser.must_change_password
+                        ? 'Debe cambiar contraseña'
+                        : 'Contraseña privada'
+                    }}
+                  </span>
+                  <span
                     class="badge"
                     :class="row.coreUser ? 'ui-profile-badge-on' : 'ui-profile-badge-off'"
                   >
@@ -479,6 +643,10 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
                     <p class="m-0"><strong>Rol:</strong> {{ roleLabel(row.saasUser.role) }}</p>
                     <p class="m-0">
                       <strong>Estado:</strong> {{ statusLabel(row.saasUser.is_active) }}
+                    </p>
+                    <p class="m-0">
+                      <strong>Contraseña:</strong>
+                      {{ passwordChangeLabel(row.saasUser.must_change_password) }}
                     </p>
                     <p class="m-0">
                       <strong>Email:</strong> {{ row.saasUser.email || 'sin email' }}
@@ -613,7 +781,7 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
       </label>
 
       <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Password</span>
+        <span class="ui-item-form-label">Password temporal</span>
         <input
           v-model="createUserForm.password"
           class="input"
@@ -621,6 +789,7 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
           minlength="8"
           required
         />
+        <span class="subtle">El usuario tendrá que cambiarla en su primer acceso.</span>
       </label>
 
       <label class="ui-item-form-field">

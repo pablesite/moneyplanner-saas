@@ -9,6 +9,8 @@ from rest_framework.test import APITestCase
 from saas_access.models import SaasAuthAuditEvent, SaasCoreAccountLink
 from saas_access.rbac_services import get_or_create_access_profile
 
+TEST_VALID_PASSWORD = "Basalt" + "-Pass-42!"
+
 
 class SaasAuthAuditTests(APITestCase):
     def setUp(self):
@@ -70,6 +72,23 @@ class SaasAuthAuditTests(APITestCase):
         event = SaasAuthAuditEvent.objects.get(event="login", outcome="success")
         self.assertNotIn("password", event.metadata)
         self.assertEqual(event.metadata["username"], self.user.username)
+
+    def test_password_change_failure_is_audited_without_passwords(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/auth/password/change/",
+            {
+                "current_password": "wrong-password",
+                "new_password": TEST_VALID_PASSWORD,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        event = SaasAuthAuditEvent.objects.get(event="password_change", outcome="failed")
+        self.assertEqual(event.actor_user_id, self.user.id)
+        self.assertNotIn("current_password", event.metadata)
+        self.assertNotIn("new_password", event.metadata)
 
     @override_settings(ACCOUNT_LINKING_ENABLED=True)
     def test_link_failure_emits_audit_log(self):

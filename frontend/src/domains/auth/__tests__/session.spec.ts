@@ -1,40 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  clearAuthTokens,
-  getAccessToken,
-  getRefreshToken,
-  setAccessToken,
-  setRefreshToken,
-} from '@/domains/auth/session';
+import { clearAuthTokens, getAccessToken, setAccessToken } from '@/domains/auth/session';
 
-describe('auth session tokens', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
+describe('auth session token', () => {
+  beforeEach(() => clearAuthTokens());
 
-  it('stores and retrieves access/refresh tokens', () => {
+  it('keeps the access token in memory only', () => {
     setAccessToken('a1');
-    setRefreshToken('r1');
     expect(getAccessToken()).toBe('a1');
-    expect(getRefreshToken()).toBe('r1');
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
   });
 
-  it('clears stored tokens', () => {
+  it('clears the in-memory token', () => {
     setAccessToken('a1');
-    setRefreshToken('r1');
     clearAuthTokens();
     expect(getAccessToken()).toBeNull();
-    expect(getRefreshToken()).toBeNull();
-  });
-
-  it('reads latest tokens after external localStorage changes', () => {
-    setAccessToken('a1');
-    setRefreshToken('r1');
-
-    localStorage.setItem('access_token', 'a2');
-    localStorage.setItem('refresh_token', 'r2');
-
-    expect(getAccessToken()).toBe('a2');
-    expect(getRefreshToken()).toBe('r2');
   });
 });

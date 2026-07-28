@@ -1,18 +1,12 @@
 import axios from 'axios';
-import {
-  clearAuthTokens,
-  getAccessToken,
-  getRefreshToken,
-  setAccessToken,
-  setRefreshToken,
-} from '@/domains/auth/session';
+import { clearAuthTokens, getAccessToken, setAccessToken } from '@/domains/auth/session';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8001';
 const coreBaseURL = import.meta.env.VITE_CORE_API_BASE_URL ?? 'http://localhost:8000';
 
-export const api = axios.create({ baseURL });
-export const coreApi = axios.create({ baseURL: coreBaseURL });
-const refreshClient = axios.create({ baseURL });
+export const api = axios.create({ baseURL, withCredentials: true });
+export const coreApi = axios.create({ baseURL: coreBaseURL, withCredentials: true });
+const refreshClient = axios.create({ baseURL, withCredentials: true });
 
 type PendingCallback = (token: string | null) => void;
 let isRefreshing = false;
@@ -35,18 +29,11 @@ function notifyPending(token: string | null) {
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const refresh = getRefreshToken();
-  if (!refresh) return null;
-
   try {
-    const res = await refreshClient.post('/api/auth/refresh/', { refresh });
+    const res = await refreshClient.post('/api/auth/refresh/');
     const access = res.data?.access;
-    const nextRefresh = res.data?.refresh;
     if (access) {
       setAccessToken(access);
-      if (typeof nextRefresh === 'string' && nextRefresh.length > 0) {
-        setRefreshToken(nextRefresh);
-      }
       return access;
     }
     logAuthDebug('refresh_missing_access', {
@@ -60,6 +47,19 @@ async function refreshAccessToken(): Promise<string | null> {
       status: status ?? null,
     });
     return null;
+  }
+}
+
+export async function restoreAuthSession(): Promise<boolean> {
+  if (getAccessToken()) return true;
+  return (await refreshAccessToken()) !== null;
+}
+
+export async function logoutAuthSession(): Promise<void> {
+  try {
+    await api.post('/api/auth/logout/');
+  } finally {
+    clearAuthTokens();
   }
 }
 
@@ -88,17 +88,6 @@ function installAuthInterceptors(client: typeof api) {
         url: requestUrl,
         method: String(original.method ?? 'get').toUpperCase(),
       });
-
-      const refresh = getRefreshToken();
-      if (!refresh) {
-        logAuthDebug('logout_no_refresh_token', {
-          source: 'core',
-          url: requestUrl,
-        });
-        clearAuthTokens();
-        redirectToLoginWithSessionExpiredReason();
-        return Promise.reject(error);
-      }
 
       original._retry = true;
 

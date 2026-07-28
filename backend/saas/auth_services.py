@@ -3,9 +3,15 @@ from __future__ import annotations
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core import signing
 from django.db import transaction
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 
 from saas.auth_audit import log_auth_event
 from saas.auth_serializers import CoreAccountLinkSerializer
@@ -70,10 +76,39 @@ def build_me_payload(*, user) -> dict[str, object]:
         "username": user.username,
         "email": user.email or "",
         "role": access_profile.role,
+        "must_change_password": access_profile.must_change_password,
         "subscription_status": subscription.status,
         "premium_enabled": subscription.is_premium_enabled(),
         "account_link": CoreAccountLinkSerializer(link).data if link else None,
     }
+
+
+@transaction.atomic
+def change_current_user_password(*, user, current_password: str, new_password: str) -> object:
+    if not user.check_password(current_password):
+        raise DRFValidationError({"current_password": "La contraseña actual no es correcta."})
+    if current_password == new_password:
+        raise DRFValidationError(
+            {"new_password": "La nueva contraseña debe ser distinta de la actual."}
+        )
+
+    try:
+        validate_password(new_password, user)
+    except DjangoValidationError as exc:
+        raise DRFValidationError({"new_password": list(exc.messages)}) from exc
+
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
+
+    profile = get_or_create_access_profile(user=user)
+    if profile.must_change_password:
+        profile.must_change_password = False
+        profile.save(update_fields=["must_change_password", "updated_at"])
+
+    for outstanding in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=outstanding)
+
+    return user
 
 
 def upsert_core_account_link(

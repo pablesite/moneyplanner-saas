@@ -8,7 +8,6 @@ export type LoginPayload = {
 
 export type LoginResponse = {
   access: string;
-  refresh?: string;
 };
 
 export type CurrentUser = {
@@ -16,6 +15,7 @@ export type CurrentUser = {
   username: string;
   email: string;
   role: 'saas_admin' | 'saas_member';
+  must_change_password: boolean;
   subscription_status: 'trial' | 'active' | 'past_due' | 'canceled';
   premium_enabled: boolean;
   account_link: {
@@ -27,9 +27,17 @@ export type CurrentUser = {
   } | null;
 };
 
+export type PasswordChangeResponse = CurrentUser & {
+  access: string;
+};
+
 export type AuthApiAdapter = {
   login(payload: LoginPayload): Promise<AxiosResponse<LoginResponse>>;
   validateSession(): Promise<AxiosResponse<CurrentUser>>;
+  changePassword(payload: {
+    current_password: string;
+    new_password: string;
+  }): Promise<AxiosResponse<PasswordChangeResponse>>;
 };
 
 export const coreAuthApi: AuthApiAdapter = {
@@ -38,6 +46,9 @@ export const coreAuthApi: AuthApiAdapter = {
   },
   validateSession() {
     return api.get<CurrentUser>('/api/auth/me/');
+  },
+  changePassword(payload) {
+    return api.post<PasswordChangeResponse>('/api/auth/password/change/', payload);
   },
 };
 
