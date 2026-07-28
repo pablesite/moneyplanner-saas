@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { authApi } from '@/domains/auth/api';
-import { setAccessToken, setRefreshToken } from '@/domains/auth/session';
+import { setAccessToken } from '@/domains/auth/session';
 import { toApiErrorMessage } from '@/lib/errors';
 
 export function useLoginForm() {
@@ -24,7 +24,6 @@ export function useLoginForm() {
       const res = await authApi.login({ username: username.value, password: password.value });
 
       setAccessToken(res.data.access);
-      if (res.data.refresh) setRefreshToken(res.data.refresh);
 
       await router.push('/');
     } catch (e: unknown) {

@@ -46,6 +46,7 @@ Core canonical documentation lives in:
 1. SaaS backend calls Core APIs for Core-owned functionality and bootstrap flows.
 2. SaaS frontend can expose Core-backed user flows through managed SaaS access.
 3. Family and ownership bootstrap is executed in Core through the relevant Core endpoint.
+4. Core validates browser-originated SaaS JWTs against the internal SaaS session-introspection endpoint. The only bypass is a two-minute, purpose-bound token accepted exclusively by the family bootstrap endpoint.
 
 ## Related Documents
 

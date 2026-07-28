@@ -61,6 +61,7 @@ La unica fuente principal de configuracion para este entorno integrado es `.env.
 | `EXTERNAL_JWT_ISSUER` | Issuer externo aceptado por Core | `moneyplanner-saas` |
 | `EXTERNAL_JWT_AUDIENCE` | Audience externa aceptada por Core | `moneyplanner-saas-api` |
 | `EXTERNAL_JWT_SIGNING_KEY` | Clave usada por Core para validar JWTs SaaS | Igual que `JWT_SIGNING_KEY` |
+| `SAAS_AUTH_INTROSPECTION_URL` | Validación interna de sesiones SaaS desde Core; el compose añade el alias a `ALLOWED_HOSTS` | `http://saas-backend:8000/api/auth/internal/session/` |
 | `CORE_DJANGO_SECRET_KEY` | Secret key de Core backend | `dev-only-not-for-production-change-me-please-32b` |
 | `CORE_DJANGO_DEBUG` | Debug Core | `1` |
 | `CORE_DJANGO_ALLOWED_HOSTS` | Hosts permitidos por Core | `localhost,127.0.0.1,core_backend` |
@@ -82,7 +83,7 @@ La unica fuente principal de configuracion para este entorno integrado es `.env.
 | `SAAS_DJANGO_DEBUG` | Debug SaaS | `1` |
 | `SAAS_DJANGO_ALLOWED_HOSTS` | Hosts permitidos por SaaS | `localhost,127.0.0.1,saas_backend` |
 | `SAAS_CORS_ALLOWED_ORIGINS` | Origins permitidos por SaaS | `http://localhost:5174,http://127.0.0.1:5174` |
-| `SAAS_CORS_ALLOW_CREDENTIALS` | Credenciales CORS SaaS | `0` |
+| `SAAS_CORS_ALLOW_CREDENTIALS` | Necesario para la cookie refresh `HttpOnly` entre los puertos frontend/backend de desarrollo | `1` |
 | `SAAS_CORS_ALLOW_ALL_ORIGINS` | Origins abiertos en SaaS | `0` |
 | `CORE_API_BASE_URL` | URL interna Core usada por SaaS backend | `http://core_backend:8000` |
 | `CORE_API_HOST_HEADER` | Host header forzado hacia Core | vacio |
@@ -98,10 +99,10 @@ La unica fuente principal de configuracion para este entorno integrado es `.env.
 | `SAAS_SEED_ADMIN_EMAIL` | Email admin SaaS | `admin@example.com` |
 | `SAAS_SEED_ADMIN_PASSWORD` | Password admin SaaS | `admin` |
 | `SAAS_SEED_FORCE_ADMIN_PASSWORD` | Forzar password admin SaaS | `0` |
-| `CORE_FRONTEND_VITE_API_BASE_URL` | API usada por frontend Core | `http://127.0.0.1:8000` |
-| `CORE_FRONTEND_VITE_CORE_API_BASE_URL` | Override API Core frontend | `http://127.0.0.1:8000` |
-| `SAAS_FRONTEND_VITE_API_BASE_URL` | API usada por frontend SaaS | `http://127.0.0.1:8001` |
-| `SAAS_FRONTEND_VITE_CORE_API_BASE_URL` | API Core usada por frontend SaaS | `http://127.0.0.1:8000` |
+| `CORE_FRONTEND_VITE_API_BASE_URL` | API usada por frontend Core | `http://localhost:8000` |
+| `CORE_FRONTEND_VITE_CORE_API_BASE_URL` | Override API Core frontend | `http://localhost:8000` |
+| `SAAS_FRONTEND_VITE_API_BASE_URL` | API usada por frontend SaaS | `http://localhost:8001` |
+| `SAAS_FRONTEND_VITE_CORE_API_BASE_URL` | API Core usada por frontend SaaS | `http://localhost:8000` |
 | `FRONTEND_USE_POLLING` | Polling para hot reload en WSL si hace falta | `false` |
 | `FRONTEND_POLLING_INTERVAL` | Intervalo de polling frontend | `300` |
 | `PIONEX_API_KEY` | Integracion broker Core | vacio |
