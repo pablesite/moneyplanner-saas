@@ -1048,7 +1048,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return map;
   });
 
-  // eslint-disable-next-line complexity
   function resolveIncomeExecutionForMonth(
     entry: (typeof incomeEntries.value)[number],
     month: number,
@@ -1101,7 +1100,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     };
   }
 
-  // eslint-disable-next-line complexity
   function resolveExpenseExecutionForMonth(
     entry: (typeof expenseEntries.value)[number],
     month: number,
@@ -1170,7 +1168,6 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   );
 
   const monthlyIncomeExecutionEntries = computed(() => {
-    // eslint-disable-next-line complexity
     // Usa las entradas owner-adjusted (igual que los gastos vía
     // filteredExpenseEntries) para que el filtro de titularidad escale el
     // previsto de ingresos del cierre, no solo lo ejecutado. Se descarta
@@ -3160,12 +3157,10 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           const taxonomyExecuted =
             accountingExecutionBuckets.value.incomeCategorizedByMonthTaxonomy.get(taxonomyKey) ??
             null;
-          let detectedChunk = 0;
-          if (taxonomyExecuted != null) {
-            detectedChunk = taxonomyExecuted * weight;
-          } else {
-            detectedChunk = toNumberOrZero(monthRow.executed_unbudgeted) * weight;
-          }
+          const detectedChunk =
+            (taxonomyExecuted != null
+              ? taxonomyExecuted
+              : toNumberOrZero(monthRow.executed_unbudgeted)) * weight;
           detectedExecutedYtd += detectedChunk;
         }
         if (detectedExecutedYtd <= 0) continue;
