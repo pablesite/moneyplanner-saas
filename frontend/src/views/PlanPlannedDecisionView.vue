@@ -109,6 +109,14 @@ const purchaseNetWorthGain = computed(() => {
 const purchaseDoubleCountWarning = computed(
   () => !isSale.value && purchaseNetWorthGain.value > 1000,
 );
+// Una deuda nueva sin plazo se amortizaría en 1 año en el motor (la deuda se evaporaría):
+// el plazo es obligatorio cuando hay principal.
+const debtNeedsTerm = computed(
+  () =>
+    !isSale.value &&
+    parseAnnualAmount(impact.new_debt_principal) > 0 &&
+    !impact.new_debt_term_years.trim(),
+);
 
 const lines = computed<AdoptableLine[]>(() => [
   ...expenseStore.entries.value.map((entry) => ({
@@ -200,7 +208,9 @@ const selectedAssetTotal = computed(() =>
 
 const canSubmit = computed(
   () =>
-    Boolean(form.name.trim() && form.decision_date && form.transaction_year) && !submitting.value,
+    Boolean(form.name.trim() && form.decision_date && form.transaction_year) &&
+    !debtNeedsTerm.value &&
+    !submitting.value,
 );
 
 function key(line: AdoptableLine): string {
@@ -713,6 +723,12 @@ onMounted(async () => {
           />
         </label>
       </div>
+
+      <p v-if="debtNeedsTerm" class="plan-decision-warn">
+        <strong>Falta el plazo de la deuda.</strong> Sin «Plazo (años)» el motor amortizaría la
+        deuda en 1 año y desaparecería de la proyección (patrimonio irreal). Indica el plazo (y el
+        interés) de la nueva deuda.
+      </p>
 
       <p class="plan-decision-preview">
         Se interpretará como
