@@ -24,6 +24,8 @@ from saas.auth_views import (
 )
 from saas_access.models import SaasAccessProfile, SaasCoreAccountLink, SaasSubscription
 
+TEST_VALID_PASSWORD = "Basalt" + "-Pass-42!"
+
 
 class SaasAuthApiTests(APITestCase):
     def setUp(self):
@@ -33,7 +35,7 @@ class SaasAuthApiTests(APITestCase):
             email="saas@example.com",
         )
 
-    def test_login_returns_access_and_refresh_tokens(self):
+    def test_login_returns_access_and_sets_http_only_refresh_cookie(self):
         response = self.client.post(
             "/api/auth/token/",
             {"username": self.user.username, "password": "pass1234"},
@@ -41,7 +43,10 @@ class SaasAuthApiTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access", response.data)
-        self.assertIn("refresh", response.data)
+        self.assertNotIn("refresh", response.data)
+        cookie = response.cookies[saas_settings.AUTH_REFRESH_COOKIE_NAME]
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["samesite"], saas_settings.AUTH_REFRESH_COOKIE_SAMESITE)
 
     def test_login_rejects_invalid_credentials(self):
         response = self.client.post(
@@ -64,15 +69,28 @@ class SaasAuthApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data["code"], "authentication_failed")
 
+    @override_settings(
+        CORS_ALLOWED_ORIGINS=["https://arkenstone.app"],
+        CSRF_TRUSTED_ORIGINS=["https://arkenstone.app"],
+    )
+    def test_login_rejects_untrusted_browser_origin(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+            HTTP_ORIGIN="https://evil.example",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertNotIn(saas_settings.AUTH_REFRESH_COOKIE_NAME, response.cookies)
+
     def test_refresh_returns_new_access_token(self):
-        token_res = self.client.post(
+        self.client.post(
             "/api/auth/token/",
             {"username": self.user.username, "password": "pass1234"},
             format="json",
         )
         response = self.client.post(
             "/api/auth/refresh/",
-            {"refresh": token_res.data["refresh"]},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -95,7 +113,7 @@ class SaasAuthApiTests(APITestCase):
                 "/api/auth/register/",
                 {
                     "username": "new_user",
-                    "password": "pass12345",
+                    "password": TEST_VALID_PASSWORD,
                     "email": "new_user@example.com",
                 },
                 format="json",
@@ -110,7 +128,7 @@ class SaasAuthApiTests(APITestCase):
             "/api/auth/register/",
             {
                 "username": self.user.username,
-                "password": "pass12345",
+                "password": TEST_VALID_PASSWORD,
                 "email": "new_user@example.com",
             },
             format="json",
@@ -124,7 +142,7 @@ class SaasAuthApiTests(APITestCase):
             "/api/auth/register/",
             {
                 "username": "new_user",
-                "password": "pass12345",
+                "password": TEST_VALID_PASSWORD,
                 "email": self.user.email,
             },
             format="json",
@@ -147,13 +165,26 @@ class SaasAuthApiTests(APITestCase):
         self.assertEqual(response.data["code"], "validation_error")
         self.assertIn("password", response.data["details"])
 
+    def test_register_rejects_common_password(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "new_user",
+                "password": "password",
+                "email": "new_user@example.com",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data["details"])
+
     @override_settings(SAAS_PUBLIC_REGISTRATION_ENABLED=False)
     def test_register_returns_controlled_error_when_public_registration_disabled(self):
         response = self.client.post(
             "/api/auth/register/",
             {
                 "username": "blocked_user",
-                "password": "pass12345",
+                "password": TEST_VALID_PASSWORD,
                 "email": "blocked@example.com",
             },
             format="json",
@@ -185,6 +216,7 @@ class SaasAuthApiTests(APITestCase):
         response = self.client.get("/api/auth/me/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["username"], self.user.username)
+        self.assertFalse(response.data["must_change_password"])
         self.assertEqual(response.data["subscription_status"], SaasSubscription.Status.TRIAL)
         self.assertTrue(response.data["premium_enabled"])
         self.assertIsNone(response.data["account_link"])
@@ -207,6 +239,191 @@ class SaasAuthApiTests(APITestCase):
         response = self.client.get("/api/auth/me/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["account_link"]["core_user_ref"], "core-123")
+
+    def test_me_reports_forced_password_change_flag(self):
+        profile = SaasAccessProfile.objects.get_or_create(user=self.user)[0]
+        profile.must_change_password = True
+        profile.save(update_fields=["must_change_password"])
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get("/api/auth/me/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["must_change_password"])
+
+    def test_password_change_updates_password_and_clears_required_flag(self):
+        profile = SaasAccessProfile.objects.get_or_create(user=self.user)[0]
+        profile.must_change_password = True
+        profile.save(update_fields=["must_change_password"])
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            "/api/auth/password/change/",
+            {
+                "current_password": "pass1234",
+                "new_password": "newpass12345",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertTrue(self.user.check_password("newpass12345"))
+        self.assertFalse(profile.must_change_password)
+        self.assertFalse(response.data["must_change_password"])
+        self.assertIn("access", response.data)
+
+    def test_pending_password_change_blocks_other_saas_apis(self):
+        profile = SaasAccessProfile.objects.get_or_create(user=self.user)[0]
+        profile.must_change_password = True
+        profile.save(update_fields=["must_change_password"])
+        login = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+        )
+        access = login.data["access"]
+
+        blocked = self.client.get(
+            "/api/auth/subscription/",
+            HTTP_AUTHORIZATION=f"Bearer {access}",
+        )
+        me = self.client.get("/api/auth/me/", HTTP_AUTHORIZATION=f"Bearer {access}")
+
+        self.assertEqual(blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(blocked.data["code"], "authentication_failed")
+        self.assertEqual(me.status_code, status.HTTP_200_OK)
+
+    def test_password_change_revokes_previous_access_and_refresh_tokens(self):
+        login = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+        )
+        old_access = login.data["access"]
+        cookie_name = saas_settings.AUTH_REFRESH_COOKIE_NAME
+        old_refresh = login.cookies[cookie_name].value
+
+        changed = self.client.post(
+            "/api/auth/password/change/",
+            {
+                "current_password": "pass1234",
+                "new_password": TEST_VALID_PASSWORD,
+            },
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {old_access}",
+        )
+        self.assertEqual(changed.status_code, status.HTTP_200_OK)
+
+        old_access_response = self.client.get(
+            "/api/auth/me/",
+            HTTP_AUTHORIZATION=f"Bearer {old_access}",
+        )
+        self.assertEqual(old_access_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.client.cookies[cookie_name] = old_refresh
+        old_refresh_response = self.client.post("/api/auth/refresh/", format="json")
+        self.assertEqual(old_refresh_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        new_access_response = self.client.get(
+            "/api/auth/me/",
+            HTTP_AUTHORIZATION=f"Bearer {changed.data['access']}",
+        )
+        self.assertEqual(new_access_response.status_code, status.HTTP_200_OK)
+
+    @override_settings(
+        AUTH_LOGIN_MAX_FAILURES=3,
+        AUTH_LOGIN_FAILURE_WINDOW_SECONDS=900,
+        AUTH_LOGIN_BLOCK_SECONDS=900,
+    )
+    def test_login_is_blocked_without_revealing_account_lockout(self):
+        for _attempt in range(3):
+            response = self.client.post(
+                "/api/auth/token/",
+                {"username": self.user.username, "password": "wrong-password"},
+                format="json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        blocked = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+        )
+        self.assertEqual(blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(blocked.data["code"], "authentication_failed")
+
+    @override_settings(CORE_LINKING_SHARED_SECRET="test-shared-secret-32-bytes-minimum")
+    def test_internal_session_reports_forced_password_change_to_core(self):
+        profile = SaasAccessProfile.objects.get_or_create(user=self.user)[0]
+        profile.must_change_password = True
+        profile.save(update_fields=["must_change_password"])
+        login = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+        )
+
+        response = self.client.post(
+            "/api/auth/internal/session/",
+            {"token": login.data["access"]},
+            format="json",
+            HTTP_X_SAAS_BRIDGE_SECRET="test-shared-secret-32-bytes-minimum",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["must_change_password"])
+
+    def test_logout_blacklists_refresh_cookie(self):
+        login = self.client.post(
+            "/api/auth/token/",
+            {"username": self.user.username, "password": "pass1234"},
+            format="json",
+        )
+        access = login.data["access"]
+        response = self.client.post(
+            "/api/auth/logout/",
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {access}",
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.cookies[saas_settings.AUTH_REFRESH_COOKIE_NAME]["max-age"],
+            0,
+        )
+
+    def test_password_change_rejects_invalid_current_password(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            "/api/auth/password/change/",
+            {
+                "current_password": "bad-pass",
+                "new_password": "newpass12345",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["code"], "validation_error")
+        self.assertIn("current_password", response.data["details"])
+
+    def test_password_change_returns_validation_error_for_weak_password(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            "/api/auth/password/change/",
+            {
+                "current_password": "pass1234",
+                "new_password": "12345678",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["code"], "validation_error")
+        self.assertIn("new_password", response.data["details"])
 
     def test_subscription_requires_authentication(self):
         response = self.client.get("/api/auth/subscription/")
@@ -237,7 +454,6 @@ class SaasAuthApiTests(APITestCase):
         )
         self.assertEqual(token_res.status_code, status.HTTP_200_OK)
         access = token_res.data["access"]
-        refresh = token_res.data["refresh"]
 
         me_before = self.client.get("/api/auth/me/", HTTP_AUTHORIZATION=f"Bearer {access}")
         self.assertEqual(me_before.status_code, status.HTTP_200_OK)
@@ -266,7 +482,6 @@ class SaasAuthApiTests(APITestCase):
 
         refresh_res = self.client.post(
             "/api/auth/refresh/",
-            {"refresh": refresh},
             format="json",
         )
         self.assertEqual(refresh_res.status_code, status.HTTP_200_OK)
@@ -334,7 +549,7 @@ class SaasAuthErrorShapeContractTests(APITestCase):
             "/api/auth/register/",
             {
                 "username": "contract-new-user",
-                "password": "pass12345",
+                "password": TEST_VALID_PASSWORD,
                 "email": self.user.email,
             },
             format="json",
@@ -348,7 +563,7 @@ class SaasAuthErrorShapeContractTests(APITestCase):
             "/api/auth/register/",
             {
                 "username": "blocked-contract-user",
-                "password": "pass12345",
+                "password": TEST_VALID_PASSWORD,
                 "email": "blocked-contract@example.com",
             },
             format="json",
@@ -458,7 +673,7 @@ class SaasAuthServicesTests(APITestCase):
         ) as bootstrap:
             user = auth_services.register_saas_user(
                 username="service-register",
-                password="pass12345",
+                password=TEST_VALID_PASSWORD,
                 email="register@example.com",
             )
         self.assertEqual(user.username, "service-register")
@@ -474,7 +689,7 @@ class SaasAuthServicesTests(APITestCase):
             with self.assertRaises(DRFValidationError):
                 auth_services.register_saas_user(
                     username="service-register-fail",
-                    password="pass12345",
+                    password=TEST_VALID_PASSWORD,
                     email="register-fail@example.com",
                 )
         self.assertFalse(get_user_model().objects.filter(username="service-register-fail").exists())

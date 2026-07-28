@@ -4,7 +4,6 @@ import { useLoginForm } from '@/domains/auth/composables';
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
   setAccessToken: vi.fn(),
-  setRefreshToken: vi.fn(),
   toApiErrorMessage: vi.fn(() => 'mapped-error'),
   push: vi.fn(),
   route: { query: {} as Record<string, unknown> },
@@ -18,7 +17,6 @@ vi.mock('@/domains/auth/api', () => ({
 
 vi.mock('@/domains/auth/session', () => ({
   setAccessToken: mocks.setAccessToken,
-  setRefreshToken: mocks.setRefreshToken,
 }));
 
 vi.mock('@/lib/errors', () => ({
@@ -38,7 +36,7 @@ describe('useLoginForm (core)', () => {
 
   it('shows session notice and logs in successfully', async () => {
     mocks.route.query = { reason: 'session_expired' };
-    mocks.login.mockResolvedValueOnce({ data: { access: 'a1', refresh: 'r1' } });
+    mocks.login.mockResolvedValueOnce({ data: { access: 'a1' } });
     const form = useLoginForm();
     form.username.value = 'u';
     form.password.value = 'p';
@@ -49,7 +47,6 @@ describe('useLoginForm (core)', () => {
 
     expect(mocks.login).toHaveBeenCalledWith({ username: 'u', password: 'p' });
     expect(mocks.setAccessToken).toHaveBeenCalledWith('a1');
-    expect(mocks.setRefreshToken).toHaveBeenCalledWith('r1');
     expect(mocks.push).toHaveBeenCalledWith('/');
     expect(form.loading.value).toBe(false);
     expect(form.error.value).toBeNull();

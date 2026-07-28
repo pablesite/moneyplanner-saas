@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-let modalIdCounter = 0;
-
 const props = withDefaults(
   defineProps<{
     open: boolean;
@@ -22,7 +20,7 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
-const titleId = `base-modal-title-${++modalIdCounter}`;
+const titleId = `base-modal-title-${crypto.randomUUID()}`;
 const panelRef = ref<HTMLElement | null>(null);
 let previousActiveElement: HTMLElement | null = null;
 

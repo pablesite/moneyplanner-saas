@@ -2068,6 +2068,7 @@ export function useBudgetAnnualEntriesPage() {
     return portableDataAppVersion.value;
   }
 
+  // eslint-disable-next-line complexity
   async function exportDataBundle(): Promise<void> {
     clearDataTransferFeedback();
     dataTransferBusyLabel.value = 'Exportando datos...';

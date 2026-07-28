@@ -76,6 +76,7 @@ class SaasAccessProfile(models.Model):
         related_name="saas_access_profile",
     )
     role = models.CharField(max_length=16, choices=Role.choices, default=Role.MEMBER)
+    must_change_password = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -113,3 +114,17 @@ class SaasAuthAuditEvent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.created_at.isoformat()} {self.event} ({self.outcome})"
+
+
+class SaasLoginThrottleState(models.Model):
+    username_hash = models.CharField(max_length=64, unique=True)
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
+    first_failed_at = models.DateTimeField()
+    blocked_until = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "memberships_saasloginthrottlestate"
+
+    def __str__(self) -> str:
+        return f"{self.username_hash[:12]} ({self.failed_attempts})"

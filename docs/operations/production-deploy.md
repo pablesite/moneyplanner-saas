@@ -125,9 +125,10 @@ Core backend:
 5. `FX_SYNC_ENABLED=1`
 6. `FX_SYNC_INTERVAL_SECONDS=86400`
 
-Optional linking:
-1. `ACCOUNT_LINKING_ENABLED=0` for initial private pilot unless self-hosted-to-cloud linking is actively tested.
-2. `CORE_LINKING_SHARED_SECRET` only when account linking is enabled.
+Internal Core/SaaS authentication:
+1. `CORE_LINKING_SHARED_SECRET` is mandatory even when optional account linking is disabled; it protects Core-to-SaaS session introspection.
+2. `SAAS_AUTH_INTROSPECTION_URL=http://saas-backend:8000/api/auth/internal/session/` is injected by `docker-compose.prod.yml`; `saas-backend` is the RFC-valid internal network alias.
+3. `ACCOUNT_LINKING_ENABLED=0` for the initial private pilot unless self-hosted-to-cloud linking is actively tested.
 
 Core acceptance of SaaS JWTs:
 1. `AUTH_ACCEPT_EXTERNAL_TOKENS=1`

@@ -8,10 +8,13 @@ from django.test.utils import override_settings
 from rest_framework import status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
 from saas_access import core_bootstrap
 from saas_access.models import SaasCoreAccountLink
 from saas_access.rbac_services import get_or_create_access_profile
+
+TEST_VALID_PASSWORD = "Basalt" + "-Pass-42!"
 
 
 class SaasBootstrapAndLinkApiTests(APITestCase):
@@ -28,6 +31,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
         )
         get_or_create_access_profile(user=self.admin)
 
+    @override_settings(ACCOUNT_LINKING_ENABLED=False)
     def test_core_link_endpoint_returns_400_when_disabled(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(
@@ -39,6 +43,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
         self.assertEqual(response.data["code"], "feature_disabled")
         self.assertEqual(response.data["details"]["account_linking_enabled"], False)
 
+    @override_settings(ACCOUNT_LINKING_ENABLED=False)
     def test_core_link_get_returns_400_when_disabled(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.get("/api/auth/core-link/")
@@ -210,7 +215,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
                 "/api/auth/register/",
                 {
                     "username": "rollback_user",
-                    "password": "pass12345",
+                    "password": TEST_VALID_PASSWORD,
                     "email": "rollback@example.com",
                 },
                 format="json",
@@ -228,7 +233,7 @@ class SaasBootstrapAndLinkApiTests(APITestCase):
                 "/api/admin/users/",
                 {
                     "username": "rollback_admin_user",
-                    "password": "pass12345",
+                    "password": TEST_VALID_PASSWORD,
                     "email": "rollback_admin@example.com",
                     "role": "saas_member",
                 },
@@ -268,10 +273,10 @@ class CoreBootstrapHelperTests(APITestCase):
         CORE_API_HOST_HEADER="arkenstone.codinglab.es",
         CORE_API_X_FORWARDED_PROTO="https",
     )
-    @patch("saas_access.core_bootstrap.AccessToken.for_user", return_value="abc123")
-    def test_auth_headers_for_user_builds_bearer_headers(self, _token):
+    def test_auth_headers_for_user_builds_purpose_bound_bearer_headers(self):
         headers = core_bootstrap._auth_headers_for_user(user=self.user)
-        self.assertEqual(headers["Authorization"], "Bearer abc123")
+        token = headers["Authorization"].removeprefix("Bearer ")
+        self.assertTrue(AccessToken(token)["core_bootstrap"])
         self.assertEqual(headers["Accept"], "application/json")
         self.assertEqual(headers["Content-Type"], "application/json")
         self.assertEqual(headers["Host"], "arkenstone.codinglab.es")

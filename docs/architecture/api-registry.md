@@ -8,10 +8,13 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes SaaS 
 
 | Method | Route | View | Auth | Throttle | Description |
 |--------|-------|------|------|----------|-------------|
-| `POST` | `/api/auth/token/` | `SaasTokenObtainPairView` | None | `auth_login` | Login. Returns `access` and `refresh` JWT tokens. |
-| `POST` | `/api/auth/refresh/` | `SaasTokenRefreshView` | None | `auth_refresh` | Refreshes the `access` token using `refresh`. |
+| `POST` | `/api/auth/token/` | `SaasTokenObtainPairView` | None | `auth_login` | Login. Returns the short-lived `access` JWT and sets the rotating refresh token in an `HttpOnly` cookie. Repeated failures trigger a per-account temporary lock without revealing whether the account exists. |
+| `POST` | `/api/auth/refresh/` | `SaasTokenRefreshView` | Refresh cookie | `auth_refresh` | Rotates the `HttpOnly` refresh cookie and returns a new `access` token. |
+| `POST` | `/api/auth/logout/` | `SaasLogoutAPIView` | Bearer + refresh cookie | `auth_refresh` | Blacklists the current refresh token and clears its cookie. |
 | `POST` | `/api/auth/register/` | `SaasRegisterAPIView` | None | `auth_register` | Registers a new user when public registration is enabled. Initial private production must set `SAAS_PUBLIC_REGISTRATION_ENABLED=0`; in that mode the endpoint returns canonical error `{code: "registration_disabled", ...}` and admin-created users are the onboarding path. |
-| `GET` | `/api/auth/me/` | `SaasMeAPIView` | Bearer | `auth_me` | Returns authenticated user data: id, username, email, role, subscription_status, premium_enabled, account_link. |
+| `GET` | `/api/auth/me/` | `SaasMeAPIView` | Bearer | `auth_me` | Returns authenticated user data: id, username, email, role, `must_change_password`, subscription_status, premium_enabled, account_link. |
+| `POST` | `/api/auth/password/change/` | `SaasPasswordChangeAPIView` | Bearer | `auth_me` | Changes the current user's password using `current_password` + `new_password`, blacklists existing refresh sessions, issues a replacement session immediately and clears `must_change_password` in the same response cycle. |
+| `POST` | `/api/auth/internal/session/` | `SaasInternalSessionAPIView` | `X-SaaS-Bridge-Secret` | — | Internal Core-to-SaaS JWT introspection. Rejects inactive users and password-revoked tokens, and reports `must_change_password`. |
 | `GET` | `/api/auth/subscription/` | `SaasSubscriptionAPIView` | Bearer | `auth_subscription` | Returns user subscription status. |
 | `GET` | `/api/auth/mode/` | `SaasAuthModeAPIView` | None | — | Returns auth mode config (`saas_local`, `account_linking_enabled`, `public_registration_enabled`, `transition_mode`). |
 | `GET` | `/api/auth/ops/metrics/` | `SaasAuthOpsMetricsAPIView` | Bearer + Admin | `auth_ops_metrics` | Ops metrics: user totals, subscriptions, links, RBAC. `saas_admin` only. |
@@ -25,8 +28,8 @@ All endpoints require `Bearer` + `saas_admin` role. Throttle: `saas_admin_api`.
 
 | Method | Route | View | Description |
 |--------|-------|------|-------------|
-| `GET` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Returns `{saas_users, core_users}`. `saas_users` includes roles, `account_link`, `core_user_origin` and derived `core_connection`; `core_users` includes all Core users plus their external identities and any detected SaaS connection. |
-| `POST` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Creates a user. If role is `saas_member`, triggers Core bootstrap. |
+| `GET` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Returns `{saas_users, core_users}`. `saas_users` includes roles, `must_change_password`, `account_link`, `core_user_origin` and derived `core_connection`; `core_users` includes all Core users plus their external identities and any detected SaaS connection. |
+| `POST` | `/api/admin/users/` | `SaasAdminUserListCreateAPIView` | Creates a user after Django password validation. New admin-created users start with `must_change_password=true`; on their first session they can only read `/api/auth/me/`, change their password or log out. If role is `saas_member`, creation also triggers Core bootstrap. |
 | `PATCH` | `/api/admin/users/{id}/role/` | `SaasAdminUserRoleAPIView` | Changes user role. If upgraded to `saas_member`, triggers Core bootstrap. |
 | `PATCH` | `/api/admin/users/{id}/status/` | `SaasAdminUserStatusAPIView` | Activates or deactivates a user. |
 | `DELETE` | `/api/admin/users/{id}/` | `SaasAdminUserDeleteAPIView` | Deletes a user. Prevents leaving the platform without active admins. |
@@ -201,6 +204,7 @@ These endpoints are canonically defined in `core/docs/`. Frontend domains that c
 | `JWT_SIGNING_KEY` | ✓ | — | Must match Core value |
 | `ACCOUNT_LINKING_ENABLED` | ✓ | — | Enables manual core-link endpoints |
 | `CORE_LINKING_SHARED_SECRET` | ✓ | — | Secret for linking tokens |
+| `SAAS_AUTH_INTROSPECTION_URL` | Core | — | Internal SaaS endpoint used by Core to validate external sessions |
 | `VITE_API_BASE_URL` | — | ✓ | SaaS backend URL (default: `http://localhost:8001`) |
 | `VITE_CORE_API_BASE_URL` | — | ✓ | Browser Core backend URL (default: `http://localhost:8000`) |
 | `SAAS_PUBLIC_REGISTRATION_ENABLED` | ✓ | — | Disable public registration for private production (`0`) |

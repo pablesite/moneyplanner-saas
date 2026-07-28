@@ -14,17 +14,17 @@ Browser
   ├─ POST /api/auth/token/  →  SaaS Backend
   │                              │
   │                              └─ Valida credenciales Django
-  │                                 Devuelve {access, refresh} JWT
+  │                                 Devuelve {access}; refresh va en cookie HttpOnly
   │
-  ├─ Guarda tokens en localStorage (authSession.ts)
+  ├─ Conserva access solo en memoria; JavaScript no puede leer refresh
   │
   └─ Futuras peticiones:
        ├─ api (SaaS)    → Authorization: Bearer {access}   →  SaaS Backend (8001)
        └─ coreApi (Core) → Authorization: Bearer {access}  →  Core Backend (8000)
-             (mismo token, aceptado por Core porque comparten JWT_SIGNING_KEY)
+             Core valida firma y consulta el estado actual de la sesión en SaaS
 ```
 
-**Expiry Management** (`lib/api.ts`): When any request returns 401, the frontend tries to automatically refresh via `/api/auth/refresh/`. If the refresh fails, clear tokens and redirect to `/login?reason=session_expired`. Requests pending during the refresh are queued and retried with the new token.
+**Expiry Management** (`lib/api.ts`): when any request returns 401, the frontend rotates the `HttpOnly` refresh cookie through `/api/auth/refresh/`. The access token stays only in memory and is restored from that cookie after a page reload. If refresh fails, the in-memory token is cleared and the browser redirects to `/login?reason=session_expired`.
 
 ---
 
@@ -42,11 +42,11 @@ Browser
                 ├─ 3. get_or_create_access_profile() → SaasAccessProfile (saas_member)
                 └─ 4. ensure_primary_family_member_in_core_for_saas_user()
                             │
-                            ├─ Genera AccessToken.for_user(user)  [JWT SaaS]
+                            ├─ Genera JWT SaaS de bootstrap (claim dedicado, TTL 2 minutos)
                             └─ POST {CORE_API_BASE_URL}/api/family-members/ensure-primary/
                                     Authorization: Bearer {jwt}
                                     │
-                                    └─ Core acepta el token (misma JWT_SIGNING_KEY)
+                                    └─ Core acepta ese claim solo en ensure-primary
                                        Crea FamilyMember primario si no existe
                                        Devuelve 200
                                        │
@@ -140,7 +140,7 @@ El frontend mantiene dos clientes Axios (`lib/api.ts`):
 | `api` | `VITE_API_BASE_URL` | SaaS backend (8001) | `auth`, operaciones SaaS |
 | `coreApi` | `VITE_CORE_API_BASE_URL` | Core backend (8000) | Todos los dominios de producto |
 
-Ambos clientes tienen instalados los mismos interceptores de auth (request: inyecta Bearer, response: gestiona 401 y refresh). El mismo token sirve para ambos porque comparten `JWT_SIGNING_KEY`.
+Ambos clientes tienen instalados los mismos interceptores de auth (request: inyecta Bearer, response: gestiona 401 y refresh). Core verifica la firma del JWT externo y después consulta `/api/auth/internal/session/` en SaaS para respetar inmediatamente desactivaciones, cambios de contraseña y el estado `must_change_password`.
 
 ### Production routing
 
@@ -177,6 +177,7 @@ The Core frontend is not deployed as part of SaaS production.
 | `CORE_BOOTSTRAP_TIMEOUT_SECONDS` | SaaS backend | Timeout de la llamada de bootstrap (default: 5s) |
 | `ACCOUNT_LINKING_ENABLED` | SaaS backend | Habilita endpoints de core-link (default: False) |
 | `CORE_LINKING_SHARED_SECRET` | SaaS backend + Core backend | Secreto compartido para tokens de linking y para el bridge administrativo SaaS -> Core |
+| `SAAS_AUTH_INTROSPECTION_URL` | Core backend | Endpoint interno SaaS que valida el estado vigente de cada JWT externo |
 | `CORE_LINKING_TOKEN_MAX_AGE_SECONDS` | SaaS backend | TTL de los tokens de linking (default: 300s) |
 | `VITE_CORE_API_BASE_URL` | SaaS frontend | URL del Core backend desde el navegador |
 | `SAAS_PUBLIC_REGISTRATION_ENABLED` | SaaS backend | Must be `0` for the initial private production pilot |

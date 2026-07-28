@@ -2,7 +2,7 @@
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 
-**Last review:** 2026-07-26 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
+**Last review:** 2026-07-28 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
 
 ---
 
@@ -26,8 +26,8 @@ See `core/docs/project-status.md` for the status and next tasks of Core product 
 | SaaS backend refactor — Phase 1                   | High     | ✅     | Test coverage baseline complete: suite reorganized by domain, real rollback on register if Core bootstrap fails, 138 tests and 96% coverage on `saas` + `saas_access`. Spec: `docs/tasks/backend-refactor/terminados/phase-1-test-coverage-baseline/backend.md`          |
 | SaaS backend refactor — Phase 2                   | Medium   | ✅     | Thin views complete: `auth_views.py` at 122 lines, `admin_views.py` at 96 lines, logic extracted to `saas/auth_services.py`, `saas/auth_link_views.py`, and `saas_access/rbac_services.py`. Spec: `docs/tasks/backend-refactor/terminados/phase-2-thin-views/backend.md` |
 | SaaS backend refactor — Phase 3                   | Medium   | ✅     | Canonical exception handler complete: `{code, message, details}` contract in all endpoints with error-shape contract tests. Spec: `docs/tasks/backend-refactor/terminados/phase-3-error-standardization/backend.md`                                                      |
-| SaaS auth review                                  | High     | ⚪     | Review login, permissions, RBAC, and real flows (register, session, expiration).                                                                                                                                                                                         |
-| Security audit                                    | High     | ⚪     | SaaS backend vulnerabilities, dependency CVEs, auth/permissions/input validation.                                                                                                                                                                                        |
+| SaaS auth review                                  | High     | ✅     | Login/register/password flow hardened: backend-enforced first-login change, pending-user backend gate, strong password validation, rotating HttpOnly refresh cookie, token revocation on password change, per-account lockout and Core session introspection. |
+| Security audit                                    | High     | 🔄     | Auth, permissions, dependency and secret-surface audit executed on 2026-07-28. Findings are documented locally and hardening follow-up remains pending before calling the area closed.                                                                                                                                                    |
 | CI/CD deployment                                  | High     | 🔄     | Planned in `docs/tasks/production-deployment/phase-4-github-ci-cd/qa.md`: quality, security scans, production image push to GHCR and SSH deploy.                                                                                                                         |
 | Frontend redesign "Direction A" — Phase 0         | Medium   | ✅     | Visual foundation completed on 2026-06-16: namespaced `.dir-a` tokens (Geist/oklch), Geist fonts, and shell migration sidebar → topbar without touching domain logic. Branding stays "The Arkenstone". Spec: `docs/tasks/frontend-redesign-direction-a/terminados/phase-0-foundation-topbar/frontend.md` |
 | Frontend redesign "Direction A" — Phase 1         | Medium   | ✅     | Patrimonio (`NetWorthView`) se da por cerrado con el rework Direction A aceptado. El gate visual final y la homogeneización transversal de detalles se agrupan en la Fase 5. Spec: `docs/tasks/frontend-redesign-direction-a/terminados/phase-1-networth-pilot/frontend.md` · Método: `docs/tasks/frontend-redesign-direction-a/README.md` |
@@ -95,9 +95,10 @@ Cada decisión de la timeline se despliega y cuenta su impacto completo: desembo
 | Feature                            | Status         | Notes                                                 |
 | ---------------------------------- | -------------- | ----------------------------------------------------- |
 | Login (JWT)                        | ✅ Implemented | `POST /api/auth/token/`                               |
-| Token refresh                      | ✅ Implemented | `POST /api/auth/refresh/`                             |
+| Token refresh                      | ✅ Implemented | Rotating `HttpOnly` cookie; access token remains in memory |
 | User registration                  | ✅ Implemented | `POST /api/auth/register/` + automatic Core bootstrap |
-| Authenticated user profile (`/me`) | ✅ Implemented | Includes role, subscription_status, account_link      |
+| Authenticated user profile (`/me`) | ✅ Implemented | Includes role, `must_change_password`, subscription_status, account_link |
+| Forced password change on first login | ✅ Implemented | Enforced by SaaS backend and Core introspection, not only by the frontend router; successful change clears the notice immediately and rotates the active session |
 | Auth mode endpoint                 | ✅ Implemented | `GET /api/auth/mode/`                                 |
 | Scope throttling                   | ✅ Implemented | `auth_login`, `auth_register`, `auth_me`, etc.        |
 | Auth audit logging                 | ✅ Implemented | DB + log file                                         |
@@ -125,7 +126,7 @@ Cada decisión de la timeline se despliega y cuenta su impacto completo: desembo
 | Feature                  | Status         | Notes                                     |
 | ------------------------ | -------------- | ----------------------------------------- |
 | List users               | ✅ Implemented | `GET /api/admin/users/` returns `saas_users` + `core_users` |
-| Create user (admin)      | ✅ Implemented | `POST /api/admin/users/` + Core bootstrap |
+| Create user (admin)      | ✅ Implemented | `POST /api/admin/users/` + Core bootstrap + forced password change on first login |
 | Change user role         | ✅ Implemented | `PATCH /api/admin/users/{id}/role/`       |
 | Activate/deactivate user | ✅ Implemented | `PATCH /api/admin/users/{id}/status/`     |
 | Delete user              | ✅ Implemented | `DELETE /api/admin/users/{id}/`           |

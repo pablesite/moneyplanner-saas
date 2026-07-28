@@ -7,6 +7,7 @@
 // })
 
 import { defineConfig } from 'vitest/config';
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
@@ -17,6 +18,7 @@ const pwaEnabled = process.env.VITE_PWA_ENABLED !== 'false';
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     vue(),
     VitePWA({
       // Con `disable` el módulo virtual `virtual:pwa-register/vue` sigue

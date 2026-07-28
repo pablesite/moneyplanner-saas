@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   clearAuthTokens: vi.fn(),
   hasAccessToken: { value: false },
   validateSession: vi.fn(),
+  logoutAuthSession: vi.fn(),
   route: {
     name: 'home',
     path: '/',
@@ -33,10 +34,16 @@ vi.mock('@/domains/auth', () => ({
   },
 }));
 
+vi.mock('@/lib/api', () => ({
+  logoutAuthSession: mocks.logoutAuthSession,
+}));
+
 describe('useAppShell', () => {
   beforeEach(() => {
     mocks.clearAuthTokens.mockReset();
     mocks.validateSession.mockReset();
+    mocks.logoutAuthSession.mockReset();
+    mocks.logoutAuthSession.mockResolvedValue(undefined);
     mocks.router.push.mockReset();
     mocks.hasAccessToken.value = false;
     mocks.route.name = 'home';
@@ -75,6 +82,7 @@ describe('useAppShell', () => {
       data: {
         username: 'Pablo Perez',
         role: 'saas_admin',
+        must_change_password: false,
         subscription_status: 'trial',
       },
     });
@@ -90,9 +98,10 @@ describe('useAppShell', () => {
     expect(shell.accountInitials.value).toBe('PP');
 
     shell.toggleAccountMenu();
-    shell.logout();
+    await shell.logout();
 
     expect(mocks.clearAuthTokens).toHaveBeenCalledTimes(1);
+    expect(mocks.logoutAuthSession).toHaveBeenCalledTimes(1);
     expect(shell.accountMenuOpen.value).toBe(false);
     expect(mocks.router.push).toHaveBeenCalledWith('/login');
 
