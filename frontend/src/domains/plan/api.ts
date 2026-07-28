@@ -7,6 +7,7 @@ import type {
   FinancialPlan,
   FinancialPlanPayload,
   OccurredEventPayload,
+  PlannedDecisionPayload,
   PlanMember,
   PlanOverview,
   PlanMemberPayload,
@@ -110,6 +111,9 @@ export const planApi = {
   },
   registerOccurredEvent(payload: OccurredEventPayload) {
     return coreApi.post<PlanEvent>('/api/plan/events/occurred/', payload);
+  },
+  registerPlannedDecision(payload: PlannedDecisionPayload) {
+    return coreApi.post<PlanEvent>('/api/plan/events/planned-decision/', payload);
   },
   materializeEvent(id: number, payload: { actual_date: string; note?: string }) {
     return coreApi.post<PlanEventMaterializeResponse>(

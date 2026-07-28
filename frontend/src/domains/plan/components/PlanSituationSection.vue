@@ -486,7 +486,11 @@ onMounted(() => {
             <p v-if="localError" class="plan-inline-error" role="alert">{{ localError }}</p>
 
             <p class="plan-oneoff-budget-link">
-              ¿Prefieres ajustar tu gasto o ingreso recurrente?
+              ¿Es una compra o venta de activo?
+              <RouterLink class="plan-blocker-link" to="/plan/decisiones/agrupar"
+                >Agrupar en una decisión</RouterLink
+              >
+              · ¿Ajustar un gasto o ingreso recurrente?
               <RouterLink class="plan-blocker-link" to="/presupuesto"
                 >Revisar presupuesto</RouterLink
               >

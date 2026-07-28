@@ -260,6 +260,35 @@ export type OccurredEventPayload = {
   note?: string;
 };
 
+/** Impacto proyectado de una Decisión planificada (compra: `new_*`; venta: `disposed_*`). */
+export type PlannedDecisionImpact = {
+  initial_outflow?: string;
+  new_asset_value?: string;
+  new_asset_type?: PlanAssetFunction | null;
+  new_debt_principal?: string;
+  new_debt_interest_rate?: string;
+  new_debt_term_years?: number | null;
+  disposed_asset_value?: string;
+  disposed_asset_type?: PlanAssetFunction | null;
+  proceeds?: string;
+  disposed_liability_value?: string;
+};
+
+export type PlannedDecisionPayload = {
+  name: string;
+  event_type: PlanScenarioTemplate;
+  decision_date: string;
+  /** Año en que la compra/venta impacta la proyección (puede diferir de la fecha de decisión). */
+  transaction_year: number;
+  end_year?: number | null;
+  expense_entry_ids: number[];
+  income_entry_ids: number[];
+  asset_ids: number[];
+  liability_ids: number[];
+  impact?: PlannedDecisionImpact;
+  note?: string;
+};
+
 export type PlanEventCloseResponse = {
   event: PlanEvent;
   projection: ProjectionResponse;

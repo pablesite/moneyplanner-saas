@@ -13,6 +13,7 @@ import PlanView from './views/PlanView.vue';
 import PlanAssetsView from './views/PlanAssetsView.vue';
 import PlanSetupView from './views/PlanSetupView.vue';
 import PlanOccurredEventView from './views/PlanOccurredEventView.vue';
+import PlanPlannedDecisionView from './views/PlanPlannedDecisionView.vue';
 import PlanScenariosView from './views/PlanScenariosView.vue';
 import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
 import PlanImprovementsView from './views/PlanImprovementsView.vue';
@@ -92,6 +93,12 @@ const routes: RouteRecordRaw[] = [
     path: '/plan/decisiones/registrar',
     name: 'plan-occurred-event',
     component: PlanOccurredEventView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
+  },
+  {
+    path: '/plan/decisiones/agrupar',
+    name: 'plan-planned-decision',
+    component: PlanPlannedDecisionView,
     beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {

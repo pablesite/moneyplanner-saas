@@ -8,6 +8,7 @@ import type {
   FinancialPlan,
   FinancialPlanPayload,
   OccurredEventPayload,
+  PlannedDecisionPayload,
   PlanAssetFunction,
   PlanEvent,
   PlanFinding,
@@ -194,6 +195,21 @@ export const usePlanStore = defineStore('plan', {
       this.error = null;
       try {
         const { data } = await planApi.registerOccurredEvent(payload);
+        this.events = [...this.events, data];
+        return data;
+      } catch (error) {
+        this.error = toErrorMessage(error);
+        throw error;
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async registerPlannedDecision(payload: PlannedDecisionPayload) {
+      this.saving = true;
+      this.error = null;
+      try {
+        const { data } = await planApi.registerPlannedDecision(payload);
         this.events = [...this.events, data];
         return data;
       } catch (error) {
