@@ -1043,7 +1043,6 @@ function buildInterestPayload(): Partial<ItemFormPayload> {
   };
 }
 
-// eslint-disable-next-line complexity
 function buildInvestmentPayload(normalizedAmount: string): Partial<ItemFormPayload> {
   const hasMarketValueOverride = !!String(form.market_value_override ?? '').trim();
   const effectiveMarketValueOverrideDate = hasMarketValueOverride

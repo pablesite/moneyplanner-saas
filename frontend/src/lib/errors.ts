@@ -120,6 +120,7 @@ function firstValidationMessage(data: unknown, path: string[] = []): string | nu
   return messageFromStringValue(data.detail, path);
 }
 
+// eslint-disable-next-line complexity
 export function toApiErrorMessage(error: unknown): string {
   const code = getApiErrorCode(error);
   const mapped = humanMessageForApiCode(code);

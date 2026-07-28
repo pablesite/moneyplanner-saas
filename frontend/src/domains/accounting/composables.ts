@@ -2055,6 +2055,7 @@ export function useAccountingPage() {
     });
   }
 
+  // eslint-disable-next-line complexity
   async function fetchTodosPage(reset: boolean): Promise<void> {
     if (reset) {
       todosAbortController?.abort();
