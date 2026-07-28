@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from django.conf import settings
+from django.utils.crypto import constant_time_compare
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
 
@@ -49,3 +51,10 @@ class HasPremiumAccess(BasePermission):
         if not has_premium_access(user=user):
             raise SubscriptionBlocked(self.message)
         return True
+
+
+class IsCoreSaasBridge(BasePermission):
+    def has_permission(self, request, view):
+        secret = getattr(settings, "CORE_LINKING_SHARED_SECRET", "").strip()
+        provided = request.headers.get("X-SaaS-Bridge-Secret", "").strip()
+        return bool(secret and provided and constant_time_compare(secret, provided))

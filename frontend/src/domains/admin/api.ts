@@ -9,6 +9,7 @@ export type SaasAdminUser = {
   email: string;
   is_active: boolean;
   role: SaasAdminRole;
+  must_change_password: boolean;
   core_user_origin: 'core_native' | 'manual_link' | null;
   account_link: {
     core_user_ref: string;

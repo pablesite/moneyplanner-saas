@@ -3,14 +3,19 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { AButton } from '@/domains/ui';
 import { clearAuthTokens, getAccessToken } from '@/domains/auth/session';
+import { logoutAuthSession } from '@/lib/api';
 
 const router = useRouter();
 
 const hasToken = computed(() => !!getAccessToken());
 
-function logout() {
-  clearAuthTokens();
-  router.push('/login');
+async function logout() {
+  try {
+    await logoutAuthSession();
+  } finally {
+    clearAuthTokens();
+    await router.push('/login');
+  }
 }
 </script>
 

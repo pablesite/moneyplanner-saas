@@ -3,13 +3,14 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from saas.auth_serializers import CoreAccountLinkSerializer
+from saas.auth_serializers import CoreAccountLinkSerializer, validate_user_password
 from saas_access.models import SaasAccessProfile, SaasCoreAccountLink
 from saas_access.rbac_services import get_or_create_access_profile
 
 
 class SaasAdminUserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
+    must_change_password = serializers.SerializerMethodField()
     account_link = serializers.SerializerMethodField()
     core_user_origin = serializers.SerializerMethodField()
     core_connection = serializers.SerializerMethodField()
@@ -22,6 +23,7 @@ class SaasAdminUserSerializer(serializers.ModelSerializer):
             "email",
             "is_active",
             "role",
+            "must_change_password",
             "account_link",
             "core_user_origin",
             "core_connection",
@@ -32,6 +34,12 @@ class SaasAdminUserSerializer(serializers.ModelSerializer):
         if obj.id in role_by_user_id:
             return role_by_user_id[obj.id]
         return get_or_create_access_profile(user=obj).role
+
+    def get_must_change_password(self, obj) -> bool:
+        profile_by_user_id = self.context.get("profile_by_user_id", {})
+        if obj.id in profile_by_user_id:
+            return bool(profile_by_user_id[obj.id].must_change_password)
+        return bool(get_or_create_access_profile(user=obj).must_change_password)
 
     def _get_account_link(self, obj) -> SaasCoreAccountLink | None:
         link_by_user_id = self.context.get("link_by_user_id", {})
@@ -100,7 +108,7 @@ class SaasAdminCoreUserSerializer(serializers.Serializer):
 
 class SaasAdminUserCreateSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
-    password = serializers.CharField(min_length=8, write_only=True)
+    password = serializers.CharField(min_length=8, write_only=True, trim_whitespace=False)
     email = serializers.EmailField(required=False, allow_blank=True, default="")
     role = serializers.ChoiceField(
         choices=SaasAccessProfile.Role.choices,
@@ -113,6 +121,17 @@ class SaasAdminUserCreateSerializer(serializers.Serializer):
         if get_user_model().objects.filter(username=value).exists():
             raise serializers.ValidationError("Ya existe un usuario con ese username.")
         return value
+
+    def validate(self, attrs):
+        try:
+            validate_user_password(
+                password=attrs["password"],
+                username=attrs["username"],
+                email=attrs.get("email", ""),
+            )
+        except serializers.ValidationError as exc:
+            raise serializers.ValidationError({"password": exc.detail}) from exc
+        return attrs
 
 
 class SaasAdminUserRoleSerializer(serializers.Serializer):

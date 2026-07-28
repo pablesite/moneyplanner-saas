@@ -31,7 +31,7 @@ services:
     environment:
       DJANGO_SECRET_KEY: ${SAAS_DJANGO_SECRET_KEY:?SAAS_DJANGO_SECRET_KEY is required}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
-      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-${MONEYPLANNER_DOMAIN}}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-${MONEYPLANNER_DOMAIN}},saas-backend
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://${MONEYPLANNER_DOMAIN}}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://${MONEYPLANNER_DOMAIN}}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
@@ -48,7 +48,7 @@ services:
       CORE_BOOTSTRAP_TIMEOUT_SECONDS: ${CORE_BOOTSTRAP_TIMEOUT_SECONDS:-5}
       SAAS_PUBLIC_REGISTRATION_ENABLED: ${SAAS_PUBLIC_REGISTRATION_ENABLED:-0}
       ACCOUNT_LINKING_ENABLED: ${ACCOUNT_LINKING_ENABLED:-0}
-      CORE_LINKING_SHARED_SECRET: ${CORE_LINKING_SHARED_SECRET:-}
+      CORE_LINKING_SHARED_SECRET: ${CORE_LINKING_SHARED_SECRET:?CORE_LINKING_SHARED_SECRET is required}
       CORE_LINKING_TOKEN_MAX_AGE_SECONDS: ${CORE_LINKING_TOKEN_MAX_AGE_SECONDS:-300}
       USE_X_FORWARDED_HOST: ${USE_X_FORWARDED_HOST:-1}
       SECURE_PROXY_SSL_HEADER_ENABLED: ${SECURE_PROXY_SSL_HEADER_ENABLED:-1}
@@ -92,8 +92,10 @@ services:
       - traefik.http.routers.moneyplanner-saas-backend.rule=Host(`${MONEYPLANNER_DOMAIN}`) && (PathPrefix(`/api/auth`) || PathPrefix(`/api/admin`) || PathPrefix(`/api/schema`) || PathPrefix(`/api/docs`) || PathPrefix(`/admin`))
       - traefik.http.routers.moneyplanner-saas-backend.priority=100
     networks:
-      - moneyplanner-internal
-      - proxy
+      moneyplanner-internal:
+        aliases:
+          - saas-backend
+      proxy:
 
   saas_frontend:
     image: ${SAAS_FRONTEND_IMAGE:-ghcr.io/pablesite/moneyplanner-saas-frontend:latest}
@@ -160,7 +162,9 @@ services:
       EXTERNAL_JWT_ISSUER: ${SAAS_JWT_ISSUER:-moneyplanner-saas}
       EXTERNAL_JWT_AUDIENCE: ${SAAS_JWT_AUDIENCE:-moneyplanner-saas-api}
       EXTERNAL_JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
-      CORE_LINKING_SHARED_SECRET: ${CORE_LINKING_SHARED_SECRET:-}
+      SAAS_AUTH_INTROSPECTION_URL: http://saas-backend:8000/api/auth/internal/session/
+      SAAS_AUTH_INTROSPECTION_TIMEOUT_SECONDS: ${SAAS_AUTH_INTROSPECTION_TIMEOUT_SECONDS:-2}
+      CORE_LINKING_SHARED_SECRET: ${CORE_LINKING_SHARED_SECRET:?CORE_LINKING_SHARED_SECRET is required}
       USE_X_FORWARDED_HOST: ${USE_X_FORWARDED_HOST:-1}
       SECURE_PROXY_SSL_HEADER_ENABLED: ${SECURE_PROXY_SSL_HEADER_ENABLED:-1}
       SECURE_PROXY_SSL_HEADER_NAME: ${SECURE_PROXY_SSL_HEADER_NAME:-HTTP_X_FORWARDED_PROTO}

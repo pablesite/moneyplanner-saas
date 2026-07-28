@@ -14,6 +14,7 @@ Defines the user's role within the SaaS platform.
 |-------|------|-------------|
 | `user` | OneToOne → User | Propietario del perfil |
 | `role` | CharField | `saas_admin` o `saas_member` (default: `saas_member`) |
+| `must_change_password` | BooleanField | Marca credenciales temporales creadas por un admin y bloquea cualquier API de producto hasta que el propio usuario complete el cambio de contraseña |
 | `created_at` | DateTimeField | Automatic creation |
 | `updated_at` | DateTimeField | Last modified |
 
@@ -88,6 +89,19 @@ Log of authentication events and administrative operations.
 | `core_account_link` | Manual Core Account Linking |
 | `core_account_unlink` | Core account unlinking |
 | `core_account_link_from_token` | Linking via shared token |
+| `password_change` | User changes their own SaaS password |
+| `logout` | User explicitly revokes the current refresh session |
+
+### SaasLoginThrottleState
+
+Stores only a SHA-256 hash of a normalized username plus the current failed-login window. After the configured threshold, authentication remains blocked temporarily while returning the same generic `401` response used for invalid credentials.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `username_hash` | CharField(unique) | One-way identifier; the username is never persisted here |
+| `failed_attempts` | PositiveSmallIntegerField | Failures in the active window |
+| `first_failed_at` | DateTimeField | Start of the active failure window |
+| `blocked_until` | DateTimeField(nullable) | End of the temporary account lock |
 | `saas_admin_user_create` | Admin creates a user |
 | `saas_admin_role_change` | Admin changes a user's role |
 | `saas_admin_status_change` | Admin activates/deactivates a user |
@@ -114,6 +128,11 @@ Status normal (piloto)
     └─ core_link: presente (creado durante registro)
 
 Operaciones admin
+    ├─ Crear usuario: POST /api/admin/users/  → `must_change_password=true`
+    ├─ Primer login del usuario creado por admin
+    │   ├─ GET /api/auth/me/                  → informa `must_change_password=true`
+    │   ├─ Cualquier API de producto/Core     → rechazada hasta cambiar la contraseña
+    │   └─ POST /api/auth/password/change/    → limpia `must_change_password`, revoca sesiones previas y entrega una nueva sesión
     ├─ Cambiar rol: PATCH /api/admin/users/{id}/role/
     ├─ Activar/desactivar: PATCH /api/admin/users/{id}/status/
     └─ Eliminar: DELETE /api/admin/users/{id}/
@@ -129,5 +148,6 @@ Operaciones admin
 | SaasCoreAccountLink | `memberships_saascoreaccountlink` |
 | SaasConsumedCoreLinkToken | `memberships_saasconsumedcorelinktoken` |
 | SaasAuthAuditEvent | `memberships_saasauthauditevent` |
+| SaasLoginThrottleState | `memberships_saasloginthrottlestate` |
 
 > Note: table names are prefixed with `memberships_` for historical reasons even though the app is now called `saas_access`. Do not rename without careful migration.
