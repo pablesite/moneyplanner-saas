@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.42.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.41.0...moneyplanner-saas-v0.42.0) (2026-07-29)
+
+
+### Features
+
+* **plan:** flujo "Agrupar en decisión" para movimientos puntuales ([4ea39f8](https://github.com/pablesite/moneyplanner-saas/commit/4ea39f8c34cf42f19224cadc8ff6231aee5b287a))
+* **plan:** unificar "Tu situación este año" en un solo bloque ([62fd522](https://github.com/pablesite/moneyplanner-saas/commit/62fd52227a1800c45366abed57e448da7463cb81))
+
+
+### Bug Fixes
+
+* **plan:** tratar el punto de miles como separador en los importes de decisión ([16824cd](https://github.com/pablesite/moneyplanner-saas/commit/16824cd38ed8136f3896fd2cc10fe50338257c5a))
+
 ## [0.41.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.40.0...moneyplanner-saas-v0.41.0) (2026-07-27)
 
 
