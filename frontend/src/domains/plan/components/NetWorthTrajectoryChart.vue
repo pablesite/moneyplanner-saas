@@ -226,6 +226,7 @@ const hoverDetail = computed(() => {
   return {
     productive: Number(row.productive_capital),
     target: Number(row.target_capital),
+    financingGap: Number(row.financing_gap),
   };
 });
 
@@ -338,6 +339,9 @@ function onMove(event: MouseEvent): void {
         <template v-if="hoverDetail">
           <span>Productivo {{ formatMoney(hoverDetail.productive) }}</span>
           <span>Objetivo {{ formatMoney(hoverDetail.target) }}</span>
+          <span v-if="hoverDetail.financingGap < 0">
+            Financiación pendiente {{ formatMoney(hoverDetail.financingGap) }}
+          </span>
         </template>
         <em>{{ hoverPoint.kind === 'historical' ? 'Histórico' : 'Proyección' }}</em>
       </div>
@@ -351,6 +355,7 @@ function onMove(event: MouseEvent): void {
               <th scope="col">Año</th>
               <th scope="col">Capital productivo</th>
               <th scope="col">Capital objetivo</th>
+              <th scope="col">Financiación pendiente</th>
               <th scope="col">Patrimonio neto</th>
             </tr>
           </thead>
@@ -359,6 +364,7 @@ function onMove(event: MouseEvent): void {
               <th scope="row">{{ row.year }}</th>
               <td>{{ formatMoney(row.productive_capital) }}</td>
               <td>{{ formatMoney(row.target_capital) }}</td>
+              <td>{{ formatMoney(row.financing_gap) }}</td>
               <td>{{ formatMoney(row.net_worth) }}</td>
             </tr>
           </tbody>

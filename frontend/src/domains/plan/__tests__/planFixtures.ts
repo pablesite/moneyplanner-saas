@@ -31,6 +31,7 @@ export function trajectoryRow(
     security_capital: '0.00',
     non_productive_assets: '0.00',
     liabilities: '0.00',
+    financing_gap: '0.00',
     net_worth: '0.00',
     target_capital: '0.00',
     annual_target_income: '0.00',

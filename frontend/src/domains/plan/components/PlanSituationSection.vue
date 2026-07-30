@@ -109,6 +109,7 @@ type MovementRow = {
   isPlanManaged: boolean;
   planEventName: string | null;
   isAssetSale: boolean;
+  eventGroup: string;
   income?: AnnualIncomeEntry;
   expense?: AnnualExpenseEntry;
 };
@@ -128,6 +129,7 @@ const movements = computed<MovementRow[]>(() => {
         isPlanManaged: entry.isPlanManaged,
         planEventName: entry.planEventName,
         isAssetSale: entry.cashflowRole === 'asset_sale',
+        eventGroup: entry.eventGroup,
         income: entry,
       });
     }
@@ -151,6 +153,7 @@ const movements = computed<MovementRow[]>(() => {
         isPlanManaged: entry.isPlanManaged,
         planEventName: entry.planEventName,
         isAssetSale: false,
+        eventGroup: entry.eventGroup,
         expense: entry,
       });
     }
@@ -174,17 +177,35 @@ const oneOffCountLabel = computed(() => {
 
 // Qué puntuales entran de verdad en la proyección, según `one_off_flows` del motor
 // (core `plan/services_inputs.py`):
-//  - `no_decision`: una venta de activo suelta no se modela nunca; solo cuenta
-//    cuando cuelga de una Decisión (el motor la excluye por `cashflow_role`).
-//  - `past`: en el año en curso, lo que ya pasó de fecha está reflejado en el
-//    capital actual; volver a sumarlo sería contarlo dos veces.
+//  - `no_decision`: una venta de activo suelta no se modela nunca; solo cuenta cuando
+//    cuelga de una Decisión. Y la venta se ignora **entera**: sus gastos asociados
+//    (plusvalía, notaría…) esperan también a la decisión, porque contar el coste sin
+//    el ingreso sesgaría la proyección a la baja. El vínculo es el `event_group`.
+//  - `past`: en el año en curso, lo que ya pasó de fecha está reflejado en el capital
+//    actual; volver a sumarlo sería contarlo dos veces.
 // Los gestionados por una decisión sí cuentan: entran a través de ella.
 const currentMonth = new Date().getMonth() + 1;
+
+const pendingSaleGroups = computed(
+  () =>
+    new Set(
+      incomeStore.entries.value
+        .filter(
+          (entry) =>
+            entry.cashflowRole === 'asset_sale' &&
+            entry.fiscalYear >= currentYear &&
+            entry.eventGroup,
+        )
+        .map((entry) => entry.eventGroup),
+    ),
+);
+
 type GhostReason = 'no_decision' | 'past';
 function ghostReason(row: MovementRow): GhostReason | null {
   if (row.isPlanManaged) return null;
   if (row.kind === 'income' && row.isAssetSale) return 'no_decision';
-  if (row.fiscalYear === currentYear && row.targetMonth !== null && row.targetMonth < currentMonth)
+  if (row.eventGroup && pendingSaleGroups.value.has(row.eventGroup)) return 'no_decision';
+  if (row.fiscalYear === currentYear && row.targetMonth !== null && row.targetMonth <= currentMonth)
     return 'past';
   return null;
 }
@@ -529,8 +550,8 @@ onMounted(() => {
             </p>
             <p v-if="ghostMovements.length" class="plan-oneoff-ghost-note">
               <strong>{{ ghostNoteLabel }}</strong> ({{ ghostNetLabel }}) y quedan fuera del total:
-              una venta de activo solo entra cuando forma parte de una decisión, y lo que ya pasó de
-              fecha está reflejado en tu capital actual.
+              una venta de activo —y los gastos que la acompañan— solo entra cuando forma parte de
+              una decisión, y lo que ya pasó de fecha está reflejado en tu capital actual.
               <RouterLink
                 v-if="hasUndecidedGhosts"
                 class="plan-blocker-link"
@@ -563,7 +584,7 @@ onMounted(() => {
                       <span
                         v-if="ghostReason(row) === 'no_decision'"
                         class="plan-oneoff-ghost-tag"
-                        title="Una venta de activo solo entra en la previsión cuando forma parte de una decisión."
+                        title="La venta a la que pertenece aún no es una decisión: hasta entonces no entran ni sus ingresos ni sus gastos."
                       >
                         No cuenta en la previsión
                       </span>

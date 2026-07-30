@@ -166,10 +166,11 @@ function rowByName(wrapper: VueWrapper, name: string) {
 
 describe('PlanSituationSection', () => {
   beforeEach(() => {
-    // El componente marca como "ya ocurrido" lo que cae antes del mes actual, así que
-    // el reloj se fija (15 de junio) para que el criterio no dependa del día del test.
+    // El componente marca como "ya ocurrido" lo que no supera el mes actual (mismo
+    // criterio que `one_off_flows` en Core), así que el reloj se fija en marzo para que
+    // el resultado no dependa del día en que corran los tests.
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(currentYear, 5, 15));
+    vi.setSystemTime(new Date(currentYear, 2, 15));
     fake.income = {
       entries: ref([...incomeEntries]),
       loading: ref(false),
@@ -271,26 +272,42 @@ describe('PlanSituationSection', () => {
     expect(row.findAll('button').some((b) => b.text() === 'Editar')).toBe(false);
   });
 
-  it('una venta de activo sin decisión no suma al total y ofrece agruparla', async () => {
-    const store = fake.income as { entries: { value: AnnualIncomeEntry[] } };
-    store.entries.value.push(
+  it('una venta sin decisión no suma al total, ni ella ni sus gastos asociados', async () => {
+    const incomes = fake.income as { entries: { value: AnnualIncomeEntry[] } };
+    const expenses = fake.expense as { entries: { value: AnnualExpenseEntry[] } };
+    incomes.entries.value.push(
       income({
         id: 5,
         name: 'Venta casa Palmito',
         amountAnnual: 143100,
         targetMonth: 11,
         cashflowRole: 'asset_sale',
+        eventGroup: 'venta_casa_palmito',
+      }),
+    );
+    // Gasto de la misma venta: sin decisión no entra en la proyección, igual que el
+    // ingreso (si no, el coste contaría y el ingreso no).
+    expenses.entries.value.push(
+      expense({
+        id: 4,
+        name: 'Plusvalía casa Palmito',
+        amountAnnual: 2000,
+        targetMonth: 11,
+        eventGroup: 'venta_casa_palmito',
       }),
     );
     const wrapper = mountSection();
     await openOneOff(wrapper);
 
-    const row = rowByName(wrapper, 'Venta casa Palmito');
-    expect(row.text()).toContain('No cuenta en la previsión');
-    const cta = row.get('a');
+    const saleRow = rowByName(wrapper, 'Venta casa Palmito');
+    expect(saleRow.text()).toContain('No cuenta en la previsión');
+    const cta = saleRow.get('a');
     expect(cta.text()).toBe('Añadir a una decisión');
     expect(cta.attributes('href')).toBe('/plan/decisiones/agrupar');
-    // El total de la capa sigue siendo el de los que sí cuentan: la venta no suma.
+    expect(rowByName(wrapper, 'Plusvalía casa Palmito').text()).toContain(
+      'No cuenta en la previsión',
+    );
+    // El total de la capa no se mueve: ni la venta ni su plusvalía suman.
     const total = wrapper.get('[aria-controls="plan-oneoff-detail"] .tier-value').text();
     expect(total).toContain('9.000,00');
     expect(total).not.toContain('143.100');

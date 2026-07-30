@@ -101,6 +101,7 @@ export type ProjectionTrajectoryRow = {
   security_capital: string;
   non_productive_assets: string;
   liabilities: string;
+  financing_gap: string;
   net_worth: string;
   target_capital: string;
   annual_target_income: string;
@@ -280,6 +281,8 @@ export type PlannedDecisionPayload = {
   decision_date: string;
   /** Año en que la compra/venta impacta la proyección (puede diferir de la fecha de decisión). */
   transaction_year: number;
+  /** Mes en que comienza el impacto de la compra/venta. */
+  transaction_month: number;
   end_year?: number | null;
   expense_entry_ids: number[];
   income_entry_ids: number[];

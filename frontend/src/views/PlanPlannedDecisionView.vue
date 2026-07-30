@@ -35,6 +35,7 @@ const expenseStore = useAnnualExpenseStore('saas');
 const incomeStore = useAnnualIncomeStore('saas');
 
 const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth() + 1;
 const today = new Date().toISOString().slice(0, 10);
 
 const form = reactive({
@@ -43,6 +44,7 @@ const form = reactive({
   kind: 'sale' as DecisionKind,
   decision_date: today,
   transaction_year: currentYear,
+  transaction_month: currentMonth,
   note: '',
 });
 
@@ -98,6 +100,20 @@ const yearOptions: ASelectItem[] = Array.from({ length: 41 }, (_, index) => {
   const year = currentYear - 5 + index;
   return { value: year, label: String(year) };
 });
+const monthOptions: ASelectItem[] = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+].map((label, index) => ({ value: index + 1, label }));
 
 const isSale = computed(() => form.kind === 'sale');
 
@@ -213,7 +229,9 @@ const selectedAssetTotal = computed(() =>
 
 const canSubmit = computed(
   () =>
-    Boolean(form.name.trim() && form.decision_date && form.transaction_year) &&
+    Boolean(
+      form.name.trim() && form.decision_date && form.transaction_year && form.transaction_month,
+    ) &&
     !debtNeedsTerm.value &&
     !submitting.value,
 );
@@ -333,6 +351,7 @@ async function submit(): Promise<void> {
       event_type: form.event_type,
       decision_date: form.decision_date,
       transaction_year: Number(form.transaction_year),
+      transaction_month: Number(form.transaction_month),
       expense_entry_ids: selectedLines.value
         .filter((line) => line.kind === 'expense')
         .map((line) => line.id),
@@ -420,6 +439,15 @@ onMounted(async () => {
         <label>
           <span>Fecha de la decisión</span>
           <input v-model="form.decision_date" class="input" type="date" />
+        </label>
+        <label>
+          <span>Mes de la transacción</span>
+          <ASelect
+            v-model="form.transaction_month"
+            :options="monthOptions"
+            class="filter-ctrl"
+            :searchable="false"
+          />
         </label>
         <label>
           <span>Año de la transacción</span>
