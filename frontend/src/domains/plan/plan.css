@@ -2119,38 +2119,6 @@
   padding-top: 14px;
 }
 
-.plan-situacion-net {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 14px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line-strong);
-}
-
-.plan-situacion-net-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.plan-situacion-net-value {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-}
-
-.plan-situacion-net-value.neg {
-  color: var(--neg);
-}
-
-.plan-situacion-net-rec {
-  color: var(--faint);
-  font-weight: 500;
-  font-size: 12px;
-}
-
 /* Aviso (ámbar, no error) para trampas de modelado como el doble conteo al
    comprar un activo que ya está en Patrimonio. */
 .plan-decision-warn {

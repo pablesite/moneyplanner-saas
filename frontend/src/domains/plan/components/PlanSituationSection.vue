@@ -507,19 +507,5 @@ onMounted(() => {
     >
       Cargando tu situación…
     </AState>
-
-    <div v-if="committedDiagnosis" class="plan-situacion-net">
-      <span class="plan-situacion-net-label">Flujo recurrente neto · {{ currentYear }}</span>
-      <span class="plan-situacion-net-value neg">
-        {{ committedDiagnosis.committedSurplus }}
-        <span
-          v-if="committedDiagnosis.transient && committedDiagnosis.recoveryYear"
-          class="plan-situacion-net-rec"
-        >
-          · vuelve a {{ committedDiagnosis.operatingSurplus }} /año desde
-          {{ committedDiagnosis.recoveryYear }}
-        </span>
-      </span>
-    </div>
   </section>
 </template>

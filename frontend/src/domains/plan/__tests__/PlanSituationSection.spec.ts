@@ -250,14 +250,14 @@ describe('PlanSituationSection', () => {
     expect(row.findAll('button').some((b) => b.text() === 'Editar')).toBe(false);
   });
 
-  it('con cash-flow transitorio muestra base recurrente, esfuerzo temporal y el neto', () => {
+  it('con cash-flow transitorio muestra base recurrente y esfuerzo temporal', () => {
     const wrapper = mountSection({ foundations: transientFoundations });
     const text = wrapper.text();
     expect(text).toContain('Base recurrente sana');
     expect(text).toContain('Esfuerzo temporal de este año');
     expect(text).toContain('Cuotas de casa Atrio');
     expect(text).toContain('Vuelve a positivo en 2027');
-    // Pie con el flujo recurrente neto del año.
-    expect(text).toContain('Flujo recurrente neto');
+    // El pie "Flujo recurrente neto" se retiró: repetía las cifras de los tiers.
+    expect(text).not.toContain('Flujo recurrente neto');
   });
 });
