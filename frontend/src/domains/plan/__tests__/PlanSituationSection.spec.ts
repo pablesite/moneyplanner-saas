@@ -257,6 +257,10 @@ describe('PlanSituationSection', () => {
     expect(text).toContain('Esfuerzo temporal de este año');
     expect(text).toContain('Cuotas de casa Atrio');
     expect(text).toContain('Vuelve a positivo en 2027');
+    // El esfuerzo temporal es el coste bruto de los compromisos, no el neto tras
+    // descontar la base recurrente (-7.758,46 €).
+    expect(text).toContain('-27.582,54');
+    expect(text).not.toContain('-7.758,46');
     // El pie "Flujo recurrente neto" se retiró: repetía las cifras de los tiers.
     expect(text).not.toContain('Flujo recurrente neto');
   });

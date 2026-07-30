@@ -53,7 +53,15 @@ const committedDiagnosis = computed(() => {
     operatingSurplus: formatMoney(cf.operating_surplus),
     structuralIncome: formatMoney(cf.structural_annual_income),
     operatingExpense: formatMoney(cf.structural_operating_expense),
-    committedSurplus: formatMoney(cf.committed_surplus),
+    // Cuando el esfuerzo es temporal mostramos el coste bruto de los compromisos
+    // (justo lo que suma el desglose de abajo). El neto `committed_surplus` ya
+    // descuenta la base recurrente del tier anterior, así que como "esfuerzo" se
+    // leía más pequeño de lo que realmente cuesta. El déficit estructural sí es
+    // neto: ahí la lectura útil es cuánto falta al año.
+    effort:
+      cf.committed_status === 'transient'
+        ? formatMoney(-Number(cf.temporary_commitment_expense))
+        : formatMoney(cf.committed_surplus),
     recoveryYear: cf.committed_recovery_year,
     commitments: cf.temporary_commitments.map((c) => ({
       name: cleanCommitmentName(c.name),
@@ -330,7 +338,7 @@ onMounted(() => {
                   : 'Déficit estructural'
               }}
             </span>
-            <span class="tier-value neg mono">{{ committedDiagnosis.committedSurplus }}</span>
+            <span class="tier-value neg mono">{{ committedDiagnosis.effort }}</span>
           </div>
           <p class="tier-sub">
             <template v-if="committedDiagnosis.transient && committedDiagnosis.recoveryYear">
