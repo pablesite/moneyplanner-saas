@@ -236,44 +236,6 @@
   color: var(--muted);
 }
 
-/* Compromisos como tabla alineada (concepto · vence · importe): las tres pistas
-   se comparten entre todas las filas via `li { display: contents }`, así importes
-   y fechas quedan en columna. Ancho contenido: es una lista, no ocupa todo. */
-.plan-commitment-list {
-  list-style: none;
-  margin: 0;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--line);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px 24px;
-  align-items: baseline;
-  max-width: 680px;
-  font-size: 0.85rem;
-}
-
-.plan-commitment-list li {
-  display: contents;
-}
-
-.plan-commitment-list .c-name {
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.plan-commitment-list .c-end {
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.plan-commitment-list .c-amount {
-  color: var(--text);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
 .plan-committed-cta {
   margin-top: 2px;
 }
@@ -2066,14 +2028,20 @@
   display: grid;
 }
 
+/* Plegadas, las tres capas son una fila compacta: etiqueta a la izquierda, total
+   y chevron a la derecha. El desglose solo respira cuando la capa está abierta. */
 .plan-tier {
-  padding: 16px 0;
+  padding: 11px 0;
   border-top: 1px solid var(--line);
+}
+
+.plan-tier.open {
+  padding-bottom: 16px;
 }
 
 .plan-situacion-tiers .plan-tier:first-child {
   border-top: 0;
-  padding-top: 6px;
+  padding-top: 4px;
 }
 
 .plan-diag-tier .tier-count {
@@ -2083,7 +2051,7 @@
   font-size: 12px;
 }
 
-/* La capa de puntuales despliega su tabla: la cabecera de la fila es el botón. */
+/* Cada capa despliega su desglose: la fila plegada es el botón. */
 .plan-tier-toggle {
   width: 100%;
   padding: 0;
@@ -2103,9 +2071,12 @@
   border-radius: 6px;
 }
 
+/* Total + chevron van juntos al final de la fila: el chevron es lo único que
+   cambia de color al hover, el importe mantiene su semántica pos/neg. */
 .plan-tier-toggle .tier-toggle-aside {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   color: var(--faint);
 }
 
@@ -2113,10 +2084,18 @@
   color: var(--muted);
 }
 
-.plan-oneoff-detail {
+.plan-tier-detail {
   display: grid;
-  gap: 14px;
-  padding-top: 14px;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.plan-tier-detail .tier-sub {
+  max-width: 68ch;
+}
+
+.plan-commitment-end {
+  color: var(--muted);
 }
 
 /* Aviso (ámbar, no error) para trampas de modelado como el doble conteo al
@@ -2155,14 +2134,14 @@
   color: var(--text);
 }
 
-/* --- Tabla de movimientos puntuales (estilo Patrimonio/Movimientos) --- */
-.plan-oneoff-table table {
+/* --- Tabla compartida por los desgloses de las capas (estilo Patrimonio/Movimientos) --- */
+.plan-tier-table table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
 
-.plan-oneoff-table th {
+.plan-tier-table th {
   padding: 8px 12px;
   color: var(--faint);
   font-size: 10.5px;
@@ -2174,18 +2153,18 @@
   border-bottom: 1px solid var(--line);
 }
 
-.plan-oneoff-table td {
+.plan-tier-table td {
   padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
 
-.plan-oneoff-table tbody tr:last-child td {
+.plan-tier-table tbody tr:last-child td {
   border-bottom: 0;
 }
 
-.plan-oneoff-table th.num,
-.plan-oneoff-table td.num {
+.plan-tier-table th.num,
+.plan-tier-table td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }

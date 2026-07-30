@@ -41,27 +41,37 @@ const MONTH_ABBR = [
 // ----- Capas 1 y 2: base recurrente + esfuerzo temporal (desde cash-flow) -----
 const cleanCommitmentName = (name: string) => name.replace(/^Compromiso pasivo:\s*/i, '').trim();
 const commitmentEnd = (endYear: number | null, endMonth: number | null) => {
-  if (endYear == null) return 'sin fecha';
+  if (endYear == null) return 'indefinido';
   if (endMonth == null) return String(endYear);
   return `${MONTH_ABBR[endMonth - 1] ?? ''} ${endYear}`.trim();
 };
 const committedDiagnosis = computed(() => {
   const cf = props.foundations?.cash_flow;
   if (!cf || cf.committed_status === 'healthy') return null;
+  const transient = cf.committed_status === 'transient';
+  const commitmentExpense = Number(cf.temporary_commitment_expense);
+  const hasCommitments = cf.temporary_commitments.length > 0 && commitmentExpense > 0;
   return {
-    transient: cf.committed_status === 'transient',
+    transient,
+    hasCommitments,
+    baseHealthy: Number(cf.operating_surplus) >= 0,
     operatingSurplus: formatMoney(cf.operating_surplus),
     structuralIncome: formatMoney(cf.structural_annual_income),
     operatingExpense: formatMoney(cf.structural_operating_expense),
-    // Cuando el esfuerzo es temporal mostramos el coste bruto de los compromisos
-    // (justo lo que suma el desglose de abajo). El neto `committed_surplus` ya
-    // descuenta la base recurrente del tier anterior, así que como "esfuerzo" se
-    // leía más pequeño de lo que realmente cuesta. El déficit estructural sí es
-    // neto: ahí la lectura útil es cuánto falta al año.
-    effort:
-      cf.committed_status === 'transient'
-        ? formatMoney(-Number(cf.temporary_commitment_expense))
-        : formatMoney(cf.committed_surplus),
+    effortLabel: transient
+      ? 'Esfuerzo temporal de este año'
+      : hasCommitments
+        ? 'Compromisos por encima de tu base'
+        : 'Déficit estructural',
+    // El importe del tier es el coste bruto de los compromisos: justo lo que suma
+    // el desglose que se despliega debajo. `committed_surplus` ya descuenta la base
+    // recurrente del tier anterior, así que como "esfuerzo" se leía más pequeño de
+    // lo que realmente cuesta. Sin compromisos que desglosar, el neto es lo único
+    // que hay que contar.
+    effort: hasCommitments ? formatMoney(-commitmentExpense) : formatMoney(cf.committed_surplus),
+    // Neto tras los compromisos. Solo se enuncia en el caso estructural, donde la
+    // lectura útil es cuánto falta al año.
+    committedSurplus: formatMoney(cf.committed_surplus),
     recoveryYear: cf.committed_recovery_year,
     commitments: cf.temporary_commitments.map((c) => ({
       name: cleanCommitmentName(c.name),
@@ -76,7 +86,9 @@ const incomeStore = useAnnualIncomeStore('saas');
 const expenseStore = useAnnualExpenseStore('saas');
 
 const currentYear = new Date().getFullYear();
-const oneOffOpen = ref(false);
+// Las tres capas se leen plegadas (etiqueta + total) y cada una despliega su
+// desglose de forma independiente.
+const openTiers = ref({ base: false, effort: false, oneOff: false });
 const savingKey = ref<string | null>(null);
 const editingKey = ref<string | null>(null);
 const localError = ref<string | null>(null);
@@ -156,6 +168,17 @@ const oneOffCountLabel = computed(() => {
   if (expenses) parts.push(`${expenses} ${expenses === 1 ? 'gasto' : 'gastos'}`);
   return parts.join(' · ');
 });
+
+// Neto de los puntuales listados (ingresos − gastos), para que la fila plegada
+// cuadre con la tabla que despliega.
+const oneOffNet = computed(() =>
+  movements.value.reduce(
+    (total, row) => total + (row.kind === 'income' ? row.amountAnnual : -row.amountAnnual),
+    0,
+  ),
+);
+const oneOffNetLabel = computed(() => formatMoney(oneOffNet.value));
+const oneOffNetTone = computed(() => (oneOffNet.value < 0 ? 'neg' : 'pos'));
 
 const isLoading = computed(() => incomeStore.loading.value || expenseStore.loading.value);
 const hasSituation = computed(() => committedDiagnosis.value != null || movements.value.length > 0);
@@ -312,51 +335,124 @@ onMounted(() => {
 
     <div class="plan-situacion-tiers">
       <!-- Capa 1: base recurrente -->
-      <div v-if="committedDiagnosis" class="plan-diag-tier plan-tier">
-        <span class="tier-mark tier-mark-ok" aria-hidden="true"></span>
+      <div
+        v-if="committedDiagnosis"
+        class="plan-diag-tier plan-tier"
+        :class="{ open: openTiers.base }"
+      >
+        <span
+          class="tier-mark"
+          :class="committedDiagnosis.baseHealthy ? 'tier-mark-ok' : 'tier-mark-warn'"
+          aria-hidden="true"
+        ></span>
         <div class="tier-body">
-          <div class="tier-head">
-            <span class="tier-label">Base recurrente sana</span>
-            <span class="tier-value pos mono">{{ committedDiagnosis.operatingSurplus }} /año</span>
+          <button
+            type="button"
+            class="plan-tier-toggle"
+            :aria-expanded="openTiers.base"
+            aria-controls="plan-tier-base"
+            @click="openTiers.base = !openTiers.base"
+          >
+            <span class="tier-head">
+              <span class="tier-label">
+                {{
+                  committedDiagnosis.baseHealthy
+                    ? 'Base recurrente sana'
+                    : 'Base recurrente en déficit'
+                }}
+              </span>
+              <span class="tier-toggle-aside">
+                <span
+                  class="tier-value mono"
+                  :class="committedDiagnosis.baseHealthy ? 'pos' : 'neg'"
+                >
+                  {{ committedDiagnosis.operatingSurplus }} /año
+                </span>
+                <AChevron :expanded="openTiers.base" />
+              </span>
+            </span>
+          </button>
+
+          <div v-show="openTiers.base" id="plan-tier-base" class="plan-tier-detail">
+            <p class="tier-sub">
+              Lo que se repite todos los años, sin compromisos temporales ni movimientos puntuales.
+            </p>
+            <div class="plan-tier-table plan-table-scroll">
+              <table>
+                <tbody>
+                  <tr>
+                    <td>Ingresos recurrentes</td>
+                    <td class="num mono">{{ committedDiagnosis.structuralIncome }}</td>
+                  </tr>
+                  <tr>
+                    <td>Gastos operativos</td>
+                    <td class="num mono">−{{ committedDiagnosis.operatingExpense }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <p class="tier-sub">
-            Ingresos {{ committedDiagnosis.structuralIncome }} − gastos operativos
-            {{ committedDiagnosis.operatingExpense }}
-          </p>
         </div>
       </div>
 
       <!-- Capa 2: esfuerzo temporal / déficit estructural -->
-      <div v-if="committedDiagnosis" class="plan-diag-tier plan-tier">
+      <div
+        v-if="committedDiagnosis"
+        class="plan-diag-tier plan-tier"
+        :class="{ open: openTiers.effort }"
+      >
         <span class="tier-mark tier-mark-warn" aria-hidden="true"></span>
         <div class="tier-body">
-          <div class="tier-head">
-            <span class="tier-label">
-              {{
-                committedDiagnosis.transient
-                  ? 'Esfuerzo temporal de este año'
-                  : 'Déficit estructural'
-              }}
+          <button
+            type="button"
+            class="plan-tier-toggle"
+            :aria-expanded="openTiers.effort"
+            aria-controls="plan-tier-effort"
+            @click="openTiers.effort = !openTiers.effort"
+          >
+            <span class="tier-head">
+              <span class="tier-label">{{ committedDiagnosis.effortLabel }}</span>
+              <span class="tier-toggle-aside">
+                <span class="tier-value neg mono">{{ committedDiagnosis.effort }}</span>
+                <AChevron :expanded="openTiers.effort" />
+              </span>
             </span>
-            <span class="tier-value neg mono">{{ committedDiagnosis.effort }}</span>
+          </button>
+
+          <div v-show="openTiers.effort" id="plan-tier-effort" class="plan-tier-detail">
+            <p class="tier-sub">
+              <template v-if="committedDiagnosis.transient && committedDiagnosis.recoveryYear">
+                Compromisos que vencen: desde {{ committedDiagnosis.recoveryYear }} tu base
+                recurrente vuelve a cubrir lo que siga vivo.
+              </template>
+              <template v-else-if="committedDiagnosis.transient">
+                Compromisos que vencen y liberan tu base recurrente.
+              </template>
+              <template v-else-if="committedDiagnosis.hasCommitments">
+                Superan tu base recurrente: el flujo neto se queda en
+                {{ committedDiagnosis.committedSurplus }} al año.
+              </template>
+              <template v-else>Tus gastos operativos superan a tus ingresos recurrentes.</template>
+            </p>
+            <div v-if="committedDiagnosis.hasCommitments" class="plan-tier-table plan-table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Compromiso</th>
+                    <th class="num">Termina</th>
+                    <th class="num">Importe {{ currentYear }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="c in committedDiagnosis.commitments" :key="c.name">
+                    <td>{{ c.name }}</td>
+                    <td class="num plan-commitment-end">{{ c.end }}</td>
+                    <td class="num mono">{{ c.amount }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <p class="tier-sub">
-            <template v-if="committedDiagnosis.transient && committedDiagnosis.recoveryYear">
-              Vuelve a positivo en {{ committedDiagnosis.recoveryYear }}, al vencer estos
-              compromisos:
-            </template>
-            <template v-else-if="committedDiagnosis.transient">
-              Estos compromisos vencen y liberan tu superávit:
-            </template>
-            <template v-else>Los compromisos superan tu base recurrente:</template>
-          </p>
-          <ul class="plan-commitment-list">
-            <li v-for="c in committedDiagnosis.commitments" :key="c.name">
-              <span class="c-name">{{ c.name }}</span>
-              <span class="c-end">{{ c.end }}</span>
-              <span class="c-amount mono">{{ c.amount }}</span>
-            </li>
-          </ul>
         </div>
       </div>
 
@@ -364,16 +460,16 @@ onMounted(() => {
       <div
         v-if="movements.length"
         class="plan-diag-tier plan-tier plan-tier-oneoff"
-        :class="{ open: oneOffOpen }"
+        :class="{ open: openTiers.oneOff }"
       >
         <span class="tier-mark tier-mark-oneoff" aria-hidden="true"></span>
         <div class="tier-body">
           <button
             type="button"
             class="plan-tier-toggle"
-            :aria-expanded="oneOffOpen"
+            :aria-expanded="openTiers.oneOff"
             aria-controls="plan-oneoff-detail"
-            @click="oneOffOpen = !oneOffOpen"
+            @click="openTiers.oneOff = !openTiers.oneOff"
           >
             <span class="tier-head">
               <span class="tier-label">
@@ -381,17 +477,18 @@ onMounted(() => {
                 <span class="tier-count">{{ oneOffCountLabel }}</span>
               </span>
               <span class="tier-toggle-aside">
-                <AChevron :expanded="oneOffOpen" />
+                <span class="tier-value mono" :class="oneOffNetTone">{{ oneOffNetLabel }}</span>
+                <AChevron :expanded="openTiers.oneOff" />
               </span>
             </span>
+          </button>
+
+          <div v-show="openTiers.oneOff" id="plan-oneoff-detail" class="plan-tier-detail">
             <p class="tier-sub">
               Ocurren una sola vez. Reprográmalos y el plan recalcula, sin borrar nada de tu
               presupuesto.
             </p>
-          </button>
-
-          <div v-show="oneOffOpen" id="plan-oneoff-detail" class="plan-oneoff-detail">
-            <div class="plan-oneoff-table plan-table-scroll">
+            <div class="plan-tier-table plan-table-scroll">
               <table>
                 <thead>
                   <tr>

@@ -144,7 +144,7 @@ function mountSection(props: Record<string, unknown> = {}) {
 }
 
 async function openOneOff(wrapper: VueWrapper): Promise<void> {
-  await wrapper.find('.plan-tier-toggle').trigger('click');
+  await wrapper.find('[aria-controls="plan-oneoff-detail"]').trigger('click');
 }
 
 function rowByName(wrapper: VueWrapper, name: string) {
@@ -250,18 +250,41 @@ describe('PlanSituationSection', () => {
     expect(row.findAll('button').some((b) => b.text() === 'Editar')).toBe(false);
   });
 
-  it('con cash-flow transitorio muestra base recurrente y esfuerzo temporal', () => {
+  it('las tres capas se leen plegadas, cada una con su total', () => {
     const wrapper = mountSection({ foundations: transientFoundations });
     const text = wrapper.text();
     expect(text).toContain('Base recurrente sana');
+    expect(text).toContain('19.824,08');
     expect(text).toContain('Esfuerzo temporal de este año');
-    expect(text).toContain('Cuotas de casa Atrio');
-    expect(text).toContain('Vuelve a positivo en 2027');
-    // El esfuerzo temporal es el coste bruto de los compromisos, no el neto tras
-    // descontar la base recurrente (-7.758,46 €).
+    // El esfuerzo es el coste bruto de los compromisos, no el neto tras descontar
+    // la base recurrente (-7.758,46 €), que ya vive en la capa anterior.
     expect(text).toContain('-27.582,54');
     expect(text).not.toContain('-7.758,46');
-    // El pie "Flujo recurrente neto" se retiró: repetía las cifras de los tiers.
+    // Puntuales: ingresos (8.000 + 1.000) − gastos (5.000).
+    expect(text).toContain('Movimientos puntuales previstos');
+    expect(text).toContain('4.000,00');
+    // Los tres desgloses arrancan cerrados.
+    for (const toggle of wrapper.findAll('.plan-tier-toggle')) {
+      expect(toggle.attributes('aria-expanded')).toBe('false');
+    }
+    // El pie "Flujo recurrente neto" se retiró: repetía las cifras de las capas.
     expect(text).not.toContain('Flujo recurrente neto');
+  });
+
+  it('desplegar el esfuerzo temporal muestra los compromisos con su vencimiento', async () => {
+    const wrapper = mountSection({ foundations: transientFoundations });
+    const toggle = wrapper.find('[aria-controls="plan-tier-effort"]');
+    await toggle.trigger('click');
+
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    const detail = wrapper.get('#plan-tier-effort');
+    expect(detail.text()).toContain('desde 2027 tu base recurrente vuelve a cubrir');
+    // La columna de fechas se explica en la cabecera de la tabla.
+    expect(detail.text()).toContain('Termina');
+    expect(detail.text()).toContain(`Importe ${currentYear}`);
+    const row = detail.get('tbody tr');
+    expect(row.text()).toContain('Cuotas de casa Atrio');
+    expect(row.text()).toContain('sep 2026');
+    expect(row.text()).toContain('16.488,00');
   });
 });
