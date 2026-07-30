@@ -108,6 +108,7 @@ type MovementRow = {
   targetMonth: number | null;
   isPlanManaged: boolean;
   planEventName: string | null;
+  isAssetSale: boolean;
   income?: AnnualIncomeEntry;
   expense?: AnnualExpenseEntry;
 };
@@ -126,6 +127,7 @@ const movements = computed<MovementRow[]>(() => {
         targetMonth: entry.targetMonth,
         isPlanManaged: entry.isPlanManaged,
         planEventName: entry.planEventName,
+        isAssetSale: entry.cashflowRole === 'asset_sale',
         income: entry,
       });
     }
@@ -148,6 +150,7 @@ const movements = computed<MovementRow[]>(() => {
         targetMonth: entry.targetMonth,
         isPlanManaged: entry.isPlanManaged,
         planEventName: entry.planEventName,
+        isAssetSale: false,
         expense: entry,
       });
     }
@@ -169,16 +172,52 @@ const oneOffCountLabel = computed(() => {
   return parts.join(' · ');
 });
 
-// Neto de los puntuales listados (ingresos − gastos), para que la fila plegada
-// cuadre con la tabla que despliega.
+// Qué puntuales entran de verdad en la proyección, según `one_off_flows` del motor
+// (core `plan/services_inputs.py`):
+//  - `no_decision`: una venta de activo suelta no se modela nunca; solo cuenta
+//    cuando cuelga de una Decisión (el motor la excluye por `cashflow_role`).
+//  - `past`: en el año en curso, lo que ya pasó de fecha está reflejado en el
+//    capital actual; volver a sumarlo sería contarlo dos veces.
+// Los gestionados por una decisión sí cuentan: entran a través de ella.
+const currentMonth = new Date().getMonth() + 1;
+type GhostReason = 'no_decision' | 'past';
+function ghostReason(row: MovementRow): GhostReason | null {
+  if (row.isPlanManaged) return null;
+  if (row.kind === 'income' && row.isAssetSale) return 'no_decision';
+  if (row.fiscalYear === currentYear && row.targetMonth !== null && row.targetMonth < currentMonth)
+    return 'past';
+  return null;
+}
+
+const signedAmount = (row: MovementRow) =>
+  row.kind === 'income' ? row.amountAnnual : -row.amountAnnual;
+const ghostMovements = computed(() => movements.value.filter((row) => ghostReason(row) !== null));
+
+// Neto de los puntuales que sí cuentan, para que el total de la fila plegada
+// signifique lo mismo que la proyección.
 const oneOffNet = computed(() =>
-  movements.value.reduce(
-    (total, row) => total + (row.kind === 'income' ? row.amountAnnual : -row.amountAnnual),
-    0,
-  ),
+  movements.value
+    .filter((row) => ghostReason(row) === null)
+    .reduce((total, row) => total + signedAmount(row), 0),
 );
 const oneOffNetLabel = computed(() => formatMoney(oneOffNet.value));
 const oneOffNetTone = computed(() => (oneOffNet.value < 0 ? 'neg' : 'pos'));
+const ghostNetLabel = computed(() =>
+  formatMoney(ghostMovements.value.reduce((total, row) => total + signedAmount(row), 0)),
+);
+const ghostNoteLabel = computed(() => {
+  const count = ghostMovements.value.length;
+  return count === 1
+    ? '1 movimiento no cuenta en la previsión'
+    : `${count} movimientos no cuentan en la previsión`;
+});
+const hasUndecidedGhosts = computed(() =>
+  ghostMovements.value.some((row) => ghostReason(row) === 'no_decision'),
+);
+const groupLink = (row: MovementRow) => ({
+  path: '/plan/decisiones/agrupar',
+  query: { buscar: row.name },
+});
 
 const isLoading = computed(() => incomeStore.loading.value || expenseStore.loading.value);
 const hasSituation = computed(() => committedDiagnosis.value != null || movements.value.length > 0);
@@ -488,6 +527,18 @@ onMounted(() => {
               Ocurren una sola vez. Reprográmalos y el plan recalcula, sin borrar nada de tu
               presupuesto.
             </p>
+            <p v-if="ghostMovements.length" class="plan-oneoff-ghost-note">
+              <strong>{{ ghostNoteLabel }}</strong> ({{ ghostNetLabel }}) y quedan fuera del total:
+              una venta de activo solo entra cuando forma parte de una decisión, y lo que ya pasó de
+              fecha está reflejado en tu capital actual.
+              <RouterLink
+                v-if="hasUndecidedGhosts"
+                class="plan-blocker-link"
+                to="/plan/decisiones/agrupar"
+              >
+                Agrupar en una decisión
+              </RouterLink>
+            </p>
             <div class="plan-tier-table plan-table-scroll">
               <table>
                 <thead>
@@ -502,13 +553,27 @@ onMounted(() => {
                   <tr
                     v-for="row in movements"
                     :key="row.key"
-                    :class="{ 'is-editing': editingKey === row.key }"
+                    :class="{ 'is-editing': editingKey === row.key, 'is-ghost': ghostReason(row) }"
                   >
                     <td class="plan-oneoff-concept">
                       <span class="plan-oneoff-kind" :class="`is-${row.kind}`">
                         {{ row.kind === 'income' ? 'Ingreso' : 'Gasto' }}
                       </span>
                       <strong>{{ row.name }}</strong>
+                      <span
+                        v-if="ghostReason(row) === 'no_decision'"
+                        class="plan-oneoff-ghost-tag"
+                        title="Una venta de activo solo entra en la previsión cuando forma parte de una decisión."
+                      >
+                        No cuenta en la previsión
+                      </span>
+                      <span
+                        v-else-if="ghostReason(row) === 'past'"
+                        class="plan-oneoff-ghost-tag"
+                        title="Su fecha ya pasó: está reflejado en tu capital actual."
+                      >
+                        Ya ocurrido
+                      </span>
                     </td>
 
                     <template v-if="editingKey === row.key">
@@ -578,9 +643,18 @@ onMounted(() => {
                         <span v-if="row.isPlanManaged" class="plan-oneoff-managed">
                           Gestionado por {{ row.planEventName || 'el plan' }}
                         </span>
-                        <AButton v-else variant="ghost" size="sm" @click="startEdit(row)">
-                          Editar
-                        </AButton>
+                        <div v-else class="plan-oneoff-row-actions">
+                          <RouterLink
+                            v-if="ghostReason(row) === 'no_decision'"
+                            class="plan-blocker-link"
+                            :to="groupLink(row)"
+                          >
+                            Añadir a una decisión
+                          </RouterLink>
+                          <AButton variant="ghost" size="sm" @click="startEdit(row)">
+                            Editar
+                          </AButton>
+                        </div>
                       </td>
                     </template>
                   </tr>

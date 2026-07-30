@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { mount, type VueWrapper } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, ref } from 'vue';
 import PlanSituationSection from '@/domains/plan/components/PlanSituationSection.vue';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries/annualIncomeStore';
@@ -136,10 +136,23 @@ const ASelectStub = defineComponent({
     '<button class="aselect-stub" @click="$emit(\'update:modelValue\', Number(modelValue) + 1)">{{ modelValue }}</button>',
 });
 
+// El stub por defecto de RouterLink no pinta el slot; aquí interesa leer el texto del
+// enlace (CTA "Añadir a una decisión") y su destino.
+const RouterLinkStub = defineComponent({
+  props: { to: { type: [String, Object], required: true } },
+  computed: {
+    href(): string {
+      const to = this.to as string | { path?: string };
+      return typeof to === 'string' ? to : (to.path ?? '');
+    },
+  },
+  template: '<a :href="href"><slot /></a>',
+});
+
 function mountSection(props: Record<string, unknown> = {}) {
   return mount(PlanSituationSection, {
     props,
-    global: { stubs: { ASelect: ASelectStub, RouterLink: true } },
+    global: { stubs: { ASelect: ASelectStub, RouterLink: RouterLinkStub } },
   });
 }
 
@@ -153,6 +166,10 @@ function rowByName(wrapper: VueWrapper, name: string) {
 
 describe('PlanSituationSection', () => {
   beforeEach(() => {
+    // El componente marca como "ya ocurrido" lo que cae antes del mes actual, así que
+    // el reloj se fija (15 de junio) para que el criterio no dependa del día del test.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(currentYear, 5, 15));
     fake.income = {
       entries: ref([...incomeEntries]),
       loading: ref(false),
@@ -169,6 +186,10 @@ describe('PlanSituationSection', () => {
       updateEntry: vi.fn().mockResolvedValue({ ok: true }),
       deleteEntry: vi.fn().mockResolvedValue(undefined),
     };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('lista solo movimientos puntuales próximos (ingresos y gastos) en modo lectura', async () => {
@@ -250,6 +271,31 @@ describe('PlanSituationSection', () => {
     expect(row.findAll('button').some((b) => b.text() === 'Editar')).toBe(false);
   });
 
+  it('una venta de activo sin decisión no suma al total y ofrece agruparla', async () => {
+    const store = fake.income as { entries: { value: AnnualIncomeEntry[] } };
+    store.entries.value.push(
+      income({
+        id: 5,
+        name: 'Venta casa Palmito',
+        amountAnnual: 143100,
+        targetMonth: 11,
+        cashflowRole: 'asset_sale',
+      }),
+    );
+    const wrapper = mountSection();
+    await openOneOff(wrapper);
+
+    const row = rowByName(wrapper, 'Venta casa Palmito');
+    expect(row.text()).toContain('No cuenta en la previsión');
+    const cta = row.get('a');
+    expect(cta.text()).toBe('Añadir a una decisión');
+    expect(cta.attributes('href')).toBe('/plan/decisiones/agrupar');
+    // El total de la capa sigue siendo el de los que sí cuentan: la venta no suma.
+    const total = wrapper.get('[aria-controls="plan-oneoff-detail"] .tier-value').text();
+    expect(total).toContain('9.000,00');
+    expect(total).not.toContain('143.100');
+  });
+
   it('las tres capas se leen plegadas, cada una con su total', () => {
     const wrapper = mountSection({ foundations: transientFoundations });
     const text = wrapper.text();
@@ -260,9 +306,12 @@ describe('PlanSituationSection', () => {
     // la base recurrente (-7.758,46 €), que ya vive en la capa anterior.
     expect(text).toContain('-27.582,54');
     expect(text).not.toContain('-7.758,46');
-    // Puntuales: ingresos (8.000 + 1.000) − gastos (5.000).
+    // Puntuales: solo cuentan los que entran en la proyección — Tito Ángel (jun, aún
+    // no ocurrido) + la partida gestionada por una decisión. "Reforma baño" (mar) ya
+    // pasó y queda fuera del total.
     expect(text).toContain('Movimientos puntuales previstos');
-    expect(text).toContain('4.000,00');
+    expect(text).toContain('9.000,00');
+    expect(text).toContain('1 movimiento no cuenta en la previsión');
     // Los tres desgloses arrancan cerrados.
     for (const toggle of wrapper.findAll('.plan-tier-toggle')) {
       expect(toggle.attributes('aria-expanded')).toBe('false');

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
@@ -28,6 +28,7 @@ type AdoptableLine = {
 
 type DecisionKind = 'sale' | 'purchase';
 
+const route = useRoute();
 const router = useRouter();
 const { store } = usePlan();
 const expenseStore = useAnnualExpenseStore('saas');
@@ -64,7 +65,13 @@ const selectedAssets = reactive(new Set<number>());
 const selectedLiabilities = reactive(new Set<number>());
 const assets = ref<Asset[]>([]);
 const liabilities = ref<Asset[]>([]);
-const search = ref('');
+// `?buscar=` permite llegar desde Mi Plan con la partida ya filtrada (CTA "Añadir a
+// una decisión" de los movimientos puntuales que aún no cuentan en la previsión).
+const search = ref(
+  Array.isArray(route.query.buscar)
+    ? String(route.query.buscar[0] ?? '')
+    : String(route.query.buscar ?? ''),
+);
 const positionSearch = ref('');
 const submitting = ref(false);
 const loadingLines = ref(false);

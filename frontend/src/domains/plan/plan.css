@@ -2199,6 +2199,51 @@
   color: var(--muted);
 }
 
+/* Fantasmas: puntuales que no entran en la proyección (venta de activo sin decisión
+   o fecha ya pasada). Se listan igual, pero atenuados y fuera del total de la capa. */
+.plan-tier-table tbody tr.is-ghost td {
+  color: var(--faint);
+}
+
+.plan-tier-table tbody tr.is-ghost .plan-oneoff-concept strong {
+  font-weight: 500;
+}
+
+.plan-oneoff-ghost-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 4px;
+  color: var(--faint);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.plan-oneoff-ghost-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.plan-oneoff-ghost-note strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.plan-oneoff-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+}
+
 .plan-oneoff-when-label {
   color: var(--muted);
   white-space: nowrap;
