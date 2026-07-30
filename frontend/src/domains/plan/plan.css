@@ -267,15 +267,26 @@
   padding: 18px;
 }
 
-.plan-progress-percent {
-  font-size: 2rem;
+/* El título y el porcentaje que lo resume comparten fila, como una capa de "Tu
+   situación este año": etiqueta a la izquierda, dato a la derecha. */
+.plan-progress-headline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
 }
 
-.plan-progress-head-side {
+.plan-progress-headline-copy {
   display: grid;
-  gap: 8px;
-  justify-items: end;
-  align-content: start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plan-progress-percent {
+  font-size: 2rem;
+  color: var(--accent);
+  white-space: nowrap;
 }
 
 /* La pill "Objetivo" es enlace al setup: mismo chrome que meta-pill + affordance. */
@@ -338,7 +349,6 @@
   border-color: var(--muted);
 }
 
-.plan-progress-meta,
 .plan-chart-legend {
   display: flex;
   flex-wrap: wrap;
@@ -348,56 +358,93 @@
   font-size: 0.9rem;
 }
 
-/* Título de la leyenda de hitos, con el hint que explica que son cortes orientativos. */
-.plan-milestones-head {
+/* Las dos cifras que enmarcan la barra: micro-etiqueta encima del importe, la de
+   la derecha alineada a su borde para que se lea como "de X a Y". */
+.plan-progress-meta {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 16px;
-  color: var(--muted);
-  font-size: 0.85rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
 }
 
-.plan-milestones {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  padding: 0;
-  margin: 8px 0 0;
-  list-style: none;
-}
-
-.plan-milestones li {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-/* El punto acompaña a la primera línea del hito, no al centro del bloque. */
-.plan-milestones li > span {
-  margin-top: 4px;
-}
-
-.plan-milestone-copy {
+.plan-progress-meta-item {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.plan-milestone-copy strong {
-  font-weight: 500;
+.plan-progress-meta-item.is-end {
+  justify-items: end;
+  text-align: right;
 }
 
-/* El % y el importe conectan cada etiqueta con su punto de la barra. */
-.plan-milestone-copy small {
+.plan-progress-meta dt {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
   color: var(--faint);
-  font-family: var(--font-mono);
 }
 
-.plan-milestones li span,
+.plan-progress-meta dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.plan-progress-meta .plan-progress-meta-note {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Cabecera del desglose de hitos, con el hint que explica de dónde salen. */
+.plan-milestones-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* El punto del hito repite el estado de su marca en la barra. */
+.plan-milestone-mark {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: var(--muted);
+  vertical-align: middle;
+}
+
+.plan-milestone-mark.reached {
+  background: var(--pos);
+}
+
+.plan-tier-table tbody tr.is-reached .plan-milestone-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.plan-milestone-state {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.plan-tier-table tbody tr.is-reached .plan-milestone-state {
+  color: var(--pos);
+}
+
 .plan-quality-list li span {
   width: 8px;
   height: 8px;
@@ -406,12 +453,10 @@
   background: var(--muted);
 }
 
-.plan-milestones li.reached,
 .plan-quality-list li.ok {
   color: var(--text);
 }
 
-.plan-milestones li.reached span,
 .plan-quality-list li.ok span {
   background: var(--pos);
 }
@@ -1856,10 +1901,6 @@
     font-family: var(--font-sans, inherit);
     font-size: 0.85rem;
   }
-
-  .plan-milestones {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 /* Seis pasos no caben en una fila legible fuera de escritorio: el rail se pliega. */
@@ -1952,6 +1993,19 @@
     flex-direction: column;
   }
 
+  /* Apiladas, las dos cifras de la barra se leen mejor alineadas a la izquierda. */
+  .plan-progress-meta-item.is-end {
+    justify-items: start;
+    text-align: left;
+  }
+
+  /* El título ya no cabe junto al porcentaje sin partirse en dos líneas. */
+  .plan-progress-headline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
   /* Context rail de una fila con scroll horizontal (mismo patrón que Patrimonio):
      el chrome previo al contenido se queda en una franja, no en tres filas. */
   .plan-toolbar {
@@ -1998,7 +2052,7 @@
 /* --- Tu situación este año: base recurrente + esfuerzo temporal + puntuales ---
    Las tres capas comparten el chrome de `.plan-diag-tier` (punto semántico + cuerpo)
    y se apilan en vertical separadas por hairlines para leerse como un único bloque. */
-.plan-situacion-head {
+.plan-block-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -2007,7 +2061,7 @@
 
 /* Mismo tratamiento que el eyebrow del hero ("Casi en objetivo"): etiqueta
    uppercase muted, sin título grande ni subrayado. */
-.plan-situacion-eyebrow {
+.plan-block-eyebrow {
   margin: 0;
   font-size: 10.5px;
   letter-spacing: 0.16em;

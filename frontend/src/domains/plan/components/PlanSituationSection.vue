@@ -388,8 +388,8 @@ onMounted(() => {
     class="sect plan-situacion"
     aria-label="Tu situación este año"
   >
-    <div class="plan-situacion-head">
-      <p class="plan-situacion-eyebrow">Tu situación este año</p>
+    <div class="plan-block-head">
+      <p class="plan-block-eyebrow">Tu situación este año</p>
       <span class="plan-situacion-year">{{ currentYear }}</span>
     </div>
 

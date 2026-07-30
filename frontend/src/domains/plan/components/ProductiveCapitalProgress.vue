@@ -65,11 +65,23 @@ watch(
 
 type ProgressMilestone = {
   label: string;
-  detail: string;
+  monthly: string | null;
+  capital: string | null;
+  state: string;
   positionPct: number | null;
   beyondTarget: boolean;
   reached: boolean;
 };
+
+// Estado de un hito en una sola celda: cubierto, cuánto falta, o que su capital
+// queda por encima del objetivo del plan (el tramo existe, pero no lo persigues).
+function milestoneState(capitalNeeded: number | null, reached: boolean, beyond: boolean): string {
+  if (reached) return 'Cubierto';
+  if (beyond) return 'Por encima del objetivo';
+  if (capitalNeeded == null) return '—';
+  const gap = capitalNeeded - Number(productiveCapital.value || 0);
+  return gap > 0 ? `Faltan ${formatMoney(gap)}` : 'Cubierto';
+}
 
 const budgetMilestones = computed<ProgressMilestone[]>(() =>
   mergeTierCapitals({
@@ -77,13 +89,18 @@ const budgetMilestones = computed<ProgressMilestone[]>(() =>
     requirements: requirements.value ?? [],
     productiveCapital: Number(productiveCapital.value || 0),
     targetCapital: Number(targetCapital.value || 0),
-  }).map((milestone) => ({
-    label: milestone.label,
-    detail: `${formatMoney(milestone.monthlyExpense)}/mes · necesita ${formatMoney(milestone.capitalNeeded)}`,
-    positionPct: milestone.positionPct,
-    beyondTarget: milestone.positionPct != null && milestone.positionPct > 100,
-    reached: milestone.reached,
-  })),
+  }).map((milestone) => {
+    const beyondTarget = milestone.positionPct != null && milestone.positionPct > 100;
+    return {
+      label: milestone.label,
+      monthly: formatMoney(milestone.monthlyExpense),
+      capital: formatMoney(milestone.capitalNeeded),
+      state: milestoneState(milestone.capitalNeeded, milestone.reached, beyondTarget),
+      positionPct: milestone.positionPct,
+      beyondTarget,
+      reached: milestone.reached,
+    };
+  }),
 );
 
 // Sin presupuesto que ancle los tramos, los cuartos del objetivo siguen dando
@@ -101,15 +118,15 @@ const fallbackMilestones = computed<ProgressMilestone[]>(() => {
     const amount = target > 0 ? target * row.ratio : null;
     const income =
       amount != null && withdrawalRate.value > 0 ? (amount * withdrawalRate.value) / 12 : null;
+    const reached = target > 0 && capital >= target * row.ratio;
     return {
       label: row.label,
-      detail:
-        amount != null
-          ? `${formatMoney(amount)}${income != null ? ` · renta de ${formatMoney(income)}/mes` : ''}`
-          : `${Math.round(row.ratio * 100)} % del capital requerido`,
+      monthly: income != null ? formatMoney(income) : null,
+      capital: amount != null ? formatMoney(amount) : null,
+      state: milestoneState(amount, reached, false),
       positionPct: row.ratio * 100,
       beyondTarget: false,
-      reached: target > 0 && capital >= target * row.ratio,
+      reached,
     };
   });
 });
@@ -137,19 +154,22 @@ const milestonesHint = computed(() => {
 
 <template>
   <section class="sect plan-progress">
-    <div class="sect-head">
-      <div>
-        <p class="eyebrow">Capital productivo</p>
+    <!-- Mismo chrome que "Tu situación este año": eyebrow + acción, el dato grande
+         alineado con el título, y el desglose en la tabla compartida de capas. -->
+    <div class="plan-block-head">
+      <p class="plan-block-eyebrow">Capital productivo</p>
+      <!-- La clasificación vive junto al dato que altera: qué cuenta como productivo. -->
+      <RouterLink class="plan-blocker-link" to="/plan/activos">Clasificar activos</RouterLink>
+    </div>
+
+    <div class="plan-progress-headline">
+      <div class="plan-progress-headline-copy">
         <h2 class="sect-title">Progreso hacia el capital requerido</h2>
         <p class="sect-sub">
-          Denominador: capital objetivo del escenario activo, incluyendo periodo puente si aplica.
+          El 100 % es el capital objetivo del escenario activo, con periodo puente si aplica.
         </p>
       </div>
-      <div class="plan-progress-head-side">
-        <strong class="plan-progress-percent mono">{{ formatNumber(progress, 0) }}%</strong>
-        <!-- La clasificación vive junto al dato que altera: qué cuenta como productivo. -->
-        <RouterLink class="btn btn-ghost btn-sm" to="/plan/activos">Clasificar activos</RouterLink>
-      </div>
+      <strong class="plan-progress-percent mono">{{ formatNumber(progress, 0) }} %</strong>
     </div>
 
     <div class="plan-progress-track">
@@ -170,34 +190,54 @@ const milestonesHint = computed(() => {
       ></span>
     </div>
 
-    <div class="plan-progress-meta">
-      <span>{{ formatMoney(productiveCapital) }} productivos</span>
-      <span>
-        {{ formatMoney(targetCapital) }} requeridos<template v-if="preservationAmount">
-          · incluye {{ formatMoney(preservationAmount) }} a preservar</template
-        >
-      </span>
-    </div>
+    <dl class="plan-progress-meta">
+      <div class="plan-progress-meta-item">
+        <dt>Productivo hoy</dt>
+        <dd class="mono">{{ formatMoney(productiveCapital) }}</dd>
+      </div>
+      <div class="plan-progress-meta-item is-end">
+        <dt>Requerido</dt>
+        <dd class="mono">{{ formatMoney(targetCapital) }}</dd>
+        <dd v-if="preservationAmount" class="plan-progress-meta-note">
+          incluye {{ formatMoney(preservationAmount) }} a preservar
+        </dd>
+      </div>
+    </dl>
 
     <div class="plan-milestones-head">
       <span>{{ usingBudgetMilestones ? 'Qué cubre ya tu capital' : 'Hitos del camino' }}</span>
       <AInfoHint :label="milestonesHint" />
     </div>
-    <ol class="plan-milestones">
-      <li
-        v-for="milestone in milestones"
-        :key="milestone.label"
-        :class="{ reached: milestone.reached }"
-      >
-        <span></span>
-        <div class="plan-milestone-copy">
-          <strong>{{ milestone.label }}</strong>
-          <small>
-            {{ milestone.detail
-            }}<template v-if="milestone.beyondTarget"> · por encima de tu objetivo</template>
-          </small>
-        </div>
-      </li>
-    </ol>
+    <div class="plan-tier-table plan-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ usingBudgetMilestones ? 'Nivel de vida' : 'Hito' }}</th>
+            <th class="num">{{ usingBudgetMilestones ? 'Gasto mensual' : 'Renta mensual' }}</th>
+            <th class="num">Capital necesario</th>
+            <th class="num">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="milestone in milestones"
+            :key="milestone.label"
+            :class="{ 'is-reached': milestone.reached }"
+          >
+            <td class="plan-milestone-name">
+              <span
+                class="plan-milestone-mark"
+                :class="{ reached: milestone.reached }"
+                aria-hidden="true"
+              ></span>
+              {{ milestone.label }}
+            </td>
+            <td class="num mono">{{ milestone.monthly ?? '—' }}</td>
+            <td class="num mono">{{ milestone.capital ?? '—' }}</td>
+            <td class="num plan-milestone-state">{{ milestone.state }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </template>
