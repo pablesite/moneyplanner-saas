@@ -55,11 +55,19 @@ export const planApi = {
   getHistory() {
     return coreApi.get<ProjectionSnapshot[]>('/api/plan/history/');
   },
-  getCapitalRequirements(monthlyAmounts: number[], scenario: ProjectionScenario = 'expected') {
+  // `targetYear` debe ser el año del denominador que se está mostrando (el retiro
+  // sostenible del Resumen, no la fecha objetivo del plan): un horizonte distinto
+  // deja otro puente hasta la pensión y devuelve capitales que no son comparables.
+  getCapitalRequirements(
+    monthlyAmounts: number[],
+    scenario: ProjectionScenario = 'expected',
+    targetYear?: number | null,
+  ) {
     return coreApi.get<CapitalRequirementsResponse>('/api/plan/capital-requirements/', {
       params: {
         monthly_amounts: monthlyAmounts.map((amount) => amount.toFixed(2)).join(','),
         scenario,
+        ...(targetYear ? { target_year: targetYear } : {}),
       },
     });
   },

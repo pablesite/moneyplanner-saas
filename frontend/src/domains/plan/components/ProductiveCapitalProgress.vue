@@ -36,9 +36,14 @@ const tiers = computed(() => budgetExpenseTiers(expenseStore.entries.value, fisc
 // capital objetivo (pensiones, periodo puente, inflación): hitos y barra
 // comparten eje. La perpetuidad local (gasto/tasa) sobreestimaba siempre.
 const requirements = ref<CapitalRequirementsResponse['requirements'] | null>(null);
+// El denominador que muestra el Resumen es el del retiro sostenible, no el de la
+// fecha objetivo del plan: los tramos hay que pedirlos en ese mismo año o comparan
+// capitales de horizontes distintos (un puente más largo hasta la pensión exige más
+// capital, y un tramo de gasto menor podía acabar pidiendo más que el objetivo).
+const targetYear = computed(() => props.projection.summary.target_year?.value ?? null);
 const requestKey = computed(
   () =>
-    `${tiers.value.map((tier) => tier.monthlyExpense.toFixed(2)).join(',')}|${props.projection.scenario}`,
+    `${tiers.value.map((tier) => tier.monthlyExpense.toFixed(2)).join(',')}|${props.projection.scenario}|${targetYear.value ?? ''}`,
 );
 
 watch(
@@ -51,6 +56,7 @@ watch(
       const { data } = await planApi.getCapitalRequirements(
         tiers.value.map((tier) => tier.monthlyExpense),
         props.projection.scenario,
+        targetYear.value,
       );
       // Si presupuesto o hipótesis cambiaron mientras respondía, esta respuesta ya no vale.
       if (requestKey.value !== requested) return;
