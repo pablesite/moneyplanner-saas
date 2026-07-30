@@ -307,7 +307,13 @@
 
 /* La marca del objetivo cuelga su etiqueta bajo la barra: hay que reservarle sitio. */
 .plan-progress-track.has-target-mark {
-  padding-bottom: 32px;
+  padding-bottom: 36px;
+}
+
+/* Caja de referencia de las marcas: solo la barra, para que los chips queden
+   centrados en ella y no en la pista (que reserva alto para la etiqueta). */
+.plan-progress-bar {
+  position: relative;
 }
 
 .plan-progress-native {
@@ -332,40 +338,52 @@
   background: var(--accent);
 }
 
+/* Cada tramo lleva su número: es la llave entre la marca de la barra y su fila de
+   la tabla. Sin él, cuatro puntos iguales no dicen cuál es cuál. */
+.plan-milestone-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.plan-milestone-chip.reached {
+  border-color: var(--pos);
+  background: var(--pos);
+  color: var(--bg);
+}
+
 .plan-progress-mark {
   position: absolute;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  border: 2px solid var(--panel);
-  border-radius: 999px;
-  background: var(--muted);
   transform: translate(-50%, -50%);
-}
-
-.plan-progress-mark.reached {
-  background: var(--pos);
-}
-
-/* Hito cuyo capital necesario supera el objetivo del plan: punto hueco. */
-.plan-progress-mark.beyond {
-  background: var(--bg);
-  border-color: var(--muted);
+  /* Halo del color del fondo: el chip se despega de la barra sin taparla. */
+  box-shadow: 0 0 0 2px var(--bg);
 }
 
 /* El objetivo deja de ser el final de la barra: se marca donde cae en la escala. */
 .plan-progress-target {
   position: absolute;
-  top: 14px;
+  top: 50%;
   width: 2px;
-  height: 20px;
+  height: 26px;
   background: var(--text);
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .plan-progress-target-label {
   position: absolute;
-  top: 38px;
+  top: 44px;
   transform: translateX(-50%);
   white-space: nowrap;
   color: var(--muted);
@@ -442,19 +460,11 @@
   font-weight: 700;
 }
 
-/* El punto del hito repite el estado de su marca en la barra. */
-.plan-milestone-mark {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 8px;
-  border-radius: 999px;
-  background: var(--muted);
-  vertical-align: middle;
-}
-
-.plan-milestone-mark.reached {
-  background: var(--pos);
+/* La fila empareja su número con el chip de la barra. */
+.plan-milestone-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .plan-tier-table tbody tr.is-reached .plan-milestone-name {

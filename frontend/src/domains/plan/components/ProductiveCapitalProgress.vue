@@ -202,32 +202,41 @@ const milestonesHint = computed(() => {
     </div>
 
     <div class="plan-progress-track" :class="{ 'has-target-mark': hasWiderScale }">
-      <progress
-        class="plan-progress-native"
-        :value="barPct"
-        max="100"
-        :aria-label="`Capital productivo sobre ${formatMoney(scaleMax)}`"
-      ></progress>
-      <span
-        v-for="milestone in milestones"
-        :key="milestone.label"
-        class="plan-progress-mark"
-        :class="{ reached: milestone.reached, beyond: milestone.beyondTarget }"
-        :style="{ left: markerLeft(milestone) }"
-        :title="milestone.label"
-        aria-hidden="true"
-      ></span>
-      <template v-if="hasWiderScale && targetPct != null">
+      <!-- Marcas y barra comparten caja propia: así los chips quedan centrados en la
+           barra aunque la pista reserve alto extra para la etiqueta del objetivo. -->
+      <div class="plan-progress-bar">
+        <progress
+          class="plan-progress-native"
+          :value="barPct"
+          max="100"
+          :aria-label="`Capital productivo sobre ${formatMoney(scaleMax)}`"
+        ></progress>
         <span
+          v-for="(milestone, index) in milestones"
+          :key="milestone.label"
+          class="plan-milestone-chip plan-progress-mark"
+          :class="{ reached: milestone.reached }"
+          :style="{ left: markerLeft(milestone) }"
+          :title="`${index + 1}. ${milestone.label}`"
+          aria-hidden="true"
+        >
+          {{ index + 1 }}
+        </span>
+        <span
+          v-if="hasWiderScale && targetPct != null"
           class="plan-progress-target"
           :style="{ left: `${targetPct}%` }"
           :title="`Objetivo ${formatMoney(targetCapital)}`"
           aria-hidden="true"
         ></span>
-        <span class="plan-progress-target-label" :style="{ left: targetLabelLeft }">
-          Objetivo · <span class="mono">{{ formatMoney(targetCapital) }}</span>
-        </span>
-      </template>
+      </div>
+      <span
+        v-if="hasWiderScale && targetPct != null"
+        class="plan-progress-target-label"
+        :style="{ left: targetLabelLeft }"
+      >
+        Objetivo · <span class="mono">{{ formatMoney(targetCapital) }}</span>
+      </span>
     </div>
 
     <dl class="plan-progress-meta">
@@ -260,16 +269,19 @@ const milestonesHint = computed(() => {
         </thead>
         <tbody>
           <tr
-            v-for="milestone in milestones"
+            v-for="(milestone, index) in milestones"
             :key="milestone.label"
             :class="{ 'is-reached': milestone.reached }"
           >
             <td class="plan-milestone-name">
+              <!-- El número es la llave con la marca de la barra. -->
               <span
-                class="plan-milestone-mark"
+                class="plan-milestone-chip"
                 :class="{ reached: milestone.reached }"
                 aria-hidden="true"
-              ></span>
+              >
+                {{ index + 1 }}
+              </span>
               {{ milestone.label }}
             </td>
             <td class="num mono">{{ milestone.monthly ?? '—' }}</td>
