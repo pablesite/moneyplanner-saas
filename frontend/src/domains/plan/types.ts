@@ -292,6 +292,16 @@ export type PlannedDecisionPayload = {
   note?: string;
 };
 
+export type PlannedDecisionUpdatePayload = Omit<
+  PlannedDecisionPayload,
+  'expense_entry_ids' | 'income_entry_ids' | 'asset_ids' | 'liability_ids'
+>;
+
+export type PlannedDecisionUpdateResponse = {
+  event: PlanEvent;
+  projection: ProjectionResponse;
+};
+
 export type PlanEventCloseResponse = {
   event: PlanEvent;
   projection: ProjectionResponse;

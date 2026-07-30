@@ -18,6 +18,7 @@ import PlanScenariosView from './views/PlanScenariosView.vue';
 import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
 import PlanImprovementsView from './views/PlanImprovementsView.vue';
 import PlanEventDetailView from './views/PlanEventDetailView.vue';
+import PlanDecisionEditView from './views/PlanDecisionEditView.vue';
 import { registerAuthGuard } from '@/domains/auth';
 import { canUsePlan } from '@/domains/capabilities';
 
@@ -76,6 +77,12 @@ const routes: RouteRecordRaw[] = [
       path: '/plan/decisiones',
       query: { ...to.query, create: '1' },
     }),
+  },
+  {
+    path: '/plan/decisiones/eventos/:id/editar',
+    name: 'plan-event-edit',
+    component: PlanDecisionEditView,
+    beforeEnter: () => (canUsePlan() ? true : '/'),
   },
   {
     path: '/plan/decisiones/eventos/:id',

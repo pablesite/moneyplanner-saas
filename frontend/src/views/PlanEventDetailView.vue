@@ -10,6 +10,16 @@ const route = useRoute();
 const store = usePlanStore();
 const eventId = computed(() => Number(route.params.id));
 const event = computed(() => store.events.find((item) => item.id === eventId.value));
+const registration = computed(() => {
+  const value = event.value?.actual_impact_json.registration;
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+});
+const canEdit = computed(
+  () =>
+    event.value?.status === 'planned' &&
+    Array.isArray(registration.value?.adopted_lines) &&
+    event.value.source_scenario == null,
+);
 
 onMounted(async () => {
   document.title = 'Detalle de decisión · The Arkenstone';
@@ -21,6 +31,13 @@ onMounted(async () => {
   <main class="page plan-page">
     <APageHead :title="event?.name ?? 'Detalle de decisión'">
       <template #actions>
+        <RouterLink
+          v-if="canEdit"
+          class="btn btn-primary"
+          :to="`/plan/decisiones/eventos/${eventId}/editar`"
+        >
+          Editar decisión
+        </RouterLink>
         <RouterLink class="btn btn-ghost" to="/plan/decisiones">Volver a decisiones</RouterLink>
       </template>
     </APageHead>

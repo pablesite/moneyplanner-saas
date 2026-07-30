@@ -50,6 +50,9 @@ vi.mock('./views/PlanImprovementsView.vue', () => ({
 vi.mock('./views/PlanEventDetailView.vue', () => ({
   default: { name: 'PlanEventDetailView' },
 }));
+vi.mock('./views/PlanDecisionEditView.vue', () => ({
+  default: { name: 'PlanDecisionEditView' },
+}));
 
 describe('router (core)', () => {
   beforeEach(() => {
@@ -83,6 +86,7 @@ describe('router (core)', () => {
           expect.objectContaining({ path: '/plan/decisiones' }),
           expect.objectContaining({ path: '/plan/decisiones/nueva' }),
           expect.objectContaining({ path: '/plan/decisiones/eventos/:id' }),
+          expect.objectContaining({ path: '/plan/decisiones/eventos/:id/editar' }),
         ]),
       }),
     );
