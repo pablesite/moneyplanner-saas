@@ -499,12 +499,13 @@
 }
 
 /* Paleta categórica del gráfico: hues bien separados para que las series no se
-   confundan (verde patrimonio 148°, azul capital productivo 250°, ámbar
-   acontecimientos 85°, gris objetivo). Validada CVD: ΔE adyacente ≥ 20 (skill
-   dataviz). El objetivo/capital objetivo usan gris achromático (referencia). */
+   confundan (verde patrimonio 148°, azul capital productivo 250°, turquesa
+   seguridad 195°, ámbar acontecimientos 85°, gris objetivo). El
+   objetivo/capital objetivo usa gris acromático como referencia. */
 .plan-trajectory {
   --chart-networth: var(--pos);
   --chart-productive: oklch(0.7 0.14 250);
+  --chart-security: oklch(0.76 0.13 195);
   --chart-event: oklch(0.8 0.11 85);
 }
 
@@ -547,6 +548,11 @@
   stroke: var(--chart-productive);
   stroke-width: 2;
   stroke-dasharray: 3 5;
+}
+
+.plan-chart-line.security {
+  stroke: var(--chart-security);
+  stroke-width: 2;
 }
 
 .plan-chart-line.target {
@@ -657,6 +663,10 @@
 
 .plan-chart-legend .prod {
   background: repeating-linear-gradient(90deg, var(--chart-productive) 0 3px, transparent 3px 7px);
+}
+
+.plan-chart-legend .security {
+  background: var(--chart-security);
 }
 
 .plan-chart-legend .target {

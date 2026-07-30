@@ -22,12 +22,14 @@ const baseProjection = makeProjection({
       year: 2027,
       net_worth: '150000',
       productive_capital: '40000',
+      security_capital: '25000',
       target_capital: '900000',
     }),
     trajectoryRow({
       year: 2035,
       net_worth: '400000',
       productive_capital: '120000',
+      security_capital: '30000',
       target_capital: '1000000',
     }),
   ],
@@ -42,7 +44,9 @@ describe('NetWorthTrajectoryChart', () => {
     expect(wrapper.find('.plan-chart-line.hist').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.proj').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.prod').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-line.security').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.target').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-legend').text()).toContain('Fondo de emergencia');
     const xLabels = wrapper.findAll('.plan-chart-x-label').map((n) => n.text());
     expect(xLabels.length).toBeGreaterThan(0);
   });
@@ -97,6 +101,7 @@ describe('NetWorthTrajectoryChart', () => {
     expect(wrapper.find('.plan-chart-table').exists()).toBe(true);
     expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(3);
     expect(wrapper.find('.plan-chart-table').text()).toContain('Capital productivo');
+    expect(wrapper.find('.plan-chart-table').text()).toContain('Fondo de emergencia');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Patrimonio neto');
   });
 });

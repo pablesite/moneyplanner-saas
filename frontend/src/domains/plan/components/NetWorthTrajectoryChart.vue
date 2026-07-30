@@ -69,6 +69,9 @@ const points = computed<Point[]>(() => [...historicalPoints.value, ...projectedP
 const productiveSeries = computed(() =>
   projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.productive_capital) })),
 );
+const securitySeries = computed(() =>
+  projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.security_capital) })),
+);
 const targetSeries = computed(() =>
   projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.target_capital) })),
 );
@@ -76,6 +79,7 @@ const targetSeries = computed(() =>
 const values = computed(() => [
   ...points.value.map((point) => point.value),
   ...productiveSeries.value.map((entry) => entry.value),
+  ...securitySeries.value.map((entry) => entry.value),
   ...targetSeries.value.map((entry) => entry.value),
 ]);
 const bounds = computed(() => {
@@ -113,6 +117,7 @@ function buildPath(series: Array<{ t: number; value: number }>): string {
 const historicalPath = computed(() => buildPath(historicalPoints.value));
 const projectedPath = computed(() => buildPath(projectedPoints.value));
 const productivePath = computed(() => buildPath(productiveSeries.value));
+const securityPath = computed(() => buildPath(securitySeries.value));
 const targetPath = computed(() => buildPath(targetSeries.value));
 
 const yTicks = computed(() =>
@@ -225,6 +230,7 @@ const hoverDetail = computed(() => {
   if (!row) return null;
   return {
     productive: Number(row.productive_capital),
+    security: Number(row.security_capital),
     target: Number(row.target_capital),
     financingGap: Number(row.financing_gap),
   };
@@ -262,6 +268,7 @@ function onMove(event: MouseEvent): void {
         <span><i class="hist"></i> Histórico</span>
         <span><i class="proj"></i> Proyección</span>
         <span><i class="prod"></i> Capital productivo</span>
+        <span><i class="security"></i> Fondo de emergencia</span>
         <span><i class="target"></i> Capital objetivo</span>
         <span v-if="eventMarkers.length"><i class="event"></i> Acontecimiento</span>
       </div>
@@ -275,7 +282,7 @@ function onMove(event: MouseEvent): void {
         class="plan-chart"
         :viewBox="`0 0 ${W} ${H}`"
         role="img"
-        aria-label="Trayectoria patrimonial histórica y proyectada frente al capital objetivo"
+        aria-label="Trayectoria patrimonial, capital productivo y fondo de emergencia frente al capital objetivo"
         @mousemove="onMove"
         @mouseleave="hoverIndex = null"
       >
@@ -315,6 +322,7 @@ function onMove(event: MouseEvent): void {
         </g>
         <path v-if="targetPath" class="plan-chart-line target" :d="targetPath" />
         <path v-if="productivePath" class="plan-chart-line prod" :d="productivePath" />
+        <path v-if="securityPath" class="plan-chart-line security" :d="securityPath" />
         <path v-if="historicalPath" class="plan-chart-line hist" :d="historicalPath" />
         <path v-if="projectedPath" class="plan-chart-line proj" :d="projectedPath" />
         <g v-if="hoverPoint && hoverIndex !== null">
@@ -338,6 +346,7 @@ function onMove(event: MouseEvent): void {
         <span>{{ formatMoney(hoverPoint.value) }}</span>
         <template v-if="hoverDetail">
           <span>Productivo {{ formatMoney(hoverDetail.productive) }}</span>
+          <span>Fondo de emergencia {{ formatMoney(hoverDetail.security) }}</span>
           <span>Objetivo {{ formatMoney(hoverDetail.target) }}</span>
           <span v-if="hoverDetail.financingGap < 0">
             Financiación pendiente {{ formatMoney(hoverDetail.financingGap) }}
@@ -354,6 +363,7 @@ function onMove(event: MouseEvent): void {
             <tr>
               <th scope="col">Año</th>
               <th scope="col">Capital productivo</th>
+              <th scope="col">Fondo de emergencia</th>
               <th scope="col">Capital objetivo</th>
               <th scope="col">Financiación pendiente</th>
               <th scope="col">Patrimonio neto</th>
@@ -363,6 +373,7 @@ function onMove(event: MouseEvent): void {
             <tr v-for="row in projection.trajectory" :key="row.year">
               <th scope="row">{{ row.year }}</th>
               <td>{{ formatMoney(row.productive_capital) }}</td>
+              <td>{{ formatMoney(row.security_capital) }}</td>
               <td>{{ formatMoney(row.target_capital) }}</td>
               <td>{{ formatMoney(row.financing_gap) }}</td>
               <td>{{ formatMoney(row.net_worth) }}</td>
