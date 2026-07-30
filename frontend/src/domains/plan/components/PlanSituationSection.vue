@@ -685,15 +685,12 @@ onMounted(() => {
 
             <p v-if="localError" class="plan-inline-error" role="alert">{{ localError }}</p>
 
+            <!-- Aquí solo se reprograman los puntuales que ya existen: crearlos sigue
+                 siendo cosa de Presupuesto. Agrupar en una decisión ya se ofrece por
+                 fila en los que lo necesitan. -->
             <p class="plan-oneoff-budget-link">
-              ¿Es una compra o venta de activo?
-              <RouterLink class="plan-blocker-link" to="/plan/decisiones/agrupar"
-                >Agrupar en una decisión</RouterLink
-              >
-              · ¿Ajustar un gasto o ingreso recurrente?
-              <RouterLink class="plan-blocker-link" to="/presupuesto"
-                >Revisar presupuesto</RouterLink
-              >
+              ¿Falta algún movimiento puntual? Créalo desde
+              <RouterLink class="plan-blocker-link" to="/presupuesto">Presupuesto</RouterLink>.
             </p>
           </div>
         </div>
