@@ -47,12 +47,28 @@ const monthlyAction = computed(() => {
   const amount = Number(nextAction.value?.monthly_commitment ?? 0);
   return amount > 0 ? `${formatMoney(amount)} al mes` : null;
 });
+// "1 bloquean el plan" no decía cuál era ni concordaba: con un solo cimiento en
+// rojo se nombra, y con varios se cuenta diciendo de qué se habla.
+const FOUNDATION_LABELS: Record<string, string> = {
+  cash_flow: 'Flujo de caja',
+  emergency_fund: 'Fondo de emergencia',
+  debt: 'Deuda',
+  net_worth_health: 'Salud patrimonial',
+  data_quality: 'Calidad de datos',
+};
+
 const foundationStatus = computed(() => {
-  const values = Object.values(store.overview?.foundations ?? {});
-  const critical = values.filter((item) => item.status === 'critical').length;
-  const warning = values.filter((item) => item.status === 'warning').length;
-  if (critical) return `${critical} bloquean el plan`;
-  if (warning) return `${warning} necesitan atención`;
+  const entries = Object.entries(store.overview?.foundations ?? {});
+  const named = (status: string) =>
+    entries
+      .filter(([, item]) => item.status === status)
+      .map(([key]) => FOUNDATION_LABELS[key] ?? key);
+  const critical = named('critical');
+  const warning = named('warning');
+  if (critical.length === 1) return `${critical[0]} bloquea el plan`;
+  if (critical.length) return `${critical.length} cimientos bloquean el plan`;
+  if (warning.length === 1) return `${warning[0]} necesita atención`;
+  if (warning.length) return `${warning.length} cimientos necesitan atención`;
   return 'Cimientos sólidos';
 });
 

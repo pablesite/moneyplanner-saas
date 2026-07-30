@@ -51,13 +51,16 @@ function hasDebt(debt: PlanFoundations['debt']): boolean {
   return toNumber(debt.total_debt) > 0;
 }
 
-// Un "superávit" negativo se lee como contradicción: se etiqueta como déficit.
-function surplusText(value: string | null | undefined): string {
-  if (value == null) return 'Superávit -';
+// Importe mensual con signo explícito: la tarjeta encadena ingresos − gastos =
+// base, y sin el signo no se ve si cada eslabón suma o resta.
+function signedMonthly(value: string | null | undefined): string {
+  if (value == null) return '-';
   const amount = toNumber(value) / 12;
-  return amount < 0
-    ? `Déficit ${formatMoney(Math.abs(amount))}/mes`
-    : `Superávit ${formatMoney(amount)}/mes`;
+  return `${amount > 0 ? '+' : ''}${formatMoney(amount)}`;
+}
+
+function hasCommitments(cashFlow: PlanFoundations['cash_flow']): boolean {
+  return toNumber(cashFlow.temporary_commitment_expense) > 0;
 }
 
 // Los factores de calidad vienen del motor (DataQualityService); aquí solo
@@ -107,17 +110,27 @@ function qualitySummary(flags: Record<string, boolean>): string {
         <strong :class="tone(foundations.cash_flow.status)">
           {{ statusLabel(foundations.cash_flow.status) }}
         </strong>
+        <!-- Las tres líneas encadenan la misma cuenta que "Tu situación este año".
+             Antes la primera enseñaba gastos operativos y la segunda un déficit que
+             ya incluía los compromisos: dos alcances distintos que no cuadraban. -->
         <small>
-          Ingresos {{ monthlyMoney(foundations.cash_flow.structural_annual_income) }}/mes · Gastos
-          {{ monthlyMoney(foundations.cash_flow.structural_operating_expense) }}/mes
+          Ingresos {{ monthlyMoney(foundations.cash_flow.structural_annual_income) }}/mes − gastos
+          operativos {{ monthlyMoney(foundations.cash_flow.structural_operating_expense) }}/mes
         </small>
         <small>
-          {{ surplusText(foundations.cash_flow.committed_surplus)
-          }}<template v-if="foundations.cash_flow.operating_surplus_ratio">
-            · margen {{ formatPct(toNumber(foundations.cash_flow.operating_surplus_ratio), 1) }}
-          </template>
+          Base recurrente {{ signedMonthly(foundations.cash_flow.operating_surplus) }}/mes<template
+            v-if="foundations.cash_flow.operating_surplus_ratio"
+          >
+            · {{ formatPct(toNumber(foundations.cash_flow.operating_surplus_ratio), 1) }} de tus
+            ingresos</template
+          >
         </small>
-        <small>Detalle: {{ scoreLabel(foundations.cash_flow.score) }}</small>
+        <small v-if="hasCommitments(foundations.cash_flow)">
+          Con los compromisos temporales de este año ({{
+            monthlyMoney(foundations.cash_flow.temporary_commitment_expense)
+          }}/mes), {{ signedMonthly(foundations.cash_flow.committed_surplus) }}/mes
+        </small>
+        <small>Puntuación {{ scoreLabel(foundations.cash_flow.score) }}</small>
       </article>
       <article>
         <span>Fondo de emergencia</span>
@@ -136,7 +149,7 @@ function qualitySummary(flags: Record<string, boolean>): string {
             {{ statusLabel(foundations.debt.status) }}
           </strong>
           <small>
-            Deuda cara {{ money(foundations.debt.high_cost_debt) }} · detalle
+            Deuda cara {{ money(foundations.debt.high_cost_debt) }} · puntuación
             {{ scoreLabel(foundations.debt.score) }}
           </small>
         </template>
@@ -156,7 +169,7 @@ function qualitySummary(flags: Record<string, boolean>): string {
         </strong>
         <!-- Antes aquí se mostraba el margen del flujo de caja: era de otro cimiento. -->
         <small v-if="qualitySummary(foundations.data_quality.flags)">
-          {{ qualitySummary(foundations.data_quality.flags) }} · detalle
+          {{ qualitySummary(foundations.data_quality.flags) }} · puntuación
           {{ scoreLabel(foundations.data_quality.score) }}
         </small>
       </article>
