@@ -674,7 +674,7 @@ onMounted(async () => {
 
       <div v-if="isSale" class="plan-form-grid">
         <label>
-          <span>Ingresos netos de la venta</span>
+          <span>Cobro pendiente que llegará a tu cuenta</span>
           <input v-model="impact.proceeds" class="input" inputmode="decimal" placeholder="0" />
         </label>
         <label>
@@ -696,7 +696,7 @@ onMounted(async () => {
           />
         </label>
         <label>
-          <span>Deuda cancelada (hipoteca)</span>
+          <span>Deuda que desaparece del patrimonio</span>
           <input
             v-model="impact.disposed_liability_value"
             class="input"
@@ -705,6 +705,11 @@ onMounted(async () => {
           />
         </label>
       </div>
+      <p v-if="isSale" class="plan-decision-preview">
+        Introduce solo el efectivo que aún recibirás en la cuenta, después de que el banco retenga
+        la hipoteca y de los costes incluidos en el cálculo. No sumes reservas ya cobradas ni
+        vuelvas a restar aquí la deuda: «Deuda que desaparece» ya retira ese pasivo del balance.
+      </p>
 
       <div v-else class="plan-form-grid">
         <label>
