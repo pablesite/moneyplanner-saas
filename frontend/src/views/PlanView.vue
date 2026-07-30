@@ -130,7 +130,7 @@ onMounted(() => {
       <div class="plan-main-grid">
         <ProductiveCapitalProgress :projection="projection" />
         <section class="sect plan-foundation-summary">
-          <p class="eyebrow">Cimientos y datos</p>
+          <p class="plan-block-eyebrow">Cimientos y datos</p>
           <h2 class="sect-title">{{ foundationStatus }}</h2>
           <PlanFoundations :foundations="store.foundations" compact />
         </section>

@@ -247,24 +247,23 @@
   gap: 18px;
 }
 
-.plan-progress,
-.plan-quality,
-.plan-foundations,
-.plan-trajectory,
-.plan-form-section,
-.plan-recommendations {
+/* Los bloques de contenido van sin caja (mismo patrón que el hero y que "Tu
+   situación este año"): el ritmo lo dan el gap de la página, los eyebrow y las
+   hairlines internas. Solo los formularios conservan panel, donde el fondo sí
+   agrupa campos. */
+.plan-form-section {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+  padding: 18px;
 }
 
 .plan-progress,
 .plan-quality,
 .plan-foundations,
 .plan-trajectory,
-.plan-form-section,
 .plan-recommendations {
-  padding: 18px;
+  padding: 0;
 }
 
 /* El título y el porcentaje que lo resume comparten fila, como una capa de "Tu
@@ -306,6 +305,11 @@
   padding-block: 14px;
 }
 
+/* La marca del objetivo cuelga su etiqueta bajo la barra: hay que reservarle sitio. */
+.plan-progress-track.has-target-mark {
+  padding-bottom: 32px;
+}
+
 .plan-progress-native {
   width: 100%;
   height: 12px;
@@ -343,10 +347,33 @@
   background: var(--pos);
 }
 
-/* Hito cuyo capital necesario supera el objetivo: punto hueco pegado al final. */
+/* Hito cuyo capital necesario supera el objetivo del plan: punto hueco. */
 .plan-progress-mark.beyond {
-  background: var(--panel);
+  background: var(--bg);
   border-color: var(--muted);
+}
+
+/* El objetivo deja de ser el final de la barra: se marca donde cae en la escala. */
+.plan-progress-target {
+  position: absolute;
+  top: 14px;
+  width: 2px;
+  height: 20px;
+  background: var(--text);
+  transform: translateX(-50%);
+}
+
+.plan-progress-target-label {
+  position: absolute;
+  top: 38px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.plan-progress-target-label .mono {
+  color: var(--text);
 }
 
 .plan-chart-legend {
@@ -835,9 +862,9 @@
   font-size: 12px;
 }
 
-.plan-foundation-summary .plan-foundations {
-  border: 0;
-  padding: 0;
+.plan-foundation-summary {
+  display: grid;
+  gap: 4px;
 }
 
 .plan-calculation-settings summary,
@@ -1957,12 +1984,7 @@
     align-items: stretch;
   }
 
-  .plan-progress,
-  .plan-quality,
-  .plan-foundations,
-  .plan-trajectory,
-  .plan-form-section,
-  .plan-recommendations {
+  .plan-form-section {
     padding: 14px;
   }
 

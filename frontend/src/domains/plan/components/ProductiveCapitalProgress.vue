@@ -67,6 +67,7 @@ type ProgressMilestone = {
   label: string;
   monthly: string | null;
   capital: string | null;
+  capitalValue: number | null;
   state: string;
   positionPct: number | null;
   beyondTarget: boolean;
@@ -95,6 +96,7 @@ const budgetMilestones = computed<ProgressMilestone[]>(() =>
       label: milestone.label,
       monthly: formatMoney(milestone.monthlyExpense),
       capital: formatMoney(milestone.capitalNeeded),
+      capitalValue: milestone.capitalNeeded,
       state: milestoneState(milestone.capitalNeeded, milestone.reached, beyondTarget),
       positionPct: milestone.positionPct,
       beyondTarget,
@@ -123,6 +125,7 @@ const fallbackMilestones = computed<ProgressMilestone[]>(() => {
       label: row.label,
       monthly: income != null ? formatMoney(income) : null,
       capital: amount != null ? formatMoney(amount) : null,
+      capitalValue: amount,
       state: milestoneState(amount, reached, false),
       positionPct: row.ratio * 100,
       beyondTarget: false,
@@ -136,8 +139,29 @@ const milestones = computed(() =>
   usingBudgetMilestones.value ? budgetMilestones.value : fallbackMilestones.value,
 );
 
+// La barra no termina en el objetivo, sino en el capital que cubriría el nivel de
+// vida completo de hoy (el tramo más alto). Así el objetivo —que suele ser vivir con
+// menos— cae donde le toca, hacia la mitad, y se ve cuánto de lo de hoy renuncias.
+const scaleMax = computed(() => {
+  const target = Number(targetCapital.value || 0);
+  const capitals = milestones.value
+    .map((milestone) => milestone.capitalValue)
+    .filter((value): value is number => value != null && value > 0);
+  return Math.max(target, ...capitals, 0);
+});
+const hasWiderScale = computed(() => scaleMax.value > Number(targetCapital.value || 0));
+
+const scalePct = (value: number | null): number | null => {
+  if (value == null || scaleMax.value <= 0) return null;
+  return Math.max(0, Math.min(100, (value / scaleMax.value) * 100));
+};
+const barPct = computed(() => scalePct(Number(productiveCapital.value || 0)) ?? 0);
+const targetPct = computed(() => scalePct(Number(targetCapital.value || 0)));
+// Sin margen la etiqueta del objetivo se saldría de la caja cuando cae en un extremo.
+const targetLabelLeft = computed(() => `${Math.max(8, Math.min(92, targetPct.value ?? 100))}%`);
+
 function markerLeft(milestone: ProgressMilestone): string {
-  return `${Math.min(milestone.positionPct ?? 100, 100)}%`;
+  return `${scalePct(milestone.capitalValue) ?? Math.min(milestone.positionPct ?? 100, 100)}%`;
 }
 
 const milestonesHint = computed(() => {
@@ -166,18 +190,23 @@ const milestonesHint = computed(() => {
       <div class="plan-progress-headline-copy">
         <h2 class="sect-title">Progreso hacia el capital requerido</h2>
         <p class="sect-sub">
-          El 100 % es el capital objetivo del escenario activo, con periodo puente si aplica.
+          El porcentaje mide tu capital frente al objetivo del escenario activo<template
+            v-if="preservationAmount"
+            >, que incluye {{ formatMoney(preservationAmount) }} a preservar</template
+          >.<template v-if="hasWiderScale">
+            La barra llega hasta el capital que cubriría tu nivel de vida completo de hoy.</template
+          >
         </p>
       </div>
       <strong class="plan-progress-percent mono">{{ formatNumber(progress, 0) }} %</strong>
     </div>
 
-    <div class="plan-progress-track">
+    <div class="plan-progress-track" :class="{ 'has-target-mark': hasWiderScale }">
       <progress
         class="plan-progress-native"
-        :value="progress"
+        :value="barPct"
         max="100"
-        aria-label="Progreso de capital productivo"
+        :aria-label="`Capital productivo sobre ${formatMoney(scaleMax)}`"
       ></progress>
       <span
         v-for="milestone in milestones"
@@ -188,6 +217,17 @@ const milestonesHint = computed(() => {
         :title="milestone.label"
         aria-hidden="true"
       ></span>
+      <template v-if="hasWiderScale && targetPct != null">
+        <span
+          class="plan-progress-target"
+          :style="{ left: `${targetPct}%` }"
+          :title="`Objetivo ${formatMoney(targetCapital)}`"
+          aria-hidden="true"
+        ></span>
+        <span class="plan-progress-target-label" :style="{ left: targetLabelLeft }">
+          Objetivo · <span class="mono">{{ formatMoney(targetCapital) }}</span>
+        </span>
+      </template>
     </div>
 
     <dl class="plan-progress-meta">
@@ -196,9 +236,9 @@ const milestonesHint = computed(() => {
         <dd class="mono">{{ formatMoney(productiveCapital) }}</dd>
       </div>
       <div class="plan-progress-meta-item is-end">
-        <dt>Requerido</dt>
-        <dd class="mono">{{ formatMoney(targetCapital) }}</dd>
-        <dd v-if="preservationAmount" class="plan-progress-meta-note">
+        <dt>{{ hasWiderScale ? 'Tu nivel de vida de hoy' : 'Requerido' }}</dt>
+        <dd class="mono">{{ formatMoney(hasWiderScale ? scaleMax : targetCapital) }}</dd>
+        <dd v-if="!hasWiderScale && preservationAmount" class="plan-progress-meta-note">
           incluye {{ formatMoney(preservationAmount) }} a preservar
         </dd>
       </div>

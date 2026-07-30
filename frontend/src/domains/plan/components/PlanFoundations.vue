@@ -90,11 +90,13 @@ function qualitySummary(flags: Record<string, boolean>): string {
 
 <template>
   <section class="sect plan-foundations" :class="{ 'is-compact': compact }">
-    <div class="sect-head">
+    <!-- En compacto vive dentro de "Cimientos y datos", que ya pone el rótulo: repetir
+         "Cimientos · Diagnóstico" solo añadía ruido. -->
+    <div v-if="!compact" class="sect-head">
       <div>
-        <p class="eyebrow">Cimientos</p>
-        <h2 class="sect-title">{{ compact ? 'Diagnóstico' : 'Diagnóstico compacto' }}</h2>
-        <p v-if="!compact" class="sect-sub">
+        <p class="plan-block-eyebrow">Cimientos</p>
+        <h2 class="sect-title">Diagnóstico compacto</h2>
+        <p class="sect-sub">
           Flujo de caja, fondo de emergencia, deuda, aportación y calidad de datos.
         </p>
       </div>
