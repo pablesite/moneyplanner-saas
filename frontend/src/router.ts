@@ -134,7 +134,11 @@ export const router = createRouter({
 
 registerAuthGuard(router);
 
-router.afterEach(async () => {
+router.afterEach(async (to, from) => {
+  // Los filtros que se sincronizan con la URL (`router.replace` con query nueva) no
+  // son navegaciones reales: mover el foco al shell ahí le roba el cursor al usuario
+  // mientras escribe en un buscador.
+  if (to.path === from.path) return;
   await nextTick();
   const main = document.querySelector<HTMLElement>('main');
   if (!main) return;

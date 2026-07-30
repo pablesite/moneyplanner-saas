@@ -1272,6 +1272,14 @@ body {
   min-width: 0;
 }
 
+/* Tras navegar, el shell recibe foco programatico (accesibilidad: lector de pantalla
+   y teclado empiezan en el contenido). No es un control interactivo, asi que no debe
+   pintar el anillo de foco del navegador alrededor de toda la app. */
+main[tabindex='-1']:focus,
+main[tabindex='-1']:focus-visible {
+  outline: none;
+}
+
 .ui-shell-content-stage {
   min-height: calc(100vh - 57px);
 }
