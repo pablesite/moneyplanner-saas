@@ -114,6 +114,7 @@ export type TimelineRow = {
   total_assets: string;
   total_liabilities: string;
   net_worth: string;
+  assets_by_category?: Record<string, string>;
   asset_positions: number;
   liability_positions: number;
 };

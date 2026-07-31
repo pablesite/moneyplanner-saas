@@ -30,6 +30,7 @@ const hoverIndex = ref<number | null>(null);
 
 type Point = {
   t: number;
+  date?: string;
   label: string;
   value: number;
   kind: 'historical' | 'projected';
@@ -37,8 +38,9 @@ type Point = {
 };
 
 const historicalPoints = computed<Point[]>(() =>
-  (props.timeline?.rows ?? []).slice(-36).map((row) => ({
+  (props.timeline?.rows ?? []).map((row) => ({
     t: Date.parse(row.date),
+    date: row.date,
     label: formatMonthYearLabel(row.date),
     value: Number(row.net_worth),
     kind: 'historical' as const,
@@ -67,10 +69,29 @@ const projectedPoints = computed<Point[]>(() =>
 
 const points = computed<Point[]>(() => [...historicalPoints.value, ...projectedPoints.value]);
 
-const productiveSeries = computed(() =>
+const hasHistoricalComposition = computed(() =>
+  (props.timeline?.rows ?? []).some((row) => row.assets_by_category != null),
+);
+const historicalProductiveSeries = computed(() =>
+  hasHistoricalComposition.value
+    ? (props.timeline?.rows ?? []).map((row) => ({
+        t: Date.parse(row.date),
+        value: Number(row.assets_by_category?.investments ?? 0),
+      }))
+    : [],
+);
+const historicalSecuritySeries = computed(() =>
+  hasHistoricalComposition.value
+    ? (props.timeline?.rows ?? []).map((row) => ({
+        t: Date.parse(row.date),
+        value: Number(row.assets_by_category?.cash ?? 0),
+      }))
+    : [],
+);
+const projectedProductiveSeries = computed(() =>
   projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.productive_capital) })),
 );
-const securitySeries = computed(() =>
+const projectedSecuritySeries = computed(() =>
   projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.security_capital) })),
 );
 const targetSeries = computed(() =>
@@ -79,8 +100,10 @@ const targetSeries = computed(() =>
 
 const values = computed(() => [
   ...points.value.map((point) => point.value),
-  ...productiveSeries.value.map((entry) => entry.value),
-  ...securitySeries.value.map((entry) => entry.value),
+  ...historicalProductiveSeries.value.map((entry) => entry.value),
+  ...historicalSecuritySeries.value.map((entry) => entry.value),
+  ...projectedProductiveSeries.value.map((entry) => entry.value),
+  ...projectedSecuritySeries.value.map((entry) => entry.value),
   ...targetSeries.value.map((entry) => entry.value),
 ]);
 const bounds = computed(() => {
@@ -117,8 +140,10 @@ function buildPath(series: Array<{ t: number; value: number }>): string {
 
 const historicalPath = computed(() => buildPath(historicalPoints.value));
 const projectedPath = computed(() => buildPath(projectedPoints.value));
-const productivePath = computed(() => buildPath(productiveSeries.value));
-const securityPath = computed(() => buildPath(securitySeries.value));
+const historicalProductivePath = computed(() => buildPath(historicalProductiveSeries.value));
+const historicalSecurityPath = computed(() => buildPath(historicalSecuritySeries.value));
+const projectedProductivePath = computed(() => buildPath(projectedProductiveSeries.value));
+const projectedSecurityPath = computed(() => buildPath(projectedSecuritySeries.value));
 const targetPath = computed(() => buildPath(targetSeries.value));
 
 const yTicks = computed(() =>
@@ -226,13 +251,32 @@ const hoverPoint = computed(() =>
 
 const hoverDetail = computed(() => {
   const point = hoverPoint.value;
-  if (!point || point.kind !== 'projected' || point.year == null) return null;
+  if (!point) return null;
+  if (point.kind === 'historical' && point.date) {
+    const row = props.timeline?.rows.find((entry) => entry.date === point.date);
+    if (!row) return null;
+    const categories = row.assets_by_category ?? {};
+    return {
+      totalAssets: Number(row.total_assets),
+      liquidity: Number(categories.cash ?? 0),
+      productive: Number(categories.investments ?? 0),
+      realEstate: Number(categories.real_estate ?? 0),
+      furnishings: Number(categories.furnishings ?? 0) + Number(categories.vehicle ?? 0),
+      otherAssets: Number(categories.other ?? 0),
+      liabilities: Number(row.total_liabilities),
+      security: Number(categories.cash ?? 0),
+      securityTarget: null,
+      target: null,
+      financingGap: 0,
+    };
+  }
+  if (point.kind !== 'projected' || point.year == null) return null;
   const row = props.projection.trajectory.find((entry) => entry.year === point.year);
   if (!row) return null;
   return {
     totalAssets: Number(row.total_assets),
     liquidity: Number(row.liquidity_assets),
-    productive: Number(row.investment_assets),
+    productive: Number(row.productive_capital),
     realEstate: Number(row.real_estate_assets),
     furnishings: Number(row.furnishings_assets),
     otherAssets: Number(row.other_assets),
@@ -329,8 +373,26 @@ function onMove(event: MouseEvent): void {
           <circle :cx="marker.x" :cy="H - padB" r="4" />
         </g>
         <path v-if="targetPath" class="plan-chart-line target" :d="targetPath" />
-        <path v-if="productivePath" class="plan-chart-line prod" :d="productivePath" />
-        <path v-if="securityPath" class="plan-chart-line security" :d="securityPath" />
+        <path
+          v-if="historicalProductivePath"
+          class="plan-chart-line prod historical-segment"
+          :d="historicalProductivePath"
+        />
+        <path
+          v-if="historicalSecurityPath"
+          class="plan-chart-line security historical-segment"
+          :d="historicalSecurityPath"
+        />
+        <path
+          v-if="projectedProductivePath"
+          class="plan-chart-line prod projected-segment"
+          :d="projectedProductivePath"
+        />
+        <path
+          v-if="projectedSecurityPath"
+          class="plan-chart-line security projected-segment"
+          :d="projectedSecurityPath"
+        />
         <path v-if="historicalPath" class="plan-chart-line hist" :d="historicalPath" />
         <path v-if="projectedPath" class="plan-chart-line proj" :d="projectedPath" />
         <g v-if="hoverPoint && hoverIndex !== null">
@@ -363,8 +425,12 @@ function onMove(event: MouseEvent): void {
           >
           <span>Deudas {{ formatMoney(hoverDetail.liabilities) }}</span>
           <span>Fondo de emergencia {{ formatMoney(hoverDetail.security) }}</span>
-          <span>Objetivo del fondo {{ formatMoney(hoverDetail.securityTarget) }}</span>
-          <span>Objetivo {{ formatMoney(hoverDetail.target) }}</span>
+          <span v-if="hoverDetail.securityTarget != null"
+            >Objetivo del fondo {{ formatMoney(hoverDetail.securityTarget) }}</span
+          >
+          <span v-if="hoverDetail.target != null"
+            >Objetivo {{ formatMoney(hoverDetail.target) }}</span
+          >
           <span v-if="hoverDetail.financingGap < 0">
             Financiación pendiente {{ formatMoney(hoverDetail.financingGap) }}
           </span>

@@ -85,7 +85,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET/POST` | `/api/net-worth/liquidity-checkins/` | Monthly liquidity check-ins |
 | `GET/POST` | `/api/net-worth/snapshots/` | Net worth snapshots |
 | `GET` | `/api/net-worth/summary/` | Aggregated net worth summary |
-| `GET` | `/api/net-worth/timeline/` | Net worth timeline. Includes monthly `rows` plus `comparisons` baselines (`previous_month_close`, `same_day_previous_month`, `previous_year_close`, `same_day_previous_year`) for summary UIs. |
+| `GET` | `/api/net-worth/timeline/` | Net worth timeline. Monthly `rows` include `assets_by_category` in the user's base currency; `comparisons` exposes the baselines `previous_month_close`, `same_day_previous_month`, `previous_year_close`, and `same_day_previous_year` for summary UIs. |
 | `GET` | `/api/net-worth/liquidity/monthly-summary/` | Monthly liquidity summary; includes cash, cards, and interest-bearing investments. Asset rows include `annual_interest_tae` to identify remunerated liquidity. |
 
 ### Financial Plan — `/api/plan/`

@@ -6,13 +6,27 @@ import type { PlanTimelineMarker } from '@/domains/plan/usePlanEvents';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import { makeProjection, trajectoryRow } from './planFixtures';
 
-function timeline(rows: Array<{ date: string; net_worth: string }>): NetWorthTimeline {
+function timeline(
+  rows: Array<{
+    date: string;
+    net_worth: string;
+    assets_by_category?: Record<string, string>;
+  }>,
+): NetWorthTimeline {
   return { rows } as unknown as NetWorthTimeline;
 }
 
 const baseTimeline = timeline([
-  { date: '2025-01-31', net_worth: '100000' },
-  { date: '2026-01-31', net_worth: '120000' },
+  {
+    date: '2025-01-31',
+    net_worth: '100000',
+    assets_by_category: { cash: '20000', investments: '30000' },
+  },
+  {
+    date: '2026-01-31',
+    net_worth: '120000',
+    assets_by_category: { cash: '25000', investments: '40000' },
+  },
 ]);
 
 const baseProjection = makeProjection({
@@ -43,12 +57,28 @@ describe('NetWorthTrajectoryChart', () => {
     });
     expect(wrapper.find('.plan-chart-line.hist').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.proj').exists()).toBe(true);
-    expect(wrapper.find('.plan-chart-line.prod').exists()).toBe(true);
-    expect(wrapper.find('.plan-chart-line.security').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-line.prod.historical-segment').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-line.prod.projected-segment').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-line.security.historical-segment').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-line.security.projected-segment').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.target').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-legend').text()).toContain('Fondo de emergencia');
     const xLabels = wrapper.findAll('.plan-chart-x-label').map((n) => n.text());
     expect(xLabels.length).toBeGreaterThan(0);
+  });
+
+  it('keeps every historical point instead of truncating the chart to 36 closes', () => {
+    const rows = Array.from({ length: 40 }, (_, index) => ({
+      date: `${2000 + index}-01-31`,
+      net_worth: String(100000 + index * 1000),
+      assets_by_category: { cash: '20000', investments: '30000' },
+    }));
+    const wrapper = mount(NetWorthTrajectoryChart, {
+      props: { timeline: timeline(rows), projection: baseProjection },
+    });
+
+    const historicalPath = wrapper.find('.plan-chart-line.hist').attributes('d') ?? '';
+    expect(historicalPath.match(/[ML]/g) ?? []).toHaveLength(40);
   });
 
   it('drops projected rows that fall behind the last historical close', () => {

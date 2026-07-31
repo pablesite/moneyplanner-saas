@@ -566,6 +566,15 @@
   stroke-width: 2;
 }
 
+.plan-chart-line.historical-segment {
+  stroke-dasharray: none;
+  opacity: 0.72;
+}
+
+.plan-chart-line.security.projected-segment {
+  stroke-dasharray: 7 6;
+}
+
 .plan-chart-line.target {
   stroke: var(--faint);
   stroke-width: 1.5;
@@ -673,7 +682,7 @@
 }
 
 .plan-chart-legend .prod {
-  background: repeating-linear-gradient(90deg, var(--chart-productive) 0 3px, transparent 3px 7px);
+  background: var(--chart-productive);
 }
 
 .plan-chart-legend .security {
