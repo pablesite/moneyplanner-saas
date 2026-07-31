@@ -121,6 +121,10 @@ onMounted(() => {
 
     <template v-else-if="projection">
       <section class="plan-chapter" aria-label="Objetivo y situación actual">
+        <div class="plan-chapter-label" aria-hidden="true">
+          <span>01</span>
+          <strong>Objetivo y presente</strong>
+        </div>
         <PlanHero
           :plan="plan"
           :projection="projection"
@@ -132,6 +136,10 @@ onMounted(() => {
       </section>
 
       <section class="plan-chapter" aria-label="Preparación financiera">
+        <div class="plan-chapter-label" aria-hidden="true">
+          <span>02</span>
+          <strong>Capital y salud financiera</strong>
+        </div>
         <div class="plan-main-grid">
           <ProductiveCapitalProgress :projection="projection" />
           <section class="sect plan-foundation-summary">
@@ -178,6 +186,10 @@ onMounted(() => {
            proyección"): envolverlo en otra ("Detalle · Cómo evoluciona tu patrimonio")
            solo duplicaba rótulo, y esconderlo tras un toggle escondía el contenido. -->
       <section class="plan-chapter plan-chapter-trajectory" aria-label="Previsión patrimonial">
+        <div class="plan-chapter-label" aria-hidden="true">
+          <span>03</span>
+          <strong>Previsión a largo plazo</strong>
+        </div>
         <NetWorthTrajectoryChart
           :timeline="netWorthTimeline"
           :projection="projection"

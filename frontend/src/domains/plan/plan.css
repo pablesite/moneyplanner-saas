@@ -21,13 +21,39 @@
 }
 
 .plan-chapter + .plan-chapter {
-  margin-top: 8px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 28px;
 }
 
 .plan-chapter-trajectory {
-  gap: 0;
+  gap: 24px;
+}
+
+.plan-chapter-label {
+  display: grid;
+  grid-template-columns: auto auto minmax(24px, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.plan-chapter-label::after {
+  height: 1px;
+  background: var(--line-strong);
+  content: '';
+}
+
+.plan-chapter-label span {
+  color: var(--accent);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-weight: 650;
+}
+
+.plan-chapter-label strong {
+  font-weight: 650;
 }
 
 /* Tabs con las mismas métricas que las de Patrimonio (`.a-nw-tabs-bar`): misma
