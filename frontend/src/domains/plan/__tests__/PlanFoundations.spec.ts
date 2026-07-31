@@ -76,16 +76,36 @@ describe('PlanFoundations', () => {
     expect(grades).toEqual(['D', 'D', 'A', 'B', 'D', 'B']);
   });
 
-  it('encadena la cuenta del flujo de caja sin mezclar alcances', () => {
+  it('el flujo de caja titula con el resultado que juzga su nota', () => {
     const text = mountCompact().text().replace(/\s+/g, ' ');
 
-    // El valor del cimiento es la base recurrente; el desglose explica de dónde sale
-    // y qué queda tras los compromisos, que es lo que antes no cuadraba.
-    expect(text).toContain('+1.652,01 €/mes');
-    expect(text).toContain('Ingresos 4.702,84 €/mes − gastos operativos 3.050,83 €/mes');
-    expect(text).toContain('Base recurrente · 35,1 % de tus ingresos');
-    expect(text).toContain('Con los compromisos temporales de este año (2.298,55 €/mes)');
+    // Con compromisos, el valor es el resultado del año (lo que explica la D), y el
+    // desglose enseña de dónde sale: base recurrente menos compromisos.
     expect(text).toContain('-646,54 €/mes');
+    expect(text).toContain('Base recurrente +1.652,01 €/mes (35,1 % de tus ingresos)');
+    expect(text).toContain('− compromisos temporales 2.298,55 €/mes');
+    expect(text).toContain('que vencen en 2027');
+  });
+
+  it('deuda, patrimonio y aportación titulan con el KPI que puntúa cada nota', () => {
+    const text = mountCompact({
+      debt: {
+        ...foundations.debt,
+        total_debt: '27702.82',
+        high_cost_debt: '0.00',
+        weighted_tae_pct: '1.4716',
+        debt_payment_to_income: '0.4888',
+      },
+    } as Partial<PlanFoundationsData>)
+      .text()
+      .replace(/\s+/g, ' ');
+
+    // Deuda: la nota mira la deuda cara, no el saldo.
+    expect(text).toContain('Deuda cara 0,00 €');
+    expect(text).toContain('27.702,82 € en total · 1,5 % de interés medio');
+    // Patrimonio: la nota mide composición, así que el valor es la parte ilíquida.
+    expect(text).toContain('91,6 % poco líquido');
+    expect(text).toContain('Sobre 512.000,00 € en activos');
   });
 
   it('la aportación se lee como tasa de ahorro frente a su objetivo', () => {

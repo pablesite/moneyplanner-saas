@@ -77,9 +77,8 @@ const QUALITY_FACTOR_LABELS: Record<string, string> = {
   pensions: 'pensiones estimadas',
   contributions: 'aportación planificada',
   fresh_data: 'datos recientes',
-  employment_income_end_dates: 'fin de ingresos laborales',
+  employment_income_end_dates: 'cuándo dejáis de cobrar por trabajar (Editar objetivo)',
   expenses_classified: 'gastos clasificados',
-  one_off_income_excluded: 'ingresos puntuales excluidos',
 };
 
 function qualitySummary(flags: Record<string, boolean>): string {
@@ -117,23 +116,34 @@ function qualitySummary(flags: Record<string, boolean>): string {
           </span>
           Flujo de caja
         </span>
+        <!-- El valor es el resultado del año, no la base: si los compromisos lo dejan
+             en negativo, la nota y la cifra tienen que contar lo mismo. -->
         <strong
           :class="tone(foundations.cash_flow.status)"
           :title="gradeTitle(foundations.cash_flow)"
         >
-          {{ signedMonthly(foundations.cash_flow.operating_surplus) }}/mes
+          {{
+            signedMonthly(
+              hasCommitments(foundations.cash_flow)
+                ? foundations.cash_flow.committed_surplus
+                : foundations.cash_flow.operating_surplus,
+            )
+          }}/mes
         </strong>
         <small>
-          Ingresos {{ monthlyMoney(foundations.cash_flow.structural_annual_income) }}/mes − gastos
-          operativos {{ monthlyMoney(foundations.cash_flow.structural_operating_expense) }}/mes
-        </small>
-        <small v-if="foundations.cash_flow.operating_surplus_ratio">
-          Base recurrente · {{ pct(foundations.cash_flow.operating_surplus_ratio) }} de tus ingresos
+          Base recurrente {{ signedMonthly(foundations.cash_flow.operating_surplus) }}/mes<template
+            v-if="foundations.cash_flow.operating_surplus_ratio"
+          >
+            ({{ pct(foundations.cash_flow.operating_surplus_ratio) }} de tus ingresos)</template
+          >
         </small>
         <small v-if="hasCommitments(foundations.cash_flow)">
-          Con los compromisos temporales de este año ({{
-            monthlyMoney(foundations.cash_flow.temporary_commitment_expense)
-          }}/mes), {{ signedMonthly(foundations.cash_flow.committed_surplus) }}/mes
+          − compromisos temporales
+          {{ monthlyMoney(foundations.cash_flow.temporary_commitment_expense) }}/mes<template
+            v-if="foundations.cash_flow.committed_recovery_year"
+          >
+            , que vencen en {{ foundations.cash_flow.committed_recovery_year }}</template
+          >
         </small>
       </article>
 
@@ -161,14 +171,20 @@ function qualitySummary(flags: Record<string, boolean>): string {
           <span class="plan-grade" :class="`is-${foundations.debt.grade}`">
             {{ foundations.debt.grade }}
           </span>
-          Deuda
+          Deuda cara
         </span>
+        <!-- Lo que juzga la nota es la deuda cara, no el saldo: una hipoteca al 1,5 %
+             no es un problema. El total y su coste medio van al desglose. -->
         <strong :class="tone(foundations.debt.status)" :title="gradeTitle(foundations.debt)">
-          {{ hasDebt(foundations.debt) ? money(foundations.debt.total_debt) : 'Sin deuda' }}
+          {{ money(foundations.debt.high_cost_debt) }}
         </strong>
         <small v-if="hasDebt(foundations.debt)">
-          Deuda cara {{ money(foundations.debt.high_cost_debt)
-          }}<template v-if="foundations.debt.debt_payment_to_income">
+          {{ money(foundations.debt.total_debt) }} en total<template
+            v-if="foundations.debt.weighted_tae_pct"
+          >
+            · {{ formatNumber(toNumber(foundations.debt.weighted_tae_pct), 1) }} % de interés
+            medio</template
+          ><template v-if="foundations.debt.debt_payment_to_income">
             · cuotas {{ pct(foundations.debt.debt_payment_to_income) }} de tus ingresos</template
           >
         </small>
@@ -182,7 +198,10 @@ function qualitySummary(flags: Record<string, boolean>): string {
           </span>
           Aportación planificada
         </span>
-        <strong :title="gradeTitle(foundations.planned_contribution)">
+        <strong
+          :class="tone(foundations.planned_contribution.status)"
+          :title="gradeTitle(foundations.planned_contribution)"
+        >
           {{ money(foundations.planned_contribution.monthly_amount) }}/mes
         </strong>
         <small v-if="foundations.planned_contribution.savings_rate">
@@ -198,15 +217,18 @@ function qualitySummary(flags: Record<string, boolean>): string {
           </span>
           Salud patrimonial
         </span>
+        <!-- La nota mide composición (liquidez y concentración), así que el valor es
+             la parte poco líquida, no el tamaño del patrimonio. -->
         <strong
           :class="tone(foundations.net_worth_health.status)"
           :title="gradeTitle(foundations.net_worth_health)"
         >
-          {{ money(foundations.net_worth_health.assets_value) }}
+          {{ pct(foundations.net_worth_health.illiquid_assets_share) }} poco líquido
         </strong>
-        <small v-if="foundations.net_worth_health.illiquid_assets_share">
-          {{ pct(foundations.net_worth_health.illiquid_assets_share) }} en activos poco
-          líquidos<template v-if="foundations.net_worth_health.top_asset_share">
+        <small>
+          Sobre {{ money(foundations.net_worth_health.assets_value) }} en activos<template
+            v-if="foundations.net_worth_health.top_asset_share"
+          >
             · mayor categoría {{ pct(foundations.net_worth_health.top_asset_share) }}</template
           >
         </small>
