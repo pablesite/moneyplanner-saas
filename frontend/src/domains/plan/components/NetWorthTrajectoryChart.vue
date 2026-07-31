@@ -154,7 +154,11 @@ function buildPath(
 }
 
 const historicalPath = computed(() => buildPath(historicalPoints.value, pyNetWorth));
-const projectedPath = computed(() => buildPath(projectedPoints.value, pyNetWorth));
+const projectedNetWorthSeries = computed(() => {
+  const lastHistorical = historicalPoints.value[historicalPoints.value.length - 1];
+  return lastHistorical ? [lastHistorical, ...projectedPoints.value] : projectedPoints.value;
+});
+const projectedPath = computed(() => buildPath(projectedNetWorthSeries.value, pyNetWorth));
 const historicalProductivePath = computed(() =>
   buildPath(historicalProductiveSeries.value, pyCapital),
 );
@@ -164,6 +168,21 @@ const projectedProductivePath = computed(() =>
 );
 const projectedSecurityPath = computed(() => buildPath(projectedSecuritySeries.value, pyCapital));
 const targetPath = computed(() => buildPath(targetSeries.value, pyCapital));
+
+const forecastHandoff = computed(() => {
+  const lastHistorical = historicalPoints.value[historicalPoints.value.length - 1];
+  const firstProjected = projectedPoints.value[0];
+  if (!lastHistorical?.date || !firstProjected) return null;
+  const delta = firstProjected.value - lastHistorical.value;
+  return {
+    x: tx(firstProjected.t),
+    y: pyNetWorth(firstProjected.value),
+    delta,
+    historyDate: lastHistorical.date,
+    label: `Previsión ${delta >= 0 ? '+' : '−'}${formatCompact(Math.abs(delta))}`,
+    detail: `${formatMoney(firstProjected.value)} · desde ${lastHistorical.label} ${delta >= 0 ? '+' : '−'}${formatMoney(Math.abs(delta))}`,
+  };
+});
 
 const yTicks = computed(() =>
   [0, 1, 2, 3].map((i) => {
@@ -311,6 +330,13 @@ const eventMarkers = computed<EventMarker[]>(() => {
 const hoverPoint = computed(() =>
   hoverIndex.value == null ? null : (points.value[hoverIndex.value] ?? null),
 );
+
+const hoveredForecastHandoff = computed(() => {
+  const point = hoverPoint.value;
+  const firstProjected = projectedPoints.value[0];
+  if (point?.kind !== 'projected' || point.year !== firstProjected?.year) return null;
+  return forecastHandoff.value;
+});
 
 const hoverDetail = computed(() => {
   const point = hoverPoint.value;
@@ -465,6 +491,13 @@ function onMove(event: MouseEvent): void {
         />
         <path v-if="historicalPath" class="plan-chart-line hist" :d="historicalPath" />
         <path v-if="projectedPath" class="plan-chart-line proj" :d="projectedPath" />
+        <g v-if="forecastHandoff" class="plan-chart-handoff">
+          <title>{{ forecastHandoff.detail }}</title>
+          <circle :cx="forecastHandoff.x" :cy="forecastHandoff.y" r="4" />
+          <text :x="forecastHandoff.x + 7" :y="forecastHandoff.y - 8">
+            {{ forecastHandoff.label }}
+          </text>
+        </g>
         <g
           v-for="marker in eventMarkers"
           :key="`event-${marker.id}`"
@@ -500,6 +533,11 @@ function onMove(event: MouseEvent): void {
         <strong>{{ hoverPoint.label }}</strong>
         <span>{{ formatMoney(hoverPoint.value) }}</span>
         <template v-if="hoverDetail">
+          <span v-if="hoveredForecastHandoff">
+            Desde {{ formatShortMonthYear(hoveredForecastHandoff.historyDate) }}
+            {{ hoveredForecastHandoff.delta >= 0 ? '+' : '−'
+            }}{{ formatMoney(Math.abs(hoveredForecastHandoff.delta)) }}
+          </span>
           <span>Activos {{ formatMoney(hoverDetail.totalAssets) }}</span>
           <span>Liquidez {{ formatMoney(hoverDetail.liquidity) }}</span>
           <span>Productivo {{ formatMoney(hoverDetail.productive) }}</span>

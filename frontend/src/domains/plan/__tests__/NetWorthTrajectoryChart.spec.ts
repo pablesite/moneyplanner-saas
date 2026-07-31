@@ -65,6 +65,8 @@ describe('NetWorthTrajectoryChart', () => {
     expect(wrapper.findAll('.plan-chart-capital-label')).toHaveLength(4);
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Patrimonio');
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Capital');
+    expect(wrapper.find('.plan-chart-handoff').text()).toContain('Previsión +');
+    expect(wrapper.find('.plan-chart-handoff title').text()).toContain('desde ene 26');
     expect(wrapper.find('.plan-chart-legend').text()).toContain('Fondo de emergencia');
     const xLabels = wrapper.findAll('.plan-chart-x-label').map((n) => n.text());
     expect(xLabels.length).toBeGreaterThan(0);
@@ -86,13 +88,12 @@ describe('NetWorthTrajectoryChart', () => {
 
   it('drops projected rows that fall behind the last historical close', () => {
     // 2025 projected row is before the last historical date (2026-01) -> excluded,
-    // so the projected path only spans 2027 and 2035.
+    // so the projected path links the last historical close with 2027 and 2035.
     const wrapper = mount(NetWorthTrajectoryChart, {
       props: { timeline: baseTimeline, projection: baseProjection },
     });
     const projPath = wrapper.find('.plan-chart-line.proj').attributes('d') ?? '';
-    // A two-point path has exactly one move and one line command.
-    expect((projPath.match(/[ML]/g) ?? []).length).toBe(2);
+    expect((projPath.match(/[ML]/g) ?? []).length).toBe(3);
   });
 
   it('renders the target-year marker', () => {
