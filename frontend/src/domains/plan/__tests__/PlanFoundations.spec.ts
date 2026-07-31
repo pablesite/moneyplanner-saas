@@ -68,7 +68,7 @@ function mountCompact(overrides: Partial<PlanFoundationsData> = {}) {
 }
 
 describe('PlanFoundations', () => {
-  it('cada cimiento abre con su nota A-E', () => {
+  it('cada dimensión abre con su nota A-E', () => {
     const wrapper = mountCompact();
     const grades = wrapper.findAll('.plan-grade').map((node) => node.text());
 

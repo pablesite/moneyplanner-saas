@@ -13,7 +13,7 @@ export const appShellNavItems: NavItem[] = [
     iconKey: 'status',
     label: 'Mi Plan',
     mobileLabel: 'Plan',
-    hint: 'Proyección, cimientos y próximos pasos',
+    hint: 'Proyección, dimensiones y próximos pasos',
     to: '/plan',
   },
   {

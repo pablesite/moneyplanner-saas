@@ -105,7 +105,7 @@ const expenseEntries = [
   }),
 ];
 
-// Solo se lee `cash_flow`; el resto de cimientos no los usa este componente.
+// Solo se lee `cash_flow`; el resto de dimensiones no las usa este componente.
 const transientFoundations = {
   cash_flow: {
     score: 60,

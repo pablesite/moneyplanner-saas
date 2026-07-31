@@ -37,7 +37,7 @@ const monthlyAction = computed(() => {
   const amount = Number(nextAction.value?.monthly_commitment ?? 0);
   return amount > 0 ? `${formatMoney(amount)} al mes` : null;
 });
-// El titular del bloque: nota global de Core y, debajo, qué cimiento la frena.
+// El titular del bloque: nota global de Core y, debajo, qué dimensión la frena.
 const FOUNDATION_LABELS: Record<string, string> = {
   cash_flow: 'Flujo de caja',
   emergency_fund: 'Fondo de emergencia',
@@ -60,10 +60,10 @@ const foundationStatus = computed(() => {
   const critical = named('critical');
   const warning = named('warning');
   if (critical.length === 1) return `${critical[0]} bloquea el plan`;
-  if (critical.length) return `${critical.length} cimientos bloquean el plan`;
+  if (critical.length) return `${critical.length} dimensiones bloquean el plan`;
   if (warning.length === 1) return `${warning[0]} necesita atención`;
-  if (warning.length) return `${warning.length} cimientos necesitan atención`;
-  return 'Todo en verde';
+  if (warning.length) return `${warning.length} dimensiones necesitan atención`;
+  return 'Todas las dimensiones en verde';
 });
 
 onMounted(() => {

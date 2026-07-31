@@ -380,7 +380,7 @@ export type PlanFoundationStatus = 'good' | 'warning' | 'critical';
 /** Nota A-E que Core deriva del score, encajada en las bandas de `status`. */
 export type PlanFoundationGrade = 'A' | 'B' | 'C' | 'D' | 'E';
 
-/** Cabecera común de cada cimiento puntuado (y de la nota global del bloque). */
+/** Cabecera común de cada dimensión puntuada (y de la nota global del bloque). */
 export type PlanFoundationScore = {
   score: number;
   status?: PlanFoundationStatus;

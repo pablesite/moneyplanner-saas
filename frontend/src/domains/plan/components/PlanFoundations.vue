@@ -62,7 +62,7 @@ function hasCommitments(cashFlow: PlanFoundations['cash_flow']): boolean {
 }
 
 // Score 0 en rojo sin deuda alguna se lee como contradicción: sin pasivos no hay
-// nada que puntuar, así que el cimiento lo dice en palabras y sin tono crítico.
+// nada que puntuar, así que la dimensión lo dice en palabras y sin tono crítico.
 function hasDebt(debt: PlanFoundations['debt']): boolean {
   return toNumber(debt.total_debt) > 0;
 }
@@ -99,14 +99,14 @@ function qualitySummary(flags: Record<string, boolean>): string {
     <div v-if="!compact" class="sect-head">
       <div>
         <p class="plan-block-eyebrow">Salud financiera</p>
-        <h2 class="sect-title">Diagnóstico compacto</h2>
+        <h2 class="sect-title">Diagnóstico por dimensiones</h2>
         <p class="sect-sub">
           Flujo de caja, fondo de emergencia, deuda, aportación, patrimonio y calidad de datos.
         </p>
       </div>
     </div>
     <div v-if="foundations" class="plan-foundation-grid">
-      <!-- Cada cimiento abre con su nota: la letra juzga, la cifra de la derecha
+      <!-- Cada dimensión abre con su nota: la letra juzga, la cifra de la derecha
            informa. El valor dejó de ser la palabra del estado, que solo repetía el
            color con más letras. -->
       <article>
@@ -255,6 +255,6 @@ function qualitySummary(flags: Record<string, boolean>): string {
         </small>
       </article>
     </div>
-    <p v-else class="plan-muted">Aún no hay cimientos calculados para este plan.</p>
+    <p v-else class="plan-muted">Aún no hay dimensiones calculadas para este plan.</p>
   </section>
 </template>
