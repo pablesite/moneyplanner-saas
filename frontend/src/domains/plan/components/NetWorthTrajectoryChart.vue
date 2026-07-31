@@ -5,7 +5,7 @@ import { formatMoney } from '@/lib/format';
 import { formatMonthYearLabel, formatShortMonthYear } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import type { PlanMember, ProjectionResponse } from '@/domains/plan/types';
-import { compactYearWithAges } from '@/domains/plan/age';
+import { ageInYear, compactYearWithAges } from '@/domains/plan/age';
 import type { PlanTimelineMarker } from '@/domains/plan/usePlanEvents';
 
 const props = withDefaults(
@@ -205,13 +205,14 @@ const xTicks = computed(() => {
   const { min, max } = timeBounds.value;
   const firstYear = new Date(min).getFullYear();
   const lastYear = new Date(max).getFullYear();
-  const span = Math.max(1, lastYear - firstYear);
-  const step = Math.max(1, Math.ceil(span / 7));
-  const ticks: Array<{ x: number; label: string }> = [];
-  for (let year = Math.ceil(firstYear / step) * step; year <= lastYear; year += step) {
+  const ticks: Array<{ x: number; year: number; ages: string }> = [];
+  for (let year = Math.ceil(firstYear / 5) * 5; year <= lastYear; year += 5) {
     const t = Date.parse(`${year}-01-01`);
     if (t < min || t > max) continue;
-    ticks.push({ x: tx(t), label: compactYearWithAges(year, props.members) });
+    const ages = props.members
+      .map((member) => ageInYear(member.birth_date, year))
+      .filter((age): age is number => age != null);
+    ticks.push({ x: tx(t), year, ages: ages.length ? `${ages.join('/')} años` : '' });
   }
   return ticks;
 });
@@ -425,7 +426,7 @@ function onMove(event: MouseEvent): void {
         <g class="plan-chart-grid">
           <line
             v-for="tick in xTicks"
-            :key="`x-grid-${tick.label}`"
+            :key="`x-grid-${tick.year}`"
             class="plan-chart-x-grid"
             :x1="tick.x"
             :x2="tick.x"
@@ -455,12 +456,15 @@ function onMove(event: MouseEvent): void {
           </text>
           <text
             v-for="tick in xTicks"
-            :key="`x-${tick.label}`"
+            :key="`x-${tick.year}`"
             class="plan-chart-x-label"
             :x="tick.x"
-            :y="H - 10"
+            :y="H - 20"
           >
-            {{ tick.label }}
+            <tspan class="plan-chart-x-year">{{ tick.year }}</tspan>
+            <tspan v-if="tick.ages" class="plan-chart-x-age" :x="tick.x" dy="13">
+              {{ tick.ages }}
+            </tspan>
           </text>
         </g>
         <g class="plan-chart-axis-titles" aria-hidden="true">

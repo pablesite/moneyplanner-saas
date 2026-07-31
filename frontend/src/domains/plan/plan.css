@@ -548,6 +548,16 @@
   text-anchor: end;
 }
 
+.plan-chart-x-year {
+  font-weight: 650;
+}
+
+.plan-chart-grid .plan-chart-x-age {
+  fill: var(--faint);
+  font-size: 9px;
+  font-weight: 500;
+}
+
 .plan-chart-axis-titles text {
   fill: var(--muted);
   font-size: 10px;

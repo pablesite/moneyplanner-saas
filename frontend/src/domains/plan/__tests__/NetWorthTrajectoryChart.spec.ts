@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils';
 import NetWorthTrajectoryChart from '@/domains/plan/components/NetWorthTrajectoryChart.vue';
 import type { PlanTimelineMarker } from '@/domains/plan/usePlanEvents';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
+import type { PlanMember } from '@/domains/plan/types';
 import { makeProjection, trajectoryRow } from './planFixtures';
 
 function timeline(
@@ -50,10 +51,35 @@ const baseProjection = makeProjection({
   summary: { target_year: makeProjection().summary.target_year },
 });
 
+const members: PlanMember[] = [
+  {
+    id: 1,
+    name: 'Pablo',
+    role: 'adult',
+    is_active: true,
+    birth_date: '1980-01-01',
+    employment_income_end_date: null,
+    pension_start_date: null,
+    estimated_monthly_pension_today_eur: null,
+    other_future_income_today_eur: null,
+  },
+  {
+    id: 2,
+    name: 'Ana',
+    role: 'adult',
+    is_active: true,
+    birth_date: '1982-01-01',
+    employment_income_end_date: null,
+    pension_start_date: null,
+    estimated_monthly_pension_today_eur: null,
+    other_future_income_today_eur: null,
+  },
+];
+
 describe('NetWorthTrajectoryChart', () => {
   it('renders historical and projected series paths and year axis labels', () => {
     const wrapper = mount(NetWorthTrajectoryChart, {
-      props: { timeline: baseTimeline, projection: baseProjection },
+      props: { timeline: baseTimeline, projection: baseProjection, members },
     });
     expect(wrapper.find('.plan-chart-line.hist').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.proj').exists()).toBe(true);
@@ -66,12 +92,14 @@ describe('NetWorthTrajectoryChart', () => {
     expect(capitalLabels).toContain('100k');
     expect(capitalLabels).not.toContain('100,0k');
     expect(wrapper.findAll('.plan-chart-y-grid').length).toBeGreaterThan(4);
-    expect(wrapper.findAll('.plan-chart-x-grid').length).toBeGreaterThan(4);
+    expect(wrapper.findAll('.plan-chart-x-grid')).toHaveLength(2);
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Patrimonio');
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Capital');
     expect(wrapper.find('.plan-chart-legend').text()).toContain('Fondo de emergencia');
-    const xLabels = wrapper.findAll('.plan-chart-x-label').map((n) => n.text());
-    expect(xLabels.length).toBeGreaterThan(0);
+    const years = wrapper.findAll('.plan-chart-x-year').map((node) => node.text());
+    const ages = wrapper.findAll('.plan-chart-x-age').map((node) => node.text());
+    expect(years).toEqual(['2030', '2035']);
+    expect(ages).toEqual(['50/48 años', '55/53 años']);
   });
 
   it('keeps every historical point instead of truncating the chart to 36 closes', () => {
