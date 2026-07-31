@@ -175,7 +175,7 @@ const kpis = computed<AKpiItem[]>(() => [
   {
     label: 'Escenario central',
     value: projectionScenarioLabel(props.projection.scenario),
-    meta: 'Puedes cambiarlo en Ajustes',
+    meta: 'Cámbialo en Ajustes del cálculo',
   },
 ]);
 </script>

@@ -887,7 +887,6 @@
   gap: 4px;
 }
 
-.plan-calculation-settings summary,
 .plan-chart-table summary {
   cursor: pointer;
   font-weight: 650;
@@ -1448,37 +1447,42 @@
   color: oklch(0.78 0.13 80);
 }
 
-.plan-assumptions {
+/* Ajustes del cálculo: escenario, patrimonio a preservar y parámetros de la
+   hipótesis, todo en el modal que abre la cabecera. */
+.plan-settings {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
-.plan-assumptions p {
+.plan-settings-field {
+  max-width: 260px;
+}
+
+.plan-settings-note {
   margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.plan-settings-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
   color: var(--muted);
 }
 
-.plan-assumptions dl {
+.plan-settings-row strong {
+  color: var(--text);
+}
+
+.plan-settings-params {
   display: grid;
   gap: 10px;
-  margin: 0;
-}
-
-.plan-assumptions div {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  padding-block: 10px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
-}
-
-.plan-assumptions dt {
-  color: var(--muted);
-}
-
-.plan-assumptions dd {
-  margin: 0;
-  font-family: var(--font-mono);
 }
 
 .plan-setup {

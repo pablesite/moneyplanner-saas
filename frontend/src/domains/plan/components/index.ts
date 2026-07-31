@@ -4,7 +4,7 @@ export { default as PlanFoundations } from './PlanFoundations.vue';
 export { default as PlanHero } from './PlanHero.vue';
 export { default as PlanSituationSection } from './PlanSituationSection.vue';
 export { default as ProductiveCapitalProgress } from './ProductiveCapitalProgress.vue';
-export { default as ProjectionAssumptionsDrawer } from './ProjectionAssumptionsDrawer.vue';
+export { default as PlanCalculationSettingsModal } from './PlanCalculationSettingsModal.vue';
 export { default as PlanEventsTimeline } from './PlanEventsTimeline.vue';
 export { default as PlanExpenseEqualizer } from './PlanExpenseEqualizer.vue';
 export { default as PlanRecommendationCard } from './PlanRecommendationCard.vue';

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, AState } from '@/domains/ui';
 import {
   NetWorthTrajectoryChart,
+  PlanCalculationSettingsModal,
   PlanFoundations,
   PlanHero,
   PlanSituationSection,
   ProductiveCapitalProgress,
-  ProjectionAssumptionsDrawer,
 } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import { planEventMarkers } from '@/domains/plan/usePlanEvents';
@@ -18,21 +18,12 @@ import '@/domains/plan/plan.css';
 
 const { store, loading, error, plan, planMissing, projection, netWorthTimeline, scenario } =
   usePlan();
-const assumptionsOpen = ref(false);
+const settingsOpen = ref(false);
 const trajectoryOpen = ref(false);
 
-const scenarioOptions: ASelectItem[] = [
-  { value: 'prudent', label: 'Prudente' },
-  { value: 'expected', label: 'Esperado' },
-  { value: 'favorable', label: 'Favorable' },
-];
-
-const activeScenario = computed({
-  get: () => scenario.value,
-  set: (value) => {
-    void store.fetchOverview(value as ProjectionScenario);
-  },
-});
+function selectScenario(value: ProjectionScenario): void {
+  void store.fetchOverview(value);
+}
 
 const eventMarkers = computed(() => planEventMarkers(store.events));
 // En un apretón transitorio no hay acción de mejora real (los compromisos vencen
@@ -85,6 +76,11 @@ onMounted(() => {
         <span>Tu camino para que trabajar sea opcional</span>
       </template>
       <template #actions>
+        <!-- Lo que altera el cálculo vive junto a lo que altera el objetivo, no al
+             final de la página. -->
+        <AButton v-if="plan && !planMissing" variant="ghost" @click="settingsOpen = true">
+          Ajustes del cálculo
+        </AButton>
         <RouterLink v-if="plan && !planMissing" class="btn btn-ghost" to="/plan/setup">
           Editar objetivo
         </RouterLink>
@@ -152,28 +148,6 @@ onMounted(() => {
         </section>
       </div>
 
-      <section class="sect plan-calculation-settings">
-        <details>
-          <summary>Ajustes del cálculo</summary>
-          <div class="plan-toolbar">
-            <label class="context-field">
-              <span>Escenario</span>
-              <ASelect
-                v-model="activeScenario"
-                :options="scenarioOptions"
-                class="filter-ctrl"
-                :searchable="false"
-              />
-            </label>
-            <span v-if="plan.preservation_target_eur">
-              Capital que no quieres consumir:
-              <strong>{{ formatMoney(plan.preservation_target_eur) }}</strong>
-            </span>
-            <AButton variant="ghost" @click="assumptionsOpen = true">Ver parámetros</AButton>
-          </div>
-        </details>
-      </section>
-
       <section class="sect plan-trajectory-detail">
         <div class="sect-head">
           <div>
@@ -199,10 +173,13 @@ onMounted(() => {
         Una parte no pudo actualizarse. Los demás datos siguen disponibles. {{ error }}
       </p>
 
-      <ProjectionAssumptionsDrawer
-        :open="assumptionsOpen"
+      <PlanCalculationSettingsModal
+        :open="settingsOpen"
+        :scenario="scenario"
         :assumptions="projection.assumptions"
-        @close="assumptionsOpen = false"
+        :preservation-target="plan.preservation_target_eur"
+        @update:scenario="selectScenario"
+        @close="settingsOpen = false"
       />
     </template>
   </main>
