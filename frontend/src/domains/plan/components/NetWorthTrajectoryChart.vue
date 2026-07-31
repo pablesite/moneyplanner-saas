@@ -21,11 +21,11 @@ const props = withDefaults(
 );
 
 const W = 960;
-const H = 280;
+const H = 300;
 const padL = 72;
-const padR = 24;
-const padT = 22;
-const padB = 34;
+const padR = 72;
+const padT = 34;
+const padB = 38;
 const hoverIndex = ref<number | null>(null);
 
 type Point = {
@@ -98,22 +98,25 @@ const targetSeries = computed(() =>
   projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.target_capital) })),
 );
 
-const values = computed(() => [
-  ...points.value.map((point) => point.value),
+const netWorthValues = computed(() => points.value.map((point) => point.value));
+const capitalValues = computed(() => [
   ...historicalProductiveSeries.value.map((entry) => entry.value),
   ...historicalSecuritySeries.value.map((entry) => entry.value),
   ...projectedProductiveSeries.value.map((entry) => entry.value),
   ...projectedSecuritySeries.value.map((entry) => entry.value),
   ...targetSeries.value.map((entry) => entry.value),
 ]);
-const bounds = computed(() => {
-  if (!values.value.length) return { min: 0, max: 1 };
-  const min = Math.min(...values.value, 0);
-  const max = Math.max(...values.value, 1);
+
+function seriesBounds(values: number[]): { min: number; max: number } {
+  if (!values.length) return { min: 0, max: 1 };
+  const min = Math.min(...values, 0);
+  const max = Math.max(...values, 1);
   if (min === max) return { min: min - 1, max: max + 1 };
   return { min, max };
-});
-const range = computed(() => bounds.value.max - bounds.value.min || 1);
+}
+
+const netWorthBounds = computed(() => seriesBounds(netWorthValues.value));
+const capitalBounds = computed(() => seriesBounds(capitalValues.value));
 
 const timeBounds = computed(() => {
   if (!points.value.length) return { min: 0, max: 1 };
@@ -127,29 +130,53 @@ function tx(t: number): number {
   return padL + ((t - min) / (max - min)) * (W - padL - padR);
 }
 
-function py(value: number): number {
-  return padT + (1 - (value - bounds.value.min) / range.value) * (H - padT - padB);
+function scaledY(value: number, bounds: { min: number; max: number }): number {
+  const range = bounds.max - bounds.min || 1;
+  return padT + (1 - (value - bounds.min) / range) * (H - padT - padB);
 }
 
-function buildPath(series: Array<{ t: number; value: number }>): string {
+function pyNetWorth(value: number): number {
+  return scaledY(value, netWorthBounds.value);
+}
+
+function pyCapital(value: number): number {
+  return scaledY(value, capitalBounds.value);
+}
+
+function buildPath(
+  series: Array<{ t: number; value: number }>,
+  yScale: (value: number) => number,
+): string {
   if (!series.length) return '';
   return series
-    .map((entry, index) => `${index === 0 ? 'M' : 'L'} ${tx(entry.t)} ${py(entry.value)}`)
+    .map((entry, index) => `${index === 0 ? 'M' : 'L'} ${tx(entry.t)} ${yScale(entry.value)}`)
     .join(' ');
 }
 
-const historicalPath = computed(() => buildPath(historicalPoints.value));
-const projectedPath = computed(() => buildPath(projectedPoints.value));
-const historicalProductivePath = computed(() => buildPath(historicalProductiveSeries.value));
-const historicalSecurityPath = computed(() => buildPath(historicalSecuritySeries.value));
-const projectedProductivePath = computed(() => buildPath(projectedProductiveSeries.value));
-const projectedSecurityPath = computed(() => buildPath(projectedSecuritySeries.value));
-const targetPath = computed(() => buildPath(targetSeries.value));
+const historicalPath = computed(() => buildPath(historicalPoints.value, pyNetWorth));
+const projectedPath = computed(() => buildPath(projectedPoints.value, pyNetWorth));
+const historicalProductivePath = computed(() =>
+  buildPath(historicalProductiveSeries.value, pyCapital),
+);
+const historicalSecurityPath = computed(() => buildPath(historicalSecuritySeries.value, pyCapital));
+const projectedProductivePath = computed(() =>
+  buildPath(projectedProductiveSeries.value, pyCapital),
+);
+const projectedSecurityPath = computed(() => buildPath(projectedSecuritySeries.value, pyCapital));
+const targetPath = computed(() => buildPath(targetSeries.value, pyCapital));
 
 const yTicks = computed(() =>
   [0, 1, 2, 3].map((i) => {
-    const value = bounds.value.min + range.value * (i / 3);
-    return { value, y: py(value) };
+    const bounds = netWorthBounds.value;
+    const value = bounds.min + (bounds.max - bounds.min) * (i / 3);
+    return { value, y: pyNetWorth(value) };
+  }),
+);
+const capitalTicks = computed(() =>
+  [0, 1, 2, 3].map((i) => {
+    const bounds = capitalBounds.value;
+    const value = bounds.min + (bounds.max - bounds.min) * (i / 3);
+    return { value, y: pyCapital(value) };
   }),
 );
 
@@ -351,6 +378,15 @@ function onMove(event: MouseEvent): void {
             {{ formatCompact(tick.value) }}
           </text>
           <text
+            v-for="tick in capitalTicks"
+            :key="`capital-label-${tick.value}`"
+            class="plan-chart-capital-label"
+            :x="W - 8"
+            :y="tick.y + 4"
+          >
+            {{ formatCompact(tick.value) }}
+          </text>
+          <text
             v-for="tick in xTicks"
             :key="`x-${tick.label}`"
             class="plan-chart-x-label"
@@ -359,6 +395,10 @@ function onMove(event: MouseEvent): void {
           >
             {{ tick.label }}
           </text>
+        </g>
+        <g class="plan-chart-axis-titles" aria-hidden="true">
+          <text x="8" y="14">Patrimonio</text>
+          <text class="capital" :x="W - 8" y="14">Capital</text>
         </g>
         <g v-for="marker in yearMarkers" :key="marker.label" class="plan-chart-marker">
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" :class="marker.kind" />
@@ -406,7 +446,7 @@ function onMove(event: MouseEvent): void {
           <circle
             class="plan-chart-hover-dot"
             :cx="tx(hoverPoint.t)"
-            :cy="py(hoverPoint.value)"
+            :cy="pyNetWorth(hoverPoint.value)"
             r="5"
           />
         </g>

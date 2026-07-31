@@ -539,6 +539,24 @@
   font-size: 13px;
 }
 
+.plan-chart-grid .plan-chart-capital-label {
+  fill: var(--chart-productive);
+  text-anchor: end;
+}
+
+.plan-chart-axis-titles text {
+  fill: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-chart-axis-titles .capital {
+  fill: var(--chart-productive);
+  text-anchor: end;
+}
+
 .plan-chart-line {
   fill: none;
   stroke-width: 3;
