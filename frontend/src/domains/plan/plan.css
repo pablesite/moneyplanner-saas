@@ -1,13 +1,23 @@
 .plan-page {
   display: grid;
-  gap: 18px;
+  /* Mismo ritmo vertical que Patrimonio (`.a-nw-page`): las dos vistas principales
+     comparten cabecera, tabs y banda de contexto, así que no pueden respirar
+     distinto. */
+  gap: 12px;
 }
 
-/* Sticky: cambiar de sección en una página larga nunca exige volver arriba. */
+/* Tabs con las mismas métricas que las de Patrimonio (`.a-nw-tabs-bar`): misma
+   altura, mismo tamaño de letra y subrayado a ras de la hairline. Se mantiene
+   sticky, que es comportamiento propio de esta vista, no estilo. */
 .plan-tabs-bar {
   position: sticky;
   top: 0;
   z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   overflow-x: auto;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
@@ -15,23 +25,41 @@
 
 .plan-tabs-bar .tabs {
   display: flex;
-  gap: 24px;
+  gap: 0;
   min-width: max-content;
+  margin-bottom: -1px;
 }
 
 .plan-tabs-bar .tab {
-  padding: 10px 0;
+  padding: 10px 16px;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--muted);
   font: inherit;
+  font-size: 13.5px;
+  text-decoration: none;
   cursor: pointer;
+  transition: color 0.12s;
+}
+
+.plan-tabs-bar .tab:hover {
+  color: var(--text);
 }
 
 .plan-tabs-bar .tab.on {
   border-bottom-color: var(--accent);
   color: var(--text);
+}
+
+/* El rótulo del hero ocupa la banda que en Patrimonio ocupan los selectores de
+   lectura (`.a-nw-read-controls`): misma altura, así que el titular de cada vista
+   arranca a la misma altura. */
+.plan-hero .a-hero-figure > .eyebrow {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 10px 0;
 }
 
 .plan-toolbar {
@@ -545,6 +573,10 @@
 
 .plan-chart-grid .plan-chart-capital-label {
   fill: var(--chart-productive);
+  text-anchor: start;
+}
+
+.plan-chart-grid .plan-chart-networth-label {
   text-anchor: end;
 }
 
@@ -573,7 +605,7 @@
 
 .plan-chart-line {
   fill: none;
-  stroke-width: 3;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -584,7 +616,24 @@
 
 .plan-chart-line.proj {
   stroke: var(--chart-networth);
-  stroke-dasharray: 9 8;
+  stroke-dasharray: 7 6;
+}
+
+.plan-chart-area {
+  pointer-events: none;
+}
+
+.plan-chart-point {
+  fill: var(--chart-networth);
+  pointer-events: none;
+}
+
+.plan-chart-point.historical {
+  opacity: 0.56;
+}
+
+.plan-chart-point.projected {
+  opacity: 0.78;
 }
 
 .plan-chart-line.prod {
@@ -684,13 +733,15 @@
 }
 
 .plan-chart-hover-line {
-  stroke: rgba(255, 255, 255, 0.2);
+  stroke: var(--chart-networth);
+  stroke-dasharray: 3 3;
+  opacity: 0.42;
 }
 
 .plan-chart-hover-dot {
-  fill: var(--text);
-  stroke: var(--panel);
-  stroke-width: 2;
+  fill: var(--bg);
+  stroke: var(--chart-networth);
+  stroke-width: 2.5;
 }
 
 .plan-chart-tooltip {
@@ -704,6 +755,20 @@
   border-radius: 8px;
   background: rgba(12, 13, 16, 0.92);
   box-shadow: var(--shadow-surface-soft);
+}
+
+.plan-chart-tooltip strong {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-chart-tooltip .plan-chart-tooltip-value {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .plan-chart-tooltip span,
@@ -2248,12 +2313,9 @@
     min-height: 44px;
   }
 
+  /* En móvil el tap target manda sobre la métrica de escritorio. */
   .plan-tabs-bar .tab {
-    padding: 14px 2px;
-  }
-
-  .plan-tabs-bar .tabs {
-    gap: 18px;
+    padding: 14px 12px;
   }
 
   .plan-page {

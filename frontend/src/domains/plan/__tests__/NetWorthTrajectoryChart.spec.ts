@@ -83,6 +83,10 @@ describe('NetWorthTrajectoryChart', () => {
     });
     expect(wrapper.find('.plan-chart-line.hist').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.proj').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-area.historical').exists()).toBe(true);
+    expect(wrapper.find('.plan-chart-area.projected').exists()).toBe(true);
+    expect(wrapper.findAll('.plan-chart-point.historical')).toHaveLength(2);
+    expect(wrapper.findAll('.plan-chart-point.projected')).toHaveLength(2);
     expect(wrapper.find('.plan-chart-line.prod.historical-segment').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.prod.projected-segment').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.security.historical-segment').exists()).toBe(true);

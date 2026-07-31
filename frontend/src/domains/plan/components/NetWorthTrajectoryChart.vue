@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, useId } from 'vue';
 import { AInfoHint } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import { formatMonthYearLabel, formatShortMonthYear } from '@/lib/dates';
@@ -27,6 +27,9 @@ const padR = 72;
 const padT = 34;
 const padB = 38;
 const hoverIndex = ref<number | null>(null);
+const chartId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+const historicalAreaGradientId = `plan-history-area-${chartId}`;
+const projectedAreaGradientId = `plan-projection-area-${chartId}`;
 
 type Point = {
   t: number;
@@ -182,8 +185,21 @@ function buildPath(
     .join(' ');
 }
 
+function buildAreaPath(
+  series: Array<{ t: number; value: number }>,
+  yScale: (value: number) => number,
+): string {
+  if (series.length < 2) return '';
+  const first = series[0]!;
+  const last = series[series.length - 1]!;
+  const baseline = H - padB;
+  return `${buildPath(series, yScale)} L ${tx(last.t)} ${baseline} L ${tx(first.t)} ${baseline} Z`;
+}
+
 const historicalPath = computed(() => buildPath(historicalPoints.value, pyNetWorth));
 const projectedPath = computed(() => buildPath(projectedPoints.value, pyNetWorth));
+const historicalAreaPath = computed(() => buildAreaPath(historicalPoints.value, pyNetWorth));
+const projectedAreaPath = computed(() => buildAreaPath(projectedPoints.value, pyNetWorth));
 const historicalProductivePath = computed(() =>
   buildPath(historicalProductiveSeries.value, pyCapital),
 );
@@ -423,6 +439,16 @@ function onMove(event: MouseEvent): void {
         @mousemove="onMove"
         @mouseleave="hoverIndex = null"
       >
+        <defs>
+          <linearGradient :id="historicalAreaGradientId" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="var(--chart-networth)" stop-opacity="0.24" />
+            <stop offset="100%" stop-color="var(--chart-networth)" stop-opacity="0.02" />
+          </linearGradient>
+          <linearGradient :id="projectedAreaGradientId" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="var(--chart-networth)" stop-opacity="0.13" />
+            <stop offset="100%" stop-color="var(--chart-networth)" stop-opacity="0" />
+          </linearGradient>
+        </defs>
         <g class="plan-chart-grid">
           <line
             v-for="tick in xTicks"
@@ -442,14 +468,20 @@ function onMove(event: MouseEvent): void {
             :y1="tick.y"
             :y2="tick.y"
           />
-          <text v-for="tick in yTicks" :key="`label-${tick.value}`" :x="8" :y="tick.y + 4">
+          <text
+            v-for="tick in yTicks"
+            :key="`label-${tick.value}`"
+            class="plan-chart-networth-label"
+            :x="padL - 8"
+            :y="tick.y + 4"
+          >
             {{ formatAxisTick(tick.value) }}
           </text>
           <text
             v-for="tick in capitalTicks"
             :key="`capital-label-${tick.value}`"
             class="plan-chart-capital-label"
-            :x="W - 8"
+            :x="W - padR + 8"
             :y="tick.y + 4"
           >
             {{ formatAxisTick(tick.value) }}
@@ -477,6 +509,18 @@ function onMove(event: MouseEvent): void {
             {{ marker.label }}
           </text>
         </g>
+        <path
+          v-if="historicalAreaPath"
+          class="plan-chart-area historical"
+          :d="historicalAreaPath"
+          :fill="`url(#${historicalAreaGradientId})`"
+        />
+        <path
+          v-if="projectedAreaPath"
+          class="plan-chart-area projected"
+          :d="projectedAreaPath"
+          :fill="`url(#${projectedAreaGradientId})`"
+        />
         <path v-if="targetPath" class="plan-chart-line target" :d="targetPath" />
         <path
           v-if="historicalProductivePath"
@@ -498,8 +542,36 @@ function onMove(event: MouseEvent): void {
           class="plan-chart-line security projected-segment"
           :d="projectedSecurityPath"
         />
-        <path v-if="historicalPath" class="plan-chart-line hist" :d="historicalPath" />
-        <path v-if="projectedPath" class="plan-chart-line proj" :d="projectedPath" />
+        <path
+          v-if="historicalPath"
+          class="plan-chart-line hist"
+          :d="historicalPath"
+          vector-effect="non-scaling-stroke"
+        />
+        <path
+          v-if="projectedPath"
+          class="plan-chart-line proj"
+          :d="projectedPath"
+          vector-effect="non-scaling-stroke"
+        />
+        <circle
+          v-for="point in historicalPoints"
+          :key="`historical-point-${point.date}`"
+          class="plan-chart-point historical"
+          :cx="tx(point.t)"
+          :cy="pyNetWorth(point.value)"
+          r="1.35"
+          vector-effect="non-scaling-stroke"
+        />
+        <circle
+          v-for="point in projectedPoints"
+          :key="`projected-point-${point.year}`"
+          class="plan-chart-point projected"
+          :cx="tx(point.t)"
+          :cy="pyNetWorth(point.value)"
+          r="1.8"
+          vector-effect="non-scaling-stroke"
+        />
         <g
           v-for="marker in eventMarkers"
           :key="`event-${marker.id}`"
@@ -522,18 +594,20 @@ function onMove(event: MouseEvent): void {
             :x2="tx(hoverPoint.t)"
             :y1="padT"
             :y2="H - padB"
+            vector-effect="non-scaling-stroke"
           />
           <circle
             class="plan-chart-hover-dot"
             :cx="tx(hoverPoint.t)"
             :cy="pyNetWorth(hoverPoint.value)"
-            r="5"
+            r="5.5"
+            vector-effect="non-scaling-stroke"
           />
         </g>
       </svg>
       <div v-if="hoverPoint" class="plan-chart-tooltip">
         <strong>{{ hoverPoint.label }}</strong>
-        <span>{{ formatMoney(hoverPoint.value) }}</span>
+        <span class="plan-chart-tooltip-value">{{ formatMoney(hoverPoint.value) }}</span>
         <template v-if="hoverDetail">
           <span>Activos {{ formatMoney(hoverDetail.totalAssets) }}</span>
           <span>Liquidez {{ formatMoney(hoverDetail.liquidity) }}</span>
