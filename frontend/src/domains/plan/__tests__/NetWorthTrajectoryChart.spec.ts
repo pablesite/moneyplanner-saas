@@ -113,18 +113,20 @@ describe('NetWorthTrajectoryChart', () => {
     });
     const eventGroups = wrapper.findAll('.plan-chart-event');
     expect(eventGroups).toHaveLength(1);
-    // Sin <text> visible: el nombre vive en el tooltip nativo, como en Patrimonio.
-    expect(wrapper.find('.plan-chart-event text').exists()).toBe(false);
+    expect(wrapper.find('.plan-chart-event text').text()).toContain('Coche Ana');
+    expect(wrapper.find('.plan-chart-event text').text()).toContain('jun 2027');
+    expect(wrapper.find('.plan-chart-event circle').attributes('cy')).not.toBe('262');
     expect(wrapper.find('.plan-chart-event title').text()).toContain('Coche Ana');
     expect(wrapper.find('.plan-chart-event title').text()).toContain('Vehículo');
-    expect(wrapper.find('.plan-chart-legend').text()).toContain('Acontecimiento');
+    expect(wrapper.find('.plan-chart-event').attributes('aria-label')).toContain('Coche Ana');
+    expect(wrapper.find('.plan-chart-legend').text()).toContain('Decisión');
   });
 
   it('hides the event legend entry when there are no events', () => {
     const wrapper = mount(NetWorthTrajectoryChart, {
       props: { timeline: baseTimeline, projection: baseProjection },
     });
-    expect(wrapper.find('.plan-chart-legend').text()).not.toContain('Acontecimiento');
+    expect(wrapper.find('.plan-chart-legend').text()).not.toContain('Decisión');
   });
 
   it('offers the projected data as an accessible table', () => {

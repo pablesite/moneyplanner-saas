@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { AInfoHint } from '@/domains/ui';
 import { formatCompact, formatMoney } from '@/lib/format';
-import { formatMonthYearLabel } from '@/lib/dates';
+import { formatMonthYearLabel, formatShortMonthYear } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import type { PlanMember, ProjectionResponse } from '@/domains/plan/types';
 import { compactYearWithAges } from '@/domains/plan/age';
@@ -251,25 +251,61 @@ const yearMarkers = computed<YearMarker[]>(() => {
 type EventMarker = {
   id: number;
   x: number;
+  y: number;
+  labelX: number;
+  labelY: number;
+  anchorClass: 'anchor-start' | 'anchor-end';
   label: string;
+  dateLabel: string;
   detail: string;
   status: PlanTimelineMarker['status'];
 };
+
+function netWorthAt(t: number): number {
+  const series = points.value;
+  if (!series.length) return 0;
+  if (t <= series[0]!.t) return series[0]!.value;
+  for (let index = 1; index < series.length; index += 1) {
+    const current = series[index]!;
+    const previous = series[index - 1]!;
+    if (t <= current.t) {
+      const span = current.t - previous.t;
+      if (span <= 0) return current.value;
+      const progress = (t - previous.t) / span;
+      return previous.value + (current.value - previous.value) * progress;
+    }
+  }
+  return series[series.length - 1]!.value;
+}
 
 // Acontecimientos incorporados al plan como anotaciones sobre el eje temporal,
 // recortados al rango visible; no son una serie más.
 const eventMarkers = computed<EventMarker[]>(() => {
   const { min, max } = timeBounds.value;
+  const laneEnds = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
   return props.events
     .map((marker) => ({ marker, t: Date.parse(marker.date) }))
     .filter((entry) => Number.isFinite(entry.t) && entry.t >= min && entry.t <= max)
-    .map(({ marker, t }) => ({
-      id: marker.id,
-      x: tx(t),
-      label: marker.label,
-      detail: marker.detail,
-      status: marker.status,
-    }));
+    .sort((a, b) => a.t - b.t)
+    .map(({ marker, t }, index) => {
+      const x = tx(t);
+      let lane = laneEnds.findIndex((lastX) => x - lastX >= 145);
+      if (lane < 0) lane = index % laneEnds.length;
+      laneEnds[lane] = x;
+      const anchorAtEnd = x > W - padR - 150;
+      return {
+        id: marker.id,
+        x,
+        y: pyNetWorth(netWorthAt(t)),
+        labelX: x + (anchorAtEnd ? -7 : 7),
+        labelY: padT + 16 + lane * 18,
+        anchorClass: anchorAtEnd ? ('anchor-end' as const) : ('anchor-start' as const),
+        label: marker.label,
+        dateLabel: formatShortMonthYear(marker.date),
+        detail: marker.detail,
+        status: marker.status,
+      };
+    });
 });
 
 const hoverPoint = computed(() =>
@@ -349,7 +385,7 @@ function onMove(event: MouseEvent): void {
         <span><i class="prod"></i> Capital productivo</span>
         <span><i class="security"></i> Fondo de emergencia</span>
         <span><i class="target"></i> Capital objetivo</span>
-        <span v-if="eventMarkers.length"><i class="event"></i> Acontecimiento</span>
+        <span v-if="eventMarkers.length"><i class="event"></i> Decisión</span>
       </div>
     </div>
 
@@ -406,12 +442,6 @@ function onMove(event: MouseEvent): void {
             {{ marker.label }}
           </text>
         </g>
-        <!-- Sin etiqueta de texto: varios acontecimientos próximos se solapan; el nombre vive en el tooltip, como en Patrimonio. -->
-        <g v-for="marker in eventMarkers" :key="`event-${marker.id}`" class="plan-chart-event">
-          <title>{{ marker.label }} · {{ marker.detail }}</title>
-          <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" />
-          <circle :cx="marker.x" :cy="H - padB" r="4" />
-        </g>
         <path v-if="targetPath" class="plan-chart-line target" :d="targetPath" />
         <path
           v-if="historicalProductivePath"
@@ -435,6 +465,21 @@ function onMove(event: MouseEvent): void {
         />
         <path v-if="historicalPath" class="plan-chart-line hist" :d="historicalPath" />
         <path v-if="projectedPath" class="plan-chart-line proj" :d="projectedPath" />
+        <g
+          v-for="marker in eventMarkers"
+          :key="`event-${marker.id}`"
+          class="plan-chart-event"
+          role="img"
+          tabindex="0"
+          :aria-label="`${marker.label}, ${marker.dateLabel}. ${marker.detail}`"
+        >
+          <title>{{ marker.label }} · {{ marker.dateLabel }} · {{ marker.detail }}</title>
+          <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" />
+          <circle :cx="marker.x" :cy="marker.y" r="5" />
+          <text :x="marker.labelX" :y="marker.labelY" :class="marker.anchorClass">
+            {{ marker.label }} · {{ marker.dateLabel }}
+          </text>
+        </g>
         <g v-if="hoverPoint && hoverIndex !== null">
           <line
             class="plan-chart-hover-line"

@@ -633,11 +633,40 @@
 .plan-chart-event line {
   stroke: var(--chart-event);
   stroke-dasharray: 3 3;
-  opacity: 0.7;
+  opacity: 0.55;
 }
 
 .plan-chart-event circle {
   fill: var(--chart-event);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.plan-chart-event text {
+  fill: var(--chart-event);
+  font-size: 11px;
+  font-weight: 650;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-linejoin: round;
+  stroke-width: 4px;
+}
+
+.plan-chart-event text.anchor-start {
+  text-anchor: start;
+}
+
+.plan-chart-event text.anchor-end {
+  text-anchor: end;
+}
+
+.plan-chart-event:focus {
+  outline: none;
+}
+
+.plan-chart-event:focus circle {
+  stroke: var(--text);
+  stroke-width: 3;
 }
 
 .plan-chart-hover-line {
