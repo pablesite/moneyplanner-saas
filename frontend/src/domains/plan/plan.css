@@ -599,22 +599,6 @@
   stroke-dasharray: 2 5;
 }
 
-.plan-chart-handoff circle {
-  fill: var(--chart-networth);
-  stroke: var(--bg);
-  stroke-width: 2;
-}
-
-.plan-chart-handoff text {
-  fill: var(--chart-networth);
-  font-size: 10px;
-  font-weight: 650;
-  paint-order: stroke;
-  stroke: var(--bg);
-  stroke-linejoin: round;
-  stroke-width: 4px;
-}
-
 .plan-chart-x-label {
   text-anchor: middle;
 }
