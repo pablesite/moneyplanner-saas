@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // Marcador de ayuda Direction A: icono "i" con tooltip elegante al pasar el
-// ratón o enfocar. El contenido va en el slot por defecto.
+// ratón o enfocar. El contenido va en el slot; sin slot se usa `label`, que
+// además es siempre el nombre accesible. Antes, pasar solo `label` pintaba un
+// bocadillo vacío.
 defineProps<{ label?: string }>();
 </script>
 
@@ -11,6 +13,8 @@ defineProps<{ label?: string }>();
       <rect x="7.3" y="6.8" width="1.4" height="4.6" rx="0.7" fill="currentColor" />
       <circle cx="8" cy="4.6" r="0.85" fill="currentColor" />
     </svg>
-    <span class="info-hint-tip" role="tooltip"><slot /></span>
+    <span class="info-hint-tip" role="tooltip"
+      ><slot>{{ label }}</slot></span
+    >
   </span>
 </template>
