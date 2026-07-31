@@ -19,7 +19,6 @@ import '@/domains/plan/plan.css';
 const { store, loading, error, plan, planMissing, projection, netWorthTimeline, scenario } =
   usePlan();
 const settingsOpen = ref(false);
-const trajectoryOpen = ref(false);
 
 function selectScenario(value: ProjectionScenario): void {
   void store.fetchOverview(value);
@@ -148,26 +147,17 @@ onMounted(() => {
         </section>
       </div>
 
-      <section class="sect plan-trajectory-detail">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Detalle</p>
-            <h2 class="sect-title">Cómo evoluciona tu patrimonio</h2>
-          </div>
-          <AButton variant="ghost" @click="trajectoryOpen = !trajectoryOpen">
-            {{ trajectoryOpen ? 'Ocultar trayectoria' : 'Ver trayectoria' }}
-          </AButton>
-        </div>
-        <NetWorthTrajectoryChart
-          v-if="trajectoryOpen"
-          :timeline="netWorthTimeline"
-          :projection="projection"
-          :members="plan.members"
-          :events="eventMarkers"
-          :sustainable-year="store.overview?.sustainable_year ?? null"
-          :desired-year="store.overview?.desired_year ?? null"
-        />
-      </section>
+      <!-- El gráfico trae su propia cabecera ("Trayectoria patrimonial · Histórico y
+           proyección"): envolverlo en otra ("Detalle · Cómo evoluciona tu patrimonio")
+           solo duplicaba rótulo, y esconderlo tras un toggle escondía el contenido. -->
+      <NetWorthTrajectoryChart
+        :timeline="netWorthTimeline"
+        :projection="projection"
+        :members="plan.members"
+        :events="eventMarkers"
+        :sustainable-year="store.overview?.sustainable_year ?? null"
+        :desired-year="store.overview?.desired_year ?? null"
+      />
 
       <p v-if="error" class="plan-inline-error" role="alert">
         Una parte no pudo actualizarse. Los demás datos siguen disponibles. {{ error }}
