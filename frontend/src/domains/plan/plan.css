@@ -599,6 +599,22 @@
   stroke-dasharray: 2 5;
 }
 
+.plan-chart-handoff circle {
+  fill: var(--chart-networth);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.plan-chart-handoff text {
+  fill: var(--chart-networth);
+  font-size: 10px;
+  font-weight: 650;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-linejoin: round;
+  stroke-width: 4px;
+}
+
 .plan-chart-x-label {
   text-anchor: middle;
 }
@@ -792,45 +808,67 @@
   color: var(--text);
 }
 
-/* Nota A-E. Las bandas las decide Core (A/B good, C/D warning, E critical): aquí
-   solo se colorean, con dos tonos por banda para que la letra se distinga. */
+/* Nota A-E. Escala ordinal verde→rojo de cinco pasos, validada con el script de la
+   skill dataviz sobre el fondo oscuro real (#0c0d10): separación adyacente 17,3 ΔE a
+   visión normal y 8,8 con deuteranopía, y contraste ≥3:1 en los cinco. La letra va
+   dentro del chip, así que el color refuerza pero nunca es el único portador. */
 .plan-grade {
+  --grade-color: var(--muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
-  border: 1px solid currentColor;
+  border: 1px solid color-mix(in oklab, var(--grade-color) 45%, transparent);
   border-radius: 6px;
+  background: color-mix(in oklab, var(--grade-color) 16%, transparent);
+  color: var(--grade-color);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
 }
 
 .plan-grade.is-A {
-  color: var(--pos);
-  background: color-mix(in oklab, var(--pos) 16%, transparent);
+  --grade-color: #3bb360;
 }
 
 .plan-grade.is-B {
-  color: color-mix(in oklab, var(--pos) 78%, var(--muted));
-  background: color-mix(in oklab, var(--pos) 10%, transparent);
+  --grade-color: #b8fe60;
 }
 
 .plan-grade.is-C {
-  color: oklch(0.82 0.13 92);
-  background: color-mix(in oklab, oklch(0.82 0.13 92) 14%, transparent);
+  --grade-color: #feba08;
 }
 
 .plan-grade.is-D {
-  color: oklch(0.76 0.15 62);
-  background: color-mix(in oklab, oklch(0.76 0.15 62) 14%, transparent);
+  --grade-color: #e77412;
 }
 
 .plan-grade.is-E {
-  color: var(--neg);
-  background: color-mix(in oklab, var(--neg) 16%, transparent);
+  --grade-color: #d11d58;
+}
+
+/* El tema claro existe en tokens pero aún no se activa en ninguna vista; cuando se
+   active, la escala necesita pasos oscuros o el chip se vuelve ilegible sobre #faf9f7. */
+.dir-a.theme-light .plan-grade.is-A {
+  --grade-color: #007332;
+}
+
+.dir-a.theme-light .plan-grade.is-B {
+  --grade-color: #5f7a2a;
+}
+
+.dir-a.theme-light .plan-grade.is-C {
+  --grade-color: #b07c00;
+}
+
+.dir-a.theme-light .plan-grade.is-D {
+  --grade-color: #a7490d;
+}
+
+.dir-a.theme-light .plan-grade.is-E {
+  --grade-color: #881f35;
 }
 
 /* Nota global del bloque, junto al titular. */

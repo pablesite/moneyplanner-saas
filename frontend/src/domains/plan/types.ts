@@ -417,6 +417,7 @@ export type PlanFoundations = {
     unbacked_debt: string;
     high_cost_debt: string;
     weighted_tae_pct: string | null;
+    annual_debt_service: string;
     debt_payment_to_income: string | null;
   };
   net_worth_health: PlanFoundationScore & {
