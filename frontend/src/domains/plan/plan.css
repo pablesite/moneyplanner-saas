@@ -403,6 +403,17 @@
   font-size: 0.9rem;
 }
 
+/* La ⓘ acompaña al rótulo en la misma línea, sin heredar su letra-espaciado. */
+.plan-trajectory-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-trajectory-label .info-hint {
+  letter-spacing: normal;
+}
+
 /* Las dos cifras que enmarcan la barra: micro-etiqueta encima del importe, la de
    la derecha alineada a su borde para que se lea como "de X a Y". */
 .plan-progress-meta {

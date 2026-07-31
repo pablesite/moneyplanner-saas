@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { AInfoHint } from '@/domains/ui';
 import { formatCompact, formatMoney } from '@/lib/format';
 import { formatMonthYearLabel } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
@@ -255,16 +256,16 @@ function onMove(event: MouseEvent): void {
 </script>
 
 <template>
-  <section class="sect plan-trajectory">
+  <section class="sect plan-trajectory" aria-label="Trayectoria patrimonial">
     <div class="sect-head">
-      <div>
-        <p class="plan-block-eyebrow">Trayectoria patrimonial</p>
-        <h2 class="sect-title">Histórico y proyección</h2>
-        <p class="sect-sub">
-          La fecha llega cuando el capital productivo alcanza el capital objetivo, no cuando lo hace
-          el patrimonio total.
-        </p>
-      </div>
+      <!-- El rótulo basta: la leyenda ya dice qué es cada serie y el matiz de la
+           fecha vive en la ⓘ, no ocupando dos líneas de cabecera. -->
+      <p class="plan-block-eyebrow plan-trajectory-label">
+        Trayectoria patrimonial
+        <AInfoHint
+          label="La fecha llega cuando el capital productivo alcanza el capital objetivo, no cuando lo hace el patrimonio total."
+        />
+      </p>
       <div class="plan-chart-legend" aria-hidden="true">
         <span><i class="hist"></i> Histórico</span>
         <span><i class="proj"></i> Proyección</span>
