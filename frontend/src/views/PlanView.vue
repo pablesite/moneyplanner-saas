@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, APageHead, AState } from '@/domains/ui';
+import { AButton, AInfoHint, APageHead, AState } from '@/domains/ui';
 import {
   NetWorthTrajectoryChart,
   PlanCalculationSettingsModal,
@@ -77,6 +77,11 @@ onMounted(() => {
     <APageHead title="Mi Plan">
       <template #meta>
         <span>Tu camino para que trabajar sea opcional</span>
+        <!-- El matiz de qué mide el plan vivía como párrafo dentro del hero, robando
+             sitio a los KPIs: aquí explica el título sin ocupar espacio. -->
+        <AInfoHint
+          label="Mi Plan separa capacidad financiera futura y patrimonio familiar: el progreso usa tu capital productivo, no el patrimonio neto total."
+        />
       </template>
       <template #actions>
         <!-- Lo que altera el cálculo vive junto a lo que altera el objetivo, no al

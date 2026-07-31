@@ -23,7 +23,6 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  overflow-x: auto;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
 }
@@ -140,13 +139,6 @@
   flex: 1 1 300px;
   min-width: 0;
   max-width: 480px;
-}
-
-.plan-hero-note {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.5;
 }
 
 /* Diagnóstico: sin caja, ancho completo, separado del hero por una hairline. */
@@ -2627,6 +2619,20 @@
   /* En móvil el tap target manda sobre la métrica de escritorio. */
   .plan-tabs-bar .tab {
     padding: 14px 12px;
+  }
+
+  /* Scroll horizontal solo cuando las tabs no caben, y sin barra visible (mismo
+     patrón que Patrimonio). En escritorio no se declara overflow: `overflow-x`
+     obliga a `overflow-y: auto`, y el subrayado del tab activo desborda 1px, así
+     que aparecía una barra vertical que no scrollea nada. */
+  .plan-tabs-bar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .plan-tabs-bar::-webkit-scrollbar {
+    display: none;
   }
 
   .plan-page {

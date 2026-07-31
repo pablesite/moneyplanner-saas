@@ -298,6 +298,23 @@
   gap: 20px;
 }
 
+/* Banda de KPIs con filas compartidas: sin esto, una etiqueta que ocupa dos líneas
+   ("Nivel de vida objetivo") empuja su cifra hacia abajo y las tres columnas dejan
+   de alinearse. Subgrid mantiene etiqueta, cifra y meta en la misma fila. */
+.dir-a .kpis.a-kpi-band {
+  grid-template-rows: auto auto auto;
+  /* El gap de la banda separa columnas, no las filas internas de un KPI: dentro
+     manda el ritmo de `.kpi-label`/`.kpi-meta`. */
+  row-gap: 0;
+  align-items: start;
+}
+
+.dir-a .kpis.a-kpi-band > .kpi {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+}
+
 .dir-a .kpi-label {
   margin: 0 0 4px;
   font-size: 10.5px;

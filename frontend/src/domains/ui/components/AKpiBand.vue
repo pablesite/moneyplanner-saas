@@ -15,7 +15,7 @@ defineProps<{ items?: AKpiItem[] }>();
 </script>
 
 <template>
-  <div class="kpis">
+  <div class="kpis a-kpi-band">
     <div v-for="(kpi, i) in items ?? []" :key="i" class="kpi" :class="kpi.cellClass">
       <p class="kpi-label">{{ kpi.label }}</p>
       <div class="kpi-value mono">{{ kpi.value }}</div>

@@ -20,10 +20,16 @@ const props = defineProps<{
 }>();
 
 const summary = computed(() => props.projection.summary);
-// El titular pasa a ser la jubilación sostenible más temprana (cuándo puedes
-// dejar de trabajar sin quedarte sin dinero), no la vieja "fecha estimada".
+// El motor devuelve el primer año de retiro sostenible. Visualmente mostramos
+// el cierre anterior, cuando el capital queda preparado, igual que el gráfico.
 const sustainableYear = computed(() => props.overview?.sustainable_year ?? null);
 const desiredYear = computed(() => props.overview?.desired_year ?? null);
+const sustainableReadinessYear = computed(() =>
+  sustainableYear.value == null ? null : sustainableYear.value - 1,
+);
+const desiredReadinessYear = computed(() =>
+  desiredYear.value == null ? null : desiredYear.value - 1,
+);
 // gap_years > 0 = tu objetivo deseado aún no es sostenible; <= 0 = lo logras en/antes.
 const gapYears = computed(() => props.overview?.gap_years ?? null);
 
@@ -36,15 +42,15 @@ const sustainableShare = computed(() => {
 });
 const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
 const projectedCopy = computed(() =>
-  sustainableYear.value == null
+  sustainableReadinessYear.value == null
     ? 'Sin fecha sostenible'
-    : yearWithAges(sustainableYear.value, props.plan.members),
+    : yearWithAges(sustainableReadinessYear.value, props.plan.members),
 );
 // En pantallas estrechas el nombre sobra (ya es tu plan): "2045 · 61 años".
 const projectedCompactCopy = computed(() =>
-  sustainableYear.value == null
+  sustainableReadinessYear.value == null
     ? 'Sin fecha sostenible'
-    : compactYearWithAges(sustainableYear.value, props.plan.members),
+    : compactYearWithAges(sustainableReadinessYear.value, props.plan.members),
 );
 // Extremos del rango etiquetados para la ⓘ: favorable (optimista, antes) y
 // prudente (conservador, después). Null si no hay spread (coinciden).
@@ -52,7 +58,7 @@ const rangeDetail = computed(() => {
   const range = props.overview?.sustainable_range;
   if (!range?.prudent_year || !range.favorable_year) return null;
   if (range.prudent_year === range.favorable_year) return null;
-  return { favorable: range.favorable_year, prudent: range.prudent_year };
+  return { favorable: range.favorable_year - 1, prudent: range.prudent_year - 1 };
 });
 type Blocker = { text: string; to: string; cta: string };
 
@@ -119,7 +125,9 @@ const diagnosisTitle = computed(() =>
 // El objetivo que fija el usuario es una aspiración; el delta compara esa
 // aspiración con la jubilación sostenible más temprana que calcula el motor.
 const objetivoCopy = computed(() =>
-  desiredYear.value == null ? 'tu objetivo' : `tu objetivo de ${desiredYear.value}`,
+  desiredReadinessYear.value == null
+    ? 'el cierre de tu objetivo'
+    : `el cierre objetivo de ${desiredReadinessYear.value}`,
 );
 const deltaCopy = computed(() => {
   if (sustainableYear.value == null) {
@@ -129,10 +137,15 @@ const deltaCopy = computed(() => {
     }
     return 'Con los datos actuales no hay una jubilación sostenible en el horizonte';
   }
-  if (gapYears.value == null || gapYears.value === 0) return `Justo en ${objetivoCopy.value}`;
+  const retirementCopy = `podrías dejar de trabajar en ${sustainableYear.value}`;
+  if (gapYears.value == null || gapYears.value === 0) {
+    return `Consolidado justo en ${objetivoCopy.value} · ${retirementCopy}`;
+  }
   const years = Math.abs(gapYears.value) === 1 ? 'año' : 'años';
-  if (gapYears.value > 0) return `${gapYears.value} ${years} más tarde que ${objetivoCopy.value}`;
-  return `${Math.abs(gapYears.value)} ${years} antes que ${objetivoCopy.value}`;
+  if (gapYears.value > 0) {
+    return `Consolidado ${gapYears.value} ${years} más tarde que ${objetivoCopy.value} · ${retirementCopy}`;
+  }
+  return `Consolidado ${Math.abs(gapYears.value)} ${years} antes que ${objetivoCopy.value} · ${retirementCopy}`;
 });
 
 const statusCopy = computed(() => {
@@ -208,10 +221,11 @@ const kpis = computed<AKpiItem[]>(() => [
         </template>
         <template #delta>
           <span class="plan-delta-main" :class="deltaTone">{{ deltaCopy }}</span>
-          <AInfoHint label="Sobre la fecha sostenible">
-            Estimación central.<template v-if="rangeDetail">
-              Según las hipótesis, entre {{ rangeDetail.favorable }} (favorable) y
-              {{ rangeDetail.prudent }} (prudente).</template
+          <AInfoHint label="Sobre la fecha de consolidación">
+            El año principal es el cierre en que el capital queda preparado; podrías dejar de
+            trabajar al año siguiente.<template v-if="rangeDetail">
+              Según las hipótesis, ese cierre estaría entre {{ rangeDetail.favorable }} (favorable)
+              y {{ rangeDetail.prudent }} (prudente).</template
             >
             No es una garantía: se calcula con capital productivo, hipótesis y datos actuales.
           </AInfoHint>
@@ -225,10 +239,6 @@ const kpis = computed<AKpiItem[]>(() => [
             <AInfoHint :label="sustainableHint" />
           </template>
         </AKpiBand>
-        <p class="plan-hero-note">
-          Mi Plan separa capacidad financiera futura y patrimonio familiar. El progreso usa capital
-          productivo, no patrimonio neto total.
-        </p>
       </div>
     </div>
 
