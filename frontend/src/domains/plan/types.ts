@@ -78,6 +78,8 @@ export type ProjectionAssumptions = {
   non_productive_appreciation_rate: string;
   income_growth_rate: string;
   contribution_growth_rate: string;
+  security_contribution_rate: string;
+  security_target_expense_years: string;
   withdrawal_rate: string;
   default_liability_rate: string;
 };
@@ -99,6 +101,7 @@ export type ProjectionTrajectoryRow = {
   year: number;
   productive_capital: string;
   security_capital: string;
+  security_target: string;
   non_productive_assets: string;
   liabilities: string;
   financing_gap: string;

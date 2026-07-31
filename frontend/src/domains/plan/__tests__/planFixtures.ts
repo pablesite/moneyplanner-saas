@@ -15,6 +15,8 @@ const assumptions: ProjectionAssumptions = {
   non_productive_appreciation_rate: '0.0150',
   income_growth_rate: '0.0200',
   contribution_growth_rate: '0.0200',
+  security_contribution_rate: '0.2500',
+  security_target_expense_years: '2.00',
   withdrawal_rate: '0.0350',
   default_liability_rate: '0.0450',
 };
@@ -29,6 +31,7 @@ export function trajectoryRow(
   return {
     productive_capital: '0.00',
     security_capital: '0.00',
+    security_target: '0.00',
     non_productive_assets: '0.00',
     liabilities: '0.00',
     financing_gap: '0.00',
