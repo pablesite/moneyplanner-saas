@@ -1,8 +1,13 @@
 .plan-page {
   display: grid;
-  /* Mismo ritmo vertical que Patrimonio (`.a-nw-page`): las dos vistas principales
-     comparten cabecera, tabs y banda de contexto, así que no pueden respirar
-     distinto. */
+}
+
+/* Mismo ritmo vertical que Patrimonio (`.dir-a .page.a-nw-page`): las dos vistas
+   principales comparten cabecera, tabs y banda de contexto, así que no pueden
+   respirar distinto. La especificidad tiene que igualar a la del design system
+   (`.dir-a .page` = 28px), o el gap de la página gana y las tabs caen 16px más
+   abajo que en Patrimonio. */
+.dir-a .page.plan-page {
   gap: 12px;
 }
 
