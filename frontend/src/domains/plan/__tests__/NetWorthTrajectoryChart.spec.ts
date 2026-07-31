@@ -139,6 +139,29 @@ describe('NetWorthTrajectoryChart', () => {
     expect(markerText.some((t) => t.includes('Objetivo 2035'))).toBe(true);
   });
 
+  it('keeps future years hoverable when the tooltip overlaps the chart', async () => {
+    const projection = makeProjection({
+      trajectory: [
+        trajectoryRow({ year: 2035, net_worth: '400000' }),
+        trajectoryRow({ year: 2041, net_worth: '500000' }),
+        trajectoryRow({ year: 2042, net_worth: '520000' }),
+      ],
+    });
+    const wrapper = mount(NetWorthTrajectoryChart, {
+      props: { timeline: baseTimeline, projection },
+    });
+    const svg = wrapper.find('.plan-chart');
+    Object.defineProperty(svg.element, 'getBoundingClientRect', {
+      value: () => ({ left: 0, width: 960 }),
+    });
+
+    await svg.trigger('mousemove', { clientX: 959 });
+
+    expect(wrapper.find('.plan-chart-tooltip strong').text()).toContain('2042');
+    expect(wrapper.find('.plan-chart-tooltip').classes()).toContain('is-left');
+    expect(wrapper.find('.plan-chart-tooltip-metrics').text()).toContain('Activos');
+  });
+
   it('renders event markers clipped to the visible range with native detail', () => {
     const events: PlanTimelineMarker[] = [
       { id: 1, date: '2027-06-01', label: 'Coche Ana', detail: 'Vehículo', status: 'planned' },

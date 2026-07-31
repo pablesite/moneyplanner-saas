@@ -349,6 +349,10 @@ const eventMarkers = computed<EventMarker[]>(() => {
 const hoverPoint = computed(() =>
   hoverIndex.value == null ? null : (points.value[hoverIndex.value] ?? null),
 );
+const tooltipOnLeft = computed(() => {
+  const point = hoverPoint.value;
+  return point ? tx(point.t) > W * 0.62 : false;
+});
 
 const hoverDetail = computed(() => {
   const point = hoverPoint.value;
@@ -605,31 +609,60 @@ function onMove(event: MouseEvent): void {
           />
         </g>
       </svg>
-      <div v-if="hoverPoint" class="plan-chart-tooltip">
-        <strong>{{ hoverPoint.label }}</strong>
-        <span class="plan-chart-tooltip-value">{{ formatMoney(hoverPoint.value) }}</span>
-        <template v-if="hoverDetail">
-          <span>Activos {{ formatMoney(hoverDetail.totalAssets) }}</span>
-          <span>Liquidez {{ formatMoney(hoverDetail.liquidity) }}</span>
-          <span>Productivo {{ formatMoney(hoverDetail.productive) }}</span>
-          <span>Inmuebles {{ formatMoney(hoverDetail.realEstate) }}</span>
-          <span>Mobiliario y vehículos {{ formatMoney(hoverDetail.furnishings) }}</span>
-          <span v-if="hoverDetail.otherAssets"
-            >Otros {{ formatMoney(hoverDetail.otherAssets) }}</span
-          >
-          <span>Deudas {{ formatMoney(hoverDetail.liabilities) }}</span>
-          <span>Fondo de emergencia {{ formatMoney(hoverDetail.security) }}</span>
-          <span v-if="hoverDetail.securityTarget != null"
-            >Objetivo del fondo {{ formatMoney(hoverDetail.securityTarget) }}</span
-          >
-          <span v-if="hoverDetail.target != null"
-            >Objetivo {{ formatMoney(hoverDetail.target) }}</span
-          >
-          <span v-if="hoverDetail.financingGap < 0">
-            Financiación pendiente {{ formatMoney(hoverDetail.financingGap) }}
-          </span>
-        </template>
-        <em>{{ hoverPoint.kind === 'historical' ? 'Histórico' : 'Proyección' }}</em>
+      <div v-if="hoverPoint" class="plan-chart-tooltip" :class="{ 'is-left': tooltipOnLeft }">
+        <div class="plan-chart-tooltip-head">
+          <div>
+            <strong>{{ hoverPoint.label }}</strong>
+            <em>{{ hoverPoint.kind === 'historical' ? 'Histórico' : 'Proyección' }}</em>
+          </div>
+          <span class="plan-chart-tooltip-value">{{ formatMoney(hoverPoint.value) }}</span>
+        </div>
+        <dl v-if="hoverDetail" class="plan-chart-tooltip-metrics">
+          <div class="is-key">
+            <dt>Activos</dt>
+            <dd>{{ formatMoney(hoverDetail.totalAssets) }}</dd>
+          </div>
+          <div class="is-key">
+            <dt>Deudas</dt>
+            <dd>{{ formatMoney(hoverDetail.liabilities) }}</dd>
+          </div>
+          <div>
+            <dt>Liquidez</dt>
+            <dd>{{ formatMoney(hoverDetail.liquidity) }}</dd>
+          </div>
+          <div>
+            <dt>Productivo</dt>
+            <dd>{{ formatMoney(hoverDetail.productive) }}</dd>
+          </div>
+          <div>
+            <dt>Inmuebles</dt>
+            <dd>{{ formatMoney(hoverDetail.realEstate) }}</dd>
+          </div>
+          <div>
+            <dt>Mobiliario y vehículos</dt>
+            <dd>{{ formatMoney(hoverDetail.furnishings) }}</dd>
+          </div>
+          <div v-if="hoverDetail.otherAssets">
+            <dt>Otros</dt>
+            <dd>{{ formatMoney(hoverDetail.otherAssets) }}</dd>
+          </div>
+          <div>
+            <dt>Fondo de emergencia</dt>
+            <dd>{{ formatMoney(hoverDetail.security) }}</dd>
+          </div>
+          <div v-if="hoverDetail.securityTarget != null">
+            <dt>Objetivo del fondo</dt>
+            <dd>{{ formatMoney(hoverDetail.securityTarget) }}</dd>
+          </div>
+          <div v-if="hoverDetail.target != null">
+            <dt>Capital objetivo</dt>
+            <dd>{{ formatMoney(hoverDetail.target) }}</dd>
+          </div>
+          <div v-if="hoverDetail.financingGap < 0" class="is-alert">
+            <dt>Financiación pendiente</dt>
+            <dd>{{ formatMoney(hoverDetail.financingGap) }}</dd>
+          </div>
+        </dl>
       </div>
     </div>
     <details v-if="projection.trajectory.length" class="plan-chart-table">

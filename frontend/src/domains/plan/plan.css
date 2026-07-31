@@ -759,12 +759,32 @@
   right: 14px;
   top: 14px;
   display: grid;
-  gap: 2px;
-  padding: 10px 12px;
+  width: min(330px, calc(100% - 28px));
+  gap: 9px;
+  padding: 10px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--surface);
   box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.plan-chart-tooltip.is-left {
+  right: auto;
+  left: 14px;
+}
+
+.plan-chart-tooltip-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plan-chart-tooltip-head > div {
+  display: grid;
+  gap: 2px;
 }
 
 .plan-chart-tooltip strong {
@@ -775,18 +795,76 @@
   text-transform: uppercase;
 }
 
+.plan-chart-tooltip-head em {
+  color: var(--muted);
+  font-size: 9px;
+  font-style: normal;
+}
+
 .plan-chart-tooltip .plan-chart-tooltip-value {
   color: var(--text);
   font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.plan-chart-tooltip span,
-.plan-chart-tooltip em {
+.plan-chart-tooltip-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.plan-chart-tooltip-metrics > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 6px 7px;
+  border-bottom: 1px solid var(--line);
+}
+
+.plan-chart-tooltip-metrics > div:nth-child(odd) {
+  border-right: 1px solid var(--line);
+}
+
+.plan-chart-tooltip-metrics dt {
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.plan-chart-tooltip-metrics dd {
+  margin: 0;
+  overflow: hidden;
   color: var(--muted);
-  font-style: normal;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-chart-tooltip-metrics .is-key dd {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.plan-chart-tooltip-metrics .is-alert {
+  grid-column: 1 / -1;
+  border-right: 0;
+}
+
+.plan-chart-tooltip-metrics .is-alert dd {
+  color: var(--neg);
 }
 
 .plan-chart-empty {
