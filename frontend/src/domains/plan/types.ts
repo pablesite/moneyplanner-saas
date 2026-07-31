@@ -377,11 +377,20 @@ export type CapitalRequirementsResponse = {
 /** Banda de producto que Core calcula junto al score: el frontend colorea, no decide. */
 export type PlanFoundationStatus = 'good' | 'warning' | 'critical';
 
+/** Nota A-E que Core deriva del score, encajada en las bandas de `status`. */
+export type PlanFoundationGrade = 'A' | 'B' | 'C' | 'D' | 'E';
+
+/** Cabecera común de cada cimiento puntuado (y de la nota global del bloque). */
+export type PlanFoundationScore = {
+  score: number;
+  status?: PlanFoundationStatus;
+  grade: PlanFoundationGrade;
+};
+
 export type PlanFoundations = {
   period: string;
-  cash_flow: {
-    score: number;
-    status?: PlanFoundationStatus;
+  overall: PlanFoundationScore;
+  cash_flow: PlanFoundationScore & {
     structural_annual_income: string;
     structural_operating_expense: string;
     temporary_commitment_expense: string;
@@ -397,38 +406,32 @@ export type PlanFoundations = {
       end_month: number | null;
     }[];
   };
-  emergency_fund: {
-    score: number;
-    status?: PlanFoundationStatus;
+  emergency_fund: PlanFoundationScore & {
     eligible_liquidity: string;
     coverage_months_base: string | null;
     coverage_months_committed: string | null;
     target_months: string;
   };
-  debt: {
-    score: number;
-    status?: PlanFoundationStatus;
+  debt: PlanFoundationScore & {
     total_debt: string;
     unbacked_debt: string;
     high_cost_debt: string;
     weighted_tae_pct: string | null;
     debt_payment_to_income: string | null;
   };
-  net_worth_health: {
-    score: number;
-    status?: PlanFoundationStatus;
+  net_worth_health: PlanFoundationScore & {
     assets_value: string;
     illiquid_assets_share: string | null;
     top_asset_share: string | null;
     diversification_index: string | null;
   };
-  planned_contribution: {
+  planned_contribution: PlanFoundationScore & {
     annual_amount: string;
     monthly_amount: string;
+    savings_rate: string | null;
+    target_savings_rate: string;
   };
-  data_quality: {
-    score: number;
-    status?: PlanFoundationStatus;
+  data_quality: PlanFoundationScore & {
     flags: Record<string, boolean>;
   };
 };
@@ -500,8 +503,14 @@ export type PlanOverview = {
     confidence: 'low' | 'medium';
   };
   foundations: Record<
-    'cash_flow' | 'emergency_fund' | 'debt' | 'net_worth_health' | 'data_quality',
-    { status: PlanFoundationStatus; score: number }
+    | 'overall'
+    | 'cash_flow'
+    | 'emergency_fund'
+    | 'debt'
+    | 'planned_contribution'
+    | 'net_worth_health'
+    | 'data_quality',
+    PlanFoundationScore
   >;
   next_action: PlanGuidanceAction | null;
   input_hash: string;

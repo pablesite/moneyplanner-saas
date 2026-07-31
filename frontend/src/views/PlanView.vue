@@ -37,18 +37,22 @@ const monthlyAction = computed(() => {
   const amount = Number(nextAction.value?.monthly_commitment ?? 0);
   return amount > 0 ? `${formatMoney(amount)} al mes` : null;
 });
-// "1 bloquean el plan" no decía cuál era ni concordaba: con un solo cimiento en
-// rojo se nombra, y con varios se cuenta diciendo de qué se habla.
+// El titular del bloque: nota global de Core y, debajo, qué cimiento la frena.
 const FOUNDATION_LABELS: Record<string, string> = {
   cash_flow: 'Flujo de caja',
   emergency_fund: 'Fondo de emergencia',
   debt: 'Deuda',
+  planned_contribution: 'Aportación planificada',
   net_worth_health: 'Salud patrimonial',
   data_quality: 'Calidad de datos',
 };
 
+const overallHealth = computed(() => store.foundations?.overall ?? null);
+
 const foundationStatus = computed(() => {
-  const entries = Object.entries(store.overview?.foundations ?? {});
+  const entries = Object.entries(store.overview?.foundations ?? {}).filter(
+    ([key]) => key !== 'overall',
+  );
   const named = (status: string) =>
     entries
       .filter(([, item]) => item.status === status)
@@ -59,7 +63,7 @@ const foundationStatus = computed(() => {
   if (critical.length) return `${critical.length} cimientos bloquean el plan`;
   if (warning.length === 1) return `${warning[0]} necesita atención`;
   if (warning.length) return `${warning.length} cimientos necesitan atención`;
-  return 'Cimientos sólidos';
+  return 'Todo en verde';
 });
 
 onMounted(() => {
@@ -141,8 +145,18 @@ onMounted(() => {
       <div class="plan-main-grid">
         <ProductiveCapitalProgress :projection="projection" />
         <section class="sect plan-foundation-summary">
-          <p class="plan-block-eyebrow">Cimientos y datos</p>
-          <h2 class="sect-title">{{ foundationStatus }}</h2>
+          <p class="plan-block-eyebrow">Salud financiera</p>
+          <div class="plan-foundation-headline">
+            <span
+              v-if="overallHealth"
+              class="plan-grade plan-grade-lg"
+              :class="`is-${overallHealth.grade}`"
+              :title="`Nota global ${overallHealth.grade} · ${overallHealth.score}/100`"
+            >
+              {{ overallHealth.grade }}
+            </span>
+            <h2 class="sect-title">{{ foundationStatus }}</h2>
+          </div>
           <PlanFoundations :foundations="store.foundations" compact />
         </section>
       </div>

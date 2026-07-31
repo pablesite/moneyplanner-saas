@@ -728,6 +728,69 @@
   color: var(--muted);
 }
 
+/* Nombre del cimiento con su nota delante: la letra juzga y el nombre etiqueta. */
+.plan-foundation-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+/* Nota A-E. Las bandas las decide Core (A/B good, C/D warning, E critical): aquí
+   solo se colorean, con dos tonos por banda para que la letra se distinga. */
+.plan-grade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.plan-grade.is-A {
+  color: var(--pos);
+  background: color-mix(in oklab, var(--pos) 16%, transparent);
+}
+
+.plan-grade.is-B {
+  color: color-mix(in oklab, var(--pos) 78%, var(--muted));
+  background: color-mix(in oklab, var(--pos) 10%, transparent);
+}
+
+.plan-grade.is-C {
+  color: oklch(0.82 0.13 92);
+  background: color-mix(in oklab, oklch(0.82 0.13 92) 14%, transparent);
+}
+
+.plan-grade.is-D {
+  color: oklch(0.76 0.15 62);
+  background: color-mix(in oklab, oklch(0.76 0.15 62) 14%, transparent);
+}
+
+.plan-grade.is-E {
+  color: var(--neg);
+  background: color-mix(in oklab, var(--neg) 16%, transparent);
+}
+
+/* Nota global del bloque, junto al titular. */
+.plan-foundation-headline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-grade-lg {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
 .plan-foundation-grid small {
   color: var(--muted);
 }
