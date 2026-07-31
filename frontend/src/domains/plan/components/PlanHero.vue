@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, formatPct } from '@/lib/format';
 import type {
   FinancialPlan,
   PlanFoundations,
@@ -160,7 +160,25 @@ const deltaTone = computed(() => {
 // La renta sostenible hereda la señal semántica de los deltas: por debajo del
 // objetivo es el aviso más accionable del hero, no un metadato neutro.
 const sustainableTone = computed(() => (sustainableShare.value >= 100 ? 'pos' : 'neg'));
-const sustainableMeta = computed(() => `${sustainableShare.value} % de tu objetivo mensual`);
+const sustainableMeta = computed(
+  () => `${sustainableShare.value} % de tu objetivo, sin contar la pensión`,
+);
+
+// Este porcentaje y el del progreso de capital no coinciden y parecen lo mismo. No
+// lo son: aquí se compara la renta que da tu capital HOY, a perpetuidad y sin
+// pensión; allí, tu capital frente al que necesitarás en la fecha proyectada, donde
+// la pensión ya cubre parte del gasto y solo hay que financiar el puente.
+const withdrawalPct = computed(() => {
+  const rate = Number(props.projection.assumptions?.withdrawal_rate ?? 0);
+  return rate > 0 ? formatPct(rate, 1) : null;
+});
+const sustainableHint = computed(() => {
+  const capital = formatMoney(productiveCapital.value);
+  const base = withdrawalPct.value
+    ? `Es lo que renta hoy tu capital productivo (${capital} al ${withdrawalPct.value} anual), como si tuviera que durar para siempre.`
+    : `Es lo que renta hoy tu capital productivo (${capital}), como si tuviera que durar para siempre.`;
+  return `${base} El progreso hacia el capital requerido sale más alto porque ese objetivo cuenta con tus pensiones y solo financia los años hasta cobrarlas.`;
+});
 
 const kpis = computed<AKpiItem[]>(() => [
   {
@@ -204,6 +222,7 @@ const kpis = computed<AKpiItem[]>(() => [
         <AKpiBand :items="kpis">
           <template #meta-1>
             <span :class="sustainableTone">{{ sustainableMeta }}</span>
+            <AInfoHint :label="sustainableHint" />
           </template>
         </AKpiBand>
         <p class="plan-hero-note">

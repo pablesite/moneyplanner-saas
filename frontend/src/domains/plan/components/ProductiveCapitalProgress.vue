@@ -195,10 +195,12 @@ const milestonesHint = computed(() => {
     <div class="plan-progress-headline">
       <div class="plan-progress-headline-copy">
         <h2 class="sect-title">Progreso hacia el capital requerido</h2>
+        <!-- Sin decir que el objetivo ya cuenta con las pensiones, este porcentaje y
+             el de "renta sostenible" del hero parecen la misma medida y no cuadran. -->
         <p class="sect-sub">
-          El porcentaje mide tu capital frente al objetivo del escenario activo<template
-            v-if="preservationAmount"
-            >, que incluye {{ formatMoney(preservationAmount) }} a preservar</template
+          El porcentaje mide tu capital frente al que necesitarás en la fecha proyectada, con tus
+          pensiones ya descontadas<template v-if="preservationAmount">
+            e incluyendo {{ formatMoney(preservationAmount) }} a preservar</template
           >.<template v-if="hasWiderScale">
             La barra llega hasta el capital que cubriría tu nivel de vida completo de hoy.</template
           >
