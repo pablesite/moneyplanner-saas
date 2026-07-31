@@ -120,63 +120,73 @@ onMounted(() => {
     </AState>
 
     <template v-else-if="projection">
-      <PlanHero
-        :plan="plan"
-        :projection="projection"
-        :overview="store.overview"
-        :foundations="store.foundations"
-      />
+      <section class="plan-chapter" aria-label="Objetivo y situación actual">
+        <PlanHero
+          :plan="plan"
+          :projection="projection"
+          :overview="store.overview"
+          :foundations="store.foundations"
+        />
 
-      <PlanSituationSection :foundations="store.foundations" />
-
-      <section v-if="nextAction" class="sect plan-next-action" aria-labelledby="next-action-title">
-        <div>
-          <p class="eyebrow">Lo más útil ahora</p>
-          <h2 id="next-action-title" class="sect-title">{{ nextAction.title }}</h2>
-          <p class="sect-sub">{{ nextAction.reason }}</p>
-        </div>
-        <div class="plan-next-action-impact">
-          <strong v-if="monthlyAction">{{ monthlyAction }}</strong>
-          <span>Impacto estimado antes de incorporarlo</span>
-        </div>
-        <RouterLink
-          class="btn btn-primary"
-          :to="{ path: '/plan/mejoras', query: { action: nextAction.recommendation_id } }"
-        >
-          Ver cómo mejoraría mi plan
-        </RouterLink>
+        <PlanSituationSection :foundations="store.foundations" />
       </section>
 
-      <div class="plan-main-grid">
-        <ProductiveCapitalProgress :projection="projection" />
-        <section class="sect plan-foundation-summary">
-          <p class="plan-block-eyebrow">Salud financiera</p>
-          <div class="plan-foundation-headline">
-            <span
-              v-if="overallHealth"
-              class="plan-grade plan-grade-lg"
-              :class="`is-${overallHealth.grade}`"
-              :title="`Nota global ${overallHealth.grade} · ${overallHealth.score}/100`"
-            >
-              {{ overallHealth.grade }}
-            </span>
-            <h2 class="sect-title">{{ foundationStatus }}</h2>
+      <section class="plan-chapter" aria-label="Preparación financiera">
+        <div class="plan-main-grid">
+          <ProductiveCapitalProgress :projection="projection" />
+          <section class="sect plan-foundation-summary">
+            <p class="plan-block-eyebrow">Salud financiera</p>
+            <div class="plan-foundation-headline">
+              <span
+                v-if="overallHealth"
+                class="plan-grade plan-grade-lg"
+                :class="`is-${overallHealth.grade}`"
+                :title="`Nota global ${overallHealth.grade} · ${overallHealth.score}/100`"
+              >
+                {{ overallHealth.grade }}
+              </span>
+              <h2 class="sect-title">{{ foundationStatus }}</h2>
+            </div>
+            <PlanFoundations :foundations="store.foundations" compact />
+          </section>
+        </div>
+
+        <section
+          v-if="nextAction"
+          class="sect plan-next-action"
+          aria-labelledby="next-action-title"
+        >
+          <div>
+            <p class="eyebrow">Lo más útil ahora</p>
+            <h2 id="next-action-title" class="sect-title">{{ nextAction.title }}</h2>
+            <p class="sect-sub">{{ nextAction.reason }}</p>
           </div>
-          <PlanFoundations :foundations="store.foundations" compact />
+          <div class="plan-next-action-impact">
+            <strong v-if="monthlyAction">{{ monthlyAction }}</strong>
+            <span>Impacto estimado antes de incorporarlo</span>
+          </div>
+          <RouterLink
+            class="btn btn-primary"
+            :to="{ path: '/plan/mejoras', query: { action: nextAction.recommendation_id } }"
+          >
+            Ver cómo mejoraría mi plan
+          </RouterLink>
         </section>
-      </div>
+      </section>
 
       <!-- El gráfico trae su propia cabecera ("Trayectoria patrimonial · Histórico y
            proyección"): envolverlo en otra ("Detalle · Cómo evoluciona tu patrimonio")
            solo duplicaba rótulo, y esconderlo tras un toggle escondía el contenido. -->
-      <NetWorthTrajectoryChart
-        :timeline="netWorthTimeline"
-        :projection="projection"
-        :members="plan.members"
-        :events="eventMarkers"
-        :sustainable-year="store.overview?.sustainable_year ?? null"
-        :desired-year="store.overview?.desired_year ?? null"
-      />
+      <section class="plan-chapter plan-chapter-trajectory" aria-label="Previsión patrimonial">
+        <NetWorthTrajectoryChart
+          :timeline="netWorthTimeline"
+          :projection="projection"
+          :members="plan.members"
+          :events="eventMarkers"
+          :sustainable-year="store.overview?.sustainable_year ?? null"
+          :desired-year="store.overview?.desired_year ?? null"
+        />
+      </section>
 
       <p v-if="error" class="plan-inline-error" role="alert">
         Una parte no pudo actualizarse. Los demás datos siguen disponibles. {{ error }}

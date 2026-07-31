@@ -11,6 +11,25 @@
   gap: 12px;
 }
 
+/* El resumen se lee en tres capítulos sobre una misma superficie. El gap global
+   sigue alineando cabecera y tabs con Patrimonio; aquí añadimos jerarquía solo
+   entre los grandes bloques de contenido. */
+.plan-chapter {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.plan-chapter + .plan-chapter {
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-chapter-trajectory {
+  gap: 0;
+}
+
 /* Tabs con las mismas métricas que las de Patrimonio (`.a-nw-tabs-bar`): misma
    altura, mismo tamaño de letra y subrayado a ras de la hairline. Se mantiene
    sticky, que es comportamiento propio de esta vista, no estilo. */
@@ -620,6 +639,7 @@
 
 .plan-chart-grid line {
   stroke: rgba(255, 255, 255, 0.08);
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-chart-grid .plan-chart-x-grid {
@@ -672,17 +692,20 @@
 
 .plan-chart-line {
   fill: none;
-  stroke-width: 2;
+  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-chart-line.hist {
   stroke: var(--chart-networth);
+  stroke-width: 2;
 }
 
 .plan-chart-line.proj {
   stroke: var(--chart-networth);
+  stroke-width: 2;
   stroke-dasharray: 7 6;
 }
 
@@ -700,23 +723,23 @@
 }
 
 .plan-chart-point.projected {
-  opacity: 0.78;
+  opacity: 0.7;
 }
 
 .plan-chart-line.prod {
   stroke: var(--chart-productive);
-  stroke-width: 2;
+  stroke-width: 1.6;
   stroke-dasharray: 3 5;
 }
 
 .plan-chart-line.security {
   stroke: var(--chart-security);
-  stroke-width: 2;
+  stroke-width: 1.6;
 }
 
 .plan-chart-line.historical-segment {
   stroke-dasharray: none;
-  opacity: 0.72;
+  opacity: 0.68;
 }
 
 .plan-chart-line.security.projected-segment {
@@ -725,7 +748,7 @@
 
 .plan-chart-line.target {
   stroke: var(--faint);
-  stroke-width: 1.5;
+  stroke-width: 1.15;
   stroke-dasharray: 2 5;
 }
 
@@ -736,6 +759,7 @@
 .plan-chart-marker line {
   stroke: var(--line-strong);
   stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-chart-marker line.projected {
@@ -766,12 +790,14 @@
   stroke: var(--chart-event);
   stroke-dasharray: 3 3;
   opacity: 0.55;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-chart-event circle {
   fill: var(--chart-event);
   stroke: var(--bg);
   stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-chart-event text {
@@ -806,6 +832,7 @@
   stroke: var(--chart-networth);
   stroke-dasharray: 3 3;
   opacity: 0.42;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-chart-hover-dot {
