@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.43.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.43.0...moneyplanner-saas-v0.43.1) (2026-07-31)
+
+
+### Bug Fixes
+
+* **ci:** drop pip from the production images so Trivy can pass ([4af8635](https://github.com/pablesite/moneyplanner-saas/commit/4af86359a81966482e9ca286ead2e4ee50c118e5))
+
 ## [0.43.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.42.0...moneyplanner-saas-v0.43.0) (2026-07-31)
 
 
