@@ -230,7 +230,13 @@ const hoverDetail = computed(() => {
   const row = props.projection.trajectory.find((entry) => entry.year === point.year);
   if (!row) return null;
   return {
-    productive: Number(row.productive_capital),
+    totalAssets: Number(row.total_assets),
+    liquidity: Number(row.liquidity_assets),
+    productive: Number(row.investment_assets),
+    realEstate: Number(row.real_estate_assets),
+    furnishings: Number(row.furnishings_assets),
+    otherAssets: Number(row.other_assets),
+    liabilities: Number(row.liabilities),
     security: Number(row.security_capital),
     securityTarget: Number(row.security_target),
     target: Number(row.target_capital),
@@ -347,7 +353,15 @@ function onMove(event: MouseEvent): void {
         <strong>{{ hoverPoint.label }}</strong>
         <span>{{ formatMoney(hoverPoint.value) }}</span>
         <template v-if="hoverDetail">
+          <span>Activos {{ formatMoney(hoverDetail.totalAssets) }}</span>
+          <span>Liquidez {{ formatMoney(hoverDetail.liquidity) }}</span>
           <span>Productivo {{ formatMoney(hoverDetail.productive) }}</span>
+          <span>Inmuebles {{ formatMoney(hoverDetail.realEstate) }}</span>
+          <span>Mobiliario y vehículos {{ formatMoney(hoverDetail.furnishings) }}</span>
+          <span v-if="hoverDetail.otherAssets"
+            >Otros {{ formatMoney(hoverDetail.otherAssets) }}</span
+          >
+          <span>Deudas {{ formatMoney(hoverDetail.liabilities) }}</span>
           <span>Fondo de emergencia {{ formatMoney(hoverDetail.security) }}</span>
           <span>Objetivo del fondo {{ formatMoney(hoverDetail.securityTarget) }}</span>
           <span>Objetivo {{ formatMoney(hoverDetail.target) }}</span>
@@ -365,10 +379,13 @@ function onMove(event: MouseEvent): void {
           <thead>
             <tr>
               <th scope="col">Año</th>
+              <th scope="col">Activos</th>
+              <th scope="col">Liquidez</th>
+              <th scope="col">Inmuebles</th>
               <th scope="col">Capital productivo</th>
-              <th scope="col">Fondo de emergencia</th>
-              <th scope="col">Objetivo del fondo</th>
-              <th scope="col">Capital objetivo</th>
+              <th scope="col">Mobiliario y vehículos</th>
+              <th scope="col">Otros activos</th>
+              <th scope="col">Deudas</th>
               <th scope="col">Financiación pendiente</th>
               <th scope="col">Patrimonio neto</th>
             </tr>
@@ -376,10 +393,13 @@ function onMove(event: MouseEvent): void {
           <tbody>
             <tr v-for="row in projection.trajectory" :key="row.year">
               <th scope="row">{{ row.year }}</th>
-              <td>{{ formatMoney(row.productive_capital) }}</td>
-              <td>{{ formatMoney(row.security_capital) }}</td>
-              <td>{{ formatMoney(row.security_target) }}</td>
-              <td>{{ formatMoney(row.target_capital) }}</td>
+              <td>{{ formatMoney(row.total_assets) }}</td>
+              <td>{{ formatMoney(row.liquidity_assets) }}</td>
+              <td>{{ formatMoney(row.real_estate_assets) }}</td>
+              <td>{{ formatMoney(row.investment_assets) }}</td>
+              <td>{{ formatMoney(row.furnishings_assets) }}</td>
+              <td>{{ formatMoney(row.other_assets) }}</td>
+              <td>{{ formatMoney(row.liabilities) }}</td>
               <td>{{ formatMoney(row.financing_gap) }}</td>
               <td>{{ formatMoney(row.net_worth) }}</td>
             </tr>

@@ -25,7 +25,8 @@ const scenarioOptions: ASelectItem[] = [
 const assumptionRows: Array<{ key: keyof ProjectionAssumptions; label: string }> = [
   { key: 'inflation_rate', label: 'Inflación' },
   { key: 'productive_return_rate', label: 'Retorno productivo' },
-  { key: 'non_productive_appreciation_rate', label: 'Revalorización no productiva' },
+  { key: 'non_productive_appreciation_rate', label: 'Revalorización inmobiliaria' },
+  { key: 'furnishings_depreciation_rate', label: 'Depreciación de mobiliario y vehículos' },
   { key: 'income_growth_rate', label: 'Crecimiento de ingresos' },
   { key: 'contribution_growth_rate', label: 'Crecimiento de aportaciones' },
   { key: 'withdrawal_rate', label: 'Tasa de retirada' },

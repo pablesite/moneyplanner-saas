@@ -76,6 +76,7 @@ export type ProjectionAssumptions = {
   inflation_rate: string;
   productive_return_rate: string;
   non_productive_appreciation_rate: string;
+  furnishings_depreciation_rate: string;
   income_growth_rate: string;
   contribution_growth_rate: string;
   security_contribution_rate: string;
@@ -103,6 +104,12 @@ export type ProjectionTrajectoryRow = {
   security_capital: string;
   security_target: string;
   non_productive_assets: string;
+  liquidity_assets: string;
+  investment_assets: string;
+  real_estate_assets: string;
+  furnishings_assets: string;
+  other_assets: string;
+  total_assets: string;
   liabilities: string;
   financing_gap: string;
   net_worth: string;
