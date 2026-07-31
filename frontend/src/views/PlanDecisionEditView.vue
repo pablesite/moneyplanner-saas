@@ -312,7 +312,7 @@ onMounted(async () => {
             <input v-model="impact.proceeds" class="input" inputmode="decimal" />
           </label>
           <label>
-            <span>Valor neto del activo que se da de baja</span>
+            <span>Valor bruto del activo que se da de baja</span>
             <input v-model="impact.disposed_asset_value" class="input" inputmode="decimal" />
           </label>
           <label>

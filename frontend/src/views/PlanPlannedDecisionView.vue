@@ -281,7 +281,8 @@ function toggleLiability(id: number): void {
 
 // Prellenado de pistas: los ingresos seleccionados son los ingresos netos de la venta;
 // los gastos seleccionados, el desembolso de la compra; el activo/pasivo enlazado, los
-// valores a dar de baja o adquirir. El usuario ajusta el valor neto si procede.
+// valores brutos a dar de baja o adquirir. La deuda se informa por separado para
+// que el motor derive el valor neto sin mezclar ambos conceptos.
 watch(selectedIncomeTotal, (total) => {
   if (isSale.value && !impact.proceeds && total > 0) impact.proceeds = String(total);
 });
@@ -678,7 +679,7 @@ onMounted(async () => {
           <input v-model="impact.proceeds" class="input" inputmode="decimal" placeholder="0" />
         </label>
         <label>
-          <span>Valor neto del activo (se da de baja)</span>
+          <span>Valor bruto del activo (se da de baja)</span>
           <input
             v-model="impact.disposed_asset_value"
             class="input"
