@@ -568,11 +568,15 @@
 
 .plan-chart-grid text {
   fill: var(--muted);
-  font-size: 13px;
+  fill-opacity: 0.55;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
 }
 
 .plan-chart-grid .plan-chart-capital-label {
   fill: var(--chart-productive);
+  fill-opacity: 0.72;
   text-anchor: start;
 }
 
@@ -581,18 +585,21 @@
 }
 
 .plan-chart-x-year {
-  font-weight: 650;
+  font-size: 9.5px;
+  font-weight: 600;
 }
 
 .plan-chart-grid .plan-chart-x-age {
   fill: var(--faint);
-  font-size: 9px;
-  font-weight: 500;
+  fill-opacity: 0.78;
+  font-size: 7px;
+  font-weight: 450;
 }
 
 .plan-chart-axis-titles text {
   fill: var(--muted);
-  font-size: 10px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -678,7 +685,9 @@
 .plan-chart-marker text {
   text-anchor: middle;
   fill: var(--muted);
-  font-size: 12px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 9.5px;
+  font-weight: 500;
 }
 
 .plan-chart-marker text.projected {
@@ -707,7 +716,8 @@
 
 .plan-chart-event text {
   fill: var(--chart-event);
-  font-size: 11px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 9px;
   font-weight: 650;
   paint-order: stroke;
   stroke: var(--bg);
@@ -751,10 +761,10 @@
   display: grid;
   gap: 2px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: rgba(12, 13, 16, 0.92);
-  box-shadow: var(--shadow-surface-soft);
+  background: var(--surface);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.5);
 }
 
 .plan-chart-tooltip strong {
@@ -767,8 +777,10 @@
 
 .plan-chart-tooltip .plan-chart-tooltip-value {
   color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .plan-chart-tooltip span,
