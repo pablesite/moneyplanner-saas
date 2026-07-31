@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.43.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.42.0...moneyplanner-saas-v0.43.0) (2026-07-31)
+
+
+### Features
+
+* **plan:** add trajectory range controls ([a7cdaf3](https://github.com/pablesite/moneyplanner-saas/commit/a7cdaf3724c91b9dc6a53a27c1245aed39ec12e7))
+* **plan:** align trajectory chart styling ([245c6a9](https://github.com/pablesite/moneyplanner-saas/commit/245c6a9316de8bb43fcbc122d6baff49af2381ce))
+* **plan:** call the health rows "dimensiones" instead of "cimientos" ([82becef](https://github.com/pablesite/moneyplanner-saas/commit/82becefdf6db6c966a251af13dc63a8a3a8565a7))
+* **plan:** edit planned decisions from their detail ([0043270](https://github.com/pablesite/moneyplanner-saas/commit/0043270d61f63140e6af8a37aed28bbf2e29330d))
+* **plan:** expose emergency savings projection ([3cabbf8](https://github.com/pablesite/moneyplanner-saas/commit/3cabbf85d9f1477b6657bc7af5a57f348f9322e0))
+* **plan:** extend trajectory through full history ([a1973f1](https://github.com/pablesite/moneyplanner-saas/commit/a1973f1b8fdcbfbd97d92faa7e7c5dcd93f4731f))
+* **plan:** give each grade its own validated colour ([45e7440](https://github.com/pablesite/moneyplanner-saas/commit/45e7440616f93f0ff2f75fd2f65a3c9396df7f3b))
+* **plan:** make "Tu situación este año" compact and collapsible ([29eb2ef](https://github.com/pablesite/moneyplanner-saas/commit/29eb2efb8a464b08557eaa586b251f63510a34a0))
+* **plan:** move calculation settings to a modal in the page header ([5833583](https://github.com/pablesite/moneyplanner-saas/commit/5833583b887c0b7a53d6894b7fc9b7b63f0e2e4f))
+* **plan:** rebuild the foundations block around A-E grades ([ef1e453](https://github.com/pablesite/moneyplanner-saas/commit/ef1e4536ff57074528c3e54c126acc4170afa4bc))
+* **plan:** show emergency fund trajectory ([3dddec7](https://github.com/pablesite/moneyplanner-saas/commit/3dddec71c2d3b59fb6a75d13087ed5b1cff239d9))
+* **plan:** show projected asset balance ([f6bf6cc](https://github.com/pablesite/moneyplanner-saas/commit/f6bf6ccb8f2bb04e9f918dd9560b325b89b3d16a))
+* **plan:** show the trajectory chart without its wrapper section ([abfbcac](https://github.com/pablesite/moneyplanner-saas/commit/abfbcacc0bdc7e5423d80718e7a4ab46942af2cf))
+* **plan:** structure overview into chapters ([6555733](https://github.com/pablesite/moneyplanner-saas/commit/655573311ba4d9f7973035674ff560db39a96743))
+* **plan:** trim the trajectory header to its label plus a hint ([783d795](https://github.com/pablesite/moneyplanner-saas/commit/783d795bb9c7593ffd4c5ca4fe3080362ae5af97))
+
+
+### Bug Fixes
+
+* **core:** update mortgage cancellation forecast ([22e91dc](https://github.com/pablesite/moneyplanner-saas/commit/22e91dc1003b0ea52885a04616a9412229cd3f87))
+* **core:** update projection cash allocation ([f1ed1a8](https://github.com/pablesite/moneyplanner-saas/commit/f1ed1a845a43f7e8c063f183bc727d357d9e2301))
+* **frontend:** keep search focus and hide shell focus ring on query syncs ([f514e6a](https://github.com/pablesite/moneyplanner-saas/commit/f514e6a525ea6de4f4c9e0e9ec6919bdd44ba631))
+* **plan:** align financed sale values ([de79a67](https://github.com/pablesite/moneyplanner-saas/commit/de79a67257e3b5e7c77b5ef4b48316ac905683fc))
+* **plan:** align trajectory range controls ([2489b5e](https://github.com/pablesite/moneyplanner-saas/commit/2489b5ec6422600f20f335aeb1edba26689ea67b))
+* **plan:** clarify forecast handoff ([19ebe42](https://github.com/pablesite/moneyplanner-saas/commit/19ebe426386a43259e0bd03d7ad455f673b223d4))
+* **plan:** clarify sale cash and preserve liquidity ([684e866](https://github.com/pablesite/moneyplanner-saas/commit/684e8660c19c1517840dac8b859cb3355cefd926))
+* **plan:** clarify trajectory year axis ([f6bd522](https://github.com/pablesite/moneyplanner-saas/commit/f6bd522c7d50066a406e443e7c719d4710b8d78f))
+* **plan:** explain why the two percentages differ ([0320053](https://github.com/pablesite/moneyplanner-saas/commit/0320053c8006ee78939aa65e21082f934955667d))
+* **plan:** expose monthly financing gaps ([d8fdf2f](https://github.com/pablesite/moneyplanner-saas/commit/d8fdf2fc17a4acb6fde341ac877ccc3501c61464))
+* **plan:** improve trajectory hover details ([d244fd7](https://github.com/pablesite/moneyplanner-saas/commit/d244fd7e164036c49b51cfedc0c6e41d677b1539))
+* **plan:** keep phantom one-off movements out of the projected total ([d4b674d](https://github.com/pablesite/moneyplanner-saas/commit/d4b674da1ae60361d2596ab98810a3d6e162f4f5))
+* **plan:** label trajectory decision markers ([9a2d703](https://github.com/pablesite/moneyplanner-saas/commit/9a2d703f5d8a85f256214282ffdfe688a6f6acf4))
+* **plan:** make each foundation title with the KPI its grade judges ([90de33f](https://github.com/pablesite/moneyplanner-saas/commit/90de33f9803ce40338a2fb48340d21990fea35e4))
+* **plan:** make historical capital series visible ([75dc06b](https://github.com/pablesite/moneyplanner-saas/commit/75dc06b04f32dcea39f4bf1fca3a738681c9fae3))
+* **plan:** make overview chapters visible ([567dcb3](https://github.com/pablesite/moneyplanner-saas/commit/567dcb3a6c62d6e83210ca58b496820d20e73c64))
+* **plan:** make the cash-flow foundation card add up ([1042a82](https://github.com/pablesite/moneyplanner-saas/commit/1042a82f145ccf2714bafd69e45e3e886958f30e))
+* **plan:** make the page gap actually match Patrimonio ([12db277](https://github.com/pablesite/moneyplanner-saas/commit/12db2770d70e9761cf789ecf24e597906531b843))
+* **plan:** put the milestone marks back on the bar and number them ([b048755](https://github.com/pablesite/moneyplanner-saas/commit/b04875560af051e5e8c6018e5dcb4cf4dfbc3ca2))
+* **plan:** refine trajectory chart typography ([7abd1de](https://github.com/pablesite/moneyplanner-saas/commit/7abd1de9093db1df08b948a75b84e13be0c21d72))
+* **plan:** refine trajectory data table ([443a6a4](https://github.com/pablesite/moneyplanner-saas/commit/443a6a44d79f832b1f94ad03e5353f1b1fa67eb4))
+* **plan:** remove redundant net recurring flow footer in Mi Plan ([474343f](https://github.com/pablesite/moneyplanner-saas/commit/474343fc08c3ee3a532be6d94d674a3b9863401e))
+* **plan:** replace the stale footer of the one-off movements table ([291a0df](https://github.com/pablesite/moneyplanner-saas/commit/291a0df9d791e6f46f04d41045996ceb57e7d895))
+* **plan:** request capital milestones in the same year as the denominator ([4ccfa60](https://github.com/pablesite/moneyplanner-saas/commit/4ccfa60993b52768d18e22822462081ec5416b97))
+* **plan:** separate history from annual forecast ([7c60a55](https://github.com/pablesite/moneyplanner-saas/commit/7c60a558cad516dc2d9a2c3cc5e9054f1e19926a))
+* **plan:** show gross temporary effort instead of net committed surplus ([2e7df74](https://github.com/pablesite/moneyplanner-saas/commit/2e7df74e9068b577a753ee7205ef0b36b7119737))
+* **plan:** tidy the hero KPI band ([f0af0f6](https://github.com/pablesite/moneyplanner-saas/commit/f0af0f66098831a4c86bee562a934319a4a49135))
+* **plan:** use readable trajectory scales ([13afd5d](https://github.com/pablesite/moneyplanner-saas/commit/13afd5dc263f4ffb847eff382828e4c9db4a321a))
+* **ui:** fall back to `label` when AInfoHint has no slot content ([ef55742](https://github.com/pablesite/moneyplanner-saas/commit/ef557423fb830b5b831eb5e635286bf9788cb4e3))
+
 ## [0.42.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.41.0...moneyplanner-saas-v0.42.0) (2026-07-29)
 
 
