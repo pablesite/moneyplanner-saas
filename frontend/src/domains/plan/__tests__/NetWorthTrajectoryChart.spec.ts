@@ -62,7 +62,11 @@ describe('NetWorthTrajectoryChart', () => {
     expect(wrapper.find('.plan-chart-line.security.historical-segment').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.security.projected-segment').exists()).toBe(true);
     expect(wrapper.find('.plan-chart-line.target').exists()).toBe(true);
-    expect(wrapper.findAll('.plan-chart-capital-label')).toHaveLength(4);
+    const capitalLabels = wrapper.findAll('.plan-chart-capital-label').map((node) => node.text());
+    expect(capitalLabels).toContain('100k');
+    expect(capitalLabels).not.toContain('100,0k');
+    expect(wrapper.findAll('.plan-chart-y-grid').length).toBeGreaterThan(4);
+    expect(wrapper.findAll('.plan-chart-x-grid').length).toBeGreaterThan(4);
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Patrimonio');
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Capital');
     expect(wrapper.find('.plan-chart-legend').text()).toContain('Fondo de emergencia');

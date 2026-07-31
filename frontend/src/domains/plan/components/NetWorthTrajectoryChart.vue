@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { AInfoHint } from '@/domains/ui';
-import { formatCompact, formatMoney } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 import { formatMonthYearLabel, formatShortMonthYear } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
 import type { PlanMember, ProjectionResponse } from '@/domains/plan/types';
@@ -107,16 +107,45 @@ const capitalValues = computed(() => [
   ...targetSeries.value.map((entry) => entry.value),
 ]);
 
-function seriesBounds(values: number[]): { min: number; max: number } {
-  if (!values.length) return { min: 0, max: 1 };
-  const min = Math.min(...values, 0);
-  const max = Math.max(...values, 1);
-  if (min === max) return { min: min - 1, max: max + 1 };
-  return { min, max };
+type NumericScale = { min: number; max: number; step: number };
+
+function niceStep(span: number, targetIntervals = 10): number {
+  const roughStep = span / targetIntervals;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const normalized = roughStep / magnitude;
+  if (normalized <= 1) return magnitude;
+  if (normalized <= 2) return 2 * magnitude;
+  if (normalized <= 5) return 5 * magnitude;
+  return 10 * magnitude;
 }
 
-const netWorthBounds = computed(() => seriesBounds(netWorthValues.value));
-const capitalBounds = computed(() => seriesBounds(capitalValues.value));
+function numericScale(values: number[]): NumericScale {
+  if (!values.length) return { min: 0, max: 1, step: 1 };
+  const rawMin = Math.min(...values, 0);
+  const rawMax = Math.max(...values, 0);
+  const span = rawMax - rawMin || 1;
+  const step = niceStep(span);
+  const min = Math.floor(rawMin / step) * step;
+  const max = Math.ceil(rawMax / step) * step;
+  return { min, max: max === min ? min + step : max, step };
+}
+
+function scaleTicks(scale: NumericScale): number[] {
+  const count = Math.round((scale.max - scale.min) / scale.step);
+  return Array.from({ length: count + 1 }, (_, index) => scale.min + index * scale.step);
+}
+
+function formatAxisTick(value: number): string {
+  const abs = Math.abs(value);
+  const divisor = abs >= 1_000_000 ? 1_000_000 : abs >= 1_000 ? 1_000 : 1;
+  const suffix = divisor === 1_000_000 ? 'M' : divisor === 1_000 ? 'k' : '';
+  return `${(value / divisor).toLocaleString('es-ES', { maximumFractionDigits: 1 })}${suffix}`;
+}
+
+const netWorthScale = computed(() => numericScale(netWorthValues.value));
+const capitalScale = computed(() => numericScale(capitalValues.value));
+const netWorthBounds = computed(() => netWorthScale.value);
+const capitalBounds = computed(() => capitalScale.value);
 
 const timeBounds = computed(() => {
   if (!points.value.length) return { min: 0, max: 1 };
@@ -166,18 +195,10 @@ const projectedSecurityPath = computed(() => buildPath(projectedSecuritySeries.v
 const targetPath = computed(() => buildPath(targetSeries.value, pyCapital));
 
 const yTicks = computed(() =>
-  [0, 1, 2, 3].map((i) => {
-    const bounds = netWorthBounds.value;
-    const value = bounds.min + (bounds.max - bounds.min) * (i / 3);
-    return { value, y: pyNetWorth(value) };
-  }),
+  scaleTicks(netWorthScale.value).map((value) => ({ value, y: pyNetWorth(value) })),
 );
 const capitalTicks = computed(() =>
-  [0, 1, 2, 3].map((i) => {
-    const bounds = capitalBounds.value;
-    const value = bounds.min + (bounds.max - bounds.min) * (i / 3);
-    return { value, y: pyCapital(value) };
-  }),
+  scaleTicks(capitalScale.value).map((value) => ({ value, y: pyCapital(value) })),
 );
 
 const xTicks = computed(() => {
@@ -403,15 +424,25 @@ function onMove(event: MouseEvent): void {
       >
         <g class="plan-chart-grid">
           <line
+            v-for="tick in xTicks"
+            :key="`x-grid-${tick.label}`"
+            class="plan-chart-x-grid"
+            :x1="tick.x"
+            :x2="tick.x"
+            :y1="padT"
+            :y2="H - padB"
+          />
+          <line
             v-for="tick in yTicks"
             :key="tick.value"
+            class="plan-chart-y-grid"
             :x1="padL"
             :x2="W - padR"
             :y1="tick.y"
             :y2="tick.y"
           />
           <text v-for="tick in yTicks" :key="`label-${tick.value}`" :x="8" :y="tick.y + 4">
-            {{ formatCompact(tick.value) }}
+            {{ formatAxisTick(tick.value) }}
           </text>
           <text
             v-for="tick in capitalTicks"
@@ -420,7 +451,7 @@ function onMove(event: MouseEvent): void {
             :x="W - 8"
             :y="tick.y + 4"
           >
-            {{ formatCompact(tick.value) }}
+            {{ formatAxisTick(tick.value) }}
           </text>
           <text
             v-for="tick in xTicks"

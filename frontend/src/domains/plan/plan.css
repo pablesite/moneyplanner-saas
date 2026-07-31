@@ -534,6 +534,10 @@
   stroke: rgba(255, 255, 255, 0.08);
 }
 
+.plan-chart-grid .plan-chart-x-grid {
+  stroke: rgba(255, 255, 255, 0.045);
+}
+
 .plan-chart-grid text {
   fill: var(--muted);
   font-size: 13px;
