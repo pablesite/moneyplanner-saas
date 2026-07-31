@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue';
-import { AInfoHint } from '@/domains/ui';
+import { AButton, AInfoHint } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import { formatMonthYearLabel, formatShortMonthYear } from '@/lib/dates';
 import type { NetWorthTimeline } from '@/domains/net-worth/models';
@@ -40,8 +40,38 @@ type Point = {
   year?: number;
 };
 
+type RangeOption = { value: number | null; label: string };
+
+const historicalRangeOptions: RangeOption[] = [
+  { value: 1, label: '1a' },
+  { value: 3, label: '3a' },
+  { value: 5, label: '5a' },
+  { value: 10, label: '10a' },
+  { value: null, label: 'Todo' },
+];
+const projectionRangeOptions: RangeOption[] = [
+  { value: 5, label: '5a' },
+  { value: 10, label: '10a' },
+  { value: 15, label: '15a' },
+  { value: 20, label: '20a' },
+  { value: null, label: 'Todo' },
+];
+const historicalRangeYears = ref<number | null>(null);
+const projectionRangeYears = ref<number | null>(null);
+
+const visibleHistoricalRows = computed(() => {
+  const rows = props.timeline?.rows ?? [];
+  const years = historicalRangeYears.value;
+  const lastRow = rows.at(-1);
+  if (years == null || !lastRow) return rows;
+  const cutoff = new Date(lastRow.date);
+  cutoff.setUTCFullYear(cutoff.getUTCFullYear() - years);
+  const cutoffTime = cutoff.getTime();
+  return rows.filter((row) => Date.parse(row.date) >= cutoffTime);
+});
+
 const historicalPoints = computed<Point[]>(() =>
-  (props.timeline?.rows ?? []).map((row) => ({
+  visibleHistoricalRows.value.map((row) => ({
     t: Date.parse(row.date),
     date: row.date,
     label: formatMonthYearLabel(row.date),
@@ -52,13 +82,21 @@ const historicalPoints = computed<Point[]>(() =>
 
 // Las filas proyectadas son valores a fin de año; se descartan las que quedan
 // por detrás del último cierre histórico para que el eje temporal no retroceda.
-const projectedRows = computed(() => {
+const availableProjectedRows = computed(() => {
   const history = historicalPoints.value;
   const lastHistorical = history.length ? history[history.length - 1]!.t : Number.NEGATIVE_INFINITY;
   return props.projection.trajectory
     .map((row) => ({ row, t: Date.parse(`${row.year}-12-31`) }))
     .filter((entry) => entry.t > lastHistorical);
 });
+
+const projectedRows = computed(() => {
+  const years = projectionRangeYears.value;
+  return years == null
+    ? availableProjectedRows.value
+    : availableProjectedRows.value.slice(0, years);
+});
+const visibleProjectionRows = computed(() => projectedRows.value.map(({ row }) => row));
 
 const projectedPoints = computed<Point[]>(() =>
   projectedRows.value.map(({ row, t }) => ({
@@ -73,11 +111,11 @@ const projectedPoints = computed<Point[]>(() =>
 const points = computed<Point[]>(() => [...historicalPoints.value, ...projectedPoints.value]);
 
 const hasHistoricalComposition = computed(() =>
-  (props.timeline?.rows ?? []).some((row) => row.assets_by_category != null),
+  visibleHistoricalRows.value.some((row) => row.assets_by_category != null),
 );
 const historicalProductiveSeries = computed(() =>
   hasHistoricalComposition.value
-    ? (props.timeline?.rows ?? []).map((row) => ({
+    ? visibleHistoricalRows.value.map((row) => ({
         t: Date.parse(row.date),
         value: Number(row.assets_by_category?.investments ?? 0),
       }))
@@ -85,7 +123,7 @@ const historicalProductiveSeries = computed(() =>
 );
 const historicalSecuritySeries = computed(() =>
   hasHistoricalComposition.value
-    ? (props.timeline?.rows ?? []).map((row) => ({
+    ? visibleHistoricalRows.value.map((row) => ({
         t: Date.parse(row.date),
         value: Number(row.assets_by_category?.cash ?? 0),
       }))
@@ -100,6 +138,16 @@ const projectedSecuritySeries = computed(() =>
 const targetSeries = computed(() =>
   projectedRows.value.map(({ row, t }) => ({ t, value: Number(row.target_capital) })),
 );
+
+function selectHistoricalRange(years: number | null): void {
+  historicalRangeYears.value = years;
+  hoverIndex.value = null;
+}
+
+function selectProjectionRange(years: number | null): void {
+  projectionRangeYears.value = years;
+  hoverIndex.value = null;
+}
 
 const netWorthValues = computed(() => points.value.map((point) => point.value));
 const capitalValues = computed(() => [
@@ -223,7 +271,9 @@ const xTicks = computed(() => {
   const lastYear = new Date(max).getFullYear();
   const ticks: Array<{ x: number; year: number; ages: string }> = [];
   for (let year = Math.ceil(firstYear / 5) * 5; year <= lastYear; year += 5) {
-    const t = Date.parse(`${year}-01-01`);
+    // Las filas proyectadas son cierres anuales: la marca 2040 debe coincidir con
+    // el cierre de 2040, no con el cierre de 2039 situado un día antes.
+    const t = Date.parse(`${year}-12-31`);
     if (t < min || t > max) continue;
     const ages = props.members
       .map((member) => ageInYear(member.birth_date, year))
@@ -244,28 +294,31 @@ type YearMarker = {
 const yearMarkers = computed<YearMarker[]>(() => {
   const markers: YearMarker[] = [];
   const { min, max } = timeBounds.value;
-  // Objetivo = aspiración del usuario; Sostenible = jubilación más temprana viable.
+  // El retiro en R empieza a consumir capital durante R. La preparación se
+  // consolida al cierre de R-1, último año completo de acumulación.
   const desiredYear = props.desiredYear ?? props.projection.summary.target_year.value;
   const sustainableYear = props.sustainableYear ?? props.projection.summary.projected_year.value;
   if (desiredYear != null) {
-    const desiredT = Date.parse(`${desiredYear}-12-31`);
+    const readinessYear = desiredYear - 1;
+    const desiredT = Date.parse(`${readinessYear}-12-31`);
     if (desiredT >= min && desiredT <= max) {
       markers.push({
         x: tx(desiredT),
         labelX: tx(desiredT),
-        label: `Objetivo ${desiredYear}`,
+        label: `Objetivo · cierre ${readinessYear}`,
         kind: 'target',
         anchorClass: '',
       });
     }
   }
   if (sustainableYear != null) {
-    const sustainableT = Date.parse(`${sustainableYear}-12-31`);
+    const readinessYear = sustainableYear - 1;
+    const sustainableT = Date.parse(`${readinessYear}-12-31`);
     if (sustainableT >= min && sustainableT <= max) {
       markers.push({
         x: tx(sustainableT),
         labelX: tx(sustainableT),
-        label: `Sostenible ${sustainableYear}`,
+        label: `Sostenible · cierre ${readinessYear}`,
         kind: 'projected',
         anchorClass: '',
       });
@@ -418,16 +471,30 @@ function onMove(event: MouseEvent): void {
       <p class="plan-block-eyebrow plan-trajectory-label">
         Trayectoria patrimonial
         <AInfoHint
-          label="La fecha llega cuando el capital productivo alcanza el capital objetivo, no cuando lo hace el patrimonio total."
+          label="Los hitos se muestran al cierre del último año de trabajo. El retiro y las retiradas empiezan el año siguiente."
         />
       </p>
-      <div class="plan-chart-legend" aria-hidden="true">
-        <span><i class="hist"></i> Histórico</span>
-        <span><i class="proj"></i> Proyección</span>
-        <span><i class="prod"></i> Capital productivo</span>
-        <span><i class="security"></i> Fondo de emergencia</span>
-        <span><i class="target"></i> Capital objetivo</span>
-        <span v-if="eventMarkers.length"><i class="event"></i> Decisión</span>
+      <div class="plan-chart-legend" aria-label="Leyenda de la trayectoria patrimonial">
+        <div class="plan-chart-legend-group" aria-label="Series">
+          <span class="plan-chart-legend-title">Series</span>
+          <span class="plan-chart-legend-item"><i class="networth"></i> Patrimonio</span>
+          <span class="plan-chart-legend-item"><i class="prod"></i> Capital productivo</span>
+          <span class="plan-chart-legend-item"><i class="security"></i> Fondo de emergencia</span>
+          <span class="plan-chart-legend-item"><i class="target"></i> Capital objetivo</span>
+        </div>
+        <div class="plan-chart-legend-group plan-chart-legend-separated" aria-label="Tipo de dato">
+          <span class="plan-chart-legend-title">Tramo</span>
+          <span class="plan-chart-legend-item"><i class="hist"></i> Histórico</span>
+          <span class="plan-chart-legend-item"><i class="proj"></i> Proyección</span>
+        </div>
+        <div
+          v-if="eventMarkers.length"
+          class="plan-chart-legend-group plan-chart-legend-separated"
+          aria-label="Hitos"
+        >
+          <span class="plan-chart-legend-title">Hitos</span>
+          <span class="plan-chart-legend-item"><i class="event"></i> Decisión</span>
+        </div>
       </div>
     </div>
 
@@ -665,7 +732,41 @@ function onMove(event: MouseEvent): void {
         </dl>
       </div>
     </div>
-    <details v-if="projection.trajectory.length" class="plan-chart-table">
+    <div class="plan-chart-range-controls" aria-label="Rango visible de la trayectoria">
+      <div class="plan-chart-range-group">
+        <span>Histórico</span>
+        <div class="plan-chart-range-options" aria-label="Años de histórico">
+          <AButton
+            v-for="option in historicalRangeOptions"
+            :key="option.label"
+            size="sm"
+            variant="ghost"
+            :class="{ on: historicalRangeYears === option.value }"
+            :aria-pressed="historicalRangeYears === option.value"
+            @click="selectHistoricalRange(option.value)"
+          >
+            {{ option.label }}
+          </AButton>
+        </div>
+      </div>
+      <div class="plan-chart-range-group">
+        <span>Proyección</span>
+        <div class="plan-chart-range-options" aria-label="Años de proyección">
+          <AButton
+            v-for="option in projectionRangeOptions"
+            :key="option.label"
+            size="sm"
+            variant="ghost"
+            :class="{ on: projectionRangeYears === option.value }"
+            :aria-pressed="projectionRangeYears === option.value"
+            @click="selectProjectionRange(option.value)"
+          >
+            {{ option.label }}
+          </AButton>
+        </div>
+      </div>
+    </div>
+    <details v-if="visibleProjectionRows.length" class="plan-chart-table">
       <summary>Ver los datos en una tabla</summary>
       <div class="plan-table-scroll">
         <table>
@@ -684,7 +785,7 @@ function onMove(event: MouseEvent): void {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in projection.trajectory" :key="row.year">
+            <tr v-for="row in visibleProjectionRows" :key="row.year">
               <th scope="row">{{ row.year }}</th>
               <td>{{ formatMoney(row.total_assets) }}</td>
               <td>{{ formatMoney(row.liquidity_assets) }}</td>

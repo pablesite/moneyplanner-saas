@@ -96,14 +96,21 @@ describe('NetWorthTrajectoryChart', () => {
     expect(capitalLabels).toContain('100k');
     expect(capitalLabels).not.toContain('100,0k');
     expect(wrapper.findAll('.plan-chart-y-grid').length).toBeGreaterThan(4);
-    expect(wrapper.findAll('.plan-chart-x-grid')).toHaveLength(2);
+    expect(wrapper.findAll('.plan-chart-x-grid')).toHaveLength(3);
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Patrimonio');
     expect(wrapper.find('.plan-chart-axis-titles').text()).toContain('Capital');
-    expect(wrapper.find('.plan-chart-legend').text()).toContain('Fondo de emergencia');
+    const seriesLegend = wrapper.find('[aria-label="Series"]');
+    const readingLegend = wrapper.find('[aria-label="Tipo de dato"]');
+    expect(seriesLegend.text()).toContain('Patrimonio');
+    expect(seriesLegend.text()).toContain('Capital productivo');
+    expect(seriesLegend.text()).toContain('Fondo de emergencia');
+    expect(seriesLegend.text()).toContain('Capital objetivo');
+    expect(readingLegend.text()).toContain('Histórico');
+    expect(readingLegend.text()).toContain('Proyección');
     const years = wrapper.findAll('.plan-chart-x-year').map((node) => node.text());
     const ages = wrapper.findAll('.plan-chart-x-age').map((node) => node.text());
-    expect(years).toEqual(['2030', '2035']);
-    expect(ages).toEqual(['50/48 años', '55/53 años']);
+    expect(years).toEqual(['2025', '2030', '2035']);
+    expect(ages).toEqual(['45/43 años', '50/48 años', '55/53 años']);
   });
 
   it('keeps every historical point instead of truncating the chart to 36 closes', () => {
@@ -118,6 +125,43 @@ describe('NetWorthTrajectoryChart', () => {
 
     const historicalPath = wrapper.find('.plan-chart-line.hist').attributes('d') ?? '';
     expect(historicalPath.match(/[ML]/g) ?? []).toHaveLength(40);
+  });
+
+  it('selects historical and projected ranges independently', async () => {
+    const rows = Array.from({ length: 12 }, (_, index) => ({
+      date: `${2015 + index}-01-31`,
+      net_worth: String(100000 + index * 10000),
+      assets_by_category: { cash: '20000', investments: '30000' },
+    }));
+    const projection = makeProjection({
+      trajectory: Array.from({ length: 20 }, (_, index) =>
+        trajectoryRow({
+          year: 2027 + index,
+          net_worth: String(220000 + index * 20000),
+          productive_capital: String(50000 + index * 10000),
+        }),
+      ),
+    });
+    const wrapper = mount(NetWorthTrajectoryChart, {
+      props: { timeline: timeline(rows), projection },
+    });
+    const historicalButtons = wrapper.findAll('[aria-label="Años de histórico"] button');
+    const projectionButtons = wrapper.findAll('[aria-label="Años de proyección"] button');
+    const history3Years = historicalButtons.find((button) => button.text() === '3a');
+    const projection5Years = projectionButtons.find((button) => button.text() === '5a');
+
+    expect(wrapper.findAll('.plan-chart-point.historical')).toHaveLength(12);
+    expect(wrapper.findAll('.plan-chart-point.projected')).toHaveLength(20);
+    expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(20);
+
+    await history3Years?.trigger('click');
+    await projection5Years?.trigger('click');
+
+    expect(history3Years?.attributes('aria-pressed')).toBe('true');
+    expect(projection5Years?.attributes('aria-pressed')).toBe('true');
+    expect(wrapper.findAll('.plan-chart-point.historical')).toHaveLength(4);
+    expect(wrapper.findAll('.plan-chart-point.projected')).toHaveLength(5);
+    expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(5);
   });
 
   it('drops projected rows that fall behind the last historical close', () => {
@@ -136,7 +180,48 @@ describe('NetWorthTrajectoryChart', () => {
       props: { timeline: baseTimeline, projection: baseProjection },
     });
     const markerText = wrapper.findAll('.plan-chart-marker text').map((n) => n.text());
-    expect(markerText.some((t) => t.includes('Objetivo 2035'))).toBe(true);
+    expect(markerText.some((t) => t.includes('Objetivo · cierre 2034'))).toBe(true);
+  });
+
+  it('aligns annual forecast points with the matching end-of-year ticks', () => {
+    const wrapper = mount(NetWorthTrajectoryChart, {
+      props: { timeline: baseTimeline, projection: baseProjection, members },
+    });
+    const tick2035 = wrapper
+      .findAll('.plan-chart-x-label')
+      .find((node) => node.find('.plan-chart-x-year').text() === '2035');
+    const projected2035 = wrapper.findAll('.plan-chart-point.projected').at(1);
+
+    expect(tick2035).toBeDefined();
+    expect(projected2035).toBeDefined();
+    expect(tick2035?.attributes('x')).toBe(projected2035?.attributes('cx'));
+  });
+
+  it('marks readiness at the close before withdrawals begin', () => {
+    const projection = makeProjection({
+      trajectory: [
+        trajectoryRow({ year: 2037, net_worth: '500000' }),
+        trajectoryRow({ year: 2038, net_worth: '480000', annual_withdrawals: '40000' }),
+      ],
+    });
+    const wrapper = mount(NetWorthTrajectoryChart, {
+      props: {
+        timeline: baseTimeline,
+        projection,
+        desiredYear: 2038,
+        sustainableYear: 2038,
+      },
+    });
+    const labels = wrapper.findAll('.plan-chart-marker text').map((node) => node.text());
+    const readinessX = wrapper.find('.plan-chart-point.projected').attributes('cx');
+
+    expect(labels).toContain('Objetivo · cierre 2037');
+    expect(labels).toContain('Sostenible · cierre 2037');
+    expect(
+      wrapper
+        .findAll('.plan-chart-marker line')
+        .every((line) => line.attributes('x1') === readinessX),
+    ).toBe(true);
   });
 
   it('keeps future years hoverable when the tooltip overlaps the chart', async () => {
@@ -178,7 +263,7 @@ describe('NetWorthTrajectoryChart', () => {
     expect(wrapper.find('.plan-chart-event title').text()).toContain('Coche Ana');
     expect(wrapper.find('.plan-chart-event title').text()).toContain('Vehículo');
     expect(wrapper.find('.plan-chart-event').attributes('aria-label')).toContain('Coche Ana');
-    expect(wrapper.find('.plan-chart-legend').text()).toContain('Decisión');
+    expect(wrapper.find('[aria-label="Hitos"]').text()).toContain('Decisión');
   });
 
   it('hides the event legend entry when there are no events', () => {
@@ -186,6 +271,7 @@ describe('NetWorthTrajectoryChart', () => {
       props: { timeline: baseTimeline, projection: baseProjection },
     });
     expect(wrapper.find('.plan-chart-legend').text()).not.toContain('Decisión');
+    expect(wrapper.find('[aria-label="Hitos"]').exists()).toBe(false);
   });
 
   it('offers the projected data as an accessible table', () => {
@@ -193,7 +279,7 @@ describe('NetWorthTrajectoryChart', () => {
       props: { timeline: baseTimeline, projection: baseProjection },
     });
     expect(wrapper.find('.plan-chart-table').exists()).toBe(true);
-    expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(3);
+    expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(2);
     expect(wrapper.find('.plan-chart-table').text()).toContain('Activos');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Liquidez');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Inmuebles');
