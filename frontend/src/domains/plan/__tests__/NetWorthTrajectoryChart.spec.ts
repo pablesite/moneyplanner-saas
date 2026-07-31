@@ -280,11 +280,15 @@ describe('NetWorthTrajectoryChart', () => {
     });
     expect(wrapper.find('.plan-chart-table').exists()).toBe(true);
     expect(wrapper.findAll('.plan-chart-table tbody tr')).toHaveLength(2);
+    expect(wrapper.find('.plan-chart-table summary').text()).toContain('2027–2035 · 2 años');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Activos');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Liquidez');
+    expect(wrapper.find('.plan-chart-table').text()).toContain('Fondo de emergencia');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Inmuebles');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Capital productivo');
+    expect(wrapper.find('.plan-chart-table').text()).toContain('Capital objetivo');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Mobiliario y vehículos');
     expect(wrapper.find('.plan-chart-table').text()).toContain('Patrimonio neto');
+    expect(wrapper.find('.plan-chart-table .is-productive').text()).toContain('40.000');
   });
 });

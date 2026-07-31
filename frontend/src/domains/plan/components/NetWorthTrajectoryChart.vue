@@ -97,6 +97,13 @@ const projectedRows = computed(() => {
     : availableProjectedRows.value.slice(0, years);
 });
 const visibleProjectionRows = computed(() => projectedRows.value.map(({ row }) => row));
+const projectionTableRangeLabel = computed(() => {
+  const rows = visibleProjectionRows.value;
+  const first = rows[0];
+  const last = rows.at(-1);
+  if (!first || !last) return '';
+  return `${first.year}–${last.year} · ${rows.length} ${rows.length === 1 ? 'año' : 'años'}`;
+});
 
 const projectedPoints = computed<Point[]>(() =>
   projectedRows.value.map(({ row, t }) => ({
@@ -767,35 +774,44 @@ function onMove(event: MouseEvent): void {
       </div>
     </div>
     <details v-if="visibleProjectionRows.length" class="plan-chart-table">
-      <summary>Ver los datos en una tabla</summary>
+      <summary>
+        <span>Datos anuales de la proyección</span>
+        <small>{{ projectionTableRangeLabel }}</small>
+      </summary>
       <div class="plan-table-scroll">
-        <table>
+        <table class="plan-chart-data-table">
           <thead>
             <tr>
               <th scope="col">Año</th>
-              <th scope="col">Activos</th>
-              <th scope="col">Liquidez</th>
-              <th scope="col">Inmuebles</th>
-              <th scope="col">Capital productivo</th>
-              <th scope="col">Mobiliario y vehículos</th>
-              <th scope="col">Otros activos</th>
-              <th scope="col">Deudas</th>
-              <th scope="col">Financiación pendiente</th>
-              <th scope="col">Patrimonio neto</th>
+              <th scope="col" class="num">Patrimonio neto</th>
+              <th scope="col" class="num">Activos</th>
+              <th scope="col" class="num">Deudas</th>
+              <th scope="col" class="num">Liquidez</th>
+              <th scope="col" class="num">Fondo de emergencia</th>
+              <th scope="col" class="num">Capital productivo</th>
+              <th scope="col" class="num">Inmuebles</th>
+              <th scope="col" class="num">Mobiliario y vehículos</th>
+              <th scope="col" class="num">Otros activos</th>
+              <th scope="col" class="num">Capital objetivo</th>
+              <th scope="col" class="num">Financiación pendiente</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in visibleProjectionRows" :key="row.year">
-              <th scope="row">{{ row.year }}</th>
-              <td>{{ formatMoney(row.total_assets) }}</td>
-              <td>{{ formatMoney(row.liquidity_assets) }}</td>
-              <td>{{ formatMoney(row.real_estate_assets) }}</td>
-              <td>{{ formatMoney(row.investment_assets) }}</td>
-              <td>{{ formatMoney(row.furnishings_assets) }}</td>
-              <td>{{ formatMoney(row.other_assets) }}</td>
-              <td>{{ formatMoney(row.liabilities) }}</td>
-              <td>{{ formatMoney(row.financing_gap) }}</td>
-              <td>{{ formatMoney(row.net_worth) }}</td>
+              <th scope="row" class="year mono">{{ row.year }}</th>
+              <td class="num mono is-key">{{ formatMoney(row.net_worth) }}</td>
+              <td class="num mono">{{ formatMoney(row.total_assets) }}</td>
+              <td class="num mono">{{ formatMoney(row.liabilities) }}</td>
+              <td class="num mono">{{ formatMoney(row.liquidity_assets) }}</td>
+              <td class="num mono is-security">{{ formatMoney(row.security_capital) }}</td>
+              <td class="num mono is-productive">{{ formatMoney(row.productive_capital) }}</td>
+              <td class="num mono">{{ formatMoney(row.real_estate_assets) }}</td>
+              <td class="num mono">{{ formatMoney(row.furnishings_assets) }}</td>
+              <td class="num mono">{{ formatMoney(row.other_assets) }}</td>
+              <td class="num mono is-target">{{ formatMoney(row.target_capital) }}</td>
+              <td class="num mono" :class="{ 'is-negative': Number(row.financing_gap) < 0 }">
+                {{ formatMoney(row.financing_gap) }}
+              </td>
             </tr>
           </tbody>
         </table>
