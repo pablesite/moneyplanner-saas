@@ -22,6 +22,11 @@
   --focus-ring: 0 0 0 3px rgba(130, 190, 255, 0.18);
   --state-error-border: rgba(255, 120, 120, 0.8);
   --state-error-bg: rgba(255, 80, 80, 0.08);
+  /* Espacio que ocupa la tab bar móvil en el fondo del viewport (0 mientras no
+     existe, más el safe area del dispositivo). Todo lo anclado abajo —fin del
+     contenido, barras sticky, FABs, toasts, banners— lo descuenta con este token
+     en vez de repetir el alto de la barra como número mágico. */
+  --shell-bottom-inset: env(safe-area-inset-bottom, 0px);
 }
 
 body {
@@ -1282,6 +1287,10 @@ main[tabindex='-1']:focus-visible {
 
 .ui-shell-content-stage {
   min-height: calc(100vh - 57px);
+  /* La tab bar es `position: fixed`: sin esta reserva, el último bloque de cada
+     vista (típicamente su acción principal) queda debajo de la barra y no hay
+     scroll que lo rescate porque el documento ya ha terminado. */
+  padding-bottom: var(--shell-bottom-inset);
 }
 
 .ui-shell-bottom-nav {
@@ -1313,6 +1322,13 @@ main[tabindex='-1']:focus-visible {
 
   .ui-shell-content-stage {
     min-height: auto;
+  }
+
+  /* Fuente única del alto de la barra: el resto de la app lo consume vía token.
+     `:has()` lo mantiene en 0 para el shell de saas_admin, que no pinta tab bar,
+     y al vivir en `:root` también lo heredan los nodos con teleport a body. */
+  :root:has(.ui-shell-bottom-nav) {
+    --shell-bottom-inset: calc(68px + env(safe-area-inset-bottom, 0px));
   }
 
   .ui-shell-bottom-nav {
@@ -1382,10 +1398,12 @@ main[tabindex='-1']:focus-visible {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
 
-  .pwa-floating-banner {
-    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
-  }
+/* Los banners PWA traen `bottom-4` de Tailwind: `!important` para reubicarlos
+   sobre la tab bar cuando existe. */
+.pwa-floating-banner {
+  bottom: calc(16px + var(--shell-bottom-inset)) !important;
 }
 
 .ui-shell-about-modal {
@@ -1466,7 +1484,7 @@ main[tabindex='-1']:focus-visible {
 .ui-toast {
   position: fixed;
   left: 50%;
-  bottom: calc(24px + env(safe-area-inset-bottom));
+  bottom: calc(24px + var(--shell-bottom-inset));
   transform: translateX(-50%);
   z-index: 10000;
   display: inline-flex;

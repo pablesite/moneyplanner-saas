@@ -1349,7 +1349,9 @@
 @container page (max-width: 560px) {
   .plan-scenarios-page .plan-scenario-submit {
     position: sticky;
-    bottom: 84px;
+    /* A ras de la tab bar: la barra sangra a los bordes, así que dejar aire
+       intermedio solo enseñaría una franja de contenido entre las dos. */
+    bottom: var(--shell-bottom-inset);
     z-index: 15;
     flex-direction: row;
     align-items: center;
@@ -1496,7 +1498,7 @@
 
 .plan-impact-preview {
   position: sticky;
-  bottom: 16px;
+  bottom: calc(16px + var(--shell-bottom-inset));
   z-index: 5;
   box-shadow: 0 20px 50px rgba(21, 28, 24, 0.16);
 }
@@ -1603,10 +1605,6 @@
 
   .plan-improvement-heading {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .plan-impact-preview {
-    bottom: calc(76px + env(safe-area-inset-bottom));
   }
 }
 

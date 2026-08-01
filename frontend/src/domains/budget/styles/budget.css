@@ -1239,7 +1239,7 @@
     position: fixed;
     z-index: 45;
     right: 24px;
-    bottom: calc(92px + env(safe-area-inset-bottom));
+    bottom: calc(24px + var(--shell-bottom-inset));
     display: grid;
     justify-items: end;
     gap: 10px;

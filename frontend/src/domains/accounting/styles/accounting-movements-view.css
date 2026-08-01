@@ -1797,9 +1797,9 @@
     position: fixed;
     z-index: 45;
     right: 24px;
-    /* Por encima de la barra de navegación inferior (68px), igual que el FAB de
+    /* Por encima de la barra de navegación inferior, igual que el FAB de
        patrimonio; antes quedaba a 32px y la barra lo tapaba. */
-    bottom: calc(92px + env(safe-area-inset-bottom));
+    bottom: calc(24px + var(--shell-bottom-inset));
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -1318,7 +1318,7 @@
 
 .a-nw-page-status {
   position: sticky;
-  bottom: 16px;
+  bottom: calc(16px + var(--shell-bottom-inset));
   justify-self: end;
   margin-left: auto;
   width: fit-content;
@@ -1698,7 +1698,7 @@
     position: fixed;
     z-index: 45;
     right: 24px;
-    bottom: calc(92px + env(safe-area-inset-bottom));
+    bottom: calc(24px + var(--shell-bottom-inset));
     display: grid;
     justify-items: end;
     gap: 10px;
