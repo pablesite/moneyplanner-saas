@@ -50,9 +50,11 @@ export type MonthlyClosePlanImpact = {
   calculated_at: string;
   trajectory: {
     status: 'on_track' | 'delayed' | 'off_track';
+    // Fecha que titula el plan y con la que se juzga el estado de la trayectoria.
+    sustainable_year: number | null;
     projected_year: number | null;
     target_year: number;
-    projected_year_delta: number | null;
+    sustainable_year_delta: number | null;
   };
   capital: {
     productive_capital: string;

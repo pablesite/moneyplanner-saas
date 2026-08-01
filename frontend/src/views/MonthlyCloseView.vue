@@ -474,9 +474,9 @@ function goToCloseStep(): void {
           <article>
             <span>Trayectoria</span>
             <strong>{{ planTrajectoryLabel }}</strong>
-            <small v-if="planImpact.trajectory.projected_year_delta">
-              Cambio material: {{ planImpact.trajectory.projected_year_delta > 0 ? '+' : ''
-              }}{{ planImpact.trajectory.projected_year_delta }} año(s)
+            <small v-if="planImpact.trajectory.sustainable_year_delta">
+              Cambio material: {{ planImpact.trajectory.sustainable_year_delta > 0 ? '+' : ''
+              }}{{ planImpact.trajectory.sustainable_year_delta }} año(s)
             </small>
           </article>
         </div>
