@@ -163,12 +163,22 @@ export const planApi = {
       snoozed_until: snoozedUntil,
     });
   },
-  previewRecommendation(id: number, scenario: ProjectionScenario = 'expected') {
+  previewRecommendation(
+    id: number,
+    scenario: ProjectionScenario = 'expected',
+    adjustments?: { monthly_contribution_delta?: string; start_date?: string },
+  ) {
     return coreApi.get<ActionImpactPreview>(`/api/plan/recommendations/${id}/preview/`, {
-      params: { scenario },
+      params: { scenario, ...adjustments },
     });
   },
-  simulateRecommendation(id: number) {
-    return coreApi.post<PlanScenario>(`/api/plan/recommendations/${id}/simulate/`, {});
+  simulateRecommendation(
+    id: number,
+    adjustments?: { monthly_contribution_delta?: string; start_date?: string },
+  ) {
+    return coreApi.post<PlanScenario>(
+      `/api/plan/recommendations/${id}/simulate/`,
+      adjustments ?? {},
+    );
   },
 };

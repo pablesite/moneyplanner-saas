@@ -525,6 +525,9 @@ export type PlanOverview = {
 };
 
 export type ActionImpactMetrics = {
+  // Fecha que titula el plan. `projected_year` responde a otra pregunta (desde cuándo
+  // cubre la pensión) y no se mueve al simular capital.
+  sustainable_year: number | null;
   projected_year: number | null;
   monthly_sustainable_income: string;
   productive_capital: string;

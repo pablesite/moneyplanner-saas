@@ -122,8 +122,8 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET` | `/api/plan/recommendations/` | Evaluates and returns deterministic recommendations with explanation payloads. |
 | `POST` | `/api/plan/recommendations/{id}/accept/` | Compatibility endpoint. New clients accept by incorporating the linked scenario. |
 | `POST` | `/api/plan/recommendations/{id}/dismiss/` | Marks a user-owned recommendation as dismissed. |
-| `POST` | `/api/plan/recommendations/{id}/simulate/` | Creates a draft scenario preconfigured from the recommendation and returns it. |
-| `GET` | `/api/plan/recommendations/{id}/preview/` | Returns before/after impact without creating scenarios, snapshots or budget rows. |
+| `POST` | `/api/plan/recommendations/{id}/simulate/` | Creates a draft scenario preconfigured from the recommendation and returns it. An adjustable contribution recommendation accepts optional `monthly_contribution_delta` and `start_date` overrides, but rejects values above its estimated margin or before its recovery date. |
+| `GET` | `/api/plan/recommendations/{id}/preview/` | Returns before/after impact without creating scenarios, snapshots or budget rows. Optional `monthly_contribution_delta` and `start_date` query parameters recalculate an adjustable recommendation and expose affordability before it is incorporated. |
 | `POST` | `/api/plan/recommendations/{id}/snooze/` | Postpones a recommendation until a future `snoozed_until` date. |
 
 ### Budget — `/api/budget/`

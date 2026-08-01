@@ -1503,6 +1503,75 @@
   box-shadow: 0 20px 50px rgba(21, 28, 24, 0.16);
 }
 
+.plan-impact-adjustment {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--panel) 94%, var(--accent));
+}
+
+.plan-impact-adjustment h3,
+.plan-impact-adjustment p {
+  margin: 0;
+}
+
+.plan-impact-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.plan-impact-field {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.plan-money-input {
+  position: relative;
+  display: block;
+}
+
+.plan-money-input .input {
+  width: 100%;
+  padding-right: 38px;
+}
+
+.plan-money-input > span {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.plan-impact-funding {
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.plan-impact-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklab, var(--color-warning) 45%, var(--line));
+  border-radius: 9px;
+  background: color-mix(in oklab, var(--color-warning) 10%, transparent);
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+@container page (max-width: 560px) {
+  .plan-impact-form {
+    grid-template-columns: 1fr;
+  }
+}
+
 .plan-chart-table {
   margin-top: 8px;
 }

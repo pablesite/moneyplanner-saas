@@ -484,8 +484,11 @@ export const usePlanStore = defineStore('plan', {
       return data;
     },
 
-    async simulateRecommendation(id: number) {
-      const { data } = await planApi.simulateRecommendation(id);
+    async simulateRecommendation(
+      id: number,
+      adjustments?: { monthly_contribution_delta?: string; start_date?: string },
+    ) {
+      const { data } = await planApi.simulateRecommendation(id, adjustments);
       this.selectedScenario = data;
       await this.fetchScenarios();
       return data;
