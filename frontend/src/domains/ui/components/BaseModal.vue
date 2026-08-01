@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -20,7 +20,7 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
-const titleId = `base-modal-title-${crypto.randomUUID()}`;
+const titleId = `base-modal-title-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 const panelRef = ref<HTMLElement | null>(null);
 let previousActiveElement: HTMLElement | null = null;
 
