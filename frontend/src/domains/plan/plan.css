@@ -716,6 +716,36 @@
   text-anchor: end;
 }
 
+/* Modo compacto (el componente iguala el viewBox al ancho real del contenedor):
+   a escala 1:1 los tamaños de escritorio, pensados para reducirse ~0.94x, se
+   quedan cortos. Aquí las unidades SVG son píxeles reales, así que la tipografía
+   sube al mínimo legible en pantalla pequeña. */
+.plan-chart.is-compact .plan-chart-grid text {
+  fill-opacity: 0.7;
+  font-size: 9px;
+}
+
+.plan-chart.is-compact .plan-chart-x-year {
+  font-size: 11px;
+}
+
+.plan-chart.is-compact .plan-chart-grid .plan-chart-x-age {
+  font-size: 8.5px;
+}
+
+.plan-chart.is-compact .plan-chart-axis-titles text {
+  font-size: 9.5px;
+}
+
+.plan-chart.is-compact .plan-chart-marker text {
+  font-size: 9.5px;
+}
+
+.plan-chart.is-compact .plan-chart-event text {
+  font-size: 9px;
+  stroke-width: 3.5px;
+}
+
 .plan-chart-line {
   fill: none;
   stroke-width: 1.6;
@@ -2587,13 +2617,35 @@
     padding: 14px;
   }
 
-  /* El SVG no escala por debajo de un ancho legible: scroll horizontal propio. */
-  .plan-chart-wrap {
-    overflow-x: auto;
+  /* El gráfico ya no fuerza scroll horizontal: el componente redibuja el viewBox
+     al ancho disponible (`is-compact`) para que la previsión se vea entera.
+
+     Alinear el segundo grupo a la derecha partía los controles en dos bloques
+     desiguales: en estrecho cada rango ocupa su propia fila completa. */
+  .plan-chart-range-controls {
+    gap: 12px;
   }
 
-  .plan-chart {
-    min-width: 520px;
+  .plan-chart-range-group,
+  .plan-chart-range-group:last-child {
+    width: 100%;
+    justify-items: stretch;
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .plan-chart-range-options,
+  .plan-chart-range-group:last-child .plan-chart-range-options {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    justify-content: stretch;
+  }
+
+  /* Objetivo táctil mínimo en móvil. */
+  .plan-chart-range-options .btn {
+    min-height: 44px;
+    padding: 4px 6px;
   }
 
   /* La leyenda conserva juntos color y significado en lugar de repartir entradas sueltas. */

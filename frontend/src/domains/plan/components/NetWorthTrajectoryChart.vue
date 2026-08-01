@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue';
+import { computed, onBeforeUnmount, ref, watch, useId } from 'vue';
 import { AButton, AInfoHint } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import { formatMonthYearLabel, formatShortMonthYear } from '@/lib/dates';
@@ -20,13 +20,60 @@ const props = withDefaults(
   { events: () => [], members: () => [] },
 );
 
-const W = 960;
+// El gráfico se dibujaba siempre en un lienzo de 960 unidades. En móvil eso
+// obligaba a scroll horizontal (nunca se veía la previsión entera) y encogía las
+// etiquetas a ~0.4x, por debajo de lo legible. En estrecho el viewBox pasa a
+// igualar el ancho real del contenedor: 1 unidad SVG = 1 px CSS, así que la
+// tipografía se lee a su tamaño nominal y la serie cabe completa.
+const COMPACT_MAX_WIDTH = 560;
+const MIN_COMPACT_WIDTH = 260;
+const chartWrap = ref<HTMLElement | null>(null);
+const containerWidth = ref(0);
+const compact = computed(
+  () => containerWidth.value > 0 && containerWidth.value < COMPACT_MAX_WIDTH,
+);
+
+const W = computed(() =>
+  compact.value ? Math.max(MIN_COMPACT_WIDTH, Math.round(containerWidth.value)) : 960,
+);
 const H = 300;
-const padL = 72;
-const padR = 72;
-const padT = 34;
-const padB = 38;
+const padL = computed(() => (compact.value ? 40 : 72));
+const padR = computed(() => (compact.value ? 40 : 72));
+// En compacto los hitos ocupan dos filas de etiqueta sobre el área de trazado.
+const padT = computed(() => (compact.value ? 46 : 34));
+const padB = computed(() => (compact.value ? 42 : 38));
 const hoverIndex = ref<number | null>(null);
+
+let resizeObserver: ResizeObserver | null = null;
+
+function measure(el: HTMLElement): void {
+  const next = Math.round(el.clientWidth);
+  if (next !== containerWidth.value) containerWidth.value = next;
+}
+
+watch(
+  chartWrap,
+  (el) => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    if (!el) return;
+    measure(el);
+    if (typeof ResizeObserver === 'undefined') return;
+    resizeObserver = new ResizeObserver(() => measure(el));
+    resizeObserver.observe(el);
+  },
+  { flush: 'post' },
+);
+
+// La geometría cambia bajo el puntero: un tooltip heredado apuntaría a otro punto.
+watch(compact, () => {
+  hoverIndex.value = null;
+});
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+});
 const chartId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
 const historicalAreaGradientId = `plan-history-area-${chartId}`;
 const projectedAreaGradientId = `plan-projection-area-${chartId}`;
@@ -214,12 +261,12 @@ const timeBounds = computed(() => {
 
 function tx(t: number): number {
   const { min, max } = timeBounds.value;
-  return padL + ((t - min) / (max - min)) * (W - padL - padR);
+  return padL.value + ((t - min) / (max - min)) * (W.value - padL.value - padR.value);
 }
 
 function scaledY(value: number, bounds: { min: number; max: number }): number {
   const range = bounds.max - bounds.min || 1;
-  return padT + (1 - (value - bounds.min) / range) * (H - padT - padB);
+  return padT.value + (1 - (value - bounds.min) / range) * (H - padT.value - padB.value);
 }
 
 function pyNetWorth(value: number): number {
@@ -247,7 +294,7 @@ function buildAreaPath(
   if (series.length < 2) return '';
   const first = series[0]!;
   const last = series[series.length - 1]!;
-  const baseline = H - padB;
+  const baseline = H - padB.value;
   return `${buildPath(series, yScale)} L ${tx(last.t)} ${baseline} L ${tx(first.t)} ${baseline} Z`;
 }
 
@@ -272,12 +319,31 @@ const capitalTicks = computed(() =>
   scaleTicks(capitalScale.value).map((value) => ({ value, y: pyCapital(value) })),
 );
 
+const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
+
+// Ancho disponible por marca temporal con un paso dado: de él dependen tanto la
+// cadencia de las marcas como cuánto texto cabe debajo de cada una.
+function widthPerTick(step: number): number {
+  const { min, max } = timeBounds.value;
+  const years = (max - min) / YEAR_MS;
+  const plotWidth = W.value - padL.value - padR.value;
+  return years > step ? plotWidth / (years / step) : plotWidth;
+}
+
+// Una marca cada 5 años no cabe legible en móvil sobre un recorrido largo:
+// el paso se dobla cuando el rango visible no da ancho suficiente por marca.
+const xTickStep = computed(() => (!compact.value || widthPerTick(5) >= 62 ? 5 : 10));
+
 const xTicks = computed(() => {
   const { min, max } = timeBounds.value;
+  const step = xTickStep.value;
+  // Muy justo de ancho, "30/27 años" invade la marca vecina; las edades siguen
+  // siendo legibles sin la unidad, que se repite en todas las marcas.
+  const withAgeUnit = !compact.value || widthPerTick(step) >= 56;
   const firstYear = new Date(min).getFullYear();
   const lastYear = new Date(max).getFullYear();
   const ticks: Array<{ x: number; year: number; ages: string }> = [];
-  for (let year = Math.ceil(firstYear / 5) * 5; year <= lastYear; year += 5) {
+  for (let year = Math.ceil(firstYear / step) * step; year <= lastYear; year += step) {
     // Las filas proyectadas son cierres anuales: la marca 2040 debe coincidir con
     // el cierre de 2040, no con el cierre de 2039 situado un día antes.
     const t = Date.parse(`${year}-12-31`);
@@ -285,7 +351,12 @@ const xTicks = computed(() => {
     const ages = props.members
       .map((member) => ageInYear(member.birth_date, year))
       .filter((age): age is number => age != null);
-    ticks.push({ x: tx(t), year, ages: ages.length ? `${ages.join('/')} años` : '' });
+    const joined = ages.join('/');
+    ticks.push({
+      x: tx(t),
+      year,
+      ages: ages.length ? `${joined}${withAgeUnit ? ' años' : ''}` : '',
+    });
   }
   return ticks;
 });
@@ -293,6 +364,7 @@ const xTicks = computed(() => {
 type YearMarker = {
   x: number;
   labelX: number;
+  labelY: number;
   label: string;
   kind: 'target' | 'projected';
   anchorClass: '' | 'anchor-start' | 'anchor-end';
@@ -301,6 +373,7 @@ type YearMarker = {
 const yearMarkers = computed<YearMarker[]>(() => {
   const markers: YearMarker[] = [];
   const { min, max } = timeBounds.value;
+  const baseLabelY = padT.value - 8;
   // El retiro en R empieza a consumir capital durante R. La preparación se
   // consolida al cierre de R-1, último año completo de acumulación.
   const desiredYear = props.desiredYear ?? props.projection.summary.target_year.value;
@@ -312,7 +385,8 @@ const yearMarkers = computed<YearMarker[]>(() => {
       markers.push({
         x: tx(desiredT),
         labelX: tx(desiredT),
-        label: `Objetivo · cierre ${readinessYear}`,
+        labelY: baseLabelY,
+        label: compact.value ? `Objetivo · ${readinessYear}` : `Objetivo · cierre ${readinessYear}`,
         kind: 'target',
         anchorClass: '',
       });
@@ -325,11 +399,26 @@ const yearMarkers = computed<YearMarker[]>(() => {
       markers.push({
         x: tx(sustainableT),
         labelX: tx(sustainableT),
-        label: `Sostenible · cierre ${readinessYear}`,
+        labelY: baseLabelY,
+        label: compact.value
+          ? `Sostenible · ${readinessYear}`
+          : `Sostenible · cierre ${readinessYear}`,
         kind: 'projected',
         anchorClass: '',
       });
     }
+  }
+  // En estrecho no hay ancho que repartir entre dos etiquetas: cada hito ocupa su
+  // propia fila y el texto crece siempre hacia el interior del área de trazado.
+  if (compact.value) {
+    const pivot = padL.value + (W.value - padL.value - padR.value) * 0.55;
+    markers.forEach((marker, index) => {
+      const towardsLeft = marker.x > pivot;
+      marker.anchorClass = towardsLeft ? 'anchor-end' : 'anchor-start';
+      marker.labelX = marker.x + (towardsLeft ? -5 : 5);
+      marker.labelY = baseLabelY - (markers.length - 1 - index) * 13;
+    });
+    return markers;
   }
   // Objetivo y Sostenible pueden caer muy juntos (p. ej. 2039 vs 2042): sus
   // etiquetas se solapan. Cuando están cerca, se anclan en direcciones opuestas
@@ -354,10 +443,15 @@ type EventMarker = {
   labelY: number;
   anchorClass: 'anchor-start' | 'anchor-end';
   label: string;
+  text: string;
   dateLabel: string;
   detail: string;
   status: PlanTimelineMarker['status'];
 };
+
+function truncateLabel(label: string, max = 16): string {
+  return label.length > max ? `${label.slice(0, max - 1).trimEnd()}…` : label;
+}
 
 function netWorthAt(t: number): number {
   const series = points.value;
@@ -381,25 +475,34 @@ function netWorthAt(t: number): number {
 const eventMarkers = computed<EventMarker[]>(() => {
   const { min, max } = timeBounds.value;
   const laneEnds = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
+  // Los umbrales de carril y de borde son proporciones del lienzo, no píxeles
+  // fijos: con el viewBox estrecho un valor de 145 abarcaría medio gráfico.
+  const laneGap = W.value * 0.15;
+  const endThreshold = W.value * 0.16;
+  const laneStep = compact.value ? 15 : 18;
   return props.events
     .map((marker) => ({ marker, t: Date.parse(marker.date) }))
     .filter((entry) => Number.isFinite(entry.t) && entry.t >= min && entry.t <= max)
     .sort((a, b) => a.t - b.t)
     .map(({ marker, t }, index) => {
       const x = tx(t);
-      let lane = laneEnds.findIndex((lastX) => x - lastX >= 145);
+      let lane = laneEnds.findIndex((lastX) => x - lastX >= laneGap);
       if (lane < 0) lane = index % laneEnds.length;
       laneEnds[lane] = x;
-      const anchorAtEnd = x > W - padR - 150;
+      const anchorAtEnd = x > W.value - padR.value - endThreshold;
+      const dateLabel = formatShortMonthYear(marker.date);
       return {
         id: marker.id,
         x,
         y: pyNetWorth(netWorthAt(t)),
         labelX: x + (anchorAtEnd ? -7 : 7),
-        labelY: padT + 16 + lane * 18,
+        labelY: padT.value + 16 + lane * laneStep,
         anchorClass: anchorAtEnd ? ('anchor-end' as const) : ('anchor-start' as const),
         label: marker.label,
-        dateLabel: formatShortMonthYear(marker.date),
+        // La fecha va en el tooltip nativo y en el aria-label: en estrecho la
+        // etiqueta sola ya ocupa buena parte del ancho útil.
+        text: compact.value ? truncateLabel(marker.label) : `${marker.label} · ${dateLabel}`,
+        dateLabel,
         detail: marker.detail,
         status: marker.status,
       };
@@ -411,7 +514,7 @@ const hoverPoint = computed(() =>
 );
 const tooltipOnLeft = computed(() => {
   const point = hoverPoint.value;
-  return point ? tx(point.t) > W * 0.62 : false;
+  return point ? tx(point.t) > W.value * 0.62 : false;
 });
 
 const hoverDetail = computed(() => {
@@ -456,7 +559,7 @@ const hoverDetail = computed(() => {
 function onMove(event: MouseEvent): void {
   if (!points.value.length) return;
   const rect = (event.currentTarget as SVGElement).getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width) * W;
+  const x = ((event.clientX - rect.left) / rect.width) * W.value;
   let nearest = 0;
   let nearestDistance = Number.POSITIVE_INFINITY;
   points.value.forEach((point, index) => {
@@ -508,9 +611,10 @@ function onMove(event: MouseEvent): void {
     <div v-if="points.length < 2" class="plan-chart-empty">
       No hay suficientes puntos para dibujar la trayectoria.
     </div>
-    <div v-else class="plan-chart-wrap">
+    <div v-else ref="chartWrap" class="plan-chart-wrap">
       <svg
         class="plan-chart"
+        :class="{ 'is-compact': compact }"
         :viewBox="`0 0 ${W} ${H}`"
         role="img"
         aria-label="Trayectoria patrimonial, capital productivo y fondo de emergencia frente al capital objetivo"
@@ -569,10 +673,10 @@ function onMove(event: MouseEvent): void {
             :key="`x-${tick.year}`"
             class="plan-chart-x-label"
             :x="tick.x"
-            :y="H - 20"
+            :y="H - (compact ? 24 : 20)"
           >
             <tspan class="plan-chart-x-year">{{ tick.year }}</tspan>
-            <tspan v-if="tick.ages" class="plan-chart-x-age" :x="tick.x" dy="13">
+            <tspan v-if="tick.ages" class="plan-chart-x-age" :x="tick.x" :dy="compact ? 14 : 13">
               {{ tick.ages }}
             </tspan>
           </text>
@@ -583,7 +687,7 @@ function onMove(event: MouseEvent): void {
         </g>
         <g v-for="marker in yearMarkers" :key="marker.label" class="plan-chart-marker">
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" :class="marker.kind" />
-          <text :x="marker.labelX" :y="padT - 8" :class="[marker.kind, marker.anchorClass]">
+          <text :x="marker.labelX" :y="marker.labelY" :class="[marker.kind, marker.anchorClass]">
             {{ marker.label }}
           </text>
         </g>
@@ -662,7 +766,7 @@ function onMove(event: MouseEvent): void {
           <line :x1="marker.x" :x2="marker.x" :y1="padT" :y2="H - padB" />
           <circle :cx="marker.x" :cy="marker.y" r="5" />
           <text :x="marker.labelX" :y="marker.labelY" :class="marker.anchorClass">
-            {{ marker.label }} · {{ marker.dateLabel }}
+            {{ marker.text }}
           </text>
         </g>
         <g v-if="hoverPoint && hoverIndex !== null">

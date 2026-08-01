@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
+import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import NetWorthTrajectoryChart from '@/domains/plan/components/NetWorthTrajectoryChart.vue';
 import type { PlanTimelineMarker } from '@/domains/plan/usePlanEvents';
@@ -75,6 +76,25 @@ const members: PlanMember[] = [
     other_future_income_today_eur: null,
   },
 ];
+
+type ChartProps = InstanceType<typeof NetWorthTrajectoryChart>['$props'];
+
+// jsdom no hace layout: `clientWidth` es siempre 0 y el gráfico se queda en su
+// geometría de escritorio. Fijarlo permite comprobar el redibujado responsive.
+async function mountAtWidth(width: number, props: ChartProps) {
+  const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    configurable: true,
+    get: () => width,
+  });
+  try {
+    const wrapper = mount(NetWorthTrajectoryChart, { props });
+    await nextTick();
+    return wrapper;
+  } finally {
+    if (original) Object.defineProperty(HTMLElement.prototype, 'clientWidth', original);
+  }
+}
 
 describe('NetWorthTrajectoryChart', () => {
   it('renders historical and projected series paths and year axis labels', () => {
@@ -272,6 +292,56 @@ describe('NetWorthTrajectoryChart', () => {
     });
     expect(wrapper.find('.plan-chart-legend').text()).not.toContain('Decisión');
     expect(wrapper.find('[aria-label="Hitos"]').exists()).toBe(false);
+  });
+
+  it('redraws to the available width instead of forcing horizontal scroll', async () => {
+    const wrapper = await mountAtWidth(360, {
+      timeline: baseTimeline,
+      projection: baseProjection,
+      members,
+    });
+    const chart = wrapper.find('.plan-chart');
+
+    expect(chart.classes()).toContain('is-compact');
+    expect(chart.attributes('viewBox')).toBe('0 0 360 300');
+    // El último punto proyectado cae dentro del lienzo, sin desbordar el ancho.
+    const lastPointX = Number(
+      wrapper.findAll('.plan-chart-point.projected').at(-1)?.attributes('cx'),
+    );
+    expect(lastPointX).toBeLessThanOrEqual(360);
+    expect(lastPointX).toBeGreaterThan(0);
+  });
+
+  it('keeps the desktop canvas when the container is wide', async () => {
+    const wrapper = await mountAtWidth(960, {
+      timeline: baseTimeline,
+      projection: baseProjection,
+      members,
+    });
+
+    expect(wrapper.find('.plan-chart').classes()).not.toContain('is-compact');
+    expect(wrapper.find('.plan-chart').attributes('viewBox')).toBe('0 0 960 300');
+  });
+
+  it('stacks the readiness markers on their own rows when narrow', async () => {
+    const projection = makeProjection({
+      trajectory: [
+        trajectoryRow({ year: 2037, net_worth: '500000' }),
+        trajectoryRow({ year: 2038, net_worth: '480000', annual_withdrawals: '40000' }),
+      ],
+    });
+    const wrapper = await mountAtWidth(360, {
+      timeline: baseTimeline,
+      projection,
+      desiredYear: 2038,
+      sustainableYear: 2039,
+    });
+    const labels = wrapper.findAll('.plan-chart-marker text');
+    const rows = labels.map((node) => node.attributes('y'));
+
+    // Sin "· cierre": a 360px esa copia deja las dos etiquetas solapadas.
+    expect(labels.map((node) => node.text())).toEqual(['Objetivo · 2037', 'Sostenible · 2038']);
+    expect(new Set(rows).size).toBe(2);
   });
 
   it('offers the projected data as an accessible table', () => {
