@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue';
 export type StepperStep = {
   id: string;
   label: string;
@@ -19,14 +20,27 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{ (e: 'change', id: string): void }>();
+const stepperElement = ref<HTMLElement | null>(null);
 
 function isCurrent(step: StepperStep): boolean {
   return props.activeId ? step.id === props.activeId : step.status === 'current';
 }
+
+watch(
+  () => props.activeId,
+  async () => {
+    await nextTick();
+    const stepper = stepperElement.value;
+    const activeStep = stepper?.querySelector<HTMLElement>('.stepper-step.is-active');
+    if (stepper && activeStep && stepper.scrollWidth > stepper.clientWidth) {
+      activeStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  },
+);
 </script>
 
 <template>
-  <div class="stepper" :style="{ '--n': steps.length }">
+  <div ref="stepperElement" class="stepper" :style="{ '--n': steps.length }">
     <button
       v-for="(step, index) in steps"
       :key="step.id"

@@ -154,6 +154,7 @@ function onExpenseSeedUpdate(next: Record<string, string>): void {
 
 const currentStep = computed<StepId>(() => stepIds.value[stepIndex.value]!);
 const isLastStep = computed(() => stepIndex.value === stepIds.value.length - 1);
+const isEditing = computed(() => Boolean(plan.value));
 const maxMembers = computed(() => (form.household_type === 'family' ? 2 : 1));
 const activeMembers = computed(() => members.slice(0, maxMembers.value));
 
@@ -525,7 +526,7 @@ onMounted(() => {
 
 <template>
   <main class="page plan-page plan-setup-page">
-    <APageHead title="Tu plan en seis preguntas" eyebrow="Mi Plan">
+    <APageHead :title="isEditing ? 'Editar tu plan' : 'Crear tu plan'" eyebrow="Mi Plan">
       <template #meta>
         <span>Todo en euros de hoy</span><span class="dot"></span
         ><span>Puedes cambiarlo cuando quieras</span>
@@ -1056,7 +1057,7 @@ onMounted(() => {
         Continuar
       </AButton>
       <AButton v-else variant="primary" :loading="submitting" @click="submit">
-        Guardar y calcular
+        {{ isEditing ? 'Guardar cambios' : 'Crear y calcular plan' }}
       </AButton>
     </div>
   </main>
