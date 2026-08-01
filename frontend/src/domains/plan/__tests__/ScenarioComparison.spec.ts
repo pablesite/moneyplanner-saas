@@ -8,13 +8,23 @@ import { makeProjection, trajectoryRow } from './planFixtures';
 function comparison(
   current: ProjectionTrajectoryRow[],
   simulated: ProjectionTrajectoryRow[],
+  sustainable: { current: number | null; simulated: number | null } = {
+    current: null,
+    simulated: null,
+  },
 ): PlanScenarioComparison {
+  const delta =
+    sustainable.current == null || sustainable.simulated == null
+      ? null
+      : sustainable.simulated - sustainable.current;
   return {
     scenario: { id: 1, name: 'Coche', template_type: 'vehicle', status: 'draft' },
     assumption_set: 'expected',
     current: makeProjection({ trajectory: current }),
     simulated: makeProjection({ trajectory: simulated }),
+    sustainable_year: sustainable,
     delta: {
+      sustainable_year: delta,
       projected_year: null,
       productive_capital: '0.00',
       net_worth: '0.00',
@@ -63,6 +73,30 @@ describe('ScenarioComparison', () => {
     const rows = wrapper.findAll('.plan-comparison-row').map((r) => r.text());
     const nw2035 = rows.find((r) => r.includes('Patrimonio neto en 2035')) ?? '';
     expect(nw2035).toMatch(/\+.*15\.000/);
+  });
+
+  it('compares the sustainable date, which is the one the plan headline uses', () => {
+    const simulated = [
+      trajectoryRow({ year: 2027, net_worth: '100000', productive_capital: '40000' }),
+      trajectoryRow({ year: 2035, net_worth: '380000', productive_capital: '140000' }),
+      trajectoryRow({ year: 2040, net_worth: '560000', productive_capital: '260000' }),
+    ];
+    const wrapper = mount(ScenarioComparison, {
+      props: {
+        comparison: comparison(currentTrajectory, simulated, { current: 2043, simulated: 2045 }),
+      },
+    });
+    const row = wrapper
+      .findAll('.plan-comparison-row')
+      .map((node) => node.text())
+      .find((text) => text.includes('Fecha sostenible'));
+
+    expect(row).toBeDefined();
+    expect(row).toContain('2043');
+    expect(row).toContain('2045');
+    // Retrasar la fecha es empeorar: el delta se marca en negativo.
+    expect(row).toContain('+2 años');
+    expect(wrapper.find('.plan-comparison-row .neg').exists()).toBe(true);
   });
 
   it('does not treat a differing trajectory length as unchanged', () => {

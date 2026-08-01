@@ -232,7 +232,14 @@ export type PlanScenarioComparison = {
   assumption_set: ProjectionScenario;
   current: ProjectionResponse;
   simulated: ProjectionResponse;
+  // Primer año en que dejar de trabajar es sostenible: la misma fecha que titula el
+  // plan. `delta.projected_year` mide otra cosa y no se mueve si el plan no llega.
+  sustainable_year: {
+    current: number | null;
+    simulated: number | null;
+  };
   delta: {
+    sustainable_year: number | null;
     projected_year: number | null;
     productive_capital: string;
     net_worth: string;

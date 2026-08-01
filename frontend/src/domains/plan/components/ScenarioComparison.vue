@@ -81,26 +81,27 @@ function moneyRow(
 }
 
 const rows = computed<Row[]>(() => {
-  const projectedDelta = props.comparison.delta.projected_year;
+  // La misma fecha que titula el plan ("podrías dejar de trabajar en X"), no la del
+  // summary: aquella responde a otra pregunta y en un plan que aún no llega se queda
+  // clavada, de modo que la tabla decía "sin variación" mientras todo lo demás se movía.
+  const sustainableDelta = props.comparison.delta.sustainable_year;
   const result: Row[] = [
     {
-      label: 'Fecha proyectada',
-      current: yearWithAges(
-        props.comparison.current.summary.projected_year.value,
-        props.members ?? [],
-      ),
-      simulated: yearWithAges(
-        props.comparison.simulated.summary.projected_year.value,
-        props.members ?? [],
-      ),
+      label: 'Fecha sostenible',
+      current: yearWithAges(props.comparison.sustainable_year.current, props.members ?? []),
+      simulated: yearWithAges(props.comparison.sustainable_year.simulated, props.members ?? []),
       delta:
-        projectedDelta == null
+        sustainableDelta == null
           ? 'Sin variación calculable'
-          : projectedDelta === 0
+          : sustainableDelta === 0
             ? 'Sin variación'
-            : `${projectedDelta > 0 ? '+' : ''}${projectedDelta} ${Math.abs(projectedDelta) === 1 ? 'año' : 'años'}`,
+            : `${sustainableDelta > 0 ? '+' : ''}${sustainableDelta} ${Math.abs(sustainableDelta) === 1 ? 'año' : 'años'}`,
       deltaTone:
-        projectedDelta == null || projectedDelta === 0 ? null : projectedDelta < 0 ? 'pos' : 'neg',
+        sustainableDelta == null || sustainableDelta === 0
+          ? null
+          : sustainableDelta < 0
+            ? 'pos'
+            : 'neg',
     },
   ];
   for (const year of milestoneYears.value) {
