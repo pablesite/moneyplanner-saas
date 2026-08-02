@@ -46,6 +46,10 @@ const foundations = {
     grade: 'B',
     annual_amount: '9860.04',
     monthly_amount: '821.67',
+    funded_annual_amount: '0.00',
+    funded_monthly_amount: '0.00',
+    funding_gap: '9860.04',
+    is_fully_funded: false,
     savings_rate: '0.1747',
     target_savings_rate: '0.2000',
   },
@@ -108,8 +112,25 @@ describe('PlanFoundations', () => {
     expect(text).toContain('Sobre 512.000,00 € en activos');
   });
 
-  it('la aportación se lee como tasa de ahorro frente a su objetivo', () => {
+  it('la aportación distingue lo planificado de lo que la caja puede financiar', () => {
     const text = mountCompact().text().replace(/\s+/g, ' ');
+
+    expect(text).toContain('Aportación sostenible 0,00 €/mes');
+    expect(text).toContain('Has planificado 821,67 €/mes · faltan 821,67 €/mes de caja');
+  });
+
+  it('si la aportación cabe muestra la tasa de ahorro efectiva', () => {
+    const text = mountCompact({
+      planned_contribution: {
+        ...foundations.planned_contribution,
+        funded_annual_amount: '9860.04',
+        funded_monthly_amount: '821.67',
+        funding_gap: '0.00',
+        is_fully_funded: true,
+      },
+    })
+      .text()
+      .replace(/\s+/g, ' ');
 
     expect(text).toContain('821,67 €/mes');
     expect(text).toContain('Ahorras el 17,5 % de tus ingresos · objetivo 20,0 %');

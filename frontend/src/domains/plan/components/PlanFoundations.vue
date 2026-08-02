@@ -49,6 +49,10 @@ function monthlyMoney(value: string | null | undefined): string {
   return formatMoney(toNumber(value) / 12);
 }
 
+function monthlyFundingGap(value: string): string {
+  return formatMoney(toNumber(value) / 12);
+}
+
 // Importe mensual con signo explícito: la tarjeta encadena ingresos − gastos =
 // base, y sin el signo no se ve si cada eslabón suma o resta.
 function signedMonthly(value: string | null | undefined): string {
@@ -196,15 +200,19 @@ function qualitySummary(flags: Record<string, boolean>): string {
           <span class="plan-grade" :class="`is-${foundations.planned_contribution.grade}`">
             {{ foundations.planned_contribution.grade }}
           </span>
-          Aportación planificada
+          Aportación sostenible
         </span>
         <strong
           :class="tone(foundations.planned_contribution.status)"
           :title="gradeTitle(foundations.planned_contribution)"
         >
-          {{ money(foundations.planned_contribution.monthly_amount) }}/mes
+          {{ money(foundations.planned_contribution.funded_monthly_amount) }}/mes
         </strong>
-        <small v-if="foundations.planned_contribution.savings_rate">
+        <small v-if="!foundations.planned_contribution.is_fully_funded">
+          Has planificado {{ money(foundations.planned_contribution.monthly_amount) }}/mes · faltan
+          {{ monthlyFundingGap(foundations.planned_contribution.funding_gap) }}/mes de caja
+        </small>
+        <small v-else-if="foundations.planned_contribution.savings_rate">
           Ahorras el {{ pct(foundations.planned_contribution.savings_rate) }} de tus ingresos ·
           objetivo {{ pct(foundations.planned_contribution.target_savings_rate) }}
         </small>

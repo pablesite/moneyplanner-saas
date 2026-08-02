@@ -436,6 +436,10 @@ export type PlanFoundations = {
   planned_contribution: PlanFoundationScore & {
     annual_amount: string;
     monthly_amount: string;
+    funded_annual_amount: string;
+    funded_monthly_amount: string;
+    funding_gap: string;
+    is_fully_funded: boolean;
     savings_rate: string | null;
     target_savings_rate: string;
   };
