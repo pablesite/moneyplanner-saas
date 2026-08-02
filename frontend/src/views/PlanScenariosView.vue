@@ -423,7 +423,7 @@ onMounted(async () => {
           <legend>Cambios mensuales</legend>
           <div class="plan-form-grid">
             <label v-if="show.monthlyExpense">
-              <span>Gasto mensual adicional</span>
+              <span>Coste de uso mensual (sin cuota)</span>
               <input
                 v-model="form.monthlyExpenseDelta"
                 class="input"
