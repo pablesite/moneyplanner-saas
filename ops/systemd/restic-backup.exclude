@@ -1,0 +1,8 @@
+# Live database files are not transaction-consistent. The backup script creates
+# verified logical/online copies under /datos/docker/backup-staging instead.
+/datos/docker/data/moneyplanner/core-db
+/datos/docker/data/moneyplanner/saas-db
+/datos/docker/data/passbolt/db
+/datos/docker/volumes/volumes/uptime-kuma_uptime-kuma-data/_data/kuma.db
+/datos/docker/volumes/volumes/uptime-kuma_uptime-kuma-data/_data/kuma.db-shm
+/datos/docker/volumes/volumes/uptime-kuma_uptime-kuma-data/_data/kuma.db-wal

@@ -1,11 +1,13 @@
 # Production Deployment (SaaS)
 
 ## Objective
+
 Run the private The Arkenstone SaaS production deployment at `https://arkenstone.app`.
 
 Production serves the SaaS frontend as the only public UI. The SaaS backend handles access, admin, subscription state, and platform operations. The Core backend remains the source of truth for product APIs consumed by the SaaS frontend and by SaaS backend bootstrap flows. The Core frontend is not deployed for the SaaS product.
 
 ## Target Topology
+
 1. Cloudflare DNS exposes `arkenstone.app`.
 2. Cloudflare Tunnel forwards traffic to `localhost:80` on the server.
 3. Traefik receives traffic on `localhost:80`.
@@ -13,6 +15,7 @@ Production serves the SaaS frontend as the only public UI. The SaaS backend hand
 5. The Arkenstone services communicate through an internal Docker network.
 
 Production services:
+
 1. `saas_frontend` - nginx static build for the private SaaS UI.
 2. `saas_backend` - Django SaaS API served by Gunicorn.
 3. `saas_db` - PostgreSQL for SaaS access/platform data.
@@ -21,9 +24,11 @@ Production services:
 6. `core_market_data_sync` - Core market data worker.
 
 Not deployed:
+
 1. `core_frontend` - reserved for the public/self-hosted Core product.
 
 ## Phase 1 Production Images
+
 Phase 1 leaves the production image artifacts in-repo, ready for the unified compose of phase 2:
 
 1. SaaS backend image:
@@ -38,21 +43,26 @@ Phase 1 leaves the production image artifacts in-repo, ready for the unified com
    - Runtime serves only the static `dist/` bundle with SPA fallback and basic response headers.
 
 ## Phase 2 Unified Production Compose
+
 Root production orchestration now lives in `docker-compose.prod.yml`.
 
 Technical note:
+
 1. The public brand/domain is already `The Arkenstone` on `arkenstone.app`.
 2. Some infrastructure identifiers below still keep the legacy `moneyplanner*` naming until phase 2 migration is executed. See `brand-migration-phase-2.md`.
 
 Networks:
+
 1. `moneyplanner-internal` - private network for app-to-app and DB traffic.
 2. `proxy` - external Traefik network shared with the reverse proxy on the server.
 
 Persistent bind mounts:
+
 1. `${MONEYPLANNER_DATA_ROOT:-/datos/docker/data/moneyplanner}/saas-db`
 2. `${MONEYPLANNER_DATA_ROOT:-/datos/docker/data/moneyplanner}/core-db`
 
 Compose services:
+
 1. `saas_frontend` - SaaS nginx static app, attached to `proxy`.
 2. `saas_backend` - SaaS Django/Gunicorn API, attached to `proxy` and `moneyplanner-internal`.
 3. `saas_db` - PostgreSQL for SaaS data.
@@ -63,6 +73,7 @@ Compose services:
 The compose file intentionally excludes `core_frontend`.
 
 ## Routing Contract
+
 Public origin: `https://arkenstone.app`.
 
 The SaaS frontend should be built with same-origin API bases:
@@ -75,6 +86,7 @@ VITE_CORE_API_BASE_URL=""
 The SaaS frontend production bundle is expected to preserve empty-string base URLs, so both API clients resolve against the same public origin instead of falling back to localhost defaults.
 
 Traefik owns path routing:
+
 1. SaaS backend: `/api/auth`, `/api/admin`, `/api/schema`, `/api/docs`, `/admin`.
 2. Core backend auth subpaths with higher priority: `/api/auth/settings`, `/api/auth/link-token`.
 3. Core backend product paths: `/api/net-worth`, `/api/budget`, `/api/accounting`, `/api/core`, `/api/family-members`, `/api/ownerships`, `/api/ownership-links`.
@@ -83,6 +95,7 @@ Traefik owns path routing:
 Use explicit Traefik router priorities so API routes win over the frontend fallback.
 
 ## Server Files
+
 Expected server layout:
 
 ```text
@@ -97,14 +110,30 @@ Expected server layout:
 
 The `.env.prod` file must stay outside git. It contains production secrets and deployment-specific values.
 
-Restic already backs up Docker volumes and compose files on the server at 03:00 daily. Keep The Arkenstone database data under `/datos/docker/data/moneyplanner/...` so it remains covered by that policy.
+Restic backs up production daily at 03:00 through `restic-backup.timer`. The canonical artifacts are:
+
+1. `scripts/production-restic-backup.sh`, installed as `/usr/local/sbin/restic-backup`.
+2. `ops/systemd/restic-backup.service` and `ops/systemd/restic-backup.timer`.
+3. `ops/systemd/restic-backup.exclude`, installed as `/etc/restic-backup.exclude`.
+
+The repository lives on the dedicated filesystem mounted at `/backups` and must match the UUID
+declared by the script. Before each encrypted Restic snapshot, the script creates and validates
+consistent database copies in `/datos/docker/backup-staging`: Core and SaaS PostgreSQL custom
+dumps, a Passbolt MariaDB dump and an online Uptime Kuma SQLite backup. Live database directories
+are excluded because copying them while their engines are running is not transaction-consistent.
+
+Every run sends a success or failure message through the active Telegram notification configured
+in Uptime Kuma. Logs remain available through `journalctl -u restic-backup.service`.
 
 ## Required Production Variables
+
 Shared:
+
 1. `MONEYPLANNER_DOMAIN=arkenstone.app`
 2. `JWT_SIGNING_KEY` - long random value, identical for SaaS and Core.
 
 SaaS backend:
+
 1. `SAAS_DJANGO_SECRET_KEY`
 2. `SAAS_POSTGRES_DB`
 3. `SAAS_POSTGRES_USER`
@@ -118,6 +147,7 @@ SaaS backend:
 11. `CORE_API_X_FORWARDED_PROTO=https` so those internal requests are treated as secure and do not trigger Django SSL redirects.
 
 Core backend:
+
 1. `CORE_DJANGO_SECRET_KEY`
 2. `CORE_POSTGRES_DB`
 3. `CORE_POSTGRES_USER`
@@ -126,17 +156,20 @@ Core backend:
 6. `FX_SYNC_INTERVAL_SECONDS=86400`
 
 Internal Core/SaaS authentication:
+
 1. `CORE_LINKING_SHARED_SECRET` is mandatory even when optional account linking is disabled; it protects Core-to-SaaS session introspection.
 2. `SAAS_AUTH_INTROSPECTION_URL=http://saas-backend:8000/api/auth/internal/session/` is injected by `docker-compose.prod.yml`; `saas-backend` is the RFC-valid internal network alias.
 3. `ACCOUNT_LINKING_ENABLED=0` for the initial private pilot unless self-hosted-to-cloud linking is actively tested.
 
 Core acceptance of SaaS JWTs:
+
 1. `AUTH_ACCEPT_EXTERNAL_TOKENS=1`
 2. `EXTERNAL_JWT_ISSUER=moneyplanner-saas`
 3. `EXTERNAL_JWT_AUDIENCE=moneyplanner-saas-api`
 4. `EXTERNAL_JWT_SIGNING_KEY=${JWT_SIGNING_KEY}`
 
 Production Django defaults:
+
 1. `DJANGO_DEBUG=0`
 2. `DJANGO_ALLOWED_HOSTS=arkenstone.app`
 3. `CORS_ALLOWED_ORIGINS=https://arkenstone.app`
@@ -154,13 +187,16 @@ Production Django defaults:
 15. `SECURE_REFERRER_POLICY=strict-origin-when-cross-origin`
 
 Private access policy:
+
 1. Initial production access is admin-controlled only.
 2. `POST /api/auth/register/` must return `registration_disabled` while the private pilot lasts.
 3. New member onboarding must happen through `POST /api/admin/users/` or the controlled seed admin flow.
 4. Keep `SEED_CREATE_ADMIN=1` only for the first deploy or an explicit recovery operation.
 
 ## GitHub Deployment Contract
+
 GitHub Actions should:
+
 1. Run SaaS backend and frontend quality checks.
 2. Run security checks: gitleaks, CodeQL, dependency audits, and image scan.
 3. Build production images.
@@ -168,6 +204,7 @@ GitHub Actions should:
 5. Deploy over SSH to the server.
 
 Required GitHub secrets:
+
 1. `DEPLOY_HOST`
 2. `DEPLOY_USER`
 3. `DEPLOY_SSH_KEY`
@@ -177,16 +214,19 @@ Required GitHub secrets:
 7. `RELEASE_PLEASE_TOKEN` if release-please remains enabled.
 
 Required GitHub variable:
+
 1. `ENABLE_PRODUCTION_DEPLOY=1` only when the production server, tunnel, and DNS are ready to receive automatic deploys. Keep it unset or `0` while phases 2 and 5 are still being validated.
 2. `DEPLOY_ENV_FILE=.env` when the server keeps production secrets in `.env` instead of `.env.prod`.
 3. `PRODUCTION_URL=https://arkenstone.app` or the current public production URL. GitHub Actions uses this for the deployment environment link and post-deploy smoke checks.
 
 Published GHCR images on `main`:
+
 1. `ghcr.io/pablesite/moneyplanner-saas-backend`
 2. `ghcr.io/pablesite/moneyplanner-saas-frontend`
 3. `ghcr.io/pablesite/moneyplanner-core-backend`
 
 Tag policy:
+
 1. Every `main` push publishes `sha-${GITHUB_SHA}` and `latest`.
 2. Deploys must use the SHA tag, not only `latest`.
 3. The workflow uploads a server-side `.env.release` file with the exact image refs used by the last deploy.
@@ -202,6 +242,7 @@ docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.releas
 ```
 
 Workflow flow on `main`:
+
 1. Run secret scan, dependency audit, backend quality, and frontend quality.
 2. Build production images from `backend/Dockerfile.prod`, `frontend/Dockerfile.prod`, and `core/backend/Dockerfile.prod`.
 3. Scan built images with Trivy and upload SARIF results.
@@ -209,6 +250,7 @@ Workflow flow on `main`:
 5. If `ENABLE_PRODUCTION_DEPLOY=1`, copy `docker-compose.prod.yml` to the server, upload `.env.release`, authenticate the server against GHCR, run pull/up over SSH, and execute smoke checks against `PRODUCTION_URL`.
 
 ## Manual Deploy
+
 Use this before CI/CD is trusted:
 
 ```bash
@@ -227,6 +269,7 @@ docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.releas
 ```
 
 ## Logs and Diagnosis
+
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env logs --tail 100 saas_backend
 docker compose -f docker-compose.prod.yml --env-file .env logs --tail 100 core_backend
@@ -247,6 +290,7 @@ If root works but API paths return the SPA, check Traefik priorities and path ru
 If APIs work internally but not externally, check Cloudflare CNAME and tunnel hostname.
 
 ## Rollback
+
 Rollback should use the previous GHCR SHA tag, not only `latest`.
 
 1. Identify the previous known-good image tags from GitHub Actions logs.
@@ -262,12 +306,31 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod --env-file .env.r
 Database migrations are the main rollback risk. If a deployment includes migrations, document the forward-only recovery path before applying it.
 
 ## Restore Notes
+
 Restic is the authoritative backup mechanism on the server. Before production launch, verify:
-1. `/datos/docker/data/moneyplanner/saas-db` is included.
-2. `/datos/docker/data/moneyplanner/core-db` is included.
-3. `/datos/docker/apps/moneyplanner/docker-compose.prod.yml` is included.
-4. `/datos/docker/apps/moneyplanner/.env.prod` handling is understood and secure.
-5. `/datos/docker/apps/moneyplanner/.env.release` is included or can be reconstructed from GitHub Actions logs.
+
+1. The verified `saas.dump` and `core.dump` logical copies are present in the latest snapshot.
+2. `/datos/docker/compose/moneyplanner/docker-compose.prod.yml` is included.
+3. `/datos/docker/compose/moneyplanner/.env` remains encrypted inside Restic and is not copied to development.
+4. `/datos/docker/compose/moneyplanner/.env.release` is included or can be reconstructed from GitHub Actions logs.
+
+Operational checks:
+
+```bash
+systemctl status restic-backup.timer
+sudo systemctl start restic-backup.service
+sudo journalctl -u restic-backup.service --since today
+sudo RESTIC_PASSWORD_FILE=/home/pablo/.restic-password restic -r /backups/restic snapshots
+```
+
+The timer must not be considered healthy only because it is active. Confirm that the last service
+result is `success`, that the latest snapshot is recent and that the Telegram success message was
+received. Test both notification paths after changing Uptime Kuma:
+
+```bash
+sudo /usr/local/sbin/restic-backup --notify-test-success
+sudo /usr/local/sbin/restic-backup --notify-test-failure
+```
 
 Perform a restore drill before treating production as durable.
 
@@ -284,6 +347,7 @@ When local development needs up-to-date real data, use the controlled refresh wo
 in `prod-to-dev-refresh.md`.
 
 ## Production Smoke Checklist
+
 Run after the first deployment and after each deploy until CI/CD smoke is trusted.
 
 1. Open `https://arkenstone.app`.
@@ -305,7 +369,9 @@ curl -I https://arkenstone.app/api/core/market-data/status/
 ```
 
 ## Phase Specs
+
 Implementation is intentionally split into task specs:
+
 1. `docs/tasks/production-deployment/phase-1-prod-images/`
 2. `docs/tasks/production-deployment/phase-2-prod-compose-traefik/`
 3. `docs/tasks/production-deployment/phase-3-security-private-access/`

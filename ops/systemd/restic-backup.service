@@ -1,0 +1,12 @@
+[Unit]
+Description=Restic backup with consistent database dumps
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/sbin/restic-backup
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=6h
