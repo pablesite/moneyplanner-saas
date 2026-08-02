@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AButton, AInfoHint, APageHead, AState } from '@/domains/ui';
 import {
@@ -19,6 +19,8 @@ import '@/domains/plan/plan.css';
 const { store, loading, error, plan, planMissing, projection, netWorthTimeline, scenario } =
   usePlan();
 const settingsOpen = ref(false);
+const optionsOpen = ref(false);
+const optionsRoot = ref<HTMLElement | null>(null);
 
 function selectScenario(value: ProjectionScenario): void {
   void store.fetchOverview(value);
@@ -76,6 +78,23 @@ const foundationStatus = computed(() => {
   return 'Todas las dimensiones en verde';
 });
 
+function closeOptions(): void {
+  optionsOpen.value = false;
+}
+
+function handleDocumentClick(event: MouseEvent): void {
+  const target = event.target as Node | null;
+  if (optionsOpen.value && target && !optionsRoot.value?.contains(target)) {
+    closeOptions();
+  }
+}
+
+document.addEventListener('click', handleDocumentClick);
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick);
+});
+
 onMounted(() => {
   document.title = 'Mi Plan · The Arkenstone';
   void store.loadDashboard();
@@ -93,16 +112,6 @@ onMounted(() => {
           label="Mi Plan separa capacidad financiera futura y patrimonio familiar: el progreso usa tu capital productivo, no el patrimonio neto total."
         />
       </template>
-      <template #actions>
-        <!-- Lo que altera el cálculo vive junto a lo que altera el objetivo, no al
-             final de la página. -->
-        <AButton v-if="plan && !planMissing" variant="ghost" @click="settingsOpen = true">
-          Ajustes del cálculo
-        </AButton>
-        <RouterLink v-if="plan && !planMissing" class="btn btn-ghost" to="/plan/setup">
-          Editar objetivo
-        </RouterLink>
-      </template>
     </APageHead>
 
     <nav class="plan-tabs-bar" aria-label="Secciones de Mi Plan">
@@ -110,6 +119,39 @@ onMounted(() => {
         <RouterLink class="tab on" to="/plan" aria-current="page">Resumen</RouterLink>
         <RouterLink class="tab" to="/plan/mejoras">Mejoras</RouterLink>
         <RouterLink class="tab" to="/plan/decisiones">Decisiones</RouterLink>
+      </div>
+      <div v-if="plan && !planMissing" ref="optionsRoot" class="plan-options">
+        <button
+          class="btn btn-ghost plan-options-trigger"
+          type="button"
+          aria-label="Opciones del plan"
+          :aria-expanded="optionsOpen"
+          aria-controls="plan-options-menu"
+          @click.stop="optionsOpen = !optionsOpen"
+        >
+          <span aria-hidden="true">•••</span>
+        </button>
+        <div
+          v-if="optionsOpen"
+          id="plan-options-menu"
+          class="plan-options-menu"
+          role="menu"
+          @keydown.esc="closeOptions"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            @click="
+              settingsOpen = true;
+              closeOptions();
+            "
+          >
+            Ajustes del cálculo
+          </button>
+          <RouterLink role="menuitem" to="/plan/setup" @click="closeOptions">
+            Editar objetivo
+          </RouterLink>
+        </div>
       </div>
     </nav>
 

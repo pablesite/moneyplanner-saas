@@ -101,6 +101,59 @@
   color: var(--text);
 }
 
+/* Las acciones de configuración son secundarias al resumen. Viven con la
+   navegación de la vista, agrupadas en un menú compacto, para no abrir una fila
+   entera bajo el título en móvil. */
+.plan-options {
+  position: relative;
+  flex: 0 0 auto;
+  margin-right: 4px;
+}
+
+.plan-options-trigger {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 10px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+}
+
+.plan-options-menu {
+  position: absolute;
+  z-index: 24;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  min-width: 196px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel-solid, var(--panel));
+  box-shadow: 0 14px 34px rgb(0 0 0 / 28%);
+}
+
+.plan-options-menu :is(button, a) {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.plan-options-menu :is(button, a):hover,
+.plan-options-menu :is(button, a):focus-visible {
+  background: var(--panel-hover, rgb(255 255 255 / 6%));
+}
+
 /* El rótulo del hero ocupa la banda que en Patrimonio ocupan los selectores de
    lectura (`.a-nw-read-controls`): misma altura, así que el titular de cada vista
    arranca a la misma altura. */
@@ -3812,18 +3865,26 @@
     padding: 14px 12px;
   }
 
-  /* Scroll horizontal solo cuando las tabs no caben, y sin barra visible (mismo
-     patrón que Patrimonio). En escritorio no se declara overflow: `overflow-x`
-     obliga a `overflow-y: auto`, y el subrayado del tab activo desborda 1px, así
-     que aparecía una barra vertical que no scrollea nada. */
+  /* Las tres tabs comparten el ancho disponible con el menú de opciones. Evitamos
+     scroll/recorte para que el panel contextual pueda abrirse bajo su disparador. */
   .plan-tabs-bar {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
+    flex-wrap: nowrap;
+    overflow: visible;
   }
 
-  .plan-tabs-bar::-webkit-scrollbar {
-    display: none;
+  .plan-tabs-bar .tabs {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .plan-tabs-bar .tab {
+    flex: 1 1 0;
+    padding-inline: 10px;
+    text-align: center;
+  }
+
+  .plan-options {
+    margin-right: 0;
   }
 
   .plan-page {
