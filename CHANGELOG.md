@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.45.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.44.0...moneyplanner-saas-v0.45.0) (2026-08-02)
+
+
+### Features
+
+* **plan:** show live decision impact ([6c53e3c](https://github.com/pablesite/moneyplanner-saas/commit/6c53e3c7bc5d9a4d217cacaf08a05f7a083f6cee))
+
+
+### Bug Fixes
+
+* **ops:** restore consistent production backups ([4e44904](https://github.com/pablesite/moneyplanner-saas/commit/4e44904807d0cc2a049d9c9c84b08dacb944c660))
+* **plan:** align scenario form with modal pattern ([2f3807b](https://github.com/pablesite/moneyplanner-saas/commit/2f3807bc2953b74d7c43fc539c4bdb2a4205859a))
+* **plan:** clarify recurring decision costs ([1c79a5b](https://github.com/pablesite/moneyplanner-saas/commit/1c79a5b861015cd49b411701661a64446812c543))
+* **plan:** clarify scenario usage cost ([85a1892](https://github.com/pablesite/moneyplanner-saas/commit/85a18928d69e51e6d96cfd4d38436bccfa1af57e))
+* **plan:** compact scenario form layout ([8b97af9](https://github.com/pablesite/moneyplanner-saas/commit/8b97af96b9fdda0db1d364d4f4269c8b0914696a))
+* **plan:** edit scenario-backed planned decisions ([3044932](https://github.com/pablesite/moneyplanner-saas/commit/3044932a5d35314d143bea4b8e5e10f13e4f9b16))
+* **plan:** move summary configuration actions ([8af14e8](https://github.com/pablesite/moneyplanner-saas/commit/8af14e8ab4151ee7064ebc9791fc3a5a233b7435))
+* **plan:** streamline draft scenario decisions ([1b8e903](https://github.com/pablesite/moneyplanner-saas/commit/1b8e903cbbceb2c39c7ae61629db07437688b106))
+
+
+### Performance Improvements
+
+* **plan:** reduce summary requests ([78418e6](https://github.com/pablesite/moneyplanner-saas/commit/78418e64ae3d512a0ed1fde6f5f05408384781e9))
+
 ## [0.44.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.43.2...moneyplanner-saas-v0.44.0) (2026-08-02)
 
 
