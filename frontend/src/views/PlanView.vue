@@ -46,13 +46,23 @@ const FOUNDATION_LABELS: Record<string, string> = {
   net_worth_health: 'Salud patrimonial',
   data_quality: 'Calidad de datos',
 };
+const FOUNDATION_KEYS = [
+  'cash_flow',
+  'emergency_fund',
+  'debt',
+  'planned_contribution',
+  'net_worth_health',
+  'data_quality',
+] as const;
 
 const overallHealth = computed(() => store.foundations?.overall ?? null);
 
 const foundationStatus = computed(() => {
-  const entries = Object.entries(store.overview?.foundations ?? {}).filter(
-    ([key]) => key !== 'overall',
-  );
+  const foundations = store.overview?.foundations;
+  const entries = FOUNDATION_KEYS.flatMap((key) => {
+    const item = foundations?.[key];
+    return item ? [[key, item] as const] : [];
+  });
   const named = (status: string) =>
     entries
       .filter(([, item]) => item.status === status)
@@ -68,7 +78,7 @@ const foundationStatus = computed(() => {
 
 onMounted(() => {
   document.title = 'Mi Plan · The Arkenstone';
-  void Promise.all([store.loadDashboard(), store.fetchScenarios()]);
+  void store.loadDashboard();
 });
 </script>
 

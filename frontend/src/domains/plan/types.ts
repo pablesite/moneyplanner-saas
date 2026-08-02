@@ -515,16 +515,7 @@ export type PlanOverview = {
     factors: Record<string, boolean>;
     confidence: 'low' | 'medium';
   };
-  foundations: Record<
-    | 'overall'
-    | 'cash_flow'
-    | 'emergency_fund'
-    | 'debt'
-    | 'planned_contribution'
-    | 'net_worth_health'
-    | 'data_quality',
-    PlanFoundationScore
-  >;
+  foundations: PlanFoundations;
   next_action: PlanGuidanceAction | null;
   input_hash: string;
 };

@@ -116,6 +116,7 @@ export const usePlanStore = defineStore('plan', {
         const { data } = await planApi.getOverview(scenario);
         this.overview = data;
         this.projection = data.projection;
+        this.foundations = data.foundations;
         this.scenario = data.scenario;
       } catch (error) {
         this.error = toErrorMessage(error);
@@ -312,14 +313,7 @@ export const usePlanStore = defineStore('plan', {
     async loadDashboard(scenario?: ProjectionScenario) {
       await this.fetchPlan();
       if (!this.plan) return;
-      await Promise.all([
-        this.fetchOverview(scenario),
-        this.fetchTimeline(),
-        this.fetchEvents(),
-        this.fetchFoundations(),
-        this.fetchFindings(),
-        this.fetchRecommendations(),
-      ]);
+      await Promise.all([this.fetchOverview(scenario), this.fetchTimeline(), this.fetchEvents()]);
     },
 
     async recalculate(scenario?: ProjectionScenario) {
