@@ -21,7 +21,6 @@ type MemberDraft = {
   id?: number;
   name: string;
   birth_date: string;
-  employment_end_age: number;
   pension_start_age: number;
   estimated_monthly_pension_today_eur: string;
   other_future_income_today_eur: string;
@@ -230,11 +229,7 @@ const lifestyleComplete = computed(() => Number(form.monthly_income) > 0);
 const futureComplete = computed(
   () =>
     activeMembers.value.every(
-      (member) =>
-        member.pension_start_age >= 18 &&
-        member.pension_start_age <= 100 &&
-        member.employment_end_age >= 18 &&
-        member.employment_end_age <= 100,
+      (member) => member.pension_start_age >= 18 && member.pension_start_age <= 100,
     ) &&
     (!form.wants_legacy || Number(form.legacy_amount) > 0),
 );
@@ -301,7 +296,6 @@ function emptyMember(): MemberDraft {
   return {
     name: '',
     birth_date: '',
-    employment_end_age: DEFAULT_INDEPENDENCE_AGE,
     pension_start_age: DEFAULT_PENSION_AGE,
     estimated_monthly_pension_today_eur: '',
     other_future_income_today_eur: '',
@@ -313,11 +307,6 @@ function toDraft(member: PlanMember): MemberDraft {
     id: member.id,
     name: member.name,
     birth_date: member.birth_date ?? '',
-    employment_end_age:
-      (member.birth_date &&
-        member.employment_income_end_date &&
-        ageAtDate(member.birth_date, member.employment_income_end_date)) ||
-      DEFAULT_INDEPENDENCE_AGE,
     pension_start_age:
       (member.birth_date &&
         member.pension_start_date &&
@@ -334,7 +323,9 @@ function toPayload(member: MemberDraft): PlanMemberPayload {
     role: 'adult',
     is_active: true,
     birth_date: member.birth_date || null,
-    employment_end_age: member.employment_end_age,
+    // El salario termina en la fecha objetivo: es la misma decisión que el usuario
+    // ya tomó en "Cuándo", no una segunda pregunta con riesgo de contradicción.
+    employment_end_age: form.independence_age,
     pension_start_age: member.pension_start_age,
     estimated_monthly_pension_today_eur: member.estimated_monthly_pension_today_eur || null,
     other_future_income_today_eur: member.other_future_income_today_eur || null,
@@ -946,18 +937,6 @@ onMounted(async () => {
                   max="100"
                   required
                 />
-              </label>
-              <label>
-                <span>Edad a la que dejarías el ingreso laboral</span>
-                <input
-                  v-model.number="member.employment_end_age"
-                  class="input"
-                  type="number"
-                  min="18"
-                  max="100"
-                  required
-                />
-                <small>El plan deja de contar salario desde tu fecha objetivo.</small>
               </label>
               <label>
                 <span>Pensión pública estimada (al mes)</span>
