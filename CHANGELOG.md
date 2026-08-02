@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.44.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.43.2...moneyplanner-saas-v0.44.0) (2026-08-02)
+
+
+### Features
+
+* **plan:** streamline decisions workspace ([a97a38a](https://github.com/pablesite/moneyplanner-saas/commit/a97a38a7b4c5ab85ce6204424c5a66ef2933f328))
+
+
+### Bug Fixes
+
+* **budget:** clarify extraordinary income impact ([6ac5217](https://github.com/pablesite/moneyplanner-saas/commit/6ac52171c55a477c74ac576fec638eeb2c04e8fd))
+* **plan:** compact and harden setup flow ([7f6e863](https://github.com/pablesite/moneyplanner-saas/commit/7f6e8631298e2f28e1ab255410ea90f42bab0164))
+* **plan:** condense mobile setup layout ([62e1000](https://github.com/pablesite/moneyplanner-saas/commit/62e10008df464fd05758ba8d6a1da0fceada0081))
+* **plan:** derive employment end from target age ([70c7068](https://github.com/pablesite/moneyplanner-saas/commit/70c7068c0b2c0496aef8e9c1901a84c5a237a07d))
+* **plan:** show sustainable funded contribution ([bfc9005](https://github.com/pablesite/moneyplanner-saas/commit/bfc9005d4860729e25525490e1a3fe7067d93463))
+
 ## [0.43.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.43.1...moneyplanner-saas-v0.43.2) (2026-08-02)
 
 
