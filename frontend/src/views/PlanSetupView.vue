@@ -188,9 +188,9 @@ const lifestyleChoices = computed(() => {
   const base = suggestedMonthly.value;
   if (!base) return [];
   return [
-    { amount: Math.round(base * 0.8), label: 'Con algo menos', hint: '20% por debajo de hoy' },
+    { amount: Math.round(base * 0.8), label: '20% menos', hint: 'Por debajo de tu gasto actual' },
     { amount: base, label: 'Como ahora', hint: 'Tu gasto estructural actual' },
-    { amount: Math.round(base * 1.2), label: 'Con algo más', hint: '20% por encima de hoy' },
+    { amount: Math.round(base * 1.2), label: '20% más', hint: 'Por encima de tu gasto actual' },
   ];
 });
 
@@ -876,7 +876,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="lifestyleChoices.length" class="plan-choice-grid">
+        <div v-if="lifestyleChoices.length" class="plan-choice-grid plan-choice-grid-lifestyle">
           <button
             v-for="choice in lifestyleChoices"
             :key="choice.label"
@@ -884,10 +884,11 @@ onMounted(async () => {
             class="plan-choice"
             :class="{ 'is-on': Number(form.monthly_income) === choice.amount }"
             :aria-pressed="Number(form.monthly_income) === choice.amount"
+            :aria-label="`${formatMoney(choice.amount)} al mes. ${choice.label}. ${choice.hint}`"
             @click="form.monthly_income = String(choice.amount)"
           >
-            <strong>{{ formatMoney(choice.amount) }}/mes</strong>
-            <small>{{ choice.label }} · {{ choice.hint }}</small>
+            <strong>{{ formatMoney(choice.amount) }}</strong>
+            <small>{{ choice.label }}</small>
           </button>
         </div>
         <AState v-else status="empty" layout="inline">

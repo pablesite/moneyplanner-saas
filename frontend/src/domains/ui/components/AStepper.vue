@@ -50,6 +50,7 @@ watch(
         'is-active': isCurrent(step),
         'is-done': step.status === 'done',
       }"
+      :aria-label="`${eyebrowPrefix} ${index + 1} de ${steps.length}: ${step.label}`"
       :aria-current="isCurrent(step) ? 'step' : undefined"
       @click="emit('change', step.id)"
     >

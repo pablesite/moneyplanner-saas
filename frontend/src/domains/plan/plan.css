@@ -2601,6 +2601,20 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.plan-choice-grid-lifestyle {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plan-choice-grid-lifestyle .plan-choice {
+  align-content: center;
+  min-height: 64px;
+}
+
+.plan-choice-grid-lifestyle .plan-choice strong {
+  font-size: clamp(0.82rem, 3.8vw, 1rem);
+  white-space: nowrap;
+}
+
 .plan-choice {
   display: grid;
   gap: 4px;
@@ -2985,6 +2999,14 @@
     flex: 0 0 clamp(132px, 36%, 180px);
     scroll-snap-align: center;
   }
+
+  .plan-setup-page .plan-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-setup-page .plan-form-grid > :only-child {
+    grid-column: 1 / -1;
+  }
 }
 
 @container page (max-width: 400px) {
@@ -3001,12 +3023,42 @@
     gap: 6px;
   }
 
+  .plan-choice-grid-lifestyle {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
   .plan-choice-grid-ages .plan-choice {
     padding-inline: 4px;
+  }
+
+  .plan-choice-grid-lifestyle .plan-choice {
+    padding-inline: 8px;
   }
 }
 
 @container page (max-width: 560px) {
+  /* La cabecera ya informa del paso actual. En móvil el stepper se reduce a una
+     barra segmentada navegable, sin repetir nueve etiquetas en un carrusel alto. */
+  .dir-a .plan-setup-page .stepper {
+    display: grid;
+    grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .dir-a .plan-setup-page .stepper-step {
+    min-height: 12px;
+    padding: 0;
+    border-top-width: 3px;
+  }
+
+  .dir-a .plan-setup-page .stepper-step-head,
+  .dir-a .plan-setup-page .stepper-label,
+  .dir-a .plan-setup-page .stepper-meta {
+    display: none;
+  }
+
   .plan-one-off-head,
   .plan-one-off-row {
     grid-template-columns: minmax(0, 1fr) auto;
