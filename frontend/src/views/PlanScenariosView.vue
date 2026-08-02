@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { PlanEventsTimeline } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import type { PlanAssetFunction, PlanScenarioPayload, PlanScenarioTemplate } from '@/domains/plan';
 import {
   assetFunctionLabels,
   defaultScenarioEvent,
-  scenarioStatusLabel,
   scenarioTemplateLabel,
   scenarioTemplates,
 } from '@/domains/plan/scenarioTemplates';
@@ -18,23 +18,15 @@ import '@/domains/plan/plan.css';
 const router = useRouter();
 const route = useRoute();
 const { store, error } = usePlan();
-const eventStatusLabels = {
-  planned: 'Prevista',
-  occurred: 'Ocurrida',
-  cancelled: 'Cancelada',
-} as const;
 // El formulario abierto se renderiza antes de la lista: la acción pedida va primero,
 // sin depender de un scroll automático que en móvil dejaba el CTA a dos pantallas.
 const formOpen = ref(false);
+const formSection = ref<HTMLElement | null>(null);
 const submitError = ref<string | null>(null);
 const validationSummary = computed(
   () => submitError.value ?? Object.values(store.scenarioFieldErrors)[0] ?? null,
 );
 
-const templateOptions: ASelectItem[] = scenarioTemplates.map((item) => ({
-  value: item.value,
-  label: item.label,
-}));
 const assetOptions: ASelectItem[] = Object.entries(assetFunctionLabels).map(([value, label]) => ({
   value,
   label,
@@ -59,6 +51,22 @@ const oneOffItems = reactive<OneOffItem[]>([]);
 
 const selectedTemplate = computed(
   () => scenarioTemplates.find((item) => item.value === form.template) ?? scenarioTemplates[0]!,
+);
+
+const pendingScenarios = computed(() =>
+  store.scenarios.filter((scenario) => scenario.status === 'draft'),
+);
+const discardedScenarios = computed(() =>
+  store.scenarios.filter((scenario) => scenario.status === 'discarded'),
+);
+const activeEvents = computed(() =>
+  store.events.filter((event) => event.status !== 'cancelled' || event.effective_end_date),
+);
+const plannedEvents = computed(
+  () => activeEvents.value.filter((event) => event.status === 'planned').length,
+);
+const occurredEvents = computed(
+  () => activeEvents.value.filter((event) => event.status === 'occurred').length,
 );
 
 const show = computed(() => {
@@ -98,6 +106,20 @@ function hydrateTemplate(template: PlanScenarioTemplate): void {
   form.newDebtInterestRate = '';
   form.newDebtTermMonths = '';
   oneOffItems.splice(0, oneOffItems.length, { name: 'Pago inicial', amount: '' });
+}
+
+async function startScenario(template: PlanScenarioTemplate): Promise<void> {
+  if (form.template !== template) form.template = template;
+  else hydrateTemplate(template);
+  formOpen.value = true;
+  submitError.value = null;
+  await nextTick();
+  formSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeForm(): void {
+  formOpen.value = false;
+  submitError.value = null;
 }
 
 function addOneOffItem(): void {
@@ -187,8 +209,15 @@ function scenarioImpact(scenario: (typeof store.scenarios)[number]): string {
     parts.push(`${formatMoney(Number(event.initial_outflow))} inicial`);
   if (Number(event.monthly_expense_delta))
     parts.push(`+${formatMoney(Number(event.monthly_expense_delta))}/mes de gasto`);
-  if (Number(event.monthly_income_delta))
-    parts.push(`${formatMoney(Number(event.monthly_income_delta))}/mes de ingreso`);
+  const incomeDelta = Number(event.monthly_income_delta);
+  if (incomeDelta < 0) parts.push(`${formatMoney(Math.abs(incomeDelta))}/mes menos de ingreso`);
+  if (incomeDelta > 0) parts.push(`+${formatMoney(incomeDelta)}/mes de ingreso`);
+  if (Number(event.monthly_contribution_delta)) {
+    parts.push(`+${formatMoney(Number(event.monthly_contribution_delta))}/mes de aportación`);
+  }
+  if (Number(event.new_debt_principal)) {
+    parts.push(`${formatMoney(Number(event.new_debt_principal))} de deuda`);
+  }
   return parts.join(' · ') || 'Sin impacto monetario';
 }
 
@@ -200,9 +229,9 @@ watch(
 
 onMounted(async () => {
   document.title = 'Decisiones de Mi Plan · The Arkenstone';
-  formOpen.value = route.query.create === '1';
   await store.fetchPlan();
   await Promise.all([store.fetchScenarios(), store.fetchEvents()]);
+  if (route.query.create === '1') await startScenario(form.template);
 });
 </script>
 
@@ -210,13 +239,7 @@ onMounted(async () => {
   <main class="page plan-page plan-scenarios-page">
     <APageHead title="Decisiones" eyebrow="Mi Plan">
       <template #meta>
-        <span>Simulaciones sin contaminar datos reales</span>
-      </template>
-      <template #actions>
-        <AButton variant="primary" @click="formOpen = !formOpen">
-          {{ formOpen ? 'Cerrar' : 'Nueva decisión' }}
-        </AButton>
-        <RouterLink class="btn btn-ghost" to="/plan">Volver a Mi Plan</RouterLink>
+        <span>Prueba primero; incorpora al plan solo cuando lo tengas claro</span>
       </template>
     </APageHead>
     <nav class="plan-tabs-bar" aria-label="Secciones de Mi Plan">
@@ -227,34 +250,95 @@ onMounted(async () => {
       </div>
     </nav>
 
-    <AState v-if="store.scenariosLoading && !store.scenarios.length" status="loading">
+    <AState
+      v-if="store.scenariosLoading && !store.scenarios.length && !store.events.length"
+      status="loading"
+    >
       Cargando escenarios...
     </AState>
     <AState v-if="error" status="error">{{ error }}</AState>
 
-    <section v-if="formOpen" ref="formSection" class="sect plan-form-section">
+    <section class="plan-chapter plan-decisions-start" aria-labelledby="decisions-start-title">
+      <div class="plan-chapter-label" aria-hidden="true">
+        <span>01</span>
+        <strong>Empezar</strong>
+      </div>
+      <div class="plan-decisions-hero">
+        <div class="plan-decisions-hero-copy">
+          <p class="eyebrow">Simula sin compromiso</p>
+          <h2 id="decisions-start-title">¿Qué decisión estás valorando?</h2>
+          <p>
+            Elige un punto de partida. Verás cómo cambia la fecha de tu objetivo antes de añadir
+            nada al plan o al presupuesto.
+          </p>
+        </div>
+        <dl class="plan-decision-kpis" aria-label="Estado de tus decisiones">
+          <div>
+            <dt>Por decidir</dt>
+            <dd>{{ pendingScenarios.length }}</dd>
+          </div>
+          <div>
+            <dt>Previstas</dt>
+            <dd>{{ plannedEvents }}</dd>
+          </div>
+          <div>
+            <dt>Ocurridas</dt>
+            <dd>{{ occurredEvents }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="plan-decision-template-grid" aria-label="Tipos de decisión">
+        <button
+          v-for="template in scenarioTemplates"
+          :key="template.value"
+          type="button"
+          class="plan-decision-template"
+          :class="{ 'is-active': formOpen && form.template === template.value }"
+          :aria-label="`${template.label}: ${template.description}`"
+          :aria-pressed="formOpen && form.template === template.value"
+          @click="startScenario(template.value)"
+        >
+          <strong>{{ template.label }}</strong>
+          <span>{{ template.description }}</span>
+        </button>
+      </div>
+
+      <div class="plan-decision-direct-actions">
+        <RouterLink class="plan-decision-direct" to="/plan/decisiones/agrupar">
+          <span class="plan-decision-direct-index" aria-hidden="true">A</span>
+          <span>
+            <strong>Ya está decidida</strong>
+            <small>Añade una compra o venta prevista usando partidas existentes.</small>
+          </span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
+        <RouterLink class="plan-decision-direct" to="/plan/decisiones/registrar">
+          <span class="plan-decision-direct-index" aria-hidden="true">B</span>
+          <span>
+            <strong>Ya ocurrió</strong>
+            <small>Regístrala y enlázala con Presupuesto o Patrimonio.</small>
+          </span>
+          <span aria-hidden="true">→</span>
+        </RouterLink>
+      </div>
+    </section>
+
+    <section v-if="formOpen" ref="formSection" class="sect plan-form-section plan-decision-form">
       <div class="sect-head">
         <div>
-          <p class="eyebrow">Nueva previsión</p>
-          <h2 class="sect-title">¿Qué decisión quieres valorar?</h2>
+          <p class="eyebrow">Nueva simulación · {{ selectedTemplate.label }}</p>
+          <h2 class="sect-title">Cuéntanos cómo sería</h2>
           <p class="sect-sub">{{ selectedTemplate.description }}</p>
         </div>
+        <AButton size="sm" variant="ghost" @click="closeForm">Cerrar</AButton>
       </div>
 
       <form class="plan-setup" @submit.prevent="submit">
-        <div class="plan-form-grid">
+        <div class="plan-form-grid plan-decision-name-grid">
           <label>
-            <span>Plantilla</span>
-            <ASelect
-              v-model="form.template"
-              :options="templateOptions"
-              class="filter-ctrl"
-              :searchable="false"
-            />
-          </label>
-          <label>
-            <span>Nombre</span>
-            <input v-model="form.name" class="input" type="text" />
+            <span>Nombre de la decisión</span>
+            <input v-model="form.name" class="input" type="text" autocomplete="off" />
             <small v-if="fieldError('name')" class="plan-field-error">{{
               fieldError('name')
             }}</small>
@@ -407,72 +491,90 @@ onMounted(async () => {
         </AState>
         <!-- Sticky en móvil: el CTA queda siempre a la vista aunque el formulario sea largo. -->
         <div class="plan-setup-actions plan-scenario-submit">
-          <AButton variant="ghost" type="button" @click="formOpen = false">Cerrar</AButton>
+          <AButton variant="ghost" type="button" @click="closeForm">Cancelar</AButton>
           <AButton variant="primary" type="submit" :loading="store.saving">Ver resultado</AButton>
         </div>
       </form>
     </section>
 
-    <section class="sect plan-scenario-list">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Laboratorio</p>
-          <h2 class="sect-title">Borradores y previsiones</h2>
+    <section class="plan-chapter" aria-labelledby="pending-decisions-title">
+      <div class="plan-chapter-label" aria-hidden="true">
+        <span>02</span>
+        <strong>Por decidir</strong>
+      </div>
+      <section class="plan-decision-worklist">
+        <div class="plan-block-head">
+          <div>
+            <p class="plan-block-eyebrow">Pendientes</p>
+            <h2 id="pending-decisions-title" class="sect-title">Decisiones que estás valorando</h2>
+          </div>
+          <span class="plan-decision-count">{{ pendingScenarios.length }}</span>
         </div>
-      </div>
-      <div v-if="!store.scenarios.length" class="plan-empty-inline">
-        <p class="plan-muted">Aún no has guardado ninguna decisión.</p>
-        <span>Simula una decisión para comparar su impacto antes de incorporarla al plan.</span>
-      </div>
-      <RouterLink
-        v-for="scenario in store.scenarios"
-        v-else
-        :key="scenario.id"
-        class="plan-scenario-row"
-        :to="`/plan/decisiones/${scenario.id}`"
-      >
-        <div>
-          <strong>{{ scenario.name }}</strong>
-          <span>
-            {{ scenarioTemplateLabel(scenario.template_type) }} ·
+        <div v-if="!pendingScenarios.length" class="plan-empty-inline plan-decision-empty">
+          <p class="plan-muted">No tienes decisiones pendientes.</p>
+          <span>Elige arriba una opción para probar su impacto.</span>
+        </div>
+        <RouterLink
+          v-for="scenario in pendingScenarios"
+          v-else
+          :key="scenario.id"
+          class="plan-scenario-row plan-decision-row"
+          :to="`/plan/decisiones/${scenario.id}`"
+        >
+          <span class="plan-decision-row-date mono">
             {{ formatShortMonthYear(scenario.events[0]?.start_date || scenario.created_at) }}
           </span>
-          <small>{{ scenarioImpact(scenario) }}</small>
-        </div>
-        <span class="plan-status-chip" :class="`is-${scenario.status}`">
-          {{ scenarioStatusLabel(scenario.status) }}
-        </span>
-      </RouterLink>
+          <div>
+            <strong>{{ scenario.name }}</strong>
+            <span>{{ scenarioTemplateLabel(scenario.template_type) }}</span>
+            <small>{{ scenarioImpact(scenario) }}</small>
+          </div>
+          <span class="plan-decision-row-action"
+            >Ver impacto <span aria-hidden="true">→</span></span
+          >
+        </RouterLink>
+
+        <details v-if="discardedScenarios.length" class="plan-decision-archive">
+          <summary>
+            Descartadas <span>{{ discardedScenarios.length }}</span>
+          </summary>
+          <RouterLink
+            v-for="scenario in discardedScenarios"
+            :key="scenario.id"
+            class="plan-scenario-row plan-decision-row is-archived"
+            :to="`/plan/decisiones/${scenario.id}`"
+          >
+            <span class="plan-decision-row-date mono">
+              {{ formatShortMonthYear(scenario.events[0]?.start_date || scenario.created_at) }}
+            </span>
+            <div>
+              <strong>{{ scenario.name }}</strong>
+              <span>{{ scenarioTemplateLabel(scenario.template_type) }}</span>
+            </div>
+            <span class="plan-decision-row-action">Consultar</span>
+          </RouterLink>
+        </details>
+      </section>
     </section>
 
-    <section class="sect plan-scenario-list">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Seguimiento</p>
-          <h2 class="sect-title">Decisiones incorporadas y ocurridas</h2>
-        </div>
-        <RouterLink class="btn btn-ghost btn-sm" to="/plan/decisiones/registrar">
-          Registrar que ya ocurrió
-        </RouterLink>
+    <section class="plan-chapter" aria-label="Decisiones en tu plan">
+      <div class="plan-chapter-label" aria-hidden="true">
+        <span>03</span>
+        <strong>En tu plan</strong>
       </div>
-      <div v-if="!store.events.length" class="plan-empty-inline">
-        <p class="plan-muted">Todavía no hay decisiones en seguimiento.</p>
-      </div>
-      <RouterLink
-        v-for="event in store.events"
-        v-else
-        :key="event.id"
-        class="plan-scenario-row"
-        :to="`/plan/decisiones/eventos/${event.id}`"
-      >
-        <div>
-          <strong>{{ event.name }}</strong>
-          <span>{{ formatShortMonthYear(event.actual_date || event.planned_date) }}</span>
-        </div>
-        <span class="plan-status-chip" :class="`is-${event.status}`">
-          {{ eventStatusLabels[event.status] }}
-        </span>
-      </RouterLink>
+      <PlanEventsTimeline
+        :events="activeEvents"
+        :saving="store.saving"
+        :close-event="store.closePlanEvent"
+        :release-event="store.releaseEvent"
+        :materialize-event="store.materializeEvent"
+        :cancel-event="store.cancelEvent"
+        eyebrow="Seguimiento"
+        title="Decisiones que ya cuentan en tu plan"
+        empty-copy="Cuando incorpores una simulación o registres una decisión, aparecerá aquí."
+        :empty-action="false"
+        allow-editing
+      />
     </section>
   </main>
 </template>

@@ -25,3 +25,4 @@ dist-ssr
 
 # Playwright browser-audit screenshots (local only)
 .pw-shots/
+test-results/

@@ -171,4 +171,29 @@ describe('PlanEventsTimeline', () => {
     expect(cancelEvent).toHaveBeenCalledWith(1);
     expect(wrapper.text()).toContain('2 partidas futuras eliminadas');
   });
+
+  it('offers direct editing for a manually planned decision when requested', async () => {
+    const editable: PlanEvent = {
+      ...event,
+      source_scenario: null,
+      actual_impact_json: { registration: { adopted_lines: [{ id: 3 }] } },
+    };
+    const wrapper = mount(PlanEventsTimeline, {
+      props: { events: [editable], allowEditing: true },
+      global: {
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>',
+          },
+          PlanEventImpact: true,
+        },
+      },
+    });
+
+    await expandRow(wrapper);
+
+    const edit = wrapper.findAll('a').find((link) => link.text() === 'Editar');
+    expect(edit?.attributes('href')).toBe('/plan/decisiones/eventos/1/editar');
+  });
 });

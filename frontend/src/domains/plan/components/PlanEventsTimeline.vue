@@ -13,20 +13,34 @@ import { planEventStatusLabel, scenarioTemplateLabel } from '@/domains/plan/scen
 import { formatShortMonthYear } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 
-const props = defineProps<{
-  events: PlanEvent[];
-  saving?: boolean;
-  closeEvent?: (
-    id: number,
-    payload: { effective_date: string; note?: string },
-  ) => Promise<PlanEventCloseResponse>;
-  releaseEvent?: (id: number) => Promise<void>;
-  materializeEvent?: (
-    id: number,
-    payload: { actual_date: string; note?: string },
-  ) => Promise<PlanEventMaterializeResponse>;
-  cancelEvent?: (id: number) => Promise<PlanEventCancelResponse>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    events: PlanEvent[];
+    saving?: boolean;
+    eyebrow?: string;
+    title?: string;
+    emptyCopy?: string;
+    emptyAction?: boolean;
+    allowEditing?: boolean;
+    closeEvent?: (
+      id: number,
+      payload: { effective_date: string; note?: string },
+    ) => Promise<PlanEventCloseResponse>;
+    releaseEvent?: (id: number) => Promise<void>;
+    materializeEvent?: (
+      id: number,
+      payload: { actual_date: string; note?: string },
+    ) => Promise<PlanEventMaterializeResponse>;
+    cancelEvent?: (id: number) => Promise<PlanEventCancelResponse>;
+  }>(),
+  {
+    eyebrow: 'Acontecimientos',
+    title: 'Incorporados al plan',
+    emptyCopy: 'Todavía no hay decisiones incorporadas.',
+    emptyAction: true,
+    allowEditing: false,
+  },
+);
 
 const closingId = ref<number | null>(null);
 const effectiveDate = ref('');
@@ -59,6 +73,18 @@ function isRegistered(event: PlanEvent): boolean {
 /** Una previsión: aún no ha pasado, así que puede hacerse realidad o cancelarse. */
 function isForecast(event: PlanEvent): boolean {
   return event.status === 'planned' && !event.effective_end_date;
+}
+
+function isEditable(event: PlanEvent): boolean {
+  const registration = (event.actual_impact_json as { registration?: unknown })?.registration;
+  return (
+    props.allowEditing &&
+    event.status === 'planned' &&
+    event.source_scenario == null &&
+    registration != null &&
+    typeof registration === 'object' &&
+    Array.isArray((registration as { adopted_lines?: unknown }).adopted_lines)
+  );
 }
 
 function beginMaterialize(event: PlanEvent): void {
@@ -186,14 +212,14 @@ function shortDate(value: string): string {
   <section class="sect plan-events">
     <div class="sect-head">
       <div>
-        <p class="eyebrow">Acontecimientos</p>
-        <h2 class="sect-title">Incorporados al plan</h2>
+        <p class="eyebrow">{{ eyebrow }}</p>
+        <h2 class="sect-title">{{ title }}</h2>
       </div>
     </div>
 
     <div v-if="!events.length" class="plan-empty-inline">
-      <p class="plan-muted">Todavía no hay decisiones incorporadas.</p>
-      <RouterLink class="btn btn-ghost btn-sm" to="/plan/decisiones/nueva">
+      <p class="plan-muted">{{ emptyCopy }}</p>
+      <RouterLink v-if="emptyAction" class="btn btn-ghost btn-sm" to="/plan/decisiones/nueva">
         Crear previsión
       </RouterLink>
     </div>
@@ -311,6 +337,13 @@ function shortDate(value: string): string {
           v-if="expandedId === event.id && closingId !== event.id && materializingId !== event.id"
         >
           <div v-if="isForecast(event)" class="plan-event-actions">
+            <RouterLink
+              v-if="isEditable(event)"
+              class="btn btn-ghost btn-sm"
+              :to="`/plan/decisiones/eventos/${event.id}/editar`"
+            >
+              Editar
+            </RouterLink>
             <AButton
               v-if="materializeEvent"
               variant="ghost"

@@ -1331,6 +1331,260 @@
   background: var(--panel);
 }
 
+/* Decisiones comparte la lectura por capítulos del Resumen. La entrada principal
+   queda sin caja; solo el formulario conserva panel porque agrupa controles. */
+.plan-decisions-start {
+  gap: 18px;
+}
+
+.plan-decisions-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px 48px;
+}
+
+.plan-decisions-hero-copy {
+  display: grid;
+  gap: 8px;
+  max-width: 650px;
+}
+
+.plan-decisions-hero-copy :is(h2, p) {
+  margin: 0;
+}
+
+.plan-decisions-hero-copy h2 {
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.plan-decisions-hero-copy > p:last-child {
+  max-width: 62ch;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.plan-decision-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  min-width: min(100%, 300px);
+  margin: 0;
+}
+
+.plan-decision-kpis > div {
+  display: grid;
+  gap: 4px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+}
+
+.plan-decision-kpis dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.plan-decision-kpis dd {
+  margin: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 1.55rem;
+  font-weight: 650;
+}
+
+.plan-decision-template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.plan-decision-template {
+  display: grid;
+  gap: 5px;
+  min-height: 92px;
+  padding: 15px 16px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.plan-decision-template:hover,
+.plan-decision-template.is-active {
+  background: var(--hover);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.plan-decision-template strong {
+  font-size: 0.92rem;
+}
+
+.plan-decision-template span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.plan-decision-direct-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.plan-decision-direct {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.plan-decision-direct:hover > span:last-child {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+.plan-decision-direct > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+}
+
+.plan-decision-direct small {
+  color: var(--muted);
+}
+
+.plan-decision-direct > span:last-child {
+  color: var(--muted);
+  transition:
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.plan-decision-direct-index {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--accent-line);
+  border-radius: 50%;
+  color: var(--accent);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+.plan-decision-form {
+  scroll-margin-top: 64px;
+}
+
+.plan-decision-name-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.plan-decision-worklist {
+  display: grid;
+  gap: 10px;
+}
+
+.plan-decision-count {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.plan-decision-empty {
+  padding-block: 18px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.plan-scenarios-page .plan-decision-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
+  min-height: 68px;
+  padding: 12px 0;
+}
+
+.plan-decision-row-date {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.plan-decision-row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.plan-decision-row:hover .plan-decision-row-action {
+  color: var(--accent);
+}
+
+.plan-decision-archive {
+  border-top: 1px solid var(--line);
+}
+
+.plan-decision-archive summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.plan-decision-archive summary::-webkit-details-marker {
+  display: none;
+}
+
+.plan-decision-archive summary::before {
+  content: '›';
+  transition: transform 140ms ease;
+}
+
+.plan-decision-archive[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.plan-decision-archive summary span {
+  color: var(--faint);
+}
+
+.plan-decision-row.is-archived {
+  opacity: 0.7;
+}
+
+.plan-scenarios-page .plan-events {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.plan-scenarios-page .plan-event-list {
+  gap: 0;
+}
+
 .plan-event-list,
 .plan-scenario-list {
   display: grid;
@@ -1690,6 +1944,58 @@
 }
 
 @container page (max-width: 560px) {
+  .plan-decisions-hero {
+    display: grid;
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .plan-decision-kpis {
+    width: 100%;
+  }
+
+  .plan-decision-kpis > div:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .plan-decision-template-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .plan-decision-template {
+    align-content: center;
+    min-height: 58px;
+    padding: 9px 8px;
+  }
+
+  .plan-decision-template strong {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .plan-decision-template span {
+    display: none;
+  }
+
+  .plan-decision-direct-actions {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .plan-scenarios-page .plan-decision-row {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    gap: 8px 12px;
+  }
+
+  .plan-decision-row-action {
+    font-size: 0;
+  }
+
+  .plan-decision-row-action > span {
+    font-size: 1rem;
+  }
+
   .plan-impact-form {
     grid-template-columns: 1fr;
   }
