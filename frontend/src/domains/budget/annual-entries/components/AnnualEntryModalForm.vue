@@ -49,6 +49,8 @@ const props = withDefaults(
     showEventGroupField?: boolean;
     showTermEndYearField?: boolean;
     showRecurringTargetMonthField?: boolean;
+    showCategoryWhenOneOff?: boolean;
+    oneOffHelp?: string;
     namePlaceholder: string;
     amountPlaceholder: string;
     targetMonthPlaceholder?: string;
@@ -69,6 +71,8 @@ const props = withDefaults(
     showEventGroupField: true,
     showTermEndYearField: true,
     showRecurringTargetMonthField: false,
+    showCategoryWhenOneOff: false,
+    oneOffHelp: '',
     ownerOptions: () => [],
     timeProfileFieldLabel: '',
     targetMonthPlaceholder: 'Mes objetivo (1-12)',
@@ -133,7 +137,10 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
         </p>
       </div>
 
-      <label v-if="advancedOpen" class="ui-item-form-field">
+      <label
+        v-if="advancedOpen || (showCategoryWhenOneOff && form.timeProfile === 'one_off')"
+        class="ui-item-form-field"
+      >
         <span class="ui-item-form-label">Categoría</span>
         <ASelect
           class="select"
@@ -184,6 +191,13 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
           @update:model-value="(v) => emit('patch', { timeProfile: String(v) })"
         />
       </label>
+
+      <p
+        v-if="form.timeProfile === 'one_off' && oneOffHelp"
+        class="ui-section-subtitle md:col-span-2"
+      >
+        {{ oneOffHelp }}
+      </p>
 
       <label v-if="advancedOpen && showCashflowRoleField" class="ui-item-form-field">
         <span class="ui-item-form-label">Rol en flujo de caja</span>

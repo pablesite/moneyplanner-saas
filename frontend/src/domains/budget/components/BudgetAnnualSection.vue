@@ -1025,6 +1025,8 @@ async function removeExpense(entry: AnnualExpenseEntry): Promise<void> {
     :cashflow-role-options="annualEntriesPage.incomeCashflowRoleOptions"
     :show-cashflow-role-field="false"
     :show-recurring-target-month-field="true"
+    :show-category-when-one-off="true"
+    one-off-help="Una donación, herencia o ayuda familiar es dinero nuevo: suma a tu caja y a tu patrimonio en el mes indicado. Si después lo inviertes, registra esa inversión como una salida independiente para no duplicarlo."
     :event-group-options="annualEntriesPage.annualEventGroupOptions.value"
     event-group-datalist-id="budget-income-event-groups"
     name-placeholder="Concepto (ej: Nomina, Regalo)"
