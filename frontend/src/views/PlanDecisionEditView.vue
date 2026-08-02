@@ -47,6 +47,7 @@ const impact = reactive({
   new_debt_principal: '',
   new_debt_interest_rate: '',
   new_debt_term_years: '',
+  monthly_expense_delta: '',
 });
 
 const kindOptions: ASelectItem[] = [
@@ -84,6 +85,7 @@ const monthOptions: ASelectItem[] = [
 ].map((label, index) => ({ value: index + 1, label }));
 
 const isSale = computed(() => form.kind === 'sale');
+const scenarioBacked = computed(() => event.value?.source_scenario != null);
 const debtNeedsTerm = computed(
   () =>
     !isSale.value && amountNum(impact.new_debt_principal) > 0 && !impact.new_debt_term_years.trim(),
@@ -147,6 +149,7 @@ function buildImpact(): PlannedDecisionImpact {
     new_debt_principal: money(impact.new_debt_principal),
     new_debt_interest_rate: rate(impact.new_debt_interest_rate),
     new_debt_term_years: impact.new_debt_term_years ? Number(impact.new_debt_term_years) : null,
+    monthly_expense_delta: money(impact.monthly_expense_delta),
   };
 }
 
@@ -156,7 +159,7 @@ function initialize(): void {
   const registration = record(current.actual_impact_json.registration);
   const adopted = registration.adopted_lines;
   editable.value =
-    current.status === 'planned' && Array.isArray(adopted) && current.source_scenario == null;
+    current.status === 'planned' && (current.source_scenario != null || Array.isArray(adopted));
   if (!editable.value) return;
 
   const events = current.planned_impact_json.events;
@@ -182,6 +185,7 @@ function initialize(): void {
   impact.new_debt_principal = textValue(projected.new_debt_principal);
   impact.new_debt_interest_rate = textValue(projected.new_debt_interest_rate);
   impact.new_debt_term_years = textValue(projected.new_debt_term_years);
+  impact.monthly_expense_delta = textValue(projected.monthly_expense_delta);
 }
 
 async function submit(): Promise<void> {
@@ -227,7 +231,9 @@ onMounted(async () => {
     <APageHead :title="event ? `Editar ${event.name}` : 'Editar decisión'" eyebrow="Mi Plan">
       <template #meta>
         <span>Corrige la previsión</span><span class="dot"></span
-        ><span>Las partidas agrupadas no cambian</span>
+        ><span>{{
+          scenarioBacked ? 'Se regeneran las partidas futuras' : 'Las partidas agrupadas no cambian'
+        }}</span>
       </template>
       <template #actions>
         <RouterLink class="btn btn-ghost" :to="`/plan/decisiones/eventos/${eventId}`">
@@ -251,7 +257,8 @@ onMounted(async () => {
             <h2 class="sect-title">Qué cambia y cuándo</h2>
             <p class="sect-sub">
               Ajusta la fecha, el mes de la operación y sus importes. Al guardar se recalculan caja,
-              deuda y patrimonio desde ese mes.
+              deuda y patrimonio desde ese mes. Las partidas futuras se sincronizan con la
+              previsión.
             </p>
           </div>
         </div>
@@ -362,6 +369,10 @@ onMounted(async () => {
             <span>Plazo (años)</span>
             <input v-model="impact.new_debt_term_years" class="input" inputmode="numeric" />
           </label>
+          <label v-if="scenarioBacked">
+            <span>Coste de uso mensual (sin cuota)</span>
+            <input v-model="impact.monthly_expense_delta" class="input" inputmode="decimal" />
+          </label>
         </div>
         <p v-if="debtNeedsTerm" class="plan-decision-warn">
           Indica el plazo de la hipoteca para que la deuda no se amortice de forma irreal.
@@ -374,7 +385,12 @@ onMounted(async () => {
             <p class="eyebrow">Se conserva</p>
             <h2 class="sect-title">Partidas y posiciones vinculadas</h2>
             <p class="sect-sub">
-              No se desagrupa ni modifica nada del presupuesto. Se mantienen
+              <template v-if="scenarioBacked">
+                Al guardar se regeneran las partidas futuras gestionadas por la decisión.
+              </template>
+              <template v-else>
+                No se desagrupa ni modifica nada del presupuesto. Se mantienen
+              </template>
               {{ preservedCount }} partidas, {{ context?.linked.assets.length ?? 0 }} activos y
               {{ context?.linked.liabilities.length ?? 0 }} pasivos vinculados.
             </p>

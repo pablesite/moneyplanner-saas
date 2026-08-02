@@ -290,6 +290,7 @@ export type PlannedDecisionImpact = {
   disposed_asset_type?: PlanAssetFunction | null;
   proceeds?: string;
   disposed_liability_value?: string;
+  monthly_expense_delta?: string;
 };
 
 export type PlannedDecisionPayload = {

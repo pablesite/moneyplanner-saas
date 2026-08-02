@@ -80,10 +80,10 @@ function isEditable(event: PlanEvent): boolean {
   return (
     props.allowEditing &&
     event.status === 'planned' &&
-    event.source_scenario == null &&
-    registration != null &&
-    typeof registration === 'object' &&
-    Array.isArray((registration as { adopted_lines?: unknown }).adopted_lines)
+    (event.source_scenario != null ||
+      (registration != null &&
+        typeof registration === 'object' &&
+        Array.isArray((registration as { adopted_lines?: unknown }).adopted_lines)))
   );
 }
 
