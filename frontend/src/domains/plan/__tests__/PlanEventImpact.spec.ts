@@ -50,14 +50,42 @@ describe('PlanEventImpact', () => {
     await flushPromises();
 
     const text = wrapper.text();
-    // El desembolso es la suma de las partidas adoptadas...
-    expect(text).toContain('Desembolso');
+    // El pago puntual es la suma de las partidas adoptadas...
+    expect(text).toContain('Pago puntual');
     expect(text).toContain('38.920,00');
     // ...y la deuda es la del pasivo enlazado, que el evento no posee.
     expect(text).toContain('Pasivo vinculado');
     expect(text).toContain('Préstamo - Reserva Atrio');
     expect(text).toContain('16.494,50');
     expect(text).toContain('los gestiona Patrimonio');
+  });
+
+  it('presents a structural expense as annual from its start year', async () => {
+    vi.mocked(planApi.getEventBudgetLines).mockResolvedValue({
+      data: {
+        ...trace,
+        expenses: [
+          ...trace.expenses,
+          {
+            id: 3,
+            name: 'Atrio - mantenimiento y seguro',
+            fiscal_year: 2028,
+            amount_annual: '3600.00',
+            time_profile: 'structural_recurrent',
+            cashflow_role: 'operating',
+          },
+        ],
+      },
+    } as never);
+
+    const wrapper = mount(PlanEventImpact, { props: { eventId: 4 } });
+    await flushPromises();
+
+    const text = wrapper.text();
+    expect(text).toContain('Coste recurrente');
+    expect(text).toMatch(/3\.600,00\s€\/año/);
+    expect(text).toContain('Cada año desde 2028');
+    expect(text).toMatch(/Pago puntual38\.920,00\s€/);
   });
 
   it('explains an empty decision instead of showing a blank block', async () => {

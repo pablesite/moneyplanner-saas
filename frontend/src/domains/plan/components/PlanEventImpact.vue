@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { AState } from '@/domains/ui';
 import { planApi } from '@/domains/plan/api';
-import type { PlanEventBudgetLines } from '@/domains/plan/types';
+import type { PlanEventBudgetLines, PlanManagedBudgetLine } from '@/domains/plan/types';
 import { toApiErrorMessage } from '@/lib/errors';
 import { formatMoney } from '@/lib/format';
 
@@ -16,8 +16,15 @@ function total(lines: { amount_annual: string }[]): number {
   return lines.reduce((sum, line) => sum + Number(line.amount_annual), 0);
 }
 
-const spent = computed(() => (trace.value ? total(trace.value.expenses) : 0));
+const oneOffExpenses = computed(
+  () => trace.value?.expenses.filter((line) => line.time_profile === 'one_off') ?? [],
+);
+const structuralExpenses = computed(
+  () => trace.value?.expenses.filter((line) => line.time_profile === 'structural_recurrent') ?? [],
+);
+const spent = computed(() => total(oneOffExpenses.value));
 const received = computed(() => (trace.value ? total(trace.value.income) : 0));
+const recurringAnnual = computed(() => total(structuralExpenses.value));
 /** Deuda que trajo la decisión. La gobierna Patrimonio; aquí solo se cuenta. */
 const debt = computed(() =>
   trace.value
@@ -36,6 +43,13 @@ const hasAnything = computed(
       trace.value!.linked.liabilities.length > 0 ||
       trace.value!.linked.assets.length > 0),
 );
+
+function linePeriod(line: PlanManagedBudgetLine): string {
+  if (line.time_profile === 'structural_recurrent') {
+    return `Cada año desde ${line.fiscal_year}`;
+  }
+  return String(line.fiscal_year);
+}
 
 onMounted(async () => {
   try {
@@ -60,8 +74,12 @@ onMounted(async () => {
     <template v-else-if="trace">
       <dl class="plan-impact-figures">
         <div v-if="spent">
-          <dt>Desembolso</dt>
+          <dt>Pago puntual</dt>
           <dd class="mono">{{ formatMoney(spent) }}</dd>
+        </div>
+        <div v-if="recurringAnnual">
+          <dt>Coste recurrente</dt>
+          <dd class="mono">{{ formatMoney(recurringAnnual) }}<small>/año</small></dd>
         </div>
         <!-- Neutro a propósito: una decisión puede contraer una deuda o cancelarla,
              comprar un activo o venderlo. "Vinculado" es cierto en los dos sentidos. -->
@@ -117,14 +135,14 @@ onMounted(async () => {
         <div v-for="line in trace.expenses" :key="`expense:${line.id}`" class="plan-impact-row">
           <span>
             <strong>{{ line.name }}</strong>
-            <small>{{ line.fiscal_year }}</small>
+            <small>{{ linePeriod(line) }}</small>
           </span>
           <span class="mono">{{ formatMoney(line.amount_annual) }}</span>
         </div>
         <div v-for="line in trace.income" :key="`income:${line.id}`" class="plan-impact-row">
           <span>
             <strong>{{ line.name }}</strong>
-            <small>{{ line.fiscal_year }}</small>
+            <small>{{ linePeriod(line) }}</small>
           </span>
           <span class="mono pos">{{ formatMoney(line.amount_annual) }}</span>
         </div>

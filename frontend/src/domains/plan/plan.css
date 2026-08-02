@@ -2426,11 +2426,6 @@
   text-decoration: none;
 }
 
-/* El impacto se despliega bajo la fila, ocupando su ancho completo. */
-.plan-event-list li {
-  flex-wrap: wrap;
-}
-
 .plan-event-summary {
   display: flex;
   flex: 1;
@@ -2444,6 +2439,18 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.plan-event-open {
+  flex-shrink: 0;
+  color: var(--faint);
+  font-size: 0.78rem;
+}
+
+@container page (max-width: 560px) {
+  .plan-event-open {
+    display: none;
+  }
 }
 
 .plan-event-summary > span {
@@ -3440,12 +3447,37 @@
 /* Impacto de una decisión: sus partidas y lo que trajo a Patrimonio. */
 .plan-event-impact {
   display: grid;
-  flex-basis: 100%;
   gap: 16px;
-  margin-top: 10px;
-  padding: 14px;
-  border-radius: 8px;
-  background: var(--panel);
+}
+
+.plan-event-detail-sheet .ui-modal-head {
+  align-items: flex-start;
+}
+
+.plan-event-detail-heading {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.plan-event-detail-heading :is(p, h2) {
+  margin: 0;
+}
+
+.plan-event-detail-heading > p:last-child {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.plan-event-detail-body {
+  display: grid;
+  gap: 18px;
+}
+
+.plan-event-detail-body > .plan-event-actions {
+  order: 3;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 
 .plan-impact-figures {
@@ -3464,6 +3496,13 @@
 .plan-impact-figures dd {
   margin: 0;
   font-size: 1.05rem;
+}
+
+.plan-impact-figures dd small {
+  margin-left: 3px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
 }
 
 .plan-impact-block {

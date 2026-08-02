@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, AChevron, AState } from '@/domains/ui';
+import { AButton, AState, BaseModal } from '@/domains/ui';
 import PlanEventImpact from '@/domains/plan/components/PlanEventImpact.vue';
 import type {
   PlanEvent,
@@ -47,20 +47,31 @@ const effectiveDate = ref('');
 const note = ref('');
 const closeError = ref<string | null>(null);
 const closeSuccess = ref<string | null>(null);
-// La fila que originó el último éxito: el mensaje se muestra pegado a ella.
+// La decisión que originó el último éxito, para mantener el resultado en su diálogo.
 const successId = ref<number | null>(null);
 const releasingId = ref<number | null>(null);
 const materializingId = ref<number | null>(null);
 const actualDate = ref('');
 const cancellingId = ref<number | null>(null);
-const expandedId = ref<number | null>(null);
+const selectedId = ref<number | null>(null);
 
 /** El impacto real de la decisión: sus partidas y lo que trajo a Patrimonio. */
-function toggleImpact(event: PlanEvent): void {
-  expandedId.value = expandedId.value === event.id ? null : event.id;
+function openImpact(event: PlanEvent): void {
+  selectedId.value = event.id;
+  closeError.value = null;
+}
+
+function closeImpact(): void {
+  selectedId.value = null;
+  closingId.value = null;
+  materializingId.value = null;
+  cancellingId.value = null;
+  releasingId.value = null;
+  closeError.value = null;
 }
 
 const closingEvent = computed(() => props.events.find((event) => event.id === closingId.value));
+const selectedEvent = computed(() => props.events.find((event) => event.id === selectedId.value));
 const materializingEvent = computed(() =>
   props.events.find((event) => event.id === materializingId.value),
 );
@@ -230,18 +241,16 @@ function shortDate(value: string): string {
         <RouterLink class="btn btn-ghost btn-sm" to="/presupuesto">Ver presupuesto</RouterLink>
       </div>
     </AState>
-    <!-- La lista nunca desaparece: confirmaciones y resultados viven dentro de la
-         fila afectada, con el resto de decisiones siempre a la vista. -->
+    <!-- La lista queda limpia; el detalle y las operaciones viven en un diálogo contextual. -->
     <ol class="plan-event-list">
       <li v-for="event in events" :key="event.id">
         <span class="plan-event-date mono">{{ formatShortMonthYear(event.planned_date) }}</span>
         <button
           type="button"
           class="plan-event-summary"
-          :aria-expanded="expandedId === event.id"
-          @click="toggleImpact(event)"
+          aria-haspopup="dialog"
+          @click="openImpact(event)"
         >
-          <AChevron :expanded="expandedId === event.id" />
           <span>
             <strong>{{ event.name }}</strong>
             <span>
@@ -253,20 +262,48 @@ function shortDate(value: string): string {
             </span>
           </span>
         </button>
+        <span class="plan-event-open" aria-hidden="true">Ver detalle</span>
+      </li>
+    </ol>
+
+    <BaseModal
+      :open="Boolean(selectedEvent)"
+      :title="selectedEvent?.name"
+      variant="sheet"
+      panel-class="max-w-[640px] dir-a dir-a-sheet plan-event-detail-sheet"
+      body-class="plan-event-detail-body"
+      @close="closeImpact"
+    >
+      <template v-if="selectedEvent" #header="{ titleId, close }">
+        <div class="plan-event-detail-heading">
+          <p class="eyebrow">{{ formatShortMonthYear(selectedEvent.planned_date) }}</p>
+          <h2 :id="titleId" class="ui-modal-title">{{ selectedEvent.name }}</h2>
+          <p>
+            {{ scenarioTemplateLabel(selectedEvent.event_type) }} ·
+            <template v-if="selectedEvent.effective_end_date">
+              Cerrado el {{ shortDate(selectedEvent.effective_end_date) }}
+            </template>
+            <template v-else>{{ planEventStatusLabel(selectedEvent.status) }}</template>
+          </p>
+        </div>
+        <AButton size="sm" variant="ghost" @click="close">Cerrar</AButton>
+      </template>
+
+      <template v-if="selectedEvent">
         <AState
-          v-if="closeSuccess && successId === event.id"
+          v-if="closeSuccess && successId === selectedEvent.id"
           status="success"
           layout="inline"
-          class="plan-event-row-panel"
         >
           <div class="plan-event-close-result">
             <span>{{ closeSuccess }}</span>
             <RouterLink class="btn btn-ghost btn-sm" to="/presupuesto">Ver presupuesto</RouterLink>
           </div>
         </AState>
+
         <div
-          v-if="closingId === event.id && closingEvent"
-          class="plan-scenario-notice plan-event-close-confirm plan-event-row-panel"
+          v-if="closingId === selectedEvent.id && closingEvent"
+          class="plan-scenario-notice plan-event-close-confirm"
         >
           <div>
             <strong>Dar de baja «{{ closingEvent.name }}»</strong>
@@ -300,8 +337,8 @@ function shortDate(value: string): string {
           </div>
         </div>
         <div
-          v-else-if="materializingId === event.id && materializingEvent"
-          class="plan-scenario-notice plan-event-close-confirm plan-event-row-panel"
+          v-else-if="materializingId === selectedEvent.id && materializingEvent"
+          class="plan-scenario-notice plan-event-close-confirm"
         >
           <div>
             <strong>«{{ materializingEvent.name }}» ya ha ocurrido</strong>
@@ -330,17 +367,13 @@ function shortDate(value: string): string {
             </AButton>
           </div>
         </div>
-        <!-- Una previsión se hace realidad o se cancela; lo ya ocurrido se da de baja.
-             Las acciones viven en la fila expandida: se decide viendo el impacto completo
-             y la lista deja de repetir los mismos enlaces fila a fila. -->
-        <template
-          v-if="expandedId === event.id && closingId !== event.id && materializingId !== event.id"
-        >
-          <div v-if="isForecast(event)" class="plan-event-actions">
+        <!-- Una previsión se hace realidad o se cancela; lo ya ocurrido se da de baja. -->
+        <template v-if="closingId !== selectedEvent.id && materializingId !== selectedEvent.id">
+          <div v-if="isForecast(selectedEvent)" class="plan-event-actions">
             <RouterLink
-              v-if="isEditable(event)"
+              v-if="isEditable(selectedEvent)"
               class="btn btn-ghost btn-sm"
-              :to="`/plan/decisiones/eventos/${event.id}/editar`"
+              :to="`/plan/decisiones/eventos/${selectedEvent.id}/editar`"
             >
               Editar
             </RouterLink>
@@ -348,7 +381,7 @@ function shortDate(value: string): string {
               v-if="materializeEvent"
               variant="ghost"
               size="sm"
-              @click="beginMaterialize(event)"
+              @click="beginMaterialize(selectedEvent)"
             >
               Ya ha ocurrido
             </AButton>
@@ -356,34 +389,36 @@ function shortDate(value: string): string {
               v-if="cancelEvent"
               variant="ghost"
               size="sm"
-              :loading="saving && cancellingId === event.id"
-              @click="cancel(event)"
+              :loading="saving && cancellingId === selectedEvent.id"
+              @click="cancel(selectedEvent)"
             >
-              {{ cancellingId === event.id ? 'Confirmar cancelación' : 'Cancelar previsión' }}
+              {{
+                cancellingId === selectedEvent.id ? 'Confirmar cancelación' : 'Cancelar previsión'
+              }}
             </AButton>
           </div>
           <div v-else class="plan-event-actions">
             <AButton
-              v-if="isRegistered(event) && releaseEvent"
+              v-if="isRegistered(selectedEvent) && releaseEvent"
               variant="ghost"
               size="sm"
-              :loading="saving && releasingId === event.id"
-              @click="release(event)"
+              :loading="saving && releasingId === selectedEvent.id"
+              @click="release(selectedEvent)"
             >
-              {{ releasingId === event.id ? 'Confirmar deshacer' : 'Deshacer registro' }}
+              {{ releasingId === selectedEvent.id ? 'Confirmar deshacer' : 'Deshacer registro' }}
             </AButton>
             <AButton
-              v-if="!event.effective_end_date && closeEvent"
+              v-if="!selectedEvent.effective_end_date && closeEvent"
               variant="ghost"
               size="sm"
-              @click="beginClose(event)"
+              @click="beginClose(selectedEvent)"
             >
               Dar de baja
             </AButton>
           </div>
         </template>
-        <PlanEventImpact v-if="expandedId === event.id" :key="event.id" :event-id="event.id" />
-      </li>
-    </ol>
+        <PlanEventImpact :key="selectedEvent.id" :event-id="selectedEvent.id" />
+      </template>
+    </BaseModal>
   </section>
 </template>

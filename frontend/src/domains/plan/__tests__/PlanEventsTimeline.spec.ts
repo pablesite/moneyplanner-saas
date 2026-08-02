@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { mount, type VueWrapper } from '@vue/test-utils';
+import { defineComponent } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import PlanEventsTimeline from '@/domains/plan/components/PlanEventsTimeline.vue';
 import type {
@@ -28,21 +29,33 @@ const event: PlanEvent = {
 /** Dar de baja solo aplica a lo que ya ocurrió: una previsión se materializa o se cancela. */
 const occurred: PlanEvent = { ...event, status: 'occurred', actual_date: '2027-06-01' };
 
-/** La fila es un desplegable de impacto, así que las acciones se buscan por su etiqueta. */
+/** Las acciones del diálogo se buscan por su etiqueta. */
 async function clickByLabel(wrapper: VueWrapper, label: string): Promise<void> {
   const button = wrapper.findAll('button').find((item) => item.text() === label);
   await button!.trigger('click');
 }
 
-/** Las acciones viven en la fila expandida: hay que desplegarla antes de actuar. */
-async function expandRow(wrapper: VueWrapper, index = 0): Promise<void> {
+/** Las acciones viven en el modal: hay que abrir el detalle antes de actuar. */
+async function openDetail(wrapper: VueWrapper, index = 0): Promise<void> {
   await wrapper.findAll('button.plan-event-summary')[index]!.trigger('click');
 }
+
+const BaseModalStub = defineComponent({
+  props: { open: Boolean },
+  emits: ['close'],
+  template: `
+    <div v-if="open" role="dialog">
+      <slot name="header" title-id="test-modal-title" :close="() => $emit('close')" />
+      <slot />
+    </div>
+  `,
+});
 
 const globalMountOptions = {
   stubs: {
     RouterLink: { template: '<a><slot /></a>' },
     PlanEventImpact: true,
+    BaseModal: BaseModalStub,
   },
 };
 
@@ -58,7 +71,7 @@ describe('PlanEventsTimeline', () => {
       global: globalMountOptions,
     });
 
-    await expandRow(wrapper);
+    await openDetail(wrapper);
     await clickByLabel(wrapper, 'Dar de baja');
     expect(wrapper.text()).toContain('El histórico se conserva');
     expect(closeEvent).not.toHaveBeenCalled();
@@ -81,7 +94,7 @@ describe('PlanEventsTimeline', () => {
     });
 
     expect(wrapper.text()).toContain('Cerrado el');
-    await expandRow(wrapper);
+    await openDetail(wrapper);
     expect(wrapper.text()).not.toContain('Dar de baja');
   });
 
@@ -99,10 +112,10 @@ describe('PlanEventsTimeline', () => {
     });
 
     // La previsión expandida no ofrece deshacer: no fue un registro retrospectivo.
-    await expandRow(wrapper, 0);
+    await openDetail(wrapper, 0);
     expect(wrapper.text()).not.toContain('Deshacer registro');
 
-    await expandRow(wrapper, 1);
+    await openDetail(wrapper, 1);
     const undo = wrapper
       .findAll('button')
       .filter((button) => button.text() === 'Deshacer registro');
@@ -134,7 +147,7 @@ describe('PlanEventsTimeline', () => {
       global: globalMountOptions,
     });
 
-    await expandRow(wrapper);
+    await openDetail(wrapper);
     const labels = wrapper.findAll('button').map((button) => button.text());
     expect(labels).toContain('Ya ha ocurrido');
     expect(labels).toContain('Cancelar previsión');
@@ -162,7 +175,7 @@ describe('PlanEventsTimeline', () => {
       global: globalMountOptions,
     });
 
-    await expandRow(wrapper);
+    await openDetail(wrapper);
     await clickByLabel(wrapper, 'Cancelar previsión');
     expect(cancelEvent).not.toHaveBeenCalled();
 
@@ -187,11 +200,12 @@ describe('PlanEventsTimeline', () => {
             template: '<a :href="to"><slot /></a>',
           },
           PlanEventImpact: true,
+          BaseModal: BaseModalStub,
         },
       },
     });
 
-    await expandRow(wrapper);
+    await openDetail(wrapper);
 
     const edit = wrapper.findAll('a').find((link) => link.text() === 'Editar');
     expect(edit?.attributes('href')).toBe('/plan/decisiones/eventos/1/editar');
