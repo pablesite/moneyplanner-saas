@@ -34,6 +34,7 @@ const adjustment = reactive({ monthlyAmount: '', startDate: '' });
 const recommendations = computed(() =>
   [...store.recommendations].sort((a, b) => a.priority - b.priority),
 );
+const cashFlow = computed(() => store.foundations?.cash_flow ?? null);
 const adjustmentValid = computed(
   () =>
     Number.isFinite(Number(adjustment.monthlyAmount.replace(',', '.'))) &&
@@ -62,6 +63,30 @@ function destinationPath(item: PlanRecommendation): string {
   if (destination === 'budget') return '/presupuesto';
   if (destination === 'plan_setup') return '/plan/setup';
   return '/plan/decisiones/nueva';
+}
+
+function isTemporaryLiquidityGuidance(item: PlanRecommendation): boolean {
+  return item.code === 'RESTORE_CASH_FLOW' && cashFlow.value?.committed_status === 'transient';
+}
+
+function improvementTitle(item: PlanRecommendation): string {
+  if (isTemporaryLiquidityGuidance(item) && cashFlow.value?.committed_recovery_year) {
+    return `Protege tu liquidez hasta ${cashFlow.value.committed_recovery_year}`;
+  }
+  return item.action_json.title ?? 'Mejora recomendada';
+}
+
+function monthlyMoney(value: string | undefined, sign = false): string {
+  const amount = Number(value ?? 0) / 12;
+  const formatted = formatMoney(amount);
+  return sign && amount > 0 ? `+${formatted}` : formatted;
+}
+
+function primaryActionLabel(item: PlanRecommendation): string {
+  if (item.action_json.scenario_event) return 'Ver impacto';
+  if (item.action_json.destination === 'budget') return 'Revisar compromisos';
+  if (item.action_json.destination === 'plan_setup') return 'Completar datos';
+  return 'Continuar';
 }
 
 function scenarioEvent(item: PlanRecommendation): RecommendationEvent | null {
@@ -136,7 +161,7 @@ async function dismiss(item: PlanRecommendation): Promise<void> {
 
 onMounted(async () => {
   document.title = 'Mejoras de Mi Plan · The Arkenstone';
-  await Promise.all([store.fetchPlan(), store.fetchRecommendations()]);
+  await Promise.all([store.fetchPlan(), store.fetchFoundations(), store.fetchRecommendations()]);
   const requested = Number(route.query.action);
   const item = store.recommendations.find((candidate) => candidate.id === requested);
   if (item) void showImpact(item);
@@ -145,9 +170,9 @@ onMounted(async () => {
 
 <template>
   <main class="page plan-page">
-    <APageHead title="Plan de mejoras">
+    <APageHead title="Mejoras">
       <template #meta>
-        <span>Acciones ordenadas para reforzar primero lo que desbloquea lo demás</span>
+        <span>Qué conviene hacer ahora, explicado con los datos de tu plan</span>
       </template>
     </APageHead>
     <nav class="plan-tabs-bar" aria-label="Secciones de Mi Plan">
@@ -163,26 +188,70 @@ onMounted(async () => {
     <AState v-else-if="!recommendations.length" status="empty">
       No hay mejoras pendientes. Tu plan se actualizará cuando cambien tus datos.
     </AState>
-    <section v-else class="plan-improvement-list" aria-label="Mejoras del plan">
-      <article
-        v-for="(item, index) in recommendations"
-        :key="item.id"
-        class="sect plan-improvement-card"
-        :class="{ 'is-muted': item.status !== 'open' }"
-      >
-        <div class="plan-improvement-order">{{ index + 1 }}</div>
-        <div class="plan-improvement-content">
-          <div class="plan-improvement-heading">
-            <div>
-              <p class="eyebrow">{{ stateLabel(item) }}</p>
-              <h2 class="sect-title">{{ item.action_json.title }}</h2>
+    <section v-else class="plan-chapter plan-improvements-chapter" aria-label="Mejoras del plan">
+      <div class="plan-chapter-label" aria-hidden="true">
+        <span>01</span>
+        <strong>Prioridad actual</strong>
+      </div>
+      <div class="plan-improvement-list">
+        <article
+          v-for="(item, index) in recommendations"
+          :key="item.id"
+          class="plan-improvement-card"
+          :class="{ 'is-muted': item.status !== 'open' }"
+        >
+          <header class="plan-improvement-heading">
+            <p class="eyebrow">Prioridad {{ index + 1 }} · {{ stateLabel(item) }}</p>
+            <h2>{{ improvementTitle(item) }}</h2>
+            <p class="plan-improvement-lead">{{ item.action_json.summary }}</p>
+          </header>
+
+          <template v-if="isTemporaryLiquidityGuidance(item) && cashFlow">
+            <div class="plan-cashflow-equation" aria-label="Cómo queda tu margen mensual">
+              <div>
+                <span>Base recurrente</span>
+                <strong class="pos">{{ monthlyMoney(cashFlow.operating_surplus, true) }}</strong>
+                <small>después de tus gastos habituales</small>
+              </div>
+              <div>
+                <span>Compromisos temporales</span>
+                <strong class="neg"
+                  >−{{ monthlyMoney(cashFlow.temporary_commitment_expense) }}</strong
+                >
+                <small>cuotas que tienen fecha de fin</small>
+              </div>
+              <div class="is-result">
+                <span>Margen durante el esfuerzo</span>
+                <strong class="neg">{{ monthlyMoney(cashFlow.committed_surplus) }}</strong>
+                <small>se cubre temporalmente con liquidez</small>
+              </div>
             </div>
-            <span class="plan-status-chip" :class="`is-${item.status}`">
-              {{ stateLabel(item) }}
-            </span>
-          </div>
-          <p>{{ item.action_json.summary }}</p>
-          <dl class="plan-improvement-facts">
+
+            <div class="plan-recovery-track">
+              <span>Ahora</span>
+              <i aria-hidden="true"></i>
+              <strong>Margen recuperado · {{ cashFlow.committed_recovery_year }}</strong>
+            </div>
+
+            <div class="plan-improvement-guidance">
+              <div>
+                <span>Qué significa</span>
+                <p>
+                  Tu economía habitual genera margen. El saldo negativo viene de pagos temporales,
+                  no de un problema permanente de ingresos y gastos.
+                </p>
+              </div>
+              <div>
+                <span>Qué conviene hacer</span>
+                <p>
+                  Evita añadir nuevas cuotas o aportaciones extra y conserva el fondo de emergencia
+                  disponible hasta recuperar el margen.
+                </p>
+              </div>
+            </div>
+          </template>
+
+          <dl v-else class="plan-improvement-facts">
             <div>
               <dt>Por qué aparece</dt>
               <dd>{{ item.action_json.reason }}</dd>
@@ -199,13 +268,11 @@ onMounted(async () => {
               <dt>De dónde sale</dt>
               <dd>{{ item.impact_json.funding_source }}</dd>
             </div>
-            <div>
-              <dt>Confianza</dt>
-              <dd>Estimación basada en los datos actuales</dd>
-            </div>
           </dl>
-          <p v-if="item.alternatives_json.length" class="plan-muted">
-            Alternativa: {{ item.alternatives_json[0] }}
+
+          <p v-if="item.alternatives_json.length" class="plan-improvement-secondary">
+            <span>{{ isTemporaryLiquidityGuidance(item) ? 'Mientras tanto' : 'Otra vía' }}</span>
+            {{ item.alternatives_json[0] }}
           </p>
           <div v-if="item.status === 'open'" class="plan-recommendation-actions">
             <AButton
@@ -213,13 +280,13 @@ onMounted(async () => {
               :loading="previewingId === item.id"
               @click="showImpact(item)"
             >
-              {{ item.action_json.scenario_event ? 'Ver impacto' : 'Completar ahora' }}
+              {{ primaryActionLabel(item) }}
             </AButton>
-            <AButton variant="ghost" @click="snooze(item)">Ahora no</AButton>
-            <AButton variant="ghost" @click="dismiss(item)">No me interesa</AButton>
+            <AButton variant="ghost" @click="snooze(item)">Recordármelo después</AButton>
+            <AButton variant="ghost" @click="dismiss(item)">Descartar</AButton>
           </div>
-        </div>
-      </article>
+        </article>
+      </div>
     </section>
 
     <section v-if="preview" class="sect plan-impact-preview" aria-live="polite">

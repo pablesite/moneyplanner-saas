@@ -1440,60 +1440,183 @@
 
 .plan-improvement-list {
   display: grid;
-  gap: 14px;
+  gap: 42px;
 }
 
 .plan-improvement-card {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: 16px;
+  gap: 22px;
+  padding-bottom: 34px;
+  border-bottom: 1px solid var(--line);
 }
 
 .plan-improvement-card.is-muted {
   opacity: 0.68;
 }
 
-.plan-improvement-order {
-  width: 36px;
-  height: 36px;
+.plan-improvement-heading {
   display: grid;
-  place-items: center;
+  max-width: 760px;
+  gap: 7px;
+}
+
+.plan-improvement-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.plan-improvement-lead {
+  max-width: 680px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.plan-cashflow-equation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  margin: 0;
+  border-block: 1px solid var(--line);
+}
+
+.plan-cashflow-equation > div {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  padding: 18px 20px 18px 0;
+}
+
+.plan-cashflow-equation > div + div {
+  padding-left: 20px;
+  border-left: 1px solid var(--line);
+}
+
+.plan-cashflow-equation span,
+.plan-improvement-guidance span,
+.plan-improvement-secondary span {
+  color: var(--faint);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.plan-cashflow-equation strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.plan-cashflow-equation small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.plan-cashflow-equation .is-result {
+  padding-right: 0;
+}
+
+.plan-recovery-track {
+  display: grid;
+  grid-template-columns: auto minmax(40px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.plan-recovery-track i {
+  position: relative;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.plan-recovery-track i::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--text);
-  color: var(--bg);
-  font-weight: 700;
+  background: var(--accent);
+  content: '';
+  transform: translateY(-50%);
 }
 
-.plan-improvement-content,
-.plan-improvement-heading {
+.plan-recovery-track strong {
+  color: var(--accent);
+  font-weight: 560;
+}
+
+.plan-improvement-guidance {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 44px;
 }
 
-.plan-improvement-heading {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+.plan-improvement-guidance > div {
+  display: grid;
+  gap: 7px;
+}
+
+.plan-improvement-guidance p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .plan-improvement-facts,
 .plan-impact-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0;
   margin: 0;
+  border-block: 1px solid var(--line);
 }
 
 .plan-improvement-facts > div,
 .plan-impact-grid > div {
   display: grid;
   gap: 5px;
-  padding: 12px;
-  background: color-mix(in oklab, var(--panel) 90%, var(--accent));
-  border-radius: 10px;
+  padding: 14px 18px;
+}
+
+.plan-improvement-facts > div + div,
+.plan-impact-grid > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.plan-improvement-facts > div:first-child,
+.plan-impact-grid > div:first-child {
+  padding-left: 0;
 }
 
 .plan-improvement-facts dd {
   margin: 0;
+}
+
+.plan-improvement-secondary {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.plan-improvement-card > .plan-recommendation-actions {
+  padding-top: 2px;
 }
 
 .plan-impact-preview {
@@ -1674,6 +1797,68 @@
 
   .plan-improvement-heading {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-improvement-guidance {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan-improvement-facts > div,
+  .plan-impact-grid > div {
+    padding-inline: 0;
+  }
+
+  .plan-improvement-facts > div + div,
+  .plan-impact-grid > div + div {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
+@container page (max-width: 560px) {
+  .plan-improvement-card {
+    gap: 18px;
+    padding-bottom: 28px;
+  }
+
+  .plan-improvement-heading h2 {
+    font-size: 1.65rem;
+  }
+
+  .plan-cashflow-equation > div {
+    padding: 14px 10px 14px 0;
+  }
+
+  .plan-cashflow-equation > div + div {
+    padding-left: 10px;
+  }
+
+  .plan-cashflow-equation strong {
+    font-size: 0.92rem;
+  }
+
+  .plan-cashflow-equation span {
+    font-size: 0.59rem;
+    letter-spacing: 0.035em;
+  }
+
+  .plan-cashflow-equation small {
+    font-size: 0.67rem;
+  }
+
+  .plan-recovery-track {
+    grid-template-columns: auto minmax(24px, 1fr) minmax(0, auto);
+    gap: 8px;
+    font-size: 0.72rem;
+  }
+
+  .plan-improvement-secondary {
+    display: grid;
+    gap: 5px;
+  }
+
+  .plan-improvement-card > .plan-recommendation-actions .btn:first-child {
+    width: 100%;
   }
 }
 
