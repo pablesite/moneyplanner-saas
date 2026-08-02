@@ -320,6 +320,11 @@ export type PlannedDecisionUpdateResponse = {
   projection: ProjectionResponse;
 };
 
+export type PlannedDecisionPreviewResponse = Pick<
+  PlanScenarioComparison,
+  'current' | 'simulated' | 'sustainable_year' | 'delta'
+>;
+
 export type PlanEventCloseResponse = {
   event: PlanEvent;
   projection: ProjectionResponse;

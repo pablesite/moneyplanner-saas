@@ -10,6 +10,7 @@ import type {
   PlannedDecisionPayload,
   PlannedDecisionUpdatePayload,
   PlannedDecisionUpdateResponse,
+  PlannedDecisionPreviewResponse,
   PlanMember,
   PlanOverview,
   PlanMemberPayload,
@@ -128,6 +129,12 @@ export const planApi = {
   updatePlannedDecision(id: number, payload: PlannedDecisionUpdatePayload) {
     return coreApi.patch<PlannedDecisionUpdateResponse>(
       `/api/plan/events/${id}/planned-decision/`,
+      payload,
+    );
+  },
+  previewPlannedDecision(payload: PlannedDecisionPayload & { replaced_event_id?: number }) {
+    return coreApi.post<PlannedDecisionPreviewResponse>(
+      '/api/plan/events/planned-decision/preview/',
       payload,
     );
   },

@@ -154,6 +154,32 @@
   background: var(--panel-hover, rgb(255 255 255 / 6%));
 }
 
+/* Lectura inmediata mientras se ajusta una Decisión: el número grande es el año
+   sostenible resultante; la comparación queda en una línea secundaria. */
+.plan-decision-live-preview {
+  position: sticky;
+  z-index: 8;
+  bottom: calc(12px + var(--shell-bottom-inset));
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 88%, var(--accent-muted));
+  box-shadow: 0 10px 26px rgb(0 0 0 / 22%);
+}
+
+.plan-decision-live-preview > strong {
+  color: var(--text);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 1.15rem;
+}
+
+.plan-decision-live-preview > span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 /* El rótulo del hero ocupa la banda que en Patrimonio ocupan los selectores de
    lectura (`.a-nw-read-controls`): misma altura, así que el titular de cada vista
    arranca a la misma altura. */

@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
-import type { PlanScenarioTemplate, PlannedDecisionImpact } from '@/domains/plan/types';
+import type {
+  PlanScenarioTemplate,
+  PlannedDecisionImpact,
+  PlannedDecisionPreviewResponse,
+} from '@/domains/plan/types';
+import { planApi } from '@/domains/plan/api';
 import { useAnnualExpenseStore } from '@/domains/budget/annual-entries/annualExpenseStore';
 import { useAnnualIncomeStore } from '@/domains/budget/annual-entries/annualIncomeStore';
 import { parseAnnualAmount } from '@/domains/budget/annual-entries/annualEntryUtils';
@@ -80,6 +85,10 @@ const loadingLines = ref(false);
 const showLocked = ref(false);
 const expandedYears = ref<Set<number>>(new Set());
 const expandedPositionGroups = ref<Set<'liabilities' | 'assets'>>(new Set());
+const decisionPreview = ref<PlannedDecisionPreviewResponse | null>(null);
+const previewLoading = ref(false);
+let previewTimer: ReturnType<typeof setTimeout> | undefined;
+let previewRequest = 0;
 
 const kindOptions: ASelectItem[] = [
   { value: 'sale', label: 'Venta de activo' },
@@ -341,6 +350,66 @@ function buildImpact(): PlannedDecisionImpact {
     new_debt_term_years: impact.new_debt_term_years ? Number(impact.new_debt_term_years) : null,
   };
 }
+
+async function refreshDecisionPreview(): Promise<void> {
+  if (!form.decision_date || debtNeedsTerm.value) return;
+  const request = ++previewRequest;
+  previewLoading.value = true;
+  try {
+    const { data } = await planApi.previewPlannedDecision({
+      name: form.name.trim() || 'Nueva decisión',
+      event_type: form.event_type,
+      decision_date: form.decision_date,
+      transaction_year: Number(form.transaction_year),
+      transaction_month: Number(form.transaction_month),
+      expense_entry_ids: selectedLines.value
+        .filter((line) => line.kind === 'expense')
+        .map((line) => line.id),
+      income_entry_ids: selectedLines.value
+        .filter((line) => line.kind === 'income')
+        .map((line) => line.id),
+      asset_ids: [],
+      liability_ids: [],
+      impact: buildImpact(),
+      note: form.note.trim(),
+    });
+    if (request === previewRequest) decisionPreview.value = data;
+  } catch {
+    // Un valor intermedio inválido no debe bloquear la edición del formulario.
+  } finally {
+    if (request === previewRequest) previewLoading.value = false;
+  }
+}
+
+function scheduleDecisionPreview(): void {
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => void refreshDecisionPreview(), 500);
+}
+
+watch(
+  () => [
+    form.event_type,
+    form.decision_date,
+    form.transaction_year,
+    form.transaction_month,
+    impact.proceeds,
+    impact.disposed_asset_value,
+    impact.disposed_asset_type,
+    impact.disposed_liability_value,
+    impact.initial_outflow,
+    impact.new_asset_value,
+    impact.new_asset_type,
+    impact.new_debt_principal,
+    impact.new_debt_interest_rate,
+    impact.new_debt_term_years,
+    ...selectedLines.value.map((line) => `${line.kind}:${line.id}`),
+  ],
+  scheduleDecisionPreview,
+);
+
+onBeforeUnmount(() => {
+  if (previewTimer) clearTimeout(previewTimer);
+});
 
 async function submit(): Promise<void> {
   if (!canSubmit.value) return;
@@ -789,6 +858,36 @@ onMounted(async () => {
         </template>
         . Usa el punto solo como decimal (para miles, escribe sin separador: <code>282176</code>).
       </p>
+    </section>
+
+    <section class="plan-decision-live-preview" aria-live="polite">
+      <p class="eyebrow">Impacto en tu plan</p>
+      <template v-if="decisionPreview">
+        <strong>{{
+          decisionPreview.sustainable_year.simulated
+            ? `Año ${decisionPreview.sustainable_year.simulated}`
+            : 'No alcanzable en el horizonte'
+        }}</strong>
+        <span>
+          Objetivo sostenible · antes
+          {{ decisionPreview.sustainable_year.current ?? 'no alcanzable' }}
+          <template v-if="decisionPreview.delta.sustainable_year !== null">
+            ·
+            {{
+              decisionPreview.delta.sustainable_year === 0
+                ? 'sin cambio'
+                : decisionPreview.delta.sustainable_year > 0
+                  ? `se retrasa ${decisionPreview.delta.sustainable_year} años`
+                  : `se adelanta ${Math.abs(decisionPreview.delta.sustainable_year)} años`
+            }}
+          </template>
+        </span>
+      </template>
+      <span v-else>{{
+        previewLoading
+          ? 'Recalculando con tus cambios...'
+          : 'Introduce los importes para ver el impacto.'
+      }}</span>
     </section>
 
     <div class="plan-setup-actions">
