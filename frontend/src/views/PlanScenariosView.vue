@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { PlanEventsTimeline } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import type { PlanAssetFunction, PlanScenarioPayload, PlanScenarioTemplate } from '@/domains/plan';
@@ -18,10 +18,7 @@ import '@/domains/plan/plan.css';
 const router = useRouter();
 const route = useRoute();
 const { store, error } = usePlan();
-// El formulario abierto se renderiza antes de la lista: la acción pedida va primero,
-// sin depender de un scroll automático que en móvil dejaba el CTA a dos pantallas.
 const formOpen = ref(false);
-const formSection = ref<HTMLElement | null>(null);
 const submitError = ref<string | null>(null);
 const validationSummary = computed(
   () => submitError.value ?? Object.values(store.scenarioFieldErrors)[0] ?? null,
@@ -108,13 +105,11 @@ function hydrateTemplate(template: PlanScenarioTemplate): void {
   oneOffItems.splice(0, oneOffItems.length, { name: 'Pago inicial', amount: '' });
 }
 
-async function startScenario(template: PlanScenarioTemplate): Promise<void> {
+function startScenario(template: PlanScenarioTemplate): void {
   if (form.template !== template) form.template = template;
   else hydrateTemplate(template);
   formOpen.value = true;
   submitError.value = null;
-  await nextTick();
-  formSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function closeForm(): void {
@@ -324,17 +319,26 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section v-if="formOpen" ref="formSection" class="sect plan-form-section plan-decision-form">
-      <div class="sect-head">
-        <div>
+    <BaseModal
+      :open="formOpen"
+      variant="sheet"
+      panel-class="max-w-[640px] self-start dir-a dir-a-sheet plan-scenario-sheet"
+      @close="closeForm"
+    >
+      <template #header="{ titleId, close }">
+        <div class="plan-scenario-sheet-heading">
           <p class="eyebrow">Nueva simulación · {{ selectedTemplate.label }}</p>
-          <h2 class="sect-title">Cuéntanos cómo sería</h2>
-          <p class="sect-sub">{{ selectedTemplate.description }}</p>
+          <h2 :id="titleId" class="ui-modal-title">Cuéntanos cómo sería</h2>
+          <p>{{ selectedTemplate.description }}</p>
         </div>
-        <AButton size="sm" variant="ghost" @click="closeForm">Cerrar</AButton>
-      </div>
+        <AButton size="sm" variant="ghost" @click="close">Cerrar</AButton>
+      </template>
 
-      <form class="plan-setup" @submit.prevent="submit">
+      <form
+        id="plan-scenario-form"
+        class="plan-setup plan-scenario-sheet-form"
+        @submit.prevent="submit"
+      >
         <div class="plan-form-grid plan-decision-name-grid">
           <label>
             <span>Nombre de la decisión</span>
@@ -482,20 +486,27 @@ onMounted(async () => {
           </div>
         </fieldset>
 
-        <p class="plan-muted plan-scenario-reassurance">
-          Guardar el borrador no cambia tus datos. Solo al incorporarlo pasará a Mi Plan y generará
-          sus partidas futuras de presupuesto.
-        </p>
         <AState v-if="validationSummary" status="error" layout="inline">
           {{ validationSummary }}
         </AState>
-        <!-- Sticky en móvil: el CTA queda siempre a la vista aunque el formulario sea largo. -->
-        <div class="plan-setup-actions plan-scenario-submit">
-          <AButton variant="ghost" type="button" @click="closeForm">Cancelar</AButton>
-          <AButton variant="primary" type="submit" :loading="store.saving">Ver resultado</AButton>
-        </div>
       </form>
-    </section>
+      <template #footer>
+        <div class="plan-scenario-sheet-footer">
+          <p>Guardar el borrador no cambia tu plan ni tu presupuesto.</p>
+          <div class="ui-modal-foot-actions">
+            <AButton variant="ghost" type="button" @click="closeForm">Cancelar</AButton>
+            <AButton
+              variant="primary"
+              type="submit"
+              form="plan-scenario-form"
+              :loading="store.saving"
+            >
+              Ver resultado
+            </AButton>
+          </div>
+        </div>
+      </template>
+    </BaseModal>
 
     <section class="plan-chapter" aria-labelledby="pending-decisions-title">
       <div class="plan-chapter-label" aria-hidden="true">

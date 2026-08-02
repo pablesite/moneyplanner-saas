@@ -1591,32 +1591,66 @@
   gap: 10px;
 }
 
-/* El simulador abierto va primero (orden DOM): la acción pedida no se esconde
-   tras la lista. Cerrado, la lista es lo único visible. */
-
-.plan-scenario-reassurance {
-  margin: 0;
-  font-size: 0.9rem;
+/* La simulación comparte el patrón de hoja modal de Movimientos: contexto en
+   cabecera, campos densos en cuerpo desplazable y una única acción fija. */
+.plan-scenario-sheet .ui-modal-head {
+  align-items: flex-start;
 }
 
-/* En móvil el CTA de crear escenario queda fijo sobre la bottom-nav. */
-@container page (max-width: 560px) {
-  .plan-scenarios-page .plan-scenario-submit {
-    position: sticky;
-    /* A ras de la tab bar: la barra sangra a los bordes, así que dejar aire
-       intermedio solo enseñaría una franja de contenido entre las dos. */
-    bottom: var(--shell-bottom-inset);
-    z-index: 15;
-    flex-direction: row;
-    align-items: center;
-    margin-inline: -14px;
-    padding: 10px 14px;
-    border-top: 1px solid var(--line);
-    background: var(--panel);
+.plan-scenario-sheet-heading {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.plan-scenario-sheet-heading .eyebrow {
+  margin: 0;
+}
+
+.plan-scenario-sheet-heading > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.plan-scenario-sheet-form {
+  display: grid;
+  gap: 18px;
+}
+
+.plan-scenario-sheet-form .plan-form-group {
+  margin: 0;
+}
+
+.plan-scenario-sheet-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.plan-scenario-sheet-footer > p {
+  max-width: 270px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 560px) {
+  .plan-scenario-sheet-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .plan-scenarios-page .plan-scenario-submit .btn {
-    width: auto;
+  .plan-scenario-sheet-footer > p {
+    max-width: none;
+  }
+
+  .plan-scenario-sheet-footer .ui-modal-foot-actions .btn {
+    min-width: 0;
     flex: 1;
   }
 }
