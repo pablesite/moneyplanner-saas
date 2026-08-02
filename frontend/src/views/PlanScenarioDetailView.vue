@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, AMetaPill, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AMetaPill,
+  APageHead,
+  ASelect,
+  AState,
+  BaseModal,
+  type ASelectItem,
+} from '@/domains/ui';
 import { ScenarioComparison } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import { planApi } from '@/domains/plan';
@@ -109,14 +117,11 @@ const activeScenario = computed({
 });
 
 const confirming = ref<'accept' | 'discard' | null>(null);
-
-// El panel de confirmación vive bajo la cabecera: si se llega desde el CTA del
-// final de la comparación, hay que volver a él para que la pregunta se vea.
 function beginConfirm(kind: 'accept' | 'discard'): void {
   confirming.value = kind;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 const acceptedBudgetEntries = ref<number | null>(null);
+const acceptanceResultOpen = ref(false);
 const eventTrace = ref<PlanEventBudgetLines | null>(null);
 const linkedEvent = computed(() =>
   store.events.find((event) => event.source_scenario === scenarioId.value),
@@ -133,6 +138,7 @@ async function confirmAction(): Promise<void> {
     if (confirming.value === 'accept') {
       const result = await store.acceptScenario(scenarioId.value, scenario.value);
       acceptedBudgetEntries.value = result.budget_entries_created;
+      acceptanceResultOpen.value = true;
     }
     if (confirming.value === 'discard') {
       await store.discardScenario(scenarioId.value);
@@ -175,23 +181,10 @@ onMounted(async () => {
         <AMetaPill v-if="selected">{{ statusCopy }}</AMetaPill>
       </template>
       <template #actions>
-        <RouterLink class="btn btn-ghost" to="/plan/decisiones">Decisiones</RouterLink>
-        <AButton
-          v-if="selected?.status === 'draft'"
-          variant="ghost"
-          :disabled="store.saving"
-          @click="beginConfirm('discard')"
-        >
-          Descartar
-        </AButton>
-        <AButton
-          v-if="selected?.status === 'draft'"
-          variant="primary"
-          :disabled="store.saving"
-          @click="beginConfirm('accept')"
-        >
-          Incorporar al plan
-        </AButton>
+        <RouterLink v-if="selected?.status === 'draft'" class="btn btn-ghost" to="/plan/decisiones">
+          Guardar borrador
+        </RouterLink>
+        <RouterLink v-else class="btn btn-ghost" to="/plan/decisiones">Decisiones</RouterLink>
       </template>
     </APageHead>
 
@@ -211,38 +204,7 @@ onMounted(async () => {
         </RouterLink>
       </section>
 
-      <section v-if="confirming" class="plan-scenario-notice">
-        <p>{{ confirmCopy }}</p>
-        <div class="plan-scenario-notice-actions">
-          <AButton size="sm" variant="primary" :loading="store.saving" @click="confirmAction">
-            {{ confirming === 'accept' ? 'Confirmar incorporación' : 'Confirmar descarte' }}
-          </AButton>
-          <AButton size="sm" variant="ghost" :disabled="store.saving" @click="confirming = null">
-            Cancelar
-          </AButton>
-        </div>
-      </section>
-
-      <section
-        v-else-if="acceptedBudgetEntries !== null"
-        class="plan-scenario-notice success"
-        role="status"
-      >
-        <p>
-          Escenario incorporado al plan vigente<template v-if="acceptedBudgetEntries"
-            >: {{ acceptedBudgetEntries }} línea{{ acceptedBudgetEntries === 1 ? '' : 's' }} de
-            presupuesto futuro creada{{ acceptedBudgetEntries === 1 ? '' : 's' }}</template
-          >.
-        </p>
-        <div class="plan-scenario-notice-actions">
-          <RouterLink class="btn btn-primary btn-sm" to="/plan">Ver Mi Plan</RouterLink>
-          <RouterLink v-if="acceptedBudgetEntries" class="btn btn-ghost btn-sm" to="/presupuesto">
-            Ver presupuesto
-          </RouterLink>
-        </div>
-      </section>
-
-      <div v-if="selected.status !== 'accepted'" class="plan-toolbar">
+      <div v-if="selected.status !== 'accepted'" class="plan-toolbar plan-scenario-context">
         <label class="context-field">
           <span>Hipótesis</span>
           <ASelect
@@ -254,7 +216,7 @@ onMounted(async () => {
         </label>
       </div>
 
-      <section class="sect plan-scenario-summary">
+      <section class="sect plan-scenario-summary plan-scenario-summary-open">
         <div class="sect-head">
           <div>
             <p class="eyebrow">Inputs</p>
@@ -343,18 +305,94 @@ onMounted(async () => {
             :comparison="store.scenarioComparison"
             :members="store.plan?.members"
           />
-          <!-- La decisión se toma tras leer la evidencia: se repiten las acciones al
-               final para no obligar a volver a la cabecera (clave en móvil). -->
-          <div v-if="selected.status === 'draft' && !confirming" class="plan-scenario-decide">
-            <AButton variant="ghost" :disabled="store.saving" @click="beginConfirm('discard')">
-              Descartar
-            </AButton>
-            <AButton variant="primary" :disabled="store.saving" @click="beginConfirm('accept')">
-              Incorporar al plan
-            </AButton>
-          </div>
         </template>
       </template>
+
+      <div v-if="selected.status === 'draft'" class="plan-scenario-decide">
+        <div>
+          <p class="eyebrow">Decisión</p>
+          <strong>Cuando lo tengas claro, incorpórala al plan.</strong>
+        </div>
+        <div class="plan-scenario-decide-actions">
+          <AButton variant="ghost" :disabled="store.saving" @click="beginConfirm('discard')">
+            Descartar borrador
+          </AButton>
+          <AButton variant="primary" :disabled="store.saving" @click="beginConfirm('accept')">
+            Incorporar al plan
+          </AButton>
+        </div>
+      </div>
     </template>
+
+    <BaseModal
+      :open="confirming !== null"
+      variant="sheet"
+      panel-class="max-w-[520px] dir-a dir-a-sheet plan-scenario-confirm-sheet"
+      @close="confirming = null"
+    >
+      <template #header="{ titleId, close }">
+        <div>
+          <p class="eyebrow">Confirmar decisión</p>
+          <h2 :id="titleId" class="ui-modal-title">
+            {{ confirming === 'accept' ? '¿Incorporar al plan?' : '¿Descartar borrador?' }}
+          </h2>
+        </div>
+        <AButton size="sm" variant="ghost" :disabled="store.saving" @click="close">Cerrar</AButton>
+      </template>
+      <div class="plan-scenario-modal-copy">
+        <p>{{ confirmCopy }}</p>
+      </div>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
+          <AButton variant="ghost" :disabled="store.saving" @click="confirming = null">
+            Cancelar
+          </AButton>
+          <AButton variant="primary" :loading="store.saving" @click="confirmAction">
+            {{ confirming === 'accept' ? 'Incorporar al plan' : 'Descartar borrador' }}
+          </AButton>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="acceptanceResultOpen"
+      variant="sheet"
+      panel-class="max-w-[520px] dir-a dir-a-sheet plan-scenario-confirm-sheet"
+      @close="acceptanceResultOpen = false"
+    >
+      <template #header="{ titleId, close }">
+        <div>
+          <p class="eyebrow">Decisión incorporada</p>
+          <h2 :id="titleId" class="ui-modal-title">Ya cuenta en tu plan</h2>
+        </div>
+        <AButton size="sm" variant="ghost" @click="close">Cerrar</AButton>
+      </template>
+      <div class="plan-scenario-modal-copy">
+        <p>
+          La decisión y su impacto ya forman parte de la trayectoria.
+          <template v-if="acceptedBudgetEntries">
+            Se han creado {{ acceptedBudgetEntries }} línea{{
+              acceptedBudgetEntries === 1 ? '' : 's'
+            }}
+            de presupuesto futuro.</template
+          >
+        </p>
+      </div>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
+          <RouterLink class="btn btn-ghost" to="/plan" @click="acceptanceResultOpen = false">
+            Ver Mi Plan
+          </RouterLink>
+          <RouterLink
+            v-if="acceptedBudgetEntries"
+            class="btn btn-primary"
+            to="/presupuesto"
+            @click="acceptanceResultOpen = false"
+          >
+            Ver presupuesto
+          </RouterLink>
+        </div>
+      </template>
+    </BaseModal>
   </main>
 </template>

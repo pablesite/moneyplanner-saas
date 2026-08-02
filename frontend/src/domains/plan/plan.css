@@ -2717,13 +2717,132 @@
 /* Acciones repetidas tras la evidencia de la comparación (detalle de escenario). */
 .plan-scenario-decide {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-scenario-decide > div:first-child {
+  display: grid;
+  gap: 4px;
+  margin-right: auto;
+}
+
+.plan-scenario-decide strong {
+  font-size: 0.92rem;
+}
+
+.plan-scenario-decide-actions {
+  display: flex;
   gap: 10px;
 }
 
+/* El detalle de un borrador pertenece a la lectura editorial de Decisiones:
+   el borde guía la secuencia, no una pila de tarjetas. */
+.plan-scenario-detail .plan-scenario-summary-open,
+.plan-scenario-detail .plan-comparison {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.plan-scenario-detail .plan-scenario-summary-open {
+  padding-top: 8px;
+}
+
+.plan-scenario-detail .plan-scenario-summary-open > .sect-head,
+.plan-scenario-detail .plan-comparison > .sect-head {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.plan-scenario-detail .plan-scenario-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 28px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-scenario-detail .plan-scenario-metrics article {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.plan-scenario-detail .plan-scenario-metrics article strong {
+  text-align: right;
+}
+
+.plan-scenario-detail .plan-one-off-summary {
+  margin-top: 0;
+}
+
+.plan-scenario-detail .plan-impact-explanation {
+  margin-top: 0;
+  padding: 14px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.plan-scenario-context {
+  padding: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.plan-scenario-context .context-field {
+  min-width: 0;
+}
+
+.plan-scenario-confirm-sheet .ui-modal-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.plan-scenario-confirm-sheet .eyebrow {
+  margin: 0;
+}
+
+.plan-scenario-modal-copy {
+  display: grid;
+  gap: 10px;
+  padding-block: 8px;
+}
+
+.plan-scenario-modal-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 @container page (max-width: 560px) {
+  .plan-scenario-decide {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .plan-scenario-decide-actions {
+    width: 100%;
+  }
+
   .plan-scenario-decide .btn {
     flex: 1;
+  }
+
+  .plan-scenario-detail .plan-scenario-metrics {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 
