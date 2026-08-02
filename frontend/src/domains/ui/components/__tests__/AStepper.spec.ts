@@ -32,4 +32,11 @@ describe('AStepper', () => {
       inline: 'center',
     });
   });
+
+  it('exposes the current step to assistive technology', () => {
+    const wrapper = mount(AStepper, { props: { steps, activeId: 'two' } });
+
+    expect(wrapper.get('.stepper-step.is-active').attributes('aria-current')).toBe('step');
+    expect(wrapper.findAll('[aria-current="step"]')).toHaveLength(1);
+  });
 });

@@ -65,7 +65,7 @@ const DEFAULT_INDEPENDENCE_AGE = 60;
 const DEFAULT_LONGEVITY_AGE = 95;
 
 const router = useRouter();
-const { store, plan, loading, error } = usePlan();
+const { store, plan, error } = usePlan();
 const incomeStore = useAnnualIncomeStore();
 const expenseStore = useAnnualExpenseStore();
 
@@ -106,8 +106,11 @@ const stepLabels: Record<StepId, string> = {
 
 const stepIndex = ref(0);
 const furthestIndex = ref(0);
+const initializing = ref(true);
+const initialLoadFailed = ref(false);
 const submitting = ref(false);
 const seedSubmitting = ref(false);
+const todayIso = new Date().toISOString().slice(0, 10);
 
 const form = reactive({
   household_type: 'single' as HouseholdType,
@@ -155,8 +158,14 @@ function onExpenseSeedUpdate(next: Record<string, string>): void {
 const currentStep = computed<StepId>(() => stepIds.value[stepIndex.value]!);
 const isLastStep = computed(() => stepIndex.value === stepIds.value.length - 1);
 const isEditing = computed(() => Boolean(plan.value));
+const budgetLoadWarning = computed(() =>
+  incomeStore.error.value || expenseStore.error.value
+    ? 'No hemos podido comprobar tu Presupuesto. Puedes completar el plan; no añadiremos partidas para evitar duplicados.'
+    : null,
+);
 const maxMembers = computed(() => (form.household_type === 'family' ? 2 : 1));
 const activeMembers = computed(() => members.slice(0, maxMembers.value));
+const currentStepNumber = computed(() => stepIndex.value + 1);
 
 /** El primer adulto ancla las edades: las fechas del plan se derivan de su nacimiento. */
 const anchorBirthDate = computed(() => activeMembers.value[0]?.birth_date ?? '');
@@ -204,15 +213,31 @@ const profileChoices: { value: PlanProfile; label: string; hint: string }[] = [
 ];
 
 const householdComplete = computed(() =>
-  activeMembers.value.every((member) => member.name.trim() && member.birth_date),
+  activeMembers.value.every(
+    (member) => member.name.trim() && member.birth_date && member.birth_date <= todayIso,
+  ),
 );
 const horizonComplete = computed(
   () =>
     Boolean(targetDate.value && projectionEndDate.value) &&
+    form.independence_age >= 30 &&
+    form.independence_age <= 90 &&
+    form.longevity_age >= 40 &&
+    form.longevity_age <= 110 &&
     form.longevity_age > form.independence_age,
 );
 const lifestyleComplete = computed(() => Number(form.monthly_income) > 0);
-const futureComplete = computed(() => !form.wants_legacy || Number(form.legacy_amount) > 0);
+const futureComplete = computed(
+  () =>
+    activeMembers.value.every(
+      (member) =>
+        member.pension_start_age >= 18 &&
+        member.pension_start_age <= 100 &&
+        member.employment_end_age >= 18 &&
+        member.employment_end_age <= 100,
+    ) &&
+    (!form.wants_legacy || Number(form.legacy_amount) > 0),
+);
 
 // Un "Continuar" deshabilitado sin explicación deja al usuario adivinando qué falta.
 const stepHints: Partial<Record<StepId, string>> = {
@@ -220,6 +245,7 @@ const stepHints: Partial<Record<StepId, string>> = {
   horizon: 'Revisa las edades: el dinero tiene que durar más allá de la edad de independencia.',
   lifestyle: 'Indica con cuánto quieres vivir al mes para poder continuar.',
   future: 'Escribe el patrimonio a preservar o marca que no hace falta.',
+  summary: 'Hay respuestas incompletas. Vuelve al paso marcado para poder guardar.',
 };
 
 const stepComplete = computed<Record<StepId, boolean>>(() => ({
@@ -231,9 +257,14 @@ const stepComplete = computed<Record<StepId, boolean>>(() => ({
   lifestyle: lifestyleComplete.value,
   future: futureComplete.value,
   profile: true,
-  summary: true,
+  summary:
+    householdComplete.value &&
+    horizonComplete.value &&
+    lifestyleComplete.value &&
+    futureComplete.value,
 }));
 const canAdvance = computed(() => stepComplete.value[currentStep.value]);
+const canSubmit = computed(() => stepComplete.value.summary);
 const pendingHint = computed(() =>
   canAdvance.value ? null : (stepHints[currentStep.value] ?? null),
 );
@@ -244,7 +275,7 @@ const steps = computed(() =>
     label: stepLabels[id],
     status: (index === stepIndex.value
       ? 'current'
-      : index < stepIndex.value && stepComplete.value[id]
+      : (index < stepIndex.value || isEditing.value) && stepComplete.value[id]
         ? 'done'
         : 'pending') as 'current' | 'done' | 'pending',
   })),
@@ -466,7 +497,7 @@ async function next(): Promise<void> {
 }
 
 async function submit(): Promise<void> {
-  if (submitting.value) return;
+  if (submitting.value || !canSubmit.value) return;
   submitting.value = true;
   store.clearError();
   try {
@@ -506,8 +537,23 @@ watch(
 
 watch(plan, syncFromPlan, { immediate: true });
 
+watch(
+  [isEditing, () => stepIds.value.length],
+  ([editing]) => {
+    if (editing) furthestIndex.value = stepIds.value.length - 1;
+  },
+  { immediate: true },
+);
+
 async function checkExistingBudgetData(): Promise<void> {
   await Promise.all([incomeStore.loadAll(), expenseStore.loadAll()]);
+  if (incomeStore.error.value || expenseStore.error.value) {
+    // Si no sabemos si ya hay partidas, no ofrecemos una siembra que podría duplicarlas.
+    hasExistingIncomeOrExpenseData.value = true;
+    hasExistingContributionData.value = true;
+    budgetSeedChecked.value = true;
+    return;
+  }
   const isContributionEntry = (entry: { cashflowRole: string }) =>
     entry.cashflowRole === 'savings' || entry.cashflowRole === 'investment';
   hasExistingIncomeOrExpenseData.value =
@@ -517,10 +563,10 @@ async function checkExistingBudgetData(): Promise<void> {
   budgetSeedChecked.value = true;
 }
 
-onMounted(() => {
-  void store.fetchPlan();
-  void store.fetchFoundations();
-  void checkExistingBudgetData();
+onMounted(async () => {
+  await Promise.all([store.fetchPlan(), store.fetchFoundations(), checkExistingBudgetData()]);
+  initialLoadFailed.value = Boolean(store.error) && !store.plan;
+  initializing.value = false;
 });
 </script>
 
@@ -528,537 +574,578 @@ onMounted(() => {
   <main class="page plan-page plan-setup-page">
     <APageHead :title="isEditing ? 'Editar tu plan' : 'Crear tu plan'" eyebrow="Mi Plan">
       <template #meta>
-        <span>Todo en euros de hoy</span><span class="dot"></span
-        ><span>Puedes cambiarlo cuando quieras</span>
+        <span>Paso {{ currentStepNumber }} de {{ stepIds.length }}</span
+        ><span class="dot"></span><span>{{ stepLabels[currentStep] }}</span>
       </template>
     </APageHead>
 
-    <AState v-if="loading && !plan" status="loading">Cargando tu plan...</AState>
+    <AState v-if="initializing" status="loading">Preparando el formulario...</AState>
     <AState v-if="error" status="error">{{ error }}</AState>
+    <AState v-if="budgetLoadWarning" status="empty" layout="inline">
+      {{ budgetLoadWarning }}
+    </AState>
 
-    <AStepper :steps="steps" :active-id="currentStep" @change="goToId" />
-
-    <section v-if="currentStep === 'household'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Pregunta 1</p>
-          <h2 class="sect-title">¿Quién forma parte de este plan?</h2>
-          <p class="sect-sub">
-            Vuestras finanzas se consolidan en una sola unidad. Con la fecha de nacimiento podemos
-            hablar de edades en lugar de fechas.
-          </p>
-        </div>
-      </div>
-
-      <div class="plan-choice-grid">
-        <button
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': form.household_type === 'single' }"
-          :aria-pressed="form.household_type === 'single'"
-          @click="selectHousehold('single')"
-        >
-          <strong>Yo solo</strong>
-          <small>Un adulto.</small>
-        </button>
-        <button
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': form.household_type === 'family' }"
-          :aria-pressed="form.household_type === 'family'"
-          @click="selectHousehold('family')"
-        >
-          <strong>Somos dos</strong>
-          <small>Pareja o familia con dos adultos.</small>
-        </button>
-      </div>
-
-      <div class="plan-members">
-        <article v-for="(member, index) in activeMembers" :key="member.id ?? index">
-          <div class="plan-form-grid">
-            <label>
-              <span>{{ index === 0 ? 'Tu nombre' : 'Nombre del segundo adulto' }}</span>
-              <input v-model="member.name" class="input" type="text" autocomplete="name" />
-            </label>
-            <label>
-              <span>Fecha de nacimiento</span>
-              <input v-model="member.birth_date" class="input" type="date" />
-            </label>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section v-else-if="currentStep === 'income'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Antes de seguir</p>
-          <h2 class="sect-title">¿Cuánto ingresas al mes ahora mismo?</h2>
-          <p class="sect-sub">
-            Aún no tienes presupuesto cargado. Con esto sembramos tu Presupuesto para que el plan
-            calcule tu capacidad de ahorro real, no solo lo que aspiras a gastar. Puedes dejarlo en
-            blanco y añadirlo luego en Presupuesto.
-          </p>
-        </div>
-      </div>
-
-      <div class="plan-form-grid">
-        <label>
-          <span>Tu nómina (al mes)</span>
-          <div class="plan-money-field">
-            <input
-              v-model="incomeSeedForm.salary_monthly"
-              class="input"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="50"
-            />
-            <span aria-hidden="true">€/mes</span>
-          </div>
-        </label>
-        <label>
-          <span>Otros ingresos recurrentes (al mes)</span>
-          <div class="plan-money-field">
-            <input
-              v-model="incomeSeedForm.other_monthly"
-              class="input"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="50"
-            />
-            <span aria-hidden="true">€/mes</span>
-          </div>
-        </label>
-      </div>
-    </section>
-
-    <section v-else-if="currentStep === 'expenses'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Antes de seguir</p>
-          <h2 class="sect-title">Reparte tus ingresos entre categorías</h2>
-          <p class="sect-sub">
-            Aproximado basta: sube cada barra hasta lo que gastas al mes. Las barras no pueden
-            superar tus ingresos, y lo que quede libre será tu capacidad de ahorro. Cada categoría
-            con importe se guarda como partida en Presupuesto.
-          </p>
-        </div>
-      </div>
-
-      <PlanExpenseEqualizer
-        :fields="expenseSeedFields"
-        :model-value="expenseSeedForm"
-        :monthly-income="seedMonthlyIncome"
-        @update:model-value="onExpenseSeedUpdate"
+    <template v-if="!initializing && !initialLoadFailed">
+      <AStepper
+        :steps="steps"
+        :active-id="currentStep"
+        aria-label="Progreso de configuración del plan"
+        @change="goToId"
       />
-    </section>
 
-    <section v-else-if="currentStep === 'contribution'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Antes de seguir</p>
-          <h2 class="sect-title">¿Cuánto ahorras o inviertes al mes ahora mismo?</h2>
-          <p class="sect-sub">
-            Esto es lo que hace crecer tu capital: sin una aportación planificada, la proyección se
-            queda plana aunque tengas superávit. Cuenta solo lo que ya destinas a ahorro o
-            inversión, no el superávit entero si no lo inviertes todo.
-          </p>
-        </div>
-      </div>
-
-      <div v-if="estimatedMonthlySurplus" class="plan-choice-grid">
-        <button
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': Number(contributionSeedForm.monthly) === estimatedMonthlySurplus }"
-          :aria-pressed="Number(contributionSeedForm.monthly) === estimatedMonthlySurplus"
-          @click="contributionSeedForm.monthly = String(estimatedMonthlySurplus)"
-        >
-          <strong>{{ formatMoney(estimatedMonthlySurplus) }}/mes</strong>
-          <small>Tu superávit: lo que declaraste de ingresos menos gastos</small>
-        </button>
-      </div>
-
-      <div class="plan-form-grid">
-        <label>
-          <span>Aportación mensual a ahorro/inversión</span>
-          <div class="plan-money-field">
-            <input
-              v-model="contributionSeedForm.monthly"
-              class="input"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="25"
-            />
-            <span aria-hidden="true">€/mes</span>
+      <section v-if="currentStep === 'household'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Pregunta 1</p>
+            <h2 class="sect-title">¿Quién forma parte de este plan?</h2>
+            <p class="sect-sub">
+              Vuestras finanzas se consolidan en una sola unidad. Con la fecha de nacimiento podemos
+              hablar de edades en lugar de fechas.
+            </p>
           </div>
-        </label>
-      </div>
-    </section>
-
-    <section v-else-if="currentStep === 'horizon'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Pregunta 2</p>
-          <h2 class="sect-title">¿A qué edad quieres dejar de depender de tu trabajo?</h2>
-          <p class="sect-sub">
-            Es el momento en el que tu capital debería poder pagar tu vida sin que tengas que
-            trabajar por obligación.
-          </p>
         </div>
-      </div>
 
-      <div class="plan-choice-grid">
-        <button
-          v-for="age in [50, 55, 60, 65]"
-          :key="age"
-          type="button"
-          class="plan-choice plan-choice-sm"
-          :class="{ 'is-on': form.independence_age === age }"
-          :aria-pressed="form.independence_age === age"
-          @click="form.independence_age = age"
-        >
-          <strong>{{ age }} años</strong>
-        </button>
-      </div>
-
-      <div class="plan-form-grid">
-        <label>
-          <span>O una edad concreta</span>
-          <input
-            v-model.number="form.independence_age"
-            class="input"
-            type="number"
-            min="30"
-            max="90"
-          />
-        </label>
-        <p v-if="targetDate" class="plan-derived-field">
-          <span>Sería en</span>
-          <strong>{{ formatLongMonthYear(targetDate) }}</strong>
-          <small v-if="yearsToTarget !== null">Dentro de {{ yearsToTarget }} años.</small>
-        </p>
-      </div>
-
-      <div class="sect-head plan-subquestion">
-        <div>
-          <h2 class="sect-title">¿Hasta qué edad debe durarte el dinero?</h2>
-          <p class="sect-sub">
-            Hasta aquí llega la proyección. Si te quedas corto, el plan parecerá más fácil de lo que
-            es.
-          </p>
+        <div class="plan-choice-grid plan-choice-grid-binary">
+          <button
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': form.household_type === 'single' }"
+            :aria-pressed="form.household_type === 'single'"
+            @click="selectHousehold('single')"
+          >
+            <strong>Yo solo</strong>
+            <small>Un adulto.</small>
+          </button>
+          <button
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': form.household_type === 'family' }"
+            :aria-pressed="form.household_type === 'family'"
+            @click="selectHousehold('family')"
+          >
+            <strong>Somos dos</strong>
+            <small>Pareja o familia con dos adultos.</small>
+          </button>
         </div>
-      </div>
 
-      <div class="plan-choice-grid">
-        <button
-          v-for="age in [85, 90, 95, 100]"
-          :key="age"
-          type="button"
-          class="plan-choice plan-choice-sm"
-          :class="{ 'is-on': form.longevity_age === age }"
-          :aria-pressed="form.longevity_age === age"
-          @click="form.longevity_age = age"
-        >
-          <strong>{{ age }} años</strong>
-        </button>
-      </div>
-
-      <div class="plan-form-grid">
-        <label>
-          <span>O una edad concreta</span>
-          <input
-            v-model.number="form.longevity_age"
-            class="input"
-            type="number"
-            min="40"
-            max="110"
-          />
-        </label>
-        <p v-if="projectionEndDate" class="plan-derived-field">
-          <span>Proyectamos hasta</span>
-          <strong>{{ formatLongMonthYear(projectionEndDate) }}</strong>
-        </p>
-      </div>
-
-      <p v-if="form.longevity_age <= form.independence_age" class="plan-field-error">
-        El dinero tiene que durar más allá de la edad en la que dejas de trabajar.
-      </p>
-    </section>
-
-    <section v-else-if="currentStep === 'lifestyle'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Pregunta 3</p>
-          <h2 class="sect-title">¿Con cuánto quieres vivir cada mes?</h2>
-          <p class="sect-sub">
-            En euros de hoy: nosotros aplicamos la inflación. Cuenta tu vida cotidiana, no la compra
-            de una casa ni una inversión.
-          </p>
+        <div class="plan-members">
+          <article v-for="(member, index) in activeMembers" :key="member.id ?? index">
+            <div class="plan-form-grid">
+              <label>
+                <span>{{ index === 0 ? 'Tu nombre' : 'Nombre del segundo adulto' }}</span>
+                <input
+                  v-model="member.name"
+                  class="input"
+                  type="text"
+                  autocomplete="name"
+                  required
+                />
+              </label>
+              <label>
+                <span>Fecha de nacimiento</span>
+                <input
+                  v-model="member.birth_date"
+                  class="input"
+                  type="date"
+                  :max="todayIso"
+                  required
+                />
+                <small
+                  v-if="member.birth_date && member.birth_date > todayIso"
+                  class="plan-field-error"
+                >
+                  La fecha de nacimiento no puede estar en el futuro.
+                </small>
+              </label>
+            </div>
+          </article>
         </div>
-      </div>
+      </section>
 
-      <div v-if="lifestyleChoices.length" class="plan-choice-grid">
-        <button
-          v-for="choice in lifestyleChoices"
-          :key="choice.label"
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': Number(form.monthly_income) === choice.amount }"
-          :aria-pressed="Number(form.monthly_income) === choice.amount"
-          @click="form.monthly_income = String(choice.amount)"
-        >
-          <strong>{{ formatMoney(choice.amount) }}/mes</strong>
-          <small>{{ choice.label }} · {{ choice.hint }}</small>
-        </button>
-      </div>
-      <AState v-else status="empty" layout="inline">
-        Aún no podemos calcular tu gasto actual, así que escribe la cifra que tengas en mente.
-      </AState>
-
-      <div class="plan-form-grid">
-        <label>
-          <span>O la cifra que prefieras</span>
-          <div class="plan-money-field">
-            <input
-              v-model="form.monthly_income"
-              class="input"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="50"
-            />
-            <span aria-hidden="true">€/mes</span>
+      <section v-else-if="currentStep === 'income'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Antes de seguir</p>
+            <h2 class="sect-title">¿Cuánto ingresas al mes ahora mismo?</h2>
+            <p class="sect-sub">
+              Aún no tienes presupuesto cargado. Con esto sembramos tu Presupuesto para que el plan
+              calcule tu capacidad de ahorro real, no solo lo que aspiras a gastar. Puedes dejarlo
+              en blanco y añadirlo luego en Presupuesto.
+            </p>
           </div>
-        </label>
-      </div>
-    </section>
-
-    <section v-else-if="currentStep === 'future'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Pregunta 4</p>
-          <h2 class="sect-title">¿Con qué ingresos contarás cuando te jubiles?</h2>
-          <p class="sect-sub">
-            Todo lo que entre por su cuenta reduce lo que tu capital tiene que sostener. Si no lo
-            sabes, déjalo vacío: el plan será más conservador.
-          </p>
         </div>
-      </div>
 
-      <div class="plan-members">
-        <article v-for="(member, index) in activeMembers" :key="member.id ?? index">
-          <div class="plan-member-head">
-            <strong>{{ member.name.trim() || `Adulto ${index + 1}` }}</strong>
-            <span v-if="member.birth_date" class="plan-member-meta">
-              Pensión prevista a los {{ member.pension_start_age }} en
-              {{ formatLongMonthYear(dateAtAge(member.birth_date, member.pension_start_age)) }}
-            </span>
-          </div>
-          <div class="plan-form-grid">
-            <label>
-              <span>Edad de inicio de la pensión</span>
+        <div class="plan-form-grid">
+          <label>
+            <span>Tu nómina (al mes)</span>
+            <div class="plan-money-field">
               <input
-                v-model.number="member.pension_start_age"
+                v-model="incomeSeedForm.salary_monthly"
                 class="input"
                 type="number"
-                min="18"
-                max="100"
+                inputmode="decimal"
+                min="0"
+                step="50"
               />
-            </label>
-            <label>
-              <span>Edad a la que dejarías el ingreso laboral</span>
+              <span aria-hidden="true">€/mes</span>
+            </div>
+          </label>
+          <label>
+            <span>Otros ingresos recurrentes (al mes)</span>
+            <div class="plan-money-field">
               <input
-                v-model.number="member.employment_end_age"
+                v-model="incomeSeedForm.other_monthly"
                 class="input"
                 type="number"
-                min="18"
-                max="100"
+                inputmode="decimal"
+                min="0"
+                step="50"
               />
-              <small>El plan deja de contar salario desde tu fecha objetivo.</small>
-            </label>
-            <label>
-              <span>Pensión pública estimada (al mes)</span>
-              <div class="plan-money-field">
-                <input
-                  v-model="member.estimated_monthly_pension_today_eur"
-                  class="input"
-                  type="number"
-                  inputmode="decimal"
-                  min="0"
-                  step="50"
-                />
-                <span aria-hidden="true">€/mes</span>
-              </div>
-            </label>
-            <label>
-              <span>Otros ingresos futuros (al mes)</span>
-              <div class="plan-money-field">
-                <input
-                  v-model="member.other_future_income_today_eur"
-                  class="input"
-                  type="number"
-                  inputmode="decimal"
-                  min="0"
-                  step="50"
-                />
-                <span aria-hidden="true">€/mes</span>
-              </div>
-            </label>
-          </div>
-        </article>
-      </div>
-
-      <div class="sect-head plan-subquestion">
-        <div>
-          <h2 class="sect-title">¿Quieres dejar patrimonio al final del camino?</h2>
-          <p class="sect-sub">
-            Es el capital que no quieres consumir. Cuanto mayor sea, más puede retrasarse la fecha
-            estimada.
-          </p>
+              <span aria-hidden="true">€/mes</span>
+            </div>
+          </label>
         </div>
-      </div>
+      </section>
 
-      <div class="plan-choice-grid">
-        <button
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': !form.wants_legacy }"
-          :aria-pressed="!form.wants_legacy"
-          @click="form.wants_legacy = false"
-        >
-          <strong>No hace falta</strong>
-          <small>Me vale con que el dinero me dure.</small>
-        </button>
-        <button
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': form.wants_legacy }"
-          :aria-pressed="form.wants_legacy"
-          @click="form.wants_legacy = true"
-        >
-          <strong>Sí, quiero preservar</strong>
-          <small>Un patrimonio mínimo que no debe tocarse.</small>
-        </button>
-      </div>
+      <section v-else-if="currentStep === 'expenses'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Antes de seguir</p>
+            <h2 class="sect-title">Reparte tus ingresos entre categorías</h2>
+            <p class="sect-sub">
+              Aproximado basta: sube cada barra hasta lo que gastas al mes. Las barras no pueden
+              superar tus ingresos, y lo que quede libre será tu capacidad de ahorro. Cada categoría
+              con importe se guarda como partida en Presupuesto.
+            </p>
+          </div>
+        </div>
 
-      <div v-if="form.wants_legacy" class="plan-form-grid">
-        <label>
-          <span>Patrimonio mínimo a preservar</span>
-          <div class="plan-money-field">
+        <PlanExpenseEqualizer
+          :fields="expenseSeedFields"
+          :model-value="expenseSeedForm"
+          :monthly-income="seedMonthlyIncome"
+          @update:model-value="onExpenseSeedUpdate"
+        />
+      </section>
+
+      <section v-else-if="currentStep === 'contribution'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Antes de seguir</p>
+            <h2 class="sect-title">¿Cuánto ahorras o inviertes al mes ahora mismo?</h2>
+            <p class="sect-sub">
+              Esto es lo que hace crecer tu capital: sin una aportación planificada, la proyección
+              se queda plana aunque tengas superávit. Cuenta solo lo que ya destinas a ahorro o
+              inversión, no el superávit entero si no lo inviertes todo.
+            </p>
+          </div>
+        </div>
+
+        <div v-if="estimatedMonthlySurplus" class="plan-choice-grid">
+          <button
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': Number(contributionSeedForm.monthly) === estimatedMonthlySurplus }"
+            :aria-pressed="Number(contributionSeedForm.monthly) === estimatedMonthlySurplus"
+            @click="contributionSeedForm.monthly = String(estimatedMonthlySurplus)"
+          >
+            <strong>{{ formatMoney(estimatedMonthlySurplus) }}/mes</strong>
+            <small>Tu superávit: lo que declaraste de ingresos menos gastos</small>
+          </button>
+        </div>
+
+        <div class="plan-form-grid">
+          <label>
+            <span>Aportación mensual a ahorro/inversión</span>
+            <div class="plan-money-field">
+              <input
+                v-model="contributionSeedForm.monthly"
+                class="input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="25"
+              />
+              <span aria-hidden="true">€/mes</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section v-else-if="currentStep === 'horizon'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Pregunta 2</p>
+            <h2 class="sect-title">¿A qué edad quieres dejar de depender de tu trabajo?</h2>
+            <p class="sect-sub">
+              Es el momento en el que tu capital debería poder pagar tu vida sin que tengas que
+              trabajar por obligación.
+            </p>
+          </div>
+        </div>
+
+        <div class="plan-choice-grid plan-choice-grid-ages">
+          <button
+            v-for="age in [50, 55, 60, 65]"
+            :key="age"
+            type="button"
+            class="plan-choice plan-choice-sm"
+            :class="{ 'is-on': form.independence_age === age }"
+            :aria-pressed="form.independence_age === age"
+            @click="form.independence_age = age"
+          >
+            <strong>{{ age }} años</strong>
+          </button>
+        </div>
+
+        <div class="plan-form-grid">
+          <label>
+            <span>O una edad concreta</span>
             <input
-              v-model="form.legacy_amount"
+              v-model.number="form.independence_age"
               class="input"
               type="number"
-              inputmode="decimal"
-              min="0"
-              step="1000"
+              min="30"
+              max="90"
+              required
             />
-            <span aria-hidden="true">€</span>
-          </div>
-        </label>
-      </div>
-    </section>
-
-    <section v-else-if="currentStep === 'profile'" class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Pregunta 5</p>
-          <h2 class="sect-title">Tus inversiones caen un 30% este año. ¿Qué haces?</h2>
-          <p class="sect-sub">
-            No hay respuesta correcta. Nos dice cuánto riesgo puedes sostener sin abandonar el plan.
+          </label>
+          <p v-if="targetDate" class="plan-derived-field">
+            <span>Sería en</span>
+            <strong>{{ formatLongMonthYear(targetDate) }}</strong>
+            <small v-if="yearsToTarget !== null">Dentro de {{ yearsToTarget }} años.</small>
           </p>
         </div>
-      </div>
 
-      <div class="plan-choice-grid plan-choice-grid-stack">
-        <button
-          v-for="choice in profileChoices"
-          :key="choice.value"
-          type="button"
-          class="plan-choice"
-          :class="{ 'is-on': form.profile === choice.value }"
-          :aria-pressed="form.profile === choice.value"
-          @click="form.profile = choice.value"
+        <div class="sect-head plan-subquestion">
+          <div>
+            <h2 class="sect-title">¿Hasta qué edad debe durarte el dinero?</h2>
+            <p class="sect-sub">
+              Hasta aquí llega la proyección. Si te quedas corto, el plan parecerá más fácil de lo
+              que es.
+            </p>
+          </div>
+        </div>
+
+        <div class="plan-choice-grid plan-choice-grid-ages">
+          <button
+            v-for="age in [85, 90, 95, 100]"
+            :key="age"
+            type="button"
+            class="plan-choice plan-choice-sm"
+            :class="{ 'is-on': form.longevity_age === age }"
+            :aria-pressed="form.longevity_age === age"
+            @click="form.longevity_age = age"
+          >
+            <strong>{{ age }} años</strong>
+          </button>
+        </div>
+
+        <div class="plan-form-grid">
+          <label>
+            <span>O una edad concreta</span>
+            <input
+              v-model.number="form.longevity_age"
+              class="input"
+              type="number"
+              min="40"
+              max="110"
+              required
+            />
+          </label>
+          <p v-if="projectionEndDate" class="plan-derived-field">
+            <span>Proyectamos hasta</span>
+            <strong>{{ formatLongMonthYear(projectionEndDate) }}</strong>
+          </p>
+        </div>
+
+        <p v-if="form.longevity_age <= form.independence_age" class="plan-field-error">
+          El dinero tiene que durar más allá de la edad en la que dejas de trabajar.
+        </p>
+      </section>
+
+      <section v-else-if="currentStep === 'lifestyle'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Pregunta 3</p>
+            <h2 class="sect-title">¿Con cuánto quieres vivir cada mes?</h2>
+            <p class="sect-sub">
+              En euros de hoy: nosotros aplicamos la inflación. Cuenta tu vida cotidiana, no la
+              compra de una casa ni una inversión.
+            </p>
+          </div>
+        </div>
+
+        <div v-if="lifestyleChoices.length" class="plan-choice-grid">
+          <button
+            v-for="choice in lifestyleChoices"
+            :key="choice.label"
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': Number(form.monthly_income) === choice.amount }"
+            :aria-pressed="Number(form.monthly_income) === choice.amount"
+            @click="form.monthly_income = String(choice.amount)"
+          >
+            <strong>{{ formatMoney(choice.amount) }}/mes</strong>
+            <small>{{ choice.label }} · {{ choice.hint }}</small>
+          </button>
+        </div>
+        <AState v-else status="empty" layout="inline">
+          Aún no podemos calcular tu gasto actual, así que escribe la cifra que tengas en mente.
+        </AState>
+
+        <div class="plan-form-grid">
+          <label>
+            <span>O la cifra que prefieras</span>
+            <div class="plan-money-field">
+              <input
+                v-model="form.monthly_income"
+                class="input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="50"
+                required
+              />
+              <span aria-hidden="true">€/mes</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section v-else-if="currentStep === 'future'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Pregunta 4</p>
+            <h2 class="sect-title">¿Con qué ingresos contarás cuando te jubiles?</h2>
+            <p class="sect-sub">
+              Todo lo que entre por su cuenta reduce lo que tu capital tiene que sostener. Si no lo
+              sabes, déjalo vacío: el plan será más conservador.
+            </p>
+          </div>
+        </div>
+
+        <div class="plan-members">
+          <article v-for="(member, index) in activeMembers" :key="member.id ?? index">
+            <div class="plan-member-head">
+              <strong>{{ member.name.trim() || `Adulto ${index + 1}` }}</strong>
+              <span v-if="member.birth_date" class="plan-member-meta">
+                Pensión prevista a los {{ member.pension_start_age }} en
+                {{ formatLongMonthYear(dateAtAge(member.birth_date, member.pension_start_age)) }}
+              </span>
+            </div>
+            <div class="plan-form-grid">
+              <label>
+                <span>Edad de inicio de la pensión</span>
+                <input
+                  v-model.number="member.pension_start_age"
+                  class="input"
+                  type="number"
+                  min="18"
+                  max="100"
+                  required
+                />
+              </label>
+              <label>
+                <span>Edad a la que dejarías el ingreso laboral</span>
+                <input
+                  v-model.number="member.employment_end_age"
+                  class="input"
+                  type="number"
+                  min="18"
+                  max="100"
+                  required
+                />
+                <small>El plan deja de contar salario desde tu fecha objetivo.</small>
+              </label>
+              <label>
+                <span>Pensión pública estimada (al mes)</span>
+                <div class="plan-money-field">
+                  <input
+                    v-model="member.estimated_monthly_pension_today_eur"
+                    class="input"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="50"
+                  />
+                  <span aria-hidden="true">€/mes</span>
+                </div>
+              </label>
+              <label>
+                <span>Otros ingresos futuros (al mes)</span>
+                <div class="plan-money-field">
+                  <input
+                    v-model="member.other_future_income_today_eur"
+                    class="input"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="50"
+                  />
+                  <span aria-hidden="true">€/mes</span>
+                </div>
+              </label>
+            </div>
+          </article>
+        </div>
+
+        <div class="sect-head plan-subquestion">
+          <div>
+            <h2 class="sect-title">¿Quieres dejar patrimonio al final del camino?</h2>
+            <p class="sect-sub">
+              Es el capital que no quieres consumir. Cuanto mayor sea, más puede retrasarse la fecha
+              estimada.
+            </p>
+          </div>
+        </div>
+
+        <div class="plan-choice-grid plan-choice-grid-binary">
+          <button
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': !form.wants_legacy }"
+            :aria-pressed="!form.wants_legacy"
+            @click="form.wants_legacy = false"
+          >
+            <strong>No hace falta</strong>
+            <small>Me vale con que el dinero me dure.</small>
+          </button>
+          <button
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': form.wants_legacy }"
+            :aria-pressed="form.wants_legacy"
+            @click="form.wants_legacy = true"
+          >
+            <strong>Sí, quiero preservar</strong>
+            <small>Un patrimonio mínimo que no debe tocarse.</small>
+          </button>
+        </div>
+
+        <div v-if="form.wants_legacy" class="plan-form-grid">
+          <label>
+            <span>Patrimonio mínimo a preservar</span>
+            <div class="plan-money-field">
+              <input
+                v-model="form.legacy_amount"
+                class="input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="1000"
+                required
+              />
+              <span aria-hidden="true">€</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section v-else-if="currentStep === 'profile'" class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Pregunta 5</p>
+            <h2 class="sect-title">Tus inversiones caen un 30% este año. ¿Qué haces?</h2>
+            <p class="sect-sub">
+              No hay respuesta correcta. Nos dice cuánto riesgo puedes sostener sin abandonar el
+              plan.
+            </p>
+          </div>
+        </div>
+
+        <div class="plan-choice-grid plan-choice-grid-stack">
+          <button
+            v-for="choice in profileChoices"
+            :key="choice.value"
+            type="button"
+            class="plan-choice"
+            :class="{ 'is-on': form.profile === choice.value }"
+            :aria-pressed="form.profile === choice.value"
+            @click="form.profile = choice.value"
+          >
+            <strong>{{ choice.label }}</strong>
+            <small>{{ choice.hint }}</small>
+          </button>
+        </div>
+      </section>
+
+      <section v-else class="sect plan-form-section">
+        <div class="sect-head">
+          <div>
+            <p class="eyebrow">Tu plan</p>
+            <h2 class="sect-title">Esto es lo que vamos a calcular</h2>
+            <p class="sect-sub">Repásalo. Cualquier respuesta se puede cambiar volviendo atrás.</p>
+          </div>
+        </div>
+
+        <p class="plan-summary">
+          <template v-if="summaryNames">{{ summaryNames }}.</template>
+          Quieres dejar de depender de tu trabajo a los
+          <strong>{{ form.independence_age }} años</strong>
+          <template v-if="targetDate">
+            ({{ formatLongMonthYear(targetDate)
+            }}<template v-if="yearsToTarget !== null">, dentro de {{ yearsToTarget }} años</template
+            >)</template
+          >, viviendo con <strong>{{ formatMoney(form.monthly_income) }} al mes</strong> en euros de
+          hoy, y que el dinero te dure hasta los <strong>{{ form.longevity_age }} años</strong>.
+          <template v-if="form.wants_legacy && Number(form.legacy_amount) > 0">
+            Además quieres preservar {{ formatMoney(form.legacy_amount) }} de patrimonio.
+          </template>
+          <template v-else> No necesitas dejar patrimonio al final. </template>
+          <template v-if="summaryAges && activeMembers.length > 1">
+            En la fecha objetivo, {{ summaryAges }}.
+          </template>
+        </p>
+
+        <dl class="plan-summary-facts">
+          <div>
+            <dt>Fecha objetivo</dt>
+            <dd class="mono">{{ targetDate ? formatLongMonthYear(targetDate) : '—' }}</dd>
+          </div>
+          <div>
+            <dt>Fin de proyección</dt>
+            <dd class="mono">
+              {{ projectionEndDate ? formatLongMonthYear(projectionEndDate) : '—' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Nivel de vida</dt>
+            <dd class="mono">{{ formatMoney(form.monthly_income) }}/mes</dd>
+          </div>
+          <div>
+            <dt>Perfil</dt>
+            <dd>{{ profileChoices.find((item) => item.value === form.profile)?.label }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <p v-if="pendingHint" class="plan-setup-hint" role="status">{{ pendingHint }}</p>
+
+      <div class="plan-setup-actions">
+        <RouterLink class="btn btn-ghost plan-setup-exit" to="/plan">Salir</RouterLink>
+        <AButton v-if="stepIndex > 0" variant="ghost" @click="goTo(stepIndex - 1)">Atrás</AButton>
+        <AButton
+          v-if="!isLastStep"
+          class="plan-setup-primary"
+          variant="primary"
+          :disabled="!canAdvance"
+          :loading="seedSubmitting"
+          @click="next"
         >
-          <strong>{{ choice.label }}</strong>
-          <small>{{ choice.hint }}</small>
-        </button>
+          Continuar
+        </AButton>
+        <AButton
+          v-else
+          class="plan-setup-primary"
+          variant="primary"
+          :disabled="!canSubmit"
+          :loading="submitting"
+          @click="submit"
+        >
+          {{ isEditing ? 'Guardar cambios' : 'Crear y calcular plan' }}
+        </AButton>
       </div>
-    </section>
-
-    <section v-else class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Tu plan</p>
-          <h2 class="sect-title">Esto es lo que vamos a calcular</h2>
-          <p class="sect-sub">Repásalo. Cualquier respuesta se puede cambiar volviendo atrás.</p>
-        </div>
-      </div>
-
-      <p class="plan-summary">
-        <template v-if="summaryNames">{{ summaryNames }}.</template>
-        Quieres dejar de depender de tu trabajo a los
-        <strong>{{ form.independence_age }} años</strong>
-        <template v-if="targetDate">
-          ({{ formatLongMonthYear(targetDate)
-          }}<template v-if="yearsToTarget !== null">, dentro de {{ yearsToTarget }} años</template
-          >)</template
-        >, viviendo con <strong>{{ formatMoney(form.monthly_income) }} al mes</strong> en euros de
-        hoy, y que el dinero te dure hasta los <strong>{{ form.longevity_age }} años</strong>.
-        <template v-if="form.wants_legacy && Number(form.legacy_amount) > 0">
-          Además quieres preservar {{ formatMoney(form.legacy_amount) }} de patrimonio.
-        </template>
-        <template v-else> No necesitas dejar patrimonio al final. </template>
-        <template v-if="summaryAges && activeMembers.length > 1">
-          En la fecha objetivo, {{ summaryAges }}.
-        </template>
-      </p>
-
-      <dl class="plan-summary-facts">
-        <div>
-          <dt>Fecha objetivo</dt>
-          <dd class="mono">{{ targetDate ? formatLongMonthYear(targetDate) : '—' }}</dd>
-        </div>
-        <div>
-          <dt>Fin de proyección</dt>
-          <dd class="mono">
-            {{ projectionEndDate ? formatLongMonthYear(projectionEndDate) : '—' }}
-          </dd>
-        </div>
-        <div>
-          <dt>Nivel de vida</dt>
-          <dd class="mono">{{ formatMoney(form.monthly_income) }}/mes</dd>
-        </div>
-        <div>
-          <dt>Perfil</dt>
-          <dd>{{ profileChoices.find((item) => item.value === form.profile)?.label }}</dd>
-        </div>
-      </dl>
-    </section>
-
-    <p v-if="pendingHint" class="plan-setup-hint" role="status">{{ pendingHint }}</p>
-
-    <div class="plan-setup-actions">
-      <AButton v-if="stepIndex > 0" variant="ghost" @click="goTo(stepIndex - 1)">Atrás</AButton>
-      <!-- Salida visible en todos los pasos: lo respondido hasta aquí no se pierde
-           (los pasos de siembra ya guardaron en Presupuesto al avanzar). -->
-      <RouterLink class="btn btn-ghost plan-setup-exit" to="/plan">Salir</RouterLink>
-      <AButton
-        v-if="!isLastStep"
-        variant="primary"
-        :disabled="!canAdvance"
-        :loading="seedSubmitting"
-        @click="next"
-      >
-        Continuar
-      </AButton>
-      <AButton v-else variant="primary" :loading="submitting" @click="submit">
-        {{ isEditing ? 'Guardar cambios' : 'Crear y calcular plan' }}
-      </AButton>
-    </div>
+    </template>
   </main>
 </template>

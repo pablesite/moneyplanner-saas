@@ -77,6 +77,7 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
 16. Si un control necesita comportamiento especial y no puede ser `ASelect` (por ejemplo un rango de fechas), debe seguir el mismo lenguaje visual del resto de filtros: mismo trigger, mismo borde/radio, misma tipografía y mismo tratamiento del popover.
 17. Mi Plan sigue el patrón de vista principal de Patrimonio y Movimientos: una única cabecera y pestañas sticky `Resumen`, `Trayectoria` y `Decisiones`, sincronizadas con la URL. El Resumen absorbe el diagnóstico completo (hero con causas, progreso de capital, recomendaciones y cimientos a 0 clicks); la simulación de decisiones debe ser visible desde la cabecera y desde su pestaña; los acontecimientos se agrupan por intención, no en una secuencia vertical indiferenciada.
 18. Los estados de escenarios se expresan con chips semánticos discretos (`draft`, `accepted`, `discarded`) dentro de una fila completa navegable. El chip informa; no sustituye el enlace ni añade una acción competidora.
+19. El alta y edición de Mi Plan (`/plan/setup`) usa un wizard compacto: progreso en una sola franja, contenido limitado a una pregunta principal, elecciones binarias y edades en rejillas densas, y acciones en una sola fila sobre la navegación móvil. Al editar, los pasos completos son navegables directamente; el formulario no se muestra hasta resolver plan y presupuesto, y nunca presupone que el presupuesto está vacío si su lectura falla.
 
 ## Styling Rules
 1. Do not introduce inline styles unless there is a clear, temporary reason.

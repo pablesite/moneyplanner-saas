@@ -50,6 +50,7 @@ watch(
         'is-active': isCurrent(step),
         'is-done': step.status === 'done',
       }"
+      :aria-current="isCurrent(step) ? 'step' : undefined"
       @click="emit('change', step.id)"
     >
       <div class="stepper-step-head">
