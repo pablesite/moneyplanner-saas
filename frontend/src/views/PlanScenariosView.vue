@@ -327,9 +327,10 @@ onMounted(async () => {
     >
       <template #header="{ titleId, close }">
         <div class="plan-scenario-sheet-heading">
-          <p class="eyebrow">Nueva simulación · {{ selectedTemplate.label }}</p>
-          <h2 :id="titleId" class="ui-modal-title">Cuéntanos cómo sería</h2>
-          <p>{{ selectedTemplate.description }}</p>
+          <h2 :id="titleId" class="ui-modal-title">Nueva simulación</h2>
+          <p>
+            <strong>{{ selectedTemplate.label }}</strong> · {{ selectedTemplate.description }}
+          </p>
         </div>
         <AButton size="sm" variant="ghost" @click="close">Cerrar</AButton>
       </template>
