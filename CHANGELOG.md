@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.43.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.43.1...moneyplanner-saas-v0.43.2) (2026-08-02)
+
+
+### Bug Fixes
+
+* **plan:** align improvements with summary design ([3004cc2](https://github.com/pablesite/moneyplanner-saas/commit/3004cc2e7209b7f9a1ffd24ca42cf52332fa1ef1))
+* **plan:** align setup forms with app design ([bc07bc8](https://github.com/pablesite/moneyplanner-saas/commit/bc07bc802d4e2bd33395a348e759e2d5cf5623f5))
+* **plan:** make contribution improvements actionable ([d4bd7ad](https://github.com/pablesite/moneyplanner-saas/commit/d4bd7ad94307b24ce6245838bc5022a0912fb777))
+* **plan:** make the long-term forecast fit on mobile ([1a0c4d6](https://github.com/pablesite/moneyplanner-saas/commit/1a0c4d608830fb9fe3e59715eebc6430461f94de))
+* **plan:** read the monthly-close impact from the sustainable date ([9537e61](https://github.com/pablesite/moneyplanner-saas/commit/9537e61a0a6d89e3685c503cda4a9dc838049b79))
+* **plan:** show the sustainable date in the scenario comparison ([010506f](https://github.com/pablesite/moneyplanner-saas/commit/010506f13f8e98d7eef54919257ac3a62bdafd5f))
+* **plan:** update core pointer with the decision cash-flow fix ([1cea682](https://github.com/pablesite/moneyplanner-saas/commit/1cea682b65c978d3345b45abb057c7e6570be4db))
+* **shell:** reserve the mobile tab bar space app-wide ([ce85ce2](https://github.com/pablesite/moneyplanner-saas/commit/ce85ce292ec72bf9d343542bbcd3768df24a416d))
+* **ui:** support modals on local network HTTP ([498553b](https://github.com/pablesite/moneyplanner-saas/commit/498553b16d7fcf3df466362f1f446685e373392b))
+
 ## [0.43.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.43.0...moneyplanner-saas-v0.43.1) (2026-07-31)
 
 
