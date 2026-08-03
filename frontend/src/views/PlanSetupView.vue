@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { AButton, APageHead, AState, AStepper } from '@/domains/ui';
+import { AButton, APageHead, ASectHead, AState, AStepper } from '@/domains/ui';
 import { PlanExpenseEqualizer } from '@/domains/plan/components';
 import { usePlan } from '@/domains/plan';
 import { ageAtDate, dateAtAge } from '@/domains/plan/age';
@@ -585,16 +585,11 @@ onMounted(async () => {
       />
 
       <section v-if="currentStep === 'household'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Pregunta 1</p>
-            <h2 class="sect-title">¿Quién forma parte de este plan?</h2>
-            <p class="sect-sub">
-              Vuestras finanzas se consolidan en una sola unidad. Con la fecha de nacimiento podemos
-              hablar de edades en lugar de fechas.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Pregunta 1"
+          title="¿Quién forma parte de este plan?"
+          subtitle="Vuestras finanzas se consolidan en una sola unidad. Con la fecha de nacimiento podemos hablar de edades en lugar de fechas."
+        />
 
         <div class="plan-choice-grid plan-choice-grid-binary">
           <button
@@ -654,17 +649,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'income'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Antes de seguir</p>
-            <h2 class="sect-title">¿Cuánto ingresas al mes ahora mismo?</h2>
-            <p class="sect-sub">
-              Aún no tienes presupuesto cargado. Con esto sembramos tu Presupuesto para que el plan
-              calcule tu capacidad de ahorro real, no solo lo que aspiras a gastar. Puedes dejarlo
-              en blanco y añadirlo luego en Presupuesto.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Antes de seguir"
+          title="¿Cuánto ingresas al mes ahora mismo?"
+          subtitle="Aún no tienes presupuesto cargado. Con esto sembramos tu Presupuesto para que el plan calcule tu capacidad de ahorro real, no solo lo que aspiras a gastar. Puedes dejarlo en blanco y añadirlo luego en Presupuesto."
+        />
 
         <div class="plan-form-grid">
           <label>
@@ -699,17 +688,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'expenses'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Antes de seguir</p>
-            <h2 class="sect-title">Reparte tus ingresos entre categorías</h2>
-            <p class="sect-sub">
-              Aproximado basta: sube cada barra hasta lo que gastas al mes. Las barras no pueden
-              superar tus ingresos, y lo que quede libre será tu capacidad de ahorro. Cada categoría
-              con importe se guarda como partida en Presupuesto.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Antes de seguir"
+          title="Reparte tus ingresos entre categorías"
+          subtitle="Aproximado basta: sube cada barra hasta lo que gastas al mes. Las barras no pueden superar tus ingresos, y lo que quede libre será tu capacidad de ahorro. Cada categoría con importe se guarda como partida en Presupuesto."
+        />
 
         <PlanExpenseEqualizer
           :fields="expenseSeedFields"
@@ -720,17 +703,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'contribution'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Antes de seguir</p>
-            <h2 class="sect-title">¿Cuánto ahorras o inviertes al mes ahora mismo?</h2>
-            <p class="sect-sub">
-              Esto es lo que hace crecer tu capital: sin una aportación planificada, la proyección
-              se queda plana aunque tengas superávit. Cuenta solo lo que ya destinas a ahorro o
-              inversión, no el superávit entero si no lo inviertes todo.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Antes de seguir"
+          title="¿Cuánto ahorras o inviertes al mes ahora mismo?"
+          subtitle="Esto es lo que hace crecer tu capital: sin una aportación planificada, la proyección se queda plana aunque tengas superávit. Cuenta solo lo que ya destinas a ahorro o inversión, no el superávit entero si no lo inviertes todo."
+        />
 
         <div v-if="estimatedMonthlySurplus" class="plan-choice-grid">
           <button
@@ -764,16 +741,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'horizon'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Pregunta 2</p>
-            <h2 class="sect-title">¿A qué edad quieres dejar de depender de tu trabajo?</h2>
-            <p class="sect-sub">
-              Es el momento en el que tu capital debería poder pagar tu vida sin que tengas que
-              trabajar por obligación.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Pregunta 2"
+          title="¿A qué edad quieres dejar de depender de tu trabajo?"
+          subtitle="Es el momento en el que tu capital debería poder pagar tu vida sin que tengas que trabajar por obligación."
+        />
 
         <div class="plan-choice-grid plan-choice-grid-ages">
           <button
@@ -808,15 +780,11 @@ onMounted(async () => {
           </p>
         </div>
 
-        <div class="sect-head plan-subquestion">
-          <div>
-            <h2 class="sect-title">¿Hasta qué edad debe durarte el dinero?</h2>
-            <p class="sect-sub">
-              Hasta aquí llega la proyección. Si te quedas corto, el plan parecerá más fácil de lo
-              que es.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          class="plan-subquestion"
+          title="¿Hasta qué edad debe durarte el dinero?"
+          subtitle="Hasta aquí llega la proyección. Si te quedas corto, el plan parecerá más fácil de lo que es."
+        />
 
         <div class="plan-choice-grid plan-choice-grid-ages">
           <button
@@ -856,16 +824,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'lifestyle'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Pregunta 3</p>
-            <h2 class="sect-title">¿Con cuánto quieres vivir cada mes?</h2>
-            <p class="sect-sub">
-              En euros de hoy: nosotros aplicamos la inflación. Cuenta tu vida cotidiana, no la
-              compra de una casa ni una inversión.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Pregunta 3"
+          title="¿Con cuánto quieres vivir cada mes?"
+          subtitle="En euros de hoy: nosotros aplicamos la inflación. Cuenta tu vida cotidiana, no la compra de una casa ni una inversión."
+        />
 
         <div v-if="lifestyleChoices.length" class="plan-choice-grid plan-choice-grid-lifestyle">
           <button
@@ -906,16 +869,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'future'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Pregunta 4</p>
-            <h2 class="sect-title">¿Con qué ingresos contarás cuando te jubiles?</h2>
-            <p class="sect-sub">
-              Todo lo que entre por su cuenta reduce lo que tu capital tiene que sostener. Si no lo
-              sabes, déjalo vacío: el plan será más conservador.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Pregunta 4"
+          title="¿Con qué ingresos contarás cuando te jubiles?"
+          subtitle="Todo lo que entre por su cuenta reduce lo que tu capital tiene que sostener. Si no lo sabes, déjalo vacío: el plan será más conservador."
+        />
 
         <div class="plan-members">
           <article v-for="(member, index) in activeMembers" :key="member.id ?? index">
@@ -970,15 +928,11 @@ onMounted(async () => {
           </article>
         </div>
 
-        <div class="sect-head plan-subquestion">
-          <div>
-            <h2 class="sect-title">¿Quieres dejar patrimonio al final del camino?</h2>
-            <p class="sect-sub">
-              Es el capital que no quieres consumir. Cuanto mayor sea, más puede retrasarse la fecha
-              estimada.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          class="plan-subquestion"
+          title="¿Quieres dejar patrimonio al final del camino?"
+          subtitle="Es el capital que no quieres consumir. Cuanto mayor sea, más puede retrasarse la fecha estimada."
+        />
 
         <div class="plan-choice-grid plan-choice-grid-binary">
           <button
@@ -1023,16 +977,11 @@ onMounted(async () => {
       </section>
 
       <section v-else-if="currentStep === 'profile'" class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Pregunta 5</p>
-            <h2 class="sect-title">Tus inversiones caen un 30% este año. ¿Qué haces?</h2>
-            <p class="sect-sub">
-              No hay respuesta correcta. Nos dice cuánto riesgo puedes sostener sin abandonar el
-              plan.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Pregunta 5"
+          title="Tus inversiones caen un 30% este año. ¿Qué haces?"
+          subtitle="No hay respuesta correcta. Nos dice cuánto riesgo puedes sostener sin abandonar el plan."
+        />
 
         <div class="plan-choice-grid plan-choice-grid-stack">
           <button
@@ -1051,13 +1000,11 @@ onMounted(async () => {
       </section>
 
       <section v-else class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Tu plan</p>
-            <h2 class="sect-title">Esto es lo que vamos a calcular</h2>
-            <p class="sect-sub">Repásalo. Cualquier respuesta se puede cambiar volviendo atrás.</p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Tu plan"
+          title="Esto es lo que vamos a calcular"
+          subtitle="Repásalo. Cualquier respuesta se puede cambiar volviendo atrás."
+        />
 
         <p class="plan-summary">
           <template v-if="summaryNames">{{ summaryNames }}.</template>

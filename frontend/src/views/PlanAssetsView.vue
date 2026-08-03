@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import type { ClassifiedPlanAsset, PlanAssetFunction } from '@/domains/plan';
 import { assetFunctionLabel, assetFunctionLabels } from '@/domains/plan/scenarioTemplates';
@@ -180,16 +180,11 @@ onMounted(() => {
 
     <template v-else-if="classification">
       <section class="sect plan-assets-summary-sect">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Capital por función</p>
-            <h2 class="sect-title">{{ money(classification.total_assets) }} en activos</h2>
-            <p class="sect-sub">
-              Cada activo aporta a una función. La proyección crece solo con lo clasificado como
-              productivo. Pulsa una función para filtrar la lista.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Capital por función"
+          :title="`${money(classification.total_assets)} en activos`"
+          subtitle="Cada activo aporta a una función. La proyección crece solo con lo clasificado como productivo. Pulsa una función para filtrar la lista."
+        />
         <div class="plan-assets-summary">
           <button
             v-for="item in summary"
@@ -208,16 +203,11 @@ onMounted(() => {
       </section>
 
       <section class="sect plan-assets-list-sect">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Activos</p>
-            <h2 class="sect-title">Función de cada activo</h2>
-            <p class="sect-sub">
-              La función automática se infiere de la categoría. Cámbiala si no encaja; "Automática"
-              vuelve a la inferida.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Activos"
+          title="Función de cada activo"
+          subtitle='La función automática se infiere de la categoría. Cámbiala si no encaja; "Automática" vuelve a la inferida.'
+        />
 
         <div class="plan-assets-toolbar">
           <!-- La barra es sticky: la vuelta a Mi Plan viaja con el scroll en listas largas. -->

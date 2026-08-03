@@ -185,11 +185,14 @@ son una excepción documentada y validada con la skill `dataviz`.
 - [x] **F1 — Estados y botones.** `AState layout="inline"` sustituye a
       `.plan-empty-inline` / `.plan-muted` / `.plan-inline-error`; `AButton`
       sustituye los `<button class="btn …">` crudos.
-- [ ] **F2 — `ASectHead`.** 32 `<div class="sect-head">` a mano en Mi Plan (fuera
-      del dominio solo quedan 3). Sustitución mecánica; el markup es idéntico al
-      que renderiza la primitiva. Focos: `PlanSetupView` (11),
-      `PlanOccurredEventView` (4), `PlanPlannedDecisionView` (4),
-      `PlanDecisionEditView` (3).
+- [x] **F2 — `ASectHead`.** 30 de los 32 `<div class="sect-head">` de Mi Plan
+      migrados a la primitiva. `ASectHead` gana un slot `#subtitle` (tres
+      pantallas tenían subtítulo con énfasis o partes condicionales y por eso
+      quedaban fuera) y su primer spec. Quedan dos casos fuera a propósito:
+      `NetWorthTrajectoryChart` no tiene `sect-title` (su cabecera es rótulo con
+      `AInfoHint` + leyenda, estructura distinta), y `PlanFoundations` usa
+      `.plan-block-eyebrow` (muted) en vez de `.eyebrow` (accent), así que
+      migrarlo cambiaría el color — va con F4.
 - [ ] **F3 — Helpers y menús.** `useCollapsibleGroups` (3 reimplementaciones con
       `Set` propio: `PlanAssetsView`, `PlanPlannedDecisionView` ×2), `AChevron` en
       `PlanAssetsView` (hoy texto "Ver/Ocultar", mientras `PlanSituationSection`
@@ -200,8 +203,10 @@ son una excepción documentada y validada con la skill `dataviz`.
       patrón compartido `.context-bar` es una tira transparente con hairline
       inferior, que es lo que usan Patrimonio, Presupuesto y Cierre. Además
       `.plan-setup-page > .page-head .page-title { font-size: 26px }` re-estiliza
-      chrome compartido para una sola página, y `.plan-form-section` duplica la
-      superficie de card. **Cambia el aspecto: requiere decisión de producto.**
+      chrome compartido para una sola página, `.plan-form-section` duplica la
+      superficie de card, y `.plan-block-eyebrow` (muted, 7 usos) convive con
+      `.eyebrow` (accent, ~30 usos) sin criterio documentado. **Cambia el
+      aspecto: requiere decisión de producto.**
 
 **DoD**: los greps de control de la Review Checklist de la skill salen limpios en
 `views/Plan*.vue` y `domains/plan/**`.

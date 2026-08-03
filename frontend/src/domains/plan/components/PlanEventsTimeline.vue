@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, AState, BaseModal } from '@/domains/ui';
+import { AButton, ASectHead, AState, BaseModal } from '@/domains/ui';
 import PlanEventImpact from '@/domains/plan/components/PlanEventImpact.vue';
 import type {
   PlanEvent,
@@ -221,12 +221,7 @@ function shortDate(value: string): string {
 
 <template>
   <section class="sect plan-events">
-    <div class="sect-head">
-      <div>
-        <p class="eyebrow">{{ eyebrow }}</p>
-        <h2 class="sect-title">{{ title }}</h2>
-      </div>
-    </div>
+    <ASectHead :eyebrow="eyebrow" :title="title" />
 
     <AState v-if="!events.length" status="empty" layout="inline" class="plan-empty-inline">
       <p class="plan-muted">{{ emptyCopy }}</p>

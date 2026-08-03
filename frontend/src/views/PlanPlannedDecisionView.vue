@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type {
@@ -471,17 +471,11 @@ onMounted(async () => {
     <AState v-if="store.error" status="error">{{ store.error }}</AState>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 1</p>
-          <h2 class="sect-title">¿Qué decisión es y cuándo impacta?</h2>
-          <p class="sect-sub">
-            La fecha es cuándo la decidiste; el año de transacción es cuándo la compra o venta pega
-            en tu patrimonio (pueden diferir). En una venta, el activo se da de baja ese año; en una
-            compra, aparece con su deuda.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 1"
+        title="¿Qué decisión es y cuándo impacta?"
+        subtitle="La fecha es cuándo la decidiste; el año de transacción es cuándo la compra o venta pega en tu patrimonio (pueden diferir). En una venta, el activo se da de baja ese año; en una compra, aparece con su deuda."
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -536,16 +530,11 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 2</p>
-          <h2 class="sect-title">¿Qué partidas puntuales agrupas en esta decisión?</h2>
-          <p class="sect-sub">
-            Salen de los movimientos puntuales sueltos y pasan a gobernarse por la decisión (para no
-            contarlas dos veces). Sus importes y fechas no cambian.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 2"
+        title="¿Qué partidas puntuales agrupas en esta decisión?"
+        subtitle="Salen de los movimientos puntuales sueltos y pasan a gobernarse por la decisión (para no contarlas dos veces). Sus importes y fechas no cambian."
+      />
 
       <div v-if="existingGroups.length" class="plan-choice-grid">
         <button
@@ -624,21 +613,15 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 3</p>
-          <h2 class="sect-title">¿Qué activo y deuda mueve?</h2>
-          <p class="sect-sub">
-            Enlaza el activo real (y su hipoteca) de Patrimonio.
-            {{
-              isSale
-                ? 'En la venta se da de baja del patrimonio proyectado en su año.'
-                : 'En la compra aparece como activo, con su deuda, en su año.'
-            }}
-            Patrimonio sigue siendo su dueño.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 3"
+        title="¿Qué activo y deuda mueve?"
+        :subtitle="`Enlaza el activo real (y su hipoteca) de Patrimonio. ${
+          isSale
+            ? 'En la venta se da de baja del patrimonio proyectado en su año.'
+            : 'En la compra aparece como activo, con su deuda, en su año.'
+        } Patrimonio sigue siendo su dueño.`"
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -718,16 +701,12 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 4</p>
-          <h2 class="sect-title">Impacto en la proyección</h2>
-          <p class="sect-sub">
-            Cifras prellenadas con lo seleccionado; ajústalas si procede (p. ej. el valor
-            <em>neto</em> del activo = valor − hipoteca).
-          </p>
-        </div>
-      </div>
+      <ASectHead eyebrow="Paso 4" title="Impacto en la proyección">
+        <template #subtitle>
+          Cifras prellenadas con lo seleccionado; ajústalas si procede (p. ej. el valor
+          <em>neto</em> del activo = valor − hipoteca).
+        </template>
+      </ASectHead>
 
       <p v-if="purchaseDoubleCountWarning" class="plan-decision-warn">
         <strong>Revisa los importes.</strong> Con estos números esta compra sumaría

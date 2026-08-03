@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, AState } from '@/domains/ui';
+import { AButton, APageHead, ASectHead, AState } from '@/domains/ui';
 import { planApi } from '@/domains/plan/api';
 import { usePlanStore } from '@/domains/plan/store';
 import type { ActionImpactPreview, PlanRecommendation } from '@/domains/plan/types';
@@ -290,13 +290,11 @@ onMounted(async () => {
     </section>
 
     <section v-if="preview" class="sect plan-impact-preview" aria-live="polite">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Antes de decidir</p>
-          <h2 class="sect-title">Así cambiaría tu plan</h2>
-        </div>
-        <AButton variant="ghost" @click="preview = null">Cerrar</AButton>
-      </div>
+      <ASectHead eyebrow="Antes de decidir" title="Así cambiaría tu plan">
+        <template #actions>
+          <AButton variant="ghost" @click="preview = null">Cerrar</AButton>
+        </template>
+      </ASectHead>
       <div class="plan-impact-adjustment">
         <div>
           <p class="eyebrow">Ajusta la prueba</p>

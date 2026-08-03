@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type { PlanScenarioTemplate } from '@/domains/plan';
@@ -251,17 +251,11 @@ onMounted(async () => {
     <AState v-if="store.error" status="error">{{ store.error }}</AState>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 1</p>
-          <h2 class="sect-title">¿Qué decidiste y cuándo?</h2>
-          <p class="sect-sub">
-            La fecha es la de la decisión, no la del pago. Queda registrada como ocurrida: sus
-            efectos ya están en tu patrimonio y en tu presupuesto, así que no se vuelven a
-            proyectar.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 1"
+        title="¿Qué decidiste y cuándo?"
+        subtitle="La fecha es la de la decisión, no la del pago. Queda registrada como ocurrida: sus efectos ya están en tu patrimonio y en tu presupuesto, así que no se vuelven a proyectar."
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -289,16 +283,11 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 2</p>
-          <h2 class="sect-title">¿Qué partidas de tu presupuesto salieron de esta decisión?</h2>
-          <p class="sect-sub">
-            Al vincularlas, pasan a estar gestionadas por el plan: dejarán de ser editables desde
-            Presupuesto y se retirarán si algún día das de baja la decisión. Puedes deshacerlo.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 2"
+        title="¿Qué partidas de tu presupuesto salieron de esta decisión?"
+        subtitle="Al vincularlas, pasan a estar gestionadas por el plan: dejarán de ser editables desde Presupuesto y se retirarán si algún día das de baja la decisión. Puedes deshacerlo."
+      />
 
       <div v-if="existingGroups.length" class="plan-choice-grid">
         <button
@@ -384,17 +373,11 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 3</p>
-          <h2 class="sect-title">¿Qué activos o pasivos trajo esta decisión?</h2>
-          <p class="sect-sub">
-            Aquí no se adopta nada: la decisión solo apunta a ellos. Patrimonio sigue siendo su
-            dueño y quien genera sus cuotas. Enlazarlos es lo que permite ver el impacto completo de
-            la decisión, no solo el de las partidas que escribiste a mano.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 3"
+        title="¿Qué activos o pasivos trajo esta decisión?"
+        subtitle="Aquí no se adopta nada: la decisión solo apunta a ellos. Patrimonio sigue siendo su dueño y quien genera sus cuotas. Enlazarlos es lo que permite ver el impacto completo de la decisión, no solo el de las partidas que escribiste a mano."
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -477,30 +460,26 @@ onMounted(async () => {
       v-if="selectedLines.length || selectedAssets.size || selectedLiabilities.size"
       class="sect plan-form-section"
     >
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Resumen</p>
-          <h2 class="sect-title">
-            {{ selectedLines.length }} partida{{ selectedLines.length === 1 ? '' : 's' }} ·
-            {{ formatMoney(selectedTotal) }}
-          </h2>
-          <p class="sect-sub">
-            Las partidas pasan a colgar de «{{ form.name.trim() || 'esta decisión' }}»; sus importes
-            y fechas no cambian.
-            <template v-if="selectedLiabilities.size || selectedAssets.size">
-              Además queda enlazada a
-              <template v-if="selectedLiabilities.size">
-                {{ selectedLiabilities.size }} pasivo{{ selectedLiabilities.size === 1 ? '' : 's' }}
-              </template>
-              <template v-if="selectedLiabilities.size && selectedAssets.size"> y </template>
-              <template v-if="selectedAssets.size">
-                {{ selectedAssets.size }} activo{{ selectedAssets.size === 1 ? '' : 's' }}
-              </template>
-              de Patrimonio, que siguen gestionándose allí.
+      <ASectHead
+        eyebrow="Resumen"
+        :title="`${selectedLines.length} partida${selectedLines.length === 1 ? '' : 's'} · ${formatMoney(selectedTotal)}`"
+      >
+        <template #subtitle>
+          Las partidas pasan a colgar de «{{ form.name.trim() || 'esta decisión' }}»; sus importes y
+          fechas no cambian.
+          <template v-if="selectedLiabilities.size || selectedAssets.size">
+            Además queda enlazada a
+            <template v-if="selectedLiabilities.size">
+              {{ selectedLiabilities.size }} pasivo{{ selectedLiabilities.size === 1 ? '' : 's' }}
             </template>
-          </p>
-        </div>
-      </div>
+            <template v-if="selectedLiabilities.size && selectedAssets.size"> y </template>
+            <template v-if="selectedAssets.size">
+              {{ selectedAssets.size }} activo{{ selectedAssets.size === 1 ? '' : 's' }}
+            </template>
+            de Patrimonio, que siguen gestionándose allí.
+          </template>
+        </template>
+      </ASectHead>
     </section>
 
     <div class="plan-setup-actions">
