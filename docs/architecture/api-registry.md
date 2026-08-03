@@ -73,6 +73,16 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET/POST` | `/api/ownership-links/` | Ownership links (asset <-> person) |
 | `GET/PATCH/DELETE` | `/api/ownership-links/{id}/` | Ownership link detail |
 
+Settlement configuration is opt-in and Core-owned. Annual income/expense payloads expose nullable
+`ownership_id`; annual expense payloads also expose nullable `settlement_account_id`.
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/PUT` | `/api/budget/settlement/configuration/` | Reads or atomically replaces the disabled profile's participating accounts and zero-sum opening adjustments. |
+| `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M` | Returns period blockers, warnings and ownership ledger coverage without changing balances. |
+| `POST` | `/api/budget/settlement/activate/` | Activates a ready profile and captures its immutable member/account opening baseline; repeated calls are idempotent. |
+| `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
+
 ### Net Worth — `/api/net-worth/`
 | Method | Route | Description |
 |--------|-------|-------------|
