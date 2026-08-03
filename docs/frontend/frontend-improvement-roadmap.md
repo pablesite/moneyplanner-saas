@@ -71,15 +71,20 @@ candidatos nuevos (regla: una primitiva nueva solo si ≥2 pantallas la usarían
       (budget/monthly-close suelen tener bloques colapsables).
 - [x] Documentar toda primitiva nueva en el visual-contract.
 
-**Auditoría ligera cerrada:** no quedan `<select>` nativos en componentes de
-producto; el único `<option>` restante pertenece a un `datalist` de texto libre
-en `AnnualEntryModalForm` (sugerencias de grupo de evento, no selector cerrado).
-Los mensajes de éxito usan `AToast`, los indicadores de expansión usan
-`AChevron`, y los flujos Direction A principales ya consumen `AButton`,
-`ASelect`, `AState`, `APageHead`/`ASectHead`, `AKindChip`, `ARowMenu`,
-`AHero`/`AKpiBand`, `ASparkline`, `ADateRange` y `BaseModal` donde aplica. No
-se creó ninguna primitiva nueva en este bloque; por tanto no hay actualización
-adicional necesaria en el visual-contract.
+**Auditoría de 2026-08 (Patrimonio, Contabilidad, Presupuesto, Cierre):** no
+quedan `<select>` nativos en componentes de producto; el único `<option>`
+restante pertenece a un `datalist` de texto libre en `AnnualEntryModalForm`
+(sugerencias de grupo de evento, no selector cerrado). Los mensajes de éxito
+usan `AToast`, los indicadores de expansión usan `AChevron`, y esos cuatro
+dominios consumen `AButton`, `ASelect`, `AState`, `APageHead`/`ASectHead`,
+`AKindChip`, `ARowMenu`, `AHero`/`AKpiBand`, `ASparkline`, `ADateRange` y
+`BaseModal` donde aplica. No se creó ninguna primitiva nueva.
+
+> **Mi Plan quedó fuera de esa auditoría** (el dominio se construyó después) y
+> no cumple el DoD. Auditado el 2026-08-03: adopta el shell (`.page`,
+> `APageHead`, `.sect`), los tokens, `ASelect`, `AState`, `BaseModal`,
+> `AStepper` y `AHero`/`AKpiBand`, pero se saltó la capa de primitivas y
+> helpers. Ver bloque F.
 
 **DoD**: la vista no reimplementa nada que ya exista en `@/domains/ui`.
 
@@ -156,6 +161,62 @@ Para cada vista, checklist mínima:
 - [ ] Dedup utilidades (A) · [ ] Primitivas UI (B) · [ ] CSS compartido (C) ·
       [ ] Modales al slot de footer (D) · [ ] Estados loading/empty/error/success
       · [ ] Validación Docker + tests verdes.
+
+## F. Alineación de Mi Plan con el design system
+
+Auditoría del 2026-08-03 sobre las 10 vistas de `domains/plan`, contrastadas con
+Patrimonio y Contabilidad. Mi Plan se construyó después de cerrar el bloque B, no
+pasó por esa auditoría, y la skill `frontend-system` apuntaba entonces a ficheros
+obsoletos (corregido en este mismo bloque). Resultado: `plan.css` son 4.248
+líneas frente a 1.981 de contabilidad y 1.765 de patrimonio.
+
+**Cumple**: shell (`.page` + `APageHead` + `.sect`), tokens, `ASelect`, `.input`,
+`AState` para loading/empty/error de página, `BaseModal`, `AStepper`,
+`AHero`/`AKpiBand`, `AInfoHint`, `--shell-bottom-inset`. Cero `style=` inline,
+cero `<style scoped>`, cero `<select>` nativo. Los hex de la escala de notas A–E
+son una excepción documentada y validada con la skill `dataviz`.
+
+- [x] **F0 — Doc y skill.** Corregidas las fuentes canónicas en la skill
+      `frontend-system`, `frontend-visual-contract.md` y `frontend-css-workflow.md`
+      (apuntaban a `core/frontend/src/styles/app.css`, congelado y pre-Direction A).
+      Añadida a la skill la tabla de primitivas `@/domains/ui` y los greps de
+      control al Review Checklist. Contrato e improvement-roadmap añadidos a los
+      docs canónicos de `CLAUDE.md`/`AGENTS.md`.
+- [x] **F1 — Estados y botones.** `AState layout="inline"` sustituye a
+      `.plan-empty-inline` / `.plan-muted` / `.plan-inline-error`; `AButton`
+      sustituye los `<button class="btn …">` crudos.
+- [ ] **F2 — `ASectHead`.** 32 `<div class="sect-head">` a mano en Mi Plan (fuera
+      del dominio solo quedan 3). Sustitución mecánica; el markup es idéntico al
+      que renderiza la primitiva. Focos: `PlanSetupView` (11),
+      `PlanOccurredEventView` (4), `PlanPlannedDecisionView` (4),
+      `PlanDecisionEditView` (3).
+- [ ] **F3 — Helpers y menús.** `useCollapsibleGroups` (3 reimplementaciones con
+      `Set` propio: `PlanAssetsView`, `PlanPlannedDecisionView` ×2), `AChevron` en
+      `PlanAssetsView` (hoy texto "Ver/Ocultar", mientras `PlanSituationSection`
+      sí usa la primitiva), `ARowMenu` en `PlanView` (reimplementa lógica de
+      click-fuera + 40 líneas de CSS de popover), `AToast` en vez de
+      `.plan-scenario-notice`.
+- [ ] **F4 — Chrome.** `.plan-toolbar` es una caja con borde/radio/fondo panel; el
+      patrón compartido `.context-bar` es una tira transparente con hairline
+      inferior, que es lo que usan Patrimonio, Presupuesto y Cierre. Además
+      `.plan-setup-page > .page-head .page-title { font-size: 26px }` re-estiliza
+      chrome compartido para una sola página, y `.plan-form-section` duplica la
+      superficie de card. **Cambia el aspecto: requiere decisión de producto.**
+
+**DoD**: los greps de control de la Review Checklist de la skill salen limpios en
+`views/Plan*.vue` y `domains/plan/**`.
+
+## G. Deuda transversal detectada (4 dominios)
+
+No es específica de Mi Plan; no abrir sin decidir si se tocan los cuatro
+dominios a la vez.
+
+- [ ] `.tabs` / `.tab` no existen en `design-system.css`: los redefinen por
+      separado net-worth, accounting, budget y plan.
+- [ ] `AContextBar` está exportado en `domains/ui/index.ts` y **no lo usa nadie**;
+      todas las vistas montan la barra de contexto a mano.
+- [ ] `padding-bottom: 84px/88px` mágico en los 5 CSS de dominio, justo lo que
+      prohíbe la regla 24 del visual-contract (`--shell-bottom-inset`).
 
 ---
 

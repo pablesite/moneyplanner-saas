@@ -6,14 +6,15 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 
 ## Rules
 
-1. Shared patterns and design tokens are defined in `core/frontend/src/styles/app.css`.
-2. `core/frontend/src/styles/app.css` is the canonical source; SaaS synchronization is explicit and should only happen when the scope includes SaaS.
-3. Direction A SaaS experimentation can live in `frontend/src/styles/design-system.css` as long as it remains namespaced under `.dir-a`.
-4. New page-level layout patterns must use shared classes before introducing local CSS.
-5. Inline `style=` is not allowed in Vue templates.
-6. New `<style scoped>` blocks require explicit justification; default to shared styles.
-7. Loading, empty, error, and success states must use the shared state pattern when possible.
-8. Direction A views may define local reusable page patterns in `frontend/src/domains/*/*.css` when they are still stabilizing, but those patterns must stay namespaced and documented here once reused.
+1. La primera fuente de reutilización son las **primitivas** de `frontend/src/domains/ui` (barrel `@/domains/ui`), catalogadas al final de este documento. Markup ad-hoc solo cuando ninguna primitiva cubre el caso.
+2. Los tokens y clases base Direction A (`.dir-a`) son canónicos en `frontend/src/styles/design-system.css`. Ahí van los patrones compartidos nuevos.
+3. `frontend/src/styles/app.css` es la capa legacy (`ui-*`, `card`, `ui-pro-*`) más el shell global (topbar, nav móvil, `--shell-bottom-inset`). No se añaden ahí patrones Direction A nuevos.
+4. `core/frontend/src/styles/app.css` **no es fuente canónica del SaaS**. Está congelado y es anterior a Direction A; consultarlo solo como referencia histórica.
+5. New page-level layout patterns must use shared classes before introducing local CSS.
+6. Inline `style=` is not allowed in Vue templates.
+7. New `<style scoped>` blocks require explicit justification; default to shared styles.
+8. Loading, empty, error, and success states must use `AState`; no crear clases de estado por dominio (fue justo la duplicación que `AState` vino a eliminar).
+9. Direction A views may define local reusable page patterns in `frontend/src/domains/*/*.css` when they are still stabilizing, but those patterns must stay namespaced and documented here once reused.
 
 ## Design Tokens
 
