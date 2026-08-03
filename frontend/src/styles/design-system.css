@@ -515,6 +515,19 @@
   font-size: 13px;
 }
 
+/* El layout inline solo tenía color muted, así que un `status="error"` o
+   `status="success"` inline perdía la semántica y se leía igual que un vacío.
+   Aquí el color sí es el único portador del estado, a diferencia del panel: se
+   mantiene el contraste alto y sin caja para no convertir un aviso de campo en
+   un bloque. */
+.dir-a .a-state-inline.a-state-error {
+  color: color-mix(in oklab, var(--neg) 70%, white);
+}
+
+.dir-a .a-state-inline.a-state-success {
+  color: color-mix(in oklab, var(--pos) 70%, white);
+}
+
 .dir-a .a-state-panel {
   display: flex;
   align-items: center;

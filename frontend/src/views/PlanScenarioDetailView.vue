@@ -291,9 +291,13 @@ onMounted(async () => {
             </div>
             <strong>{{ formatMoney(toNumber(line.amount_annual)) }}</strong>
           </article>
-          <p v-if="!eventTrace.income.length && !eventTrace.expenses.length" class="plan-muted">
+          <AState
+            v-if="!eventTrace.income.length && !eventTrace.expenses.length"
+            status="empty"
+            layout="inline"
+          >
             Este acontecimiento no generó partidas de presupuesto.
-          </p>
+          </AState>
         </div>
       </section>
       <template v-else>

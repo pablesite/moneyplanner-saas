@@ -121,16 +121,16 @@ onMounted(() => {
         <RouterLink class="tab" to="/plan/decisiones">Decisiones</RouterLink>
       </div>
       <div v-if="plan && !planMissing" ref="optionsRoot" class="plan-options">
-        <button
-          class="btn btn-ghost plan-options-trigger"
-          type="button"
+        <AButton
+          variant="ghost"
+          class="plan-options-trigger"
           aria-label="Opciones del plan"
           :aria-expanded="optionsOpen"
           aria-controls="plan-options-menu"
           @click.stop="optionsOpen = !optionsOpen"
         >
           <span aria-hidden="true">•••</span>
-        </button>
+        </AButton>
         <div
           v-if="optionsOpen"
           id="plan-options-menu"
@@ -252,9 +252,9 @@ onMounted(() => {
         />
       </section>
 
-      <p v-if="error" class="plan-inline-error" role="alert">
+      <AState v-if="error" status="error" role="alert">
         Una parte no pudo actualizarse. Los demás datos siguen disponibles. {{ error }}
-      </p>
+      </AState>
 
       <PlanCalculationSettingsModal
         :open="settingsOpen"

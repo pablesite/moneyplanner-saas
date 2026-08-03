@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { usePlan } from '@/domains/plan';
 import type { ClassifiedPlanAsset, PlanAssetFunction } from '@/domains/plan';
 import { assetFunctionLabel, assetFunctionLabels } from '@/domains/plan/scenarioTemplates';
@@ -229,38 +229,31 @@ onMounted(() => {
             placeholder="Buscar activo..."
             aria-label="Buscar activo"
           />
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
+          <AButton
+            variant="ghost"
+            size="sm"
             :class="{ active: reviewFilter === 'review' }"
             @click="reviewFilter = reviewFilter === 'review' ? 'all' : 'review'"
           >
             Requieren revisión
-          </button>
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
+          </AButton>
+          <AButton
+            variant="ghost"
+            size="sm"
             :class="{ active: reviewFilter === 'manual' }"
             @click="reviewFilter = reviewFilter === 'manual' ? 'all' : 'manual'"
           >
             Modificados manualmente
-          </button>
-          <button
-            v-if="hasActiveFilter"
-            type="button"
-            class="btn btn-ghost btn-sm"
-            @click="clearFilters"
-          >
+          </AButton>
+          <AButton v-if="hasActiveFilter" variant="ghost" size="sm" @click="clearFilters">
             Limpiar filtros
-          </button>
+          </AButton>
         </div>
 
-        <div v-if="!groups.length" class="plan-empty-inline">
+        <AState v-if="!groups.length" status="empty" layout="inline" class="plan-empty-inline">
           <p class="plan-muted">Ningún activo coincide con el filtro actual.</p>
-          <button type="button" class="btn btn-ghost btn-sm" @click="clearFilters">
-            Limpiar filtros
-          </button>
-        </div>
+          <AButton variant="ghost" size="sm" @click="clearFilters">Limpiar filtros</AButton>
+        </AState>
 
         <template v-else>
           <div v-for="group in groups" :key="group.fn" class="plan-assets-group">

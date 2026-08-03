@@ -683,7 +683,9 @@ onMounted(() => {
               </table>
             </div>
 
-            <p v-if="localError" class="plan-inline-error" role="alert">{{ localError }}</p>
+            <AState v-if="localError" status="error" layout="inline" role="alert">
+              {{ localError }}
+            </AState>
 
             <!-- Aquí solo se reprograman los puntuales que ya existen: crearlos sigue
                  siendo cosa de Presupuesto. Agrupar en una decisión ya se ofrece por

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AInfoHint } from '@/domains/ui';
+import { AInfoHint, AState } from '@/domains/ui';
 import type {
   PlanFoundations,
   PlanFoundationScore,
@@ -263,6 +263,8 @@ function qualitySummary(flags: Record<string, boolean>): string {
         </small>
       </article>
     </div>
-    <p v-else class="plan-muted">Aún no hay dimensiones calculadas para este plan.</p>
+    <AState v-else status="empty" layout="inline">
+      Aún no hay dimensiones calculadas para este plan.
+    </AState>
   </section>
 </template>

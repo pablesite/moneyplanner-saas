@@ -1387,17 +1387,15 @@
   color: var(--muted);
 }
 
+/* Modificador de layout sobre `AState layout="inline"`, no un estado propio: la
+   primitiva pone color, padding y semántica; aquí solo se reparte el texto y su
+   acción en una fila. */
 .plan-empty-inline {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  color: var(--muted);
-}
-
-.plan-empty-inline span {
-  color: var(--muted);
 }
 
 .plan-events,
