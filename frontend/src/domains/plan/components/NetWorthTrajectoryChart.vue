@@ -578,7 +578,7 @@ function onMove(event: MouseEvent): void {
     <div class="sect-head">
       <!-- El rótulo basta: la leyenda ya dice qué es cada serie y el matiz de la
            fecha vive en la ⓘ, no ocupando dos líneas de cabecera. -->
-      <p class="plan-block-eyebrow plan-trajectory-label">
+      <p class="eyebrow plan-trajectory-label">
         Trayectoria patrimonial
         <AInfoHint
           label="Los hitos se muestran al cierre del último año de trabajo. El retiro y las retiradas empiezan el año siguiente."

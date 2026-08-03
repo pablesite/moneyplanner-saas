@@ -517,7 +517,7 @@ onMounted(async () => {
       <section class="plan-decision-worklist">
         <div class="plan-block-head">
           <div>
-            <p class="plan-block-eyebrow">Pendientes</p>
+            <p class="eyebrow">Pendientes</p>
             <h2 id="pending-decisions-title" class="sect-title">Decisiones que estás valorando</h2>
           </div>
           <span class="plan-decision-count">{{ pendingScenarios.length }}</span>

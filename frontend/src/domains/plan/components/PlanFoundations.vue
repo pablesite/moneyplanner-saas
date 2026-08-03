@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AInfoHint, AState } from '@/domains/ui';
+import { AInfoHint, ASectHead, AState } from '@/domains/ui';
 import type {
   PlanFoundations,
   PlanFoundationScore,
@@ -100,15 +100,12 @@ function qualitySummary(flags: Record<string, boolean>): string {
 
 <template>
   <section class="sect plan-foundations" :class="{ 'is-compact': compact }">
-    <div v-if="!compact" class="sect-head">
-      <div>
-        <p class="plan-block-eyebrow">Salud financiera</p>
-        <h2 class="sect-title">Diagnóstico por dimensiones</h2>
-        <p class="sect-sub">
-          Flujo de caja, fondo de emergencia, deuda, aportación, patrimonio y calidad de datos.
-        </p>
-      </div>
-    </div>
+    <ASectHead
+      v-if="!compact"
+      eyebrow="Salud financiera"
+      title="Diagnóstico por dimensiones"
+      subtitle="Flujo de caja, fondo de emergencia, deuda, aportación, patrimonio y calidad de datos."
+    />
     <div v-if="foundations" class="plan-foundation-grid">
       <!-- Cada dimensión abre con su nota: la letra juzga, la cifra de la derecha
            informa. El valor dejó de ser la palabra del estado, que solo repetía el

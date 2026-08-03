@@ -187,7 +187,7 @@ const milestonesHint = computed(() => {
     <!-- Mismo chrome que "Tu situación este año": eyebrow + acción, el dato grande
          alineado con el título, y el desglose en la tabla compartida de capas. -->
     <div class="plan-block-head">
-      <p class="plan-block-eyebrow">Capital productivo</p>
+      <p class="eyebrow">Capital productivo</p>
       <!-- La clasificación vive junto al dato que altera: qué cuenta como productivo. -->
       <RouterLink class="plan-blocker-link" to="/plan/activos">Clasificar activos</RouterLink>
     </div>

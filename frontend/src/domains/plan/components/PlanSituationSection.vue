@@ -389,7 +389,7 @@ onMounted(() => {
     aria-label="Tu situación este año"
   >
     <div class="plan-block-head">
-      <p class="plan-block-eyebrow">Tu situación este año</p>
+      <p class="eyebrow">Tu situación este año</p>
       <span class="plan-situacion-year">{{ currentYear }}</span>
     </div>
 

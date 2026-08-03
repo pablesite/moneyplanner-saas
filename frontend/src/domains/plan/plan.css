@@ -147,17 +147,6 @@
   padding: 10px 0;
 }
 
-.plan-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-}
-
 .plan-diagnosis-toggle {
   width: fit-content;
 }
@@ -165,10 +154,6 @@
 .plan-diagnosis-detail {
   display: grid;
   gap: 18px;
-}
-
-.plan-toolbar .context-field {
-  min-width: 180px;
 }
 
 .plan-onboarding.a-state-panel {
@@ -355,14 +340,10 @@
 
 /* Los bloques de contenido van sin caja (mismo patrón que el hero y que "Tu
    situación este año"): el ritmo lo dan el gap de la página, los eyebrow y las
-   hairlines internas. Solo los formularios conservan panel, donde el fondo sí
-   agrupa campos. */
-.plan-form-section {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  padding: 18px;
-}
+   hairlines internas.
+   `.plan-form-section` no declara superficie: sus 20 instancias son hijas directas
+   de `.plan-setup-page`, que ya las abre (`padding: 0; border: 0; background:
+   transparent`). El panel que había aquí no se pintaba en ningún sitio. */
 
 .plan-progress,
 .plan-quality,
@@ -2824,14 +2805,9 @@
   background: transparent;
 }
 
-.plan-scenario-context {
-  padding: 0 0 12px;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-}
-
+/* La barra es `.context-bar` compartida (transparente, hairline inferior): esta
+   clase solo queda como gancho para el ancho del campo. Antes replicaba a mano lo
+   que ya hacía el patrón, sobre una `.plan-toolbar` con caja que nunca se veía. */
 .plan-scenario-context .context-field {
   min-width: 0;
 }
@@ -2972,12 +2948,11 @@
   width: min(100%, var(--plan-setup-width));
 }
 
+/* El título usa la escala compartida (`.dir-a .page-title`): un tamaño propio aquí
+   dejaba estas cuatro pantallas fuera de cualquier cambio futuro de la escala. Solo
+   se conserva el ajuste de ritmo vertical, que es de esta página. */
 .plan-setup-page > .page-head {
   padding-bottom: 0;
-}
-
-.plan-setup-page > .page-head .page-title {
-  font-size: 26px;
 }
 
 .plan-setup-page > .page-head .page-meta {
@@ -3844,17 +3819,17 @@
 
   /* Context rail de una fila con scroll horizontal (mismo patrón que Patrimonio):
      el chrome previo al contenido se queda en una franja, no en tres filas. */
-  .plan-toolbar {
+  .plan-scenario-context {
     flex-wrap: nowrap;
     overflow-x: auto;
   }
 
-  .plan-toolbar > * {
+  .plan-scenario-context > * {
     flex: 0 0 auto;
     min-width: 0;
   }
 
-  .plan-toolbar .context-field {
+  .plan-scenario-context .context-field {
     min-width: 150px;
   }
 
@@ -3913,16 +3888,10 @@
   gap: 12px;
 }
 
-/* Mismo tratamiento que el eyebrow del hero ("Casi en objetivo"): etiqueta
-   uppercase muted, sin título grande ni subrayado. */
-.plan-block-eyebrow {
-  margin: 0;
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--muted);
-}
+/* El eyebrow muted es tratamiento de hero (`.dir-a .a-hero-figure .eyebrow`), no de
+   cabecera de bloque. Mi Plan lo había extendido a bloques con una clase propia que
+   ningún otro dominio tenía; las cabeceras usan ahora `.eyebrow` como el resto del
+   producto. */
 
 .plan-situacion-year {
   font-size: 10.5px;

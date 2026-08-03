@@ -58,7 +58,7 @@ const assumptionRows: Array<{ key: keyof ProjectionAssumptions; label: string }>
       </div>
 
       <div class="plan-settings-params">
-        <p class="plan-block-eyebrow">Parámetros de la hipótesis</p>
+        <p class="eyebrow">Parámetros de la hipótesis</p>
         <div class="plan-tier-table plan-table-scroll">
           <table>
             <tbody>

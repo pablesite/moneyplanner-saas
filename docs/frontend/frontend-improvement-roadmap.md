@@ -210,14 +210,21 @@ son una excepción documentada y validada con la skill `dataviz`.
       transitorias; un toast que se auto-descarta sería peor. Se mantienen como
       sección. Sí se retira el modificador `.plan-scenario-notice.success`, que
       era CSS muerto.
-- [ ] **F4 — Chrome.** `.plan-toolbar` es una caja con borde/radio/fondo panel; el
-      patrón compartido `.context-bar` es una tira transparente con hairline
-      inferior, que es lo que usan Patrimonio, Presupuesto y Cierre. Además
-      `.plan-setup-page > .page-head .page-title { font-size: 26px }` re-estiliza
-      chrome compartido para una sola página, `.plan-form-section` duplica la
-      superficie de card, y `.plan-block-eyebrow` (muted, 7 usos) convive con
-      `.eyebrow` (accent, ~30 usos) sin criterio documentado. **Cambia el
-      aspecto: requiere decisión de producto.**
+- [x] **F4 — Chrome.** Dos decisiones de producto y dos limpiezas.
+      **Decidido:** las cabeceras de bloque usan `.eyebrow` (acento) como el resto
+      del producto; `.plan-block-eyebrow` (muted, 7 usos) se retira. El muted es
+      tratamiento de hero (`.dir-a .a-hero-figure .eyebrow`), patrón compartido
+      que Mi Plan había extendido a bloques con una clase que ningún otro dominio
+      tenía. Y el título de las páginas de asistente vuelve a la escala
+      compartida de 32px: se retira `font-size: 26px`, que dejaba esas cuatro
+      pantallas fuera de cualquier cambio futuro de la escala.
+      **Corrección a la auditoría:** los otros dos puntos no cambiaban el aspecto,
+      eran reglas muertas anuladas por un override que no comprobé. La caja de
+      `.plan-toolbar` la anulaba `.plan-scenario-context`, y la card de
+      `.plan-form-section` la anula `.plan-setup-page > .plan-form-section`. La
+      barra pasa a `.context-bar` compartida y ambas reglas se borran sin cambio
+      visual. `PlanFoundations` cierra además el pendiente de F2: quedó fuera
+      justo por el color del eyebrow, y ahora usa `ASectHead`.
 
 **DoD**: los greps de control de la Review Checklist de la skill salen limpios en
 `views/Plan*.vue` y `domains/plan/**`.

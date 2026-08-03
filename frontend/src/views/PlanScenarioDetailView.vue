@@ -205,7 +205,7 @@ onMounted(async () => {
         </RouterLink>
       </section>
 
-      <div v-if="selected.status !== 'accepted'" class="plan-toolbar plan-scenario-context">
+      <div v-if="selected.status !== 'accepted'" class="context-bar plan-scenario-context">
         <label class="context-field">
           <span>Hipótesis</span>
           <ASelect

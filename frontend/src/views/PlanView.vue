@@ -161,7 +161,7 @@ onMounted(() => {
         <div class="plan-main-grid">
           <ProductiveCapitalProgress :projection="projection" />
           <section class="sect plan-foundation-summary">
-            <p class="plan-block-eyebrow">Salud financiera</p>
+            <p class="eyebrow">Salud financiera</p>
             <div class="plan-foundation-headline">
               <span
                 v-if="overallHealth"
