@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import {
   AButton,
+  AContextBar,
   AMetaPill,
   APageHead,
   ASectHead,
@@ -205,7 +206,7 @@ onMounted(async () => {
         </RouterLink>
       </section>
 
-      <div v-if="selected.status !== 'accepted'" class="context-bar plan-scenario-context">
+      <AContextBar v-if="selected.status !== 'accepted'" class="plan-scenario-context">
         <label class="context-field">
           <span>Hipótesis</span>
           <ASelect
@@ -215,7 +216,7 @@ onMounted(async () => {
             :searchable="false"
           />
         </label>
-      </div>
+      </AContextBar>
 
       <section class="sect plan-scenario-summary plan-scenario-summary-open">
         <ASectHead eyebrow="Inputs" title="Impacto definido" />

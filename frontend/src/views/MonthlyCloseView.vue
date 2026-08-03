@@ -238,7 +238,7 @@ function goToCloseStep(): void {
     </APageHead>
 
     <section class="mc-read-section" aria-label="Filtros de cierre mensual">
-      <div class="mc-read-controls">
+      <div class="context-rail">
         <label class="context-field mc-control-chip">
           <span class="mc-sr-only">Mes</span>
           <ASelect

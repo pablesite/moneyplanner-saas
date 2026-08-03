@@ -229,17 +229,34 @@ son una excepción documentada y validada con la skill `dataviz`.
 **DoD**: los greps de control de la Review Checklist de la skill salen limpios en
 `views/Plan*.vue` y `domains/plan/**`.
 
-## G. Deuda transversal detectada (4 dominios)
+## G. Deuda transversal (4 dominios) — cerrada
 
-No es específica de Mi Plan; no abrir sin decidir si se tocan los cuatro
-dominios a la vez.
-
-- [ ] `.tabs` / `.tab` no existen en `design-system.css`: los redefinen por
-      separado net-worth, accounting, budget y plan.
-- [ ] `AContextBar` está exportado en `domains/ui/index.ts` y **no lo usa nadie**;
-      todas las vistas montan la barra de contexto a mano.
-- [ ] `padding-bottom: 84px/88px` mágico en los 5 CSS de dominio, justo lo que
-      prohíbe la regla 24 del visual-contract (`--shell-bottom-inset`).
+- [x] **Tabs compartidas.** `.tabs` / `.tab` estaban duplicadas literalmente en
+      net-worth, accounting, budget y plan: las mismas 10 declaraciones cambiando
+      solo el prefijo. Promovidas a `design-system.css`. Los ajustes responsive de
+      cada dominio (tap targets, scroll horizontal) sí divergen de verdad y se
+      quedan locales.
+- [x] **Rail de contexto compartido.** El hallazgo real no era `AContextBar`: hay
+      **dos** patrones de barra de contexto, y el triplicado era el otro. Los
+      `*-read-controls` de Patrimonio, Presupuesto y Cierre eran idénticos (10
+      declaraciones, un `border-bottom: 0` de diferencia que era no-op).
+      Promovidos a `.context-rail`. `.a-budget-read-controls` y `.mc-read-controls`
+      desaparecen; `.a-nw-read-controls` sobrevive solo como gancho de su `gap`
+      responsive. `AContextBar` (variante que envuelve) pasa a usarse en
+      `PlanScenarioDetailView`, así que deja de estar exportado sin consumidores, y
+      se borran los overrides muertos de `.context-bar` / `.context-divider` en
+      Contabilidad, que no renderiza ninguna de las dos.
+- [x] **Doble reserva de la tab bar.** Los cinco `padding-bottom: 84/88px` no eran
+      solo números mágicos: `.ui-shell-content-stage` ya reserva
+      `--shell-bottom-inset`, así que cada vista sumaba su propia reserva encima
+      (~156 px en móvil en lugar de ~68). Retirados los cinco; la reserva la hace
+      solo el shell.
+- [x] **Especificidad documentada.** Al mover chrome al design system apareció un
+      detalle que no estaba escrito: `main.ts` importa el router (línea 11) antes
+      que `design-system.css` (línea 13), así que el CSS de dominio se inyecta
+      primero y a igualdad de especificidad **gana el design system**. Verificado
+      sobre el bundle. Las clases compartidas que las vistas matizan van dentro de
+      `:where()` para no romper sus overrides. Reglas 26–28 del visual-contract.
 
 ---
 

@@ -58,33 +58,6 @@
   border-bottom: 1px solid var(--line);
 }
 
-.a-mov-page .tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: -1px;
-}
-
-.a-mov-page .tab {
-  font: inherit;
-  font-size: 13.5px;
-  padding: 10px 16px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  transition: color 0.12s;
-}
-
-.a-mov-page .tab:hover {
-  color: var(--text);
-}
-
-.a-mov-page .tab.on {
-  color: var(--text);
-  border-bottom-color: var(--accent);
-}
-
 .a-mov-tabs-actions {
   display: flex;
   gap: 8px;
@@ -104,15 +77,6 @@
   .a-mov-page .tab {
     padding: 10px 10px;
     font-size: 13px;
-  }
-
-  .a-mov-page .context-bar {
-    flex-wrap: wrap;
-    gap: 12px 16px;
-  }
-
-  .a-mov-page .context-divider {
-    display: none;
   }
 }
 
@@ -1116,10 +1080,6 @@
 }
 
 /* Daily accounting workspace ------------------------------------------------ */
-.a-mov-operations-page {
-  padding-bottom: 88px;
-}
-
 /* Tighten the rhythm between the page title and the ledger. Needs `.dir-a .page`
    specificity to beat the shared 28px page gap. */
 .dir-a .page.a-mov-operations-page,

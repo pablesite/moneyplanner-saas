@@ -1444,7 +1444,7 @@ watch(
     </nav>
 
     <section class="sect a-nw-read-section" aria-label="Opciones de lectura de patrimonio">
-      <div class="a-nw-read-controls">
+      <div class="context-rail a-nw-read-controls">
         <label class="context-field a-nw-control-chip" data-test="ownership-filter">
           <span class="a-nw-sr-only">Titularidad</span>
           <ASelect

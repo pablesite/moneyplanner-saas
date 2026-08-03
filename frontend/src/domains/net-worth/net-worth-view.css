@@ -3,12 +3,6 @@
   gap: 12px;
 }
 
-@media (max-width: 960px) {
-  .dir-a .page.a-nw-page {
-    padding-bottom: 88px;
-  }
-}
-
 /* Timeline scope and accounting granularity -------------------------------- */
 .a-nw-scope-seg {
   max-width: 100%;
@@ -103,24 +97,6 @@
   background: transparent;
 }
 
-.a-nw-read-controls {
-  width: 100%;
-  max-width: 100%;
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 10px;
-  margin: 0;
-  padding: 10px 0;
-  border-bottom: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.a-nw-read-controls::-webkit-scrollbar {
-  display: none;
-}
-
 .a-nw-page .context-field {
   flex: 0 0 auto;
   min-width: 0;
@@ -180,33 +156,6 @@
   gap: 16px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--line);
-}
-
-.a-nw-page .tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: -1px;
-}
-
-.a-nw-page .tab {
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 13.5px;
-  padding: 10px 16px;
-  transition: color 0.12s;
-}
-
-.a-nw-page .tab:hover {
-  color: var(--text);
-}
-
-.a-nw-page .tab.on {
-  color: var(--text);
-  border-bottom-color: var(--accent);
 }
 
 .a-nw-mobile-tools,
@@ -1463,8 +1412,9 @@
     flex: 0 0 auto;
   }
 
-  /* Toolbar compacta de una línea; si no cabe, desplaza horizontal. */
-  .a-nw-read-controls {
+  /* Toolbar compacta de una línea; si no cabe, desplaza horizontal. `.dir-a` para
+     ganar al `.context-rail` compartido, que se inyecta después. */
+  .dir-a .a-nw-read-controls {
     gap: 8px;
   }
 

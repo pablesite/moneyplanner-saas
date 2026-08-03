@@ -47,12 +47,6 @@
   }
 }
 
-@media (max-width: 960px) {
-  .dir-a .page.mc-page {
-    padding-bottom: 88px;
-  }
-}
-
 .mc-page .filter-ctrl {
   width: auto;
   min-width: 82px;
@@ -63,23 +57,6 @@
   background: transparent;
   color: var(--text);
   font: inherit;
-}
-
-.mc-read-controls {
-  width: 100%;
-  max-width: 100%;
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 10px;
-  margin: 0;
-  padding: 10px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.mc-read-controls::-webkit-scrollbar {
-  display: none;
 }
 
 .mc-page .context-field {

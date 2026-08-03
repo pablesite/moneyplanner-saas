@@ -556,6 +556,67 @@
   background: color-mix(in oklab, var(--pos-soft) 70%, transparent);
 }
 
+/* Rail de contexto: la fila de filtros bajo la cabecera de página. Es el patrón
+   vivo del producto (Patrimonio, Presupuesto y Cierre lo tenían triplicado con las
+   mismas 10 declaraciones bajo tres nombres distintos). A diferencia de
+   `.context-bar`, no envuelve: se mantiene en una línea y desplaza en horizontal,
+   que es lo que necesitan las vistas con varios filtros en móvil.
+   En `:where()` por el mismo motivo que las tabs: el CSS de dominio se inyecta
+   antes que este fichero. */
+.dir-a :where(.context-rail) {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 10px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dir-a :where(.context-rail)::-webkit-scrollbar {
+  display: none;
+}
+
+/* Barra de tabs de sección. El bloque base estaba duplicado literalmente en
+   net-worth, accounting, budget y plan (mismas 10 declaraciones, cambiando solo el
+   prefijo del dominio).
+   Va dentro de `:where()` a propósito: el CSS de dominio se inyecta ANTES que este
+   fichero —`main.ts` importa el router en la línea 11 y el design system en la 13—
+   así que a igualdad de especificidad ganaría el design system y se cargaría los
+   ajustes responsive de cada vista. Con especificidad 0 los dominios siguen
+   mandando sin tener que subir la suya.
+   `text-decoration: none` es necesario porque las tabs de Mi Plan son RouterLink. */
+.dir-a :where(.tabs) {
+  display: flex;
+  gap: 0;
+  margin-bottom: -1px;
+}
+
+.dir-a :where(.tab) {
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.dir-a :where(.tab:hover) {
+  color: var(--text);
+}
+
+.dir-a :where(.tab.on) {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
 /* Menú de acciones compartido (ARowMenu). Vivía en `net-worth-view.css` acotado
    a `.a-nw-page`, así que la primitiva se pintaba sin caja ni posicionamiento en
    Contabilidad, que también la consume. El chrome pertenece al componente, no a

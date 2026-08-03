@@ -216,7 +216,7 @@ function setEntryViewMode(mode: string): void {
     </nav>
 
     <section class="a-budget-read-section" aria-label="Filtros de presupuesto">
-      <div class="a-budget-read-controls">
+      <div class="context-rail">
         <label class="context-field a-budget-control-chip">
           <span class="a-budget-sr-only">Año fiscal</span>
           <ASelect

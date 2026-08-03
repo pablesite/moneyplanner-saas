@@ -73,32 +73,7 @@
 }
 
 .plan-tabs-bar .tabs {
-  display: flex;
-  gap: 0;
   min-width: max-content;
-  margin-bottom: -1px;
-}
-
-.plan-tabs-bar .tab {
-  padding: 10px 16px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13.5px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.12s;
-}
-
-.plan-tabs-bar .tab:hover {
-  color: var(--text);
-}
-
-.plan-tabs-bar .tab.on {
-  border-bottom-color: var(--accent);
-  color: var(--text);
 }
 
 /* Las acciones de configuración son secundarias al resumen. Viven con la
@@ -3871,10 +3846,6 @@
 
   .plan-options {
     margin-right: 0;
-  }
-
-  .plan-page {
-    padding-bottom: 84px;
   }
 }
 
