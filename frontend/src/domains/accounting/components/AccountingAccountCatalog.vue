@@ -119,7 +119,7 @@ function goToTodos(accountId: number) {
     </div>
 
     <div v-else class="a-mov-catalog-scroll">
-      <table class="a-mov-catalog-table">
+      <table class="data-table a-mov-catalog-table">
         <thead>
           <tr>
             <th>Cuenta</th>

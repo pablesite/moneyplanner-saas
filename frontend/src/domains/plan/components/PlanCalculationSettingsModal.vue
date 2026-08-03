@@ -59,7 +59,7 @@ const assumptionRows: Array<{ key: keyof ProjectionAssumptions; label: string }>
 
       <div class="plan-settings-params">
         <p class="eyebrow">Parámetros de la hipótesis</p>
-        <div class="plan-tier-table plan-table-scroll">
+        <div class="data-table plan-tier-table plan-table-scroll">
           <table>
             <tbody>
               <tr v-for="row in assumptionRows" :key="row.key">

@@ -218,7 +218,7 @@ function setEntryViewMode(mode: string): void {
     <section class="a-budget-read-section" aria-label="Filtros de presupuesto">
       <div class="context-rail">
         <label class="context-field a-budget-control-chip">
-          <span class="a-budget-sr-only">Año fiscal</span>
+          <span class="sr-only">Año fiscal</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Año fiscal"
@@ -230,7 +230,7 @@ function setEntryViewMode(mode: string): void {
         </label>
 
         <label class="context-field a-budget-control-chip">
-          <span class="a-budget-sr-only">Titularidad</span>
+          <span class="sr-only">Titularidad</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Titularidad"
@@ -242,7 +242,7 @@ function setEntryViewMode(mode: string): void {
         </label>
 
         <label class="context-field a-budget-control-chip">
-          <span class="a-budget-sr-only">Tipo de partida</span>
+          <span class="sr-only">Tipo de partida</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Tipo de partida"

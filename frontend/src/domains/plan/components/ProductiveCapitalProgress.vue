@@ -265,7 +265,7 @@ const milestonesHint = computed(() => {
       <span>{{ usingBudgetMilestones ? 'Qué cubre ya tu capital' : 'Hitos del camino' }}</span>
       <AInfoHint :label="milestonesHint" />
     </div>
-    <div class="plan-tier-table plan-table-scroll">
+    <div class="data-table plan-tier-table plan-table-scroll">
       <table>
         <thead>
           <tr>

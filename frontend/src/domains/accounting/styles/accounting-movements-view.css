@@ -3,13 +3,6 @@
 }
 
 .a-mov-page .filter-ctrl {
-  min-height: 32px;
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
   font-size: 12px;
 }
 
@@ -267,17 +260,6 @@
   width: 36px;
 }
 
-.a-mov-todos-table th {
-  padding: 8px 12px;
-  color: var(--faint);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: left;
-  border-bottom: 1px solid var(--line);
-}
-
 .a-mov-todos-table th.num,
 .a-mov-todos-table td.num {
   text-align: right;
@@ -388,17 +370,6 @@
 
 .a-mov-catalog-menu-head {
   width: 36px;
-}
-
-.a-mov-catalog-table th {
-  padding: 8px 12px;
-  color: var(--faint);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: left;
-  border-bottom: 1px solid var(--line);
 }
 
 .a-mov-catalog-table th.num,

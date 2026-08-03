@@ -240,7 +240,7 @@ function goToCloseStep(): void {
     <section class="mc-read-section" aria-label="Filtros de cierre mensual">
       <div class="context-rail">
         <label class="context-field mc-control-chip">
-          <span class="mc-sr-only">Mes</span>
+          <span class="sr-only">Mes</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Mes"
@@ -251,7 +251,7 @@ function goToCloseStep(): void {
         </label>
 
         <label class="context-field mc-control-chip">
-          <span class="mc-sr-only">Titularidad</span>
+          <span class="sr-only">Titularidad</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Titularidad"

@@ -556,6 +556,56 @@
   background: color-mix(in oklab, var(--pos-soft) 70%, transparent);
 }
 
+/* Control de filtro (el chrome de los `ASelect`, inputs y triggers de las barras
+   de contexto). Los cuatro dominios repetían las mismas declaraciones; aquí van
+   solo las comunes a los cuatro. `width`/`min-width` los sigue decidiendo cada
+   vista, porque Contabilidad los gestiona por contexto (popover, herramientas de
+   cuenta) y no quiere un mínimo global. */
+.dir-a :where(.filter-ctrl) {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+/* Texto solo para lectores de pantalla. Estaba triplicado como `.a-nw-sr-only`,
+   `.a-budget-sr-only` y `.mc-sr-only`. */
+.dir-a :where(.sr-only) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Cabecera de tabla de datos: etiqueta uppercase muy pequeña sobre hairline.
+   Idéntica en el balance de Patrimonio y en las dos tablas de Contabilidad. */
+.dir-a :where(.data-table) th {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+/* Campo dentro de una barra o rail de contexto: no se encoge ni parte la etiqueta.
+   Acompaña a `.context-rail` / `.context-bar`; estaba repetido en Patrimonio,
+   Presupuesto y Cierre. */
+.dir-a :where(.context-field) {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
 /* Rail de contexto: la fila de filtros bajo la cabecera de página. Es el patrón
    vivo del producto (Patrimonio, Presupuesto y Cierre lo tenían triplicado con las
    mismas 10 declaraciones bajo tres nombres distintos). A diferencia de

@@ -95,22 +95,35 @@ Estado: ~10,6k líneas en 13 ficheros. Los grandes:
 `app.css` (1508), `design-system.css` (1091), `budget.css` (1079),
 `movements.css` (1024).
 
-- [ ] **Auditar `style=` inline** en componentes (detectado en `budget/*`,
-      `NetWorthEvolutionChart`, `NetWorthView`): separar lo dinámico legítimo
-      (`:style` en charts) de lo que debe ir a clases/tokens.
-- [ ] **Catálogo de patrones repetidos** con prefijo por dominio (`a-mov-*`,
-      `a-nw-*`, `bdg-*`, `mc-*`): identificar los que son el mismo patrón visual
-      y promoverlos a clase compartida `.ui-*` en `app.css` (como se hizo con
-      `.ui-toast`, `.ui-chevron`). Empezar por: cabeceras de grupo, KPI bands,
-      filtros/toolbars, footers de modal.
-- [ ] Verificar que los nuevos patrones compartidos quedan documentados en el
-      visual-contract y que las clases por dominio que queden huérfanas se
-      eliminan.
-- [ ] No mover CSS por mover: solo consolidar lo que esté **duplicado** entre
-      ≥2 dominios.
+- [x] **Auditar `style=` inline.** No queda ninguno estático en el frontend SaaS.
+      Los 19 `:style` que hay son dinámicos legítimos (anchos de barra, posición
+      de tooltips y marcadores, color de serie, `--n` del stepper, panel de
+      `ASelect`).
+- [x] **Catálogo de patrones repetidos.** Medido con un script que compara los
+      cuerpos de regla normalizados entre dominios: 26 cuerpos idénticos, pero la
+      mayoría son coincidencias triviales de 3 declaraciones (`display: flex;
+      gap: 8px`) que no son el mismo patrón semántico — consolidarlas sería
+      justo el "mover CSS por mover" que prohíbe el último punto. Promovidos los
+      cuatro que sí lo son: `.filter-ctrl` (4 dominios), `.sr-only` (3),
+      `.data-table th` (4) y `.context-field` (3). Los tabs y el rail de contexto
+      ya se hicieron en el bloque G.
+- [x] Documentados en el visual-contract (regla 29) y eliminadas las clases de
+      dominio huérfanas (`.a-nw-sr-only`, `.a-budget-sr-only`, `.mc-sr-only`).
+- [x] Solo se consolidó lo duplicado entre ≥2 dominios.
 
-**DoD**: reducción neta de líneas duplicadas; sin `style=` inline no-dinámico;
-patrones compartidos en `app.css` + documentados.
+**Pendiente en C:** el FAB móvil es idéntico entre Patrimonio y Presupuesto
+(contenedor + menú), pero Contabilidad diverge estructuralmente (el propio botón
+es el FAB, 54×54). Es una consolidación mayor y dentro de media queries; no
+abrirla junto con las utilidades.
+
+**Bug corregido de paso:** `.sr-only` se usaba en `AccountView` y
+`PlanImprovementsView` pero **no estaba definida en ningún fichero** (tampoco la
+aporta Tailwind), así que un `<input type="file">` de importación y un anuncio
+`aria-live` se renderizaban visibles. Al promover la utilidad quedan ocultos.
+
+**DoD**: cumplido para utilidades. Reducción neta de líneas duplicadas, sin
+`style=` inline no-dinámico, patrones compartidos en `design-system.css` (no en
+`app.css`, que es la capa legacy) y documentados.
 
 ## D. Hueco estructural en `BaseModal` (slot de footer)
 

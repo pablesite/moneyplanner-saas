@@ -336,7 +336,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeDateDropdown, t
     </div>
 
     <div v-else class="a-mov-table-scroll">
-      <table class="a-mov-todos-table a-mov-operations-table">
+      <table class="data-table a-mov-todos-table a-mov-operations-table">
         <colgroup>
           <col class="a-mov-col-icon" />
           <col class="a-mov-col-concept" />

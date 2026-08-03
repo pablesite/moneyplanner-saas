@@ -107,6 +107,8 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 27. Especificidad del chrome compartido: `main.ts` importa el router antes que `design-system.css`, así que **el CSS de dominio se inyecta antes** y a igualdad de especificidad gana el design system. Por eso las clases compartidas que cada vista necesita ajustar (`.tabs`, `.tab`, `.context-rail`) se declaran dentro de `:where()`, con especificidad 0: así los ajustes responsive de cada dominio siguen ganando sin tener que inflar sus selectores. Si añades una clase compartida que las vistas vayan a matizar, envuélvela igual.
 28. Reserva de la tab bar móvil: la hace **solo** `.ui-shell-content-stage` con `padding-bottom: var(--shell-bottom-inset)` (regla 24). Las vistas no añaden su propio `padding-bottom` al final de la página: los cinco dominios lo hacían y quedaba doble reserva (~156 px en móvil). Los elementos anclados abajo (FABs, barras sticky, toasts) sí consumen el token en su `calc()`, porque están fuera del flujo.
 
+29. Utilidades compartidas (`design-system.css`, todas dentro de `:where()` por la regla 27): `.filter-ctrl` (chrome de los controles de filtro; `width`/`min-width` los decide cada vista), `.sr-only` (texto solo para lectores de pantalla), `.data-table` (cabecera `th` uppercase sobre hairline; se pone en la tabla o en su contenedor) y `.context-field` (campo de una barra o rail de contexto). Estaban duplicadas entre tres y cuatro dominios. Antes de crear una clase con prefijo de dominio para cualquiera de estos cuatro casos, usar la compartida.
+
 ## Usage Guidance
 
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.

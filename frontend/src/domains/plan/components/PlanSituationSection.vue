@@ -437,7 +437,7 @@ onMounted(() => {
             <p class="tier-sub">
               Lo que se repite todos los años, sin compromisos temporales ni movimientos puntuales.
             </p>
-            <div class="plan-tier-table plan-table-scroll">
+            <div class="data-table plan-tier-table plan-table-scroll">
               <table>
                 <tbody>
                   <tr>
@@ -494,7 +494,10 @@ onMounted(() => {
               </template>
               <template v-else>Tus gastos operativos superan a tus ingresos recurrentes.</template>
             </p>
-            <div v-if="committedDiagnosis.hasCommitments" class="plan-tier-table plan-table-scroll">
+            <div
+              v-if="committedDiagnosis.hasCommitments"
+              class="data-table plan-tier-table plan-table-scroll"
+            >
               <table>
                 <thead>
                   <tr>
@@ -560,7 +563,7 @@ onMounted(() => {
                 Agrupar en una decisión
               </RouterLink>
             </p>
-            <div class="plan-tier-table plan-table-scroll">
+            <div class="data-table plan-tier-table plan-table-scroll">
               <table>
                 <thead>
                   <tr>
