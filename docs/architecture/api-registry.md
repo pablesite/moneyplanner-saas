@@ -75,6 +75,8 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 
 Settlement configuration is opt-in and Core-owned. Annual income/expense payloads expose nullable
 `ownership_id`; annual expense payloads also expose nullable `settlement_account_id`.
+The SaaS frontend consumes these contracts from `/cierre-mensual`, `/people` and the annual budget
+forms; it does not duplicate settlement calculations or create ledger movements.
 
 | Method | Route | Description |
 |--------|-------|-------------|

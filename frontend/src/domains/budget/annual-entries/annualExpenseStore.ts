@@ -31,6 +31,8 @@ export type AnnualExpenseEntry = {
   category: ExpenseCategoryKey;
   subcategory: string;
   owner: string;
+  ownershipId?: number | null;
+  settlementAccountId?: number | null;
   expenseType: AnnualExpenseType;
   timeProfile: AnnualTimeProfile;
   cashflowRole: AnnualExpenseCashflowRole;
@@ -56,6 +58,8 @@ export type AnnualExpenseDraft = {
   category: ExpenseCategoryKey;
   subcategory: string;
   owner?: string;
+  ownershipId?: number | null;
+  settlementAccountId?: number | null;
   expenseType: AnnualExpenseType;
   timeProfile?: AnnualTimeProfile;
   cashflowRole?: AnnualExpenseCashflowRole;
@@ -82,6 +86,8 @@ type AnnualExpenseApiItem = {
   category: ExpenseCategoryKey;
   subcategory: string;
   owner_name: string;
+  ownership_id?: number | null;
+  settlement_account_id?: number | null;
   expense_type: AnnualExpenseType;
   time_profile?: AnnualTimeProfile;
   cashflow_role?: AnnualExpenseCashflowRole;
@@ -123,6 +129,9 @@ function mapApiItem(item: AnnualExpenseApiItem): AnnualExpenseEntry {
     category: item.category,
     subcategory: item.subcategory,
     owner: item.owner_name || '',
+    ownershipId: item.ownership_id == null ? null : Number(item.ownership_id),
+    settlementAccountId:
+      item.settlement_account_id == null ? null : Number(item.settlement_account_id),
     expenseType: item.expense_type,
     timeProfile,
     cashflowRole: item.cashflow_role ?? 'operating',
@@ -193,6 +202,8 @@ function createAnnualExpenseStore() {
         category: draft.category,
         subcategory: draft.subcategory,
         owner_name: normalizeOwnerName(draft.owner ?? ''),
+        ownership_id: draft.ownershipId ?? null,
+        settlement_account_id: draft.settlementAccountId ?? null,
         expense_type: draft.expenseType,
         ...(draft.timeProfile && draft.timeProfile !== 'structural_recurrent'
           ? { time_profile: draft.timeProfile }
@@ -248,6 +259,8 @@ function createAnnualExpenseStore() {
         category: draft.category,
         subcategory: draft.subcategory,
         owner_name: normalizeOwnerName(draft.owner ?? ''),
+        ownership_id: draft.ownershipId ?? null,
+        settlement_account_id: draft.settlementAccountId ?? null,
         expense_type: draft.expenseType,
         time_profile:
           draft.timeProfile ??

@@ -46,6 +46,7 @@ describe('people api (saas)', () => {
     await premiumPeopleApi.getOwnerships();
     await premiumPeopleApi.createSharedOwnership(splitsPayload);
     await premiumPeopleApi.updateSharedOwnership(5, splitsPayload);
+    await premiumPeopleApi.getAllocationPreview(5, 2026, 8);
     await premiumPeopleApi.deleteOwnership(5);
 
     expect(mocks.api.get).toHaveBeenCalledWith('/api/family-members/');
@@ -53,6 +54,9 @@ describe('people api (saas)', () => {
     expect(mocks.api.patch).toHaveBeenCalledWith('/api/family-members/1/', patchPayload);
     expect(mocks.api.delete).toHaveBeenCalledWith('/api/family-members/1/');
     expect(mocks.api.get).toHaveBeenCalledWith('/api/ownerships/');
+    expect(mocks.api.get).toHaveBeenCalledWith('/api/ownerships/5/allocation-preview/', {
+      params: { year: 2026, month: 8 },
+    });
     expect(mocks.api.post).toHaveBeenCalledWith('/api/ownerships/', {
       kind: 'shared',
       member: null,

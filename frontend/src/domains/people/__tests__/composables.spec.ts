@@ -130,6 +130,8 @@ describe('people composables (saas)', () => {
     ownerships.form.percents[2] = '40';
     await ownerships.submit();
     expect(store.updateSharedOwnership).toHaveBeenCalledWith(9, {
+      allocation_basis: 'explicit_split',
+      income_rules: [],
       splits: [
         { member_id: 1, percent: '60' },
         { member_id: 2, percent: '40' },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   AButton,
@@ -17,12 +17,30 @@ import {
   BudgetMonthlyCloseLiquiditySection,
   BudgetMonthlyCloseResultSection,
   MonthlyCloseHero,
+  SettlementConfigurationSheet,
 } from '@/domains/budget';
+import { peopleApi } from '@/domains/people/api';
 import { getMonthlyClosePlanImpact, type MonthlyClosePlanImpact } from '@/domains/budget';
 import '@/domains/budget/styles/monthly-close.css';
 import { useMonthlyCloseView } from './budget/useMonthlyCloseView';
 
 const router = useRouter();
+const settlementConfigurationOpen = ref(false);
+const activeAdultCount = ref(0);
+const showSettlementConfiguration = computed(() => activeAdultCount.value > 1);
+
+onMounted(() => {
+  void peopleApi
+    .getMembers()
+    .then(({ data }) => {
+      activeAdultCount.value = data.filter(
+        (member) => member.is_active && member.role === 'adult',
+      ).length;
+    })
+    .catch(() => {
+      activeAdultCount.value = 0;
+    });
+});
 
 const {
   fiscalYear,
@@ -437,10 +455,12 @@ function goToCloseStep(): void {
       :is-close-locked="isCloseLocked"
       :monthly-close-action-busy="monthlyCloseActionBusy"
       :has-distribution-suggestion="hasDistributionSuggestion"
+      :show-settlement-configuration="showSettlementConfiguration"
       :on-finalize-close="handleFinalizeClose"
       :on-reopen-close="handleReopenClose"
       :on-lock-close="handleLockClose"
       :on-apply-distribution="handleApplyDistribution"
+      :on-configure-settlement="() => (settlementConfigurationOpen = true)"
     />
 
     <section v-if="planImpact || planImpactLoading" class="sect mc-plan-impact">
@@ -492,5 +512,13 @@ function goToCloseStep(): void {
     </section>
 
     <AState v-if="isLoading" status="loading" layout="inline">Cargando cierre mensual…</AState>
+
+    <SettlementConfigurationSheet
+      v-if="settlementConfigurationOpen"
+      :open="settlementConfigurationOpen"
+      :year="fiscalYear"
+      :month="selectedExecutionMonth"
+      @close="settlementConfigurationOpen = false"
+    />
   </div>
 </template>

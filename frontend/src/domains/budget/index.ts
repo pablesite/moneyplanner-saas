@@ -1,5 +1,6 @@
 export * from './api';
 export * from './types';
+export * from './settlementTypes';
 export { default as BudgetAnnualSection } from './components/BudgetAnnualSection.vue';
 export { default as BudgetHero } from './components/BudgetHero.vue';
 export { default as BudgetYearStrip } from './components/BudgetYearStrip.vue';
@@ -8,3 +9,4 @@ export { default as BudgetMonthlyCloseExpenseSection } from './components/Budget
 export { default as BudgetMonthlyCloseIncomeSection } from './components/BudgetMonthlyCloseIncomeSection.vue';
 export { default as BudgetMonthlyCloseLiquiditySection } from './components/BudgetMonthlyCloseLiquiditySection.vue';
 export { default as BudgetMonthlyCloseResultSection } from './components/BudgetMonthlyCloseResultSection.vue';
+export { default as SettlementConfigurationSheet } from './components/SettlementConfigurationSheet.vue';

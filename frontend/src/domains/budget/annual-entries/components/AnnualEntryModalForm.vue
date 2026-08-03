@@ -17,6 +17,8 @@ type AnnualEntryModalFormModel = {
   subcategory: string;
   name: string;
   owner: string;
+  ownershipId?: string;
+  settlementAccountId?: string;
   timeProfile: string;
   cashflowRole: string;
   eventGroup: string;
@@ -62,6 +64,11 @@ const props = withDefaults(
     currencyOptions?: string[];
     eventGroupOptions?: ReadonlyArray<string>;
     eventGroupDatalistId?: string;
+    showSettlementFields?: boolean;
+    ownershipOptions?: ReadonlyArray<SelectOption>;
+    settlementAccountOptions?: ReadonlyArray<SelectOption>;
+    showSettlementDestination?: boolean;
+    settlementFieldsReadOnly?: boolean;
   }>(),
   {
     loading: false,
@@ -84,6 +91,11 @@ const props = withDefaults(
     currencyOptions: () => ['EUR', 'USD'],
     eventGroupOptions: () => [],
     eventGroupDatalistId: 'annual-entry-event-groups',
+    showSettlementFields: false,
+    ownershipOptions: () => [],
+    settlementAccountOptions: () => [],
+    showSettlementDestination: false,
+    settlementFieldsReadOnly: false,
   },
 );
 
@@ -116,6 +128,14 @@ const timeProfileSelectOptions = computed<ASelectItem[]>(() =>
 const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
   props.cashflowRoleOptions.map((option) => ({ value: option.value, label: option.label })),
 );
+const structuredOwnershipOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Selecciona la titularidad' },
+  ...props.ownershipOptions.map((option) => ({ value: option.value, label: option.label })),
+]);
+const destinationOptions = computed<ASelectItem[]>(() => [
+  { value: '', label: 'Selecciona la cuenta destino' },
+  ...props.settlementAccountOptions.map((option) => ({ value: option.value, label: option.label })),
+]);
 </script>
 
 <template>
@@ -179,6 +199,32 @@ const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
           @update:model-value="(v) => emit('patch', { owner: String(v) })"
         />
       </label>
+
+      <template v-if="showSettlementFields">
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Titularidad para liquidación</span>
+          <ASelect
+            class="select"
+            :model-value="form.ownershipId ?? ''"
+            :options="structuredOwnershipOptions"
+            :disabled="settlementFieldsReadOnly"
+            @update:model-value="(v) => emit('patch', { ownershipId: String(v) })"
+          />
+        </label>
+        <label v-if="showSettlementDestination" class="ui-item-form-field">
+          <span class="ui-item-form-label">Cuenta que recibirá la reserva</span>
+          <ASelect
+            class="select"
+            :model-value="form.settlementAccountId ?? ''"
+            :options="destinationOptions"
+            :disabled="settlementFieldsReadOnly"
+            @update:model-value="(v) => emit('patch', { settlementAccountId: String(v) })"
+          />
+        </label>
+        <p class="ui-section-subtitle md:col-span-2">
+          Estos datos reservan lo previsto antes de calcular el sobrante personal.
+        </p>
+      </template>
 
       <label class="ui-item-form-field">
         <span v-if="timeProfileFieldLabel" class="ui-item-form-label">{{

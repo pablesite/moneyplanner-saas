@@ -60,8 +60,21 @@ import {
   toApiErrorMessage,
 } from '@/views/budget/budgetAnnualEntriesPageApi';
 import { useBudgetAnnualEntriesFilters } from '@/views/budget/useBudgetAnnualEntriesFilters';
+import { getSettlementConfiguration } from '@/domains/budget/api';
+import type { SettlementConfiguration } from '@/domains/budget/settlementTypes';
+
+function normalizeAnnualFormAmount(amount: string, period: 'annual' | 'monthly'): string | number {
+  const parsed = Number(String(amount).replace(',', '.'));
+  if (!Number.isFinite(parsed)) return amount;
+  return period === 'monthly' ? Math.round(parsed * 12 * 100) / 100 : parsed;
+}
+
+function optionalFormNumber(value: string, enabled = true): number | null {
+  return enabled && String(value).trim() ? Number(value) : null;
+}
 
 export function useBudgetAnnualEntriesPage() {
+  const settlementConfiguration = ref<SettlementConfiguration | null>(null);
   const {
     store,
     assetCategories,
@@ -179,6 +192,7 @@ export function useBudgetAnnualEntriesPage() {
     subcategory: 'employee_salary',
     name: '',
     owner: '',
+    ownershipId: '',
     isRecurrent: true,
     timeProfile: 'structural_recurrent' as IncomeTimeProfile,
     cashflowRole: 'operating' as AnnualIncomeCashflowRole,
@@ -198,6 +212,8 @@ export function useBudgetAnnualEntriesPage() {
     subcategory: 'living_expenses',
     name: '',
     owner: '',
+    ownershipId: '',
+    settlementAccountId: '',
     isRecurrent: true,
     timeProfile: 'structural_recurrent' as ExpenseTimeProfile,
     cashflowRole: 'operating' as AnnualExpenseCashflowRole,
@@ -218,6 +234,8 @@ export function useBudgetAnnualEntriesPage() {
     subcategory: string;
     name: string;
     owner: string;
+    ownershipId: string;
+    settlementAccountId: string;
     timeProfile: string;
     cashflowRole: string;
     eventGroup: string;
@@ -406,6 +424,36 @@ export function useBudgetAnnualEntriesPage() {
       }
     }
     return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
+  });
+
+  const settlementOwnershipOptions = computed(() =>
+    (store.ownerships ?? []).map((ownership) => ({
+      value: String(ownership.id),
+      label:
+        ownership.kind === 'individual' && ownership.member
+          ? ownership.member.name
+          : sharedOwnershipLabel(ownership.splits ?? []),
+    })),
+  );
+  const showSettlementFields = computed(
+    () =>
+      Boolean(settlementConfiguration.value?.is_enabled) ||
+      Boolean(annualIncomeForm.ownershipId) ||
+      Boolean(annualExpenseForm.ownershipId) ||
+      Boolean(annualExpenseForm.settlementAccountId),
+  );
+  const settlementAccountOptions = computed(() => {
+    const ownershipId = Number(annualExpenseForm.ownershipId);
+    const assetsById = new Map(store.assets.map((asset) => [asset.id, asset]));
+    return (settlementConfiguration.value?.accounts ?? [])
+      .filter(
+        (account) => account.role === 'operating' || account.role === 'allocation_destination',
+      )
+      .filter((account) => {
+        if (!Number.isInteger(ownershipId)) return true;
+        return assetsById.get(account.asset_id)?.ownership_ref === ownershipId;
+      })
+      .map((account) => ({ value: String(account.id), label: account.asset_name }));
   });
 
   const sharedOwnershipAllocationsByLabel = computed(() => {
@@ -1095,6 +1143,7 @@ export function useBudgetAnnualEntriesPage() {
     annualIncomeForm.subcategory = 'employee_salary';
     annualIncomeForm.name = '';
     annualIncomeForm.owner = ownerOptions.value.length === 1 ? (singleOwner?.value ?? '') : '';
+    annualIncomeForm.ownershipId = '';
     annualIncomeForm.isRecurrent = true;
     annualIncomeForm.timeProfile = 'structural_recurrent';
     annualIncomeForm.cashflowRole = defaultIncomeCashflowRole(annualIncomeForm.category);
@@ -1115,6 +1164,8 @@ export function useBudgetAnnualEntriesPage() {
     annualExpenseForm.subcategory = 'living_expenses';
     annualExpenseForm.name = '';
     annualExpenseForm.owner = ownerOptions.value.length === 1 ? (singleOwner?.value ?? '') : '';
+    annualExpenseForm.ownershipId = '';
+    annualExpenseForm.settlementAccountId = '';
     annualExpenseForm.isRecurrent = true;
     annualExpenseForm.timeProfile = 'structural_recurrent';
     annualExpenseForm.cashflowRole = defaultExpenseCashflowRole(
@@ -1142,6 +1193,7 @@ export function useBudgetAnnualEntriesPage() {
       annualIncomeForm.subcategory = entry.subcategory;
       annualIncomeForm.name = entry.name;
       annualIncomeForm.owner = entry.owner || '';
+      annualIncomeForm.ownershipId = entry.ownershipId == null ? '' : String(entry.ownershipId);
       annualIncomeForm.isRecurrent = entry.incomeType === 'recurrent';
       annualIncomeForm.timeProfile = entry.timeProfile;
       annualIncomeForm.cashflowRole = entry.cashflowRole;
@@ -1185,6 +1237,10 @@ export function useBudgetAnnualEntriesPage() {
       );
       annualExpenseForm.name = sourceEntry.name;
       annualExpenseForm.owner = sourceEntry.owner || '';
+      annualExpenseForm.ownershipId =
+        sourceEntry.ownershipId == null ? '' : String(sourceEntry.ownershipId);
+      annualExpenseForm.settlementAccountId =
+        sourceEntry.settlementAccountId == null ? '' : String(sourceEntry.settlementAccountId);
       annualExpenseForm.isRecurrent = sourceEntry.expenseType === 'recurrent';
       annualExpenseForm.timeProfile = sourceEntry.timeProfile;
       annualExpenseForm.cashflowRole = sourceEntry.cashflowRole;
@@ -1804,41 +1860,35 @@ export function useBudgetAnnualEntriesPage() {
   });
 
   async function submitAnnualIncome(): Promise<void> {
-    const rawAmount = Number(String(annualIncomeForm.amountAnnual).replace(',', '.'));
-    const normalizedAmount = Number.isFinite(rawAmount)
-      ? annualIncomeForm.amountInputPeriod === 'monthly'
-        ? Math.round(rawAmount * 12 * 100) / 100
-        : rawAmount
-      : annualIncomeForm.amountAnnual;
+    const normalizedAmount = normalizeAnnualFormAmount(
+      annualIncomeForm.amountAnnual,
+      annualIncomeForm.amountInputPeriod,
+    );
 
     const draft = {
       name: annualIncomeForm.name,
       category: annualIncomeForm.category,
       subcategory: annualIncomeForm.subcategory,
       owner: annualIncomeForm.owner,
+      ownershipId: annualIncomeForm.ownershipId ? Number(annualIncomeForm.ownershipId) : null,
       incomeType: (annualIncomeForm.isRecurrent ? 'recurrent' : 'one_off') as
         'recurrent' | 'one_off',
       timeProfile: annualIncomeForm.timeProfile,
       cashflowRole: defaultIncomeCashflowRole(annualIncomeForm.category),
       eventGroup: annualIncomeForm.eventGroup,
-      targetMonth: String(annualIncomeForm.targetMonth).trim()
-        ? Number(annualIncomeForm.targetMonth)
-        : null,
-      termEndMonth:
-        annualIncomeForm.timeProfile === 'term_recurrent' &&
-        String(annualIncomeForm.termEndMonth).trim()
-          ? Number(annualIncomeForm.termEndMonth)
-          : null,
-      termStartMonth:
-        annualIncomeForm.timeProfile === 'term_recurrent' &&
-        String(annualIncomeForm.termStartMonth).trim()
-          ? Number(annualIncomeForm.termStartMonth)
-          : null,
-      termEndYear:
-        annualIncomeForm.timeProfile === 'term_recurrent' &&
-        String(annualIncomeForm.termEndYear).trim()
-          ? Number(annualIncomeForm.termEndYear)
-          : null,
+      targetMonth: optionalFormNumber(annualIncomeForm.targetMonth),
+      termEndMonth: optionalFormNumber(
+        annualIncomeForm.termEndMonth,
+        annualIncomeForm.timeProfile === 'term_recurrent',
+      ),
+      termStartMonth: optionalFormNumber(
+        annualIncomeForm.termStartMonth,
+        annualIncomeForm.timeProfile === 'term_recurrent',
+      ),
+      termEndYear: optionalFormNumber(
+        annualIncomeForm.termEndYear,
+        annualIncomeForm.timeProfile === 'term_recurrent',
+      ),
       amountInputPeriod: annualIncomeForm.amountInputPeriod,
       amountAnnual: String(normalizedAmount),
       fiscalYear: resolveDraftFiscalYear(annualIncomeForm.timeProfile, annualIncomeForm.fiscalYear),
@@ -1864,42 +1914,53 @@ export function useBudgetAnnualEntriesPage() {
 
   async function submitAnnualExpense(): Promise<void> {
     normalizeExpenseCashflowRoleForCurrentTimeProfile();
-    const rawAmount = Number(String(annualExpenseForm.amountAnnual).replace(',', '.'));
-    const normalizedAmount = Number.isFinite(rawAmount)
-      ? annualExpenseForm.amountInputPeriod === 'monthly'
-        ? Math.round(rawAmount * 12 * 100) / 100
-        : rawAmount
-      : annualExpenseForm.amountAnnual;
+    if (
+      annualExpenseForm.timeProfile !== 'one_off' &&
+      annualExpenseForm.settlementAccountId &&
+      !settlementAccountOptions.value.some(
+        (option) => option.value === annualExpenseForm.settlementAccountId,
+      )
+    ) {
+      annualExpenseError.value =
+        'La titularidad del gasto no coincide con la cuenta elegida para reservarlo.';
+      return;
+    }
+    const normalizedAmount = normalizeAnnualFormAmount(
+      annualExpenseForm.amountAnnual,
+      annualExpenseForm.amountInputPeriod,
+    );
 
     const draft = {
       name: annualExpenseForm.name,
       category: annualExpenseForm.category,
       subcategory: annualExpenseForm.subcategory,
       owner: annualExpenseForm.owner,
+      ownershipId: annualExpenseForm.ownershipId ? Number(annualExpenseForm.ownershipId) : null,
+      settlementAccountId:
+        annualExpenseForm.timeProfile !== 'one_off' && annualExpenseForm.settlementAccountId
+          ? Number(annualExpenseForm.settlementAccountId)
+          : null,
       expenseType: (annualExpenseForm.isRecurrent ? 'recurrent' : 'one_off') as
         'recurrent' | 'one_off',
       timeProfile: annualExpenseForm.timeProfile,
       cashflowRole: annualExpenseForm.cashflowRole,
       eventGroup: annualExpenseForm.eventGroup,
-      targetMonth:
-        annualExpenseForm.timeProfile === 'one_off' && String(annualExpenseForm.targetMonth).trim()
-          ? Number(annualExpenseForm.targetMonth)
-          : null,
-      termEndYear:
-        annualExpenseForm.timeProfile === 'term_recurrent' &&
-        String(annualExpenseForm.termEndYear).trim()
-          ? Number(annualExpenseForm.termEndYear)
-          : null,
-      termStartMonth:
-        annualExpenseForm.timeProfile === 'term_recurrent' &&
-        String(annualExpenseForm.termStartMonth).trim()
-          ? Number(annualExpenseForm.termStartMonth)
-          : null,
-      termEndMonth:
-        annualExpenseForm.timeProfile === 'term_recurrent' &&
-        String(annualExpenseForm.termEndMonth).trim()
-          ? Number(annualExpenseForm.termEndMonth)
-          : null,
+      targetMonth: optionalFormNumber(
+        annualExpenseForm.targetMonth,
+        annualExpenseForm.timeProfile === 'one_off',
+      ),
+      termEndYear: optionalFormNumber(
+        annualExpenseForm.termEndYear,
+        annualExpenseForm.timeProfile === 'term_recurrent',
+      ),
+      termStartMonth: optionalFormNumber(
+        annualExpenseForm.termStartMonth,
+        annualExpenseForm.timeProfile === 'term_recurrent',
+      ),
+      termEndMonth: optionalFormNumber(
+        annualExpenseForm.termEndMonth,
+        annualExpenseForm.timeProfile === 'term_recurrent',
+      ),
       amountInputPeriod: annualExpenseForm.amountInputPeriod,
       amountAnnual: String(normalizedAmount),
       fiscalYear: resolveDraftFiscalYear(
@@ -1921,6 +1982,8 @@ export function useBudgetAnnualEntriesPage() {
             category: draft.category,
             subcategory: draft.subcategory,
             owner_name: draft.owner,
+            ownership_id: draft.ownershipId,
+            settlement_account_id: draft.settlementAccountId,
             expense_type: draft.expenseType,
             time_profile: draft.timeProfile,
             cashflow_role: draft.cashflowRole,
@@ -2279,6 +2342,9 @@ export function useBudgetAnnualEntriesPage() {
     (year) => {
       loadAnnualIncome(year);
       loadAnnualExpense(year);
+      void getSettlementConfiguration()
+        .then((configuration) => (settlementConfiguration.value = configuration))
+        .catch(() => (settlementConfiguration.value = null));
     },
     { immediate: true },
   );
@@ -2385,6 +2451,9 @@ export function useBudgetAnnualEntriesPage() {
     openIncomeModal,
     openLiabilityModal,
     ownerOptions,
+    settlementOwnershipOptions,
+    settlementAccountOptions,
+    showSettlementFields,
     patchAnnualExpenseForm,
     patchAnnualIncomeForm,
     prettyError,

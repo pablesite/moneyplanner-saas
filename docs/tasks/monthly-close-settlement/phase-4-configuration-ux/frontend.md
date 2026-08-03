@@ -77,7 +77,7 @@ wizard obligatorio ni degradar la vista para usuarios individuales o de bolsa co
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck
-docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test -- --run
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test:unit -- --run
 ```
 
 Manual:
@@ -107,13 +107,19 @@ Manual:
 
 ## Completion Criteria
 
-- [ ] Disabled users see no new mandatory flow.
-- [ ] Dynamic preview exposes source period, totals, exclusions and effective percentages.
-- [ ] Configuration cannot activate while readiness has blocking issues.
-- [ ] Budget ownership/destination fields preserve form state on backend errors.
-- [ ] Wallet split requires explicit confirmation and is not silently repeated.
+- [x] Disabled users see no new mandatory flow.
+- [x] Dynamic preview exposes source period, totals, exclusions and effective percentages.
+- [x] Configuration cannot activate while readiness has blocking issues.
+- [x] Budget ownership/destination fields preserve form state on backend errors.
+- [x] Wallet split requires explicit confirmation and is not silently repeated.
 - [ ] Desktop and 360 px mobile reviews pass.
-- [ ] All validation commands pass.
-- [ ] All required documentation updates done.
+- [x] All validation commands pass.
+- [x] All required documentation updates done.
 - [ ] Spec moved to `terminados/`.
 - [ ] Commit created (Conventional Commits).
+
+## Implementation note
+
+La implementación y la revisión responsive por código están completas. El smoke autenticado confirma
+`/cierre-mensual` sin overflow a 1440 y 360 px, pero el entorno local no contiene una cuenta SaaS con
+varios miembros: la acción opt-in y su sheet todavía requieren revisión visual con datos multi-member.

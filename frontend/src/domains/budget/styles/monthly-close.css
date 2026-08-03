@@ -5,6 +5,91 @@
   gap: 12px;
 }
 
+.mc-settlement-body {
+  display: grid;
+  gap: 18px;
+}
+
+.mc-settlement-intro,
+.mc-settlement-section {
+  display: grid;
+  gap: 10px;
+}
+
+.mc-settlement-intro {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+    var(--surface);
+}
+
+.mc-settlement-intro h3,
+.mc-settlement-section h4,
+.mc-settlement-intro p,
+.mc-settlement-section p {
+  margin: 0;
+}
+
+.mc-settlement-section {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mc-settlement-field {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mc-settlement-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+}
+
+.mc-settlement-wallet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.mc-settlement-wallet > .mc-settlement-check {
+  grid-column: 1 / -1;
+}
+
+.mc-settlement-wallet-summary {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.mc-settlement-readiness ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.mc-settlement-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .mc-settlement-wallet {
+    grid-template-columns: 1fr;
+  }
+
+  .mc-settlement-actions > .btn {
+    flex: 1 1 100%;
+  }
+}
+
 .mc-plan-impact {
   display: grid;
   gap: 14px;

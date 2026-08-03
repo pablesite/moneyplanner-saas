@@ -1,5 +1,10 @@
 import { coreApi } from '@/lib/api';
 import type { MonthlyClosePlanImpact, MonthlyCloseStateResponse } from './types';
+import type {
+  SettlementConfiguration,
+  SettlementConfigurationWrite,
+  SettlementReadiness,
+} from './settlementTypes';
 
 export const budgetApi = coreApi;
 export { toApiErrorMessage as toBudgetErrorMessage } from '@/lib/errors';
@@ -46,4 +51,43 @@ export async function getMonthlyClosePlanImpact(
     { validateStatus: (status) => status === 200 || status === 204 },
   );
   return response.status === 204 ? null : response.data;
+}
+
+export async function getSettlementConfiguration(): Promise<SettlementConfiguration> {
+  const response = await coreApi.get<SettlementConfiguration>(
+    '/api/budget/settlement/configuration/',
+  );
+  return response.data;
+}
+
+export async function saveSettlementConfiguration(
+  payload: SettlementConfigurationWrite,
+): Promise<SettlementConfiguration> {
+  const response = await coreApi.put<SettlementConfiguration>(
+    '/api/budget/settlement/configuration/',
+    payload,
+  );
+  return response.data;
+}
+
+export async function getSettlementReadiness(
+  year: number,
+  month: number,
+): Promise<SettlementReadiness> {
+  const response = await coreApi.get<SettlementReadiness>('/api/budget/settlement/readiness/', {
+    params: { year, month },
+  });
+  return response.data;
+}
+
+export async function activateSettlement(activationDate: string): Promise<SettlementConfiguration> {
+  const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/activate/', {
+    activation_date: activationDate,
+  });
+  return response.data;
+}
+
+export async function disableSettlement(): Promise<SettlementConfiguration> {
+  const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/disable/');
+  return response.data;
 }
