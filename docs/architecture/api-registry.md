@@ -83,6 +83,12 @@ Settlement configuration is opt-in and Core-owned. Annual income/expense payload
 | `POST` | `/api/budget/settlement/activate/` | Activates a ready profile and captures its immutable member/account opening baseline; repeated calls are idempotent. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
 
+`GET /api/budget/monthly-close/{year}/{month}/` now includes additive `ownership_settlement`.
+Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with
+allocations, per-member economic balances, account targets, recurrent reserves, transaction-traced
+compensations, transfer recommendations, reconciliation and quality. Finalized/locked closes return
+the immutable snapshot as `status=finalized`; no recommendation creates a ledger movement in v1.
+
 ### Net Worth — `/api/net-worth/`
 | Method | Route | Description |
 |--------|-------|-------------|
