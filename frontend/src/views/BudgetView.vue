@@ -5,6 +5,7 @@ import {
   APageHead,
   AInfoHint,
   AMetaPill,
+  ASectHead,
   ASelect,
   AState,
   AToast,
@@ -278,16 +279,15 @@ function setEntryViewMode(mode: string): void {
 
     <!-- Tab Sugerencias (acciones deshabilitadas — sin backing en el motor). -->
     <section v-if="presentationView === 'sugg'" class="sect">
-      <div class="sect-head">
-        <div class="title-hint">
-          <h2 class="sect-title">Sugerencias de presupuesto</h2>
+      <ASectHead title="Sugerencias de presupuesto">
+        <template #hint>
           <AInfoHint label="Qué son las sugerencias">
             Importes recomendados para tus partidas a partir de la media de lo que has ejecutado en
             los últimos meses. Te ayudan a ajustar el presupuesto a tu gasto real. Aplicar/Ignorar
             llegará próximamente.
           </AInfoHint>
-        </div>
-      </div>
+        </template>
+      </ASectHead>
 
       <AState v-if="budgetSuggestionsError" status="error">{{ budgetSuggestionsError }}</AState>
       <AState v-else-if="budgetSuggestionsLoading" status="loading" layout="inline"

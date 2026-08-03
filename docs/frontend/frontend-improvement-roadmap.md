@@ -161,24 +161,31 @@ no-sticky, pero es un parche). Cada modal resuelve sus acciones a mano
 
 **DoD**: cumplido salvo `ItemForm`, excluido a propósito con el motivo arriba.
 
-## E. Pasada por vista (incremental)
+## E. Pasada por vista (incremental) — absorbida
 
-Una vista por iteración, aplicando A–D donde toque. Orden sugerido por
-esfuerzo/impacto (ajustable):
+Los bloques A–D, F y G se aplicaron de forma transversal a todos los dominios,
+así que la pasada vista por vista se quedó casi sin contenido. Medido con los
+greps de control de la skill sobre Presupuesto, Cierre, Personas y Datos
+auxiliares: **cero** `<button class="btn">` crudos, cero `<select>` nativos,
+cero `style=` estáticos, cero `Set` propios de colapso y cero formatters
+locales. Lo único que quedaba eran tres `sect-head` a mano.
 
-- [ ] **Presupuesto** (`BudgetView` + `domains/budget`) — CSS grande (1079) y
-      formatters locales; buen primer candidato.
-- [ ] **Cierre mensual** (`MonthlyCloseView`, `monthly-close.css`) — bloques
-      colapsables y KPI bands reutilizables.
+- [x] **Presupuesto** (`BudgetView` + `domains/budget`) — `ASectHead` en la
+      cabecera de Sugerencias.
+- [x] **Cierre mensual** (`MonthlyCloseView`) — `ASectHead` en la cabecera de
+      Impacto en Mi Plan.
 - [x] **Estado / Home / Guía** — retirado del SaaS en Financial Plan Phase 5;
       `/estado-financiero` redirige a `/plan`.
-- [ ] **Personas** (`domains/people`) — modales (sección D).
-- [ ] **Datos auxiliares** (`domains/aux-data`).
+- [x] **Personas** (`domains/people`) — sin deuda: sus modales ya se migraron al
+      slot de footer en la tanda que abrió el bloque D.
+- [x] **Datos auxiliares** (`domains/aux-data`) — sin deuda; ya consumía
+      `AChevron`, `useCollapsibleGroups`, `AToast` y `AButton`.
 
-Para cada vista, checklist mínima:
-- [ ] Dedup utilidades (A) · [ ] Primitivas UI (B) · [ ] CSS compartido (C) ·
-      [ ] Modales al slot de footer (D) · [ ] Estados loading/empty/error/success
-      · [ ] Validación Docker + tests verdes.
+**Excepción documentada:** `BudgetAnnualSection` mantiene su `sect-head` a mano
+porque `.bdg-section-title` es otro tratamiento (16px con barra de color según
+ingreso/gasto), no el `.sect-title` estándar; `ASectHead` fija la clase del `h2`
+y forzarlo sería calzar el patrón. Mismo criterio que `NetWorthTrajectoryChart`
+en el bloque F.
 
 ## F. Alineación de Mi Plan con el design system
 

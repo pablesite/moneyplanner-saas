@@ -6,6 +6,7 @@ import {
   APageHead,
   AMetaPill,
   AStepper,
+  ASectHead,
   ASelect,
   AState,
   type ASelectItem,
@@ -443,15 +444,11 @@ function goToCloseStep(): void {
     />
 
     <section v-if="planImpact || planImpactLoading" class="sect mc-plan-impact">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Impacto en Mi Plan</p>
-          <h2 class="sect-title">Lectura del cierre mensual</h2>
-          <p class="sect-sub">
-            Se muestra solo cuando existe un plan financiero y el cierre ya está finalizado.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Impacto en Mi Plan"
+        title="Lectura del cierre mensual"
+        subtitle="Se muestra solo cuando existe un plan financiero y el cierre ya está finalizado."
+      />
       <AState v-if="planImpactLoading" status="loading" layout="inline">
         Calculando impacto en el plan...
       </AState>
