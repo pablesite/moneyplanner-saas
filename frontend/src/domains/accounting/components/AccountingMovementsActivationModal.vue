@@ -19,7 +19,11 @@ defineProps({
     panel-class="dir-a dir-a-sheet"
     @close="page.showActivationModal = false"
   >
+    <!-- El submit vive en el footer del panel, fuera del área con scroll: se enlaza
+         al form por `id` + atributo `form`, que es lo que permite sacarlo del
+         <form> sin duplicar el handler. -->
     <form
+      id="a-mov-activation-form"
       class="ui-accounting-form ui-accounting-modal-form"
       @submit.prevent="page.activatePositionFromModal"
     >
@@ -105,13 +109,17 @@ defineProps({
         de apertura contra patrimonio neto contable.
       </p>
 
-      <div class="ui-accounting-submit-row">
-        <p class="ui-accounting-inline-note">
-          Solo se muestran posiciones del patrimonio con `tracking_mode=manual`.
-        </p>
+      <p class="ui-accounting-inline-note">
+        Solo se muestran posiciones del patrimonio con `tracking_mode=manual`.
+      </p>
+    </form>
+
+    <template #footer>
+      <div class="ui-modal-foot-actions">
         <AButton
           variant="primary"
           type="submit"
+          form="a-mov-activation-form"
           :disabled="page.accountActivationLoading || !page.selectedActivationIds.length"
         >
           {{
@@ -121,6 +129,6 @@ defineProps({
           }}
         </AButton>
       </div>
-    </form>
+    </template>
   </BaseModal>
 </template>

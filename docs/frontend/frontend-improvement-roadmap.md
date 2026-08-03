@@ -142,19 +142,24 @@ no-sticky, pero es un parche). Cada modal resuelve sus acciones a mano
       borde superior, acciones a la derecha, safe-area) en `app.css`.
 - [x] Migrados los modales **auto-contenidos sencillos** al slot de footer:
       `FamilyMemberManager` (crear + editar) y `OwnershipManager` (people).
-- [ ] **Migrar QuickEntry y `AccountingMovementsActivationModal`**: su botón de
-      envío es `type="submit"` dentro de un `<form>` en el slot por defecto.
-      Mover el footer fuera del form requiere dar `id` al `<form>` y `form="<id>"`
-      al botón (atributo HTML `form`), o que `AButton` reenvíe `form`. Acotado
-      pero toca componentes grandes.
-- [ ] **Migrar `ItemForm`**: lo renderiza el wrapper `NetWorthItemModals` (el
-      `BaseModal` vive en el wrapper, `ItemForm` es contenido por defecto y su
-      footer depende de su estado interno). Opciones: exponer un slot con scope
-      desde `ItemForm`, o `Teleport` a un objetivo del panel. Hoy funciona
-      (footer no-sticky), así que es consistencia, no bug.
+- [x] **Migrados QuickEntry y `AccountingMovementsActivationModal`.** La técnica
+      documentada funciona sin tocar `AButton`: se da `id` al `<form>` y el botón
+      lleva el atributo HTML `form="<id>"`, que Vue reenvía solo porque `AButton`
+      tiene un único nodo raíz. `.qe-footer` era el parche que describe este
+      bloque —sticky dentro del scroll, replicando borde, fondo, backdrop y
+      safe-area con márgenes negativos— y queda reducido a `display: grid; gap`.
+      `.ui-accounting-submit-row` desaparece (huérfana), y con ella su override
+      `.dir-a-sheet .ui-accounting-submit-row` en el design system.
+- [ ] **`ItemForm`: no migrar por ahora (decisión).** Su footer depende de ~14
+      refs de error internas, así que sacarlo del `<form>` exige o un slot con
+      scope que las exponga todas, o cambiar el contrato de `BaseModal` para que
+      `ItemForm` haga `Teleport` a un objetivo del panel. Es un refactor
+      arquitectónico del formulario más grande de la app (~2,6k líneas, 3
+      modales) a cambio de consistencia: **el bug ya no existe**, el sticky que
+      tapaba el último campo se arregló pasándolo a no-sticky. Reabrir solo si se
+      trocea `ItemForm` o si el footer que hace scroll llega a molestar.
 
-**DoD parcial**: primitiva entregada y validada con los modales de people. Resto
-pendiente con técnica documentada arriba.
+**DoD**: cumplido salvo `ItemForm`, excluido a propósito con el motivo arriba.
 
 ## E. Pasada por vista (incremental)
 

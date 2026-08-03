@@ -380,7 +380,11 @@ const quickEntryHint = computed(() => {
       Necesitas al menos una cuenta de liquidez para registrar movimientos.
     </div>
 
+    <!-- El submit vive en el footer del panel, fuera del área con scroll: se enlaza
+         al form por `id` + atributo `form`, que es lo que permite sacarlo del
+         <form> sin duplicar el handler. -->
     <form
+      id="a-mov-quick-entry-form"
       class="ui-accounting-form ui-accounting-transaction-form ui-accounting-modal-form qe-form"
       @submit.prevent="page.submitQuickEntryFromModal"
     >
@@ -913,7 +917,9 @@ const quickEntryHint = computed(() => {
           </label>
         </div>
       </details>
+    </form>
 
+    <template #footer>
       <div class="qe-footer">
         <p v-if="page.error" class="qe-error" role="alert">
           <span class="qe-error-icon" aria-hidden="true">!</span>
@@ -928,6 +934,7 @@ const quickEntryHint = computed(() => {
         <AButton
           variant="primary"
           type="submit"
+          form="a-mov-quick-entry-form"
           block
           :disabled="page.transactionCreationLoading || !page.quickEntryReady"
         >
@@ -940,6 +947,6 @@ const quickEntryHint = computed(() => {
           }}
         </AButton>
       </div>
-    </form>
+    </template>
   </BaseModal>
 </template>

@@ -1225,12 +1225,6 @@
   gap: 0 24px;
 }
 
-.dir-a-sheet .ui-accounting-submit-row {
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  margin-top: 8px;
-}
-
 /* OJO: estos overrides usan @media (viewport), no @container. El contenedor de
    query es el propio `.dir-a` (container-type: inline-size), y un container query
    NO puede estilizar su propio contenedor — así que `@container page { .dir-a {…} }`
