@@ -104,54 +104,11 @@
 /* Las acciones de configuración son secundarias al resumen. Viven con la
    navegación de la vista, agrupadas en un menú compacto, para no abrir una fila
    entera bajo el título en móvil. */
+/* Solo la posición dentro de la barra de tabs: el chrome del menú (caja, sombra,
+   filas) lo aporta `ARowMenu` vía `design-system.css`. */
 .plan-options {
-  position: relative;
   flex: 0 0 auto;
   margin-right: 4px;
-}
-
-.plan-options-trigger {
-  min-width: 40px;
-  min-height: 40px;
-  padding: 0 10px;
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 0.86rem;
-  letter-spacing: 0.08em;
-}
-
-.plan-options-menu {
-  position: absolute;
-  z-index: 24;
-  top: calc(100% + 8px);
-  right: 0;
-  display: grid;
-  min-width: 196px;
-  padding: 6px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: var(--panel-solid, var(--panel));
-  box-shadow: 0 14px 34px rgb(0 0 0 / 28%);
-}
-
-.plan-options-menu :is(button, a) {
-  display: flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.84rem;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.plan-options-menu :is(button, a):hover,
-.plan-options-menu :is(button, a):focus-visible {
-  background: var(--panel-hover, rgb(255 255 255 / 6%));
 }
 
 /* Lectura inmediata mientras se ajusta una Decisión: el número grande es el año
@@ -2739,15 +2696,6 @@
 .plan-scenario-notice p {
   margin: 0;
   color: var(--muted);
-}
-
-.plan-scenario-notice.success {
-  border-color: var(--accent-line);
-  background: var(--pos-soft);
-}
-
-.plan-scenario-notice.success p {
-  color: var(--text);
 }
 
 .plan-scenario-notice-actions {

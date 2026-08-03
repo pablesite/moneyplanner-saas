@@ -1046,43 +1046,8 @@
   text-align: right;
 }
 
-.a-nw-page .row-menu-wrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.a-nw-page .row-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 4;
-  display: grid;
-  min-width: 180px;
-  padding: 6px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--surface) 96%, transparent);
-  box-shadow: 0 16px 32px rgb(0 0 0 / 0.24);
-}
-
-.a-nw-page .row-menu button {
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-
-.a-nw-page .row-menu button:hover {
-  background: var(--hover);
-}
-
-.a-nw-page .row-menu button.danger {
-  color: color-mix(in oklab, var(--neg) 72%, white);
-}
+/* El chrome de `ARowMenu` vive en `design-system.css`: estaba aquí, acotado a
+   `.a-nw-page`, así que la misma primitiva se pintaba sin caja en Contabilidad. */
 
 .a-nw-modal-panel {
   max-width: 1080px;

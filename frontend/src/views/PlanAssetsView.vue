@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  type ASelectItem,
+} from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { usePlan } from '@/domains/plan';
 import type { ClassifiedPlanAsset, PlanAssetFunction } from '@/domains/plan';
 import { assetFunctionLabel, assetFunctionLabels } from '@/domains/plan/scenarioTemplates';
@@ -29,9 +38,8 @@ const functionOrder: PlanAssetFunction[] = [
 
 // Todo plegado salvo "Sin clasificar" (lo único accionable de entrada): con
 // decenas de posiciones, la página pasaba de las 9.000px en móvil.
-const collapsedGroups = ref<Set<PlanAssetFunction>>(
-  new Set(functionOrder.filter((fn) => fn !== 'unknown')),
-);
+const { collapsed: collapsedGroups, toggle: toggleGroup } = useCollapsibleGroups();
+collapsedGroups.value = new Set(functionOrder.filter((fn) => fn !== 'unknown'));
 
 const summary = computed(() => {
   if (!classification.value) return [];
@@ -105,13 +113,6 @@ function clearFilters(): void {
   search.value = '';
   activeFunction.value = null;
   reviewFilter.value = 'all';
-}
-
-function toggleGroup(fn: PlanAssetFunction): void {
-  const next = new Set(collapsedGroups.value);
-  if (next.has(fn)) next.delete(fn);
-  else next.add(fn);
-  collapsedGroups.value = next;
 }
 
 function functionOptions(asset: ClassifiedPlanAsset): ASelectItem[] {
@@ -253,11 +254,11 @@ onMounted(() => {
               :aria-expanded="!isGroupCollapsed(group.fn)"
               @click="toggleGroup(group.fn)"
             >
+              <AChevron :expanded="!isGroupCollapsed(group.fn)" />
               <strong>{{ group.label }}</strong>
               <span>
                 {{ group.items.length }} activo{{ group.items.length === 1 ? '' : 's' }} ·
-                {{ formatMoney(group.total) }} ·
-                {{ isGroupCollapsed(group.fn) ? 'Ver' : 'Ocultar' }}
+                {{ formatMoney(group.total) }}
               </span>
             </button>
             <ul v-if="!isGroupCollapsed(group.fn)" class="plan-assets-list">

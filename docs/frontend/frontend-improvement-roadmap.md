@@ -193,12 +193,23 @@ son una excepción documentada y validada con la skill `dataviz`.
       `AInfoHint` + leyenda, estructura distinta), y `PlanFoundations` usa
       `.plan-block-eyebrow` (muted) en vez de `.eyebrow` (accent), así que
       migrarlo cambiaría el color — va con F4.
-- [ ] **F3 — Helpers y menús.** `useCollapsibleGroups` (3 reimplementaciones con
-      `Set` propio: `PlanAssetsView`, `PlanPlannedDecisionView` ×2), `AChevron` en
-      `PlanAssetsView` (hoy texto "Ver/Ocultar", mientras `PlanSituationSection`
-      sí usa la primitiva), `ARowMenu` en `PlanView` (reimplementa lógica de
-      click-fuera + 40 líneas de CSS de popover), `AToast` en vez de
-      `.plan-scenario-notice`.
+- [x] **F3 — Helpers y menús.** `useCollapsibleGroups` sustituye las 5
+      reimplementaciones con `Set` propio (`PlanAssetsView`,
+      `PlanPlannedDecisionView` ×2, `PlanOccurredEventView` ×2); `AChevron`
+      sustituye el texto "Ver/Ocultar" en las 7 cabeceras de grupo; `ARowMenu`
+      sustituye el menú de opciones de `PlanView`.
+      **Bug corregido de paso:** el chrome de `ARowMenu` (`.row-menu`,
+      `.row-menu-wrap`) vivía en `net-worth-view.css` acotado a `.a-nw-page`, así
+      que el menú de fila de **Contabilidad** —que consume la misma primitiva— se
+      pintaba sin caja, sombra ni posicionamiento. Promovido a
+      `design-system.css`. `ARowMenu` gana cierre con Esc + restauración de foco
+      y su primer spec.
+      **Corrección a la auditoría:** el ítem "`AToast` en vez de
+      `.plan-scenario-notice`" estaba mal planteado. Esos bloques son estado
+      persistente del escenario (descartado / incorporado), no confirmaciones
+      transitorias; un toast que se auto-descarta sería peor. Se mantienen como
+      sección. Sí se retira el modificador `.plan-scenario-notice.success`, que
+      era CSS muerto.
 - [ ] **F4 — Chrome.** `.plan-toolbar` es una caja con borde/radio/fondo panel; el
       patrón compartido `.context-bar` es una tira transparente con hairline
       inferior, que es lo que usan Patrimonio, Presupuesto y Cierre. Además

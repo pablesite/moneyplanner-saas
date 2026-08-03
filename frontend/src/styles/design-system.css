@@ -556,6 +556,50 @@
   background: color-mix(in oklab, var(--pos-soft) 70%, transparent);
 }
 
+/* Menú de acciones compartido (ARowMenu). Vivía en `net-worth-view.css` acotado
+   a `.a-nw-page`, así que la primitiva se pintaba sin caja ni posicionamiento en
+   Contabilidad, que también la consume. El chrome pertenece al componente, no a
+   la vista que lo estrena. */
+.dir-a .row-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.dir-a .row-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 4;
+  display: grid;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--surface) 96%, transparent);
+  box-shadow: 0 16px 32px rgb(0 0 0 / 0.24);
+}
+
+.dir-a .row-menu :is(button, a) {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dir-a .row-menu :is(button, a):hover,
+.dir-a .row-menu :is(button, a):focus-visible {
+  background: var(--hover);
+}
+
+.dir-a .row-menu button.danger {
+  color: color-mix(in oklab, var(--neg) 72%, white);
+}
+
 /* Donut SVG compartido (ADonut). Las vistas posicionan el contenedor `.a-donut`. */
 .dir-a .a-donut-arc {
   cursor: default;

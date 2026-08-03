@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  type ASelectItem,
+} from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type {
@@ -83,8 +92,8 @@ const positionSearch = ref('');
 const submitting = ref(false);
 const loadingLines = ref(false);
 const showLocked = ref(false);
-const expandedYears = ref<Set<number>>(new Set());
-const expandedPositionGroups = ref<Set<'liabilities' | 'assets'>>(new Set());
+const yearGroups = useCollapsibleGroups({ defaultCollapsed: true });
+const positionGroups = useCollapsibleGroups({ defaultCollapsed: true });
 const decisionPreview = ref<PlannedDecisionPreviewResponse | null>(null);
 const previewLoading = ref(false);
 let previewTimer: ReturnType<typeof setTimeout> | undefined;
@@ -195,23 +204,18 @@ const groupedLines = computed(() => {
   return [...groups.entries()].sort((a, b) => a[0] - b[0]);
 });
 
+// Buscar abre todo: un grupo plegado escondería la coincidencia.
 function isYearOpen(year: number): boolean {
-  return Boolean(searchTerm.value) || expandedYears.value.has(year);
+  return Boolean(searchTerm.value) || !yearGroups.isCollapsed(String(year));
 }
 function toggleYear(year: number): void {
-  const next = new Set(expandedYears.value);
-  if (next.has(year)) next.delete(year);
-  else next.add(year);
-  expandedYears.value = next;
+  yearGroups.toggle(String(year));
 }
 function isPositionGroupOpen(kind: 'liabilities' | 'assets'): boolean {
-  return Boolean(positionSearch.value.trim()) || expandedPositionGroups.value.has(kind);
+  return Boolean(positionSearch.value.trim()) || !positionGroups.isCollapsed(kind);
 }
 function togglePositionGroup(kind: 'liabilities' | 'assets'): void {
-  const next = new Set(expandedPositionGroups.value);
-  if (next.has(kind)) next.delete(kind);
-  else next.add(kind);
-  expandedPositionGroups.value = next;
+  positionGroups.toggle(kind);
 }
 
 const selectedLines = computed(() => lines.value.filter((line) => selected.has(key(line))));
@@ -579,11 +583,9 @@ onMounted(async () => {
           :aria-expanded="isYearOpen(year)"
           @click="toggleYear(year)"
         >
+          <AChevron :expanded="isYearOpen(year)" />
           <strong>{{ year }}</strong>
-          <span>
-            {{ group.length }} partida{{ group.length === 1 ? '' : 's' }} ·
-            {{ isYearOpen(year) ? 'Ocultar' : 'Ver' }}
-          </span>
+          <span>{{ group.length }} partida{{ group.length === 1 ? '' : 's' }}</span>
         </button>
         <template v-if="isYearOpen(year)">
           <button
@@ -642,11 +644,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('assets')"
           @click="togglePositionGroup('assets')"
         >
+          <AChevron :expanded="isPositionGroupOpen('assets')" />
           <strong>Activos</strong>
           <span>
             {{ visiblePositions.assets.length }}
             {{ visiblePositions.assets.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('assets') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('assets')">
@@ -674,11 +676,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('liabilities')"
           @click="togglePositionGroup('liabilities')"
         >
+          <AChevron :expanded="isPositionGroupOpen('liabilities')" />
           <strong>Pasivos</strong>
           <span>
             {{ visiblePositions.liabilities.length }}
             {{ visiblePositions.liabilities.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('liabilities') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('liabilities')">

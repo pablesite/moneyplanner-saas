@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  type ASelectItem,
+} from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type { PlanScenarioTemplate } from '@/domains/plan';
@@ -51,9 +60,9 @@ const loadingLines = ref(false);
 const showLocked = ref(false);
 // Con años de historia, la lista completa es inabarcable: cada año empieza plegado
 // y la búsqueda despliega solo lo que coincide.
-const expandedYears = ref<Set<number>>(new Set());
+const yearGroups = useCollapsibleGroups({ defaultCollapsed: true });
 // Mismo trato para las posiciones de Patrimonio: decenas de filas plegadas por grupo.
-const expandedPositionGroups = ref<Set<'liabilities' | 'assets'>>(new Set());
+const positionGroups = useCollapsibleGroups({ defaultCollapsed: true });
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -113,28 +122,21 @@ const groupedLines = computed(() => {
   return [...groups.entries()].sort((a, b) => a[0] - b[0]);
 });
 
+// Buscar abre todo: un grupo plegado escondería la coincidencia.
 function isYearOpen(year: number): boolean {
-  if (searchTerm.value) return true;
-  return expandedYears.value.has(year);
+  return Boolean(searchTerm.value) || !yearGroups.isCollapsed(String(year));
 }
 
 function toggleYear(year: number): void {
-  const next = new Set(expandedYears.value);
-  if (next.has(year)) next.delete(year);
-  else next.add(year);
-  expandedYears.value = next;
+  yearGroups.toggle(String(year));
 }
 
 function isPositionGroupOpen(kind: 'liabilities' | 'assets'): boolean {
-  if (positionSearch.value.trim()) return true;
-  return expandedPositionGroups.value.has(kind);
+  return Boolean(positionSearch.value.trim()) || !positionGroups.isCollapsed(kind);
 }
 
 function togglePositionGroup(kind: 'liabilities' | 'assets'): void {
-  const next = new Set(expandedPositionGroups.value);
-  if (next.has(kind)) next.delete(kind);
-  else next.add(kind);
-  expandedPositionGroups.value = next;
+  positionGroups.toggle(kind);
 }
 
 const selectedLines = computed(() => lines.value.filter((line) => selected.has(key(line))));
@@ -336,11 +338,9 @@ onMounted(async () => {
           :aria-expanded="isYearOpen(year)"
           @click="toggleYear(year)"
         >
+          <AChevron :expanded="isYearOpen(year)" />
           <strong>{{ year }}</strong>
-          <span>
-            {{ group.length }} partida{{ group.length === 1 ? '' : 's' }} ·
-            {{ isYearOpen(year) ? 'Ocultar' : 'Ver' }}
-          </span>
+          <span>{{ group.length }} partida{{ group.length === 1 ? '' : 's' }}</span>
         </button>
         <template v-if="isYearOpen(year)">
           <button
@@ -398,11 +398,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('liabilities')"
           @click="togglePositionGroup('liabilities')"
         >
+          <AChevron :expanded="isPositionGroupOpen('liabilities')" />
           <strong>Pasivos</strong>
           <span>
             {{ visiblePositions.liabilities.length }}
             {{ visiblePositions.liabilities.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('liabilities') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('liabilities')">
@@ -430,11 +430,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('assets')"
           @click="togglePositionGroup('assets')"
         >
+          <AChevron :expanded="isPositionGroupOpen('assets')" />
           <strong>Activos</strong>
           <span>
             {{ visiblePositions.assets.length }}
             {{ visiblePositions.assets.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('assets') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('assets')">
