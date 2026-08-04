@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.46.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.0...moneyplanner-saas-v0.46.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* **people:** preselect pair for dynamic ownership ([f30d1a7](https://github.com/pablesite/moneyplanner-saas/commit/f30d1a74640dbc4606e548780620242937af72ff))
+* **plan:** reuse existing family members in setup ([a1d817a](https://github.com/pablesite/moneyplanner-saas/commit/a1d817adf8c98fca133b59c6fad0d4ecfb359ffb))
+* **shell:** keep account menu above sticky tabs ([9fe4372](https://github.com/pablesite/moneyplanner-saas/commit/9fe4372c39ce5f003ca5f76d1e0a69d23066ac05))
+
 ## [0.46.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.45.0...moneyplanner-saas-v0.46.0) (2026-08-04)
 
 
