@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.48.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.47.0...moneyplanner-saas-v0.48.0) (2026-08-04)
+
+
+### Features
+
+* **admin:** realinear el panel de administración con Direction A ([6a24a8e](https://github.com/pablesite/moneyplanner-saas/commit/6a24a8e2f564e976da0f9868f32cb7d186a72ec9))
+* **aux-data:** realinear Datos auxiliares y Personas con Direction A ([0d3d8c4](https://github.com/pablesite/moneyplanner-saas/commit/0d3d8c4c14998d869256766d72727711c37a2b1c))
+
+
+### Bug Fixes
+
+* **settlement:** simplify aggregate budget readiness ([8424513](https://github.com/pablesite/moneyplanner-saas/commit/8424513d6e9820d78498526b96b362ff773b4273))
+
 ## [0.47.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.2...moneyplanner-saas-v0.47.0) (2026-08-04)
 
 
