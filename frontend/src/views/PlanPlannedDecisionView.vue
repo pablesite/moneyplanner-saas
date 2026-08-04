@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  type ASelectItem,
+} from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type {
@@ -83,8 +92,8 @@ const positionSearch = ref('');
 const submitting = ref(false);
 const loadingLines = ref(false);
 const showLocked = ref(false);
-const expandedYears = ref<Set<number>>(new Set());
-const expandedPositionGroups = ref<Set<'liabilities' | 'assets'>>(new Set());
+const yearGroups = useCollapsibleGroups({ defaultCollapsed: true });
+const positionGroups = useCollapsibleGroups({ defaultCollapsed: true });
 const decisionPreview = ref<PlannedDecisionPreviewResponse | null>(null);
 const previewLoading = ref(false);
 let previewTimer: ReturnType<typeof setTimeout> | undefined;
@@ -195,23 +204,18 @@ const groupedLines = computed(() => {
   return [...groups.entries()].sort((a, b) => a[0] - b[0]);
 });
 
+// Buscar abre todo: un grupo plegado escondería la coincidencia.
 function isYearOpen(year: number): boolean {
-  return Boolean(searchTerm.value) || expandedYears.value.has(year);
+  return Boolean(searchTerm.value) || !yearGroups.isCollapsed(String(year));
 }
 function toggleYear(year: number): void {
-  const next = new Set(expandedYears.value);
-  if (next.has(year)) next.delete(year);
-  else next.add(year);
-  expandedYears.value = next;
+  yearGroups.toggle(String(year));
 }
 function isPositionGroupOpen(kind: 'liabilities' | 'assets'): boolean {
-  return Boolean(positionSearch.value.trim()) || expandedPositionGroups.value.has(kind);
+  return Boolean(positionSearch.value.trim()) || !positionGroups.isCollapsed(kind);
 }
 function togglePositionGroup(kind: 'liabilities' | 'assets'): void {
-  const next = new Set(expandedPositionGroups.value);
-  if (next.has(kind)) next.delete(kind);
-  else next.add(kind);
-  expandedPositionGroups.value = next;
+  positionGroups.toggle(kind);
 }
 
 const selectedLines = computed(() => lines.value.filter((line) => selected.has(key(line))));
@@ -471,17 +475,11 @@ onMounted(async () => {
     <AState v-if="store.error" status="error">{{ store.error }}</AState>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 1</p>
-          <h2 class="sect-title">¿Qué decisión es y cuándo impacta?</h2>
-          <p class="sect-sub">
-            La fecha es cuándo la decidiste; el año de transacción es cuándo la compra o venta pega
-            en tu patrimonio (pueden diferir). En una venta, el activo se da de baja ese año; en una
-            compra, aparece con su deuda.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 1"
+        title="¿Qué decisión es y cuándo impacta?"
+        subtitle="La fecha es cuándo la decidiste; el año de transacción es cuándo la compra o venta pega en tu patrimonio (pueden diferir). En una venta, el activo se da de baja ese año; en una compra, aparece con su deuda."
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -536,16 +534,11 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 2</p>
-          <h2 class="sect-title">¿Qué partidas puntuales agrupas en esta decisión?</h2>
-          <p class="sect-sub">
-            Salen de los movimientos puntuales sueltos y pasan a gobernarse por la decisión (para no
-            contarlas dos veces). Sus importes y fechas no cambian.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 2"
+        title="¿Qué partidas puntuales agrupas en esta decisión?"
+        subtitle="Salen de los movimientos puntuales sueltos y pasan a gobernarse por la decisión (para no contarlas dos veces). Sus importes y fechas no cambian."
+      />
 
       <div v-if="existingGroups.length" class="plan-choice-grid">
         <button
@@ -590,11 +583,9 @@ onMounted(async () => {
           :aria-expanded="isYearOpen(year)"
           @click="toggleYear(year)"
         >
+          <AChevron :expanded="isYearOpen(year)" />
           <strong>{{ year }}</strong>
-          <span>
-            {{ group.length }} partida{{ group.length === 1 ? '' : 's' }} ·
-            {{ isYearOpen(year) ? 'Ocultar' : 'Ver' }}
-          </span>
+          <span>{{ group.length }} partida{{ group.length === 1 ? '' : 's' }}</span>
         </button>
         <template v-if="isYearOpen(year)">
           <button
@@ -624,21 +615,15 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 3</p>
-          <h2 class="sect-title">¿Qué activo y deuda mueve?</h2>
-          <p class="sect-sub">
-            Enlaza el activo real (y su hipoteca) de Patrimonio.
-            {{
-              isSale
-                ? 'En la venta se da de baja del patrimonio proyectado en su año.'
-                : 'En la compra aparece como activo, con su deuda, en su año.'
-            }}
-            Patrimonio sigue siendo su dueño.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 3"
+        title="¿Qué activo y deuda mueve?"
+        :subtitle="`Enlaza el activo real (y su hipoteca) de Patrimonio. ${
+          isSale
+            ? 'En la venta se da de baja del patrimonio proyectado en su año.'
+            : 'En la compra aparece como activo, con su deuda, en su año.'
+        } Patrimonio sigue siendo su dueño.`"
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -659,11 +644,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('assets')"
           @click="togglePositionGroup('assets')"
         >
+          <AChevron :expanded="isPositionGroupOpen('assets')" />
           <strong>Activos</strong>
           <span>
             {{ visiblePositions.assets.length }}
             {{ visiblePositions.assets.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('assets') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('assets')">
@@ -691,11 +676,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('liabilities')"
           @click="togglePositionGroup('liabilities')"
         >
+          <AChevron :expanded="isPositionGroupOpen('liabilities')" />
           <strong>Pasivos</strong>
           <span>
             {{ visiblePositions.liabilities.length }}
             {{ visiblePositions.liabilities.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('liabilities') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('liabilities')">
@@ -718,16 +703,12 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 4</p>
-          <h2 class="sect-title">Impacto en la proyección</h2>
-          <p class="sect-sub">
-            Cifras prellenadas con lo seleccionado; ajústalas si procede (p. ej. el valor
-            <em>neto</em> del activo = valor − hipoteca).
-          </p>
-        </div>
-      </div>
+      <ASectHead eyebrow="Paso 4" title="Impacto en la proyección">
+        <template #subtitle>
+          Cifras prellenadas con lo seleccionado; ajústalas si procede (p. ej. el valor
+          <em>neto</em> del activo = valor − hipoteca).
+        </template>
+      </ASectHead>
 
       <p v-if="purchaseDoubleCountWarning" class="plan-decision-warn">
         <strong>Revisa los importes.</strong> Con estos números esta compra sumaría

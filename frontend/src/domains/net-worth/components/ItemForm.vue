@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 import { getMaxDecimals } from '@/lib/format';
 import type {
   AssetImprovement,
@@ -153,20 +154,25 @@ const currencies = [
   { value: 'ETH', label: 'ETH' },
 ];
 
-const ownershipLabel = (o: Ownership) => {
-  if (o.kind === 'individual') {
-    return o.member ? `Individual - ${o.member.name}` : 'Individual';
-  }
-  const parts = (o.splits || []).map((s) => `${s.member.name} ${s.percent}%`);
-  return `Compartido - ${parts.join(' - ') || 'sin splits'}`;
-};
-
 const ownershipOptions = computed(() => {
   return [
     { value: null, label: 'Selecciona titularidad' },
-    ...(props.ownerships || []).map((o) => ({ value: o.id, label: ownershipLabel(o) })),
+    ...(props.ownerships || []).map((o) => ({
+      value: Number(o.id),
+      label: ownershipDisplayLabel(o, { individualPrefix: true }),
+    })),
   ];
 });
+
+function setOwnership(value: string | number | null) {
+  if (value === null || value === undefined || value === '') {
+    form.ownership_id = null;
+    return;
+  }
+
+  const parsed = Number(value);
+  form.ownership_id = Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
 
 const ASSET_CASH_SUBCATEGORIES_REQUIRING_TAE = [
   'bank_account',
@@ -1973,7 +1979,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
                 'select ui-data-field',
                 { 'ui-select-placeholder': form.ownership_id == null },
               ]"
-              @update:model-value="(v) => (form.ownership_id = v as typeof form.ownership_id)"
+              @update:model-value="setOwnership"
             />
           </label>
         </div>
@@ -2485,7 +2491,7 @@ watch([() => form.start_date, () => form.payment_start_date], () => {
           :model-value="form.ownership_id"
           :options="ownershipOptions"
           :class="['select ui-data-field', { 'ui-select-placeholder': form.ownership_id == null }]"
-          @update:model-value="(v) => (form.ownership_id = v as typeof form.ownership_id)"
+          @update:model-value="setOwnership"
         />
       </label>
 

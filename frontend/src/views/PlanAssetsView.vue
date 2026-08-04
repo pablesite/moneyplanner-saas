@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  type ASelectItem,
+} from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { usePlan } from '@/domains/plan';
 import type { ClassifiedPlanAsset, PlanAssetFunction } from '@/domains/plan';
 import { assetFunctionLabel, assetFunctionLabels } from '@/domains/plan/scenarioTemplates';
@@ -29,9 +38,8 @@ const functionOrder: PlanAssetFunction[] = [
 
 // Todo plegado salvo "Sin clasificar" (lo único accionable de entrada): con
 // decenas de posiciones, la página pasaba de las 9.000px en móvil.
-const collapsedGroups = ref<Set<PlanAssetFunction>>(
-  new Set(functionOrder.filter((fn) => fn !== 'unknown')),
-);
+const { collapsed: collapsedGroups, toggle: toggleGroup } = useCollapsibleGroups();
+collapsedGroups.value = new Set(functionOrder.filter((fn) => fn !== 'unknown'));
 
 const summary = computed(() => {
   if (!classification.value) return [];
@@ -107,13 +115,6 @@ function clearFilters(): void {
   reviewFilter.value = 'all';
 }
 
-function toggleGroup(fn: PlanAssetFunction): void {
-  const next = new Set(collapsedGroups.value);
-  if (next.has(fn)) next.delete(fn);
-  else next.add(fn);
-  collapsedGroups.value = next;
-}
-
 function functionOptions(asset: ClassifiedPlanAsset): ASelectItem[] {
   return [
     { value: 'auto', label: `Automática (${assetFunctionLabel(asset.inferred_function)})` },
@@ -180,16 +181,11 @@ onMounted(() => {
 
     <template v-else-if="classification">
       <section class="sect plan-assets-summary-sect">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Capital por función</p>
-            <h2 class="sect-title">{{ money(classification.total_assets) }} en activos</h2>
-            <p class="sect-sub">
-              Cada activo aporta a una función. La proyección crece solo con lo clasificado como
-              productivo. Pulsa una función para filtrar la lista.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Capital por función"
+          :title="`${money(classification.total_assets)} en activos`"
+          subtitle="Cada activo aporta a una función. La proyección crece solo con lo clasificado como productivo. Pulsa una función para filtrar la lista."
+        />
         <div class="plan-assets-summary">
           <button
             v-for="item in summary"
@@ -208,16 +204,11 @@ onMounted(() => {
       </section>
 
       <section class="sect plan-assets-list-sect">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Activos</p>
-            <h2 class="sect-title">Función de cada activo</h2>
-            <p class="sect-sub">
-              La función automática se infiere de la categoría. Cámbiala si no encaja; "Automática"
-              vuelve a la inferida.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Activos"
+          title="Función de cada activo"
+          subtitle='La función automática se infiere de la categoría. Cámbiala si no encaja; "Automática" vuelve a la inferida.'
+        />
 
         <div class="plan-assets-toolbar">
           <!-- La barra es sticky: la vuelta a Mi Plan viaja con el scroll en listas largas. -->
@@ -229,38 +220,31 @@ onMounted(() => {
             placeholder="Buscar activo..."
             aria-label="Buscar activo"
           />
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
+          <AButton
+            variant="ghost"
+            size="sm"
             :class="{ active: reviewFilter === 'review' }"
             @click="reviewFilter = reviewFilter === 'review' ? 'all' : 'review'"
           >
             Requieren revisión
-          </button>
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
+          </AButton>
+          <AButton
+            variant="ghost"
+            size="sm"
             :class="{ active: reviewFilter === 'manual' }"
             @click="reviewFilter = reviewFilter === 'manual' ? 'all' : 'manual'"
           >
             Modificados manualmente
-          </button>
-          <button
-            v-if="hasActiveFilter"
-            type="button"
-            class="btn btn-ghost btn-sm"
-            @click="clearFilters"
-          >
+          </AButton>
+          <AButton v-if="hasActiveFilter" variant="ghost" size="sm" @click="clearFilters">
             Limpiar filtros
-          </button>
+          </AButton>
         </div>
 
-        <div v-if="!groups.length" class="plan-empty-inline">
+        <AState v-if="!groups.length" status="empty" layout="inline" class="plan-empty-inline">
           <p class="plan-muted">Ningún activo coincide con el filtro actual.</p>
-          <button type="button" class="btn btn-ghost btn-sm" @click="clearFilters">
-            Limpiar filtros
-          </button>
-        </div>
+          <AButton variant="ghost" size="sm" @click="clearFilters">Limpiar filtros</AButton>
+        </AState>
 
         <template v-else>
           <div v-for="group in groups" :key="group.fn" class="plan-assets-group">
@@ -270,11 +254,11 @@ onMounted(() => {
               :aria-expanded="!isGroupCollapsed(group.fn)"
               @click="toggleGroup(group.fn)"
             >
+              <AChevron :expanded="!isGroupCollapsed(group.fn)" />
               <strong>{{ group.label }}</strong>
               <span>
                 {{ group.items.length }} activo{{ group.items.length === 1 ? '' : 's' }} ·
-                {{ formatMoney(group.total) }} ·
-                {{ isGroupCollapsed(group.fn) ? 'Ver' : 'Ocultar' }}
+                {{ formatMoney(group.total) }}
               </span>
             </button>
             <ul v-if="!isGroupCollapsed(group.fn)" class="plan-assets-list">

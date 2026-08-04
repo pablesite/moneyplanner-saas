@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  AChevron,
+  APageHead,
+  ASectHead,
+  ASelect,
+  AState,
+  type ASelectItem,
+} from '@/domains/ui';
+import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
 import { usePlan } from '@/domains/plan';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
 import type { PlanScenarioTemplate } from '@/domains/plan';
@@ -51,9 +60,9 @@ const loadingLines = ref(false);
 const showLocked = ref(false);
 // Con años de historia, la lista completa es inabarcable: cada año empieza plegado
 // y la búsqueda despliega solo lo que coincide.
-const expandedYears = ref<Set<number>>(new Set());
+const yearGroups = useCollapsibleGroups({ defaultCollapsed: true });
 // Mismo trato para las posiciones de Patrimonio: decenas de filas plegadas por grupo.
-const expandedPositionGroups = ref<Set<'liabilities' | 'assets'>>(new Set());
+const positionGroups = useCollapsibleGroups({ defaultCollapsed: true });
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -113,28 +122,21 @@ const groupedLines = computed(() => {
   return [...groups.entries()].sort((a, b) => a[0] - b[0]);
 });
 
+// Buscar abre todo: un grupo plegado escondería la coincidencia.
 function isYearOpen(year: number): boolean {
-  if (searchTerm.value) return true;
-  return expandedYears.value.has(year);
+  return Boolean(searchTerm.value) || !yearGroups.isCollapsed(String(year));
 }
 
 function toggleYear(year: number): void {
-  const next = new Set(expandedYears.value);
-  if (next.has(year)) next.delete(year);
-  else next.add(year);
-  expandedYears.value = next;
+  yearGroups.toggle(String(year));
 }
 
 function isPositionGroupOpen(kind: 'liabilities' | 'assets'): boolean {
-  if (positionSearch.value.trim()) return true;
-  return expandedPositionGroups.value.has(kind);
+  return Boolean(positionSearch.value.trim()) || !positionGroups.isCollapsed(kind);
 }
 
 function togglePositionGroup(kind: 'liabilities' | 'assets'): void {
-  const next = new Set(expandedPositionGroups.value);
-  if (next.has(kind)) next.delete(kind);
-  else next.add(kind);
-  expandedPositionGroups.value = next;
+  positionGroups.toggle(kind);
 }
 
 const selectedLines = computed(() => lines.value.filter((line) => selected.has(key(line))));
@@ -251,17 +253,11 @@ onMounted(async () => {
     <AState v-if="store.error" status="error">{{ store.error }}</AState>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 1</p>
-          <h2 class="sect-title">¿Qué decidiste y cuándo?</h2>
-          <p class="sect-sub">
-            La fecha es la de la decisión, no la del pago. Queda registrada como ocurrida: sus
-            efectos ya están en tu patrimonio y en tu presupuesto, así que no se vuelven a
-            proyectar.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 1"
+        title="¿Qué decidiste y cuándo?"
+        subtitle="La fecha es la de la decisión, no la del pago. Queda registrada como ocurrida: sus efectos ya están en tu patrimonio y en tu presupuesto, así que no se vuelven a proyectar."
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -289,16 +285,11 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 2</p>
-          <h2 class="sect-title">¿Qué partidas de tu presupuesto salieron de esta decisión?</h2>
-          <p class="sect-sub">
-            Al vincularlas, pasan a estar gestionadas por el plan: dejarán de ser editables desde
-            Presupuesto y se retirarán si algún día das de baja la decisión. Puedes deshacerlo.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 2"
+        title="¿Qué partidas de tu presupuesto salieron de esta decisión?"
+        subtitle="Al vincularlas, pasan a estar gestionadas por el plan: dejarán de ser editables desde Presupuesto y se retirarán si algún día das de baja la decisión. Puedes deshacerlo."
+      />
 
       <div v-if="existingGroups.length" class="plan-choice-grid">
         <button
@@ -347,11 +338,9 @@ onMounted(async () => {
           :aria-expanded="isYearOpen(year)"
           @click="toggleYear(year)"
         >
+          <AChevron :expanded="isYearOpen(year)" />
           <strong>{{ year }}</strong>
-          <span>
-            {{ group.length }} partida{{ group.length === 1 ? '' : 's' }} ·
-            {{ isYearOpen(year) ? 'Ocultar' : 'Ver' }}
-          </span>
+          <span>{{ group.length }} partida{{ group.length === 1 ? '' : 's' }}</span>
         </button>
         <template v-if="isYearOpen(year)">
           <button
@@ -384,17 +373,11 @@ onMounted(async () => {
     </section>
 
     <section class="sect plan-form-section">
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Paso 3</p>
-          <h2 class="sect-title">¿Qué activos o pasivos trajo esta decisión?</h2>
-          <p class="sect-sub">
-            Aquí no se adopta nada: la decisión solo apunta a ellos. Patrimonio sigue siendo su
-            dueño y quien genera sus cuotas. Enlazarlos es lo que permite ver el impacto completo de
-            la decisión, no solo el de las partidas que escribiste a mano.
-          </p>
-        </div>
-      </div>
+      <ASectHead
+        eyebrow="Paso 3"
+        title="¿Qué activos o pasivos trajo esta decisión?"
+        subtitle="Aquí no se adopta nada: la decisión solo apunta a ellos. Patrimonio sigue siendo su dueño y quien genera sus cuotas. Enlazarlos es lo que permite ver el impacto completo de la decisión, no solo el de las partidas que escribiste a mano."
+      />
 
       <div class="plan-form-grid">
         <label>
@@ -415,11 +398,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('liabilities')"
           @click="togglePositionGroup('liabilities')"
         >
+          <AChevron :expanded="isPositionGroupOpen('liabilities')" />
           <strong>Pasivos</strong>
           <span>
             {{ visiblePositions.liabilities.length }}
             {{ visiblePositions.liabilities.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('liabilities') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('liabilities')">
@@ -447,11 +430,11 @@ onMounted(async () => {
           :aria-expanded="isPositionGroupOpen('assets')"
           @click="togglePositionGroup('assets')"
         >
+          <AChevron :expanded="isPositionGroupOpen('assets')" />
           <strong>Activos</strong>
           <span>
             {{ visiblePositions.assets.length }}
             {{ visiblePositions.assets.length === 1 ? 'posición' : 'posiciones' }}
-            · {{ isPositionGroupOpen('assets') ? 'Ocultar' : 'Ver' }}
           </span>
         </button>
         <template v-if="isPositionGroupOpen('assets')">
@@ -477,30 +460,26 @@ onMounted(async () => {
       v-if="selectedLines.length || selectedAssets.size || selectedLiabilities.size"
       class="sect plan-form-section"
     >
-      <div class="sect-head">
-        <div>
-          <p class="eyebrow">Resumen</p>
-          <h2 class="sect-title">
-            {{ selectedLines.length }} partida{{ selectedLines.length === 1 ? '' : 's' }} ·
-            {{ formatMoney(selectedTotal) }}
-          </h2>
-          <p class="sect-sub">
-            Las partidas pasan a colgar de «{{ form.name.trim() || 'esta decisión' }}»; sus importes
-            y fechas no cambian.
-            <template v-if="selectedLiabilities.size || selectedAssets.size">
-              Además queda enlazada a
-              <template v-if="selectedLiabilities.size">
-                {{ selectedLiabilities.size }} pasivo{{ selectedLiabilities.size === 1 ? '' : 's' }}
-              </template>
-              <template v-if="selectedLiabilities.size && selectedAssets.size"> y </template>
-              <template v-if="selectedAssets.size">
-                {{ selectedAssets.size }} activo{{ selectedAssets.size === 1 ? '' : 's' }}
-              </template>
-              de Patrimonio, que siguen gestionándose allí.
+      <ASectHead
+        eyebrow="Resumen"
+        :title="`${selectedLines.length} partida${selectedLines.length === 1 ? '' : 's'} · ${formatMoney(selectedTotal)}`"
+      >
+        <template #subtitle>
+          Las partidas pasan a colgar de «{{ form.name.trim() || 'esta decisión' }}»; sus importes y
+          fechas no cambian.
+          <template v-if="selectedLiabilities.size || selectedAssets.size">
+            Además queda enlazada a
+            <template v-if="selectedLiabilities.size">
+              {{ selectedLiabilities.size }} pasivo{{ selectedLiabilities.size === 1 ? '' : 's' }}
             </template>
-          </p>
-        </div>
-      </div>
+            <template v-if="selectedLiabilities.size && selectedAssets.size"> y </template>
+            <template v-if="selectedAssets.size">
+              {{ selectedAssets.size }} activo{{ selectedAssets.size === 1 ? '' : 's' }}
+            </template>
+            de Patrimonio, que siguen gestionándose allí.
+          </template>
+        </template>
+      </ASectHead>
     </section>
 
     <div class="plan-setup-actions">

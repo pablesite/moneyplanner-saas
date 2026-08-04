@@ -16,6 +16,8 @@ function makeState(overrides: Record<string, unknown> = {}) {
     showModal: ref(false),
     editId: ref<number | null>(null),
     successMessage: ref<string | null>(null),
+    allocationPreview: ref(null),
+    previewLoading: ref(false),
     form: reactive({ memberIds: [] as number[], percents: {} as Record<number, string> }),
     adults: computed(() => []),
     canCreate: computed(() => false),
@@ -53,7 +55,6 @@ describe('OwnershipManager', () => {
       global: {
         stubs: {
           BaseModal: { template: '<div />' },
-          OwnershipLabel: { template: '<span>ownership</span>' },
         },
       },
     });
@@ -70,7 +71,6 @@ describe('OwnershipManager', () => {
       global: {
         stubs: {
           BaseModal: { template: '<div />' },
-          OwnershipLabel: { template: '<span>ownership</span>' },
         },
       },
     });
@@ -78,5 +78,44 @@ describe('OwnershipManager', () => {
     await wrapper.get('button.btn.btn-primary').trigger('click');
     expect(state.openCreate).toHaveBeenCalled();
     expect(state.ensureLoaded).toHaveBeenCalled();
+  });
+
+  it('shows the calculated income allocation for dynamic ownerships', () => {
+    mockUsePeopleOwnerships.mockReturnValue(
+      makeState({
+        ownershipsSorted: computed(() => [
+          {
+            id: 8,
+            kind: 'shared',
+            member: null,
+            splits: [
+              { member: { id: 1, name: 'Ana', role: 'adult' }, percent: '50' },
+              { member: { id: 2, name: 'Pablo', role: 'adult' }, percent: '50' },
+            ],
+            allocation_basis: 'recurring_income_12m',
+            income_rules: [],
+            effective_splits: [
+              { member_id: 1, member_name: 'Ana', percent: '39' },
+              { member_id: 2, member_name: 'Pablo', percent: '61' },
+            ],
+            is_in_use: false,
+          },
+        ]),
+      }),
+    );
+
+    const wrapper = mount(OwnershipManager, {
+      global: {
+        stubs: {
+          BaseModal: { template: '<div />' },
+        },
+      },
+    });
+
+    expect(wrapper.text()).toContain('Compartido dinámico');
+    expect(wrapper.text()).toContain('Ana 39%');
+    expect(wrapper.text()).toContain('Pablo 61%');
+    expect(wrapper.text()).toContain('se recalcula cada mes');
+    expect(wrapper.text()).not.toContain('Ana 50%');
   });
 });

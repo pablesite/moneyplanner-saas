@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   AButton,
   APageHead,
   AInfoHint,
   AMetaPill,
+  ASectHead,
   ASelect,
   AState,
   AToast,
@@ -73,6 +75,70 @@ const suggestionsCount = computed(
 );
 
 const annualEntriesPage = useBudgetAnnualEntriesPage();
+const route = useRoute();
+const router = useRouter();
+const openedEntryDeepLink = ref<'income' | 'expense' | null>(null);
+
+function routeEntryId(value: unknown): number | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+watch(
+  [
+    () => route.query.editIncome,
+    () => route.query.editExpense,
+    () => annualEntriesPage.annualIncomeEntries.value,
+    () => annualEntriesPage.annualExpenseEntries.value,
+  ],
+  () => {
+    if (openedEntryDeepLink.value) return;
+    const incomeId = routeEntryId(route.query.editIncome);
+    const expenseId = routeEntryId(route.query.editExpense);
+    const incomeEntry = annualEntriesPage.annualIncomeEntries.value.find(
+      (entry) => entry.id === incomeId,
+    );
+    const expenseEntry = annualEntriesPage.annualExpenseEntries.value.find(
+      (entry) => entry.id === expenseId,
+    );
+    if (incomeEntry) {
+      presentationView.value = 'annual';
+      openedEntryDeepLink.value = 'income';
+      annualEntriesPage.openIncomeModal(incomeEntry);
+    } else if (expenseEntry) {
+      presentationView.value = 'annual';
+      openedEntryDeepLink.value = 'expense';
+      annualEntriesPage.openExpenseModal(expenseEntry);
+    }
+  },
+  { immediate: true },
+);
+
+async function clearEntryDeepLink(kind: 'income' | 'expense'): Promise<void> {
+  const query = { ...route.query };
+  delete query[kind === 'income' ? 'editIncome' : 'editExpense'];
+  await router.replace({ name: 'budget-dashboard', query });
+  openedEntryDeepLink.value = null;
+}
+
+watch(
+  () => annualEntriesPage.showIncomeModal.value,
+  (open, wasOpen) => {
+    if (wasOpen && !open && openedEntryDeepLink.value === 'income') {
+      void clearEntryDeepLink('income');
+    }
+  },
+);
+
+watch(
+  () => annualEntriesPage.showExpenseModal.value,
+  (open, wasOpen) => {
+    if (wasOpen && !open && openedEntryDeepLink.value === 'expense') {
+      void clearEntryDeepLink('expense');
+    }
+  },
+);
 
 watch(
   fiscalYear,
@@ -216,9 +282,9 @@ function setEntryViewMode(mode: string): void {
     </nav>
 
     <section class="a-budget-read-section" aria-label="Filtros de presupuesto">
-      <div class="a-budget-read-controls">
+      <div class="context-rail">
         <label class="context-field a-budget-control-chip">
-          <span class="a-budget-sr-only">Año fiscal</span>
+          <span class="sr-only">Año fiscal</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Año fiscal"
@@ -230,7 +296,7 @@ function setEntryViewMode(mode: string): void {
         </label>
 
         <label class="context-field a-budget-control-chip">
-          <span class="a-budget-sr-only">Titularidad</span>
+          <span class="sr-only">Titularidad</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Titularidad"
@@ -242,7 +308,7 @@ function setEntryViewMode(mode: string): void {
         </label>
 
         <label class="context-field a-budget-control-chip">
-          <span class="a-budget-sr-only">Tipo de partida</span>
+          <span class="sr-only">Tipo de partida</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Tipo de partida"
@@ -278,16 +344,15 @@ function setEntryViewMode(mode: string): void {
 
     <!-- Tab Sugerencias (acciones deshabilitadas — sin backing en el motor). -->
     <section v-if="presentationView === 'sugg'" class="sect">
-      <div class="sect-head">
-        <div class="title-hint">
-          <h2 class="sect-title">Sugerencias de presupuesto</h2>
+      <ASectHead title="Sugerencias de presupuesto">
+        <template #hint>
           <AInfoHint label="Qué son las sugerencias">
             Importes recomendados para tus partidas a partir de la media de lo que has ejecutado en
             los últimos meses. Te ayudan a ajustar el presupuesto a tu gasto real. Aplicar/Ignorar
             llegará próximamente.
           </AInfoHint>
-        </div>
-      </div>
+        </template>
+      </ASectHead>
 
       <AState v-if="budgetSuggestionsError" status="error">{{ budgetSuggestionsError }}</AState>
       <AState v-else-if="budgetSuggestionsLoading" status="loading" layout="inline"

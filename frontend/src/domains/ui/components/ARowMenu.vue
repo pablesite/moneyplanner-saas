@@ -19,13 +19,16 @@ const emit = defineEmits<{
 
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
+const trigger = ref<HTMLButtonElement | null>(null);
 
 function toggleMenu(): void {
   open.value = !open.value;
 }
 
-function closeMenu(): void {
+function closeMenu(restoreFocus = false): void {
+  const wasOpen = open.value;
   open.value = false;
+  if (wasOpen && restoreFocus) trigger.value?.focus();
 }
 
 function onSelect(id: string): void {
@@ -49,8 +52,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="root" class="row-menu-wrap">
+  <!-- Esc cierra el menú y devuelve el foco al disparador: sin esto solo se podía
+       salir con el ratón o tabulando fuera. -->
+  <div ref="root" class="row-menu-wrap" @keydown.esc.stop="closeMenu(true)">
     <button
+      ref="trigger"
       class="btn btn-icon"
       type="button"
       :aria-expanded="open"

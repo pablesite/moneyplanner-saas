@@ -21,6 +21,7 @@ export type AnnualIncomeEntry = {
   category: IncomeCategoryKey;
   subcategory: string;
   owner: string;
+  ownershipId?: number | null;
   incomeType: AnnualIncomeType;
   timeProfile: AnnualTimeProfile;
   cashflowRole: AnnualIncomeCashflowRole;
@@ -46,6 +47,7 @@ export type AnnualIncomeDraft = {
   category: IncomeCategoryKey;
   subcategory: string;
   owner?: string;
+  ownershipId?: number | null;
   incomeType: AnnualIncomeType;
   timeProfile?: AnnualTimeProfile;
   cashflowRole?: AnnualIncomeCashflowRole;
@@ -69,6 +71,7 @@ type AnnualIncomeApiItem = {
   category: IncomeCategoryKey;
   subcategory: string;
   owner_name: string;
+  ownership_id?: number | null;
   income_type: AnnualIncomeType;
   time_profile?: AnnualTimeProfile;
   cashflow_role?: AnnualIncomeCashflowRole;
@@ -107,6 +110,7 @@ function mapApiItem(item: AnnualIncomeApiItem): AnnualIncomeEntry {
     category: item.category,
     subcategory: item.subcategory,
     owner: item.owner_name || '',
+    ownershipId: item.ownership_id == null ? null : Number(item.ownership_id),
     incomeType: item.income_type,
     timeProfile,
     cashflowRole: item.cashflow_role ?? 'operating',
@@ -177,6 +181,7 @@ function createAnnualIncomeStore() {
         category: draft.category,
         subcategory: draft.subcategory,
         owner_name: normalizeOwnerName(draft.owner ?? ''),
+        ownership_id: draft.ownershipId ?? null,
         income_type: draft.incomeType,
         ...(draft.timeProfile && draft.timeProfile !== 'structural_recurrent'
           ? { time_profile: draft.timeProfile }
@@ -232,6 +237,7 @@ function createAnnualIncomeStore() {
         category: draft.category,
         subcategory: draft.subcategory,
         owner_name: normalizeOwnerName(draft.owner ?? ''),
+        ownership_id: draft.ownershipId ?? null,
         income_type: draft.incomeType,
         time_profile:
           draft.timeProfile ??

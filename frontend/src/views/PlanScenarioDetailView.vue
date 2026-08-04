@@ -3,8 +3,10 @@ import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import {
   AButton,
+  AContextBar,
   AMetaPill,
   APageHead,
+  ASectHead,
   ASelect,
   AState,
   BaseModal,
@@ -204,7 +206,7 @@ onMounted(async () => {
         </RouterLink>
       </section>
 
-      <div v-if="selected.status !== 'accepted'" class="plan-toolbar plan-scenario-context">
+      <AContextBar v-if="selected.status !== 'accepted'" class="plan-scenario-context">
         <label class="context-field">
           <span>Hipótesis</span>
           <ASelect
@@ -214,15 +216,10 @@ onMounted(async () => {
             :searchable="false"
           />
         </label>
-      </div>
+      </AContextBar>
 
       <section class="sect plan-scenario-summary plan-scenario-summary-open">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Inputs</p>
-            <h2 class="sect-title">Impacto definido</h2>
-          </div>
-        </div>
+        <ASectHead eyebrow="Inputs" title="Impacto definido" />
         <div v-if="firstEvent" class="plan-scenario-metrics">
           <article v-for="metric in impactMetrics" :key="metric.label">
             <span>{{ metric.label }}</span>
@@ -269,17 +266,11 @@ onMounted(async () => {
         <RouterLink class="btn btn-ghost btn-sm" to="/plan">Ver Mi Plan</RouterLink>
       </section>
       <section v-if="selected.status === 'accepted'" class="sect plan-scenario-trace">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Rastro real</p>
-            <h2 class="sect-title">Acontecimiento y presupuesto</h2>
-            <p class="sect-sub">
-              Estas partidas fueron creadas al incorporar la decisión y se gestionan desde Mi Plan.
-              Las filas de distintos años son tramos de una misma obligación, no gastos que se sumen
-              todos en el mismo ejercicio.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Rastro real"
+          title="Acontecimiento y presupuesto"
+          subtitle="Estas partidas fueron creadas al incorporar la decisión y se gestionan desde Mi Plan. Las filas de distintos años son tramos de una misma obligación, no gastos que se sumen todos en el mismo ejercicio."
+        />
         <RouterLink v-if="linkedEvent" class="plan-event-link" to="/plan">
           Acontecimiento: {{ linkedEvent.name }} · {{ shortDate(linkedEvent.planned_date) }}
         </RouterLink>
@@ -291,9 +282,13 @@ onMounted(async () => {
             </div>
             <strong>{{ formatMoney(toNumber(line.amount_annual)) }}</strong>
           </article>
-          <p v-if="!eventTrace.income.length && !eventTrace.expenses.length" class="plan-muted">
+          <AState
+            v-if="!eventTrace.income.length && !eventTrace.expenses.length"
+            status="empty"
+            layout="inline"
+          >
             Este acontecimiento no generó partidas de presupuesto.
-          </p>
+          </AState>
         </div>
       </section>
       <template v-else>

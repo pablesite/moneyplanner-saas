@@ -149,11 +149,13 @@ Mantener disponible para la comunidad open core:
 10. `docs/operations/dev-setup.md`
 11. `docs/roadmap/saas-pilot-integration-checklist.md` — checklist operacional de readiness para el piloto
 12. `docs/frontend/frontend-visual-guide.md`
-13. `docs/frontend/frontend-ux-iteration-playbook.md`
-14. `docs/frontend/frontend-css-workflow.md`
-15. `docs/frontend/domain-map.md` — dominios frontend SaaS, rutas y clientes API
-16. `docs/standards/task-template.md` — plantilla canónica para task specs
-17. `docs/standards/planning-guide.md` — instrucciones para planificar un módulo
+13. `docs/frontend/frontend-visual-contract.md` — contrato operativo: primitivas `@/domains/ui`, clases compartidas y reglas de reutilización
+14. `docs/frontend/frontend-ux-iteration-playbook.md`
+15. `docs/frontend/frontend-css-workflow.md`
+16. `docs/frontend/domain-map.md` — dominios frontend SaaS, rutas y clientes API
+17. `docs/frontend/frontend-improvement-roadmap.md` — plan vivo de mejora del frontend vista por vista
+18. `docs/standards/task-template.md` — plantilla canónica para task specs
+19. `docs/standards/planning-guide.md` — instrucciones para planificar un módulo
 
 ## Capabilities (regla corta)
 

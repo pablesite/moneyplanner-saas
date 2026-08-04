@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { peopleApi } from '@/domains/people/api';
 import { toPeopleErrorMessage } from '@/domains/people/errors';
 import type { FamilyMember, OwnershipRead } from '@/domains/people/types';
+import type { OwnershipWritePayload } from '@/domains/people/api';
 
 export type { FamilyMember, OwnershipKind, OwnershipRead } from '@/domains/people/types';
 
@@ -109,7 +110,7 @@ export const usePeopleStore = defineStore('people', {
       }
     },
 
-    async createSharedOwnership(payload: { splits: { member_id: number; percent: string }[] }) {
+    async createSharedOwnership(payload: OwnershipWritePayload) {
       this.loading = true;
       this.error = null;
       try {
@@ -123,10 +124,7 @@ export const usePeopleStore = defineStore('people', {
       }
     },
 
-    async updateSharedOwnership(
-      id: number,
-      payload: { splits: { member_id: number; percent: string }[] },
-    ) {
+    async updateSharedOwnership(id: number, payload: OwnershipWritePayload) {
       this.loading = true;
       this.error = null;
       try {

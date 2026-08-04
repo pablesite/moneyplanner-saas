@@ -515,6 +515,19 @@
   font-size: 13px;
 }
 
+/* El layout inline solo tenía color muted, así que un `status="error"` o
+   `status="success"` inline perdía la semántica y se leía igual que un vacío.
+   Aquí el color sí es el único portador del estado, a diferencia del panel: se
+   mantiene el contraste alto y sin caja para no convertir un aviso de campo en
+   un bloque. */
+.dir-a .a-state-inline.a-state-error {
+  color: color-mix(in oklab, var(--neg) 70%, white);
+}
+
+.dir-a .a-state-inline.a-state-success {
+  color: color-mix(in oklab, var(--pos) 70%, white);
+}
+
 .dir-a .a-state-panel {
   display: flex;
   align-items: center;
@@ -541,6 +554,161 @@
   color: color-mix(in oklab, var(--pos) 70%, white);
   border-color: color-mix(in oklab, var(--pos) 45%, transparent);
   background: color-mix(in oklab, var(--pos-soft) 70%, transparent);
+}
+
+/* Control de filtro (el chrome de los `ASelect`, inputs y triggers de las barras
+   de contexto). Los cuatro dominios repetían las mismas declaraciones; aquí van
+   solo las comunes a los cuatro. `width`/`min-width` los sigue decidiendo cada
+   vista, porque Contabilidad los gestiona por contexto (popover, herramientas de
+   cuenta) y no quiere un mínimo global. */
+.dir-a :where(.filter-ctrl) {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+/* Texto solo para lectores de pantalla. Estaba triplicado como `.a-nw-sr-only`,
+   `.a-budget-sr-only` y `.mc-sr-only`. */
+.dir-a :where(.sr-only) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Cabecera de tabla de datos: etiqueta uppercase muy pequeña sobre hairline.
+   Idéntica en el balance de Patrimonio y en las dos tablas de Contabilidad. */
+.dir-a :where(.data-table) th {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+/* Campo dentro de una barra o rail de contexto: no se encoge ni parte la etiqueta.
+   Acompaña a `.context-rail` / `.context-bar`; estaba repetido en Patrimonio,
+   Presupuesto y Cierre. */
+.dir-a :where(.context-field) {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* Rail de contexto: la fila de filtros bajo la cabecera de página. Es el patrón
+   vivo del producto (Patrimonio, Presupuesto y Cierre lo tenían triplicado con las
+   mismas 10 declaraciones bajo tres nombres distintos). A diferencia de
+   `.context-bar`, no envuelve: se mantiene en una línea y desplaza en horizontal,
+   que es lo que necesitan las vistas con varios filtros en móvil.
+   En `:where()` por el mismo motivo que las tabs: el CSS de dominio se inyecta
+   antes que este fichero. */
+.dir-a :where(.context-rail) {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 10px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dir-a :where(.context-rail)::-webkit-scrollbar {
+  display: none;
+}
+
+/* Barra de tabs de sección. El bloque base estaba duplicado literalmente en
+   net-worth, accounting, budget y plan (mismas 10 declaraciones, cambiando solo el
+   prefijo del dominio).
+   Va dentro de `:where()` a propósito: el CSS de dominio se inyecta ANTES que este
+   fichero —`main.ts` importa el router en la línea 11 y el design system en la 13—
+   así que a igualdad de especificidad ganaría el design system y se cargaría los
+   ajustes responsive de cada vista. Con especificidad 0 los dominios siguen
+   mandando sin tener que subir la suya.
+   `text-decoration: none` es necesario porque las tabs de Mi Plan son RouterLink. */
+.dir-a :where(.tabs) {
+  display: flex;
+  gap: 0;
+  margin-bottom: -1px;
+}
+
+.dir-a :where(.tab) {
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.dir-a :where(.tab:hover) {
+  color: var(--text);
+}
+
+.dir-a :where(.tab.on) {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+/* Menú de acciones compartido (ARowMenu). Vivía en `net-worth-view.css` acotado
+   a `.a-nw-page`, así que la primitiva se pintaba sin caja ni posicionamiento en
+   Contabilidad, que también la consume. El chrome pertenece al componente, no a
+   la vista que lo estrena. */
+.dir-a .row-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.dir-a .row-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 4;
+  display: grid;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--surface) 96%, transparent);
+  box-shadow: 0 16px 32px rgb(0 0 0 / 0.24);
+}
+
+.dir-a .row-menu :is(button, a) {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dir-a .row-menu :is(button, a):hover,
+.dir-a .row-menu :is(button, a):focus-visible {
+  background: var(--hover);
+}
+
+.dir-a .row-menu button.danger {
+  color: color-mix(in oklab, var(--neg) 72%, white);
 }
 
 /* Donut SVG compartido (ADonut). Las vistas posicionan el contenedor `.a-donut`. */
@@ -1055,12 +1223,6 @@
 
 .dir-a-sheet .ui-accounting-form-grid {
   gap: 0 24px;
-}
-
-.dir-a-sheet .ui-accounting-submit-row {
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  margin-top: 8px;
 }
 
 /* OJO: estos overrides usan @media (viewport), no @container. El contenedor de

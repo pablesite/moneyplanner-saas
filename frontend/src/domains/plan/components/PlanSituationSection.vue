@@ -389,7 +389,7 @@ onMounted(() => {
     aria-label="Tu situación este año"
   >
     <div class="plan-block-head">
-      <p class="plan-block-eyebrow">Tu situación este año</p>
+      <p class="eyebrow">Tu situación este año</p>
       <span class="plan-situacion-year">{{ currentYear }}</span>
     </div>
 
@@ -437,7 +437,7 @@ onMounted(() => {
             <p class="tier-sub">
               Lo que se repite todos los años, sin compromisos temporales ni movimientos puntuales.
             </p>
-            <div class="plan-tier-table plan-table-scroll">
+            <div class="data-table plan-tier-table plan-table-scroll">
               <table>
                 <tbody>
                   <tr>
@@ -494,7 +494,10 @@ onMounted(() => {
               </template>
               <template v-else>Tus gastos operativos superan a tus ingresos recurrentes.</template>
             </p>
-            <div v-if="committedDiagnosis.hasCommitments" class="plan-tier-table plan-table-scroll">
+            <div
+              v-if="committedDiagnosis.hasCommitments"
+              class="data-table plan-tier-table plan-table-scroll"
+            >
               <table>
                 <thead>
                   <tr>
@@ -560,7 +563,7 @@ onMounted(() => {
                 Agrupar en una decisión
               </RouterLink>
             </p>
-            <div class="plan-tier-table plan-table-scroll">
+            <div class="data-table plan-tier-table plan-table-scroll">
               <table>
                 <thead>
                   <tr>
@@ -683,7 +686,9 @@ onMounted(() => {
               </table>
             </div>
 
-            <p v-if="localError" class="plan-inline-error" role="alert">{{ localError }}</p>
+            <AState v-if="localError" status="error" layout="inline" role="alert">
+              {{ localError }}
+            </AState>
 
             <!-- Aquí solo se reprograman los puntuales que ya existen: crearlos sigue
                  siendo cosa de Presupuesto. Agrupar en una decisión ya se ofrece por

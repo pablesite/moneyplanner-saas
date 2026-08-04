@@ -19,6 +19,7 @@ import {
 } from '@/domains/accounting';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 import type { Asset, Ownership } from '@/domains/net-worth/models';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 import {
   expenseCategories,
   normalizeExpenseTaxonomy,
@@ -367,11 +368,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     if (id == null) return '';
     const ownership = ownershipById.value.get(id);
     if (!ownership) return '';
-    if (ownership.kind === 'individual') return ownership.member?.name ?? '';
-    const parts = ownership.splits
-      .map((split) => `${split.member.name} ${String(split.percent).trim()}%`)
-      .filter((part) => part.trim().length > 1);
-    return parts.length ? `Compartido (${parts.join(' / ')})` : '';
+    return ownershipDisplayLabel(ownership);
   }
   const budgetSuggestionsLoading = ref(false);
   const budgetSuggestionsError = ref<string | null>(null);

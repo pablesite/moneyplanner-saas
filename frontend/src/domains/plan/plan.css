@@ -73,85 +73,17 @@
 }
 
 .plan-tabs-bar .tabs {
-  display: flex;
-  gap: 0;
   min-width: max-content;
-  margin-bottom: -1px;
-}
-
-.plan-tabs-bar .tab {
-  padding: 10px 16px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13.5px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.12s;
-}
-
-.plan-tabs-bar .tab:hover {
-  color: var(--text);
-}
-
-.plan-tabs-bar .tab.on {
-  border-bottom-color: var(--accent);
-  color: var(--text);
 }
 
 /* Las acciones de configuración son secundarias al resumen. Viven con la
    navegación de la vista, agrupadas en un menú compacto, para no abrir una fila
    entera bajo el título en móvil. */
+/* Solo la posición dentro de la barra de tabs: el chrome del menú (caja, sombra,
+   filas) lo aporta `ARowMenu` vía `design-system.css`. */
 .plan-options {
-  position: relative;
   flex: 0 0 auto;
   margin-right: 4px;
-}
-
-.plan-options-trigger {
-  min-width: 40px;
-  min-height: 40px;
-  padding: 0 10px;
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 0.86rem;
-  letter-spacing: 0.08em;
-}
-
-.plan-options-menu {
-  position: absolute;
-  z-index: 24;
-  top: calc(100% + 8px);
-  right: 0;
-  display: grid;
-  min-width: 196px;
-  padding: 6px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: var(--panel-solid, var(--panel));
-  box-shadow: 0 14px 34px rgb(0 0 0 / 28%);
-}
-
-.plan-options-menu :is(button, a) {
-  display: flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.84rem;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.plan-options-menu :is(button, a):hover,
-.plan-options-menu :is(button, a):focus-visible {
-  background: var(--panel-hover, rgb(255 255 255 / 6%));
 }
 
 /* Lectura inmediata mientras se ajusta una Decisión: el número grande es el año
@@ -190,17 +122,6 @@
   padding: 10px 0;
 }
 
-.plan-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-}
-
 .plan-diagnosis-toggle {
   width: fit-content;
 }
@@ -208,10 +129,6 @@
 .plan-diagnosis-detail {
   display: grid;
   gap: 18px;
-}
-
-.plan-toolbar .context-field {
-  min-width: 180px;
 }
 
 .plan-onboarding.a-state-panel {
@@ -398,14 +315,10 @@
 
 /* Los bloques de contenido van sin caja (mismo patrón que el hero y que "Tu
    situación este año"): el ritmo lo dan el gap de la página, los eyebrow y las
-   hairlines internas. Solo los formularios conservan panel, donde el fondo sí
-   agrupa campos. */
-.plan-form-section {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  padding: 18px;
-}
+   hairlines internas.
+   `.plan-form-section` no declara superficie: sus 20 instancias son hijas directas
+   de `.plan-setup-page`, que ya las abre (`padding: 0; border: 0; background:
+   transparent`). El panel que había aquí no se pintaba en ningún sitio. */
 
 .plan-progress,
 .plan-quality,
@@ -1387,17 +1300,15 @@
   color: var(--muted);
 }
 
+/* Modificador de layout sobre `AState layout="inline"`, no un estado propio: la
+   primitiva pone color, padding y semántica; aquí solo se reparte el texto y su
+   acción en una fila. */
 .plan-empty-inline {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  color: var(--muted);
-}
-
-.plan-empty-inline span {
-  color: var(--muted);
 }
 
 .plan-events,
@@ -2743,15 +2654,6 @@
   color: var(--muted);
 }
 
-.plan-scenario-notice.success {
-  border-color: var(--accent-line);
-  background: var(--pos-soft);
-}
-
-.plan-scenario-notice.success p {
-  color: var(--text);
-}
-
 .plan-scenario-notice-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2878,14 +2780,9 @@
   background: transparent;
 }
 
-.plan-scenario-context {
-  padding: 0 0 12px;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-}
-
+/* La barra es `.context-bar` compartida (transparente, hairline inferior): esta
+   clase solo queda como gancho para el ancho del campo. Antes replicaba a mano lo
+   que ya hacía el patrón, sobre una `.plan-toolbar` con caja que nunca se veía. */
 .plan-scenario-context .context-field {
   min-width: 0;
 }
@@ -3026,12 +2923,11 @@
   width: min(100%, var(--plan-setup-width));
 }
 
+/* El título usa la escala compartida (`.dir-a .page-title`): un tamaño propio aquí
+   dejaba estas cuatro pantallas fuera de cualquier cambio futuro de la escala. Solo
+   se conserva el ajuste de ritmo vertical, que es de esta página. */
 .plan-setup-page > .page-head {
   padding-bottom: 0;
-}
-
-.plan-setup-page > .page-head .page-title {
-  font-size: 26px;
 }
 
 .plan-setup-page > .page-head .page-meta {
@@ -3208,6 +3104,21 @@
   display: grid;
   gap: 12px;
   margin-top: 0;
+}
+
+.plan-member-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 16px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.plan-member-empty {
+  flex-direction: column;
+  gap: 12px;
 }
 
 .plan-members > article {
@@ -3714,6 +3625,11 @@
 }
 
 @container page (max-width: 400px) {
+  .plan-member-picker-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .plan-choice-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3898,17 +3814,17 @@
 
   /* Context rail de una fila con scroll horizontal (mismo patrón que Patrimonio):
      el chrome previo al contenido se queda en una franja, no en tres filas. */
-  .plan-toolbar {
+  .plan-scenario-context {
     flex-wrap: nowrap;
     overflow-x: auto;
   }
 
-  .plan-toolbar > * {
+  .plan-scenario-context > * {
     flex: 0 0 auto;
     min-width: 0;
   }
 
-  .plan-toolbar .context-field {
+  .plan-scenario-context .context-field {
     min-width: 150px;
   }
 
@@ -3951,10 +3867,6 @@
   .plan-options {
     margin-right: 0;
   }
-
-  .plan-page {
-    padding-bottom: 84px;
-  }
 }
 
 /* --- Tu situación este año: base recurrente + esfuerzo temporal + puntuales ---
@@ -3967,16 +3879,10 @@
   gap: 12px;
 }
 
-/* Mismo tratamiento que el eyebrow del hero ("Casi en objetivo"): etiqueta
-   uppercase muted, sin título grande ni subrayado. */
-.plan-block-eyebrow {
-  margin: 0;
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--muted);
-}
+/* El eyebrow muted es tratamiento de hero (`.dir-a .a-hero-figure .eyebrow`), no de
+   cabecera de bloque. Mi Plan lo había extendido a bloques con una clase propia que
+   ningún otro dominio tenía; las cabeceras usan ahora `.eyebrow` como el resto del
+   producto. */
 
 .plan-situacion-year {
   font-size: 10.5px;
@@ -4104,15 +4010,7 @@
 }
 
 .plan-tier-table th {
-  padding: 8px 12px;
-  color: var(--faint);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: left;
   white-space: nowrap;
-  border-bottom: 1px solid var(--line);
 }
 
 .plan-tier-table td {

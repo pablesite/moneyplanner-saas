@@ -21,8 +21,8 @@ function formatTestMoney(value: number): string {
   return `${withThousands},${decimalPart} €`;
 }
 
-const mockUseRoute = vi.fn(() => ({ name: 'budget', path: '/presupuesto' }));
-const mockUseRouter = vi.fn(() => ({ push: vi.fn() }));
+const mockUseRoute = vi.fn(() => ({ name: 'budget', path: '/presupuesto', query: {} }));
+const mockUseRouter = vi.fn(() => ({ push: vi.fn(), replace: vi.fn() }));
 const mockCoreApiGet = vi.hoisted(() => vi.fn());
 const mockCoreApiPost = vi.hoisted(() => vi.fn());
 const mockCoreApiPatch = vi.hoisted(() => vi.fn());
@@ -62,6 +62,8 @@ const mockBudgetAnnualEntriesPage = vi.hoisted(() => ({
   fiscalYear: { value: new Date().getFullYear() },
   showIncomeModal: { value: false },
   showExpenseModal: { value: false },
+  annualIncomeEntries: { value: [] as Array<{ id: number; name: string }> },
+  annualExpenseEntries: { value: [] as Array<{ id: number; name: string }> },
   incomeModalTitle: { value: 'Nuevo ingreso' },
   expenseModalTitle: { value: 'Nuevo gasto' },
   annualIncomeForm: {},
@@ -79,6 +81,9 @@ const mockBudgetAnnualEntriesPage = vi.hoisted(() => ({
   annualExpenseSubcategoryOptions: { value: [{ value: 'living_expenses', label: 'Alimentacion' }] },
   showOwnerField: { value: false },
   ownerOptions: { value: [] },
+  showSettlementFields: { value: false },
+  settlementOwnershipOptions: { value: [] },
+  settlementAccountOptions: { value: [] },
   incomeTimeProfileOptions: { value: [{ value: 'structural_recurrent', label: 'Recurrente' }] },
   incomeCashflowRoleOptions: [{ value: 'operating', label: 'Operativo' }],
   annualEventGroupOptions: { value: [] },
@@ -371,6 +376,27 @@ describe('Budget & Monthly close views', () => {
         method_note: '',
       },
     } as never);
+    mockUseRoute.mockReturnValue({ name: 'budget', path: '/presupuesto', query: {} });
+    mockBudgetAnnualEntriesPage.annualIncomeEntries.value = [];
+    mockBudgetAnnualEntriesPage.annualExpenseEntries.value = [];
+    mockBudgetAnnualEntriesPage.openIncomeModal.mockClear();
+    mockBudgetAnnualEntriesPage.openExpenseModal.mockClear();
+  });
+
+  it('opens a budget income entry from a settlement readiness deep link', async () => {
+    const entry = { id: 47, name: 'Dividendos' };
+    mockUseRoute.mockReturnValue({
+      name: 'budget',
+      path: '/presupuesto',
+      query: { editIncome: '47' },
+    });
+    mockBudgetAnnualEntriesPage.annualIncomeEntries.value = [entry];
+    configureCoreApi();
+
+    mountBudgetView();
+    await flushPromises();
+
+    expect(mockBudgetAnnualEntriesPage.openIncomeModal).toHaveBeenCalledWith(entry);
   });
 
   it('shows ledger liquidity balance without opening manual editing', async () => {

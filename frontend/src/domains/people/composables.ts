@@ -1,6 +1,13 @@
 import { computed, reactive, ref } from 'vue';
 import { usePeopleStore } from '@/domains/people/store';
-import type { FamilyMember, OwnershipRead } from '@/domains/people/types';
+import { peopleApi } from '@/domains/people/api';
+import type {
+  FamilyMember,
+  OwnershipAllocationBasis,
+  OwnershipAllocationPreview,
+  OwnershipIncomeRule,
+  OwnershipRead,
+} from '@/domains/people/types';
 
 type MemberRole = 'adult' | 'child';
 
@@ -160,10 +167,14 @@ export function usePeopleOwnerships() {
   const showModal = ref(false);
   const editId = ref<number | null>(null);
   const successMessage = ref<string | null>(null);
+  const allocationPreview = ref<OwnershipAllocationPreview | null>(null);
+  const previewLoading = ref(false);
 
   const form = reactive({
     memberIds: [] as number[],
     percents: {} as Record<number, string>,
+    allocationBasis: 'explicit_split' as OwnershipAllocationBasis,
+    incomeRules: [{ category_key: 'salary', subcategory_key: '' }] as OwnershipIncomeRule[],
   });
 
   const adults = computed(() => store.activeAdults);
@@ -171,6 +182,7 @@ export function usePeopleOwnerships() {
   const canCreate = computed(() => {
     if (form.memberIds.length < 2) return false;
 
+    if (form.allocationBasis === 'recurring_income_12m') return true;
     for (const id of form.memberIds) {
       const p = Number(String(form.percents[id] ?? '').replace(',', '.'));
       if (!Number.isFinite(p) || p <= 0 || p > 100) return false;
@@ -203,7 +215,10 @@ export function usePeopleOwnerships() {
     showModal.value = false;
     form.memberIds = [];
     form.percents = {};
+    form.allocationBasis = 'explicit_split';
+    form.incomeRules = [{ category_key: 'salary', subcategory_key: '' }];
     editId.value = null;
+    allocationPreview.value = null;
   }
 
   function openCreate() {
@@ -211,6 +226,9 @@ export function usePeopleOwnerships() {
     editId.value = null;
     form.memberIds = [];
     form.percents = {};
+    form.allocationBasis = 'explicit_split';
+    form.incomeRules = [{ category_key: 'salary', subcategory_key: '' }];
+    allocationPreview.value = null;
     showModal.value = true;
   }
 
@@ -225,7 +243,13 @@ export function usePeopleOwnerships() {
     (ownership.splits ?? []).forEach((split) => {
       if (split.member?.id != null) form.percents[split.member.id] = String(split.percent ?? '');
     });
+    form.allocationBasis = ownership.allocation_basis ?? 'explicit_split';
+    form.incomeRules = ownership.income_rules?.length
+      ? ownership.income_rules.map((rule) => ({ ...rule }))
+      : [{ category_key: 'salary', subcategory_key: '' }];
+    allocationPreview.value = null;
     showModal.value = true;
+    if (form.allocationBasis === 'recurring_income_12m') void refreshAllocationPreview();
   }
 
   function toggleMember(id: number) {
@@ -255,20 +279,84 @@ export function usePeopleOwnerships() {
     if (!canCreate.value) return;
     successMessage.value = null;
 
+    if (form.allocationBasis === 'recurring_income_12m') setEqualSplit();
+
     const splits = form.memberIds.map((id) => ({
       member_id: id,
       percent: String(form.percents[id]).replace(',', '.'),
     }));
 
     if (editId.value != null) {
-      await store.updateSharedOwnership(editId.value, { splits });
+      const isInUse = store.ownerships.find(
+        (ownership) => ownership.id === editId.value,
+      )?.is_in_use;
+      await store.updateSharedOwnership(editId.value, {
+        ...(!isInUse && form.allocationBasis === 'explicit_split' ? { splits } : {}),
+        allocation_basis: form.allocationBasis,
+        income_rules: form.allocationBasis === 'recurring_income_12m' ? form.incomeRules : [],
+      });
       successMessage.value = 'Titularidad compartida actualizada correctamente.';
+      if (form.allocationBasis === 'recurring_income_12m') {
+        await refreshAllocationPreview();
+        return;
+      }
     } else {
-      await store.createSharedOwnership({ splits });
+      await store.createSharedOwnership({
+        splits,
+        allocation_basis: form.allocationBasis,
+        income_rules: form.allocationBasis === 'recurring_income_12m' ? form.incomeRules : [],
+      });
       successMessage.value = 'Titularidad compartida creada correctamente.';
     }
 
     resetModal();
+  }
+
+  function setIncomeRule(rule: OwnershipIncomeRule, enabled: boolean) {
+    const key = `${rule.category_key}:${rule.subcategory_key}`;
+    form.incomeRules = enabled
+      ? [
+          ...form.incomeRules.filter(
+            (item) => `${item.category_key}:${item.subcategory_key}` !== key,
+          ),
+          rule,
+        ]
+      : form.incomeRules.filter((item) => `${item.category_key}:${item.subcategory_key}` !== key);
+    allocationPreview.value = null;
+  }
+
+  function setAllocationBasis(value: OwnershipAllocationBasis) {
+    form.allocationBasis = value;
+    // A shared ownership needs at least two adults. With the usual two-person
+    // household, select both when switching to the dynamic method so the form
+    // cannot start in a state that can never be submitted.
+    if (value === 'recurring_income_12m' && adults.value.length === 2) {
+      for (const adult of adults.value) {
+        if (!form.memberIds.includes(adult.id)) {
+          form.memberIds.push(adult.id);
+          form.percents[adult.id] = form.percents[adult.id] ?? '';
+        }
+      }
+    }
+    allocationPreview.value = null;
+  }
+
+  async function refreshAllocationPreview() {
+    if (editId.value == null || form.allocationBasis !== 'recurring_income_12m') return;
+    previewLoading.value = true;
+    try {
+      const now = new Date();
+      const { data } = await peopleApi.getAllocationPreview(
+        editId.value,
+        now.getFullYear(),
+        now.getMonth() + 1,
+      );
+      allocationPreview.value = data;
+    } catch {
+      allocationPreview.value = null;
+    } finally {
+      previewLoading.value = false;
+    }
   }
 
   async function removeOwnership(id: number) {
@@ -284,6 +372,8 @@ export function usePeopleOwnerships() {
     showModal,
     editId,
     successMessage,
+    allocationPreview,
+    previewLoading,
     form,
     adults,
     canCreate,
@@ -295,6 +385,9 @@ export function usePeopleOwnerships() {
     openEdit,
     toggleMember,
     setEqualSplit,
+    setIncomeRule,
+    setAllocationBasis,
+    refreshAllocationPreview,
     submit,
     removeOwnership,
   };

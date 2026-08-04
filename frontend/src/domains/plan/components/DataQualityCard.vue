@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { ASectHead } from '@/domains/ui';
 import type { ProjectionResponse } from '@/domains/plan/types';
 
 const props = defineProps<{ projection: ProjectionResponse }>();
@@ -35,21 +36,15 @@ const showList = computed(() => !allOk.value || expanded.value);
 
 <template>
   <section class="sect plan-quality">
-    <div class="sect-head">
-      <div>
-        <p class="eyebrow">Calidad de datos</p>
-        <h2 class="sect-title">
-          {{ levelLabel[projection.quality_level] ?? projection.quality_level }}
-        </h2>
-        <p class="sect-sub">
-          {{
-            allOk
-              ? `Los ${factorCount} factores clave están al día.`
-              : 'La proyección ya puede apoyarse en los datos clave. Mantenerlos al día mejora la lectura.'
-          }}
-        </p>
-      </div>
-    </div>
+    <ASectHead
+      eyebrow="Calidad de datos"
+      :title="levelLabel[projection.quality_level] ?? projection.quality_level"
+      :subtitle="
+        allOk
+          ? `Los ${factorCount} factores clave están al día.`
+          : 'La proyección ya puede apoyarse en los datos clave. Mantenerlos al día mejora la lectura.'
+      "
+    />
 
     <ul v-if="showList" class="plan-quality-list">
       <li v-for="(ok, key) in projection.quality_factors" :key="key" :class="{ ok }">

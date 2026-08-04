@@ -71,15 +71,20 @@ candidatos nuevos (regla: una primitiva nueva solo si ≥2 pantallas la usarían
       (budget/monthly-close suelen tener bloques colapsables).
 - [x] Documentar toda primitiva nueva en el visual-contract.
 
-**Auditoría ligera cerrada:** no quedan `<select>` nativos en componentes de
-producto; el único `<option>` restante pertenece a un `datalist` de texto libre
-en `AnnualEntryModalForm` (sugerencias de grupo de evento, no selector cerrado).
-Los mensajes de éxito usan `AToast`, los indicadores de expansión usan
-`AChevron`, y los flujos Direction A principales ya consumen `AButton`,
-`ASelect`, `AState`, `APageHead`/`ASectHead`, `AKindChip`, `ARowMenu`,
-`AHero`/`AKpiBand`, `ASparkline`, `ADateRange` y `BaseModal` donde aplica. No
-se creó ninguna primitiva nueva en este bloque; por tanto no hay actualización
-adicional necesaria en el visual-contract.
+**Auditoría de 2026-08 (Patrimonio, Contabilidad, Presupuesto, Cierre):** no
+quedan `<select>` nativos en componentes de producto; el único `<option>`
+restante pertenece a un `datalist` de texto libre en `AnnualEntryModalForm`
+(sugerencias de grupo de evento, no selector cerrado). Los mensajes de éxito
+usan `AToast`, los indicadores de expansión usan `AChevron`, y esos cuatro
+dominios consumen `AButton`, `ASelect`, `AState`, `APageHead`/`ASectHead`,
+`AKindChip`, `ARowMenu`, `AHero`/`AKpiBand`, `ASparkline`, `ADateRange` y
+`BaseModal` donde aplica. No se creó ninguna primitiva nueva.
+
+> **Mi Plan quedó fuera de esa auditoría** (el dominio se construyó después) y
+> no cumple el DoD. Auditado el 2026-08-03: adopta el shell (`.page`,
+> `APageHead`, `.sect`), los tokens, `ASelect`, `AState`, `BaseModal`,
+> `AStepper` y `AHero`/`AKpiBand`, pero se saltó la capa de primitivas y
+> helpers. Ver bloque F.
 
 **DoD**: la vista no reimplementa nada que ya exista en `@/domains/ui`.
 
@@ -90,22 +95,35 @@ Estado: ~10,6k líneas en 13 ficheros. Los grandes:
 `app.css` (1508), `design-system.css` (1091), `budget.css` (1079),
 `movements.css` (1024).
 
-- [ ] **Auditar `style=` inline** en componentes (detectado en `budget/*`,
-      `NetWorthEvolutionChart`, `NetWorthView`): separar lo dinámico legítimo
-      (`:style` en charts) de lo que debe ir a clases/tokens.
-- [ ] **Catálogo de patrones repetidos** con prefijo por dominio (`a-mov-*`,
-      `a-nw-*`, `bdg-*`, `mc-*`): identificar los que son el mismo patrón visual
-      y promoverlos a clase compartida `.ui-*` en `app.css` (como se hizo con
-      `.ui-toast`, `.ui-chevron`). Empezar por: cabeceras de grupo, KPI bands,
-      filtros/toolbars, footers de modal.
-- [ ] Verificar que los nuevos patrones compartidos quedan documentados en el
-      visual-contract y que las clases por dominio que queden huérfanas se
-      eliminan.
-- [ ] No mover CSS por mover: solo consolidar lo que esté **duplicado** entre
-      ≥2 dominios.
+- [x] **Auditar `style=` inline.** No queda ninguno estático en el frontend SaaS.
+      Los 19 `:style` que hay son dinámicos legítimos (anchos de barra, posición
+      de tooltips y marcadores, color de serie, `--n` del stepper, panel de
+      `ASelect`).
+- [x] **Catálogo de patrones repetidos.** Medido con un script que compara los
+      cuerpos de regla normalizados entre dominios: 26 cuerpos idénticos, pero la
+      mayoría son coincidencias triviales de 3 declaraciones (`display: flex;
+      gap: 8px`) que no son el mismo patrón semántico — consolidarlas sería
+      justo el "mover CSS por mover" que prohíbe el último punto. Promovidos los
+      cuatro que sí lo son: `.filter-ctrl` (4 dominios), `.sr-only` (3),
+      `.data-table th` (4) y `.context-field` (3). Los tabs y el rail de contexto
+      ya se hicieron en el bloque G.
+- [x] Documentados en el visual-contract (regla 29) y eliminadas las clases de
+      dominio huérfanas (`.a-nw-sr-only`, `.a-budget-sr-only`, `.mc-sr-only`).
+- [x] Solo se consolidó lo duplicado entre ≥2 dominios.
 
-**DoD**: reducción neta de líneas duplicadas; sin `style=` inline no-dinámico;
-patrones compartidos en `app.css` + documentados.
+**Pendiente en C:** el FAB móvil es idéntico entre Patrimonio y Presupuesto
+(contenedor + menú), pero Contabilidad diverge estructuralmente (el propio botón
+es el FAB, 54×54). Es una consolidación mayor y dentro de media queries; no
+abrirla junto con las utilidades.
+
+**Bug corregido de paso:** `.sr-only` se usaba en `AccountView` y
+`PlanImprovementsView` pero **no estaba definida en ningún fichero** (tampoco la
+aporta Tailwind), así que un `<input type="file">` de importación y un anuncio
+`aria-live` se renderizaban visibles. Al promover la utilidad quedan ocultos.
+
+**DoD**: cumplido para utilidades. Reducción neta de líneas duplicadas, sin
+`style=` inline no-dinámico, patrones compartidos en `design-system.css` (no en
+`app.css`, que es la capa legacy) y documentados.
 
 ## D. Hueco estructural en `BaseModal` (slot de footer)
 
@@ -124,38 +142,146 @@ no-sticky, pero es un parche). Cada modal resuelve sus acciones a mano
       borde superior, acciones a la derecha, safe-area) en `app.css`.
 - [x] Migrados los modales **auto-contenidos sencillos** al slot de footer:
       `FamilyMemberManager` (crear + editar) y `OwnershipManager` (people).
-- [ ] **Migrar QuickEntry y `AccountingMovementsActivationModal`**: su botón de
-      envío es `type="submit"` dentro de un `<form>` en el slot por defecto.
-      Mover el footer fuera del form requiere dar `id` al `<form>` y `form="<id>"`
-      al botón (atributo HTML `form`), o que `AButton` reenvíe `form`. Acotado
-      pero toca componentes grandes.
-- [ ] **Migrar `ItemForm`**: lo renderiza el wrapper `NetWorthItemModals` (el
-      `BaseModal` vive en el wrapper, `ItemForm` es contenido por defecto y su
-      footer depende de su estado interno). Opciones: exponer un slot con scope
-      desde `ItemForm`, o `Teleport` a un objetivo del panel. Hoy funciona
-      (footer no-sticky), así que es consistencia, no bug.
+- [x] **Migrados QuickEntry y `AccountingMovementsActivationModal`.** La técnica
+      documentada funciona sin tocar `AButton`: se da `id` al `<form>` y el botón
+      lleva el atributo HTML `form="<id>"`, que Vue reenvía solo porque `AButton`
+      tiene un único nodo raíz. `.qe-footer` era el parche que describe este
+      bloque —sticky dentro del scroll, replicando borde, fondo, backdrop y
+      safe-area con márgenes negativos— y queda reducido a `display: grid; gap`.
+      `.ui-accounting-submit-row` desaparece (huérfana), y con ella su override
+      `.dir-a-sheet .ui-accounting-submit-row` en el design system.
+- [ ] **`ItemForm`: no migrar por ahora (decisión).** Su footer depende de ~14
+      refs de error internas, así que sacarlo del `<form>` exige o un slot con
+      scope que las exponga todas, o cambiar el contrato de `BaseModal` para que
+      `ItemForm` haga `Teleport` a un objetivo del panel. Es un refactor
+      arquitectónico del formulario más grande de la app (~2,6k líneas, 3
+      modales) a cambio de consistencia: **el bug ya no existe**, el sticky que
+      tapaba el último campo se arregló pasándolo a no-sticky. Reabrir solo si se
+      trocea `ItemForm` o si el footer que hace scroll llega a molestar.
 
-**DoD parcial**: primitiva entregada y validada con los modales de people. Resto
-pendiente con técnica documentada arriba.
+**DoD**: cumplido salvo `ItemForm`, excluido a propósito con el motivo arriba.
 
-## E. Pasada por vista (incremental)
+## E. Pasada por vista (incremental) — absorbida
 
-Una vista por iteración, aplicando A–D donde toque. Orden sugerido por
-esfuerzo/impacto (ajustable):
+Los bloques A–D, F y G se aplicaron de forma transversal a todos los dominios,
+así que la pasada vista por vista se quedó casi sin contenido. Medido con los
+greps de control de la skill sobre Presupuesto, Cierre, Personas y Datos
+auxiliares: **cero** `<button class="btn">` crudos, cero `<select>` nativos,
+cero `style=` estáticos, cero `Set` propios de colapso y cero formatters
+locales. Lo único que quedaba eran tres `sect-head` a mano.
 
-- [ ] **Presupuesto** (`BudgetView` + `domains/budget`) — CSS grande (1079) y
-      formatters locales; buen primer candidato.
-- [ ] **Cierre mensual** (`MonthlyCloseView`, `monthly-close.css`) — bloques
-      colapsables y KPI bands reutilizables.
+- [x] **Presupuesto** (`BudgetView` + `domains/budget`) — `ASectHead` en la
+      cabecera de Sugerencias.
+- [x] **Cierre mensual** (`MonthlyCloseView`) — `ASectHead` en la cabecera de
+      Impacto en Mi Plan.
 - [x] **Estado / Home / Guía** — retirado del SaaS en Financial Plan Phase 5;
       `/estado-financiero` redirige a `/plan`.
-- [ ] **Personas** (`domains/people`) — modales (sección D).
-- [ ] **Datos auxiliares** (`domains/aux-data`).
+- [x] **Personas** (`domains/people`) — sin deuda: sus modales ya se migraron al
+      slot de footer en la tanda que abrió el bloque D.
+- [x] **Datos auxiliares** (`domains/aux-data`) — sin deuda; ya consumía
+      `AChevron`, `useCollapsibleGroups`, `AToast` y `AButton`.
 
-Para cada vista, checklist mínima:
-- [ ] Dedup utilidades (A) · [ ] Primitivas UI (B) · [ ] CSS compartido (C) ·
-      [ ] Modales al slot de footer (D) · [ ] Estados loading/empty/error/success
-      · [ ] Validación Docker + tests verdes.
+**Excepción documentada:** `BudgetAnnualSection` mantiene su `sect-head` a mano
+porque `.bdg-section-title` es otro tratamiento (16px con barra de color según
+ingreso/gasto), no el `.sect-title` estándar; `ASectHead` fija la clase del `h2`
+y forzarlo sería calzar el patrón. Mismo criterio que `NetWorthTrajectoryChart`
+en el bloque F.
+
+## F. Alineación de Mi Plan con el design system
+
+Auditoría del 2026-08-03 sobre las 10 vistas de `domains/plan`, contrastadas con
+Patrimonio y Contabilidad. Mi Plan se construyó después de cerrar el bloque B, no
+pasó por esa auditoría, y la skill `frontend-system` apuntaba entonces a ficheros
+obsoletos (corregido en este mismo bloque). Resultado: `plan.css` son 4.248
+líneas frente a 1.981 de contabilidad y 1.765 de patrimonio.
+
+**Cumple**: shell (`.page` + `APageHead` + `.sect`), tokens, `ASelect`, `.input`,
+`AState` para loading/empty/error de página, `BaseModal`, `AStepper`,
+`AHero`/`AKpiBand`, `AInfoHint`, `--shell-bottom-inset`. Cero `style=` inline,
+cero `<style scoped>`, cero `<select>` nativo. Los hex de la escala de notas A–E
+son una excepción documentada y validada con la skill `dataviz`.
+
+- [x] **F0 — Doc y skill.** Corregidas las fuentes canónicas en la skill
+      `frontend-system`, `frontend-visual-contract.md` y `frontend-css-workflow.md`
+      (apuntaban a `core/frontend/src/styles/app.css`, congelado y pre-Direction A).
+      Añadida a la skill la tabla de primitivas `@/domains/ui` y los greps de
+      control al Review Checklist. Contrato e improvement-roadmap añadidos a los
+      docs canónicos de `CLAUDE.md`/`AGENTS.md`.
+- [x] **F1 — Estados y botones.** `AState layout="inline"` sustituye a
+      `.plan-empty-inline` / `.plan-muted` / `.plan-inline-error`; `AButton`
+      sustituye los `<button class="btn …">` crudos.
+- [x] **F2 — `ASectHead`.** 30 de los 32 `<div class="sect-head">` de Mi Plan
+      migrados a la primitiva. `ASectHead` gana un slot `#subtitle` (tres
+      pantallas tenían subtítulo con énfasis o partes condicionales y por eso
+      quedaban fuera) y su primer spec. Quedan dos casos fuera a propósito:
+      `NetWorthTrajectoryChart` no tiene `sect-title` (su cabecera es rótulo con
+      `AInfoHint` + leyenda, estructura distinta), y `PlanFoundations` usa
+      `.plan-block-eyebrow` (muted) en vez de `.eyebrow` (accent), así que
+      migrarlo cambiaría el color — va con F4.
+- [x] **F3 — Helpers y menús.** `useCollapsibleGroups` sustituye las 5
+      reimplementaciones con `Set` propio (`PlanAssetsView`,
+      `PlanPlannedDecisionView` ×2, `PlanOccurredEventView` ×2); `AChevron`
+      sustituye el texto "Ver/Ocultar" en las 7 cabeceras de grupo; `ARowMenu`
+      sustituye el menú de opciones de `PlanView`.
+      **Bug corregido de paso:** el chrome de `ARowMenu` (`.row-menu`,
+      `.row-menu-wrap`) vivía en `net-worth-view.css` acotado a `.a-nw-page`, así
+      que el menú de fila de **Contabilidad** —que consume la misma primitiva— se
+      pintaba sin caja, sombra ni posicionamiento. Promovido a
+      `design-system.css`. `ARowMenu` gana cierre con Esc + restauración de foco
+      y su primer spec.
+      **Corrección a la auditoría:** el ítem "`AToast` en vez de
+      `.plan-scenario-notice`" estaba mal planteado. Esos bloques son estado
+      persistente del escenario (descartado / incorporado), no confirmaciones
+      transitorias; un toast que se auto-descarta sería peor. Se mantienen como
+      sección. Sí se retira el modificador `.plan-scenario-notice.success`, que
+      era CSS muerto.
+- [x] **F4 — Chrome.** Dos decisiones de producto y dos limpiezas.
+      **Decidido:** las cabeceras de bloque usan `.eyebrow` (acento) como el resto
+      del producto; `.plan-block-eyebrow` (muted, 7 usos) se retira. El muted es
+      tratamiento de hero (`.dir-a .a-hero-figure .eyebrow`), patrón compartido
+      que Mi Plan había extendido a bloques con una clase que ningún otro dominio
+      tenía. Y el título de las páginas de asistente vuelve a la escala
+      compartida de 32px: se retira `font-size: 26px`, que dejaba esas cuatro
+      pantallas fuera de cualquier cambio futuro de la escala.
+      **Corrección a la auditoría:** los otros dos puntos no cambiaban el aspecto,
+      eran reglas muertas anuladas por un override que no comprobé. La caja de
+      `.plan-toolbar` la anulaba `.plan-scenario-context`, y la card de
+      `.plan-form-section` la anula `.plan-setup-page > .plan-form-section`. La
+      barra pasa a `.context-bar` compartida y ambas reglas se borran sin cambio
+      visual. `PlanFoundations` cierra además el pendiente de F2: quedó fuera
+      justo por el color del eyebrow, y ahora usa `ASectHead`.
+
+**DoD**: los greps de control de la Review Checklist de la skill salen limpios en
+`views/Plan*.vue` y `domains/plan/**`.
+
+## G. Deuda transversal (4 dominios) — cerrada
+
+- [x] **Tabs compartidas.** `.tabs` / `.tab` estaban duplicadas literalmente en
+      net-worth, accounting, budget y plan: las mismas 10 declaraciones cambiando
+      solo el prefijo. Promovidas a `design-system.css`. Los ajustes responsive de
+      cada dominio (tap targets, scroll horizontal) sí divergen de verdad y se
+      quedan locales.
+- [x] **Rail de contexto compartido.** El hallazgo real no era `AContextBar`: hay
+      **dos** patrones de barra de contexto, y el triplicado era el otro. Los
+      `*-read-controls` de Patrimonio, Presupuesto y Cierre eran idénticos (10
+      declaraciones, un `border-bottom: 0` de diferencia que era no-op).
+      Promovidos a `.context-rail`. `.a-budget-read-controls` y `.mc-read-controls`
+      desaparecen; `.a-nw-read-controls` sobrevive solo como gancho de su `gap`
+      responsive. `AContextBar` (variante que envuelve) pasa a usarse en
+      `PlanScenarioDetailView`, así que deja de estar exportado sin consumidores, y
+      se borran los overrides muertos de `.context-bar` / `.context-divider` en
+      Contabilidad, que no renderiza ninguna de las dos.
+- [x] **Doble reserva de la tab bar.** Los cinco `padding-bottom: 84/88px` no eran
+      solo números mágicos: `.ui-shell-content-stage` ya reserva
+      `--shell-bottom-inset`, así que cada vista sumaba su propia reserva encima
+      (~156 px en móvil en lugar de ~68). Retirados los cinco; la reserva la hace
+      solo el shell.
+- [x] **Especificidad documentada.** Al mover chrome al design system apareció un
+      detalle que no estaba escrito: `main.ts` importa el router (línea 11) antes
+      que `design-system.css` (línea 13), así que el CSS de dominio se inyecta
+      primero y a igualdad de especificidad **gana el design system**. Verificado
+      sobre el bundle. Las clases compartidas que las vistas matizan van dentro de
+      `:where()` para no romper sus overrides. Reglas 26–28 del visual-contract.
 
 ---
 

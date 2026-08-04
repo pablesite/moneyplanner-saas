@@ -1444,9 +1444,9 @@ watch(
     </nav>
 
     <section class="sect a-nw-read-section" aria-label="Opciones de lectura de patrimonio">
-      <div class="a-nw-read-controls">
+      <div class="context-rail a-nw-read-controls">
         <label class="context-field a-nw-control-chip" data-test="ownership-filter">
-          <span class="a-nw-sr-only">Titularidad</span>
+          <span class="sr-only">Titularidad</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Titularidad"
@@ -1459,7 +1459,7 @@ watch(
         </label>
 
         <label class="context-field a-nw-control-chip">
-          <span class="a-nw-sr-only">Moneda</span>
+          <span class="sr-only">Moneda</span>
           <ASelect
             class="filter-ctrl"
             aria-label="Moneda"
@@ -1471,7 +1471,7 @@ watch(
         </label>
 
         <div class="context-field a-nw-control-chip a-nw-valuation-control">
-          <span class="a-nw-sr-only">Valoración</span>
+          <span class="sr-only">Valoración</span>
           <div class="seg" role="group" aria-label="Valoración">
             <AButton
               :aria-pressed="valueMode === 'nominal'"
@@ -1888,7 +1888,7 @@ watch(
           </section>
         </div>
 
-        <table class="tbl a-nw-balance-table">
+        <table class="data-table tbl a-nw-balance-table">
           <thead>
             <tr>
               <th>Cuenta</th>

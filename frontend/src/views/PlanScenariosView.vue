@@ -517,15 +517,20 @@ onMounted(async () => {
       <section class="plan-decision-worklist">
         <div class="plan-block-head">
           <div>
-            <p class="plan-block-eyebrow">Pendientes</p>
+            <p class="eyebrow">Pendientes</p>
             <h2 id="pending-decisions-title" class="sect-title">Decisiones que estás valorando</h2>
           </div>
           <span class="plan-decision-count">{{ pendingScenarios.length }}</span>
         </div>
-        <div v-if="!pendingScenarios.length" class="plan-empty-inline plan-decision-empty">
+        <AState
+          v-if="!pendingScenarios.length"
+          status="empty"
+          layout="inline"
+          class="plan-empty-inline plan-decision-empty"
+        >
           <p class="plan-muted">No tienes decisiones pendientes.</p>
           <span>Elige arriba una opción para probar su impacto.</span>
-        </div>
+        </AState>
         <RouterLink
           v-for="scenario in pendingScenarios"
           v-else

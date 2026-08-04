@@ -45,6 +45,7 @@ export const usePlanStore = defineStore('plan', {
     selectedScenario: null as PlanScenario | null,
     scenarioComparison: null as PlanScenarioComparison | null,
     events: [] as PlanEvent[],
+    members: [] as PlanMember[],
     foundations: null as PlanFoundations | null,
     assetFunctions: null as AssetFunctionResponse | null,
     assetFunctionsLoading: false,
@@ -261,6 +262,16 @@ export const usePlanStore = defineStore('plan', {
       }
     },
 
+    async fetchMembers() {
+      try {
+        const { data } = await planApi.getMembers();
+        this.members = data;
+      } catch (error) {
+        this.members = [];
+        this.error = toErrorMessage(error, 'No se pudieron cargar los miembros disponibles.');
+      }
+    },
+
     async fetchAssetFunctions() {
       this.assetFunctionsLoading = true;
       this.error = null;
@@ -349,11 +360,11 @@ export const usePlanStore = defineStore('plan', {
 
     async saveMember(member: Partial<PlanMember> & PlanMemberPayload): Promise<PlanMember> {
       try {
-        if (member.id) {
-          const { data } = await planApi.updateMember(member.id, member);
-          return data;
-        }
-        const { data } = await planApi.createMember(member);
+        if (!member.id) throw new Error('El adulto debe existir antes de añadirlo al plan.');
+        const { data } = await planApi.updateMember(member.id, member);
+        this.members = this.members.map((candidate) =>
+          candidate.id === data.id ? data : candidate,
+        );
         return data;
       } catch (error) {
         this.error = toErrorMessage(error, 'No se pudo guardar un adulto del plan.');

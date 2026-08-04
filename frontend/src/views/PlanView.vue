@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
-import { AButton, AInfoHint, APageHead, AState } from '@/domains/ui';
+import { computed, onMounted, ref } from 'vue';
+import { RouterLink, useRouter } from 'vue-router';
+import { AButton, AInfoHint, APageHead, ARowMenu, AState } from '@/domains/ui';
 import {
   NetWorthTrajectoryChart,
   PlanCalculationSettingsModal,
@@ -18,9 +18,18 @@ import '@/domains/plan/plan.css';
 
 const { store, loading, error, plan, planMissing, projection, netWorthTimeline, scenario } =
   usePlan();
+const router = useRouter();
 const settingsOpen = ref(false);
-const optionsOpen = ref(false);
-const optionsRoot = ref<HTMLElement | null>(null);
+
+const optionsItems = [
+  { id: 'settings', label: 'Ajustes del cálculo' },
+  { id: 'goal', label: 'Editar objetivo' },
+];
+
+function onOptionSelect(id: string): void {
+  if (id === 'settings') settingsOpen.value = true;
+  if (id === 'goal') void router.push('/plan/setup');
+}
 
 function selectScenario(value: ProjectionScenario): void {
   void store.fetchOverview(value);
@@ -78,23 +87,6 @@ const foundationStatus = computed(() => {
   return 'Todas las dimensiones en verde';
 });
 
-function closeOptions(): void {
-  optionsOpen.value = false;
-}
-
-function handleDocumentClick(event: MouseEvent): void {
-  const target = event.target as Node | null;
-  if (optionsOpen.value && target && !optionsRoot.value?.contains(target)) {
-    closeOptions();
-  }
-}
-
-document.addEventListener('click', handleDocumentClick);
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleDocumentClick);
-});
-
 onMounted(() => {
   document.title = 'Mi Plan · The Arkenstone';
   void store.loadDashboard();
@@ -120,39 +112,13 @@ onMounted(() => {
         <RouterLink class="tab" to="/plan/mejoras">Mejoras</RouterLink>
         <RouterLink class="tab" to="/plan/decisiones">Decisiones</RouterLink>
       </div>
-      <div v-if="plan && !planMissing" ref="optionsRoot" class="plan-options">
-        <button
-          class="btn btn-ghost plan-options-trigger"
-          type="button"
-          aria-label="Opciones del plan"
-          :aria-expanded="optionsOpen"
-          aria-controls="plan-options-menu"
-          @click.stop="optionsOpen = !optionsOpen"
-        >
-          <span aria-hidden="true">•••</span>
-        </button>
-        <div
-          v-if="optionsOpen"
-          id="plan-options-menu"
-          class="plan-options-menu"
-          role="menu"
-          @keydown.esc="closeOptions"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            @click="
-              settingsOpen = true;
-              closeOptions();
-            "
-          >
-            Ajustes del cálculo
-          </button>
-          <RouterLink role="menuitem" to="/plan/setup" @click="closeOptions">
-            Editar objetivo
-          </RouterLink>
-        </div>
-      </div>
+      <ARowMenu
+        v-if="plan && !planMissing"
+        class="plan-options"
+        :items="optionsItems"
+        label="Opciones del plan"
+        @select="onOptionSelect"
+      />
     </nav>
 
     <AState v-if="loading && !projection && !planMissing" status="loading">
@@ -195,7 +161,7 @@ onMounted(() => {
         <div class="plan-main-grid">
           <ProductiveCapitalProgress :projection="projection" />
           <section class="sect plan-foundation-summary">
-            <p class="plan-block-eyebrow">Salud financiera</p>
+            <p class="eyebrow">Salud financiera</p>
             <div class="plan-foundation-headline">
               <span
                 v-if="overallHealth"
@@ -252,9 +218,9 @@ onMounted(() => {
         />
       </section>
 
-      <p v-if="error" class="plan-inline-error" role="alert">
+      <AState v-if="error" status="error" role="alert">
         Una parte no pudo actualizarse. Los demás datos siguen disponibles. {{ error }}
-      </p>
+      </AState>
 
       <PlanCalculationSettingsModal
         :open="settingsOpen"

@@ -5,6 +5,7 @@ import type {
   PlanScenarioComparison,
   ProjectionTrajectoryRow,
 } from '@/domains/plan/types';
+import { ASectHead } from '@/domains/ui';
 import { formatMoney } from '@/lib/format';
 import { yearWithAges } from '@/domains/plan/age';
 
@@ -116,16 +117,11 @@ const rows = computed<Row[]>(() => {
 
 <template>
   <section class="sect plan-comparison">
-    <div class="sect-head">
-      <div>
-        <p class="eyebrow">Comparación</p>
-        <h2 class="sect-title">Plan vigente vs escenario</h2>
-        <p class="sect-sub">
-          Impacto sobre la trayectoria proyectada, medido en el año objetivo y al final del
-          horizonte.
-        </p>
-      </div>
-    </div>
+    <ASectHead
+      eyebrow="Comparación"
+      title="Plan vigente vs escenario"
+      subtitle="Impacto sobre la trayectoria proyectada, medido en el año objetivo y al final del horizonte."
+    />
 
     <div v-if="unchanged && !showTable" class="plan-comparison-unchanged">
       <p class="plan-muted">

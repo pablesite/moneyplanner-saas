@@ -56,6 +56,9 @@ export const planApi = {
   getHistory() {
     return coreApi.get<ProjectionSnapshot[]>('/api/plan/history/');
   },
+  getMembers() {
+    return coreApi.get<PlanMember[]>('/api/plan/members/');
+  },
   // `targetYear` debe ser el año del denominador que se está mostrando (el retiro
   // sostenible del Resumen, no la fecha objetivo del plan): un horizonte distinto
   // deja otro puente hasta la pensión y devuelve capitales que no son comparables.

@@ -1,15 +1,17 @@
 ﻿<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
-import { AButton, AToast } from '@/domains/ui';
+import { AButton, ASelect, AState, AToast, type ASelectItem } from '@/domains/ui';
 import { usePeopleOwnerships } from '@/domains/people/composables';
-import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 
 const {
   store,
   showModal,
   editId,
   successMessage,
+  allocationPreview,
+  previewLoading,
   form,
   adults,
   canCreate,
@@ -21,9 +23,42 @@ const {
   openEdit,
   toggleMember,
   setEqualSplit,
+  setIncomeRule,
+  setAllocationBasis,
   submit,
   removeOwnership,
 } = usePeopleOwnerships();
+
+const allocationBasisOptions: ASelectItem[] = [
+  { value: 'recurring_income_12m', label: 'Proporcional a ingresos recurrentes (12 meses)' },
+  { value: 'explicit_split', label: 'Reparto fijo' },
+];
+const incomeRuleOptions = [
+  { category_key: 'salary', subcategory_key: '', label: 'Todos los salarios y nóminas' },
+  { category_key: 'business', subcategory_key: '', label: 'Actividad profesional o negocio' },
+  {
+    category_key: 'public_benefits',
+    subcategory_key: 'retirement_pension',
+    label: 'Pensión de jubilación',
+  },
+];
+
+function incomeRuleSelected(categoryKey: string, subcategoryKey: string): boolean {
+  return form.incomeRules.some(
+    (rule) => rule.category_key === categoryKey && rule.subcategory_key === subcategoryKey,
+  );
+}
+
+function formatMoney(value: string): string {
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(
+    Number(value),
+  );
+}
+
+function formatPercent(value: string | null | undefined): string {
+  if (value == null) return 'Sin datos';
+  return `${Number(value).toFixed(2)}%`;
+}
 
 onMounted(async () => {
   await ensureLoaded();
@@ -60,7 +95,11 @@ onMounted(async () => {
         <tbody>
           <tr v-for="o in ownershipsSorted" :key="o.id">
             <td>
-              <OwnershipLabel :kind="o.kind" :member="o.member" :splits="o.splits" />
+              <template v-if="o.allocation_basis === 'recurring_income_12m'">
+                {{ ownershipDisplayLabel(o) }}
+                <span class="subtle"> · se recalcula cada mes</span>
+              </template>
+              <template v-else>{{ ownershipDisplayLabel(o) }}</template>
             </td>
 
             <td class="ui-data-table-actions">
@@ -110,8 +149,21 @@ onMounted(async () => {
     >
       <div class="ui-item-form-grid">
         <p class="subtle m-0 pb-1 md:col-span-2">
-          Selecciona al menos 2 adultos y reparte los porcentajes (suma 100).
+          Elige quién participa y si el reparto es fijo o se recalcula con los ingresos recurrentes
+          de los últimos 12 meses.
         </p>
+
+        <label class="ui-item-form-field md:col-span-2">
+          <span class="ui-item-form-label">Método de reparto</span>
+          <ASelect
+            class="select"
+            :model-value="form.allocationBasis"
+            :options="allocationBasisOptions"
+            @update:model-value="
+              (value) => setAllocationBasis(String(value) as typeof form.allocationBasis)
+            "
+          />
+        </label>
 
         <div class="ui-item-form-field md:col-span-2">
           <span class="ui-item-form-label">Miembros</span>
@@ -120,6 +172,7 @@ onMounted(async () => {
               v-for="m in adults"
               :key="m.id"
               :class="{ 'ui-people-member-inactive': !form.memberIds.includes(m.id) }"
+              :disabled="editId != null && ownershipsSorted.find((o) => o.id === editId)?.is_in_use"
               @click="toggleMember(m.id)"
             >
               {{ m.name }}
@@ -127,7 +180,10 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="form.memberIds.length" class="ui-item-form-field md:col-span-2">
+        <div
+          v-if="form.memberIds.length && form.allocationBasis === 'explicit_split'"
+          class="ui-item-form-field md:col-span-2"
+        >
           <div class="ui-people-splits-header">
             <span class="ui-item-form-label">Porcentajes</span>
             <AButton @click="setEqualSplit">Reparto igual</AButton>
@@ -142,10 +198,80 @@ onMounted(async () => {
                 inputmode="decimal"
                 placeholder="50.00"
                 class="input ui-people-percent-input"
+                :disabled="
+                  editId != null && ownershipsSorted.find((o) => o.id === editId)?.is_in_use
+                "
               />
               <span class="subtle">%</span>
             </div>
           </div>
+        </div>
+
+        <div
+          v-if="form.allocationBasis === 'recurring_income_12m'"
+          class="ui-item-form-field md:col-span-2"
+        >
+          <span class="ui-item-form-label">Ingresos que forman el reparto</span>
+          <p class="subtle m-0 pb-1">
+            Solo se cuentan movimientos recurrentes con titularidad individual dentro de estas
+            fuentes. Los ingresos puntuales quedan excluidos.
+          </p>
+          <label
+            v-for="rule in incomeRuleOptions"
+            :key="`${rule.category_key}:${rule.subcategory_key}`"
+            class="ui-check-row"
+          >
+            <input
+              type="checkbox"
+              :checked="incomeRuleSelected(rule.category_key, rule.subcategory_key)"
+              @change="
+                setIncomeRule(
+                  { category_key: rule.category_key, subcategory_key: rule.subcategory_key },
+                  ($event.target as HTMLInputElement).checked,
+                )
+              "
+            />
+            <span>{{ rule.label }}</span>
+          </label>
+        </div>
+
+        <div
+          v-if="form.allocationBasis === 'recurring_income_12m' && editId != null"
+          class="ui-item-form-field md:col-span-2"
+        >
+          <div class="ui-people-splits-header">
+            <span class="ui-item-form-label">Vista previa del reparto</span>
+            <span class="subtle">Se actualiza al guardar</span>
+          </div>
+          <AState v-if="previewLoading" status="loading" layout="inline">
+            Calculando últimos 12 meses…
+          </AState>
+          <template v-else-if="allocationPreview">
+            <p class="subtle">
+              {{ allocationPreview.window_start }} — {{ allocationPreview.window_end }} ·
+              {{ allocationPreview.observed_months }} meses observados ·
+              {{ allocationPreview.excluded_transaction_count }} movimientos excluidos
+            </p>
+            <div class="ui-people-splits">
+              <div
+                v-for="share in allocationPreview.shares"
+                :key="share.member_id"
+                class="ui-people-split-row"
+              >
+                <div class="ui-people-split-name">{{ share.member_name }}</div>
+                <strong>{{ formatPercent(share.percent) }}</strong>
+                <span class="subtle">{{ formatMoney(share.qualifying_income) }}</span>
+              </div>
+            </div>
+            <AState v-if="allocationPreview.status !== 'ready'" status="neutral" layout="inline">
+              Reparto
+              {{ allocationPreview.status === 'provisional' ? 'provisional' : 'bloqueado' }}:
+              {{ allocationPreview.quality_reasons.join(', ') || 'faltan ingresos suficientes' }}.
+            </AState>
+          </template>
+          <p v-else class="subtle">
+            Guarda el método para calcular la vista previa con movimientos reales.
+          </p>
         </div>
       </div>
       <template #footer>

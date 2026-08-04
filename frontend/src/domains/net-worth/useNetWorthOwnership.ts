@@ -1,5 +1,6 @@
 import { computed, ref, watch, type Ref } from 'vue';
 import type { Ownership } from '@/domains/net-worth/models';
+import { ownershipDisplaySplits } from '@/domains/people/ownershipPresentation';
 import { toNumber } from '@/lib/format';
 
 export type OwnershipFilterValue = 'all' | number;
@@ -43,7 +44,7 @@ export function useNetWorthOwnership(params: {
       return ownership.member?.id === selectedOwner ? 1 : 0;
     }
 
-    const split = (ownership.splits ?? []).find((row) => row.member?.id === selectedOwner);
+    const split = ownershipDisplaySplits(ownership).find((row) => row.memberId === selectedOwner);
     if (!split) return 0;
     return normalizeOwnershipSharePercent(split.percent) / 100;
   }
@@ -63,11 +64,11 @@ export function useNetWorthOwnership(params: {
         continue;
       }
 
-      for (const split of ownership.splits ?? []) {
-        if (!split.member?.id || !split.member.name?.trim()) continue;
-        options.set(split.member.id, {
-          value: split.member.id,
-          label: split.member.name.trim(),
+      for (const split of ownershipDisplaySplits(ownership)) {
+        if (!split.memberId || !split.memberName.trim()) continue;
+        options.set(split.memberId, {
+          value: split.memberId,
+          label: split.memberName.trim(),
         });
       }
     }
@@ -105,8 +106,8 @@ export function useNetWorthOwnership(params: {
     const ownership = ownershipById.value.get(ownershipRef);
     if (!ownership) return null;
     if (ownership.kind === 'individual') return ownership.member?.name?.trim() ?? null;
-    const names = (ownership.splits ?? [])
-      .map((split) => split.member?.name?.trim())
+    const names = ownershipDisplaySplits(ownership)
+      .map((split) => split.memberName.trim())
       .filter((name): name is string => !!name);
     return names.length ? names.join(' + ') : 'Compartido';
   }

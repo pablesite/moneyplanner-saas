@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { AButton, APageHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
+import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from '@/domains/ui';
 import { planApi } from '@/domains/plan/api';
 import { usePlanStore } from '@/domains/plan/store';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
@@ -314,17 +314,11 @@ onMounted(async () => {
       <AState v-if="store.error" status="error">{{ store.error }}</AState>
 
       <section class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Previsión</p>
-            <h2 class="sect-title">Qué cambia y cuándo</h2>
-            <p class="sect-sub">
-              Ajusta la fecha, el mes de la operación y sus importes. Al guardar se recalculan caja,
-              deuda y patrimonio desde ese mes. Las partidas futuras se sincronizan con la
-              previsión.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Previsión"
+          title="Qué cambia y cuándo"
+          subtitle="Ajusta la fecha, el mes de la operación y sus importes. Al guardar se recalculan caja, deuda y patrimonio desde ese mes. Las partidas futuras se sincronizan con la previsión."
+        />
         <div class="plan-form-grid">
           <label>
             <span>Nombre de la decisión</span>
@@ -389,16 +383,11 @@ onMounted(async () => {
       </section>
 
       <section class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Impacto</p>
-            <h2 class="sect-title">{{ isSale ? 'Venta prevista' : 'Compra prevista' }}</h2>
-            <p class="sect-sub">
-              El valor del activo es únicamente la parte que aún debe incorporarse al patrimonio; no
-              vuelvas a sumar reservas o pagos que ya estén registrados.
-            </p>
-          </div>
-        </div>
+        <ASectHead
+          eyebrow="Impacto"
+          :title="isSale ? 'Venta prevista' : 'Compra prevista'"
+          subtitle="El valor del activo es únicamente la parte que aún debe incorporarse al patrimonio; no vuelvas a sumar reservas o pagos que ya estén registrados."
+        />
 
         <p v-if="purchaseWarning" class="plan-decision-warn">
           <strong>Variación patrimonial implícita:</strong>
@@ -474,22 +463,18 @@ onMounted(async () => {
       </section>
 
       <section class="sect plan-form-section">
-        <div class="sect-head">
-          <div>
-            <p class="eyebrow">Se conserva</p>
-            <h2 class="sect-title">Partidas y posiciones vinculadas</h2>
-            <p class="sect-sub">
-              <template v-if="scenarioBacked">
-                Al guardar se regeneran las partidas futuras gestionadas por la decisión.
-              </template>
-              <template v-else>
-                No se desagrupa ni modifica nada del presupuesto. Se mantienen
-              </template>
-              {{ preservedCount }} partidas, {{ context?.linked.assets.length ?? 0 }} activos y
-              {{ context?.linked.liabilities.length ?? 0 }} pasivos vinculados.
-            </p>
-          </div>
-        </div>
+        <ASectHead eyebrow="Se conserva" title="Partidas y posiciones vinculadas">
+          <template #subtitle>
+            <template v-if="scenarioBacked">
+              Al guardar se regeneran las partidas futuras gestionadas por la decisión.
+            </template>
+            <template v-else>
+              No se desagrupa ni modifica nada del presupuesto. Se mantienen
+            </template>
+            {{ preservedCount }} partidas, {{ context?.linked.assets.length ?? 0 }} activos y
+            {{ context?.linked.liabilities.length ?? 0 }} pasivos vinculados.
+          </template>
+        </ASectHead>
         <div class="plan-choice-grid">
           <div
             v-for="line in [...(context?.expenses ?? []), ...(context?.income ?? [])]"

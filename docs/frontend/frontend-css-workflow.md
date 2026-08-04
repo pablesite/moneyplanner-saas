@@ -11,9 +11,10 @@ Keep CSS changes predictable and coherent inside the SaaS frontend.
 
 ## Rules
 
-1. Implement reusable style changes directly in `frontend/src/styles/app.css` when they belong to SaaS.
-2. Use existing shared classes before adding view-local CSS.
-3. Consult Core styles only when a Core-backed flow needs visual continuity, never as an automatic sync step.
+1. Antes de escribir CSS, comprobar si el caso lo cubre una primitiva de `@/domains/ui` (ver `frontend-visual-contract.md`). Reutilizar el componente evita el CSS entero.
+2. Los patrones Direction A compartidos van en `frontend/src/styles/design-system.css` (bajo `.dir-a`). `frontend/src/styles/app.css` es la capa legacy `ui-*` + shell global: no añadir ahí patrones nuevos.
+3. Use existing shared classes before adding view-local CSS.
+4. Consult Core styles only when a Core-backed flow needs visual continuity, never as an automatic sync step.
 
 ## Responsive Rules
 

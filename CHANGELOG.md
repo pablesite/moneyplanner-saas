@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.46.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.1...moneyplanner-saas-v0.46.2) (2026-08-04)
+
+
+### Bug Fixes
+
+* **net-worth:** normalize ownership selection ([994f802](https://github.com/pablesite/moneyplanner-saas/commit/994f80242cf9664b0a541eaded9211e070604707))
+* **ownership:** use effective dynamic allocations ([b766fba](https://github.com/pablesite/moneyplanner-saas/commit/b766fba9b84acdb6e403639441fcceb7874ed80c))
+* **people:** show effective dynamic ownership shares ([8475624](https://github.com/pablesite/moneyplanner-saas/commit/8475624c92d6083821c89ecd45b195c2ceaa4ad2))
+* **ui:** keep select options inside mobile viewport ([d6a829f](https://github.com/pablesite/moneyplanner-saas/commit/d6a829f0252bd554846d7d00edb3956f5d3e22bf))
+
+## [0.46.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.0...moneyplanner-saas-v0.46.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* **people:** preselect pair for dynamic ownership ([f30d1a7](https://github.com/pablesite/moneyplanner-saas/commit/f30d1a74640dbc4606e548780620242937af72ff))
+* **plan:** reuse existing family members in setup ([a1d817a](https://github.com/pablesite/moneyplanner-saas/commit/a1d817adf8c98fca133b59c6fad0d4ecfb359ffb))
+* **shell:** keep account menu above sticky tabs ([9fe4372](https://github.com/pablesite/moneyplanner-saas/commit/9fe4372c39ce5f003ca5f76d1e0a69d23066ac05))
+
+## [0.46.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.45.0...moneyplanner-saas-v0.46.0) (2026-08-04)
+
+
+### Features
+
+* **monthly-close:** add settlement configuration ux ([e6ab779](https://github.com/pablesite/moneyplanner-saas/commit/e6ab779990da0174fc0174a8c787386df55840af))
+* **monthly-close:** expose ownership allocation phase ([273a11f](https://github.com/pablesite/moneyplanner-saas/commit/273a11f0de77acc6e26a8a1dc80d43f9d64a5855))
+* **monthly-close:** expose settlement preview contract ([4581ae6](https://github.com/pablesite/moneyplanner-saas/commit/4581ae697bb8204199a7930c28a8c870c659a040))
+* **monthly-close:** manage settlement execution ([32ceaaf](https://github.com/pablesite/moneyplanner-saas/commit/32ceaaf31b9adf05e207a621f3c26d2492498bc1))
+* **monthly-close:** present settlement recommendations ([8925822](https://github.com/pablesite/moneyplanner-saas/commit/8925822721506afe1da29c29762e94263c6f3688))
+* **monthly-close:** register settlement configuration ([a619d4c](https://github.com/pablesite/moneyplanner-saas/commit/a619d4cddb11d6fa9a2b8083b555787520552aff))
+
+
+### Bug Fixes
+
+* **monthly-close:** complete settlement configuration review ([8e12654](https://github.com/pablesite/moneyplanner-saas/commit/8e126549b171c5fbeeed7622ade1742b84d82074))
+* **plan:** usar las primitivas compartidas de estado y botón ([56884d5](https://github.com/pablesite/moneyplanner-saas/commit/56884d5453c9d4ad44a03e455481b2e55d956612))
+* **ui:** compartir el chrome de ARowMenu y adoptarlo en Mi Plan ([764d2e9](https://github.com/pablesite/moneyplanner-saas/commit/764d2e9e6cf3642670f17fb8f1ceed24d73555a3))
+* **ui:** compartir las utilidades CSS duplicadas entre dominios ([790a25d](https://github.com/pablesite/moneyplanner-saas/commit/790a25dd6ac5bd3dbd5eb18f6846d23cccfa700e))
+
 ## [0.45.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.44.0...moneyplanner-saas-v0.45.0) (2026-08-02)
 
 
