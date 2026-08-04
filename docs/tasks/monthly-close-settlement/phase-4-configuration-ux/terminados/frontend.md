@@ -112,14 +112,14 @@ Manual:
 - [x] Configuration cannot activate while readiness has blocking issues.
 - [x] Budget ownership/destination fields preserve form state on backend errors.
 - [x] Wallet split requires explicit confirmation and is not silently repeated.
-- [ ] Desktop and 360 px mobile reviews pass.
+- [x] Desktop and 360 px mobile reviews pass.
 - [x] All validation commands pass.
 - [x] All required documentation updates done.
-- [ ] Spec moved to `terminados/`.
-- [ ] Commit created (Conventional Commits).
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).
 
 ## Implementation note
 
-La implementación y la revisión responsive por código están completas. El smoke autenticado confirma
-`/cierre-mensual` sin overflow a 1440 y 360 px, pero el entorno local no contiene una cuenta SaaS con
-varios miembros: la acción opt-in y su sheet todavía requieren revisión visual con datos multi-member.
+El smoke autenticado se ejecutó con `pablesite`, abrió la acción opt-in y el sheet en Resultado y
+confirmó `overflow=0` a 1440 y 360 px. La primera pasada detectó 5 px de overflow preexistente en el
+grid de tarjetas de Resultado; el breakpoint móvil pasó a una columna y la repetición quedó en verde.

@@ -898,6 +898,10 @@
     line-height: 1.18;
   }
 
+  .mc-result-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .mc-block-kpis,
   .mc-metrics strong,
   .mc-ledger-readout strong,
