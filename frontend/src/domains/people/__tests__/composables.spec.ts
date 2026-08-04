@@ -124,6 +124,20 @@ describe('people composables (saas)', () => {
     await ownerships.submit();
     expect(store.createSharedOwnership).toHaveBeenCalled();
 
+    ownerships.openCreate();
+    ownerships.setAllocationBasis('recurring_income_12m');
+    expect(ownerships.form.memberIds).toEqual([1, 2]);
+    expect(ownerships.canCreate.value).toBe(true);
+    await ownerships.submit();
+    expect(store.createSharedOwnership).toHaveBeenLastCalledWith({
+      allocation_basis: 'recurring_income_12m',
+      income_rules: [{ category_key: 'salary', subcategory_key: '' }],
+      splits: [
+        { member_id: 1, percent: '50.00' },
+        { member_id: 2, percent: '50.00' },
+      ],
+    });
+
     ownerships.openEdit(makeOwnership({ id: 9 }));
     expect(ownerships.editId.value).toBe(9);
     ownerships.form.percents[1] = '60';

@@ -327,6 +327,17 @@ export function usePeopleOwnerships() {
 
   function setAllocationBasis(value: OwnershipAllocationBasis) {
     form.allocationBasis = value;
+    // A shared ownership needs at least two adults. With the usual two-person
+    // household, select both when switching to the dynamic method so the form
+    // cannot start in a state that can never be submitted.
+    if (value === 'recurring_income_12m' && adults.value.length === 2) {
+      for (const adult of adults.value) {
+        if (!form.memberIds.includes(adult.id)) {
+          form.memberIds.push(adult.id);
+          form.percents[adult.id] = form.percents[adult.id] ?? '';
+        }
+      }
+    }
     allocationPreview.value = null;
   }
 
