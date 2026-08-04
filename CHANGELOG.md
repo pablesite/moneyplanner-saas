@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.46.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.1...moneyplanner-saas-v0.46.2) (2026-08-04)
+
+
+### Bug Fixes
+
+* **net-worth:** normalize ownership selection ([994f802](https://github.com/pablesite/moneyplanner-saas/commit/994f80242cf9664b0a541eaded9211e070604707))
+* **ownership:** use effective dynamic allocations ([b766fba](https://github.com/pablesite/moneyplanner-saas/commit/b766fba9b84acdb6e403639441fcceb7874ed80c))
+* **people:** show effective dynamic ownership shares ([8475624](https://github.com/pablesite/moneyplanner-saas/commit/8475624c92d6083821c89ecd45b195c2ceaa4ad2))
+* **ui:** keep select options inside mobile viewport ([d6a829f](https://github.com/pablesite/moneyplanner-saas/commit/d6a829f0252bd554846d7d00edb3956f5d3e22bf))
+
 ## [0.46.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.0...moneyplanner-saas-v0.46.1) (2026-08-04)
 
 
