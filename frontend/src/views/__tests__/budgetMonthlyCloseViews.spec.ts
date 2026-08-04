@@ -82,7 +82,7 @@ const mockBudgetAnnualEntriesPage = vi.hoisted(() => ({
   showOwnerField: { value: false },
   ownerOptions: { value: [] },
   showSettlementFields: { value: false },
-  settlementOwnershipOptions: { value: [] },
+  showExpenseSettlementFields: { value: false },
   settlementAccountOptions: { value: [] },
   incomeTimeProfileOptions: { value: [{ value: 'structural_recurrent', label: 'Recurrente' }] },
   incomeCashflowRoleOptions: [{ value: 'operating', label: 'Operativo' }],

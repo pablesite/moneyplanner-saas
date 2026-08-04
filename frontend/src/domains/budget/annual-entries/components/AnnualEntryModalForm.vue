@@ -65,7 +65,6 @@ const props = withDefaults(
     eventGroupOptions?: ReadonlyArray<string>;
     eventGroupDatalistId?: string;
     showSettlementFields?: boolean;
-    ownershipOptions?: ReadonlyArray<SelectOption>;
     settlementAccountOptions?: ReadonlyArray<SelectOption>;
     showSettlementDestination?: boolean;
     settlementFieldsReadOnly?: boolean;
@@ -92,7 +91,6 @@ const props = withDefaults(
     eventGroupOptions: () => [],
     eventGroupDatalistId: 'annual-entry-event-groups',
     showSettlementFields: false,
-    ownershipOptions: () => [],
     settlementAccountOptions: () => [],
     showSettlementDestination: false,
     settlementFieldsReadOnly: false,
@@ -128,10 +126,6 @@ const timeProfileSelectOptions = computed<ASelectItem[]>(() =>
 const cashflowRoleSelectOptions = computed<ASelectItem[]>(() =>
   props.cashflowRoleOptions.map((option) => ({ value: option.value, label: option.label })),
 );
-const structuredOwnershipOptions = computed<ASelectItem[]>(() => [
-  { value: '', label: 'Selecciona la titularidad' },
-  ...props.ownershipOptions.map((option) => ({ value: option.value, label: option.label })),
-]);
 const destinationOptions = computed<ASelectItem[]>(() => [
   { value: '', label: 'Selecciona la cuenta destino' },
   ...props.settlementAccountOptions.map((option) => ({ value: option.value, label: option.label })),
@@ -201,16 +195,6 @@ const destinationOptions = computed<ASelectItem[]>(() => [
       </label>
 
       <template v-if="showSettlementFields">
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">Titularidad para liquidación</span>
-          <ASelect
-            class="select"
-            :model-value="form.ownershipId ?? ''"
-            :options="structuredOwnershipOptions"
-            :disabled="settlementFieldsReadOnly"
-            @update:model-value="(v) => emit('patch', { ownershipId: String(v) })"
-          />
-        </label>
         <label v-if="showSettlementDestination" class="ui-item-form-field">
           <span class="ui-item-form-label">Cuenta que recibirá la reserva</span>
           <ASelect
@@ -222,7 +206,7 @@ const destinationOptions = computed<ASelectItem[]>(() => [
           />
         </label>
         <p class="ui-section-subtitle md:col-span-2">
-          Estos datos reservan lo previsto antes de calcular el sobrante personal.
+          La cuenta destino recibe esta aportación antes de calcular el sobrante personal.
         </p>
       </template>
 

@@ -83,7 +83,7 @@ describe('SettlementConfigurationSheet', () => {
 
     expect(mocks.refreshAll).toHaveBeenCalledOnce();
     expect(document.body.textContent).toContain('Saldo contable actualizado: 325,31 €');
-    expect(document.body.textContent).toContain('partidas de Presupuesto, no a movimientos');
+    expect(document.body.textContent).toContain('Completa estos puntos antes de activar');
     expect(document.body.textContent).toContain('Abrir partida');
     expect(document.body.textContent).toContain('Dividendos');
     expect(wrapper.getComponent(RouterLinkStub).props('to')).toEqual({

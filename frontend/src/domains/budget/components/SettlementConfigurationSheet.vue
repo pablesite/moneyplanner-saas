@@ -256,7 +256,7 @@ function blockerLabel(item: SettlementReadinessItem): string {
     expense_missing_ownership: `Asigna titularidad al gasto “${String(item.name ?? '')}”.`,
     expense_missing_settlement_account: `Indica la cuenta destino del gasto “${String(item.name ?? '')}”.`,
     settlement_ownership_mismatch: 'La titularidad de un gasto no coincide con su cuenta destino.',
-    wallet_adjustment_required: 'Completa la compensación del monedero para conciliar el efectivo.',
+    wallet_adjustment_required: `Completa la compensación de ${String(item.asset_name ?? 'este monedero')} para conciliar el efectivo.`,
     opening_adjustments_not_zero: 'Las compensaciones iniciales deben sumar exactamente cero.',
     allocation_blocked: 'Faltan ingresos recurrentes válidos para calcular un reparto dinámico.',
   };
@@ -462,10 +462,7 @@ function requestClose(): void {
             Todo listo para activar la liquidación.
           </AState>
           <template v-else-if="readiness?.blockers.length">
-            <p>
-              Estas comprobaciones corresponden a partidas de Presupuesto, no a movimientos.
-              Completa estos puntos antes de activar:
-            </p>
+            <p>Completa estos puntos antes de activar:</p>
             <ul>
               <li v-for="(item, index) in readiness.blockers" :key="`${item.code}-${index}`">
                 <span>{{ blockerLabel(item) }}</span>

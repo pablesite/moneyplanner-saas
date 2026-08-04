@@ -16,6 +16,8 @@ function allocationLabel(allocation: SettlementAllocation | undefined): string {
 function blockerMessage(item: SettlementQualityItem): string {
   const messages: Record<string, string> = {
     account_missing_ownership: 'Asigna una titularidad a todas las cuentas participantes.',
+    allocation_missing_destination:
+      'Una aportación prevista no tiene cuenta destino y no se incluirá en las recomendaciones.',
     allocation_blocked: 'Revisa el histórico de ingresos usado para calcular el reparto dinámico.',
     expense_missing_ownership: 'Asigna una titularidad a las partidas recurrentes pendientes.',
     expense_missing_settlement_account: 'Elige una cuenta destino para cada partida recurrente.',
