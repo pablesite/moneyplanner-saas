@@ -53,14 +53,14 @@ docker compose -f core/docker-compose.yml exec backend mypy .
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck
-docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test -- --run
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test:unit
 ```
 
 ## Required Documentation Updates
 
-- [ ] `core/docs/tasks/monthly-close-settlement/README.md` - marcar modulo completado.
-- [ ] `core/docs/project-status.md` - cierre backend.
-- [ ] `docs/project-status.md` - cierre SaaS.
+- [x] `core/docs/tasks/monthly-close-settlement/README.md` - marcar modulo completado.
+- [x] `core/docs/project-status.md` - cierre backend.
+- [x] `docs/project-status.md` - cierre SaaS.
 
 ## Risks
 
@@ -70,11 +70,11 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 
 ## Completion Criteria
 
-- [ ] Concurrency and retry tests prove exactly-once ledger creation.
-- [ ] Rollback tests leave no partial transaction or status.
-- [ ] Economic totals remain invariant after every applied route.
-- [ ] Full UI lifecycle is validated at desktop and 360 px.
-- [ ] All validation commands pass.
-- [ ] All required documentation updates done.
-- [ ] Spec moved to `terminados/`.
-- [ ] Commit created (Conventional Commits).
+- [x] Concurrency and retry tests prove exactly-once ledger creation.
+- [x] Rollback tests leave no partial transaction or status.
+- [x] Economic totals remain invariant after every applied route.
+- [x] Full UI lifecycle is validated at desktop and 360 px.
+- [x] All validation commands pass.
+- [x] All required documentation updates done.
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).

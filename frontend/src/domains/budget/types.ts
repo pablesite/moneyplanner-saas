@@ -30,6 +30,49 @@ export type SettlementAllocation = {
   }>;
 };
 
+export type SettlementRecommendationStatus =
+  'recommended' | 'accepted' | 'applied' | 'partially_applied' | 'cancelled';
+
+export type SettlementTransaction = {
+  id: number;
+  booking_date: string;
+  origin: string;
+  action: 'application' | 'reconciliation' | 'reversal';
+  amount: string;
+  idempotency_key: string;
+};
+
+export type SettlementRecommendation = {
+  id?: number;
+  from_account_id: number;
+  to_account_id: number;
+  member_id: number | null;
+  ownership_id: number;
+  amount: string;
+  currency: string;
+  reason: string;
+  status?: SettlementRecommendationStatus;
+  applied_amount?: string;
+  remaining_amount?: string;
+  accepted_at?: string | null;
+  cancelled_at?: string | null;
+  transactions?: SettlementTransaction[];
+  account_reconciliation?: {
+    source_balance: string;
+    destination_balance: string;
+    target_reached: boolean;
+  } | null;
+};
+
+export type SettlementCandidate = {
+  transaction_id: number;
+  booking_date: string;
+  description: string;
+  origin: string;
+  amount: string;
+  currency: string;
+};
+
 export type OwnershipSettlement = {
   status: 'disabled' | 'not_ready' | 'ready' | 'finalized';
   calculation_status?: 'not_ready' | 'ready';
@@ -81,16 +124,7 @@ export type OwnershipSettlement = {
     ownership_id: number;
     members: Array<{ member_id: number; amount: string }>;
   }>;
-  recommendations?: Array<{
-    id?: number;
-    from_account_id: number;
-    to_account_id: number;
-    member_id: number | null;
-    ownership_id: number;
-    amount: string;
-    currency: string;
-    reason: string;
-  }>;
+  recommendations?: SettlementRecommendation[];
   reconciliation?: {
     physical_total: string;
     economic_total: string;

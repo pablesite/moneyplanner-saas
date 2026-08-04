@@ -9,6 +9,8 @@ import {
   ASectHead,
   ASelect,
   AState,
+  AToast,
+  BaseModal,
   type ASelectItem,
 } from '@/domains/ui';
 import {
@@ -19,18 +21,41 @@ import {
   MonthlyCloseSettlementSection,
   MonthlyCloseHero,
   SettlementConfigurationSheet,
+  SettlementExecutionModal,
+  acceptSettlementRecommendation,
+  applyAllSettlementRecommendations,
+  applySettlementRecommendation,
   buildSettlementPage,
+  cancelSettlementRecommendation,
+  getSettlementCandidates,
+  getMonthlyClosePlanImpact,
+  reconcileSettlementRecommendation,
+  reverseSettlementRecommendation,
+  toBudgetErrorMessage,
   type SettlementPage,
+  type SettlementCandidate,
+  type MonthlyClosePlanImpact,
 } from '@/domains/budget';
 import { peopleApi } from '@/domains/people/api';
 import type { FamilyMember } from '@/domains/people/types';
-import { getMonthlyClosePlanImpact, type MonthlyClosePlanImpact } from '@/domains/budget';
 import '@/domains/budget/styles/monthly-close.css';
 import { useMonthlyCloseView } from './budget/useMonthlyCloseView';
 
 const router = useRouter();
 const route = useRoute();
 const settlementConfigurationOpen = ref(false);
+const settlementExecutionOpen = ref(false);
+const settlementApplyAllOpen = ref(false);
+const settlementApplyAllDate = ref(new Date().toISOString().slice(0, 10));
+const settlementExecutionBusy = ref(false);
+const settlementExecutionError = ref<string | null>(null);
+const settlementCandidatesLoading = ref(false);
+const settlementCandidates = ref<SettlementCandidate[]>([]);
+const selectedSettlementRecommendation = ref<SettlementPage['recommendations'][number] | null>(
+  null,
+);
+const settlementToast = ref<string | null>(null);
+const settlementIdempotencyKey = ref('');
 const familyMembers = ref<FamilyMember[]>([]);
 const activeAdultCount = computed(
   () => familyMembers.value.filter((member) => member.is_active && member.role === 'adult').length,
@@ -291,6 +316,146 @@ function prepareSettlementTransfer(
   });
 }
 
+function newIdempotencyKey(recommendationId: number): string {
+  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+  return `settlement-ui:${recommendationId}:${random}`;
+}
+
+async function manageSettlementRecommendation(
+  recommendation: SettlementPage['recommendations'][number],
+): Promise<void> {
+  if (recommendation.id == null) return;
+  selectedSettlementRecommendation.value = recommendation;
+  settlementIdempotencyKey.value = newIdempotencyKey(recommendation.id);
+  settlementExecutionError.value = null;
+  settlementExecutionOpen.value = true;
+  settlementCandidatesLoading.value = true;
+  try {
+    settlementCandidates.value = await getSettlementCandidates(
+      monthlyCloseData.value!.monthly_close.id,
+      recommendation.id,
+    );
+  } catch {
+    settlementCandidates.value = [];
+  } finally {
+    settlementCandidatesLoading.value = false;
+  }
+}
+
+async function runSettlementAction(action: () => Promise<unknown>, success: string): Promise<void> {
+  settlementExecutionBusy.value = true;
+  settlementExecutionError.value = null;
+  try {
+    await action();
+    await refreshMonthlyCloseData();
+    const recommendationId = selectedSettlementRecommendation.value?.id;
+    if (recommendationId != null) {
+      selectedSettlementRecommendation.value =
+        settlementPage.value.recommendations.find((row) => row.id === recommendationId) ?? null;
+    }
+    settlementToast.value = success;
+  } catch (error: unknown) {
+    settlementExecutionError.value = toBudgetErrorMessage(error);
+  } finally {
+    settlementExecutionBusy.value = false;
+  }
+}
+
+async function applyAllSettlements(): Promise<void> {
+  const closeId = monthlyCloseData.value?.monthly_close.id;
+  if (!closeId) return;
+  settlementExecutionBusy.value = true;
+  try {
+    await applyAllSettlementRecommendations(closeId, settlementApplyAllDate.value);
+    await refreshMonthlyCloseData();
+    settlementApplyAllOpen.value = false;
+    settlementToast.value = 'Transferencias contables registradas.';
+  } catch (error: unknown) {
+    settlementToast.value = null;
+    monthlyCloseError.value = toBudgetErrorMessage(error);
+  } finally {
+    settlementExecutionBusy.value = false;
+  }
+}
+
+function closeSettlementExecution(): void {
+  if (settlementExecutionBusy.value) return;
+  settlementExecutionOpen.value = false;
+  selectedSettlementRecommendation.value = null;
+}
+
+function confirmAllSettlements(): void {
+  settlementApplyAllDate.value = new Date().toISOString().slice(0, 10);
+  settlementApplyAllOpen.value = true;
+}
+
+function openSettlementMovement(transactionId: number): void {
+  void router.push({
+    name: 'accounting-movements',
+    query: { transaction_id: String(transactionId) },
+  });
+}
+
+function selectedExecutionIds(): { closeId: number; recommendationId: number } | null {
+  const closeId = monthlyCloseData.value?.monthly_close.id;
+  const recommendationId = selectedSettlementRecommendation.value?.id;
+  return closeId && recommendationId ? { closeId, recommendationId } : null;
+}
+
+function applySelectedSettlement(payload: { amount?: string; executionDate: string }): void {
+  const ids = selectedExecutionIds();
+  if (!ids) return;
+  void runSettlementAction(
+    () =>
+      applySettlementRecommendation(ids.closeId, ids.recommendationId, {
+        execution_date: payload.executionDate,
+        ...(payload.amount ? { amount: payload.amount } : {}),
+        idempotency_key: settlementIdempotencyKey.value,
+      }),
+    'Transferencia contable registrada.',
+  );
+}
+
+function acceptSelectedSettlement(): void {
+  const ids = selectedExecutionIds();
+  if (!ids) return;
+  void runSettlementAction(
+    () => acceptSettlementRecommendation(ids.closeId, ids.recommendationId),
+    'Recomendación aceptada.',
+  );
+}
+
+function cancelSelectedSettlement(): void {
+  const ids = selectedExecutionIds();
+  if (!ids) return;
+  void runSettlementAction(
+    () => cancelSettlementRecommendation(ids.closeId, ids.recommendationId),
+    'Recomendación cancelada.',
+  );
+}
+
+function reverseSelectedSettlement(payload: { executionDate: string }): void {
+  const ids = selectedExecutionIds();
+  if (!ids) return;
+  void runSettlementAction(
+    () =>
+      reverseSettlementRecommendation(ids.closeId, ids.recommendationId, {
+        execution_date: payload.executionDate,
+        idempotency_key: `${settlementIdempotencyKey.value}:reverse`,
+      }),
+    'Reverso contable registrado.',
+  );
+}
+
+function reconcileSelectedSettlement(transactionId: number): void {
+  const ids = selectedExecutionIds();
+  if (!ids) return;
+  void runSettlementAction(
+    () => reconcileSettlementRecommendation(ids.closeId, ids.recommendationId, transactionId),
+    'Movimiento conciliado con la recomendación.',
+  );
+}
+
 async function closeSettlementConfiguration(): Promise<void> {
   settlementConfigurationOpen.value = false;
   await refreshMonthlyCloseData();
@@ -516,6 +681,7 @@ async function closeSettlementConfiguration(): Promise<void> {
       :on-lock-close="handleLockClose"
       :on-apply-distribution="handleApplyDistribution"
       :on-configure-settlement="() => (settlementConfigurationOpen = true)"
+      :settlement-has-history="settlementPage.hasSettlementHistory"
     />
 
     <MonthlyCloseSettlementSection
@@ -523,8 +689,13 @@ async function closeSettlementConfiguration(): Promise<void> {
       :page="settlementPage"
       :format-money="formatMoney"
       :format-signed-money="formatSignedMoney"
+      :busy="settlementExecutionBusy"
+      :locked="isCloseLocked"
       @configure="settlementConfigurationOpen = true"
       @transfer="prepareSettlementTransfer"
+      @manage="manageSettlementRecommendation"
+      @apply-all="confirmAllSettlements"
+      @movement="openSettlementMovement"
     />
 
     <section v-if="planImpact || planImpactLoading" class="sect mc-plan-impact">
@@ -583,6 +754,84 @@ async function closeSettlementConfiguration(): Promise<void> {
       :year="fiscalYear"
       :month="selectedExecutionMonth"
       @close="closeSettlementConfiguration"
+    />
+
+    <SettlementExecutionModal
+      :open="settlementExecutionOpen"
+      :recommendation="selectedSettlementRecommendation"
+      :candidates="settlementCandidates"
+      :loading-candidates="settlementCandidatesLoading"
+      :busy="settlementExecutionBusy"
+      :error="settlementExecutionError"
+      @close="closeSettlementExecution"
+      @apply="applySelectedSettlement"
+      @accept="acceptSelectedSettlement"
+      @cancel="cancelSelectedSettlement"
+      @reverse="reverseSelectedSettlement"
+      @reconcile="reconcileSelectedSettlement"
+    >
+      <template #transactions="{ transactions }">
+        <AButton
+          v-for="movement in transactions"
+          :key="movement.id"
+          variant="ghost"
+          size="sm"
+          @click="openSettlementMovement(movement.id)"
+        >
+          Ver movimiento #{{ movement.id }}
+        </AButton>
+      </template>
+    </SettlementExecutionModal>
+
+    <BaseModal
+      :open="settlementApplyAllOpen"
+      title="Registrar todas las transferencias"
+      variant="sheet"
+      panel-class="dir-a mc-settlement-execution-modal"
+      @close="!settlementExecutionBusy && (settlementApplyAllOpen = false)"
+    >
+      <div class="mc-settlement-execution-body">
+        <AState status="neutral" layout="inline">
+          Se crearán movimientos contables, no órdenes bancarias. El cierre conservará este
+          histórico y ya no podrá reabrirse.
+        </AState>
+        <div class="mc-settlement-apply-list">
+          <article
+            v-for="recommendation in settlementPage.recommendations.filter(
+              (row) => row.status !== 'cancelled' && row.remainingAmountNumber > 0,
+            )"
+            :key="recommendation.id"
+          >
+            <span>{{ recommendation.sourceName }} → {{ recommendation.destinationName }}</span>
+            <strong>
+              {{ formatMoney(recommendation.remainingAmountNumber) }} {{ recommendation.currency }}
+            </strong>
+          </article>
+        </div>
+        <label class="mc-settlement-apply-date">
+          <span>Fecha contable</span>
+          <input
+            v-model="settlementApplyAllDate"
+            class="input"
+            type="date"
+            :disabled="settlementExecutionBusy"
+          />
+        </label>
+        <AButton
+          variant="primary"
+          block
+          :loading="settlementExecutionBusy"
+          @click="applyAllSettlements"
+        >
+          Confirmar y registrar
+        </AButton>
+      </div>
+    </BaseModal>
+
+    <AToast
+      :open="Boolean(settlementToast)"
+      :message="settlementToast"
+      @close="settlementToast = null"
     />
   </div>
 </template>

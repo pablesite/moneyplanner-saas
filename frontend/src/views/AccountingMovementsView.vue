@@ -30,6 +30,16 @@ const transferQueryKeys = new Set([
   'description',
 ]);
 
+async function consumeTransactionLink(): Promise<void> {
+  const transactionId = Number(queryValue(route.query.transaction_id));
+  if (!Number.isInteger(transactionId) || transactionId <= 0) return;
+  await page.openEditTransactionModal(transactionId);
+  const remainingQuery = Object.fromEntries(
+    Object.entries(route.query).filter(([key]) => key !== 'transaction_id'),
+  );
+  await router.replace({ name: 'accounting-movements', query: remainingQuery });
+}
+
 function safeReturnPath(): string {
   const value = queryValue(route.query.return_to);
   return value.startsWith('/cierre-mensual') ? value : '';
@@ -97,6 +107,7 @@ async function applyRouteQuery(): Promise<void> {
   await nextTick();
   applyingRoute = false;
   await consumeTransferPrefill();
+  await consumeTransactionLink();
 }
 
 function currentQuery(): Record<string, string> {

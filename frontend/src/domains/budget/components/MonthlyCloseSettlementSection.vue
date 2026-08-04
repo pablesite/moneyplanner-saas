@@ -4,6 +4,8 @@ import type { SettlementPage } from '../settlementPresentation';
 
 defineProps<{
   page: SettlementPage;
+  busy?: boolean;
+  locked?: boolean;
   formatMoney: (value: number, decimals?: number) => string;
   formatSignedMoney: (value: number, decimals?: number) => string;
 }>();
@@ -11,6 +13,9 @@ defineProps<{
 const emit = defineEmits<{
   configure: [];
   transfer: [recommendation: SettlementPage['recommendations'][number]];
+  manage: [recommendation: SettlementPage['recommendations'][number]];
+  applyAll: [];
+  movement: [transactionId: number];
 }>();
 
 function formatDate(value: string): string {
@@ -57,7 +62,7 @@ function formatDate(value: string): string {
         <article>
           <span>Hacia cuentas personales</span>
           <strong>{{ formatMoney(page.summary.towardPersonal) }} {{ page.currency }}</strong>
-          <small>Transferencias recomendadas, todavía sin registrar</small>
+          <small>Transferencias recomendadas hacia cuentas personales</small>
         </article>
       </div>
 
@@ -99,7 +104,19 @@ function formatDate(value: string): string {
             <p class="eyebrow">Transferencias</p>
             <h3>Rutas recomendadas</h3>
           </div>
-          <span>{{ page.recommendations.length }} movimientos</span>
+          <div class="mc-settlement-route-actions">
+            <span>{{ page.recommendations.length }} movimientos</span>
+            <AButton
+              v-if="page.canApply"
+              variant="primary"
+              size="sm"
+              :loading="busy"
+              :disabled="locked"
+              @click="emit('applyAll')"
+            >
+              Registrar todas
+            </AButton>
+          </div>
         </div>
         <AState v-if="!page.recommendations.length" status="success" layout="inline">
           El dinero ya está en sus cuentas objetivo. No hace falta transferir nada.
@@ -110,14 +127,38 @@ function formatDate(value: string): string {
           class="mc-settlement-route"
         >
           <div class="mc-settlement-route-path">
-            <small>{{ recommendation.reasonLabel }}</small>
+            <small>{{ recommendation.reasonLabel }} · {{ recommendation.statusLabel }}</small>
             <strong>{{ recommendation.sourceName }} → {{ recommendation.destinationName }}</strong>
             <span v-if="recommendation.memberName">Para {{ recommendation.memberName }}</span>
+            <AButton
+              v-for="movement in recommendation.transactions"
+              :key="movement.id"
+              variant="ghost"
+              size="sm"
+              @click="emit('movement', movement.id)"
+            >
+              Movimiento #{{ movement.id }} · {{ movement.action }}
+            </AButton>
           </div>
-          <strong class="mc-settlement-route-amount">
-            {{ formatMoney(recommendation.amountNumber) }} {{ recommendation.currency }}
-          </strong>
+          <div class="mc-settlement-route-totals">
+            <strong class="mc-settlement-route-amount">
+              {{ formatMoney(recommendation.amountNumber) }} {{ recommendation.currency }}
+            </strong>
+            <small v-if="recommendation.appliedAmountNumber > 0">
+              {{ formatMoney(recommendation.remainingAmountNumber) }} pendientes
+            </small>
+          </div>
           <AButton
+            v-if="page.isFinalized"
+            size="sm"
+            variant="ghost"
+            :disabled="busy || locked"
+            @click="emit('manage', recommendation)"
+          >
+            Gestionar
+          </AButton>
+          <AButton
+            v-else
             size="sm"
             :disabled="
               recommendation.sourceAssetId == null || recommendation.destinationAssetId == null
@@ -127,6 +168,10 @@ function formatDate(value: string): string {
             Preparar transferencia
           </AButton>
         </article>
+        <AState v-if="page.hasSettlementHistory" status="success" layout="inline">
+          El cierre conserva el histórico de liquidación y ya no puede reabrirse. Un reverso crea un
+          movimiento nuevo; nunca elimina el original.
+        </AState>
       </section>
 
       <div class="mc-settlement-details">

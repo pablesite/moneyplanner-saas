@@ -76,7 +76,8 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 Settlement configuration is opt-in and Core-owned. Annual income/expense payloads expose nullable
 `ownership_id`; annual expense payloads also expose nullable `settlement_account_id`.
 The SaaS frontend consumes these contracts from `/cierre-mensual`, `/people` and the annual budget
-forms; it does not duplicate settlement calculations or create ledger movements.
+forms; it does not duplicate settlement calculations. Ledger movements are created only by the
+Core settlement execution endpoints after explicit confirmation.
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -84,12 +85,16 @@ forms; it does not duplicate settlement calculations or create ledger movements.
 | `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M` | Returns period blockers, warnings and ownership ledger coverage without changing balances. |
 | `POST` | `/api/budget/settlement/activate/` | Activates a ready profile and captures its immutable member/account opening baseline; repeated calls are idempotent. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
+| `POST` | `/api/budget/monthly-closes/{id}/settlement/apply/` | Atomically applies every remaining non-cancelled recommendation for a finalized close. |
+| `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |
+| `GET` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/candidates/` | Lists conservatively matched posted transfers eligible for explicit reconciliation. |
 
 `GET /api/budget/monthly-close/{year}/{month}/` now includes additive `ownership_settlement`.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with
 allocations, per-member economic balances, account targets, recurrent reserves, transaction-traced
 compensations, transfer recommendations, reconciliation and quality. Finalized/locked closes return
-the immutable snapshot as `status=finalized`; no recommendation creates a ledger movement in v1.
+the immutable snapshot as `status=finalized`. Saved recommendations also expose lifecycle,
+applied/remaining amounts, linked movements and post-application account reconciliation.
 
 ### Net Worth — `/api/net-worth/`
 | Method | Route | Description |

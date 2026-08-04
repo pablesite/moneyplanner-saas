@@ -86,6 +86,18 @@ function buildRecommendations(
     return {
       ...recommendation,
       amountNumber: amount(recommendation.amount),
+      appliedAmountNumber: amount(recommendation.applied_amount),
+      remainingAmountNumber: amount(recommendation.remaining_amount ?? recommendation.amount),
+      status: recommendation.status ?? 'recommended',
+      statusLabel:
+        {
+          recommended: 'Recomendada',
+          accepted: 'Aceptada',
+          applied: 'Registrada',
+          partially_applied: 'Parcial',
+          cancelled: 'Cancelada',
+        }[recommendation.status ?? 'recommended'] ?? 'Recomendada',
+      transactions: recommendation.transactions ?? [],
       sourceName: source?.name ?? `Cuenta ${recommendation.from_account_id}`,
       destinationName: destination?.name ?? `Cuenta ${recommendation.to_account_id}`,
       sourceAssetId: source?.asset_id ?? null,
@@ -233,6 +245,16 @@ export function buildSettlementPage(
     isReady:
       state === 'ready' || (state === 'finalized' && normalized.calculationStatus === 'ready'),
     isFinalized: state === 'finalized',
+    hasSettlementHistory: recommendations.some(
+      (recommendation) => (recommendation.transactions?.length ?? 0) > 0,
+    ),
+    canApply:
+      state === 'finalized' &&
+      recommendations.some(
+        (recommendation) =>
+          (recommendation.status ?? 'recommended') !== 'cancelled' &&
+          amount(recommendation.remaining_amount ?? recommendation.amount) > 0,
+      ),
     isFrozen: normalized.isFrozen,
     currency: normalized.currency,
     targetPeriod: normalized.targetPeriod,

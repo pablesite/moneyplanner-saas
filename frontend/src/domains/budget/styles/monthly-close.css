@@ -977,6 +977,31 @@
   padding-bottom: 12px;
 }
 
+.mc-settlement-route-actions,
+.mc-settlement-route-totals,
+.mc-settlement-execution-secondary,
+.mc-settlement-execution-history {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mc-settlement-route-totals {
+  align-items: flex-end;
+  flex-direction: column;
+}
+
+.mc-settlement-route-totals small {
+  color: var(--faint);
+}
+
+.mc-settlement-route-path .btn {
+  width: fit-content;
+  min-height: 0;
+  padding: 0;
+  color: var(--accent);
+}
+
 .mc-settlement-subhead p,
 .mc-settlement-subhead h3 {
   margin: 0;
@@ -1003,6 +1028,101 @@
 
 .mc-settlement-route-path strong {
   overflow-wrap: anywhere;
+}
+
+.mc-settlement-execution-body {
+  display: grid;
+  gap: 18px;
+}
+
+.mc-settlement-execution-route {
+  display: grid;
+  gap: 5px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mc-settlement-execution-route span,
+.mc-settlement-execution-fields span,
+.mc-settlement-execution-note {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.mc-settlement-execution-route p,
+.mc-settlement-execution-note {
+  margin: 0;
+}
+
+.mc-settlement-execution-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mc-settlement-execution-fields label {
+  display: grid;
+  gap: 6px;
+}
+
+.mc-settlement-execution-history {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.mc-settlement-execution-history > strong {
+  width: 100%;
+}
+
+.mc-settlement-execution-body details {
+  padding-block: 12px;
+  border-block: 1px solid var(--line);
+}
+
+.mc-settlement-execution-body summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mc-settlement-reconcile {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.mc-settlement-execution-secondary {
+  flex-wrap: wrap;
+}
+
+.mc-settlement-apply-list {
+  display: grid;
+  border-block: 1px solid var(--line);
+}
+
+.mc-settlement-apply-list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 11px;
+}
+
+.mc-settlement-apply-list article + article {
+  border-top: 1px solid var(--line);
+}
+
+.mc-settlement-apply-list strong {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+.mc-settlement-apply-date {
+  display: grid;
+  gap: 6px;
+}
+
+.mc-settlement-apply-date span {
+  color: var(--faint);
+  font-size: 12px;
 }
 
 .mc-settlement-details {
@@ -1210,6 +1330,20 @@
   .mc-settlement-route {
     grid-template-columns: minmax(0, 1fr);
     gap: 9px;
+  }
+
+  .mc-settlement-subhead,
+  .mc-settlement-route-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mc-settlement-route-totals {
+    align-items: flex-start;
+  }
+
+  .mc-settlement-execution-fields {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mc-settlement-route .btn {

@@ -54,14 +54,14 @@ errores ni convertir el cierre en una pantalla de banca.
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck
-docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test -- --run
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test:unit
 ```
 
 ## Required Documentation Updates
 
-- [ ] `docs/frontend/domain-map.md` - acciones de materializacion y enlaces.
-- [ ] `docs/architecture/api-registry.md` - endpoints consumidos.
-- [ ] `docs/project-status.md` - version 2 completada.
+- [x] `docs/frontend/domain-map.md` - acciones de materializacion y enlaces.
+- [x] `docs/architecture/api-registry.md` - endpoints consumidos.
+- [x] `docs/project-status.md` - version 2 completada.
 
 ## Risks
 
@@ -72,11 +72,11 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 
 ## Completion Criteria
 
-- [ ] Retrying an apply action never renders duplicate movements.
-- [ ] Partial execution and exact remainder are understandable on desktop and mobile.
-- [ ] Created transactions are reachable in Movimientos.
-- [ ] Locked/reopened states match backend policy.
-- [ ] All validation commands pass.
-- [ ] All required documentation updates done.
-- [ ] Spec moved to `terminados/`.
-- [ ] Commit created (Conventional Commits).
+- [x] Retrying an apply action never renders duplicate movements.
+- [x] Partial execution and exact remainder are understandable on desktop and mobile.
+- [x] Created transactions are reachable in Movimientos.
+- [x] Locked/reopened states match backend policy.
+- [x] All validation commands pass.
+- [x] All required documentation updates done.
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).

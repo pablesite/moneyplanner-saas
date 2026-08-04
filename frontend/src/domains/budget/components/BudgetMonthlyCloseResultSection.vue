@@ -74,6 +74,7 @@ const props = defineProps<{
   monthlyCloseActionBusy?: boolean;
   hasDistributionSuggestion?: boolean;
   showSettlementConfiguration?: boolean;
+  settlementHasHistory?: boolean;
   formatMoney: (value: number, decimals?: number) => string;
   formatPercent: (value: number | null, decimals?: number) => string;
   formatSignedMoney: (value: number, decimals?: number) => string;
@@ -137,7 +138,15 @@ const resultBridgeRows = computed(() =>
           <span class="mc-locked">Este mes está bloqueado.</span>
         </template>
         <template v-else-if="closeStatus === 'finalized'">
-          <AButton :disabled="monthlyCloseActionBusy" @click="onReopenClose && onReopenClose()">
+          <AButton
+            :disabled="monthlyCloseActionBusy || settlementHasHistory"
+            :title="
+              settlementHasHistory
+                ? 'Un cierre con movimientos de liquidación conserva su histórico y no se reabre.'
+                : undefined
+            "
+            @click="onReopenClose && onReopenClose()"
+          >
             Reabrir cierre
           </AButton>
           <AButton

@@ -176,4 +176,49 @@ describe('settlement presentation', () => {
       ?.trigger('click');
     expect(wrapper.emitted('transfer')?.[0]?.[0]).toMatchObject({ amount: '3000.00' });
   });
+
+  it('shows authoritative partial state and emits finalized execution actions', async () => {
+    const settlement = readySettlement();
+    settlement.status = 'finalized';
+    settlement.calculation_status = 'ready';
+    settlement.is_frozen = true;
+    settlement.recommendations![0] = {
+      ...settlement.recommendations![0]!,
+      id: 42,
+      status: 'partially_applied',
+      applied_amount: '1000.00',
+      remaining_amount: '2000.00',
+      transactions: [
+        {
+          id: 77,
+          booking_date: '2026-08-04',
+          origin: 'system',
+          action: 'application',
+          amount: '1000.00',
+          idempotency_key: 'test-key',
+        },
+      ],
+    };
+    const page = buildSettlementPage(settlement, members);
+    const wrapper = mount(MonthlyCloseSettlementSection, {
+      props: {
+        page,
+        formatMoney: (value: number) => value.toFixed(2),
+        formatSignedMoney: (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`,
+      },
+    });
+
+    expect(wrapper.text()).toContain('Parcial');
+    expect(wrapper.text()).toContain('2000.00 pendientes');
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Registrar todas'))
+      ?.trigger('click');
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Gestionar'))
+      ?.trigger('click');
+    expect(wrapper.emitted('applyAll')).toHaveLength(1);
+    expect(wrapper.emitted('manage')?.[0]?.[0]).toMatchObject({ id: 42 });
+  });
 });
