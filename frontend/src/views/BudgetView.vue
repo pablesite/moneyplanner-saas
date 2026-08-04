@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   AButton,
   APageHead,
@@ -74,6 +75,70 @@ const suggestionsCount = computed(
 );
 
 const annualEntriesPage = useBudgetAnnualEntriesPage();
+const route = useRoute();
+const router = useRouter();
+const openedEntryDeepLink = ref<'income' | 'expense' | null>(null);
+
+function routeEntryId(value: unknown): number | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+watch(
+  [
+    () => route.query.editIncome,
+    () => route.query.editExpense,
+    () => annualEntriesPage.annualIncomeEntries.value,
+    () => annualEntriesPage.annualExpenseEntries.value,
+  ],
+  () => {
+    if (openedEntryDeepLink.value) return;
+    const incomeId = routeEntryId(route.query.editIncome);
+    const expenseId = routeEntryId(route.query.editExpense);
+    const incomeEntry = annualEntriesPage.annualIncomeEntries.value.find(
+      (entry) => entry.id === incomeId,
+    );
+    const expenseEntry = annualEntriesPage.annualExpenseEntries.value.find(
+      (entry) => entry.id === expenseId,
+    );
+    if (incomeEntry) {
+      presentationView.value = 'annual';
+      openedEntryDeepLink.value = 'income';
+      annualEntriesPage.openIncomeModal(incomeEntry);
+    } else if (expenseEntry) {
+      presentationView.value = 'annual';
+      openedEntryDeepLink.value = 'expense';
+      annualEntriesPage.openExpenseModal(expenseEntry);
+    }
+  },
+  { immediate: true },
+);
+
+async function clearEntryDeepLink(kind: 'income' | 'expense'): Promise<void> {
+  const query = { ...route.query };
+  delete query[kind === 'income' ? 'editIncome' : 'editExpense'];
+  await router.replace({ name: 'budget-dashboard', query });
+  openedEntryDeepLink.value = null;
+}
+
+watch(
+  () => annualEntriesPage.showIncomeModal.value,
+  (open, wasOpen) => {
+    if (wasOpen && !open && openedEntryDeepLink.value === 'income') {
+      void clearEntryDeepLink('income');
+    }
+  },
+);
+
+watch(
+  () => annualEntriesPage.showExpenseModal.value,
+  (open, wasOpen) => {
+    if (wasOpen && !open && openedEntryDeepLink.value === 'expense') {
+      void clearEntryDeepLink('expense');
+    }
+  },
+);
 
 watch(
   fiscalYear,

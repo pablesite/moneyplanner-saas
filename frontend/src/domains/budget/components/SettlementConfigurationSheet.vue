@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
+import { RouterLink } from 'vue-router';
 import { AButton, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { usePeopleStore } from '@/domains/people/store';
 import { useNetWorthStore } from '@/domains/net-worth/store';
@@ -262,6 +263,25 @@ function blockerLabel(item: SettlementReadinessItem): string {
   return labels[item.code] ?? item.code.replaceAll('_', ' ');
 }
 
+function blockerTarget(item: SettlementReadinessItem) {
+  const entryId = Number(item.entry_id);
+  if (!Number.isInteger(entryId) || entryId <= 0) return null;
+  if (item.code === 'income_missing_ownership') {
+    return { name: 'budget-dashboard', query: { editIncome: String(entryId) } };
+  }
+  if (
+    [
+      'expense_missing_ownership',
+      'expense_missing_settlement_account',
+      'expense_invalid_settlement_account',
+      'settlement_ownership_mismatch',
+    ].includes(item.code)
+  ) {
+    return { name: 'budget-dashboard', query: { editExpense: String(entryId) } };
+  }
+  return null;
+}
+
 function walletDifference(assetId: number): number {
   const asset = walletAssets.value.find((row) => row.id === assetId);
   const modeled = Number(asset?.effective_amount ?? asset?.amount ?? 0);
@@ -442,10 +462,20 @@ function requestClose(): void {
             Todo listo para activar la liquidación.
           </AState>
           <template v-else-if="readiness?.blockers.length">
-            <p>Completa estos puntos antes de activar:</p>
+            <p>
+              Estas comprobaciones corresponden a partidas de Presupuesto, no a movimientos.
+              Completa estos puntos antes de activar:
+            </p>
             <ul>
               <li v-for="(item, index) in readiness.blockers" :key="`${item.code}-${index}`">
-                {{ blockerLabel(item) }}
+                <span>{{ blockerLabel(item) }}</span>
+                <RouterLink
+                  v-if="blockerTarget(item)"
+                  class="btn btn-ghost btn-sm mc-settlement-fix-link"
+                  :to="blockerTarget(item)!"
+                >
+                  Abrir partida
+                </RouterLink>
               </li>
             </ul>
           </template>

@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { flushPromises, mount } from '@vue/test-utils';
+import { defineComponent } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import SettlementConfigurationSheet from '@/domains/budget/components/SettlementConfigurationSheet.vue';
 
@@ -21,11 +22,17 @@ const mocks = vi.hoisted(() => ({
     activation_date: null,
     base_currency: 'EUR',
     target_period: { year: 2026, month: 8 },
-    blockers: [],
+    blockers: [{ code: 'income_missing_ownership', entry_id: 47, name: 'Dividendos' }],
     warnings: [],
     allocation_coverage: [],
   }),
 }));
+
+const RouterLinkStub = defineComponent({
+  name: 'RouterLink',
+  props: { to: { type: Object, required: true } },
+  template: '<a><slot /></a>',
+});
 
 vi.mock('@/domains/people/store', () => ({
   usePeopleStore: () => ({ members: [], activeAdults: [], fetchMembers: vi.fn() }),
@@ -66,14 +73,22 @@ afterEach(() => {
 
 describe('SettlementConfigurationSheet', () => {
   it('refreshes cached net worth data and formats the current wallet balance', async () => {
-    mount(SettlementConfigurationSheet, {
+    const wrapper = mount(SettlementConfigurationSheet, {
       attachTo: document.body,
       props: { open: true, year: 2026, month: 8 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
     });
 
     await flushPromises();
 
     expect(mocks.refreshAll).toHaveBeenCalledOnce();
     expect(document.body.textContent).toContain('Saldo contable actualizado: 325,31 €');
+    expect(document.body.textContent).toContain('partidas de Presupuesto, no a movimientos');
+    expect(document.body.textContent).toContain('Abrir partida');
+    expect(document.body.textContent).toContain('Dividendos');
+    expect(wrapper.getComponent(RouterLinkStub).props('to')).toEqual({
+      name: 'budget-dashboard',
+      query: { editIncome: '47' },
+    });
   });
 });
