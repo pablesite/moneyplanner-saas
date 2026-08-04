@@ -30,7 +30,10 @@ function makeState(overrides: Record<string, unknown> = {}) {
     toggleMember: vi.fn(),
     setEqualSplit: vi.fn(),
     submit: vi.fn(async () => {}),
-    removeOwnership: vi.fn(async () => {}),
+    ownershipPendingDelete: ref(null),
+    askRemoveOwnership: vi.fn(),
+    cancelRemoveOwnership: vi.fn(),
+    confirmRemoveOwnership: vi.fn(async () => {}),
     ...overrides,
   };
 }
@@ -115,7 +118,7 @@ describe('OwnershipManager', () => {
     expect(wrapper.text()).toContain('Compartido dinámico');
     expect(wrapper.text()).toContain('Ana 39%');
     expect(wrapper.text()).toContain('Pablo 61%');
-    expect(wrapper.text()).toContain('se recalcula cada mes');
+    expect(wrapper.text()).toContain('Se recalcula cada mes');
     expect(wrapper.text()).not.toContain('Ana 50%');
   });
 });

@@ -1,0 +1,338 @@
+/* Datos auxiliares (`/data`) y gestión de personas.
+   Patrones locales del dominio, namespaced `a-aux-*` (regla 9 del visual
+   contract). El chrome compartido —`.page`, `.sect`, `.tabs`, `.data-table`,
+   `.chip`, `.kpis`— viene del design system.
+
+   Sustituye a tres bloques legacy que solo consumía esta pantalla:
+   `ui-settings-*` (acordeón a medida, `app.css`) y `ui-data-table` /
+   `ui-table-empty` / `ui-people-*` (capa Tailwind). */
+
+.dir-a .a-aux-tabs-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: 4px;
+  background: var(--bg);
+}
+
+/* ── Estado de cobertura por dataset ─────────────────────────────────────── */
+
+/* `.a-aux-status-grid` y `.a-aux-status-card` sustituyen a
+   `ui-data-status-grid` / `ui-data-status-card` / `ui-data-status-card-head`,
+   que se usaban en el template pero **no estaban definidas en ningún fichero**:
+   los bloques de estado se renderizaban como divs sueltos sin rejilla ni caja. */
+.dir-a .a-aux-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.dir-a .a-aux-status-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.dir-a .a-aux-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dir-a .a-aux-status-scope {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.dir-a .a-aux-status-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dir-a .a-aux-status-row strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.dir-a .a-aux-status-error {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: color-mix(in oklab, var(--neg) 70%, white);
+  overflow-wrap: anywhere;
+}
+
+/* Estado de cobertura: un solo eje (al día / retraso / sin datos). */
+.dir-a .a-aux-cov-ok {
+  color: var(--pos);
+  border-color: color-mix(in oklab, var(--pos) 40%, transparent);
+  background: var(--pos-soft);
+}
+
+.dir-a .a-aux-cov-warn {
+  color: color-mix(in oklab, var(--neg) 55%, #f5c07a);
+  border-color: color-mix(in oklab, var(--neg) 30%, transparent);
+}
+
+.dir-a .a-aux-cov-stale {
+  color: var(--neg);
+  border-color: color-mix(in oklab, var(--neg) 40%, transparent);
+  background: var(--neg-soft);
+}
+
+.dir-a .a-aux-cov-unknown {
+  color: var(--muted);
+  border-color: var(--line-strong);
+}
+
+/* El meta del KPI reutiliza `.pos`/`.neg` de `.kpi-meta` (design system); solo
+   falta el tono intermedio, que no existe como clase compartida. */
+.dir-a .kpi-meta .a-aux-tone-warn {
+  color: color-mix(in oklab, var(--neg) 55%, #f5c07a);
+}
+
+/* ── Tablas de datos ─────────────────────────────────────────────────────── */
+
+.dir-a .a-aux-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dir-a .a-aux-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.dir-a .a-aux-table td.num,
+.dir-a .a-aux-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dir-a .a-aux-table tr:hover td {
+  background: var(--hover);
+}
+
+.dir-a .a-aux-table-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+/* ── Personas: listas de miembros y titularidades ────────────────────────── */
+
+.dir-a .a-aux-name {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.dir-a .a-aux-muted {
+  color: var(--muted);
+}
+
+.dir-a .a-aux-menu-head,
+.dir-a .a-aux-cell-menu {
+  width: 36px;
+}
+
+/* Estado del miembro: era un `AButton` con una clase de opacidad haciendo de
+   interruptor; ahora es un chip pulsable con estado explícito. */
+.dir-a .a-aux-toggle {
+  font: inherit;
+  cursor: pointer;
+  background: transparent;
+}
+
+.dir-a .a-aux-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dir-a .a-aux-toggle-on {
+  color: var(--pos);
+  border-color: color-mix(in oklab, var(--pos) 40%, transparent);
+  background: var(--pos-soft);
+}
+
+.dir-a .a-aux-toggle-off {
+  color: var(--muted);
+  border-color: var(--line-strong);
+}
+
+/* ── Formularios de titularidad (sheet) ──────────────────────────────────── */
+
+.dir-a .a-aux-member-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dir-a .a-aux-member-inactive {
+  opacity: 0.55;
+}
+
+.dir-a .a-aux-splits {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.dir-a .a-aux-splits-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dir-a .a-aux-split-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.dir-a .a-aux-split-name {
+  min-width: 160px;
+}
+
+.dir-a .a-aux-percent-input {
+  max-width: 140px;
+}
+
+.dir-a .a-aux-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: var(--muted);
+}
+
+.dir-a .a-aux-hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ── Confirmación de borrado ─────────────────────────────────────────────── */
+
+.dir-a .a-aux-confirm {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 8px;
+}
+
+.dir-a .a-aux-confirm-lead {
+  margin: 0;
+  font-size: 15.5px;
+  color: var(--text);
+}
+
+.dir-a .a-aux-confirm-copy {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* `.btn` en el selector para ganar a `.dir-a .btn` (regla 32). */
+.dir-a .btn.a-aux-danger,
+.dir-a .btn.a-aux-danger:hover {
+  border-color: color-mix(in oklab, var(--neg) 55%, transparent);
+  background: color-mix(in oklab, var(--neg) 88%, black);
+  color: white;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@container page (max-width: 560px) {
+  .dir-a .a-aux-page .kpis.a-kpi-band {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    row-gap: 16px;
+  }
+
+  .dir-a .a-aux-page .kpis.a-kpi-band > .kpi {
+    grid-row: auto;
+    grid-template-rows: none;
+  }
+
+  .dir-a .a-aux-status-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dir-a .a-aux-page .sect-head .btn {
+    white-space: nowrap;
+  }
+
+  /* Las tablas pasan a registro vertical etiquetado en vez de encogerse: a
+     360px las cuatro columnas de IPC/FX quedaban ilegibles. */
+  .dir-a .a-aux-table,
+  .dir-a .a-aux-table tbody {
+    display: block;
+  }
+
+  .dir-a .a-aux-table thead {
+    display: none;
+  }
+
+  .dir-a .a-aux-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 4px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dir-a .a-aux-table tbody tr:hover td {
+    background: transparent;
+  }
+
+  .dir-a .a-aux-table tbody tr td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .dir-a .a-aux-table tbody tr td.a-aux-cell-primary {
+    grid-column: 1;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .dir-a .a-aux-table tbody tr td.a-aux-cell-menu {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: start;
+    width: auto;
+  }
+
+  .dir-a .a-aux-table tbody tr td[data-label] {
+    grid-column: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .dir-a .a-aux-table tbody tr td[data-label]::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+}

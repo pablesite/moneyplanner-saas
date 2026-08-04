@@ -5,6 +5,13 @@ import { ref } from 'vue';
 import AuxDataView from '../AuxDataView.vue';
 
 const mockUseAuxDataPage = vi.fn();
+const routerReplace = vi.fn();
+const route = { query: {} as Record<string, unknown> };
+
+vi.mock('vue-router', () => ({
+  useRoute: () => route,
+  useRouter: () => ({ replace: routerReplace }),
+}));
 
 vi.mock('@/domains/aux-data', () => ({
   useAuxDataPage: () => mockUseAuxDataPage(),
@@ -25,6 +32,10 @@ function makeState(overrides: Record<string, unknown> = {}) {
   return {
     loading: ref(false),
     error: ref<string | null>(null),
+    syncError: ref<string | null>(null),
+    syncSuccess: ref<string | null>(null),
+    syncingInflation: ref(false),
+    syncingFx: ref(false),
     fxRates: ref([]),
     inflation: ref([]),
     fxStates: ref([]),
@@ -32,6 +43,20 @@ function makeState(overrides: Record<string, unknown> = {}) {
     supportedInflationRegions: ref([{ code: 'ES', label: 'Espana' }]),
     formatFxRate: vi.fn(() => '0.9200'),
     formatInflationIndex: vi.fn(() => '118.0'),
+    syncInflationNow: vi.fn(),
+    syncFxHistoryNow: vi.fn(),
+    ...overrides,
+  };
+}
+
+function marketState(overrides: Record<string, unknown> = {}) {
+  return {
+    scope: 'ES',
+    required_start_date: '2020-01-01',
+    covered_until: '2026-08-04',
+    last_attempt_at: null,
+    last_success_at: '2026-08-05T06:00:00Z',
+    last_error: null,
     ...overrides,
   };
 }
@@ -39,40 +64,62 @@ function makeState(overrides: Record<string, unknown> = {}) {
 describe('AuxDataView', () => {
   beforeEach(() => {
     mockUseAuxDataPage.mockReset();
+    routerReplace.mockReset();
+    route.query = {};
   });
 
-  it('renders settings and accordion sections', () => {
+  it('abre en la pestaña Personas y monta sus gestores', () => {
     mockUseAuxDataPage.mockReturnValue(makeState());
     const wrapper = mount(AuxDataView);
 
-    expect(wrapper.text()).toContain('Datos IPC');
-    expect(wrapper.text()).toContain('Tasas de conversion');
-    expect(wrapper.text()).toContain('No hay indices IPC sincronizados todavia.');
-    expect(wrapper.text()).toContain('No hay FX rates sincronizados todavia.');
+    expect(wrapper.find('[data-test="FamilyMemberManager"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="OwnershipManager"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain('Índice de precios');
   });
 
-  it('toggles IPC and FX sections in place', async () => {
+  it('cambia a Datos de mercado y lo sincroniza con la URL', async () => {
     mockUseAuxDataPage.mockReturnValue(makeState());
     const wrapper = mount(AuxDataView);
 
-    const toggles = wrapper.findAll('.ui-settings-toggle');
-    await toggles[1]!.trigger('click');
-    expect(wrapper.text()).not.toContain('No hay indices IPC sincronizados todavia.');
+    await wrapper.findAll('.tab')[1]!.trigger('click');
 
-    await toggles[2]!.trigger('click');
-    expect(wrapper.text()).not.toContain('No hay FX rates sincronizados todavia.');
+    expect(routerReplace).toHaveBeenCalledWith({ query: { tab: 'mercado' } });
+    expect(wrapper.text()).toContain('Índice de precios (IPC)');
+    expect(wrapper.text()).toContain('Tasas de cambio');
+    expect(wrapper.find('[data-test="FamilyMemberManager"]').exists()).toBe(false);
   });
 
-  it('renders loading and error messages', () => {
+  it('entra directo en la pestaña indicada por la query', () => {
+    route.query = { tab: 'mercado' };
+    mockUseAuxDataPage.mockReturnValue(makeState());
+    const wrapper = mount(AuxDataView);
+
+    expect(wrapper.text()).toContain('Índice de precios (IPC)');
+  });
+
+  it('resume la cobertura de cada dataset como estado operativo', () => {
+    route.query = { tab: 'mercado' };
     mockUseAuxDataPage.mockReturnValue(
       makeState({
-        loading: ref(true),
-        error: ref('Error de red'),
+        inflationStates: ref([marketState({ covered_until: '2026-06-30' })]),
+        fxStates: ref([marketState({ scope: 'USD->EUR', last_error: 'timeout' })]),
       }),
     );
     const wrapper = mount(AuxDataView);
 
+    expect(wrapper.text()).toContain('Cobertura IPC');
+    expect(wrapper.text()).toContain('Cobertura divisas');
+    expect(wrapper.text()).toContain('Incidencias');
+    expect(wrapper.text()).toContain('timeout');
+  });
+
+  it('explica los estados vacíos y los errores', () => {
+    route.query = { tab: 'mercado' };
+    mockUseAuxDataPage.mockReturnValue(makeState({ error: ref('Error de red') }));
+    const wrapper = mount(AuxDataView);
+
     expect(wrapper.text()).toContain('Error de red');
-    expect(wrapper.text()).toContain('Cargando datos auxiliares...');
+    expect(wrapper.text()).toContain('No hay índices IPC sincronizados todavía');
+    expect(wrapper.text()).toContain('No hay tasas sincronizadas todavía');
   });
 });

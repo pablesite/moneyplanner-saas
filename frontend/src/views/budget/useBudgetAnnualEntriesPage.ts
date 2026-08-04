@@ -410,15 +410,6 @@ export function useBudgetAnnualEntriesPage() {
     return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
   });
 
-  const settlementOwnershipOptions = computed(() =>
-    (store.ownerships ?? []).map((ownership) => ({
-      value: String(ownership.id),
-      label:
-        ownership.kind === 'individual' && ownership.member
-          ? ownership.member.name
-          : ownershipDisplayLabel(ownership),
-    })),
-  );
   const showSettlementFields = computed(
     () =>
       Boolean(settlementConfiguration.value?.is_enabled) ||
@@ -426,17 +417,15 @@ export function useBudgetAnnualEntriesPage() {
       Boolean(annualExpenseForm.ownershipId) ||
       Boolean(annualExpenseForm.settlementAccountId),
   );
+  const showExpenseSettlementFields = computed(
+    () =>
+      showSettlementFields.value &&
+      annualExpenseForm.timeProfile !== 'one_off' &&
+      ['savings', 'investment'].includes(annualExpenseForm.cashflowRole),
+  );
   const settlementAccountOptions = computed(() => {
-    const ownershipId = Number(annualExpenseForm.ownershipId);
-    const assetsById = new Map(store.assets.map((asset) => [asset.id, asset]));
     return (settlementConfiguration.value?.accounts ?? [])
-      .filter(
-        (account) => account.role === 'operating' || account.role === 'allocation_destination',
-      )
-      .filter((account) => {
-        if (!Number.isInteger(ownershipId)) return true;
-        return assetsById.get(account.asset_id)?.ownership_ref === ownershipId;
-      })
+      .filter((account) => account.role === 'allocation_destination')
       .map((account) => ({ value: String(account.id), label: account.asset_name }));
   });
 
@@ -2435,9 +2424,9 @@ export function useBudgetAnnualEntriesPage() {
     openIncomeModal,
     openLiabilityModal,
     ownerOptions,
-    settlementOwnershipOptions,
     settlementAccountOptions,
     showSettlementFields,
+    showExpenseSettlementFields,
     patchAnnualExpenseForm,
     patchAnnualIncomeForm,
     prettyError,

@@ -598,25 +598,8 @@
     @apply h-[38px] text-[13px] leading-normal;
   }
 
-  .ui-data-table {
-    @apply w-full border-collapse;
-  }
-
-  .ui-data-table th,
-  .ui-data-table td {
-    @apply border-b border-white/10 px-1.5 py-2 text-left text-[13px];
-  }
-
-  .ui-data-table-actions {
-    @apply w-[1%] whitespace-nowrap text-right;
-  }
-
   .ui-alert-success {
     @apply mt-3 rounded-[var(--radius-md)] border border-emerald-300/55 bg-emerald-500/10 p-3 text-sm text-emerald-100;
-  }
-
-  .ui-table-empty {
-    @apply px-1.5 py-2 text-sm text-white/65;
   }
 
   .ui-auth-page {
@@ -672,49 +655,5 @@
 
   .ui-app-header-actions {
     @apply flex items-center gap-2.5;
-  }
-
-  .ui-people-alert {
-    @apply mb-3;
-  }
-
-  .ui-people-header-actions {
-    @apply flex flex-wrap gap-2.5;
-  }
-
-  .ui-people-row-actions {
-    @apply inline-flex items-center gap-2.5;
-  }
-
-  .ui-people-status-inactive {
-    @apply opacity-70;
-  }
-
-  .ui-people-member-list {
-    @apply flex flex-wrap gap-2.5;
-  }
-
-  .ui-people-member-inactive {
-    @apply opacity-65;
-  }
-
-  .ui-people-splits {
-    @apply mt-3 grid gap-2.5;
-  }
-
-  .ui-people-splits-header {
-    @apply flex items-center justify-between gap-2.5;
-  }
-
-  .ui-people-split-row {
-    @apply flex flex-wrap items-center gap-2.5;
-  }
-
-  .ui-people-split-name {
-    @apply min-w-[160px];
-  }
-
-  .ui-people-percent-input {
-    @apply max-w-[140px];
   }
 }

@@ -39,11 +39,19 @@ Ambos tienen interceptores de auth (Bearer + refresh automático).
 **Cliente:** `api` (SaaS backend)
 **Ruta:** `/account` (panel embebido para `saas_admin`)
 
-| Archivo  | Contenido                                                                                                                                               |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `api.ts` | Cliente para `GET/POST /api/admin/users/`, `PATCH /api/admin/users/{id}/role/`, `PATCH /api/admin/users/{id}/status/`, `DELETE /api/admin/users/{id}/`. |
+| Archivo                                 | Contenido                                                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api.ts`                                | Cliente para `GET/POST /api/admin/users/`, `PATCH /api/admin/users/{id}/role/`, `PATCH /api/admin/users/{id}/status/`, `DELETE /api/admin/users/{id}/`. |
+| `useAdminUsersPage.ts`                  | Estado de la vista (`reactive`, patrón `:page`): cruce de identidades SaaS/Core en un eje `linked`/`saas_only`/`core_only`, búsqueda, filtros, KPIs y acciones. |
+| `components/AdminUsersSection.vue`      | Sección `Usuarios`: `ASectHead` + `AKpiBand` + toolbar de búsqueda/filtros + `.data-table` con `ARowMenu`.                                              |
+| `components/AdminUserDetailSheet.vue`   | Sheet de detalle de una identidad (bloques SaaS y Core, identidades externas) con las acciones de la fila.                                              |
+| `components/AdminUserCreateModal.vue`   | Alta de usuario SaaS (`BaseModal` + slot `#footer`).                                                                                                    |
+| `components/AdminUserDeleteDialog.vue`  | Confirmación explícita del borrado, con la alternativa de desactivar.                                                                                   |
+| `styles/admin.css`                      | Patrones locales `a-adm-*` de `/account` (lista etiqueta/valor, toolbar, tabla, sheet, overlay de transferencia).                                        |
 
 **Nota:** este dominio gestiona exclusivamente usuarios y roles del SaaS. No depende de UI espejo de Core.
+
+**Nota:** para `saas_admin` el shell oculta la navegación principal, así que `/account` **es** el panel de administración completo. `AccountView` compone las dos lecturas: admin (Usuarios + Seguridad) y miembro (Mi cuenta + Seguridad + Tus datos).
 
 ---
 
@@ -142,6 +150,11 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 
 **Requiere:** `canUsePeople()` → `core.familyLogicalModel`. Actualmente `true`.
 
+**Nota:** los dos gestores son secciones (`.sect` + `ASectHead`), no traen card
+propia, y se montan igual desde `/people` y desde la pestaña Personas de `/data`.
+El borrado de miembro y de titularidad es en dos pasos (`askRemove*` →
+`confirmRemove*`), con diálogo del producto en vez de `window.confirm`.
+
 ---
 
 ### `budget` — Presupuesto
@@ -214,13 +227,17 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 **Cliente:** `coreApi`
 **Ruta:** `/data`
 
-| Archivo          | Contenido                                           |
-| ---------------- | --------------------------------------------------- |
-| `api.ts`         | Llamadas a Core: tipos de cambio (FX), índices IPC. |
-| `composables.ts` | Composables para acceder a datos auxiliares.        |
-| `types.ts`       | Tipos TypeScript del dominio.                       |
+| Archivo             | Contenido                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `api.ts`            | Llamadas a Core: tipos de cambio (FX), índices IPC.                                                                                        |
+| `composables.ts`    | Composables para acceder a datos auxiliares.                                                                                               |
+| `marketHealth.ts`   | Traduce `covered_until` a estado operativo por dataset (`ok`/`warn`/`stale`/`unknown`), con umbrales distintos para IPC (mensual) y FX (diario). |
+| `types.ts`          | Tipos TypeScript del dominio.                                                                                                              |
+| `styles/aux-data.css` | Patrones locales `a-aux-*` de `/data` y `/people`: tarjetas de cobertura, tablas, chips de estado y confirmaciones.                       |
 
-Incluye redirecciones: `/data/fx` y `/data/ipc` → `/data`.
+La vista tiene dos pestañas sincronizadas con la URL (`?tab=mercado`): **Personas**
+(monta `FamilyMemberManager` + `OwnershipManager`) y **Datos de mercado** (banda
+de cobertura + IPC + divisas). Incluye redirecciones: `/data/fx` y `/data/ipc` → `/data`.
 
 ---
 

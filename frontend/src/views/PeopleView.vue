@@ -1,46 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+// `/people` y la pestaña Personas de `/data` gestionan lo mismo con los mismos
+// componentes; aquí solo cambia el chrome de página. Mi Plan enlaza a esta ruta
+// desde el paso de miembros, por eso se mantiene.
+import '@/domains/aux-data/styles/aux-data.css';
 import { FamilyMemberManager, OwnershipManager } from '@/domains/people';
-import { AButton, APageHead } from '@/domains/ui';
-
-const router = useRouter();
-type Tab = 'members' | 'ownerships';
-const tab = ref<Tab>('members');
+import { APageHead } from '@/domains/ui';
 </script>
 
 <template>
-  <div class="container ui-page-shell">
-    <APageHead title="Personas">
-      <template #actions>
-        <AButton @click="router.push('/account')">Cuenta</AButton>
-        <AButton @click="router.push('/patrimonio')"> Volver a Patrimonio </AButton>
-      </template>
-    </APageHead>
+  <div class="page a-aux-page">
+    <APageHead title="Personas" />
 
-    <div class="card ui-section-card mt-1">
-      <div class="mb-3.5 flex gap-2.5">
-        <AButton
-          class="opacity-60"
-          :class="{ '!opacity-100': tab === 'members' }"
-          @click="tab = 'members'"
-        >
-          Miembros
-        </AButton>
-
-        <AButton
-          class="opacity-60"
-          :class="{ '!opacity-100': tab === 'ownerships' }"
-          @click="tab = 'ownerships'"
-        >
-          Titularidades
-        </AButton>
-      </div>
-
-      <div class="grid gap-3.5">
-        <FamilyMemberManager v-if="tab === 'members'" />
-        <OwnershipManager v-else />
-      </div>
-    </div>
+    <FamilyMemberManager />
+    <OwnershipManager />
   </div>
 </template>

@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, type ComponentPublicInstance } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import {
-  saasAdminApi,
-  type CoreAdminUser,
-  type SaasAdminRole,
-  type SaasAdminUser,
-} from '@/domains/admin';
+import '@/domains/admin/styles/admin.css';
+import AdminUserCreateModal from '@/domains/admin/components/AdminUserCreateModal.vue';
+import AdminUserDeleteDialog from '@/domains/admin/components/AdminUserDeleteDialog.vue';
+import AdminUserDetailSheet from '@/domains/admin/components/AdminUserDetailSheet.vue';
+import AdminUsersSection from '@/domains/admin/components/AdminUsersSection.vue';
+import { roleLabel, useAdminUsersPage } from '@/domains/admin/useAdminUsersPage';
 import { authApi, toAuthErrorMessage, type CurrentUser } from '@/domains/auth';
 import { usePortableDataTransfer } from '@/domains/portable-data';
 import {
   AButton,
+  AMetaPill,
   APageHead,
+  ASectHead,
   ASelect,
   AState,
   AToast,
-  BaseModal,
   type ASelectItem,
 } from '@/domains/ui';
 import { updateAuthGuardSnapshot } from '@/domains/auth/guard';
@@ -33,24 +34,11 @@ const inflationRegion = ref('ES');
 const coreAccountError = ref<string | null>(null);
 const baseCurrencySaveBusy = ref(false);
 const baseCurrencySaveMessage = ref<string | null>(null);
-const adminUsers = ref<SaasAdminUser[]>([]);
-const coreUsers = ref<CoreAdminUser[]>([]);
-const adminUsersLoading = ref(false);
-const adminUsersError = ref<string | null>(null);
-const adminUsersSuccess = ref<string | null>(null);
-const adminActionBusy = ref(false);
-const showCreateUserModal = ref(false);
 const passwordChangeBusy = ref(false);
 const passwordChangeError = ref<string | null>(null);
 const passwordChangeSuccess = ref<string | null>(null);
 
-const createUserForm = reactive({
-  username: '',
-  password: '',
-  email: '',
-  role: 'saas_member' as SaasAdminRole,
-  is_active: true,
-});
+const adminPage = useAdminUsersPage();
 
 const passwordChangeForm = reactive({
   current_password: '',
@@ -78,7 +66,7 @@ const {
 
 const permissionNotice = computed(() =>
   route.query.reason === 'permission_denied'
-    ? 'No tienes permisos para acceder a esa seccion.'
+    ? 'No tienes permisos para acceder a esa sección.'
     : null,
 );
 const passwordChangeNotice = computed(() =>
@@ -90,26 +78,21 @@ const passwordChangeNotice = computed(() =>
 const isAdmin = computed(() => currentUser.value?.role === 'saas_admin');
 const isMember = computed(() => currentUser.value?.role === 'saas_member');
 const mustChangePassword = computed(() => currentUser.value?.must_change_password === true);
-const baseCurrencyOptions = ['EUR', 'USD'];
-const baseCurrencySelectOptions: ASelectItem[] = baseCurrencyOptions.map((currency) => ({
+const baseCurrencySelectOptions: ASelectItem[] = ['EUR', 'USD'].map((currency) => ({
   value: currency,
   label: currency,
 }));
-const createUserRoleOptions: ASelectItem[] = [
-  { value: 'saas_member', label: 'Miembro SaaS' },
-  { value: 'saas_admin', label: 'Admin SaaS' },
-];
 
-type AdminIdentityRow = {
-  key: string;
-  displayName: string;
-  displayEmail: string;
-  saasUser: SaasAdminUser | null;
-  coreUser: CoreAdminUser | null;
-};
+// Un solo toast para las confirmaciones de la página: antes había cuatro
+// anclados al mismo punto, así que dos éxitos simultáneos se solapaban.
+const feedbackMessage = computed(
+  () => adminPage.successMessage ?? baseCurrencySaveMessage.value ?? passwordChangeSuccess.value,
+);
 
-function roleLabel(role: CurrentUser['role'] | SaasAdminRole): string {
-  return role === 'saas_admin' ? 'Admin SaaS' : 'Miembro SaaS';
+function clearFeedback(): void {
+  adminPage.successMessage = null;
+  baseCurrencySaveMessage.value = null;
+  passwordChangeSuccess.value = null;
 }
 
 function subscriptionLabel(status: CurrentUser['subscription_status']): string {
@@ -117,80 +100,6 @@ function subscriptionLabel(status: CurrentUser['subscription_status']): string {
   if (status === 'past_due') return 'Pendiente';
   if (status === 'canceled') return 'Cancelada';
   return 'Trial';
-}
-
-function statusLabel(isActive: boolean): string {
-  return isActive ? 'Activa' : 'Desactivada';
-}
-
-function passwordChangeLabel(required: boolean): string {
-  return required ? 'Pendiente' : 'Completado';
-}
-
-function coreUserOriginLabel(user: CoreAdminUser): string {
-  return user.origin === 'core_native' ? 'Creado en Core' : 'Provisionado desde SaaS';
-}
-
-function coreUserConnectionLabel(user: CoreAdminUser): string {
-  if (user.connection_kind === 'manual_link') return 'Vinculo manual con SaaS';
-  if (user.connection_kind === 'bootstrap') return 'Conectado con usuario SaaS';
-  return 'Sin usuario SaaS';
-}
-
-const adminIdentityRows = computed<AdminIdentityRow[]>(() => {
-  const rows: AdminIdentityRow[] = [];
-  const linkedCoreBySaasId = new Map<number, CoreAdminUser>();
-
-  for (const coreUser of coreUsers.value) {
-    if (coreUser.linked_saas_user) {
-      linkedCoreBySaasId.set(coreUser.linked_saas_user.id, coreUser);
-    }
-  }
-
-  for (const saasUser of adminUsers.value) {
-    rows.push({
-      key: `saas-${saasUser.id}`,
-      displayName:
-        saasUser.username ||
-        linkedCoreBySaasId.get(saasUser.id)?.username ||
-        `Usuario ${saasUser.id}`,
-      displayEmail: saasUser.email || linkedCoreBySaasId.get(saasUser.id)?.email || 'sin email',
-      saasUser,
-      coreUser: linkedCoreBySaasId.get(saasUser.id) ?? null,
-    });
-  }
-
-  for (const coreUser of coreUsers.value) {
-    if (coreUser.linked_saas_user) continue;
-    rows.push({
-      key: `core-${coreUser.id}`,
-      displayName: coreUser.username || `Core ${coreUser.id}`,
-      displayEmail: coreUser.email || 'sin email',
-      saasUser: null,
-      coreUser,
-    });
-  }
-
-  return rows.sort((left, right) => left.displayName.localeCompare(right.displayName, 'es'));
-});
-
-function openCreateUserModal(): void {
-  adminUsersError.value = null;
-  adminUsersSuccess.value = null;
-  showCreateUserModal.value = true;
-}
-
-function closeCreateUserModal(): void {
-  showCreateUserModal.value = false;
-  resetCreateUserForm();
-}
-
-function resetCreateUserForm(): void {
-  createUserForm.username = '';
-  createUserForm.password = '';
-  createUserForm.email = '';
-  createUserForm.role = 'saas_member';
-  createUserForm.is_active = true;
 }
 
 async function loadCoreAccountSummary(): Promise<void> {
@@ -229,21 +138,11 @@ async function saveBaseCurrency(): Promise<void> {
 }
 
 async function loadAdminUsers(): Promise<void> {
-  adminUsers.value = [];
-  coreUsers.value = [];
-  adminUsersError.value = null;
-  adminUsersSuccess.value = null;
-  if (!isAdmin.value) return;
-  adminUsersLoading.value = true;
-  try {
-    const response = await saasAdminApi.listUsers();
-    adminUsers.value = response.data?.saas_users ?? [];
-    coreUsers.value = response.data?.core_users ?? [];
-  } catch (e: unknown) {
-    adminUsersError.value = toAuthErrorMessage(e);
-  } finally {
-    adminUsersLoading.value = false;
+  if (!isAdmin.value) {
+    adminPage.reset();
+    return;
   }
+  await adminPage.load();
 }
 
 async function load() {
@@ -307,79 +206,6 @@ async function changePassword(): Promise<void> {
   }
 }
 
-async function createAdminUser(): Promise<void> {
-  adminActionBusy.value = true;
-  adminUsersError.value = null;
-  adminUsersSuccess.value = null;
-  try {
-    const response = await saasAdminApi.createUser({
-      username: createUserForm.username.trim(),
-      password: createUserForm.password,
-      email: createUserForm.email.trim(),
-      role: createUserForm.role,
-      is_active: createUserForm.is_active,
-    });
-    await loadAdminUsers();
-    adminUsersSuccess.value = `Usuario ${response.data.username} creado.`;
-    showCreateUserModal.value = false;
-    resetCreateUserForm();
-  } catch (e: unknown) {
-    adminUsersError.value = toAuthErrorMessage(e);
-  } finally {
-    adminActionBusy.value = false;
-  }
-}
-
-async function switchUserRole(user: SaasAdminUser): Promise<void> {
-  adminActionBusy.value = true;
-  adminUsersError.value = null;
-  adminUsersSuccess.value = null;
-  const nextRole: SaasAdminRole = user.role === 'saas_admin' ? 'saas_member' : 'saas_admin';
-  try {
-    const response = await saasAdminApi.updateUserRole(user.id, nextRole);
-    await loadAdminUsers();
-    adminUsersSuccess.value = `Rol actualizado para ${response.data.username}.`;
-  } catch (e: unknown) {
-    adminUsersError.value = toAuthErrorMessage(e);
-  } finally {
-    adminActionBusy.value = false;
-  }
-}
-
-async function toggleUserStatus(user: SaasAdminUser): Promise<void> {
-  adminActionBusy.value = true;
-  adminUsersError.value = null;
-  adminUsersSuccess.value = null;
-  try {
-    const response = await saasAdminApi.updateUserStatus(user.id, !user.is_active);
-    await loadAdminUsers();
-    adminUsersSuccess.value = `Estado actualizado para ${response.data.username}.`;
-  } catch (e: unknown) {
-    adminUsersError.value = toAuthErrorMessage(e);
-  } finally {
-    adminActionBusy.value = false;
-  }
-}
-
-async function deleteUser(user: SaasAdminUser): Promise<void> {
-  if (typeof window !== 'undefined') {
-    const confirmed = window.confirm(`Eliminar al usuario ${user.username}?`);
-    if (!confirmed) return;
-  }
-  adminActionBusy.value = true;
-  adminUsersError.value = null;
-  adminUsersSuccess.value = null;
-  try {
-    await saasAdminApi.deleteUser(user.id);
-    await loadAdminUsers();
-    adminUsersSuccess.value = `Usuario ${user.username} eliminado.`;
-  } catch (e: unknown) {
-    adminUsersError.value = toAuthErrorMessage(e);
-  } finally {
-    adminActionBusy.value = false;
-  }
-}
-
 onMounted(load);
 
 const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): void => {
@@ -388,20 +214,19 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
 </script>
 
 <template>
-  <div class="container ui-page-shell">
-    <APageHead :title="isAdmin ? 'Admin SaaS' : 'Perfil'" />
+  <div class="page a-adm-page">
+    <APageHead :title="isAdmin ? 'Admin SaaS' : 'Perfil'">
+      <template v-if="currentUser" #meta>
+        <AMetaPill>{{ currentUser.username }}</AMetaPill>
+        <AMetaPill>{{ roleLabel(currentUser.role) }}</AMetaPill>
+      </template>
+    </APageHead>
 
-    <AToast :open="!!adminUsersSuccess" @close="adminUsersSuccess = null">
-      {{ adminUsersSuccess }}
-    </AToast>
-    <AToast :open="!!baseCurrencySaveMessage" @close="baseCurrencySaveMessage = null">
-      {{ baseCurrencySaveMessage }}
-    </AToast>
-    <AToast :open="!!passwordChangeSuccess" @close="passwordChangeSuccess = null">
-      {{ passwordChangeSuccess }}
+    <AToast :open="Boolean(feedbackMessage)" @close="clearFeedback">
+      {{ feedbackMessage }}
     </AToast>
     <AToast
-      :open="!!dataTransferToastMessage"
+      :open="Boolean(dataTransferToastMessage)"
       :tone="dataTransferToastKind"
       :duration="5000"
       @close="clearDataTransferToast"
@@ -409,433 +234,185 @@ const setImportFileInputRef = (el: Element | ComponentPublicInstance | null): vo
       {{ dataTransferToastMessage }}
     </AToast>
 
-    <div v-if="error" class="alert mt-3">
-      {{ error }}
-    </div>
+    <AState v-if="error" status="error">{{ error }}</AState>
+    <AState v-if="permissionNotice" status="error">{{ permissionNotice }}</AState>
+    <AState v-if="passwordChangeNotice" status="neutral">{{ passwordChangeNotice }}</AState>
 
-    <div v-if="permissionNotice" class="alert mt-3">
-      {{ permissionNotice }}
-    </div>
+    <AState v-if="loading" status="loading">Cargando cuenta…</AState>
 
-    <div v-if="passwordChangeNotice" class="alert mt-3">
-      {{ passwordChangeNotice }}
-    </div>
+    <template v-else-if="currentUser">
+      <!-- Para el admin, gestionar usuarios es la tarea de la pantalla: va
+           primero y la seguridad de su propia cuenta queda debajo. -->
+      <template v-if="isAdmin && !mustChangePassword">
+        <AdminUsersSection :page="adminPage" />
+      </template>
 
-    <div v-if="loading" class="ui-status-line mt-3">Cargando cuenta...</div>
+      <section v-if="!isAdmin" class="sect">
+        <ASectHead
+          title="Mi cuenta"
+          subtitle="Tus datos de acceso y la moneda con la que lees tus totales."
+        />
 
-    <div v-else-if="currentUser" class="grid gap-3.5">
-      <section class="card ui-section-card ui-profile-panel">
-        <div class="ui-profile-head">
-          <h2 class="ui-profile-head-title">{{ isAdmin ? 'Cuenta SaaS' : 'Mi cuenta' }}</h2>
-        </div>
+        <AState v-if="coreAccountError" status="error" layout="inline">
+          {{ coreAccountError }}
+        </AState>
 
-        <div class="ui-profile-layout">
-          <div class="ui-profile-list">
-            <div class="ui-profile-row">
-              <span class="ui-profile-label">Usuario</span>
-              <strong class="ui-profile-value">{{ currentUser.username }}</strong>
-            </div>
-            <div class="ui-profile-row">
-              <span class="ui-profile-label">Rol</span>
-              <strong class="ui-profile-value">{{ roleLabel(currentUser.role) }}</strong>
-            </div>
-            <div v-if="!isAdmin" class="ui-profile-row">
-              <span class="ui-profile-label">Email</span>
-              <strong class="ui-profile-value">{{ currentUser.email || 'sin configurar' }}</strong>
-            </div>
-            <div v-if="!isAdmin" class="ui-profile-row">
-              <span class="ui-profile-label">Suscripcion</span>
-              <strong class="ui-profile-value">{{
-                subscriptionLabel(currentUser.subscription_status)
-              }}</strong>
-            </div>
-            <div v-if="!isAdmin" class="ui-profile-row">
-              <span class="ui-profile-label">Moneda base</span>
-              <div class="flex items-center gap-2">
-                <ASelect
-                  class="select"
-                  :model-value="baseCurrency"
-                  :options="baseCurrencySelectOptions"
-                  :disabled="baseCurrencySaveBusy || loading || mustChangePassword"
-                  :searchable="false"
-                  @update:model-value="(v) => (baseCurrency = String(v))"
-                />
-                <AButton
-                  variant="ghost"
-                  size="sm"
-                  :disabled="baseCurrencySaveBusy || loading || mustChangePassword"
-                  @click="saveBaseCurrency"
-                >
-                  {{ baseCurrencySaveBusy ? 'Guardando...' : 'Guardar' }}
-                </AButton>
-              </div>
-            </div>
+        <dl class="a-adm-facts">
+          <div class="a-adm-fact">
+            <dt class="a-adm-fact-label">Usuario</dt>
+            <dd class="a-adm-fact-value">{{ currentUser.username }}</dd>
           </div>
-
-          <aside v-if="!isAdmin" class="ui-profile-aside">
-            <span class="ui-profile-aside-label">Preferencias</span>
-            <span class="badge ui-profile-badge-on">
-              {{ mustChangePassword ? 'Cambio de contraseña pendiente' : 'Cuenta activa' }}
-            </span>
-            <span class="subtle">
-              Ajusta la moneda base para ver tus totales con la referencia que uses a diario.
-            </span>
-          </aside>
-
-          <aside v-else class="ui-profile-aside">
-            <span class="ui-profile-aside-label">Modo de acceso</span>
-            <span class="badge ui-profile-badge-on">Administracion SaaS</span>
-            <span class="subtle">
-              Este perfil admin se centra en la gestion de usuarios y accesos del SaaS.
-            </span>
-          </aside>
-        </div>
+          <div class="a-adm-fact">
+            <dt class="a-adm-fact-label">Email</dt>
+            <dd class="a-adm-fact-value">{{ currentUser.email || 'sin configurar' }}</dd>
+          </div>
+          <div class="a-adm-fact">
+            <dt class="a-adm-fact-label">Suscripción</dt>
+            <dd class="a-adm-fact-value">
+              {{ subscriptionLabel(currentUser.subscription_status) }}
+            </dd>
+          </div>
+          <div class="a-adm-fact a-adm-fact-control">
+            <dt class="a-adm-fact-label">Moneda base</dt>
+            <dd class="a-adm-fact-value">
+              <ASelect
+                class="select"
+                :model-value="baseCurrency"
+                :options="baseCurrencySelectOptions"
+                :disabled="baseCurrencySaveBusy || mustChangePassword"
+                :searchable="false"
+                aria-label="Moneda base"
+                @update:model-value="(v) => (baseCurrency = String(v))"
+              />
+              <AButton
+                size="sm"
+                :loading="baseCurrencySaveBusy"
+                :disabled="baseCurrencySaveBusy || mustChangePassword"
+                @click="saveBaseCurrency"
+              >
+                Guardar
+              </AButton>
+            </dd>
+          </div>
+        </dl>
       </section>
 
-      <section class="card ui-section-card ui-profile-panel">
-        <div class="ui-profile-head">
-          <h2 class="ui-profile-head-title">Seguridad</h2>
-        </div>
-        <div class="grid gap-3">
-          <p v-if="passwordChangeError" class="alert m-0">{{ passwordChangeError }}</p>
-          <p class="subtle m-0">
+      <section class="sect">
+        <ASectHead title="Seguridad">
+          <template #subtitle>
             {{
               mustChangePassword
                 ? 'Estás usando una contraseña temporal. Define una nueva antes de seguir.'
                 : 'Puedes actualizar tu contraseña cuando quieras.'
             }}
-          </p>
-          <form class="grid gap-3 md:grid-cols-2" @submit.prevent="changePassword">
-            <label class="grid gap-1">
-              <span class="subtle">Contraseña actual</span>
-              <input
-                v-model="passwordChangeForm.current_password"
-                type="password"
-                autocomplete="current-password"
-                class="input"
-              />
-            </label>
-            <div class="hidden md:block" />
-            <label class="grid gap-1">
-              <span class="subtle">Nueva contraseña</span>
-              <input
-                v-model="passwordChangeForm.new_password"
-                type="password"
-                autocomplete="new-password"
-                class="input"
-              />
-            </label>
-            <label class="grid gap-1">
-              <span class="subtle">Confirmar nueva contraseña</span>
-              <input
-                v-model="passwordChangeForm.confirm_password"
-                type="password"
-                autocomplete="new-password"
-                class="input"
-              />
-            </label>
-            <div class="actions">
-              <span
-                class="badge"
-                :class="mustChangePassword ? 'ui-profile-badge-off' : 'ui-profile-badge-on'"
-              >
-                {{ passwordChangeLabel(mustChangePassword) }}
-              </span>
-              <AButton
-                variant="primary"
-                type="submit"
-                :disabled="
-                  passwordChangeBusy ||
-                  !passwordChangeForm.current_password ||
-                  !passwordChangeForm.new_password ||
-                  !passwordChangeForm.confirm_password
-                "
-              >
-                {{ passwordChangeBusy ? 'Guardando...' : 'Cambiar contraseña' }}
-              </AButton>
-            </div>
-          </form>
-        </div>
-      </section>
+          </template>
+        </ASectHead>
 
-      <section
-        v-if="isAdmin && !mustChangePassword"
-        id="users"
-        class="card ui-section-card ui-profile-panel"
-      >
-        <div class="ui-profile-head">
-          <h2 class="ui-profile-head-title">Usuarios</h2>
-          <div class="actions">
-            <AButton
-              variant="primary"
-              size="sm"
-              :disabled="adminActionBusy"
-              @click="openCreateUserModal"
-            >
-              +
-            </AButton>
-            <AButton variant="ghost" size="sm" :disabled="adminActionBusy" @click="loadAdminUsers">
-              Recargar lista
-            </AButton>
-          </div>
-        </div>
-        <p class="subtle m-0">
-          Vista unificada de identidades: cada fila muestra si la cuenta existe en SaaS, en Core o
-          en ambos lados.
-        </p>
+        <AState v-if="passwordChangeError" status="error" layout="inline">
+          {{ passwordChangeError }}
+        </AState>
 
-        <div class="grid gap-3.5 mt-3">
-          <p v-if="adminUsersError" class="alert m-0">{{ adminUsersError }}</p>
-          <p v-if="adminUsersLoading" class="ui-status-line m-0">Cargando usuarios...</p>
-
-          <div v-if="!adminUsersLoading" class="grid gap-2.5">
-            <article v-for="row in adminIdentityRows" :key="row.key" class="card">
-              <div class="card-header">
-                <div>
-                  <h3 class="card-header-title">{{ row.displayName }}</h3>
-                  <p class="subtle m-0">{{ row.displayEmail }}</p>
-                </div>
-                <div class="actions">
-                  <span
-                    class="badge"
-                    :class="row.saasUser ? 'ui-profile-badge-on' : 'ui-profile-badge-off'"
-                  >
-                    {{ row.saasUser ? 'En SaaS' : 'Solo Core' }}
-                  </span>
-                  <span
-                    v-if="row.saasUser"
-                    class="badge"
-                    :class="
-                      row.saasUser.must_change_password
-                        ? 'ui-profile-badge-off'
-                        : 'ui-profile-badge-on'
-                    "
-                  >
-                    {{
-                      row.saasUser.must_change_password
-                        ? 'Debe cambiar contraseña'
-                        : 'Contraseña privada'
-                    }}
-                  </span>
-                  <span
-                    class="badge"
-                    :class="row.coreUser ? 'ui-profile-badge-on' : 'ui-profile-badge-off'"
-                  >
-                    {{ row.coreUser ? 'En Core' : 'Solo SaaS' }}
-                  </span>
-                  <span
-                    class="badge"
-                    :class="
-                      row.saasUser?.is_active || row.coreUser?.is_active
-                        ? 'ui-profile-badge-on'
-                        : 'ui-profile-badge-off'
-                    "
-                  >
-                    {{ statusLabel(Boolean(row.saasUser?.is_active || row.coreUser?.is_active)) }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="grid gap-2 md:grid-cols-2">
-                <div class="rounded-lg border border-white/8 p-3">
-                  <p class="subtle m-0">SaaS</p>
-                  <template v-if="row.saasUser">
-                    <p class="m-0"><strong>Rol:</strong> {{ roleLabel(row.saasUser.role) }}</p>
-                    <p class="m-0">
-                      <strong>Estado:</strong> {{ statusLabel(row.saasUser.is_active) }}
-                    </p>
-                    <p class="m-0">
-                      <strong>Contraseña:</strong>
-                      {{ passwordChangeLabel(row.saasUser.must_change_password) }}
-                    </p>
-                    <p class="m-0">
-                      <strong>Email:</strong> {{ row.saasUser.email || 'sin email' }}
-                    </p>
-                  </template>
-                  <p v-else class="m-0">Sin cuenta SaaS asociada.</p>
-                </div>
-                <div class="rounded-lg border border-white/8 p-3">
-                  <p class="subtle m-0">Core</p>
-                  <template v-if="row.coreUser">
-                    <p class="m-0">
-                      <strong>Origen:</strong> {{ coreUserOriginLabel(row.coreUser) }}
-                    </p>
-                    <p class="m-0">
-                      <strong>Usuario:</strong>
-                      {{ row.coreUser.username || 'sin username' }}
-                    </p>
-                    <p class="m-0">
-                      <strong>Conexion:</strong> {{ coreUserConnectionLabel(row.coreUser) }}
-                    </p>
-                    <p class="m-0">
-                      <strong>Identidades:</strong>
-                      {{
-                        row.coreUser.external_identities.length
-                          ? row.coreUser.external_identities
-                              .map(
-                                (identity) => `${identity.provider}:${identity.external_user_id}`,
-                              )
-                              .join(', ')
-                          : 'ninguna'
-                      }}
-                    </p>
-                  </template>
-                  <p v-else class="m-0">Sin cuenta Core asociada.</p>
-                </div>
-              </div>
-
-              <div v-if="row.saasUser" class="actions">
-                <AButton
-                  variant="ghost"
-                  size="sm"
-                  :disabled="adminActionBusy"
-                  @click="switchUserRole(row.saasUser)"
-                >
-                  {{ row.saasUser.role === 'saas_admin' ? 'Pasar a miembro' : 'Dar rol admin' }}
-                </AButton>
-                <AButton
-                  variant="ghost"
-                  size="sm"
-                  :disabled="adminActionBusy"
-                  @click="toggleUserStatus(row.saasUser)"
-                >
-                  {{ row.saasUser.is_active ? 'Desactivar' : 'Activar' }}
-                </AButton>
-                <AButton
-                  variant="ghost"
-                  size="sm"
-                  :disabled="adminActionBusy"
-                  @click="deleteUser(row.saasUser)"
-                >
-                  Eliminar
-                </AButton>
-              </div>
-            </article>
-
-            <AState v-if="!adminIdentityRows.length" status="empty">
-              No hay usuarios cargados. Prueba a recargar la lista o crear el primer usuario.
-            </AState>
-          </div>
-        </div>
-      </section>
-
-      <template v-else>
-        <p v-if="coreAccountError" class="alert m-0">{{ coreAccountError }}</p>
-
-        <section class="card ui-section-card grid gap-2.5">
-          <div class="ui-profile-head">
-            <h2 class="ui-profile-head-title">Portable data</h2>
-          </div>
-          <p class="subtle m-0">
-            Exporta, importa o reemplaza tus datos para mover tu entorno entre instancias.
-          </p>
-          <div class="actions m-0">
-            <AButton variant="ghost" :disabled="dataTransferUiBusy" @click="exportDataBundle">
-              Exportar datos
-            </AButton>
-            <AButton
-              variant="primary"
-              :disabled="dataTransferUiBusy"
-              @click="triggerImportDialog('append')"
-            >
-              Importar datos
-            </AButton>
-            <AButton
-              variant="ghost"
-              :disabled="dataTransferUiBusy"
-              @click="triggerImportDialog('replace')"
-            >
-              Reemplazar datos
-            </AButton>
+        <form class="a-adm-password-form" @submit.prevent="changePassword">
+          <label class="a-adm-field">
+            <span class="a-adm-field-label">Contraseña actual</span>
             <input
-              :ref="setImportFileInputRef"
-              type="file"
-              accept="application/json,.json"
-              class="sr-only"
-              @change="importDataFromFile"
+              v-model="passwordChangeForm.current_password"
+              type="password"
+              autocomplete="current-password"
+              class="input"
             />
+          </label>
+          <label class="a-adm-field">
+            <span class="a-adm-field-label">Nueva contraseña</span>
+            <input
+              v-model="passwordChangeForm.new_password"
+              type="password"
+              autocomplete="new-password"
+              class="input"
+            />
+          </label>
+          <label class="a-adm-field">
+            <span class="a-adm-field-label">Confirmar nueva contraseña</span>
+            <input
+              v-model="passwordChangeForm.confirm_password"
+              type="password"
+              autocomplete="new-password"
+              class="input"
+            />
+          </label>
+          <div class="a-adm-password-actions">
+            <AButton
+              variant="primary"
+              type="submit"
+              :loading="passwordChangeBusy"
+              :disabled="
+                passwordChangeBusy ||
+                !passwordChangeForm.current_password ||
+                !passwordChangeForm.new_password ||
+                !passwordChangeForm.confirm_password
+              "
+            >
+              Cambiar contraseña
+            </AButton>
           </div>
-          <p v-if="dataTransferStatus" class="subtle m-0">{{ dataTransferStatus }}</p>
-          <p v-if="dataTransferError" class="alert m-0">{{ dataTransferError }}</p>
-        </section>
-      </template>
-    </div>
-  </div>
+        </form>
+      </section>
 
-  <BaseModal
-    :open="showCreateUserModal"
-    title="Crear usuario SaaS"
-    variant="sheet"
-    panel-class="dir-a dir-a-sheet"
-    @close="closeCreateUserModal"
-  >
-    <form class="ui-item-form-grid" @submit.prevent="createAdminUser">
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Username</span>
-        <input v-model="createUserForm.username" class="input" type="text" required />
-      </label>
-
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Email</span>
-        <input v-model="createUserForm.email" class="input" type="email" />
-      </label>
-
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Password temporal</span>
-        <input
-          v-model="createUserForm.password"
-          class="input"
-          type="password"
-          minlength="8"
-          required
+      <section v-if="!isAdmin" class="sect">
+        <ASectHead
+          title="Tus datos"
+          subtitle="Exporta, importa o reemplaza tus datos para mover tu entorno entre instancias."
         />
-        <span class="subtle">El usuario tendrá que cambiarla en su primer acceso.</span>
-      </label>
 
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Rol inicial</span>
-        <ASelect
-          class="select"
-          :model-value="createUserForm.role"
-          :options="createUserRoleOptions"
-          :searchable="false"
-          @update:model-value="(v) => (createUserForm.role = v as SaasAdminRole)"
-        />
-      </label>
+        <AState v-if="dataTransferError" status="error" layout="inline">
+          {{ dataTransferError }}
+        </AState>
 
-      <label class="checkbox-row md:col-span-2">
-        <input v-model="createUserForm.is_active" type="checkbox" />
-        <span>Crear usuario activo</span>
-      </label>
+        <div class="a-adm-data-actions">
+          <AButton variant="primary" :disabled="dataTransferUiBusy" @click="exportDataBundle">
+            Exportar datos
+          </AButton>
+          <AButton :disabled="dataTransferUiBusy" @click="triggerImportDialog('append')">
+            Importar datos
+          </AButton>
+          <AButton
+            variant="ghost"
+            :disabled="dataTransferUiBusy"
+            @click="triggerImportDialog('replace')"
+          >
+            Reemplazar datos
+          </AButton>
+          <input
+            :ref="setImportFileInputRef"
+            type="file"
+            accept="application/json,.json"
+            class="sr-only"
+            @change="importDataFromFile"
+          />
+        </div>
 
-      <div class="actions md:col-span-2">
-        <AButton variant="primary" type="submit" :disabled="adminActionBusy">
-          {{ adminActionBusy ? 'Guardando...' : 'Crear usuario' }}
-        </AButton>
-      </div>
-    </form>
-  </BaseModal>
+        <p v-if="dataTransferStatus" class="a-adm-note">{{ dataTransferStatus }}</p>
+      </section>
+    </template>
 
-  <div
-    v-if="dataTransferBusy"
-    class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4 backdrop-blur-[2px]"
-    role="status"
-    aria-live="polite"
-    aria-busy="true"
-  >
-    <div class="w-full max-w-md rounded-2xl border border-white/15 bg-[#111827f2] p-4 shadow-2xl">
-      <div class="flex items-center gap-3">
-        <span
-          class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-teal-300"
-          aria-hidden="true"
-        />
-        <div>
-          <p class="m-0 text-sm font-medium text-white">
-            {{ dataTransferBusyLabel ?? 'Procesando datos...' }}
-          </p>
-          <p class="m-0 text-xs text-white/65">No cierres la pestaña hasta que termine.</p>
+    <div
+      v-if="dataTransferBusy"
+      class="a-adm-busy"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div class="a-adm-busy-panel">
+        <span class="ui-import-spinner" aria-hidden="true" />
+        <div class="a-adm-busy-copy">
+          <p class="a-adm-busy-title">{{ dataTransferBusyLabel ?? 'Procesando datos…' }}</p>
+          <p class="a-adm-busy-hint">No cierres la pestaña hasta que termine.</p>
         </div>
       </div>
     </div>
   </div>
+
+  <AdminUserCreateModal :page="adminPage" />
+  <AdminUserDetailSheet :page="adminPage" />
+  <AdminUserDeleteDialog :page="adminPage" />
 </template>

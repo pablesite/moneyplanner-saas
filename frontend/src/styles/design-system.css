@@ -606,6 +606,31 @@
   white-space: nowrap;
 }
 
+/* Spinner de operación larga (import/export portable, carga de catálogo). Vivía
+   en `domains/accounting/styles/movements.css` con el teal hardcodeado, y el
+   panel de administración habría sido el tercer consumidor en un segundo
+   dominio: promovido aquí y pasado a tokens de acento. */
+.dir-a :where(.ui-import-spinner) {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: ui-spin 0.75s linear infinite;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dir-a :where(.ui-import-spinner) {
+    animation-duration: 2.4s;
+  }
+}
+
 /* Rail de contexto: la fila de filtros bajo la cabecera de página. Es el patrón
    vivo del producto (Patrimonio, Presupuesto y Cierre lo tenían triplicado con las
    mismas 10 declaraciones bajo tres nombres distintos). A diferencia de
