@@ -138,6 +138,32 @@ describe('buildMovementPresentation', () => {
     ]);
   });
 
+  it('shows the nominal amount when an investment is funded directly by income', () => {
+    const transaction = makeTransaction(
+      'investment',
+      [
+        makeEntry(2, 'debit', '12.15', {
+          flow_family: 'expense',
+          category_key: 'financial_investments',
+          subcategory_key: 'index_funds',
+        }),
+        makeEntry(4, 'credit', '12.15'),
+      ],
+      { investment_direction: 'inflow' },
+    );
+
+    const row = buildMovementPresentation(transaction, { accounts });
+
+    expect(row).toMatchObject({
+      accountName: 'Ingresos sin categoria',
+      destinationName: 'MyInvestor',
+      amount: 12.15,
+      aggregateImpact: 0,
+      showSign: false,
+      tone: 'neutral',
+    });
+  });
+
   it('reverses origin and destination for a divestment', () => {
     const transaction = makeTransaction(
       'investment',

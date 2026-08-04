@@ -115,7 +115,17 @@ function resolveAccountFlow(
   if (transaction.activity_kind === 'expense') {
     return { accountEntries: creditEntries, destinationEntries: [] };
   }
-  if (['transfer', 'investment', 'debt_payment'].includes(transaction.activity_kind)) {
+  if (transaction.activity_kind === 'investment') {
+    return {
+      accountEntries: creditEntries.length
+        ? creditEntries
+        : transaction.entries.filter((entry) => entry.side === 'credit'),
+      destinationEntries: debitEntries.length
+        ? debitEntries
+        : transaction.entries.filter((entry) => entry.side === 'debit'),
+    };
+  }
+  if (['transfer', 'debt_payment'].includes(transaction.activity_kind)) {
     return { accountEntries: creditEntries, destinationEntries: debitEntries };
   }
   const linkedEntry = operationalEntries.find(
