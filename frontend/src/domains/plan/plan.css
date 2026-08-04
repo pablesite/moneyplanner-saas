@@ -3106,6 +3106,21 @@
   margin-top: 0;
 }
 
+.plan-member-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 16px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.plan-member-empty {
+  flex-direction: column;
+  gap: 12px;
+}
+
 .plan-members > article {
   display: grid;
   gap: 12px;
@@ -3610,6 +3625,11 @@
 }
 
 @container page (max-width: 400px) {
+  .plan-member-picker-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .plan-choice-grid {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -120,7 +120,7 @@ const form = reactive({
   legacy_amount: '',
   profile: 'balanced' as PlanProfile,
 });
-const members = reactive<MemberDraft[]>([emptyMember()]);
+const members = reactive<MemberDraft[]>([]);
 const incomeSeedForm = reactive({
   salary_monthly: '',
   other_monthly: '',
@@ -164,6 +164,8 @@ const budgetLoadWarning = computed(() =>
 );
 const maxMembers = computed(() => (form.household_type === 'family' ? 2 : 1));
 const activeMembers = computed(() => members.slice(0, maxMembers.value));
+const availableMembers = computed(() => store.members);
+const selectedMemberIds = computed(() => new Set(activeMembers.value.map((member) => member.id)));
 const currentStepNumber = computed(() => stepIndex.value + 1);
 
 /** El primer adulto ancla las edades: las fechas del plan se derivan de su nacimiento. */
@@ -211,10 +213,13 @@ const profileChoices: { value: PlanProfile; label: string; hint: string }[] = [
   },
 ];
 
-const householdComplete = computed(() =>
-  activeMembers.value.every(
-    (member) => member.name.trim() && member.birth_date && member.birth_date <= todayIso,
-  ),
+const householdComplete = computed(
+  () =>
+    activeMembers.value.length === maxMembers.value &&
+    activeMembers.value.every(
+      (member) =>
+        member.id && member.name.trim() && member.birth_date && member.birth_date <= todayIso,
+    ),
 );
 const horizonComplete = computed(
   () =>
@@ -236,7 +241,7 @@ const futureComplete = computed(
 
 // Un "Continuar" deshabilitado sin explicación deja al usuario adivinando qué falta.
 const stepHints: Partial<Record<StepId, string>> = {
-  household: 'Para continuar, añade el nombre y la fecha de nacimiento de cada adulto.',
+  household: 'Para continuar, selecciona los adultos y completa sus fechas de nacimiento.',
   horizon: 'Revisa las edades: el dinero tiene que durar más allá de la edad de independencia.',
   lifestyle: 'Indica con cuánto quieres vivir al mes para poder continuar.',
   future: 'Escribe el patrimonio a preservar o marca que no hace falta.',
@@ -292,16 +297,6 @@ const summaryAges = computed(() =>
     .join(' y '),
 );
 
-function emptyMember(): MemberDraft {
-  return {
-    name: '',
-    birth_date: '',
-    pension_start_age: DEFAULT_PENSION_AGE,
-    estimated_monthly_pension_today_eur: '',
-    other_future_income_today_eur: '',
-  };
-}
-
 function toDraft(member: PlanMember): MemberDraft {
   return {
     id: member.id,
@@ -339,11 +334,7 @@ function syncFromPlan(current: typeof plan.value): void {
   form.wants_legacy = Number(current.preservation_target_eur ?? 0) > 0;
   form.legacy_amount = current.preservation_target_eur ?? '';
   form.profile = current.profile;
-  members.splice(
-    0,
-    members.length,
-    ...(current.members.length ? current.members.map(toDraft) : [emptyMember()]),
-  );
+  members.splice(0, members.length, ...current.members.map(toDraft));
 
   // Las edades son la entrada real del usuario; el plan guardado solo tiene fechas,
   // asi que las reconstruimos desde el nacimiento del adulto ancla.
@@ -355,7 +346,19 @@ function syncFromPlan(current: typeof plan.value): void {
 
 function selectHousehold(value: HouseholdType): void {
   form.household_type = value;
-  if (value === 'family' && members.length < 2) members.push(emptyMember());
+}
+
+function toggleMember(candidate: PlanMember): void {
+  const selectedIndex = members.findIndex((member) => member.id === candidate.id);
+  if (selectedIndex >= 0) {
+    members.splice(selectedIndex, 1);
+    return;
+  }
+  if (form.household_type === 'single') {
+    members.splice(0, members.length, toDraft(candidate));
+    return;
+  }
+  if (members.length < maxMembers.value) members.push(toDraft(candidate));
 }
 
 function goTo(index: number): void {
@@ -555,7 +558,12 @@ async function checkExistingBudgetData(): Promise<void> {
 }
 
 onMounted(async () => {
-  await Promise.all([store.fetchPlan(), store.fetchFoundations(), checkExistingBudgetData()]);
+  await Promise.all([
+    store.fetchPlan(),
+    store.fetchMembers(),
+    store.fetchFoundations(),
+    checkExistingBudgetData(),
+  ]);
   initialLoadFailed.value = Boolean(store.error) && !store.plan;
   initializing.value = false;
 });
@@ -614,18 +622,48 @@ onMounted(async () => {
           </button>
         </div>
 
+        <AState
+          v-if="availableMembers.length === 0"
+          class="plan-member-empty"
+          status="empty"
+          layout="panel"
+        >
+          <span>No tienes adultos activos que puedan formar parte del plan.</span>
+          <AButton variant="primary" @click="router.push('/people')">Crear miembros</AButton>
+        </AState>
+
+        <template v-else>
+          <div class="plan-choice-grid">
+            <button
+              v-for="candidate in availableMembers"
+              :key="candidate.id"
+              type="button"
+              class="plan-choice"
+              :class="{ 'is-on': selectedMemberIds.has(candidate.id) }"
+              :aria-pressed="selectedMemberIds.has(candidate.id)"
+              @click="toggleMember(candidate)"
+            >
+              <strong>{{ candidate.name }}</strong>
+              <small>{{ candidate.birth_date ? 'Adulto' : 'Falta su fecha de nacimiento' }}</small>
+            </button>
+          </div>
+          <div class="plan-member-picker-actions">
+            <span>
+              Selecciona {{ maxMembers }} {{ maxMembers === 1 ? 'adulto' : 'adultos' }} de tu
+              familia.
+            </span>
+            <AButton variant="ghost" size="sm" @click="router.push('/people')">
+              Gestionar miembros
+            </AButton>
+          </div>
+        </template>
+
         <div class="plan-members">
           <article v-for="(member, index) in activeMembers" :key="member.id ?? index">
             <div class="plan-form-grid">
               <label>
                 <span>{{ index === 0 ? 'Tu nombre' : 'Nombre del segundo adulto' }}</span>
-                <input
-                  v-model="member.name"
-                  class="input"
-                  type="text"
-                  autocomplete="name"
-                  required
-                />
+                <input :value="member.name" class="input" type="text" readonly />
               </label>
               <label>
                 <span>Fecha de nacimiento</span>
