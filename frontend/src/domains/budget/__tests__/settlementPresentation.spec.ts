@@ -148,7 +148,7 @@ describe('settlement presentation', () => {
     });
   });
 
-  it('turns blockers into corrective copy', () => {
+  it('turns blockers into corrective copy and links to the affected movement', async () => {
     const settlement = readySettlement();
     settlement.status = 'not_ready';
     settlement.quality.blockers = [{ code: 'transaction_missing_ownership', transaction_id: 9 }];
@@ -156,6 +156,19 @@ describe('settlement presentation', () => {
 
     expect(page.isReady).toBe(false);
     expect(page.blockers[0]?.message).toContain('movimientos sin titularidad');
+
+    const wrapper = mount(MonthlyCloseSettlementSection, {
+      props: {
+        page,
+        formatMoney: (value: number) => value.toFixed(2),
+        formatSignedMoney: (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`,
+      },
+    });
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Abrir movimiento'))
+      ?.trigger('click');
+    expect(wrapper.emitted('movement')).toEqual([[9]]);
   });
 
   it('renders a manual recommendation and emits its prefill intent', async () => {

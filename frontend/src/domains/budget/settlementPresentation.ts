@@ -146,7 +146,9 @@ function buildAllocationRows(allocations: SettlementAllocation[]) {
   }));
 }
 
-function buildQualityRows(items: SettlementQualityItem[]) {
+function buildQualityRows(
+  items: SettlementQualityItem[],
+): Array<SettlementQualityItem & { key: string; message: string }> {
   return items.map((item, index) => ({
     ...item,
     key: `${item.code}-${String(item.account_id ?? item.entry_id ?? index)}`,

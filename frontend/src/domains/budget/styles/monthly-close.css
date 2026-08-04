@@ -76,6 +76,18 @@
   padding-left: 20px;
 }
 
+.mc-settlement-readiness li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mc-settlement-fix-link {
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+
 .mc-settlement-actions {
   flex-wrap: wrap;
 }
@@ -87,6 +99,11 @@
 
   .mc-settlement-actions > .btn {
     flex: 1 1 100%;
+  }
+
+  .mc-settlement-readiness li {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
@@ -1213,6 +1230,13 @@
   gap: 6px;
   margin: 10px 0 14px;
   text-align: left;
+}
+
+.mc-settlement-blockers li {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
 }
 
 @container page (max-width: 820px) {

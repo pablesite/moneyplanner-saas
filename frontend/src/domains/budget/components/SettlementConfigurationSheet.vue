@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
+import { RouterLink } from 'vue-router';
 import { AButton, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { usePeopleStore } from '@/domains/people/store';
 import { useNetWorthStore } from '@/domains/net-worth/store';
@@ -17,6 +18,7 @@ import type {
   SettlementReadinessItem,
 } from '@/domains/budget/settlementTypes';
 import { toBudgetErrorMessage } from '@/domains/budget/api';
+import { currencySymbol, formatAmount } from '@/lib/format';
 
 const props = defineProps<{ open: boolean; year: number; month: number }>();
 const emit = defineEmits<{ close: []; changed: [configuration: SettlementConfiguration] }>();
@@ -139,7 +141,7 @@ async function load(): Promise<void> {
   try {
     await Promise.all([
       people.members.length ? Promise.resolve() : people.fetchMembers(),
-      netWorth.assets.length ? Promise.resolve() : netWorth.refreshAll(),
+      netWorth.refreshAll(),
     ]);
     const next = await getSettlementConfiguration();
     hydrate(next);
@@ -261,11 +263,36 @@ function blockerLabel(item: SettlementReadinessItem): string {
   return labels[item.code] ?? item.code.replaceAll('_', ' ');
 }
 
+function blockerTarget(item: SettlementReadinessItem) {
+  const entryId = Number(item.entry_id);
+  if (!Number.isInteger(entryId) || entryId <= 0) return null;
+  if (item.code === 'income_missing_ownership') {
+    return { name: 'budget-dashboard', query: { editIncome: String(entryId) } };
+  }
+  if (
+    [
+      'expense_missing_ownership',
+      'expense_missing_settlement_account',
+      'expense_invalid_settlement_account',
+      'settlement_ownership_mismatch',
+    ].includes(item.code)
+  ) {
+    return { name: 'budget-dashboard', query: { editExpense: String(entryId) } };
+  }
+  return null;
+}
+
 function walletDifference(assetId: number): number {
   const asset = walletAssets.value.find((row) => row.id === assetId);
   const modeled = Number(asset?.effective_amount ?? asset?.amount ?? 0);
   const physical = Number(String(form.physicalBalances[assetId] || 0).replace(',', '.'));
   return modeled - physical;
+}
+
+function formattedWalletAmount(assetId: number, value: unknown): string {
+  const asset = walletAssets.value.find((row) => row.id === assetId);
+  const currency = asset?.currency ?? form.baseCurrency;
+  return `${formatAmount(value, { currency })} ${currencySymbol(currency)}`;
 }
 
 function walletAdjustmentTotal(assetId: number): number {
@@ -373,8 +400,9 @@ function requestClose(): void {
           <p class="eyebrow">4 · Efectivo físico</p>
           <h4>Separa monederos reales de ajustes ficticios</h4>
           <p class="subtle">
-            Indica el efectivo contado y, si hay diferencia, reparte una compensación entre
-            miembros. Las compensaciones deben sumar cero.
+            Selecciona los monederos que formarán parte de la liquidación e indica el efectivo
+            contado en la fecha de activación. El saldo contable se actualiza al abrir este panel e
+            incluye los reajustes ya registrados en Movimientos.
           </p>
           <div v-for="asset in walletAssets" :key="asset.id" class="mc-settlement-wallet">
             <label class="mc-settlement-check">
@@ -391,10 +419,10 @@ function requestClose(): void {
                 "
               />
               <strong>{{ asset.name }}</strong>
-              <span class="subtle"
-                >Saldo modelado: {{ asset.effective_amount ?? asset.amount }}
-                {{ asset.currency }}</span
-              >
+              <span class="subtle">
+                Saldo contable actualizado:
+                {{ formattedWalletAmount(asset.id, asset.effective_amount ?? asset.amount) }}
+              </span>
             </label>
             <template v-if="form.walletAssetIds.includes(asset.id)">
               <label class="mc-settlement-field">
@@ -419,10 +447,10 @@ function requestClose(): void {
                 />
               </label>
               <p class="subtle mc-settlement-wallet-summary">
-                Diferencia frente al saldo modelado: {{ walletDifference(asset.id).toFixed(2) }}
-                {{ asset.currency }} · compensaciones:
-                {{ walletAdjustmentTotal(asset.id).toFixed(2) }} {{ asset.currency }} (debe ser
-                0,00)
+                Diferencia frente al saldo contable:
+                {{ formattedWalletAmount(asset.id, walletDifference(asset.id)) }} · compensaciones:
+                {{ formattedWalletAmount(asset.id, walletAdjustmentTotal(asset.id)) }} (debe ser
+                0,00 {{ currencySymbol(asset.currency) }})
               </p>
             </template>
           </div>
@@ -434,10 +462,20 @@ function requestClose(): void {
             Todo listo para activar la liquidación.
           </AState>
           <template v-else-if="readiness?.blockers.length">
-            <p>Completa estos puntos antes de activar:</p>
+            <p>
+              Estas comprobaciones corresponden a partidas de Presupuesto, no a movimientos.
+              Completa estos puntos antes de activar:
+            </p>
             <ul>
               <li v-for="(item, index) in readiness.blockers" :key="`${item.code}-${index}`">
-                {{ blockerLabel(item) }}
+                <span>{{ blockerLabel(item) }}</span>
+                <RouterLink
+                  v-if="blockerTarget(item)"
+                  class="btn btn-ghost btn-sm mc-settlement-fix-link"
+                  :to="blockerTarget(item)!"
+                >
+                  Abrir partida
+                </RouterLink>
               </li>
             </ul>
           </template>
