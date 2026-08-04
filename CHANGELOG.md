@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.47.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.2...moneyplanner-saas-v0.47.0) (2026-08-04)
+
+
+### Features
+
+* **settlement:** link blockers to movements ([8ac19d1](https://github.com/pablesite/moneyplanner-saas/commit/8ac19d1873e3f86b36f1d0b83d0f5e4170954ea7))
+* **settlement:** link readiness blockers to budget entries ([86a3418](https://github.com/pablesite/moneyplanner-saas/commit/86a3418ee36b9fffd8310be0b2b9322d66e3a2ed))
+
+
+### Bug Fixes
+
+* **accounting:** show cashback investment amounts ([b7fd328](https://github.com/pablesite/moneyplanner-saas/commit/b7fd3284f1994903dd49a15e6755e5302c7b0ca9))
+* **settlement:** refresh wallet balances in configuration ([33a0d3a](https://github.com/pablesite/moneyplanner-saas/commit/33a0d3a760ac3524486c9d46b5e676288d5a906f))
+
 ## [0.46.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.46.1...moneyplanner-saas-v0.46.2) (2026-08-04)
 
 
