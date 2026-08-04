@@ -25,6 +25,16 @@ function formatDate(value: string): string {
     year: 'numeric',
   }).format(new Date(`${value}T00:00:00`));
 }
+
+function blockerTransactionId(blocker: SettlementPage['blockers'][number]): number | null {
+  const transactionId = Number(blocker.transaction_id);
+  return Number.isInteger(transactionId) && transactionId > 0 ? transactionId : null;
+}
+
+function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void {
+  const transactionId = blockerTransactionId(blocker);
+  if (transactionId !== null) emit('movement', transactionId);
+}
 </script>
 
 <template>
@@ -257,7 +267,15 @@ function formatDate(value: string): string {
       <strong>La liquidación no puede calcularse con precisión todavía.</strong>
       <ul class="mc-settlement-blockers">
         <li v-for="blocker in page.blockers" :key="blocker.key">
-          {{ blocker.message }}
+          <span>{{ blocker.message }}</span>
+          <AButton
+            v-if="blockerTransactionId(blocker) !== null"
+            variant="ghost"
+            size="sm"
+            @click="openBlockerMovement(blocker)"
+          >
+            Abrir movimiento
+          </AButton>
         </li>
       </ul>
       <AButton @click="emit('configure')">Revisar configuración</AButton>
