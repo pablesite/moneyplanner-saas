@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {
   AButton,
   APageHead,
@@ -16,29 +16,35 @@ import {
   BudgetMonthlyCloseIncomeSection,
   BudgetMonthlyCloseLiquiditySection,
   BudgetMonthlyCloseResultSection,
+  MonthlyCloseSettlementSection,
   MonthlyCloseHero,
   SettlementConfigurationSheet,
+  buildSettlementPage,
+  type SettlementPage,
 } from '@/domains/budget';
 import { peopleApi } from '@/domains/people/api';
+import type { FamilyMember } from '@/domains/people/types';
 import { getMonthlyClosePlanImpact, type MonthlyClosePlanImpact } from '@/domains/budget';
 import '@/domains/budget/styles/monthly-close.css';
 import { useMonthlyCloseView } from './budget/useMonthlyCloseView';
 
 const router = useRouter();
+const route = useRoute();
 const settlementConfigurationOpen = ref(false);
-const activeAdultCount = ref(0);
+const familyMembers = ref<FamilyMember[]>([]);
+const activeAdultCount = computed(
+  () => familyMembers.value.filter((member) => member.is_active && member.role === 'adult').length,
+);
 const showSettlementConfiguration = computed(() => activeAdultCount.value > 1);
 
 onMounted(() => {
   void peopleApi
     .getMembers()
     .then(({ data }) => {
-      activeAdultCount.value = data.filter(
-        (member) => member.is_active && member.role === 'adult',
-      ).length;
+      familyMembers.value = data;
     })
     .catch(() => {
-      activeAdultCount.value = 0;
+      familyMembers.value = [];
     });
 });
 
@@ -163,11 +169,16 @@ const {
   handleReopenClose,
   handleLockClose,
   handleApplyDistribution,
+  refreshMonthlyCloseData,
   // Formatters
   formatMoney,
   formatPercent,
   formatSignedMoney,
 } = useMonthlyCloseView();
+
+const settlementPage = computed(() =>
+  buildSettlementPage(monthlyCloseData.value?.ownership_settlement, familyMembers.value),
+);
 
 const planImpact = ref<MonthlyClosePlanImpact | null>(null);
 const planImpactLoading = ref(false);
@@ -206,6 +217,18 @@ watch(
 
 type MonthlyCloseStepId = Parameters<typeof setActiveMonthlyCloseStep>[0];
 
+onMounted(() => {
+  const query = route.query ?? {};
+  const year = Number(Array.isArray(query.year) ? query.year[0] : query.year);
+  const month = Number(Array.isArray(query.month) ? query.month[0] : query.month);
+  const step = Array.isArray(query.step) ? query.step[0] : query.step;
+  if (Number.isInteger(year) && year >= 2000 && year <= 2200) fiscalYear.value = year;
+  if (Number.isInteger(month) && month >= 1 && month <= 12) updateSelectedExecutionMonth(month);
+  if (step === 'liq' || step === 'income' || step === 'expense' || step === 'result') {
+    setActiveMonthlyCloseStep(step);
+  }
+});
+
 const stepperSteps = computed(() => {
   const steps = monthlyCloseFlowSteps.value;
   const activeIdx = steps.findIndex((s) => s.id === activeMonthlyCloseStep.value);
@@ -239,6 +262,38 @@ function goToBudget(): void {
 
 function goToCloseStep(): void {
   setActiveMonthlyCloseStep('result' as MonthlyCloseStepId);
+}
+
+function prepareSettlementTransfer(
+  recommendation: SettlementPage['recommendations'][number],
+): void {
+  if (recommendation.sourceAssetId == null || recommendation.destinationAssetId == null) return;
+  const returnTo = router.resolve({
+    name: 'monthly-close',
+    query: {
+      year: String(fiscalYear.value),
+      month: String(selectedExecutionMonth.value),
+      step: 'result',
+    },
+  }).fullPath;
+  void router.push({
+    name: 'accounting-movements',
+    query: {
+      create: 'transfer',
+      from_asset_id: String(recommendation.sourceAssetId),
+      to_asset_id: String(recommendation.destinationAssetId),
+      amount: recommendation.amount,
+      transfer_ownership_id: String(recommendation.ownership_id),
+      booking_date: new Date().toISOString().slice(0, 10),
+      description: `Liquidación ${selectedExecutionMonthLabel.value}: ${recommendation.sourceName} → ${recommendation.destinationName}`,
+      return_to: returnTo,
+    },
+  });
+}
+
+async function closeSettlementConfiguration(): Promise<void> {
+  settlementConfigurationOpen.value = false;
+  await refreshMonthlyCloseData();
 }
 </script>
 
@@ -463,6 +518,15 @@ function goToCloseStep(): void {
       :on-configure-settlement="() => (settlementConfigurationOpen = true)"
     />
 
+    <MonthlyCloseSettlementSection
+      v-if="activeMonthlyCloseStep === 'result'"
+      :page="settlementPage"
+      :format-money="formatMoney"
+      :format-signed-money="formatSignedMoney"
+      @configure="settlementConfigurationOpen = true"
+      @transfer="prepareSettlementTransfer"
+    />
+
     <section v-if="planImpact || planImpactLoading" class="sect mc-plan-impact">
       <ASectHead
         eyebrow="Impacto en Mi Plan"
@@ -518,7 +582,7 @@ function goToCloseStep(): void {
       :open="settlementConfigurationOpen"
       :year="fiscalYear"
       :month="selectedExecutionMonth"
-      @close="settlementConfigurationOpen = false"
+      @close="closeSettlementConfiguration"
     />
   </div>
 </template>

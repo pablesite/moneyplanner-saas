@@ -845,7 +845,257 @@
   color: var(--faint);
 }
 
-@container page (max-width: 900px) {
+.mc-settlement {
+  display: grid;
+  gap: 18px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.mc-settlement-body {
+  display: grid;
+  gap: 20px;
+}
+
+.mc-settlement-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+}
+
+.mc-settlement-summary article {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+}
+
+.mc-settlement-summary article + article {
+  border-left: 1px solid var(--line);
+}
+
+.mc-settlement-summary span,
+.mc-settlement-destination [data-label]::before {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-settlement-summary strong,
+.mc-settlement-route-amount,
+.mc-settlement-member-head span {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-settlement-summary strong {
+  font-size: 20px;
+}
+
+.mc-settlement-summary small,
+.mc-settlement-destination-main small,
+.mc-settlement-route-path small,
+.mc-settlement-route-path span,
+.mc-settlement-subhead > span,
+.mc-settlement-evidence small,
+.mc-settlement-compensations small {
+  color: var(--faint);
+}
+
+.mc-settlement-destinations {
+  display: grid;
+}
+
+.mc-settlement-table-head,
+.mc-settlement-destination {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(3, minmax(110px, 0.7fr));
+  gap: 16px;
+  align-items: center;
+}
+
+.mc-settlement-table-head {
+  padding: 0 14px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.mc-settlement-table-head span:not(:first-child),
+.mc-settlement-destination > div:not(:first-child) {
+  text-align: right;
+}
+
+.mc-settlement-destination {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.mc-settlement-destination-main {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mc-settlement-destination-main strong {
+  overflow-wrap: anywhere;
+}
+
+.mc-settlement-destination [data-label]::before {
+  display: none;
+}
+
+.mc-settlement-in {
+  color: var(--pos);
+}
+
+.mc-settlement-out {
+  color: var(--neg);
+}
+
+.mc-settlement-routes {
+  display: grid;
+  gap: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.mc-settlement-subhead,
+.mc-settlement-member-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-settlement-subhead {
+  padding-bottom: 12px;
+}
+
+.mc-settlement-subhead p,
+.mc-settlement-subhead h3 {
+  margin: 0;
+}
+
+.mc-settlement-subhead h3 {
+  font-size: 15px;
+}
+
+.mc-settlement-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+}
+
+.mc-settlement-route-path {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-settlement-route-path strong {
+  overflow-wrap: anywhere;
+}
+
+.mc-settlement-details {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.mc-settlement-details details {
+  border-bottom: 1px solid var(--line);
+}
+
+.mc-settlement-details summary {
+  padding: 14px 2px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.mc-settlement-member-list,
+.mc-settlement-evidence,
+.mc-settlement-compensations {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.mc-settlement-member-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mc-settlement-member-list article,
+.mc-settlement-evidence article,
+.mc-settlement-compensations article {
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.mc-settlement-member-list dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.mc-settlement-member-list dl div,
+.mc-settlement-evidence article > div {
+  display: grid;
+  gap: 2px;
+}
+
+.mc-settlement-member-list dt {
+  font-size: 10px;
+  color: var(--faint);
+}
+
+.mc-settlement-member-list dd {
+  margin: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.mc-settlement-evidence article,
+.mc-settlement-compensations article {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mc-settlement-evidence p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mc-settlement-compensations article > div {
+  display: grid;
+}
+
+.mc-settlement-compensations article > span {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.mc-settlement-blockers {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 14px;
+  text-align: left;
+}
+
+@container page (max-width: 820px) {
   .mc-hero-grid {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -871,6 +1121,21 @@
   .mc-result-cols,
   .mc-result-cols-detail {
     grid-template-columns: 1fr;
+  }
+
+  .mc-settlement-table-head,
+  .mc-settlement-destination {
+    grid-template-columns: minmax(190px, 1.4fr) repeat(3, minmax(95px, 0.7fr));
+    gap: 10px;
+  }
+
+  .mc-settlement-route {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .mc-settlement-route .btn {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 }
 
@@ -900,6 +1165,65 @@
 
   .mc-result-hero {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-settlement-summary,
+  .mc-settlement-member-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-settlement-summary article + article {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .mc-settlement-table-head {
+    display: none;
+  }
+
+  .mc-settlement-destination {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 8px;
+    padding-inline: 0;
+  }
+
+  .mc-settlement-destination-main {
+    grid-column: 1 / -1;
+  }
+
+  .mc-settlement-destination > div:not(:first-child) {
+    display: grid;
+    gap: 3px;
+    text-align: left;
+    min-width: 0;
+  }
+
+  .mc-settlement-destination [data-label]::before {
+    display: block;
+  }
+
+  .mc-settlement-destination [data-label] strong {
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+
+  .mc-settlement-route {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .mc-settlement-route .btn {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .mc-settlement-member-list dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mc-settlement-evidence article,
+  .mc-settlement-compensations article {
+    display: grid;
   }
 
   .mc-block-kpis,

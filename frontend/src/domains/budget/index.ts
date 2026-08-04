@@ -10,3 +10,5 @@ export { default as BudgetMonthlyCloseIncomeSection } from './components/BudgetM
 export { default as BudgetMonthlyCloseLiquiditySection } from './components/BudgetMonthlyCloseLiquiditySection.vue';
 export { default as BudgetMonthlyCloseResultSection } from './components/BudgetMonthlyCloseResultSection.vue';
 export { default as SettlementConfigurationSheet } from './components/SettlementConfigurationSheet.vue';
+export { default as MonthlyCloseSettlementSection } from './components/MonthlyCloseSettlementSection.vue';
+export { buildSettlementPage, type SettlementPage } from './settlementPresentation';

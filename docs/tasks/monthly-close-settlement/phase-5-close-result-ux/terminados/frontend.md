@@ -77,15 +77,15 @@ liquidacion se lee como continuacion del resultado financiero.
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck
-docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test -- --run
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test:unit
 ```
 
 ## Required Documentation Updates
 
-- [ ] `docs/frontend/domain-map.md` - resultado settlement y deep-link a Movimientos.
-- [ ] `docs/frontend/frontend-visual-contract.md` - patron solo si se reutiliza fuera del cierre.
-- [ ] `docs/project-status.md` - version 1 disponible.
-- [ ] `core/docs/project-status.md` - referencia al frontend SaaS consumidor.
+- [x] `docs/frontend/domain-map.md` - resultado settlement y deep-link a Movimientos.
+- [x] `docs/frontend/frontend-visual-contract.md` - no cambia; el patrón permanece local al cierre.
+- [x] `docs/project-status.md` - version 1 disponible.
+- [x] `core/docs/project-status.md` - referencia al frontend SaaS consumidor.
 
 ## Risks
 
@@ -97,13 +97,13 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 
 ## Completion Criteria
 
-- [ ] The existing four-step flow and lifecycle remain intact.
-- [ ] Ready settlement explains every retained and transferred euro.
-- [ ] Not-ready state lists concrete corrective actions without blocking normal close.
-- [ ] Dynamic and explicit ownerships are visually distinguishable and evidenced.
-- [ ] Movement deep-link pre-fills but never auto-saves.
-- [ ] Desktop and 360 px mobile gates pass.
-- [ ] All validation commands pass.
-- [ ] All required documentation updates done.
-- [ ] Spec moved to `terminados/`.
-- [ ] Commit created (Conventional Commits).
+- [x] The existing four-step flow and lifecycle remain intact.
+- [x] Ready settlement explains every retained and transferred euro.
+- [x] Not-ready state lists concrete corrective actions without blocking normal close.
+- [x] Dynamic and explicit ownerships are visually distinguishable and evidenced.
+- [x] Movement deep-link pre-fills but never auto-saves.
+- [x] Desktop and 360 px mobile gates pass.
+- [x] All validation commands pass.
+- [x] All required documentation updates done.
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).

@@ -56,14 +56,14 @@ docker compose -f core/docker-compose.yml exec backend mypy .
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run lint
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run format:check
 docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run typecheck
-docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test -- --run
+docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend npm run test:unit
 ```
 
 ## Required Documentation Updates
 
-- [ ] `core/docs/tasks/monthly-close-settlement/spec.md` - resultado final de v1.
-- [ ] `core/docs/project-status.md` - v1 backend validada.
-- [ ] `docs/project-status.md` - v1 SaaS validada.
+- [x] `core/docs/tasks/monthly-close-settlement/spec.md` - resultado final de v1.
+- [x] `core/docs/project-status.md` - v1 backend validada.
+- [x] `docs/project-status.md` - v1 SaaS validada.
 
 ## Risks
 
@@ -74,11 +74,11 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 
 ## Completion Criteria
 
-- [ ] Canonical scenario matches the independent manual calculation to the cent.
-- [ ] Disabled profiles are behaviorally and visually unchanged.
-- [ ] All blocking and degraded states are actionable.
-- [ ] Visual and responsive gates pass without horizontal overflow.
-- [ ] All validation commands pass.
-- [ ] All required documentation updates done.
-- [ ] Spec moved to `terminados/`.
-- [ ] Commit created (Conventional Commits).
+- [x] Canonical scenario matches the independent manual calculation to the cent.
+- [x] Disabled profiles are behaviorally and visually unchanged.
+- [x] All blocking and degraded states are actionable.
+- [x] Visual and responsive gates pass without horizontal overflow.
+- [x] All validation commands pass.
+- [x] All required documentation updates done.
+- [x] Spec moved to `terminados/`.
+- [x] Commit created (Conventional Commits).

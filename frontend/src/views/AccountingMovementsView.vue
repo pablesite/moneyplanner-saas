@@ -14,9 +14,66 @@ const router = useRouter();
 const page = useAccountingMovementsPage();
 const routeReady = ref(false);
 let applyingRoute = false;
+let transferPrefillConsumed = false;
 
 function queryValue(value: unknown): string {
   return Array.isArray(value) ? String(value[0] ?? '') : String(value ?? '');
+}
+
+const transferQueryKeys = new Set([
+  'create',
+  'from_asset_id',
+  'to_asset_id',
+  'amount',
+  'transfer_ownership_id',
+  'booking_date',
+  'description',
+]);
+
+function safeReturnPath(): string {
+  const value = queryValue(route.query.return_to);
+  return value.startsWith('/cierre-mensual') ? value : '';
+}
+
+async function consumeTransferPrefill(): Promise<void> {
+  if (transferPrefillConsumed || queryValue(route.query.create) !== 'transfer') return;
+  const sourceAssetId = Number(queryValue(route.query.from_asset_id));
+  const destinationAssetId = Number(queryValue(route.query.to_asset_id));
+  const transferAmount = queryValue(route.query.amount);
+  const ownershipId = Number(queryValue(route.query.transfer_ownership_id));
+  const bookingDate = queryValue(route.query.booking_date);
+  const description = queryValue(route.query.description).slice(0, 255);
+  const source = page.accounts.find(
+    (account) => account.asset_id === sourceAssetId && account.account_type === 'asset',
+  );
+  const destination = page.accounts.find(
+    (account) => account.asset_id === destinationAssetId && account.account_type === 'asset',
+  );
+  if (!source || !destination) return;
+
+  transferPrefillConsumed = true;
+  page.openQuickEntryForCreate();
+  page.quickEntryForm.movement_type = 'transfer';
+  page.quickEntryForm.account_id = source.id;
+  page.quickEntryForm.counterparty_account_id = destination.id;
+  if (/^\d+(?:\.\d{1,8})?$/.test(transferAmount) && Number(transferAmount) > 0) {
+    page.quickEntryForm.amount = transferAmount;
+  }
+  if (Number.isInteger(ownershipId) && ownershipId > 0) {
+    page.quickEntryForm.ownership_id = ownershipId;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) {
+    page.quickEntryForm.booking_date = bookingDate;
+    page.quickEntryForm.value_date = bookingDate;
+  }
+  page.quickEntryForm.description = description;
+
+  applyingRoute = true;
+  const remainingQuery = Object.fromEntries(
+    Object.entries(route.query).filter(([key]) => !transferQueryKeys.has(key)),
+  );
+  await router.replace({ name: 'accounting-movements', query: remainingQuery });
+  applyingRoute = false;
 }
 
 async function applyRouteQuery(): Promise<void> {
@@ -39,6 +96,7 @@ async function applyRouteQuery(): Promise<void> {
   if (page.todosDateFrom || page.todosDateTo) page.todosDatePreset = 'custom';
   await nextTick();
   applyingRoute = false;
+  await consumeTransferPrefill();
 }
 
 function currentQuery(): Record<string, string> {
@@ -55,6 +113,8 @@ function currentQuery(): Record<string, string> {
   if (page.activityFilters.reviewState === 'needs_review') query.review_state = 'needs_review';
   if (page.todosDateFrom) query.date_from = page.todosDateFrom;
   if (page.todosDateTo) query.date_to = page.todosDateTo;
+  const returnTo = safeReturnPath();
+  if (returnTo) query.return_to = returnTo;
   return query;
 }
 
@@ -66,6 +126,13 @@ onMounted(async () => {
   await applyRouteQuery();
   routeReady.value = true;
 });
+
+watch(
+  () => page.accounts.length,
+  () => {
+    if (routeReady.value) void consumeTransferPrefill();
+  },
+);
 
 watch(
   () => route.query,
@@ -117,6 +184,9 @@ watch(
         </button>
       </template>
       <template #actions>
+        <AButton v-if="safeReturnPath()" variant="ghost" @click="router.push(safeReturnPath())">
+          ← Volver al cierre
+        </AButton>
         <AButton
           variant="primary"
           class="a-mov-header-create"

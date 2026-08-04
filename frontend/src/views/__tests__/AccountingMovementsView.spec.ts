@@ -1,18 +1,20 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, ref } from 'vue';
-import { shallowMount } from '@vue/test-utils';
+import { flushPromises, shallowMount } from '@vue/test-utils';
 import AccountingMovementsView from '../AccountingMovementsView.vue';
 
 const mockUseAccountingMovementsPage = vi.fn();
+const mockRoute = { query: {} as Record<string, string>, fullPath: '/contabilidad' };
+const mockRouter = { push: vi.fn(), replace: vi.fn(async () => undefined) };
 
 vi.mock('@/domains/accounting/useAccountingMovementsPage', () => ({
   useAccountingMovementsPage: () => mockUseAccountingMovementsPage(),
 }));
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ query: {}, fullPath: '/contabilidad' }),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useRoute: () => mockRoute,
+  useRouter: () => mockRouter,
 }));
 
 function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
@@ -65,6 +67,12 @@ function makeState(tab: 'cuentas' | 'todos' | 'estadisticas' = 'cuentas') {
 }
 
 describe('AccountingMovementsView', () => {
+  beforeEach(() => {
+    mockRoute.query = {};
+    mockRouter.push.mockClear();
+    mockRouter.replace.mockClear();
+  });
+
   it('renders the daily operations workspace', () => {
     mockUseAccountingMovementsPage.mockReturnValue(makeState());
     const wrapper = shallowMount(AccountingMovementsView, {
@@ -84,5 +92,66 @@ describe('AccountingMovementsView', () => {
     expect(wrapper.text()).not.toContain('Evolución');
     expect(wrapper.text()).not.toContain('Estadísticas');
     expect(wrapper.findComponent({ name: 'APageHead' }).props('title')).toBe('Contabilidad');
+  });
+
+  it('opens a settlement transfer prefilled but never submits it', async () => {
+    mockRoute.query = {
+      create: 'transfer',
+      from_asset_id: '10',
+      to_asset_id: '20',
+      amount: '1170.00',
+      transfer_ownership_id: '4',
+      booking_date: '2026-08-04',
+      description: 'Liquidación agosto',
+      return_to: '/cierre-mensual?year=2026&month=7&step=result',
+    };
+    const quickEntryForm = {
+      movement_type: 'expense',
+      account_id: null as number | null,
+      counterparty_account_id: null as number | null,
+      amount: '',
+      ownership_id: null as number | null,
+      booking_date: '',
+      value_date: '',
+      description: '',
+    };
+    const state = {
+      ...makeState(),
+      accounts: [
+        { id: 1, asset_id: 10, account_type: 'asset' },
+        { id: 2, asset_id: 20, account_type: 'asset' },
+      ],
+      quickEntryForm,
+      openQuickEntryForCreate: vi.fn(),
+      submitQuickEntryFromModal: vi.fn(),
+    };
+    mockUseAccountingMovementsPage.mockReturnValue(state);
+
+    shallowMount(AccountingMovementsView, {
+      global: {
+        stubs: {
+          APageHead: { template: '<header><slot name="actions" /></header>' },
+          AButton: { template: '<button><slot /></button>' },
+        },
+      },
+    });
+    await flushPromises();
+
+    expect(state.openQuickEntryForCreate).toHaveBeenCalledOnce();
+    expect(quickEntryForm).toMatchObject({
+      movement_type: 'transfer',
+      account_id: 1,
+      counterparty_account_id: 2,
+      amount: '1170.00',
+      ownership_id: 4,
+      booking_date: '2026-08-04',
+      value_date: '2026-08-04',
+      description: 'Liquidación agosto',
+    });
+    expect(state.submitQuickEntryFromModal).not.toHaveBeenCalled();
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      name: 'accounting-movements',
+      query: { return_to: '/cierre-mensual?year=2026&month=7&step=result' },
+    });
   });
 });
