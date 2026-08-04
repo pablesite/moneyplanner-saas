@@ -1159,7 +1159,10 @@ body {
 .ui-shell-header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  /* El header crea el contexto de apilado del menu de cuenta. Debe quedar por
+     encima de las barras sticky de cada vista (nivel 20), aunque el dropdown
+     tenga su propio z-index dentro de este contexto. */
+  z-index: 50;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(11, 13, 18, 0.82);
   backdrop-filter: blur(12px);

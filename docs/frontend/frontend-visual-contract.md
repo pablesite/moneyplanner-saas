@@ -108,6 +108,7 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 28. Reserva de la tab bar móvil: la hace **solo** `.ui-shell-content-stage` con `padding-bottom: var(--shell-bottom-inset)` (regla 24). Las vistas no añaden su propio `padding-bottom` al final de la página: los cinco dominios lo hacían y quedaba doble reserva (~156 px en móvil). Los elementos anclados abajo (FABs, barras sticky, toasts) sí consumen el token en su `calc()`, porque están fuera del flujo.
 
 29. Utilidades compartidas (`design-system.css`, todas dentro de `:where()` por la regla 27): `.filter-ctrl` (chrome de los controles de filtro; `width`/`min-width` los decide cada vista), `.sr-only` (texto solo para lectores de pantalla), `.data-table` (cabecera `th` uppercase sobre hairline; se pone en la tabla o en su contenedor) y `.context-field` (campo de una barra o rail de contexto). Estaban duplicadas entre tres y cuatro dominios. Antes de crear una clase con prefijo de dominio para cualquiera de estos cuatro casos, usar la compartida.
+30. Capas del shell: las barras sticky internas de una vista permanecen en el nivel `20`; `.ui-shell-header` usa el nivel `50` para que su menu de cuenta y cualquier otro popover global queden siempre por delante. Los overlays teletransportados (selects, modales y toasts) conservan sus niveles propios, superiores al shell. No igualar el `z-index` del header con el de una barra de pagina: el desplegable hijo no puede escapar del contexto de apilado de su padre.
 
 ## Usage Guidance
 
