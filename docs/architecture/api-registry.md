@@ -67,7 +67,7 @@ Production origin: `https://arkenstone.app`. In production, Traefik routes Core 
 | `GET/POST` | `/api/family-members/` | List and create family members |
 | `GET/PATCH/DELETE` | `/api/family-members/{id}/` | Family member detail |
 | `POST` | `/api/family-members/ensure-primary/` | **Used by SaaS bootstrap.** Creates primary family member if missing. Idempotent. |
-| `GET/POST` | `/api/ownerships/` | List and create ownership relationships |
+| `GET/POST` | `/api/ownerships/` | List and create ownership relationships. Dynamic shared records include `effective_splits`, resolved from the current previous-12-complete-month income allocation; `splits` remain the configured participant set. |
 | `GET/PATCH/DELETE` | `/api/ownerships/{id}/` | Ownership detail |
 | `GET` | `/api/ownerships/{id}/allocation-preview/?year=YYYY&month=M` | Resolves an explicit or previous-12-complete-month recurring-income allocation. Dynamic previews persist a recomputable draft snapshot and return quality, coverage, exclusions, source hash and per-member shares; frozen snapshots remain immutable. |
 | `GET/POST` | `/api/ownership-links/` | Ownership links (asset <-> person) |

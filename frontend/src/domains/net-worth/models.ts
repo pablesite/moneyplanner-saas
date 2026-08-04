@@ -230,6 +230,14 @@ export type Ownership = {
   kind: 'individual' | 'shared';
   member: { id: number; name: string; role: 'adult' | 'child' } | null;
   splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
+  allocation_basis?: 'explicit_split' | 'recurring_income_12m';
+  effective_splits?:
+    | {
+        member_id: number;
+        member_name: string;
+        percent: string | null;
+      }[]
+    | null;
   notes: string;
 };
 

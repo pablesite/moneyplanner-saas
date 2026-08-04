@@ -169,7 +169,6 @@ export function usePeopleOwnerships() {
   const successMessage = ref<string | null>(null);
   const allocationPreview = ref<OwnershipAllocationPreview | null>(null);
   const previewLoading = ref(false);
-  const dynamicAllocationPreviews = ref<Record<number, OwnershipAllocationPreview>>({});
 
   const form = reactive({
     memberIds: [] as number[],
@@ -206,43 +205,10 @@ export function usePeopleOwnerships() {
   async function ensureLoaded() {
     if (!store.ownerships.length) await store.fetchOwnerships();
     if (!store.members.length) await store.fetchMembers();
-    await refreshDynamicAllocationPreviews();
   }
 
   async function refreshOwnerships() {
     await store.fetchOwnerships();
-    await refreshDynamicAllocationPreviews();
-  }
-
-  async function refreshDynamicAllocationPreviews() {
-    const dynamicOwnerships = ownershipsSorted.value.filter(
-      (ownership) => ownership.allocation_basis === 'recurring_income_12m',
-    );
-    if (!dynamicOwnerships.length) {
-      dynamicAllocationPreviews.value = {};
-      return;
-    }
-
-    const now = new Date();
-    const previews = await Promise.all(
-      dynamicOwnerships.map(async (ownership) => {
-        try {
-          const { data } = await peopleApi.getAllocationPreview(
-            ownership.id,
-            now.getFullYear(),
-            now.getMonth() + 1,
-          );
-          return [ownership.id, data] as const;
-        } catch {
-          return null;
-        }
-      }),
-    );
-    dynamicAllocationPreviews.value = Object.fromEntries(
-      previews.filter(
-        (preview): preview is readonly [number, OwnershipAllocationPreview] => preview != null,
-      ),
-    );
   }
 
   function resetModal() {
@@ -331,7 +297,7 @@ export function usePeopleOwnerships() {
       });
       successMessage.value = 'Titularidad compartida actualizada correctamente.';
       if (form.allocationBasis === 'recurring_income_12m') {
-        await Promise.all([refreshAllocationPreview(), refreshDynamicAllocationPreviews()]);
+        await refreshAllocationPreview();
         return;
       }
     } else {
@@ -343,7 +309,6 @@ export function usePeopleOwnerships() {
       successMessage.value = 'Titularidad compartida creada correctamente.';
     }
 
-    await refreshDynamicAllocationPreviews();
     resetModal();
   }
 
@@ -409,14 +374,12 @@ export function usePeopleOwnerships() {
     successMessage,
     allocationPreview,
     previewLoading,
-    dynamicAllocationPreviews,
     form,
     adults,
     canCreate,
     ownershipsSorted,
     ensureLoaded,
     refreshOwnerships,
-    refreshDynamicAllocationPreviews,
     resetModal,
     openCreate,
     openEdit,

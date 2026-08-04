@@ -18,7 +18,6 @@ function makeState(overrides: Record<string, unknown> = {}) {
     successMessage: ref<string | null>(null),
     allocationPreview: ref(null),
     previewLoading: ref(false),
-    dynamicAllocationPreviews: ref({}),
     form: reactive({ memberIds: [] as number[], percents: {} as Record<number, string> }),
     adults: computed(() => []),
     canCreate: computed(() => false),
@@ -56,7 +55,6 @@ describe('OwnershipManager', () => {
       global: {
         stubs: {
           BaseModal: { template: '<div />' },
-          OwnershipLabel: { template: '<span>ownership</span>' },
         },
       },
     });
@@ -73,7 +71,6 @@ describe('OwnershipManager', () => {
       global: {
         stubs: {
           BaseModal: { template: '<div />' },
-          OwnershipLabel: { template: '<span>ownership</span>' },
         },
       },
     });
@@ -97,41 +94,13 @@ describe('OwnershipManager', () => {
             ],
             allocation_basis: 'recurring_income_12m',
             income_rules: [],
+            effective_splits: [
+              { member_id: 1, member_name: 'Ana', percent: '39' },
+              { member_id: 2, member_name: 'Pablo', percent: '61' },
+            ],
             is_in_use: false,
           },
         ]),
-        dynamicAllocationPreviews: ref({
-          8: {
-            ownership_id: 8,
-            allocation_basis: 'recurring_income_12m',
-            fiscal_year: 2026,
-            month: 8,
-            status: 'ready',
-            window_start: '2025-08-01',
-            window_end: '2026-07-31',
-            base_currency: 'EUR',
-            quality_reasons: [],
-            observed_months: 12,
-            eligible_transaction_count: 24,
-            excluded_transaction_count: 0,
-            total_qualifying_income: '10000.00',
-            shares: [
-              {
-                member_id: 1,
-                member_name: 'Ana',
-                qualifying_income: '3900.00',
-                percent: '39',
-              },
-              {
-                member_id: 2,
-                member_name: 'Pablo',
-                qualifying_income: '6100.00',
-                percent: '61',
-              },
-            ],
-            is_frozen: false,
-          },
-        }),
       }),
     );
 
@@ -139,14 +108,13 @@ describe('OwnershipManager', () => {
       global: {
         stubs: {
           BaseModal: { template: '<div />' },
-          OwnershipLabel: { template: '<span>ownership</span>' },
         },
       },
     });
 
     expect(wrapper.text()).toContain('Compartido dinámico');
-    expect(wrapper.text()).toContain('Ana 39.00%');
-    expect(wrapper.text()).toContain('Pablo 61.00%');
+    expect(wrapper.text()).toContain('Ana 39%');
+    expect(wrapper.text()).toContain('Pablo 61%');
     expect(wrapper.text()).toContain('se recalcula cada mes');
     expect(wrapper.text()).not.toContain('Ana 50%');
   });

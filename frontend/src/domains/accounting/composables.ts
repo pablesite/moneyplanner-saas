@@ -33,6 +33,7 @@ import type { Asset, Liability } from '@/domains/net-worth/models';
 import { getMaxDecimals, toNumber } from '@/lib/format';
 import { dateToIso } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 
 type DailyTimelinePreset = '1m' | '3m' | '6m' | '1a' | '5a' | 'all';
 const DEFAULT_DAILY_TIMELINE_PRESET: DailyTimelinePreset = '1a';
@@ -373,34 +374,11 @@ export function useAccountingPage() {
     return Array.from(values).sort((a, b) => b - a);
   });
   function ownershipLabel(ownership: OwnershipRead): string {
-    if (ownership.kind === 'individual') {
-      return ownership.member?.name?.trim() || `Titularidad #${ownership.id}`;
-    }
-    const parts = (ownership.splits ?? [])
-      .map((split) => {
-        const name = split.member?.name?.trim();
-        if (!name) return '';
-        const percent = String(split.percent ?? '').trim();
-        return percent ? `${name} ${percent}%` : name;
-      })
-      .filter(Boolean);
-    return parts.length ? `Compartido (${parts.join(' / ')})` : 'Compartido';
+    return ownershipDisplayLabel(ownership);
   }
-  // Compact label for tight spaces (e.g. ledger column): drops names and shows
-  // only the split ratio, "Compartido 60/40". The position is the convention —
-  // the first number is the first family member, as in `ownershipLabel`'s order.
+  // Keep the allocation method visible in tight ledger columns as well.
   function ownershipShortLabel(ownership: OwnershipRead): string {
-    if (ownership.kind === 'individual') {
-      return ownership.member?.name?.trim() || `Titularidad #${ownership.id}`;
-    }
-    const percents = (ownership.splits ?? [])
-      .map((split) => {
-        const value = Number(String(split.percent ?? '').trim());
-        // `String(50)` → "50", `String(33.33)` → "33.33"; drops trailing ".00".
-        return Number.isFinite(value) ? String(value) : '';
-      })
-      .filter(Boolean);
-    return percents.length ? `Compartido ${percents.join('/')}` : 'Compartido';
+    return ownershipDisplayLabel(ownership, { compact: true });
   }
   const ownershipById = computed(() => {
     const map = new Map<number, OwnershipRead>();

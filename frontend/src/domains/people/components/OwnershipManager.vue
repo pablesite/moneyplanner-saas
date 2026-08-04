@@ -3,7 +3,7 @@ import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
 import { AButton, ASelect, AState, AToast, type ASelectItem } from '@/domains/ui';
 import { usePeopleOwnerships } from '@/domains/people/composables';
-import OwnershipLabel from '@/domains/people/components/OwnershipLabel.vue';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 
 const {
   store,
@@ -12,7 +12,6 @@ const {
   successMessage,
   allocationPreview,
   previewLoading,
-  dynamicAllocationPreviews,
   form,
   adults,
   canCreate,
@@ -97,28 +96,10 @@ onMounted(async () => {
           <tr v-for="o in ownershipsSorted" :key="o.id">
             <td>
               <template v-if="o.allocation_basis === 'recurring_income_12m'">
-                <span class="subtle">Compartido dinámico</span>
-                <template v-if="dynamicAllocationPreviews[o.id]">
-                  <span class="ui-inline-offset-sm">
-                    <span
-                      v-for="(share, index) in dynamicAllocationPreviews[o.id].shares"
-                      :key="share.member_id"
-                    >
-                      {{ share.member_name }} {{ formatPercent(share.percent)
-                      }}<span v-if="index < dynamicAllocationPreviews[o.id].shares.length - 1">
-                        ·
-                      </span>
-                    </span>
-                  </span>
-                  <span class="subtle">
-                    · según ingresos recurrentes de los últimos 12 meses; se recalcula cada mes
-                  </span>
-                </template>
-                <span v-else class="subtle"
-                  >· calculando ingresos recurrentes de los últimos 12 meses…</span
-                >
+                {{ ownershipDisplayLabel(o) }}
+                <span class="subtle"> · se recalcula cada mes</span>
               </template>
-              <OwnershipLabel v-else :kind="o.kind" :member="o.member" :splits="o.splits" />
+              <template v-else>{{ ownershipDisplayLabel(o) }}</template>
             </td>
 
             <td class="ui-data-table-actions">

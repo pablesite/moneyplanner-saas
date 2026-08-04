@@ -6,6 +6,10 @@ import {
 } from '@/domains/net-worth';
 import type { NetWorthWritePayload } from '@/domains/net-worth/models';
 import {
+  ownershipDisplayLabel,
+  ownershipDisplaySplits,
+} from '@/domains/people/ownershipPresentation';
+import {
   expenseCategories,
   expenseSubcategories,
   type ExpenseCategoryKey,
@@ -383,26 +387,6 @@ export function useBudgetAnnualEntriesPage() {
     annualExpenseForm.cashflowRole = allowed.includes(suggested) ? suggested : allowed[0]!;
   }
 
-  function formatOwnershipPercent(raw: string): string {
-    const value = Number(String(raw).replace(',', '.'));
-    if (!Number.isFinite(value)) return `${raw}%`;
-    const rounded = Math.round(value * 100) / 100;
-    const normalized = Number.isInteger(rounded)
-      ? String(rounded)
-      : String(rounded).replace(/\.?0+$/, '');
-    return `${normalized}%`;
-  }
-
-  function sharedOwnershipLabel(
-    splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[],
-  ): string {
-    if (!splits.length) return 'Compartido';
-    const details = splits.map(
-      (split) => `${split.member.name} ${formatOwnershipPercent(split.percent)}`,
-    );
-    return `Compartido (${details.join(' / ')})`;
-  }
-
   const ownerOptions = computed(() => {
     const options = new Map<string, OwnerOption>();
     for (const ownership of store.ownerships ?? []) {
@@ -415,7 +399,7 @@ export function useBudgetAnnualEntriesPage() {
         });
       }
       if (ownership.kind === 'shared') {
-        const label = sharedOwnershipLabel(ownership.splits ?? []);
+        const label = ownershipDisplayLabel(ownership);
         options.set(`shared:${ownership.id}`, {
           key: `shared:${ownership.id}`,
           value: label,
@@ -432,7 +416,7 @@ export function useBudgetAnnualEntriesPage() {
       label:
         ownership.kind === 'individual' && ownership.member
           ? ownership.member.name
-          : sharedOwnershipLabel(ownership.splits ?? []),
+          : ownershipDisplayLabel(ownership),
     })),
   );
   const showSettlementFields = computed(
@@ -460,11 +444,11 @@ export function useBudgetAnnualEntriesPage() {
     const map = new Map<string, { name: string; share: number }[]>();
     for (const ownership of store.ownerships ?? []) {
       if (ownership.kind !== 'shared') continue;
-      const label = sharedOwnershipLabel(ownership.splits ?? []);
-      const shares = (ownership.splits ?? [])
+      const label = ownershipDisplayLabel(ownership);
+      const shares = ownershipDisplaySplits(ownership)
         .map((split) => {
           const share = Number(String(split.percent ?? '').replace(',', '.'));
-          const name = split.member?.name?.trim() ?? '';
+          const name = split.memberName.trim();
           if (!name || !Number.isFinite(share) || share <= 0) return null;
           return { name, share };
         })
@@ -815,7 +799,7 @@ export function useBudgetAnnualEntriesPage() {
       return ownership.member?.id === selectedOwner ? 1 : 0;
     }
 
-    const split = (ownership.splits ?? []).find((row) => row.member?.id === selectedOwner);
+    const split = ownershipDisplaySplits(ownership).find((row) => row.memberId === selectedOwner);
     if (!split) return 0;
     return normalizeOwnershipSharePercent(split.percent) / 100;
   }
@@ -828,7 +812,7 @@ export function useBudgetAnnualEntriesPage() {
       return ownership.member?.name?.trim() ?? '';
     }
     if (ownership.kind === 'shared') {
-      return sharedOwnershipLabel(ownership.splits ?? []);
+      return ownershipDisplayLabel(ownership);
     }
     return '';
   }

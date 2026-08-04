@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { AButton, ASelect, type ASelectItem } from '@/domains/ui';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 import { getMaxDecimals } from '@/lib/format';
 import type {
   AssetImprovement,
@@ -153,20 +154,12 @@ const currencies = [
   { value: 'ETH', label: 'ETH' },
 ];
 
-const ownershipLabel = (o: Ownership) => {
-  if (o.kind === 'individual') {
-    return o.member ? `Individual - ${o.member.name}` : 'Individual';
-  }
-  const parts = (o.splits || []).map((s) => `${s.member.name} ${s.percent}%`);
-  return `Compartido - ${parts.join(' - ') || 'sin splits'}`;
-};
-
 const ownershipOptions = computed(() => {
   return [
     { value: null, label: 'Selecciona titularidad' },
     ...(props.ownerships || []).map((o) => ({
       value: Number(o.id),
-      label: ownershipLabel(o),
+      label: ownershipDisplayLabel(o, { individualPrefix: true }),
     })),
   ];
 });

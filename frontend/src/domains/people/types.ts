@@ -20,6 +20,13 @@ export type OwnershipRead = {
   splits: { member: { id: number; name: string; role: 'adult' | 'child' }; percent: string }[];
   allocation_basis?: OwnershipAllocationBasis;
   income_rules?: OwnershipIncomeRule[];
+  effective_splits?:
+    | {
+        member_id: number;
+        member_name: string;
+        percent: string | null;
+      }[]
+    | null;
   is_in_use: boolean;
 };
 
