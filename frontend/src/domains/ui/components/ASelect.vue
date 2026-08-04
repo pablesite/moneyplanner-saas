@@ -107,23 +107,31 @@ const renderable = computed<RenderItem[]>(() => {
 const filteredFlatLen = computed(() => renderable.value.filter((r) => r.kind === 'opt').length);
 
 function computePosition() {
-  if (!triggerRef.value) return;
+  if (!triggerRef.value || !panelRef.value) return;
   const rect = triggerRef.value.getBoundingClientRect();
-  const below = window.innerHeight - rect.bottom;
-  const above = rect.top;
-  if (below >= 200 || below >= above) {
-    panelStyle.value = {
-      top: `${rect.bottom + 4}px`,
-      left: `${rect.left}px`,
-      minWidth: `${Math.max(rect.width, 180)}px`,
-    };
-  } else {
-    panelStyle.value = {
-      bottom: `${window.innerHeight - rect.top + 4}px`,
-      left: `${rect.left}px`,
-      minWidth: `${Math.max(rect.width, 180)}px`,
-    };
-  }
+  const viewportPadding = 8;
+  const panelHeight = Math.min(panelRef.value.getBoundingClientRect().height || 320, 320);
+  const below = window.innerHeight - rect.bottom - viewportPadding;
+  const above = rect.top - viewportPadding;
+  const showBelow = below >= panelHeight || below >= above;
+  const left = Math.min(
+    Math.max(viewportPadding, rect.left),
+    Math.max(viewportPadding, window.innerWidth - Math.max(rect.width, 180) - viewportPadding),
+  );
+
+  panelStyle.value = {
+    ...(showBelow
+      ? {
+          top: `${Math.max(
+            viewportPadding,
+            Math.min(rect.bottom + 4, window.innerHeight - panelHeight - viewportPadding),
+          )}px`,
+        }
+      : { bottom: `${Math.max(viewportPadding, window.innerHeight - rect.top + 4)}px` }),
+    left: `${left}px`,
+    minWidth: `${Math.max(rect.width, 180)}px`,
+    maxHeight: `calc(100vh - ${viewportPadding * 2}px)`,
+  };
 }
 
 async function openPanel() {
