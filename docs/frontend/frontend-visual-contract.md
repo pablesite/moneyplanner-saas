@@ -114,6 +114,8 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 
 32. Especificidad frente al design system (corolario práctico de la regla 27): una clase de dominio que pretenda ganar a una clase base necesita **más** especificidad, no la misma. `.dir-a .a-adm-danger` empata con `.dir-a .btn` y pierde por orden de inyección; `.dir-a .btn.a-adm-danger` gana. Lo mismo con `td[data-label]` frente a `tr.clickable td`, y con `row-gap` frente a `.kpis.a-kpi-band`. Si un ajuste de dominio "no aplica" sin motivo aparente, contar la especificidad antes de tocar otra cosa.
 
+33. Datos auxiliares y personas (`/data`, `/people`, `aux-data.css` `a-aux-*`): la página se lee con dos pestañas sincronizadas con la URL (`Personas` · `Datos de mercado`), no con un acordeón a medida ni con pestañas anidadas dentro de una card. **Datos de mercado** responde primero la pregunta de la pantalla —¿están mis datos al día?— con una banda de cobertura: la cifra es la fecha cubierta y el estado operativo va en el meta (`.pos`/`.neg`). El umbral de frescura depende del dataset: el IPC se publica a mediados del mes siguiente y admite semanas de retraso, las divisas son diarias (`marketHealth.ts`). Cada scope expone su tarjeta de cobertura con el error del último intento si lo hubo. **Personas** monta los dos gestores como secciones hermanas (`.sect` + `ASectHead`), sin card propia ni pestañas internas, de modo que `/people` y la pestaña son la misma UI. Acciones de fila en `ARowMenu`, estado del miembro como chip pulsable con `aria-pressed`, y borrado con diálogo del producto.
+
 ## Usage Guidance
 
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.

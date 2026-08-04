@@ -31,6 +31,8 @@ export function usePeopleMembers() {
     role: 'adult' as MemberRole,
   });
 
+  const memberPendingDelete = ref<FamilyMember | null>(null);
+
   const prettyError = computed(() => store.error);
 
   const membersSorted = computed(() => {
@@ -128,13 +130,26 @@ export function usePeopleMembers() {
     });
   }
 
-  async function removeMember(member: FamilyMember) {
-    const ok = window.confirm(`¿Eliminar a "${member.name}"?\n\nSolo se podrá si no está en uso.`);
-    if (!ok) return;
+  // Borrado en dos pasos: el `window.confirm` nativo se sustituye por un
+  // diálogo del producto, que puede explicar la consecuencia real.
+  function askRemoveMember(member: FamilyMember) {
+    store.clearError();
+    successMessage.value = null;
+    memberPendingDelete.value = member;
+  }
+
+  function cancelRemoveMember() {
+    memberPendingDelete.value = null;
+  }
+
+  async function confirmRemoveMember() {
+    const member = memberPendingDelete.value;
+    if (!member) return;
     await withRowBusy(member.id, async () => {
       await store.deleteMember(member.id);
       successMessage.value = 'Miembro eliminado correctamente.';
     });
+    memberPendingDelete.value = null;
   }
 
   return {
@@ -146,6 +161,7 @@ export function usePeopleMembers() {
     successMessage,
     editOpen,
     editForm,
+    memberPendingDelete,
     prettyError,
     membersSorted,
     ensureLoaded,
@@ -157,7 +173,9 @@ export function usePeopleMembers() {
     openEdit,
     closeEdit,
     saveEdit,
-    removeMember,
+    askRemoveMember,
+    cancelRemoveMember,
+    confirmRemoveMember,
   };
 }
 
@@ -169,6 +187,7 @@ export function usePeopleOwnerships() {
   const successMessage = ref<string | null>(null);
   const allocationPreview = ref<OwnershipAllocationPreview | null>(null);
   const previewLoading = ref(false);
+  const ownershipPendingDelete = ref<OwnershipRead | null>(null);
 
   const form = reactive({
     memberIds: [] as number[],
@@ -359,11 +378,22 @@ export function usePeopleOwnerships() {
     }
   }
 
-  async function removeOwnership(id: number) {
-    const ok = window.confirm('¿Eliminar esta titularidad compartida? (Solo si no está en uso)');
-    if (!ok) return;
+  function askRemoveOwnership(ownership: OwnershipRead) {
+    store.clearError();
     successMessage.value = null;
-    await store.deleteOwnership(id);
+    ownershipPendingDelete.value = ownership;
+  }
+
+  function cancelRemoveOwnership() {
+    ownershipPendingDelete.value = null;
+  }
+
+  async function confirmRemoveOwnership() {
+    const ownership = ownershipPendingDelete.value;
+    if (!ownership) return;
+    successMessage.value = null;
+    await store.deleteOwnership(ownership.id);
+    ownershipPendingDelete.value = null;
     successMessage.value = 'Titularidad compartida eliminada correctamente.';
   }
 
@@ -372,6 +402,7 @@ export function usePeopleOwnerships() {
     showModal,
     editId,
     successMessage,
+    ownershipPendingDelete,
     allocationPreview,
     previewLoading,
     form,
@@ -389,6 +420,8 @@ export function usePeopleOwnerships() {
     setAllocationBasis,
     refreshAllocationPreview,
     submit,
-    removeOwnership,
+    askRemoveOwnership,
+    cancelRemoveOwnership,
+    confirmRemoveOwnership,
   };
 }

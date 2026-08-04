@@ -150,6 +150,11 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 
 **Requiere:** `canUsePeople()` → `core.familyLogicalModel`. Actualmente `true`.
 
+**Nota:** los dos gestores son secciones (`.sect` + `ASectHead`), no traen card
+propia, y se montan igual desde `/people` y desde la pestaña Personas de `/data`.
+El borrado de miembro y de titularidad es en dos pasos (`askRemove*` →
+`confirmRemove*`), con diálogo del producto en vez de `window.confirm`.
+
 ---
 
 ### `budget` — Presupuesto
@@ -222,13 +227,17 @@ Dominio dedicado para mover/copiar la base de datos entre instancias. Se extrajo
 **Cliente:** `coreApi`
 **Ruta:** `/data`
 
-| Archivo          | Contenido                                           |
-| ---------------- | --------------------------------------------------- |
-| `api.ts`         | Llamadas a Core: tipos de cambio (FX), índices IPC. |
-| `composables.ts` | Composables para acceder a datos auxiliares.        |
-| `types.ts`       | Tipos TypeScript del dominio.                       |
+| Archivo             | Contenido                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `api.ts`            | Llamadas a Core: tipos de cambio (FX), índices IPC.                                                                                        |
+| `composables.ts`    | Composables para acceder a datos auxiliares.                                                                                               |
+| `marketHealth.ts`   | Traduce `covered_until` a estado operativo por dataset (`ok`/`warn`/`stale`/`unknown`), con umbrales distintos para IPC (mensual) y FX (diario). |
+| `types.ts`          | Tipos TypeScript del dominio.                                                                                                              |
+| `styles/aux-data.css` | Patrones locales `a-aux-*` de `/data` y `/people`: tarjetas de cobertura, tablas, chips de estado y confirmaciones.                       |
 
-Incluye redirecciones: `/data/fx` y `/data/ipc` → `/data`.
+La vista tiene dos pestañas sincronizadas con la URL (`?tab=mercado`): **Personas**
+(monta `FamilyMemberManager` + `OwnershipManager`) y **Datos de mercado** (banda
+de cobertura + IPC + divisas). Incluye redirecciones: `/data/fx` y `/data/ipc` → `/data`.
 
 ---
 

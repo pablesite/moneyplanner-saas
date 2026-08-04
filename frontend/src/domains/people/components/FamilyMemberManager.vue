@@ -1,8 +1,17 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
-import { AButton, ASelect, AToast, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  ARowMenu,
+  ASectHead,
+  ASelect,
+  AState,
+  AToast,
+  type ASelectItem,
+} from '@/domains/ui';
 import { usePeopleMembers } from '@/domains/people/composables';
+import type { FamilyMember } from '@/domains/people/types';
 
 const memberRoleOptions: ASelectItem[] = [
   { value: 'adult', label: 'Adulto' },
@@ -18,10 +27,10 @@ const {
   successMessage,
   editOpen,
   editForm,
+  memberPendingDelete,
   prettyError,
   membersSorted,
   ensureLoaded,
-  refreshMembers,
   openCreate,
   closeCreate,
   submit,
@@ -29,8 +38,23 @@ const {
   openEdit,
   closeEdit,
   saveEdit,
-  removeMember,
+  askRemoveMember,
+  cancelRemoveMember,
+  confirmRemoveMember,
 } = usePeopleMembers();
+
+function rowMenuItems(member: FamilyMember) {
+  const busy = store.loading || rowBusy.value[member.id];
+  return [
+    { id: 'edit', label: 'Editar miembro', disabled: busy },
+    { id: 'delete', label: 'Eliminar miembro', danger: true, disabled: busy },
+  ];
+}
+
+function onRowAction(member: FamilyMember, action: string): void {
+  if (action === 'edit') openEdit(member);
+  else if (action === 'delete') askRemoveMember(member);
+}
 
 onMounted(async () => {
   await ensureLoaded();
@@ -38,89 +62,66 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
-    <div v-if="prettyError" class="alert ui-people-alert">
-      {{ prettyError }}
-    </div>
+  <section class="sect">
+    <ASectHead
+      title="Miembros"
+      subtitle="Quién forma la unidad familiar. Cada adulto genera su titularidad individual."
+    >
+      <template #actions>
+        <AButton variant="primary" :disabled="store.loading" @click="openCreate">
+          Nuevo miembro
+        </AButton>
+      </template>
+    </ASectHead>
+
     <AToast :open="!!successMessage" @close="successMessage = null">{{ successMessage }}</AToast>
-    <!-- Lista -->
-    <section class="card">
-      <div class="card-header">
-        <h2 class="card-header-title">Miembros</h2>
-        <div class="ui-people-header-actions">
-          <AButton :disabled="store.loading" @click="refreshMembers()"> Refrescar </AButton>
-          <AButton variant="primary" :disabled="store.loading" @click="openCreate">
-            Nuevo miembro
-          </AButton>
-        </div>
-      </div>
 
-      <table class="ui-data-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Rol</th>
-            <th class="text-right">Estado</th>
-            <th class="ui-data-table-actions">Acciones</th>
-          </tr>
-        </thead>
+    <AState v-if="prettyError" status="error">{{ prettyError }}</AState>
 
-        <tbody>
-          <tr v-for="m in membersSorted" :key="m.id">
-            <td>
-              {{ m.name }}
-            </td>
+    <AState v-else-if="store.loading && !membersSorted.length" status="loading">
+      Cargando miembros…
+    </AState>
 
-            <td>
-              <span class="subtle">
-                {{ m.role === 'adult' ? 'Adulto' : 'Niño' }}
-              </span>
-            </td>
+    <AState v-else-if="!membersSorted.length" status="empty">
+      No hay miembros todavía. Crea el primero para poder repartir titularidades.
+    </AState>
 
-            <td class="text-right">
-              <AButton
-                :disabled="store.loading || rowBusy[m.id]"
-                :class="{ 'ui-people-status-inactive': !m.is_active }"
-                @click="toggleActive(m.id, !m.is_active)"
-              >
-                {{ m.is_active ? 'Activo' : 'Inactivo' }}
-              </AButton>
-            </td>
-
-            <td class="ui-data-table-actions">
-              <div class="ui-people-row-actions">
-                <button
-                  class="icon-btn"
-                  type="button"
-                  title="Editar"
-                  aria-label="Editar"
-                  :disabled="store.loading || rowBusy[m.id]"
-                  @click="openEdit(m)"
-                >
-                  &#9998;&#65039;
-                </button>
-                <button
-                  class="icon-btn"
-                  type="button"
-                  title="Eliminar"
-                  aria-label="Eliminar"
-                  :disabled="store.loading || rowBusy[m.id]"
-                  @click="removeMember(m)"
-                >
-                  &#128465;&#65039;
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr v-if="!membersSorted.length">
-            <td colspan="4" class="ui-table-empty">No hay miembros todavía.</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <div v-if="store.loading" class="ui-status-line">Cargando miembros...</div>
+    <table v-else class="data-table a-aux-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th class="a-aux-menu-head"><span class="sr-only">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="m in membersSorted" :key="m.id">
+          <td class="a-aux-cell-primary a-aux-name">{{ m.name }}</td>
+          <td class="a-aux-muted" data-label="Rol">{{ m.role === 'adult' ? 'Adulto' : 'Niño' }}</td>
+          <td data-label="Estado">
+            <button
+              type="button"
+              class="chip a-aux-toggle"
+              :class="m.is_active ? 'a-aux-toggle-on' : 'a-aux-toggle-off'"
+              :disabled="store.loading || rowBusy[m.id]"
+              :aria-pressed="m.is_active"
+              :title="m.is_active ? 'Desactivar miembro' : 'Activar miembro'"
+              @click="toggleActive(m.id, !m.is_active)"
+            >
+              {{ m.is_active ? 'Activo' : 'Inactivo' }}
+            </button>
+          </td>
+          <td class="a-aux-cell-menu">
+            <ARowMenu
+              :items="rowMenuItems(m)"
+              :label="`Acciones de ${m.name}`"
+              @select="(action) => onRowAction(m, action)"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- Modal crear -->
     <BaseModal
@@ -131,9 +132,8 @@ onMounted(async () => {
       @close="closeCreate"
     >
       <div class="ui-item-form-grid">
-        <p class="subtle m-0 pb-1 md:col-span-2">
-          Crea miembros de la familia. Al crear un adulto, se generará automáticamente su
-          titularidad individual.
+        <p class="a-aux-hint md:col-span-2">
+          Al crear un adulto se generará automáticamente su titularidad individual.
         </p>
 
         <label class="ui-item-form-field">
@@ -154,10 +154,11 @@ onMounted(async () => {
       </div>
       <template #footer>
         <div class="ui-modal-foot-actions">
-          <AButton class="ui-form-action-btn" @click="closeCreate"> Cancelar </AButton>
+          <AButton class="ui-form-action-btn" @click="closeCreate">Cancelar</AButton>
           <AButton
             variant="primary"
             class="ui-form-action-btn"
+            :loading="saving"
             :disabled="saving || store.loading"
             @click="submit"
           >
@@ -196,6 +197,7 @@ onMounted(async () => {
         <div class="ui-modal-foot-actions">
           <AButton class="ui-form-action-btn" @click="closeEdit">Cancelar</AButton>
           <AButton
+            variant="primary"
             class="ui-form-action-btn"
             :disabled="store.loading || (editForm.id != null && rowBusy[editForm.id])"
             @click="saveEdit"
@@ -205,5 +207,41 @@ onMounted(async () => {
         </div>
       </template>
     </BaseModal>
-  </div>
+
+    <!-- Confirmación de borrado -->
+    <BaseModal
+      :open="Boolean(memberPendingDelete)"
+      title="Eliminar miembro"
+      variant="sheet"
+      panel-class="dir-a dir-a-sheet"
+      @close="cancelRemoveMember"
+    >
+      <div v-if="memberPendingDelete" class="a-aux-confirm">
+        <p class="a-aux-confirm-lead">
+          Vas a eliminar a <strong>{{ memberPendingDelete.name }}</strong>
+        </p>
+        <p class="a-aux-confirm-copy">
+          Solo se puede eliminar si no está en uso por ninguna titularidad, posición o movimiento.
+          Si lo está, la operación fallará y no se perderá nada.
+        </p>
+        <p class="a-aux-confirm-copy">
+          Si solo quieres que deje de aparecer en los repartos, desactívalo en vez de eliminarlo.
+        </p>
+      </div>
+
+      <template #footer>
+        <div class="ui-modal-foot-actions">
+          <AButton class="ui-form-action-btn" @click="cancelRemoveMember">Cancelar</AButton>
+          <AButton
+            variant="primary"
+            class="ui-form-action-btn a-aux-danger"
+            :disabled="store.loading"
+            @click="confirmRemoveMember"
+          >
+            Eliminar
+          </AButton>
+        </div>
+      </template>
+    </BaseModal>
+  </section>
 </template>

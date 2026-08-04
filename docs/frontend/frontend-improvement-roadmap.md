@@ -178,8 +178,11 @@ locales. Lo único que quedaba eran tres `sect-head` a mano.
       `/estado-financiero` redirige a `/plan`.
 - [x] **Personas** (`domains/people`) — sin deuda: sus modales ya se migraron al
       slot de footer en la tanda que abrió el bloque D.
-- [x] **Datos auxiliares** (`domains/aux-data`) — sin deuda; ya consumía
-      `AChevron`, `useCollapsibleGroups`, `AToast` y `AButton`.
+- [x] **Datos auxiliares** (`domains/aux-data`) — ~~sin deuda~~. La pasada del
+      bloque E solo midió la capa de primitivas: a nivel de shell y de estados sí
+      tenía deuda, y encima dos clases usadas sin definir. Rehecha en el bloque I.
+- [x] **Personas** (`domains/people`) — misma corrección: los gestores traían
+      card propia, tabla legacy y `window.confirm`. Rehechos en el bloque I.
 - [x] **Panel de administración y perfil** (`/account`, `domains/admin`) —
       auditado el 2026-08-04. Era el único hueco de esta lista: `AccountView` no
       apareció en ningún bloque A–G y se había quedado como la última isla
@@ -334,6 +337,52 @@ visual-contract.
 
 **DoD**: greps de control limpios en `AccountView` y `domains/admin/**`; lint,
 format, typecheck y 302 tests en verde.
+
+## I. Datos auxiliares y personas (`/data`, `/people`) — cerrada
+
+Auditoría del 2026-08-05, misma pasada que el bloque H. El bloque E daba
+`aux-data` y `people` por limpios, pero solo había medido primitivas
+(`AButton`/`ASelect`/`AToast`/`AChevron`): el shell, los estados y las tablas
+seguían siendo legacy.
+
+Diagnóstico: `container ui-page-shell` (las 2 vistas que quedaban tras el bloque
+H) y `card ui-section-card`; acordeón a medida `ui-settings-*` con pestañas
+anidadas dentro de una card, resueltas con `opacity-60` / `!opacity-100` sobre
+`AButton` en vez de `.tabs`/`.tab`; `section.card` de los gestores dentro de la
+card de la vista; `.alert`, `ui-status-line` y filas `ui-table-empty` en vez de
+`AState`; tabla `ui-data-table` sin degradación responsive; cuatro
+`<button class="icon-btn">` con emoji como única acción de fila; dos
+`window.confirm`; el indicador de carga al final de la página, debajo de todo el
+contenido que estaba esperando.
+
+- [x] **Dos clases usadas sin definir.** `ui-data-status-grid` y
+      `ui-data-status-card(-head)` no existían en ningún fichero, así que los
+      bloques de cobertura se renderizaban como divs sueltos, sin rejilla ni
+      caja. Mismo patrón que el `.sr-only` del bloque C. Ahora son
+      `.a-aux-status-*`, definidas.
+- [x] **IA de la página.** Acordeón + pestañas anidadas → dos pestañas
+      compartidas sincronizadas con la URL (`Personas` · `Datos de mercado`).
+- [x] **La pregunta de la pantalla, respondida.** `covered_until` era una fecha
+      suelta; había que restar a ojo para saber si los datos estaban al día.
+      `marketHealth.ts` la traduce a estado operativo con umbrales por dataset
+      (IPC mensual admite semanas; FX diario no), resumido en banda de cobertura
+      y en un chip por scope. 5 tests.
+- [x] **Personas deja de estar duplicada.** Los gestores pasan a secciones sin
+      card propia, así que `/people` y la pestaña Personas son la misma UI.
+      `PeopleView` baja de 46 a 17 líneas.
+- [x] **Primitivas.** `ASectHead`, `AState`, `ARowMenu` (con `danger`),
+      `.data-table` con degradación a registro etiquetado bajo `sm`, chip
+      pulsable con `aria-pressed` para el estado del miembro.
+- [x] **Borrado con peso.** Los dos `window.confirm` pasan a diálogo en dos
+      pasos (`askRemove*` → `confirmRemove*`), con la consecuencia real escrita.
+- [x] **Legacy retirado.** `ui-settings-*` (7 reglas, `app.css`) y
+      `ui-data-table*` / `ui-table-empty` / `ui-people-*` (capa Tailwind):
+      ninguna tenía más consumidores.
+
+**Verificado en render** con el bundle CSS real a 1180px y 390px, en las dos
+pestañas.
+
+**DoD**: lint, format, typecheck y 309 tests en verde.
 
 ---
 

@@ -84,8 +84,17 @@ describe('people composables (saas)', () => {
     await members.toggleActive(1, false);
     expect(store.updateMember).toHaveBeenCalledWith(1, { is_active: false });
 
-    await members.removeMember(member);
+    // El borrado es en dos pasos: pedirlo no borra nada hasta confirmar.
+    members.askRemoveMember(member);
+    expect(members.memberPendingDelete.value).toEqual(member);
+    members.cancelRemoveMember();
+    expect(members.memberPendingDelete.value).toBeNull();
+    expect(store.deleteMember).not.toHaveBeenCalled();
+
+    members.askRemoveMember(member);
+    await members.confirmRemoveMember();
     expect(store.deleteMember).toHaveBeenCalledWith(1);
+    expect(members.memberPendingDelete.value).toBeNull();
   });
 
   it('sorts and validates ownership flows', async () => {
@@ -152,7 +161,15 @@ describe('people composables (saas)', () => {
       ],
     });
 
-    await ownerships.removeOwnership(9);
+    const target = makeOwnership({ id: 9, kind: 'shared' });
+    ownerships.askRemoveOwnership(target);
+    expect(ownerships.ownershipPendingDelete.value).toEqual(target);
+    ownerships.cancelRemoveOwnership();
+    expect(store.deleteOwnership).not.toHaveBeenCalled();
+
+    ownerships.askRemoveOwnership(target);
+    await ownerships.confirmRemoveOwnership();
     expect(store.deleteOwnership).toHaveBeenCalledWith(9);
+    expect(ownerships.ownershipPendingDelete.value).toBeNull();
   });
 });

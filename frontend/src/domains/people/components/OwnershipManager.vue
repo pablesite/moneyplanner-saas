@@ -1,9 +1,19 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { onMounted } from 'vue';
 import BaseModal from '@/domains/ui/components/BaseModal.vue';
-import { AButton, ASelect, AState, AToast, type ASelectItem } from '@/domains/ui';
+import {
+  AButton,
+  ARowMenu,
+  ASectHead,
+  ASelect,
+  AState,
+  AToast,
+  type ASelectItem,
+} from '@/domains/ui';
 import { usePeopleOwnerships } from '@/domains/people/composables';
 import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
+import type { OwnershipRead } from '@/domains/people/types';
+import { formatMoney } from '@/lib/format';
 
 const {
   store,
@@ -12,12 +22,12 @@ const {
   successMessage,
   allocationPreview,
   previewLoading,
+  ownershipPendingDelete,
   form,
   adults,
   canCreate,
   ownershipsSorted,
   ensureLoaded,
-  refreshOwnerships,
   resetModal,
   openCreate,
   openEdit,
@@ -26,7 +36,9 @@ const {
   setIncomeRule,
   setAllocationBasis,
   submit,
-  removeOwnership,
+  askRemoveOwnership,
+  cancelRemoveOwnership,
+  confirmRemoveOwnership,
 } = usePeopleOwnerships();
 
 const allocationBasisOptions: ASelectItem[] = [
@@ -49,16 +61,36 @@ function incomeRuleSelected(categoryKey: string, subcategoryKey: string): boolea
   );
 }
 
-function formatMoney(value: string): string {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(
-    Number(value),
-  );
-}
-
 function formatPercent(value: string | null | undefined): string {
   if (value == null) return 'Sin datos';
   return `${Number(value).toFixed(2)}%`;
 }
+
+function basisLabel(ownership: OwnershipRead): string {
+  return ownership.allocation_basis === 'recurring_income_12m'
+    ? 'Se recalcula cada mes'
+    : 'Reparto fijo';
+}
+
+function rowMenuItems(ownership: OwnershipRead) {
+  return [
+    { id: 'edit', label: 'Editar titularidad', disabled: store.loading },
+    {
+      id: 'delete',
+      label: 'Eliminar titularidad',
+      danger: true,
+      disabled: store.loading || ownership.is_in_use,
+    },
+  ];
+}
+
+function onRowAction(ownership: OwnershipRead, action: string): void {
+  if (action === 'edit') openEdit(ownership);
+  else if (action === 'delete') askRemoveOwnership(ownership);
+}
+
+const isEditingInUse = () =>
+  editId.value != null && ownershipsSorted.value.find((o) => o.id === editId.value)?.is_in_use;
 
 onMounted(async () => {
   await ensureLoaded();
@@ -66,79 +98,56 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
-    <div v-if="store.error" class="alert ui-people-alert">
-      {{ store.error }}
-    </div>
+  <section class="sect">
+    <ASectHead
+      title="Titularidades compartidas"
+      subtitle="Cómo se reparte entre adultos lo que no es de una sola persona."
+    >
+      <template #actions>
+        <AButton variant="primary" :disabled="store.loading" @click="openCreate">
+          Nueva compartida
+        </AButton>
+      </template>
+    </ASectHead>
+
     <AToast :open="!!successMessage" @close="successMessage = null">{{ successMessage }}</AToast>
 
-    <section class="section card">
-      <div class="card-header">
-        <h2 class="card-header-title">Titularidades</h2>
+    <AState v-if="store.error" status="error">{{ store.error }}</AState>
 
-        <div class="ui-people-header-actions">
-          <AButton :disabled="store.loading" @click="refreshOwnerships()"> Refrescar </AButton>
-          <AButton variant="primary" :disabled="store.loading" @click="openCreate">
-            Nueva compartida
-          </AButton>
-        </div>
-      </div>
+    <AState v-else-if="store.loading && !ownershipsSorted.length" status="loading">
+      Cargando titularidades…
+    </AState>
 
-      <table class="ui-data-table">
-        <thead>
-          <tr>
-            <th>Titularidad</th>
-            <th class="ui-data-table-actions">Acciones</th>
-          </tr>
-        </thead>
+    <AState v-else-if="!ownershipsSorted.length" status="empty">
+      No hay titularidades compartidas. Crea una cuando un bien o un gasto sea de más de un adulto.
+    </AState>
 
-        <tbody>
-          <tr v-for="o in ownershipsSorted" :key="o.id">
-            <td>
-              <template v-if="o.allocation_basis === 'recurring_income_12m'">
-                {{ ownershipDisplayLabel(o) }}
-                <span class="subtle"> · se recalcula cada mes</span>
-              </template>
-              <template v-else>{{ ownershipDisplayLabel(o) }}</template>
-            </td>
-
-            <td class="ui-data-table-actions">
-              <div class="ui-people-row-actions">
-                <button
-                  class="icon-btn"
-                  type="button"
-                  title="Editar"
-                  aria-label="Editar"
-                  :disabled="store.loading"
-                  @click="openEdit(o)"
-                >
-                  &#9998;&#65039;
-                </button>
-
-                <button
-                  class="icon-btn"
-                  type="button"
-                  title="Eliminar"
-                  aria-label="Eliminar"
-                  :disabled="store.loading || o.is_in_use"
-                  @click="removeOwnership(o.id)"
-                >
-                  &#128465;&#65039;
-                </button>
-
-                <span v-if="o.kind === 'shared' && o.is_in_use" class="subtle">En uso</span>
-              </div>
-            </td>
-          </tr>
-
-          <tr v-if="!ownershipsSorted.length">
-            <td colspan="2" class="ui-table-empty">No hay titularidades compartidas todavía.</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <div v-if="store.loading" class="ui-status-line">Cargando titularidades...</div>
+    <table v-else class="data-table a-aux-table">
+      <thead>
+        <tr>
+          <th>Titularidad</th>
+          <th>Reparto</th>
+          <th>Uso</th>
+          <th class="a-aux-menu-head"><span class="sr-only">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="o in ownershipsSorted" :key="o.id">
+          <td class="a-aux-cell-primary a-aux-name">{{ ownershipDisplayLabel(o) }}</td>
+          <td class="a-aux-muted" data-label="Reparto">{{ basisLabel(o) }}</td>
+          <td data-label="Uso">
+            <span class="a-aux-muted">{{ o.is_in_use ? 'En uso' : 'Sin usar' }}</span>
+          </td>
+          <td class="a-aux-cell-menu">
+            <ARowMenu
+              :items="rowMenuItems(o)"
+              :label="`Acciones de ${ownershipDisplayLabel(o)}`"
+              @select="(action) => onRowAction(o, action)"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <BaseModal
       :open="showModal"
@@ -148,7 +157,7 @@ onMounted(async () => {
       @close="resetModal"
     >
       <div class="ui-item-form-grid">
-        <p class="subtle m-0 pb-1 md:col-span-2">
+        <p class="a-aux-hint md:col-span-2">
           Elige quién participa y si el reparto es fijo o se recalcula con los ingresos recurrentes
           de los últimos 12 meses.
         </p>
@@ -159,6 +168,7 @@ onMounted(async () => {
             class="select"
             :model-value="form.allocationBasis"
             :options="allocationBasisOptions"
+            :searchable="false"
             @update:model-value="
               (value) => setAllocationBasis(String(value) as typeof form.allocationBasis)
             "
@@ -167,12 +177,13 @@ onMounted(async () => {
 
         <div class="ui-item-form-field md:col-span-2">
           <span class="ui-item-form-label">Miembros</span>
-          <div class="ui-people-member-list">
+          <div class="a-aux-member-list">
             <AButton
               v-for="m in adults"
               :key="m.id"
-              :class="{ 'ui-people-member-inactive': !form.memberIds.includes(m.id) }"
-              :disabled="editId != null && ownershipsSorted.find((o) => o.id === editId)?.is_in_use"
+              :class="{ 'a-aux-member-inactive': !form.memberIds.includes(m.id) }"
+              :aria-pressed="form.memberIds.includes(m.id)"
+              :disabled="isEditingInUse()"
               @click="toggleMember(m.id)"
             >
               {{ m.name }}
@@ -184,25 +195,23 @@ onMounted(async () => {
           v-if="form.memberIds.length && form.allocationBasis === 'explicit_split'"
           class="ui-item-form-field md:col-span-2"
         >
-          <div class="ui-people-splits-header">
+          <div class="a-aux-splits-header">
             <span class="ui-item-form-label">Porcentajes</span>
-            <AButton @click="setEqualSplit">Reparto igual</AButton>
+            <AButton size="sm" @click="setEqualSplit">Reparto igual</AButton>
           </div>
-          <div class="ui-people-splits">
-            <div v-for="id in form.memberIds" :key="id" class="ui-people-split-row">
-              <div class="ui-people-split-name">
+          <div class="a-aux-splits">
+            <div v-for="id in form.memberIds" :key="id" class="a-aux-split-row">
+              <div class="a-aux-split-name">
                 {{ adults.find((a) => a.id === id)?.name ?? 'ID ' + id }}
               </div>
               <input
                 v-model="form.percents[id]"
                 inputmode="decimal"
                 placeholder="50.00"
-                class="input ui-people-percent-input"
-                :disabled="
-                  editId != null && ownershipsSorted.find((o) => o.id === editId)?.is_in_use
-                "
+                class="input a-aux-percent-input"
+                :disabled="isEditingInUse()"
               />
-              <span class="subtle">%</span>
+              <span class="a-aux-muted">%</span>
             </div>
           </div>
         </div>
@@ -212,14 +221,14 @@ onMounted(async () => {
           class="ui-item-form-field md:col-span-2"
         >
           <span class="ui-item-form-label">Ingresos que forman el reparto</span>
-          <p class="subtle m-0 pb-1">
+          <p class="a-aux-hint">
             Solo se cuentan movimientos recurrentes con titularidad individual dentro de estas
             fuentes. Los ingresos puntuales quedan excluidos.
           </p>
           <label
             v-for="rule in incomeRuleOptions"
             :key="`${rule.category_key}:${rule.subcategory_key}`"
-            class="ui-check-row"
+            class="a-aux-check-row"
           >
             <input
               type="checkbox"
@@ -239,28 +248,28 @@ onMounted(async () => {
           v-if="form.allocationBasis === 'recurring_income_12m' && editId != null"
           class="ui-item-form-field md:col-span-2"
         >
-          <div class="ui-people-splits-header">
+          <div class="a-aux-splits-header">
             <span class="ui-item-form-label">Vista previa del reparto</span>
-            <span class="subtle">Se actualiza al guardar</span>
+            <span class="a-aux-muted">Se actualiza al guardar</span>
           </div>
           <AState v-if="previewLoading" status="loading" layout="inline">
             Calculando últimos 12 meses…
           </AState>
           <template v-else-if="allocationPreview">
-            <p class="subtle">
+            <p class="a-aux-hint">
               {{ allocationPreview.window_start }} — {{ allocationPreview.window_end }} ·
               {{ allocationPreview.observed_months }} meses observados ·
               {{ allocationPreview.excluded_transaction_count }} movimientos excluidos
             </p>
-            <div class="ui-people-splits">
+            <div class="a-aux-splits">
               <div
                 v-for="share in allocationPreview.shares"
                 :key="share.member_id"
-                class="ui-people-split-row"
+                class="a-aux-split-row"
               >
-                <div class="ui-people-split-name">{{ share.member_name }}</div>
+                <div class="a-aux-split-name">{{ share.member_name }}</div>
                 <strong>{{ formatPercent(share.percent) }}</strong>
-                <span class="subtle">{{ formatMoney(share.qualifying_income) }}</span>
+                <span class="a-aux-muted">{{ formatMoney(share.qualifying_income, 'EUR') }}</span>
               </div>
             </div>
             <AState v-if="allocationPreview.status !== 'ready'" status="neutral" layout="inline">
@@ -269,7 +278,7 @@ onMounted(async () => {
               {{ allocationPreview.quality_reasons.join(', ') || 'faltan ingresos suficientes' }}.
             </AState>
           </template>
-          <p v-else class="subtle">
+          <p v-else class="a-aux-hint">
             Guarda el método para calcular la vista previa con movimientos reales.
           </p>
         </div>
@@ -278,6 +287,7 @@ onMounted(async () => {
         <div class="ui-modal-foot-actions">
           <AButton class="ui-form-action-btn" @click="resetModal">Cancelar</AButton>
           <AButton
+            variant="primary"
             class="ui-form-action-btn"
             :disabled="!canCreate || store.loading"
             @click="submit"
@@ -287,5 +297,37 @@ onMounted(async () => {
         </div>
       </template>
     </BaseModal>
-  </div>
+
+    <BaseModal
+      :open="Boolean(ownershipPendingDelete)"
+      title="Eliminar titularidad"
+      variant="sheet"
+      panel-class="dir-a dir-a-sheet"
+      @close="cancelRemoveOwnership"
+    >
+      <div v-if="ownershipPendingDelete" class="a-aux-confirm">
+        <p class="a-aux-confirm-lead">
+          Vas a eliminar <strong>{{ ownershipDisplayLabel(ownershipPendingDelete) }}</strong>
+        </p>
+        <p class="a-aux-confirm-copy">
+          Solo se puede eliminar mientras no la use ninguna posición ni movimiento. Los miembros no
+          se ven afectados.
+        </p>
+      </div>
+
+      <template #footer>
+        <div class="ui-modal-foot-actions">
+          <AButton class="ui-form-action-btn" @click="cancelRemoveOwnership">Cancelar</AButton>
+          <AButton
+            variant="primary"
+            class="ui-form-action-btn a-aux-danger"
+            :disabled="store.loading"
+            @click="confirmRemoveOwnership"
+          >
+            Eliminar
+          </AButton>
+        </div>
+      </template>
+    </BaseModal>
+  </section>
 </template>
