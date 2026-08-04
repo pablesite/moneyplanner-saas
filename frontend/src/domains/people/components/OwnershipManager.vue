@@ -12,6 +12,7 @@ const {
   successMessage,
   allocationPreview,
   previewLoading,
+  dynamicAllocationPreviews,
   form,
   adults,
   canCreate,
@@ -55,6 +56,11 @@ function formatMoney(value: string): string {
   );
 }
 
+function formatPercent(value: string | null | undefined): string {
+  if (value == null) return 'Sin datos';
+  return `${Number(value).toFixed(2)}%`;
+}
+
 onMounted(async () => {
   await ensureLoaded();
 });
@@ -90,10 +96,29 @@ onMounted(async () => {
         <tbody>
           <tr v-for="o in ownershipsSorted" :key="o.id">
             <td>
-              <OwnershipLabel :kind="o.kind" :member="o.member" :splits="o.splits" />
-              <span v-if="o.allocation_basis === 'recurring_income_12m'" class="subtle">
-                · reparto dinámico por ingresos
-              </span>
+              <template v-if="o.allocation_basis === 'recurring_income_12m'">
+                <span class="subtle">Compartido dinámico</span>
+                <template v-if="dynamicAllocationPreviews[o.id]">
+                  <span class="ui-inline-offset-sm">
+                    <span
+                      v-for="(share, index) in dynamicAllocationPreviews[o.id].shares"
+                      :key="share.member_id"
+                    >
+                      {{ share.member_name }} {{ formatPercent(share.percent)
+                      }}<span v-if="index < dynamicAllocationPreviews[o.id].shares.length - 1">
+                        ·
+                      </span>
+                    </span>
+                  </span>
+                  <span class="subtle">
+                    · según ingresos recurrentes de los últimos 12 meses; se recalcula cada mes
+                  </span>
+                </template>
+                <span v-else class="subtle"
+                  >· calculando ingresos recurrentes de los últimos 12 meses…</span
+                >
+              </template>
+              <OwnershipLabel v-else :kind="o.kind" :member="o.member" :splits="o.splits" />
             </td>
 
             <td class="ui-data-table-actions">
@@ -253,7 +278,7 @@ onMounted(async () => {
                 class="ui-people-split-row"
               >
                 <div class="ui-people-split-name">{{ share.member_name }}</div>
-                <strong>{{ Number(share.percent).toFixed(2) }}%</strong>
+                <strong>{{ formatPercent(share.percent) }}</strong>
                 <span class="subtle">{{ formatMoney(share.qualifying_income) }}</span>
               </div>
             </div>
