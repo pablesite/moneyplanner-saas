@@ -180,6 +180,10 @@ locales. Lo único que quedaba eran tres `sect-head` a mano.
       slot de footer en la tanda que abrió el bloque D.
 - [x] **Datos auxiliares** (`domains/aux-data`) — sin deuda; ya consumía
       `AChevron`, `useCollapsibleGroups`, `AToast` y `AButton`.
+- [x] **Panel de administración y perfil** (`/account`, `domains/admin`) —
+      auditado el 2026-08-04. Era el único hueco de esta lista: `AccountView` no
+      apareció en ningún bloque A–G y se había quedado como la última isla
+      legacy. Detalle en el bloque H.
 
 **Excepción documentada:** `BudgetAnnualSection` mantiene su `sect-head` a mano
 porque `.bdg-section-title` es otro tratamiento (16px con barra de color según
@@ -282,6 +286,54 @@ son una excepción documentada y validada con la skill `dataviz`.
       primero y a igualdad de especificidad **gana el design system**. Verificado
       sobre el bundle. Las clases compartidas que las vistas matizan van dentro de
       `:where()` para no romper sus overrides. Reglas 26–28 del visual-contract.
+
+## H. Panel de administración (`/account`) — cerrada
+
+Auditoría del 2026-08-04. `AccountView` era la **última isla legacy** del
+frontend: no aparece en ningún bloque A–G ni en la pasada del bloque E. Para
+`saas_admin` el shell vacía la navegación, así que esa ruta es el panel de
+administración completo.
+
+Diagnóstico: shell legacy (`container ui-page-shell`, 1 de las 3 vistas que
+quedaban) en vez de `.page`; secciones `ui-section-card` con gradiente y sombra
+frente a la superficie abierta del resto; `article.card` dentro de `section.card`;
+80 líneas de `ui-profile-*` en `app.css` con un único consumidor y un `@media
+(max-width: 900px)` fuera de los breakpoints canónicos; 7 `.alert` y 2
+`ui-status-line` en vez de `AState`; tres botones de fila en línea en vez de
+`ARowMenu`; colores hex a pelo en los mini-paneles y en el overlay de importación
+(`bg-[#111827f2]`, `border-t-teal-300`, `z-[70]`); breakpoints Tailwind `md:` en
+layout de página; `.actions` con `flex-wrap: nowrap` y 4 badges por fila
+desbordando a 360px.
+
+- [x] **Alineación estructural.** `.page` + `ASectHead` + `AState` + `ARowMenu` +
+      `AKpiBand` + `AMetaPill`. Retiradas las 80 líneas de `ui-profile-*` y su
+      media query; el overlay de transferencia pasa a tokens. Breakpoints al
+      sistema `@container page`. Los cuatro `AToast` apilados en el mismo anclaje
+      se unifican en uno.
+- [x] **Rediseño de Usuarios.** Un solo eje de conexión (los dos pares de badges
+      se contradecían: una identidad solo-Core salía como "Solo Core" + "En
+      Core"), banda de KPIs, búsqueda y filtros de conexión/estado, `.data-table`
+      con `ARowMenu`, y el detalle técnico movido a un sheet. Bajo `sm`, registro
+      vertical etiquetado.
+- [x] **Borrado con peso.** `window.confirm` → diálogo con nombre, consecuencias
+      y la alternativa de desactivar; `danger` en el menú de fila.
+- [x] **Bug de datos corregido de paso.** El estado de una identidad se calculaba
+      como `saas.is_active || core.is_active`, así que una cuenta SaaS
+      desactivada con contraparte Core viva se listaba como **Activa**. Ahora,
+      cuando hay cuenta SaaS, manda la suya. Cubierto por test.
+- [x] **`.ui-import-spinner` promovido** a `design-system.css` con tokens de
+      acento: lo consumía Contabilidad y el panel habría sido el tercer
+      consumidor en un segundo dominio (regla 29).
+- [x] **Extracción de dominio.** `AccountView` baja de 841 a ~420 líneas; la
+      lógica vive en `useAdminUsersPage` (patrón `:page`) con 6 tests nuevos.
+
+**Verificado en render**, no solo por grep: harness estático con el bundle CSS
+real a 1180px y 390px (más el sheet a 520px). Sacó tres fallos que los greps no
+ven, todos de especificidad contra el design system — de ahí la regla 32 del
+visual-contract.
+
+**DoD**: greps de control limpios en `AccountView` y `domains/admin/**`; lint,
+format, typecheck y 302 tests en verde.
 
 ---
 
