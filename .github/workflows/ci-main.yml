@@ -341,6 +341,11 @@ jobs:
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release pull
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release up -d --wait --wait-timeout 300 --remove-orphans
             docker compose -f docker-compose.prod.yml --env-file '${DEPLOY_ENV_FILE}' --env-file .env.release ps
+            # Cada push a main publica una imagen sha-<commit> que nunca se reutiliza.
+            # Sin poda se acumulan y llenan / (donde vive /var/lib/containerd).
+            # Se conservan 7 dias de tags como objetivos de rollback.
+            docker image prune -af --filter 'until=168h' || true
+            df -h / | tail -1
           "
 
   smoke-production:
@@ -353,6 +358,23 @@ jobs:
         env:
           PRODUCTION_URL: ${{ env.PRODUCTION_URL }}
         run: |
+          set -euo pipefail
+
+          # Backend SaaS.
           curl --fail --silent --show-error --location \
             --retry 6 --retry-delay 10 --retry-all-errors \
             "${PRODUCTION_URL}/api/auth/mode/" > /dev/null
+
+          # UI. Sin esta comprobacion un nginx caido deja el smoke en verde:
+          # los backends siguen sanos y Traefik solo devuelve 404 en las rutas
+          # de frontend, que es justo lo que nadie estaba mirando.
+          body="$(curl --fail --silent --show-error --location \
+            --retry 6 --retry-delay 10 --retry-all-errors \
+            "${PRODUCTION_URL}/")"
+          printf '%s' "$body" | grep -q '<div id="app">'
+
+          # El service worker debe ser servible o la PWA se queda anclada a una
+          # version antigua sin forma de enterarse de que hay una nueva.
+          curl --fail --silent --show-error --location \
+            --retry 6 --retry-delay 10 --retry-all-errors \
+            "${PRODUCTION_URL}/sw.js" > /dev/null

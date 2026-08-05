@@ -2,7 +2,14 @@
 
 ## Objective
 
-Run the private The Arkenstone SaaS production deployment at `https://arkenstone.app`.
+Run the private The Arkenstone SaaS production deployment.
+
+> **Current origin vs target origin.** Production serves today on `https://arkenstone.codinglab.es`
+> — that is the `Host()` rule on the Traefik router and the default `PRODUCTION_URL` in
+> `.github/workflows/ci-main.yml`. `arkenstone.app` is the **target** domain and does not resolve
+> yet. Every runnable command in this document uses the current origin; the `arkenstone.app`
+> values in the env-var sections below describe the target state and must be reconciled against
+> the server `.env` before the domain switch.
 
 Production serves the SaaS frontend as the only public UI. The SaaS backend handles access, admin, subscription state, and platform operations. The Core backend remains the source of truth for product APIs consumed by the SaaS frontend and by SaaS backend bootstrap flows. The Core frontend is not deployed for the SaaS product.
 
@@ -280,14 +287,31 @@ docker compose -f docker-compose.prod.yml --env-file .env ps -a
 Routing checks:
 
 ```bash
-curl -I https://arkenstone.app/
-curl -I https://arkenstone.app/api/auth/mode/
-curl -I https://arkenstone.app/api/core/market-data/status/
+curl -I https://arkenstone.codinglab.es/
+curl -I https://arkenstone.codinglab.es/api/auth/mode/
+curl -I https://arkenstone.codinglab.es/api/core/market-data/status/
 ```
 
 If root works but API paths return the SPA, check Traefik priorities and path rules.
 
 If APIs work internally but not externally, check Cloudflare CNAME and tunnel hostname.
+
+If the APIs answer but every UI route returns 404, check disk before anything else:
+
+```bash
+df -h /
+docker system df
+docker logs --tail 20 moneyplanner-prod-saas_frontend-1
+```
+
+`/` holds `/var/lib/containerd`, where the image layers actually live — **not** `/datos`, despite
+`Docker Root Dir` pointing there. Every push to `main` publishes a `sha-<commit>` image that is
+never reused, so the layer store grows unbounded. When `/` fills up, nginx cannot create
+`/var/lib/nginx/tmp/client_body`, `saas_frontend` enters a restart loop, Traefik loses its only
+backend for the SPA and serves 404 on all UI paths while the Django backends stay healthy.
+Recovery is `docker image prune -af --filter 'until=168h'`; the container restarts on its own.
+The deploy job prunes on every run, so a recurrence means the prune step is failing or the
+7-day retention no longer fits the release cadence.
 
 ## Rollback
 
@@ -350,7 +374,7 @@ in `prod-to-dev-refresh.md`.
 
 Run after the first deployment and after each deploy until CI/CD smoke is trusted.
 
-1. Open `https://arkenstone.app`.
+1. Open `https://arkenstone.codinglab.es`.
 2. Log in as SaaS admin.
 3. Create a `saas_member` from admin operations.
 4. Confirm Core bootstrap succeeds.
@@ -364,8 +388,13 @@ Run after the first deployment and after each deploy until CI/CD smoke is truste
 API checks:
 
 ```bash
-curl -I https://arkenstone.app/api/auth/mode/
-curl -I https://arkenstone.app/api/core/market-data/status/
+curl -I https://arkenstone.codinglab.es/api/auth/mode/
+curl -I https://arkenstone.codinglab.es/api/core/market-data/status/
+
+# La UI se comprueba aparte: los backends siguen sanos aunque nginx este caido,
+# asi que un check solo de /api/ da verde con el frontend devolviendo 404.
+curl -fsS https://arkenstone.codinglab.es/ | grep -q '<div id="app">' && echo "UI OK"
+curl -I https://arkenstone.codinglab.es/sw.js
 ```
 
 ## Phase Specs
