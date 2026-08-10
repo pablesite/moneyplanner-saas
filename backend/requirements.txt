@@ -1,5 +1,5 @@
-Django==6.0.7
-djangorestframework==3.17.1
+Django==6.1
+djangorestframework==3.17.2
 django-cors-headers==4.9.0
 drf-spectacular==0.30.0
 djangorestframework-simplejwt==5.5.1
@@ -8,4 +8,4 @@ gunicorn==26.0.0
 whitenoise==6.12.0
 ruff==0.16.1
 mypy==2.3.0
-coverage==7.15.2
+coverage==7.15.4
