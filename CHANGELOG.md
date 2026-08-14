@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.49.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.48.0...moneyplanner-saas-v0.49.0) (2026-08-14)
+
+
+### Features
+
+* **net-worth:** show exchange rate details ([41de456](https://github.com/pablesite/moneyplanner-saas/commit/41de45687bed2fd31f5b28dc1deeaffa1febd581))
+* **plan:** select ownership for planned decisions ([08485eb](https://github.com/pablesite/moneyplanner-saas/commit/08485ebab242cd81aa8d7ffa108a91e9de20c39e))
+
+
+### Bug Fixes
+
+* **frontend:** keep select options reachable on mobile ([4842601](https://github.com/pablesite/moneyplanner-saas/commit/4842601e5aacfb6d86a8c6ca3560a60d89a2afff))
+* **frontend:** update nanoid security patch ([9ef816b](https://github.com/pablesite/moneyplanner-saas/commit/9ef816b618a7c547219fa99ee9230b4fe079a6f7))
+* **net-worth:** collapse balance categories by default ([693a8f5](https://github.com/pablesite/moneyplanner-saas/commit/693a8f5e1d077e67f7d908417c54b773da71e4e6))
+* **net-worth:** scale evolution charts to visible data ([9cb1612](https://github.com/pablesite/moneyplanner-saas/commit/9cb1612535eefed0023383a29699a84d91e71aac))
+* **net-worth:** use FAB for mobile creation ([fdd95ea](https://github.com/pablesite/moneyplanner-saas/commit/fdd95ea64baeb26bd891039770a49d78c1cc18a0))
+
 ## [0.48.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.47.0...moneyplanner-saas-v0.48.0) (2026-08-04)
 
 
