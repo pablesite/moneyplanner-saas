@@ -12,6 +12,8 @@ const mockAnnualExpenseStore = {
 const mockCoreNetWorthApi = vi.hoisted(() => ({
   getAssetTimeline: vi.fn(),
   getLiabilityTimeline: vi.fn(),
+  getFxConversion: vi.fn(),
+  refreshFxRate: vi.fn(),
 }));
 
 vi.mock('vue-router', () => ({
@@ -34,6 +36,10 @@ vi.mock('@/domains/net-worth', () => ({
   coreNetWorthApi: mockCoreNetWorthApi,
   useNetWorthViewState: () => mockUseNetWorthViewState(),
   useNetWorthViewExtensions: () => mockUseNetWorthViewExtensions(),
+}));
+
+vi.mock('@/domains/net-worth/api', () => ({
+  coreNetWorthApi: mockCoreNetWorthApi,
 }));
 
 vi.mock('@/domains/net-worth/components/NetWorthItemModals.vue', () => ({
@@ -382,6 +388,8 @@ describe('NetWorthView', () => {
     mockAnnualExpenseStore.listBySourceLiability.mockClear();
     mockCoreNetWorthApi.getAssetTimeline.mockReset();
     mockCoreNetWorthApi.getLiabilityTimeline.mockReset();
+    mockCoreNetWorthApi.getFxConversion.mockReset();
+    mockCoreNetWorthApi.refreshFxRate.mockReset();
   });
 
   it('renders the direction-a sections and visible euro amounts', () => {
@@ -736,6 +744,67 @@ describe('NetWorthView', () => {
     expect(wrapper.get('[aria-label="Cerrar detalle"]').attributes('title')).toBe('Cerrar');
     expect(wrapper.text()).not.toContain('Más acciones');
     expect(wrapper.text()).not.toContain('Editar posición');
+  });
+
+  it('shows and refreshes the FX quote for a foreign-currency asset', async () => {
+    const state = makeState({
+      store: {
+        ...makeState().store,
+        assets: [
+          {
+            ...makeState().store.assets[0],
+            currency: 'USD',
+            amount: '1000',
+            amount_base: '910',
+          },
+        ],
+      },
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+    mockCoreNetWorthApi.getFxConversion.mockResolvedValue({
+      data: {
+        from_currency: 'USD',
+        to_currency: 'EUR',
+        rate: '0.91',
+        rate_date: '2026-08-14',
+        resolution: 'exact',
+        requested_date: '2026-08-14',
+      },
+    });
+    mockCoreNetWorthApi.refreshFxRate.mockResolvedValue({
+      data: {
+        from_currency: 'USD',
+        to_currency: 'EUR',
+        rate: '0.92',
+        rate_date: '2026-08-14',
+        resolution: 'exact',
+        requested_date: '2026-08-14',
+      },
+    });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
+    await wrapper.get('.a-nw-mobile-row').trigger('click');
+    await wrapper.get('[aria-label="Detalles del cambio de moneda"]').trigger('click');
+    await flushPromises();
+
+    expect(mockCoreNetWorthApi.getFxConversion).toHaveBeenCalledWith({
+      amount: '1',
+      from: 'USD',
+      to: 'EUR',
+    });
+    expect(wrapper.text()).toContain('Cambio de moneda');
+    expect(wrapper.text()).toContain('1 USD');
+    expect(wrapper.text()).toContain('0,91000000 EUR');
+    expect(wrapper.text()).toContain('14 de agosto de 2026');
+
+    await wrapper.get('.a-nw-fx-detail-actions .btn').trigger('click');
+    await flushPromises();
+
+    expect(mockCoreNetWorthApi.refreshFxRate).toHaveBeenCalledWith({ from: 'USD', to: 'EUR' });
+    expect(state.store.refreshAll).toHaveBeenCalledOnce();
   });
 
   it('filters the mobile balance list by search text', async () => {

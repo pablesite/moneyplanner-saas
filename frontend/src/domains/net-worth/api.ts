@@ -13,6 +13,7 @@ import type {
   PositionTimeline,
   Settings,
   Summary,
+  FxConversion,
 } from '@/domains/net-worth/models';
 import type { OwnershipLink } from '@/domains/net-worth/ownership';
 
@@ -90,6 +91,12 @@ export const coreNetWorthApi = {
   },
   updateSettings(payload: Settings) {
     return coreApi.put<Settings>('/api/auth/settings/', payload);
+  },
+  getFxConversion(params: { amount: string; from: string; to: string; date?: string }) {
+    return coreApi.get<FxConversion>('/api/core/fx/convert/', { params });
+  },
+  refreshFxRate(payload: { from: string; to: string }) {
+    return coreApi.post<FxConversion>('/api/core/fx/refresh/', payload);
   },
 };
 
