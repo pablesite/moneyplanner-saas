@@ -251,6 +251,7 @@ export type PlanScenarioComparison = {
 export type PlanEvent = {
   id: number;
   source_scenario: number | null;
+  ownership_id?: number | null;
   name: string;
   event_type: PlanScenarioTemplate;
   planned_date: string;
@@ -296,6 +297,7 @@ export type PlannedDecisionImpact = {
 export type PlannedDecisionPayload = {
   name: string;
   event_type: PlanScenarioTemplate;
+  ownership_id?: number | null;
   decision_date: string;
   /** Año en que la compra/venta impacta la proyección (puede diferir de la fecha de decisión). */
   transaction_year: number;
