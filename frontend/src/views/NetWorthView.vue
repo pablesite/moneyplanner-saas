@@ -2071,7 +2071,7 @@ watch(
       </div>
     </section>
 
-    <div v-if="activeNetWorthTab === 'balance'" class="a-nw-mobile-create-wrap">
+    <div class="a-nw-mobile-create-wrap">
       <div v-if="mobileCreateMenuOpen" class="a-nw-mobile-create-menu">
         <AButton variant="ghost" size="sm" @click="openMobileCreateModal('asset')">
           Añadir activo

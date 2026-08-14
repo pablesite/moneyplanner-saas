@@ -651,15 +651,13 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('60,00 €');
   });
 
-  it('opens the asset modal from the mobile balance action', async () => {
+  it('opens the asset modal from the mobile action in any tab', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
     expect(wrapper.text()).not.toContain('Hoy');
-    expect(wrapper.find('.a-nw-mobile-create').exists()).toBe(false);
-
-    await openTab(wrapper, 'Balance');
+    expect(wrapper.find('.a-nw-mobile-create').exists()).toBe(true);
     await wrapper.get('.a-nw-mobile-create').trigger('click');
 
     expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(false);
