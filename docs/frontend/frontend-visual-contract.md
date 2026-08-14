@@ -169,5 +169,5 @@ Helpers compartidos asociados (no son componentes):
 Notas de cierre de Fase 5:
 
 - Las primitivas Direction A compartidas quedan consolidadas en `frontend/src/domains/ui` y son la vía por defecto para botones, selects, heroes, KPI bands, estados, pills y donuts.
-- `ASelect` es obligatorio tanto en filtros como en formularios/modales. El trigger visible recibe `$attrs` del consumidor y el panel dimensiona a contenido (`width/height: auto`) para evitar regresiones de tamaño.
+- `ASelect` es obligatorio tanto en filtros como en formularios/modales. El trigger visible recibe `$attrs` del consumidor y el panel dimensiona a contenido (`width/height: auto`); en móvil se limita al espacio visible por encima o debajo del trigger y la lista conserva scroll interno, para que ninguna opción quede fuera de alcance.
 - Las clases compartidas de heroes y breakdowns (`.a-hero-shell`, `.hero-*`, `.comp-*`, `.kpi-*`) viven en `frontend/src/styles/design-system.css`; no se permite importar CSS cross-dominio solo para reutilizarlas.
