@@ -59,8 +59,11 @@
 }
 
 @container page (max-width: 560px) {
-  /* El alta móvil se concentra en el FAB de Balance para no duplicar acciones
-     con la cabecera ni desplazar el contenido principal. */
+  .a-nw-page {
+    --a-nw-mobile-fab-clearance: 122px;
+  }
+
+  /* El alta móvil se concentra en un único FAB para las pestañas de Patrimonio. */
   .a-nw-page .page-head .actions {
     display: none;
   }
@@ -1483,7 +1486,14 @@
   .a-nw-mobile-balance-list {
     display: grid;
     gap: 22px;
-    padding-bottom: 122px;
+    padding-bottom: var(--a-nw-mobile-fab-clearance);
+  }
+
+  /* El FAB es fijo: General y Evolución también deben poder desplazarse por encima
+     de él, como ya hace el listado de Balance. */
+  .a-nw-general-section,
+  .a-nw-evolution-section {
+    padding-bottom: var(--a-nw-mobile-fab-clearance);
   }
 
   .a-nw-mobile-section {

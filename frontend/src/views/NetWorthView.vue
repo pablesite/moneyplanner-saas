@@ -1586,7 +1586,7 @@ watch(
       </div>
     </section>
 
-    <section v-if="activeNetWorthTab === 'general'" class="sect">
+    <section v-if="activeNetWorthTab === 'general'" class="sect a-nw-general-section">
       <div class="hero">
         <div class="hero-top">
           <AHero class="hero-headline" eyebrow="Patrimonio neto">
