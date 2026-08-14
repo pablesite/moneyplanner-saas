@@ -992,7 +992,6 @@ const {
   timelineChartPoints,
   timelineSummaryLabel,
   displayedTimelineSeriesColor,
-  timelineYAxisStartsAtZero,
 } = useNetWorthTimeline({
   ownershipFilter,
   selectedPosition,
@@ -1743,7 +1742,6 @@ watch(
               :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
               :series-label="activeEvolutionLabel"
               :series-color="displayedTimelineSeriesColor"
-              :y-axis-min-zero="timelineYAxisStartsAtZero"
               :markers="activeEvolutionMarkers"
             />
             <p
@@ -2160,7 +2158,6 @@ watch(
             :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
             :series-label="activeEvolutionLabel"
             :series-color="displayedTimelineSeriesColor"
-            :y-axis-min-zero="timelineYAxisStartsAtZero"
           />
         </div>
 
