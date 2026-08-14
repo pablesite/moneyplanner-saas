@@ -751,7 +751,7 @@ const balanceGroups = computed<BalanceGroup[]>(() => {
 });
 
 const balanceSearch = ref('');
-const balanceCollapse = useCollapsibleGroups();
+const balanceCollapse = useCollapsibleGroups({ defaultCollapsed: true });
 const mobileCreateMenuOpen = ref(false);
 const selectedBalanceDetailRow = ref<PositionRow | null>(null);
 
@@ -806,6 +806,7 @@ function balanceGroupKey(group: BalanceGroup): string {
 }
 
 function isBalanceGroupCollapsed(group: BalanceGroup): boolean {
+  if (balanceSearch.value.trim()) return false;
   return balanceCollapse.isCollapsed(balanceGroupKey(group));
 }
 

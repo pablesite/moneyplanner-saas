@@ -697,6 +697,7 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
+    await wrapper.findAll('tr.grp-row')[0]!.trigger('click');
     await wrapper.findAll('tr.clickable')[1]!.trigger('click');
 
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
@@ -710,9 +711,10 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
     const mobileRows = wrapper.findAll('.a-nw-mobile-row');
 
-    expect(mobileRows).toHaveLength(2);
+    expect(mobileRows).toHaveLength(1);
     await mobileRows[0]!.trigger('click');
 
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
@@ -757,19 +759,19 @@ describe('NetWorthView', () => {
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
 
-    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(0);
 
     const firstGroup = wrapper.get('.a-nw-mobile-group-head');
+    expect(firstGroup.attributes('aria-expanded')).toBe('false');
+
+    await firstGroup.trigger('click');
     expect(firstGroup.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
+    expect(wrapper.get('.a-nw-mobile-balance-list').text()).toContain('Cuenta principal');
 
     await firstGroup.trigger('click');
     expect(firstGroup.attributes('aria-expanded')).toBe('false');
-    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
-    expect(wrapper.get('.a-nw-mobile-balance-list').text()).not.toContain('Cuenta principal');
-
-    await firstGroup.trigger('click');
-    expect(firstGroup.attributes('aria-expanded')).toBe('true');
-    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(0);
   });
 
   it('renders each balance kind label once around its collapsible groups', async () => {
@@ -849,6 +851,7 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
 
     expect(wrapper.text()).toContain('(0,17123456 ETH)');
   });
