@@ -59,6 +59,12 @@
 }
 
 @container page (max-width: 560px) {
+  /* El alta móvil se concentra en el FAB de Balance para no duplicar acciones
+     con la cabecera ni desplazar el contenido principal. */
+  .a-nw-page .page-head .actions {
+    display: none;
+  }
+
   .a-nw-scope-seg {
     width: max-content;
   }
