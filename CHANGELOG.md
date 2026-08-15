@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.50.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.50.0...moneyplanner-saas-v0.50.1) (2026-08-15)
+
+
+### Bug Fixes
+
+* **monthly-close:** detail financial investment contributions ([6d7be7a](https://github.com/pablesite/moneyplanner-saas/commit/6d7be7a17c2a3a37df3c1a2a33dc2ac90844e12d))
+* **monthly-close:** show net savings in close result ([5075ffd](https://github.com/pablesite/moneyplanner-saas/commit/5075ffd2131623bd5dd7d4d74883aa93a6ad9558))
+
 ## [0.50.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.3...moneyplanner-saas-v0.50.0) (2026-08-15)
 
 
