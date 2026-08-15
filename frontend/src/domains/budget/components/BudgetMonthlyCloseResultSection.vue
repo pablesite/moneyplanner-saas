@@ -64,6 +64,7 @@ const props = defineProps<{
   selectedMonthlyResidualExpenseRatio: number | null;
   selectedMonthlyResidualExpectedCloseRatio: number | null;
   selectedPerimeterInternalExpenseTotal: number;
+  selectedLiquidityAdjustmentTotal: number;
   resultReconciliationFlowRows: ResultFlowRow[];
   resultReconciliationCompositionRows: ResultCompositionRow[];
   monthlyIncomeExecutionEntries: Array<{ entry: { id: number } }>;
@@ -87,8 +88,8 @@ const props = defineProps<{
 }>();
 
 const residualReading = computed(() => {
-  if (props.selectedMonthlyCloseResidual < 0) return 'Falta caja vs explicado';
-  if (props.selectedMonthlyCloseResidual > 0) return 'Sobra caja vs explicado';
+  if (props.selectedMonthlyCloseResidual < 0) return 'Falta caja sin explicar';
+  if (props.selectedMonthlyCloseResidual > 0) return 'Sobra caja sin explicar';
   return 'Sin diferencia';
 });
 
@@ -123,8 +124,8 @@ const resultBridgeRows = computed(() =>
     <ASectHead title="Resultado">
       <template #hint>
         <AInfoHint label="Sobre este paso">
-          Residual contable provisional a partir del perímetro real y de ingresos/gastos confirmados
-          del mes.
+          Residual provisional tras descontar ingresos, gastos externos y ajustes explícitos del
+          perímetro del mes.
         </AInfoHint>
       </template>
       <template v-if="closeStatus" #actions>
@@ -186,7 +187,7 @@ const resultBridgeRows = computed(() =>
         }"
       >
         <div class="mc-result-card-head">
-          <span>Residual contable</span>
+          <span>Residual sin explicar</span>
           <span class="mc-sev" :class="`mc-sev-${selectedMonthlyResidualSeverity}`">
             {{ selectedMonthlyResidualSeverityLabel }}
           </span>
@@ -200,7 +201,7 @@ const resultBridgeRows = computed(() =>
       <article class="mc-result-card">
         <span>Cierre esperado</span>
         <strong>{{ formatMoney(selectedMonthlyCloseExpected) }} €</strong>
-        <small>Perímetro inicial + ingresos − gastos externos</small>
+        <small>Perímetro inicial + ingresos − gastos externos + ajustes</small>
       </article>
       <article class="mc-result-card">
         <span>Cierre real</span>
@@ -301,6 +302,10 @@ const resultBridgeRows = computed(() =>
         <div v-if="selectedPerimeterInternalExpenseTotal > 0" class="mc-result-footnote">
           {{ formatMoney(selectedPerimeterInternalExpenseTotal) }} € movidos dentro del perímetro no
           cuentan como gasto externo.
+        </div>
+        <div v-if="selectedLiquidityAdjustmentTotal !== 0" class="mc-result-footnote">
+          {{ formatSignedMoney(selectedLiquidityAdjustmentTotal) }} € en ajustes explícitos del
+          perímetro ya están conciliados y no cuentan como residual.
         </div>
       </section>
     </div>

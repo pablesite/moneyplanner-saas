@@ -89,7 +89,9 @@ Core settlement execution endpoints after explicit confirmation.
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |
 | `GET` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/candidates/` | Lists conservatively matched posted transfers eligible for explicit reconciliation. |
 
-`GET /api/budget/monthly-close/{year}/{month}/` now includes additive `ownership_settlement`.
+`GET /api/budget/monthly-close/{year}/{month}/` now includes additive `ownership_settlement` and
+`liquidity_adjustments`. The latter lists posted `adjustment` entries within the liquidity
+perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with
 allocations, per-member economic balances, account targets, recurrent reserves, transaction-traced
 compensations, transfer recommendations, reconciliation and quality. Finalized/locked closes return

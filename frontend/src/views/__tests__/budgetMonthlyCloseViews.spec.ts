@@ -729,13 +729,53 @@ describe('Budget & Monthly close views', () => {
 
     await openMonthlyStep(wrapper, 'Resultado');
 
-    expect(wrapper.text()).toContain('Residual contable');
+    expect(wrapper.text()).toContain('Residual sin explicar');
     expect(wrapper.text()).toContain('Conciliación de cierre');
     expect(wrapper.text()).toContain('Diagnóstico del residual');
     expect(wrapper.find('.mc-bridge').exists()).toBe(true);
     expect(wrapper.find('.mc-diag').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('Composición del movimiento');
     expect(wrapper.text()).not.toContain('Variación perímetro');
+  });
+
+  it('deducts explicit liquidity adjustments before showing the unexplained residual', async () => {
+    configureCoreApi({
+      monthlyCloseState: {
+        liquidity: {
+          current_total: '110.00',
+          previous_total: '100.00',
+          delta: '10.00',
+          completion_ratio: 1,
+          has_checkins: true,
+        },
+        liquidity_adjustments: {
+          total: '10.00',
+          count: 1,
+          entries: [
+            {
+              transaction_id: 7,
+              booking_date: '2026-03-10',
+              description: 'Ajuste banco',
+              account_name: 'Cuenta corriente',
+              amount: '10.00',
+            },
+          ],
+        },
+      },
+      liquiditySummary: {
+        planned_total: '100.00',
+        executed_total: '110.00',
+        completion_ratio: 1,
+      },
+    });
+
+    const wrapper = mountMonthlyCloseView();
+    await flushPromises();
+    await openMonthlyStep(wrapper, 'Resultado');
+
+    expect(wrapper.text()).toContain('Ajustes de conciliación');
+    expect(wrapper.text()).toContain('+10,00 € en ajustes explícitos');
+    expect(wrapper.text()).toContain('0,00 €');
   });
 
   it('opens ledger liquidity manual editing without persisting until the user confirms', async () => {

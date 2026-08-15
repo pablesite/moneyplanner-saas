@@ -1525,12 +1525,16 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   const selectedExpenseMonthExternalExecuted = computed(() =>
     Math.max(0, selectedExpenseMonthExecuted.value - selectedPerimeterInternalExpenseTotal.value),
   );
+  const selectedLiquidityAdjustmentTotal = computed(() =>
+    toNumberOrZero(monthlyCloseData.value?.liquidity_adjustments?.total),
+  );
   const selectedLiquidityStartBase = computed(() => selectedLiquidityMonthPlanned.value);
   const selectedMonthlyCloseExpected = computed(
     () =>
       selectedLiquidityStartBase.value +
       selectedIncomeMonthExecuted.value -
-      selectedExpenseMonthExternalExecuted.value,
+      selectedExpenseMonthExternalExecuted.value +
+      selectedLiquidityAdjustmentTotal.value,
   );
   const selectedMonthlyCloseResidual = computed(
     () => selectedLiquidityMonthExecuted.value - selectedMonthlyCloseExpected.value,
@@ -2730,17 +2734,31 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           },
         ]
       : []),
+    ...(selectedLiquidityAdjustmentTotal.value !== 0
+      ? [
+          {
+            id: 'liquidity-adjustments',
+            label: 'Ajustes de conciliación',
+            amount: selectedLiquidityAdjustmentTotal.value,
+            tone:
+              selectedLiquidityAdjustmentTotal.value < 0
+                ? ('negative' as const)
+                : ('positive' as const),
+            meta: 'Ajustes explícitos en cuentas dentro del perímetro',
+          },
+        ]
+      : []),
     {
       id: 'expected-close',
       label: 'Cierre esperado',
       amount: selectedMonthlyCloseExpected.value,
       tone: 'neutral' as const,
-      meta: 'Perimetro inicio + ingresos - gastos externos',
+      meta: 'Perímetro inicial + ingresos - gastos externos + ajustes',
       isResult: true,
     },
     {
       id: 'residual',
-      label: 'Ajuste de conciliacion (residual)',
+      label: 'Residual sin explicar',
       amount: selectedMonthlyCloseResidual.value,
       tone: selectedMonthlyCloseResidual.value < 0 ? ('negative' as const) : ('positive' as const),
       meta:
@@ -2777,7 +2795,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       },
       {
         id: 'residual',
-        label: 'Ajuste de conciliacion (residual)',
+        label: 'Residual sin explicar',
         amount: selectedMonthlyCloseResidual.value,
         shareOfVolume: volume > 0 ? selectedMonthlyResidualAbs.value / volume : null,
         tone: selectedMonthlyCloseResidual.value < 0 ? ('negative' as const) : ('neutral' as const),
@@ -4795,6 +4813,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     incomeInvestmentRotationSubcategoryAdjustment,
     selectedMonthlyExecutedVolume,
     selectedPerimeterInternalExpenseTotal,
+    selectedLiquidityAdjustmentTotal,
     selectedMonthlyResidualAbs,
     selectedMonthlyResidualVolumeRatio,
     selectedMonthlyResidualIncomeRatio,

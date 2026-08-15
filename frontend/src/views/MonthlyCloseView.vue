@@ -179,6 +179,7 @@ const {
   selectedMonthlyResidualExpenseRatio,
   selectedMonthlyResidualExpectedCloseRatio,
   selectedPerimeterInternalExpenseTotal,
+  selectedLiquidityAdjustmentTotal,
   resultReconciliationFlowRows,
   resultReconciliationCompositionRows,
   monthlyIncomeExecutionEntries,
@@ -662,6 +663,7 @@ async function closeSettlementConfiguration(): Promise<void> {
       :selected-monthly-residual-expense-ratio="selectedMonthlyResidualExpenseRatio"
       :selected-monthly-residual-expected-close-ratio="selectedMonthlyResidualExpectedCloseRatio"
       :selected-perimeter-internal-expense-total="selectedPerimeterInternalExpenseTotal"
+      :selected-liquidity-adjustment-total="selectedLiquidityAdjustmentTotal"
       :result-reconciliation-flow-rows="resultReconciliationFlowRows"
       :result-reconciliation-composition-rows="resultReconciliationCompositionRows"
       :monthly-income-execution-entries="monthlyIncomeExecutionEntries"
