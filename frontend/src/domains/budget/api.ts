@@ -78,9 +78,12 @@ export async function saveSettlementConfiguration(
 export async function getSettlementReadiness(
   year: number,
   month: number,
+  balanceDate?: string,
 ): Promise<SettlementReadiness> {
+  const params: { year: number; month: number; balance_date?: string } = { year, month };
+  if (balanceDate) params.balance_date = balanceDate;
   const response = await coreApi.get<SettlementReadiness>('/api/budget/settlement/readiness/', {
-    params: { year, month },
+    params,
   });
   return response.data;
 }

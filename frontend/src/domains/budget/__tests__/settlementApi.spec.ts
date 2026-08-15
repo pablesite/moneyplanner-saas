@@ -32,12 +32,12 @@ describe('settlement api', () => {
 
     await getSettlementConfiguration();
     await saveSettlementConfiguration(payload);
-    await getSettlementReadiness(2026, 7);
+    await getSettlementReadiness(2026, 7, '2026-07-15');
 
     expect(mocks.get).toHaveBeenCalledWith('/api/budget/settlement/configuration/');
     expect(mocks.put).toHaveBeenCalledWith('/api/budget/settlement/configuration/', payload);
     expect(mocks.get).toHaveBeenCalledWith('/api/budget/settlement/readiness/', {
-      params: { year: 2026, month: 7 },
+      params: { year: 2026, month: 7, balance_date: '2026-07-15' },
     });
   });
 

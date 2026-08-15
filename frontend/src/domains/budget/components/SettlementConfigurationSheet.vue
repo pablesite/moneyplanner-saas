@@ -16,9 +16,11 @@ import type {
   SettlementConfigurationWrite,
   SettlementReadiness,
   SettlementReadinessItem,
+  SettlementWalletReconciliation,
 } from '@/domains/budget/settlementTypes';
 import { toBudgetErrorMessage } from '@/domains/budget/api';
 import { currencySymbol, formatAmount } from '@/lib/format';
+import { parseIsoToDate } from '@/lib/dates';
 
 const props = defineProps<{ open: boolean; year: number; month: number }>();
 const emit = defineEmits<{ close: []; changed: [configuration: SettlementConfiguration] }>();
@@ -110,7 +112,7 @@ const canSave = computed(() => {
 function hydrate(next: SettlementConfiguration): void {
   configuration.value = next;
   form.baseCurrency = next.base_currency;
-  form.activationDate = next.activation_date ?? new Date().toISOString().slice(0, 10);
+  if (next.activation_date) form.activationDate = next.activation_date;
   form.operatingAssetId = String(
     next.accounts.find((row) => row.role === 'operating')?.asset_id ?? '',
   );
@@ -135,6 +137,23 @@ function hydrate(next: SettlementConfiguration): void {
   dirty.value = false;
 }
 
+function activationPeriod(): { year: number; month: number } {
+  const [year, month] = form.activationDate.split('-').map(Number);
+  if (Number.isInteger(year) && Number.isInteger(month) && month >= 1 && month <= 12) {
+    return { year, month };
+  }
+  return { year: props.year, month: props.month };
+}
+
+async function refreshReadiness(): Promise<void> {
+  const period = activationPeriod();
+  readiness.value = await getSettlementReadiness(
+    period.year,
+    period.month,
+    form.activationDate || undefined,
+  );
+}
+
 async function load(): Promise<void> {
   loading.value = true;
   error.value = null;
@@ -145,7 +164,7 @@ async function load(): Promise<void> {
     ]);
     const next = await getSettlementConfiguration();
     hydrate(next);
-    readiness.value = await getSettlementReadiness(props.year, props.month);
+    await refreshReadiness();
   } catch (reason) {
     error.value = toBudgetErrorMessage(reason);
   } finally {
@@ -210,7 +229,7 @@ async function save(): Promise<void> {
   error.value = null;
   try {
     hydrate(await saveSettlementConfiguration(buildPayload()));
-    readiness.value = await getSettlementReadiness(props.year, props.month);
+    await refreshReadiness();
   } catch (reason) {
     error.value = toBudgetErrorMessage(reason);
   } finally {
@@ -224,7 +243,7 @@ async function activate(): Promise<void> {
   try {
     const next = await activateSettlement(form.activationDate);
     hydrate(next);
-    readiness.value = await getSettlementReadiness(props.year, props.month);
+    await refreshReadiness();
     emit('changed', next);
   } catch (reason) {
     error.value = toBudgetErrorMessage(reason);
@@ -256,7 +275,7 @@ function blockerLabel(item: SettlementReadinessItem): string {
     expense_missing_ownership: `Asigna titularidad al gasto “${String(item.name ?? '')}”.`,
     expense_missing_settlement_account: `Indica la cuenta destino del gasto “${String(item.name ?? '')}”.`,
     settlement_ownership_mismatch: 'La titularidad de un gasto no coincide con su cuenta destino.',
-    wallet_adjustment_required: `Completa la compensación de ${String(item.asset_name ?? 'este monedero')} para conciliar el efectivo.`,
+    wallet_adjustment_required: `Concilia ${String(item.asset_name ?? 'este monedero')} en la fecha de activación: la diferencia es ${formattedWalletAmount(Number(item.asset_id), item.difference)}.`,
     opening_adjustments_not_zero: 'Las compensaciones iniciales deben sumar exactamente cero.',
     allocation_blocked: 'Faltan ingresos recurrentes válidos para calcular un reparto dinámico.',
   };
@@ -283,10 +302,29 @@ function blockerTarget(item: SettlementReadinessItem) {
 }
 
 function walletDifference(assetId: number): number {
+  const reconciliation = walletReconciliation(assetId);
+  if (reconciliation) return Number(reconciliation.difference);
   const asset = walletAssets.value.find((row) => row.id === assetId);
   const modeled = Number(asset?.effective_amount ?? asset?.amount ?? 0);
   const physical = Number(String(form.physicalBalances[assetId] || 0).replace(',', '.'));
   return modeled - physical;
+}
+
+function walletReconciliation(assetId: number): SettlementWalletReconciliation | null {
+  return readiness.value?.wallet_reconciliations?.find((row) => row.asset_id === assetId) ?? null;
+}
+
+function walletModeledBalance(assetId: number): unknown {
+  const reconciliation = walletReconciliation(assetId);
+  if (reconciliation) return reconciliation.modeled_balance;
+  const asset = walletAssets.value.find((row) => row.id === assetId);
+  return asset?.effective_amount ?? asset?.amount ?? 0;
+}
+
+function walletBalanceDate(assetId: number): string {
+  const raw = walletReconciliation(assetId)?.balance_date ?? form.activationDate;
+  if (!raw) return 'la fecha de activación';
+  return new Intl.DateTimeFormat('es-ES').format(parseIsoToDate(raw));
 }
 
 function formattedWalletAmount(assetId: number, value: unknown): string {
@@ -420,8 +458,8 @@ function requestClose(): void {
               />
               <strong>{{ asset.name }}</strong>
               <span class="subtle">
-                Saldo contable actualizado:
-                {{ formattedWalletAmount(asset.id, asset.effective_amount ?? asset.amount) }}
+                Saldo contable a {{ walletBalanceDate(asset.id) }}:
+                {{ formattedWalletAmount(asset.id, walletModeledBalance(asset.id)) }}
               </span>
             </label>
             <template v-if="form.walletAssetIds.includes(asset.id)">
@@ -486,6 +524,7 @@ function requestClose(): void {
             class="input"
             type="date"
             :disabled="configuration.is_enabled"
+            @input="markDirty"
           />
         </label>
       </template>
