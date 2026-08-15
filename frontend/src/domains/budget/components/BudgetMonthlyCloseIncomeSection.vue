@@ -1,7 +1,16 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, AKindChip, AKpiBand, ASectHead, AState, type AKpiItem } from '@/domains/ui';
+import {
+  AButton,
+  AInfoHint,
+  AKindChip,
+  AKpiBand,
+  ASectHead,
+  AState,
+  type AKpiItem,
+} from '@/domains/ui';
 import type { AnnualIncomeEntry } from '@/domains/budget/annual-entries';
+import MonthlyCloseDisclosure from './MonthlyCloseDisclosure.vue';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type IncomeResetMode = 'zero' | 'planned';
@@ -199,32 +208,44 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
       </div>
 
       <div class="mc-blocks">
-        <details
+        <MonthlyCloseDisclosure
           v-for="block in incomeCategoryBlocks"
           :key="`income-checkin-category-${block.key}`"
           class="mc-block"
-          :open="block.completionRatio < 1 || block.deviation < 0"
+          :default-open="block.completionRatio < 1 || block.deviation < 0"
         >
-          <summary>
-            <div class="mc-block-title-wrap">
-              <strong class="mc-block-title">{{ block.label }}</strong>
-              <span class="mc-block-meta">
-                {{ block.groups.length }} subcategorías ·
-                {{ Math.round(block.completionRatio * 100) }} % revisión
-              </span>
+          <template #summary>
+            <div class="mc-block-heading">
+              <div class="mc-block-title-line">
+                <strong class="mc-block-title">{{ block.label }}</strong>
+                <span class="mc-review-pill" :class="{ 'is-complete': block.completionRatio >= 1 }">
+                  {{ block.reviewedCount }}/{{ block.groups.length }} revisadas
+                </span>
+              </div>
+              <span class="mc-block-meta"> {{ block.groups.length }} subcategorías </span>
             </div>
             <div class="mc-block-kpis">
-              <span>P {{ formatMoney(block.plannedTotal) }} €</span>
-              <span>E {{ formatMoney(block.executedTotal) }} €</span>
+              <span class="mc-block-kpi-primary">
+                <small>Ejecutado</small>
+                <strong>{{ formatMoney(block.executedTotal) }} €</strong>
+              </span>
+              <span>
+                <small>Previsto</small>
+                <strong>{{ formatMoney(block.plannedTotal) }} €</strong>
+              </span>
               <span
                 :class="
                   block.deviation > 0 ? 'mc-dev-neg' : block.deviation < 0 ? 'mc-dev-pos' : ''
                 "
               >
-                D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
+                <small>Desviación</small>
+                <strong v-if="block.deviation !== 0">
+                  {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
+                </strong>
+                <strong v-else>Sin desviación</strong>
               </span>
             </div>
-          </summary>
+          </template>
 
           <div class="mc-rows">
             <article
@@ -280,8 +301,9 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     <span>Movimientos</span>
                     <strong>{{ formatMoney(group.ledgerDetectedTotal) }} €</strong>
                   </div>
-                  <button
-                    type="button"
+                  <AButton
+                    variant="ghost"
+                    size="sm"
                     class="mc-mini-btn"
                     :disabled="
                       isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
@@ -290,7 +312,7 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     @click="unlockIncomeGroupManualAdjustment(group)"
                   >
                     Añadir ingreso
-                  </button>
+                  </AButton>
                   <label class="mc-confirm" title="Marcar esta subcategoría como revisada">
                     <input
                       type="checkbox"
@@ -332,8 +354,8 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                     @keydown.enter.prevent="saveIncomeGroupCheckinFromInput(group)"
                   />
                   <div class="mc-quick-actions">
-                    <button
-                      type="button"
+                    <AButton
+                      size="sm"
                       class="mc-mini-btn"
                       :disabled="
                         isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
@@ -341,9 +363,10 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                       @click="resetIncomeGroupCheckinDraftValue(group, 'planned')"
                     >
                       Previsto
-                    </button>
-                    <button
-                      type="button"
+                    </AButton>
+                    <AButton
+                      variant="primary"
+                      size="sm"
                       class="mc-mini-btn"
                       :disabled="
                         isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
@@ -352,9 +375,10 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                       @click="saveIncomeGroupCheckinFromInput(group)"
                     >
                       Guardar
-                    </button>
-                    <button
-                      type="button"
+                    </AButton>
+                    <AButton
+                      variant="ghost"
+                      size="sm"
                       class="mc-mini-btn"
                       :disabled="
                         isCloseLocked || incomeExecutionBusyEntryId === group.editableRow.entry.id
@@ -363,13 +387,13 @@ const incomeCategoryBlocks = computed<IncomeCategoryBlock[]>(() => {
                       @click="relockIncomeGroupManualAdjustment(group)"
                     >
                       Usar detectado
-                    </button>
+                    </AButton>
                   </div>
                 </div>
               </div>
             </article>
           </div>
-        </details>
+        </MonthlyCloseDisclosure>
       </div>
     </div>
   </section>

@@ -257,64 +257,135 @@
   gap: 0;
 }
 
-.mc-block {
+.mc-disclosure {
   border-bottom: 1px solid var(--line);
 }
 
-.mc-block > summary {
+.mc-disclosure > summary {
   list-style: none;
   cursor: pointer;
   display: flex;
-  align-items: center;
-  /* flex-start + margin-left:auto en los KPIs: el triángulo (::before) y el
-     título quedan agrupados a la izquierda en vez de centrarse. */
-  justify-content: flex-start;
-  gap: 16px;
-  padding: 14px 6px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
 }
 
-.mc-block > summary::-webkit-details-marker {
+.mc-disclosure > summary::-webkit-details-marker {
   display: none;
 }
 
-.mc-block > summary::before {
-  content: '▸';
-  color: var(--faint);
-  font-size: 12px;
-  margin-right: 2px;
+.mc-disclosure > summary:hover,
+.mc-disclosure[open] > summary {
+  background: var(--hover);
 }
 
-.mc-block[open] > summary::before {
-  content: '▾';
+.mc-disclosure[open] > summary {
+  box-shadow: inset 2px 0 var(--accent);
+}
+
+.mc-disclosure > summary .ui-chevron {
+  flex: 0 0 14px;
+  margin-top: 4px;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.mc-disclosure[open] > summary .ui-chevron {
   color: var(--text);
 }
 
-.mc-block-title-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.mc-disclosure-summary {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) auto;
+  align-items: center;
+  gap: 12px 24px;
   min-width: 0;
 }
 
+.mc-block-heading,
+.mc-breakdown-heading {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mc-block-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .mc-block-title {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 600;
 }
 
 .mc-block-meta {
   font-size: 11px;
-  color: var(--faint);
-  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.mc-review-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--bg);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.mc-review-pill.is-complete {
+  color: var(--pos);
+  border-color: var(--pos-soft);
+  background: var(--pos-soft);
 }
 
 .mc-block-kpis {
-  margin-left: auto;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(92px, auto));
   gap: 16px;
   font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 12px;
+}
+
+.mc-block-kpis > span,
+.mc-breakdown-kpis > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-block-kpis small,
+.mc-breakdown-kpis small {
+  color: var(--faint);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mc-block-kpis strong,
+.mc-breakdown-kpis strong {
   color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
   white-space: nowrap;
+}
+
+.mc-block-kpi-primary strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .mc-dev-pos {
@@ -325,11 +396,28 @@
   color: var(--pos);
 }
 
+.mc-block-kpis .mc-dev-pos strong,
+.mc-breakdown-kpis .mc-dev-pos strong {
+  color: var(--neg);
+}
+
+.mc-block-kpis .mc-dev-neg strong,
+.mc-breakdown-kpis .mc-dev-neg strong {
+  color: var(--pos);
+}
+
 /* Filas de subcategoría */
+.mc-block > .mc-disclosure-body,
+.mc-breakdown-group > .mc-disclosure-body {
+  margin-left: 15px;
+  padding-left: 18px;
+  border-left: 1px solid var(--line-strong);
+}
+
 .mc-rows {
   display: grid;
   gap: 0;
-  padding: 0 6px 8px;
+  padding: 0 6px 10px 0;
 }
 
 .mc-row {
@@ -337,8 +425,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
-  padding-left: 22px;
+  padding: 14px 0;
   border-top: 1px solid var(--line);
 }
 
@@ -360,11 +447,11 @@
   flex-wrap: wrap;
   gap: 4px 10px;
   font-size: 11px;
-  color: var(--faint);
+  color: var(--muted);
 }
 
 .mc-row-state strong {
-  color: var(--muted);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -465,24 +552,12 @@
   gap: 6px;
 }
 
-.mc-mini-btn {
-  font: inherit;
-  font-size: 12px;
-  padding: 5px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
+.dir-a .btn.mc-mini-btn {
+  min-height: 32px;
+  white-space: nowrap;
 }
 
-.mc-mini-btn:hover:not(:disabled) {
-  color: var(--text);
-  border-color: var(--line-strong);
-  background: var(--hover);
-}
-
-.mc-mini-btn:disabled {
+.dir-a .btn.mc-mini-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -794,67 +869,68 @@
 /* Listas de detalle ejecutado */
 .mc-breakdown-list {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 
 .mc-breakdown-group {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: grid;
-  gap: 8px;
-}
-
-.mc-breakdown-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.mc-breakdown-head strong {
-  font-size: 13px;
-  font-weight: 500;
+  border-bottom-color: var(--line);
 }
 
 .mc-breakdown-submeta {
   font-size: 10.5px;
-  color: var(--faint);
+  color: var(--muted);
 }
 
 .mc-breakdown-kpis {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  font-size: 11.5px;
-  color: var(--muted);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(84px, auto));
+  gap: 14px;
   font-family: 'Geist Mono', ui-monospace, monospace;
-  justify-content: flex-end;
 }
 
 .mc-breakdown-rows {
   display: grid;
-  gap: 2px;
+  gap: 0;
+  padding-bottom: 8px;
 }
 
 .mc-breakdown-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 90px 56px 90px;
+  align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: var(--muted);
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  padding: 3px 0;
+  padding: 10px 0;
   border-top: 1px solid var(--line);
 }
 
 .mc-breakdown-row > span:not(.mc-breakdown-name) {
+  display: grid;
+  gap: 2px;
   text-align: right;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+.mc-breakdown-row small {
+  display: none;
+  color: var(--faint);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mc-breakdown-row strong {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
 }
 
 .mc-breakdown-name {
   color: var(--text);
   font-family: 'Geist', system-ui, sans-serif;
+  font-weight: 500;
 }
 
 .mc-breakdown-more {
@@ -1397,22 +1473,46 @@
     gap: 12px;
   }
 
-  /* La cabecera del bloque (título + KPIs mono nowrap) desbordaba: dejamos que
-     los KPIs caigan bajo el título y dejen de forzar el ancho. */
-  .mc-block > summary {
-    flex-wrap: wrap;
-    gap: 8px 12px;
+  .mc-disclosure > summary {
+    gap: 8px;
+    padding: 14px 6px;
   }
 
-  .mc-block-kpis {
-    margin-left: 0;
-    flex-wrap: wrap;
+  .mc-disclosure > summary .ui-chevron {
+    margin-top: 3px;
+  }
+
+  .mc-disclosure-summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .mc-block-title {
+    font-size: 15px;
+  }
+
+  .mc-block-kpis,
+  .mc-breakdown-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mc-block-kpis strong,
+  .mc-breakdown-kpis strong {
+    font-size: 10.5px;
     white-space: normal;
-    gap: 8px 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .mc-block > .mc-disclosure-body,
+  .mc-breakdown-group > .mc-disclosure-body {
+    margin-left: 10px;
+    padding-left: 12px;
   }
 
   .mc-rows {
-    padding-inline: 0;
+    padding: 0 0 8px;
   }
 
   .mc-row {
@@ -1465,10 +1565,8 @@
     letter-spacing: 0.08em;
   }
 
-  .mc-mini-btn {
+  .dir-a .btn.mc-mini-btn {
     max-width: 128px;
-    padding: 4px 8px;
-    font-size: 11px;
     white-space: normal;
   }
 
@@ -1550,7 +1648,7 @@
     width: 100%;
   }
 
-  .mc-row-checkin .mc-adjust-editor .mc-mini-btn {
+  .dir-a .mc-row-checkin .mc-adjust-editor .btn.mc-mini-btn {
     width: 100%;
     max-width: none;
     min-height: 34px;
@@ -1562,10 +1660,19 @@
      concepto pasa a su propia línea y los importes se reparten debajo. */
   .mc-breakdown-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4px 10px;
+    gap: 8px;
+    padding: 12px 0;
   }
 
   .mc-breakdown-name {
     grid-column: 1 / -1;
+  }
+
+  .mc-breakdown-row > span:not(.mc-breakdown-name) {
+    text-align: left;
+  }
+
+  .mc-breakdown-row small {
+    display: block;
   }
 }

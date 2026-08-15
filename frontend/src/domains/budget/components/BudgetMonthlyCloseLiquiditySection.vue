@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
-import { AInfoHint, AKpiBand, ASectHead, AState, type AKpiItem } from '@/domains/ui';
+import { AButton, AInfoHint, AKpiBand, ASectHead, AState, type AKpiItem } from '@/domains/ui';
+import MonthlyCloseDisclosure from './MonthlyCloseDisclosure.vue';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type LiquidityResetMode = 'zero' | 'planned';
@@ -128,11 +129,11 @@ function liquidityBlockLabel(key: string): string {
   const labels: Record<string, string> = {
     cash_accounts: 'Cuentas y efectivo',
     yield_accounts: 'Cuentas remuneradas',
-    liquid_deposits: 'Depositos liquidos',
+    liquid_deposits: 'Depósitos líquidos',
     credit_cards: 'Tarjetas de crédito',
-    other_liquidity: 'Otros liquidos',
+    other_liquidity: 'Otros líquidos',
   };
-  return labels[key] ?? 'Otros liquidos';
+  return labels[key] ?? 'Otros líquidos';
 }
 
 function isLiquidityRowReviewed(row: LiquidityRow): boolean {
@@ -205,30 +206,42 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
       No hay activos o pasivos líquidos activos para este mes.
     </AState>
     <div v-else class="mc-blocks">
-      <details
+      <MonthlyCloseDisclosure
         v-for="block in liquidityCategoryBlocks"
         :key="`liquidity-checkin-category-${block.key}`"
         class="mc-block"
-        :open="block.completionRatio < 1 || block.deviation !== 0"
+        :default-open="block.completionRatio < 1 || block.deviation !== 0"
       >
-        <summary>
-          <div class="mc-block-title-wrap">
-            <strong class="mc-block-title">{{ block.label }}</strong>
-            <span class="mc-block-meta">
-              {{ block.rows.length }} posiciones · {{ Math.round(block.completionRatio * 100) }} %
-              revisión
-            </span>
+        <template #summary>
+          <div class="mc-block-heading">
+            <div class="mc-block-title-line">
+              <strong class="mc-block-title">{{ block.label }}</strong>
+              <span class="mc-review-pill" :class="{ 'is-complete': block.completionRatio >= 1 }">
+                {{ block.reviewedCount }}/{{ block.rows.length }} revisadas
+              </span>
+            </div>
+            <span class="mc-block-meta"> {{ block.rows.length }} posiciones </span>
           </div>
           <div class="mc-block-kpis">
-            <span>P {{ formatMoney(block.plannedTotal) }} €</span>
-            <span>E {{ formatMoney(block.executedTotal) }} €</span>
+            <span class="mc-block-kpi-primary">
+              <small>Cierre</small>
+              <strong>{{ formatMoney(block.executedTotal) }} €</strong>
+            </span>
+            <span>
+              <small>Previsto</small>
+              <strong>{{ formatMoney(block.plannedTotal) }} €</strong>
+            </span>
             <span
               :class="block.deviation > 0 ? 'mc-dev-neg' : block.deviation < 0 ? 'mc-dev-pos' : ''"
             >
-              D {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
+              <small>Desviación</small>
+              <strong v-if="block.deviation !== 0">
+                {{ block.deviation > 0 ? '+' : '' }}{{ formatMoney(block.deviation) }} €
+              </strong>
+              <strong v-else>Sin desviación</strong>
             </span>
           </div>
-        </summary>
+        </template>
 
         <div class="mc-rows">
           <article
@@ -297,15 +310,16 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
                     {{ row.currency === 'EUR' ? '€' : row.currency }}
                   </strong>
                 </div>
-                <button
-                  type="button"
+                <AButton
+                  variant="ghost"
+                  size="sm"
                   class="mc-mini-btn"
                   :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
                   title="Abrir un ajuste manual sin modificar todavía el libro contable"
                   @click="unlockLiquidityLedgerRow(row)"
                 >
-                  Ajustar manualmente
-                </button>
+                  Ajustar
+                </AButton>
               </div>
               <div v-else class="mc-adjust">
                 <input
@@ -325,34 +339,34 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
                   @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
                 />
                 <div class="mc-quick-actions">
-                  <button
-                    type="button"
+                  <AButton
+                    size="sm"
                     class="mc-mini-btn"
                     :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
                     title="Poner saldo real a 0"
                     @click="resetLiquidityCheckinDraftValue(row, 'zero')"
                   >
                     Borrar
-                  </button>
-                  <button
-                    type="button"
+                  </AButton>
+                  <AButton
+                    size="sm"
                     class="mc-mini-btn"
                     :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
                     title="Restaurar saldo de referencia"
                     @click="resetLiquidityCheckinDraftValue(row, 'planned')"
                   >
                     Referencia
-                  </button>
-                  <button
+                  </AButton>
+                  <AButton
                     v-if="row.ledger_available"
-                    type="button"
+                    size="sm"
                     class="mc-mini-btn"
                     :disabled="isCloseLocked || liquidityExecutionBusyAssetId === row.asset_id"
                     title="Volver a usar el saldo del libro contable"
                     @click="relockLiquidityLedgerRow(row)"
                   >
                     Usar libro
-                  </button>
+                  </AButton>
                 </div>
               </div>
               <label
@@ -389,7 +403,7 @@ const liquidityCategoryBlocks = computed<LiquidityCategoryBlock[]>(() => {
             </div>
           </article>
         </div>
-      </details>
+      </MonthlyCloseDisclosure>
     </div>
   </section>
 </template>

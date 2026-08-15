@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed } from 'vue';
 import { AButton, AInfoHint, ASectHead, AState } from '@/domains/ui';
+import MonthlyCloseDisclosure from './MonthlyCloseDisclosure.vue';
 
 type MonthlyCloseStepId = 'liq' | 'income' | 'expense' | 'result';
 type MonthlyCloseStatus = 'draft' | 'finalized' | 'locked';
@@ -314,42 +315,68 @@ const resultBridgeRows = computed(() =>
           No hay ingresos ejecutables para este mes.
         </AState>
         <div v-else class="mc-breakdown-list">
-          <article
+          <MonthlyCloseDisclosure
             v-for="group in monthlyIncomeResultBreakdown"
             :key="`result-income-${group.key}`"
             class="mc-breakdown-group"
+            variant="breakdown"
+            :default-open="group.completionRatio < 1 || group.deviation < 0"
           >
-            <div class="mc-breakdown-head">
-              <div>
-                <strong>{{ group.categoryLabel }}</strong>
+            <template #summary>
+              <div class="mc-breakdown-heading">
+                <div class="mc-block-title-line">
+                  <strong class="mc-block-title">{{ group.categoryLabel }}</strong>
+                  <span
+                    class="mc-review-pill"
+                    :class="{ 'is-complete': group.completionRatio >= 1 }"
+                  >
+                    {{ formatPercent(group.completionRatio, 0) }} revisado
+                  </span>
+                </div>
                 <div class="mc-breakdown-submeta">
-                  {{ group.lineCount }} líneas · {{ formatPercent(group.completionRatio, 0) }}
-                  completitud
+                  {{ group.lineCount }} líneas · {{ formatPercent(group.shareOfExecuted, 0) }} del
+                  total
                 </div>
               </div>
               <div class="mc-breakdown-kpis">
-                <span>E {{ formatMoney(group.executedTotal) }} €</span>
-                <span>P {{ formatMoney(group.plannedTotal) }} €</span>
-                <span :class="group.deviation > 0 ? 'mc-dev-neg' : 'mc-dev-pos'">
-                  D {{ formatSignedMoney(group.deviation) }} €
+                <span class="mc-block-kpi-primary">
+                  <small>Ejecutado</small>
+                  <strong>{{ formatMoney(group.executedTotal) }} €</strong>
                 </span>
-                <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
+                <span>
+                  <small>Previsto</small>
+                  <strong>{{ formatMoney(group.plannedTotal) }} €</strong>
+                </span>
+                <span :class="group.deviation > 0 ? 'mc-dev-neg' : 'mc-dev-pos'">
+                  <small>Desviación</small>
+                  <strong v-if="group.deviation !== 0">
+                    {{ formatSignedMoney(group.deviation) }} €
+                  </strong>
+                  <strong v-else>Sin desviación</strong>
+                </span>
               </div>
-            </div>
+            </template>
             <div class="mc-breakdown-rows">
               <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="mc-breakdown-row">
                 <span class="mc-breakdown-name">{{ row.subcategoryLabel }}</span>
-                <span>{{ formatMoney(row.executedTotal) }} €</span>
-                <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
+                <span>
+                  <small>Ejecutado</small>
+                  <strong>{{ formatMoney(row.executedTotal) }} €</strong>
+                </span>
+                <span>
+                  <small>Peso</small>
+                  <strong>{{ formatPercent(row.shareOfExecuted, 0) }}</strong>
+                </span>
                 <span :class="row.deviation > 0 ? 'mc-dev-neg' : 'mc-dev-pos'">
-                  {{ formatSignedMoney(row.deviation) }} €
+                  <small>Desviación</small>
+                  <strong>{{ formatSignedMoney(row.deviation) }} €</strong>
                 </span>
               </div>
               <div v-if="group.rows.length > 5" class="mc-breakdown-more">
                 + {{ group.rows.length - 5 }} subcategorías más
               </div>
             </div>
-          </article>
+          </MonthlyCloseDisclosure>
         </div>
       </section>
 
@@ -362,42 +389,68 @@ const resultBridgeRows = computed(() =>
           No hay gastos ejecutables para este mes.
         </AState>
         <div v-else class="mc-breakdown-list">
-          <article
+          <MonthlyCloseDisclosure
             v-for="group in monthlyExpenseResultBreakdown"
             :key="`result-expense-${group.key}`"
             class="mc-breakdown-group"
+            variant="breakdown"
+            :default-open="group.completionRatio < 1 || group.deviation > 0"
           >
-            <div class="mc-breakdown-head">
-              <div>
-                <strong>{{ group.categoryLabel }}</strong>
+            <template #summary>
+              <div class="mc-breakdown-heading">
+                <div class="mc-block-title-line">
+                  <strong class="mc-block-title">{{ group.categoryLabel }}</strong>
+                  <span
+                    class="mc-review-pill"
+                    :class="{ 'is-complete': group.completionRatio >= 1 }"
+                  >
+                    {{ formatPercent(group.completionRatio, 0) }} revisado
+                  </span>
+                </div>
                 <div class="mc-breakdown-submeta">
-                  {{ group.lineCount }} líneas · {{ formatPercent(group.completionRatio, 0) }}
-                  completitud
+                  {{ group.lineCount }} líneas · {{ formatPercent(group.shareOfExecuted, 0) }} del
+                  total
                 </div>
               </div>
               <div class="mc-breakdown-kpis">
-                <span>E {{ formatMoney(group.executedTotal) }} €</span>
-                <span>P {{ formatMoney(group.plannedTotal) }} €</span>
-                <span :class="group.deviation > 0 ? 'mc-dev-pos' : 'mc-dev-neg'">
-                  D {{ formatSignedMoney(group.deviation) }} €
+                <span class="mc-block-kpi-primary">
+                  <small>Ejecutado</small>
+                  <strong>{{ formatMoney(group.executedTotal) }} €</strong>
                 </span>
-                <span>{{ formatPercent(group.shareOfExecuted, 0) }} del total</span>
+                <span>
+                  <small>Previsto</small>
+                  <strong>{{ formatMoney(group.plannedTotal) }} €</strong>
+                </span>
+                <span :class="group.deviation > 0 ? 'mc-dev-pos' : 'mc-dev-neg'">
+                  <small>Desviación</small>
+                  <strong v-if="group.deviation !== 0">
+                    {{ formatSignedMoney(group.deviation) }} €
+                  </strong>
+                  <strong v-else>Sin desviación</strong>
+                </span>
               </div>
-            </div>
+            </template>
             <div class="mc-breakdown-rows">
               <div v-for="row in group.rows.slice(0, 5)" :key="row.key" class="mc-breakdown-row">
                 <span class="mc-breakdown-name">{{ row.subcategoryLabel }}</span>
-                <span>{{ formatMoney(row.executedTotal) }} €</span>
-                <span>{{ formatPercent(row.shareOfExecuted, 0) }}</span>
+                <span>
+                  <small>Ejecutado</small>
+                  <strong>{{ formatMoney(row.executedTotal) }} €</strong>
+                </span>
+                <span>
+                  <small>Peso</small>
+                  <strong>{{ formatPercent(row.shareOfExecuted, 0) }}</strong>
+                </span>
                 <span :class="row.deviation > 0 ? 'mc-dev-pos' : 'mc-dev-neg'">
-                  {{ formatSignedMoney(row.deviation) }} €
+                  <small>Desviación</small>
+                  <strong>{{ formatSignedMoney(row.deviation) }} €</strong>
                 </span>
               </div>
               <div v-if="group.rows.length > 5" class="mc-breakdown-more">
                 + {{ group.rows.length - 5 }} subcategorías más
               </div>
             </div>
-          </article>
+          </MonthlyCloseDisclosure>
         </div>
       </section>
     </div>

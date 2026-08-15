@@ -116,6 +116,8 @@ Turn the visual guide into a small operational contract for reusable frontend wo
 
 33. Datos auxiliares y personas (`/data`, `/people`, `aux-data.css` `a-aux-*`): la página se lee con dos pestañas sincronizadas con la URL (`Personas` · `Datos de mercado`), no con un acordeón a medida ni con pestañas anidadas dentro de una card. **Datos de mercado** responde primero la pregunta de la pantalla —¿están mis datos al día?— con una banda de cobertura: la cifra es la fecha cubierta y el estado operativo va en el meta (`.pos`/`.neg`). El umbral de frescura depende del dataset: el IPC se publica a mediados del mes siguiente y admite semanas de retraso, las divisas son diarias (`marketHealth.ts`). Cada scope expone su tarjeta de cobertura con el error del último intento si lo hubo. **Personas** monta los dos gestores como secciones hermanas (`.sect` + `ASectHead`), sin card propia ni pestañas internas, de modo que `/people` y la pestaña son la misma UI. Acciones de fila en `ARowMenu`, estado del miembro como chip pulsable con `aria-pressed`, y borrado con diálogo del producto.
 
+34. Jerarquía de listas del cierre (`/cierre-mensual`, `monthly-close.css`): Liquidez, Ingresos, Gastos y los desgloses de Resultado usan `MonthlyCloseDisclosure` con `AChevron`. La cabecera muestra grupo, progreso y métricas con nombres completos; el contenido hijo conserva rail vertical, sangría y separadores internos bajo `sm`, sin convertir los niveles en tarjetas anidadas. Los grupos completos sin desviación nacen plegados y las excepciones abiertas. Las acciones de fila usan `AButton` y no compiten visualmente con el importe principal.
+
 ## Usage Guidance
 
 1. Use `ui-page-shell` for top-level views instead of composing ad hoc page spacing.
