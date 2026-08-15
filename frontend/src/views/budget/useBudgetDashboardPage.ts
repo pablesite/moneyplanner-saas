@@ -1770,13 +1770,14 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
         totalOutflows: toNumberOrZero(backendResult.total_outflows),
         livingExpense: toNumberOrZero(backendResult.living_expense),
         financialContributions: toNumberOrZero(backendResult.financial_contributions),
-        financialSavings: toNumberOrZero(backendResult.financial_savings),
+        netSavings: toNumberOrZero(backendResult.net_savings),
         savingsRate:
           backendResult.savings_rate == null
             ? null
             : toNumberOrZero(backendResult.savings_rate) * 100,
         realEstateFormation: toNumberOrZero(backendResult.real_estate_formation),
         tangibleAssetPurchases: toNumberOrZero(backendResult.tangible_asset_purchases),
+        debtPrincipalRepayment: toNumberOrZero(backendResult.debt_principal_repayment),
       };
     }
 
@@ -1811,15 +1812,17 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     );
     const totalOutflows = selectedExpenseMonthExecuted.value;
     const financialSavings = eligibleIncome - (totalOutflows - financialContributions);
+    const netSavings = financialSavings + realEstateFormation + tangibleAssetPurchases;
     return {
       eligibleIncome,
       totalOutflows,
       livingExpense,
       financialContributions,
-      financialSavings,
-      savingsRate: eligibleIncome > 0 ? (financialSavings / eligibleIncome) * 100 : null,
+      netSavings,
+      savingsRate: eligibleIncome > 0 ? (netSavings / eligibleIncome) * 100 : null,
       realEstateFormation,
       tangibleAssetPurchases,
+      debtPrincipalRepayment: 0,
     };
   });
 

@@ -538,10 +538,11 @@ async function closeSettlementConfiguration(): Promise<void> {
       :total-outflows="selectedMonthlyFinancialResult.totalOutflows"
       :living-expense="selectedMonthlyFinancialResult.livingExpense"
       :financial-contributions="selectedMonthlyFinancialResult.financialContributions"
-      :financial-savings="selectedMonthlyFinancialResult.financialSavings"
+      :net-savings="selectedMonthlyFinancialResult.netSavings"
       :savings-rate="selectedMonthlyFinancialResult.savingsRate"
       :real-estate-formation="selectedMonthlyFinancialResult.realEstateFormation"
       :tangible-asset-purchases="selectedMonthlyFinancialResult.tangibleAssetPurchases"
+      :debt-principal-repayment="selectedMonthlyFinancialResult.debtPrincipalRepayment"
       :format-money="formatMoney"
       :format-signed-money="formatSignedMoney"
     />

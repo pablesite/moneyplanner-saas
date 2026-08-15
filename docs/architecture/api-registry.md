@@ -91,8 +91,10 @@ Core settlement execution endpoints after explicit confirmation.
 
 `GET /api/budget/monthly-close/{year}/{month}/` includes additive `ownership_settlement`,
 `liquidity_adjustments` and `financial_result`. The latter is the role-aware monthly outcome:
-eligible income excludes asset sales; financial savings combines retained cash with `savings` and
-`investment` contributions; real-estate and tangible-asset purchases are disclosed separately.
+eligible income excludes asset sales; `financial_savings` is retained cash after financial
+contributions, while `net_savings` also includes real-estate/tangible formation and debt-principal
+repayments. Ledger account type separates principal from interest; the detailed formation fields are
+`real_estate_formation`, `tangible_asset_purchases` and `debt_principal_repayment`.
 `liquidity_adjustments` lists posted `adjustment` entries within the liquidity
 perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with

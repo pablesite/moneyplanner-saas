@@ -271,9 +271,11 @@ function makeMonthlyCloseState(overrides: Record<string, unknown> = {}) {
       living_expense: '0.00',
       financial_contributions: '0.00',
       financial_savings: '0.00',
+      net_savings: '0.00',
       savings_rate: null,
       real_estate_formation: '0.00',
       tangible_asset_purchases: '0.00',
+      debt_principal_repayment: '0.00',
       other_outflows: '0.00',
     },
     has_gaps: false,
@@ -403,9 +405,11 @@ describe('Budget & Monthly close views', () => {
           living_expense: '3000.00',
           financial_contributions: '1000.00',
           financial_savings: '1300.00',
-          savings_rate: '0.2600',
+          net_savings: '2000.00',
+          savings_rate: '0.4000',
           real_estate_formation: '500.00',
           tangible_asset_purchases: '200.00',
+          debt_principal_repayment: '0.00',
           other_outflows: '0.00',
         },
       },
@@ -419,13 +423,13 @@ describe('Budget & Monthly close views', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Tasa de ahorro e inversión');
-    expect(wrapper.text()).toContain('26 %');
-    expect(wrapper.text()).toContain('+1.300,00 €');
-    expect(wrapper.text()).toContain('ahorro financiero');
+    expect(wrapper.text()).toContain('40 %');
+    expect(wrapper.text()).toContain('+2.000,00 €');
+    expect(wrapper.text()).toContain('ahorro e inversión netos');
     expect(wrapper.text()).toContain('1.000,00 €');
     expect(wrapper.text()).toContain('aportados a ahorro e inversión');
     expect(wrapper.text()).toContain('Formación inmobiliaria500,00');
-    expect(wrapper.text()).toContain('mobiliario 200,00 € no incluido en la tasa');
+    expect(wrapper.text()).toContain('activos materiales 200,00 €');
     expect(wrapper.text()).not.toContain('Residual del mes');
   });
 
