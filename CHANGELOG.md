@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.1...moneyplanner-saas-v0.49.2) (2026-08-15)
+
+
+### Bug Fixes
+
+* **frontend:** clarify monthly close list hierarchy ([3543d6e](https://github.com/pablesite/moneyplanner-saas/commit/3543d6e275924f12db80953ebe24b2068634abe6))
+
 ## [0.49.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.0...moneyplanner-saas-v0.49.1) (2026-08-15)
 
 
