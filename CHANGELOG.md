@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.50.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.3...moneyplanner-saas-v0.50.0) (2026-08-15)
+
+
+### Features
+
+* **monthly-close:** prioritize savings in final view ([6f8dbc7](https://github.com/pablesite/moneyplanner-saas/commit/6f8dbc7db7ffb445c4e0ae51517abea8894f139b))
+
+
+### Bug Fixes
+
+* **monthly-close:** show unexplained residual after adjustments ([bf5e5dd](https://github.com/pablesite/moneyplanner-saas/commit/bf5e5dd387bee490027d6bb4c69cfcd8a6ffce03))
+
 ## [0.49.3](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.2...moneyplanner-saas-v0.49.3) (2026-08-15)
 
 
