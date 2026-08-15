@@ -1586,7 +1586,7 @@ watch(
       </div>
     </section>
 
-    <section v-if="activeNetWorthTab === 'general'" class="sect">
+    <section v-if="activeNetWorthTab === 'general'" class="sect a-nw-general-section">
       <div class="hero">
         <div class="hero-top">
           <AHero class="hero-headline" eyebrow="Patrimonio neto">
@@ -2071,7 +2071,7 @@ watch(
       </div>
     </section>
 
-    <div v-if="activeNetWorthTab === 'balance'" class="a-nw-mobile-create-wrap">
+    <div class="a-nw-mobile-create-wrap">
       <div v-if="mobileCreateMenuOpen" class="a-nw-mobile-create-menu">
         <AButton variant="ghost" size="sm" @click="openMobileCreateModal('asset')">
           Añadir activo

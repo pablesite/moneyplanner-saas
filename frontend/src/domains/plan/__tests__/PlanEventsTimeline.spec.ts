@@ -185,14 +185,9 @@ describe('PlanEventsTimeline', () => {
     expect(wrapper.text()).toContain('2 partidas futuras eliminadas');
   });
 
-  it('offers direct editing for a manually planned decision when requested', async () => {
-    const editable: PlanEvent = {
-      ...event,
-      source_scenario: null,
-      actual_impact_json: { registration: { adopted_lines: [{ id: 3 }] } },
-    };
+  it('offers direct editing for every editable planned decision when requested', async () => {
     const wrapper = mount(PlanEventsTimeline, {
-      props: { events: [editable], allowEditing: true },
+      props: { events: [event], allowEditing: true },
       global: {
         stubs: {
           RouterLink: {

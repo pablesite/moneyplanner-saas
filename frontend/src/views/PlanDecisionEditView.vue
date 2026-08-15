@@ -5,6 +5,9 @@ import { AButton, APageHead, ASectHead, ASelect, AState, type ASelectItem } from
 import { planApi } from '@/domains/plan/api';
 import { usePlanStore } from '@/domains/plan/store';
 import { scenarioTemplates } from '@/domains/plan/scenarioTemplates';
+import { premiumOwnershipApi } from '@/domains/net-worth/api';
+import type { Ownership } from '@/domains/net-worth/models';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 import type {
   PlanEventBudgetLines,
   PlanScenarioTemplate,
@@ -35,12 +38,14 @@ const currentYear = new Date().getFullYear();
 const form = reactive({
   name: '',
   event_type: 'housing' as PlanScenarioTemplate,
+  ownershipId: null as number | null,
   kind: 'purchase' as DecisionKind,
   decision_date: '',
   transaction_year: currentYear,
   transaction_month: 1,
   note: '',
 });
+const ownerships = ref<Ownership[]>([]);
 const impact = reactive({
   proceeds: '',
   disposed_asset_value: '',
@@ -88,6 +93,13 @@ const monthOptions: ASelectItem[] = [
   'Noviembre',
   'Diciembre',
 ].map((label, index) => ({ value: index + 1, label }));
+const ownershipOptions = computed<ASelectItem[]>(() => [
+  { value: null, label: 'Sin asignar', disabled: true },
+  ...ownerships.value.map((ownership) => ({
+    value: ownership.id,
+    label: ownershipDisplayLabel(ownership),
+  })),
+]);
 
 const isSale = computed(() => form.kind === 'sale');
 const scenarioBacked = computed(() => event.value?.source_scenario != null);
@@ -205,6 +217,7 @@ function initialize(): void {
     Number(projected.proceeds ?? 0) > 0 || Number(projected.disposed_asset_value ?? 0) > 0;
   form.name = current.name;
   form.event_type = current.event_type;
+  form.ownershipId = current.ownership_id ?? null;
   form.kind = sale ? 'sale' : 'purchase';
   form.decision_date = textValue(registration.decision_date || current.planned_date);
   form.transaction_year = Number(projected.start_year || registration.transaction_year);
@@ -259,6 +272,7 @@ async function submit(): Promise<void> {
     await store.updatePlannedDecision(eventId.value, {
       name: form.name.trim(),
       event_type: form.event_type,
+      ownership_id: form.ownershipId,
       decision_date: form.decision_date,
       transaction_year: Number(form.transaction_year),
       transaction_month: Number(form.transaction_month),
@@ -277,11 +291,13 @@ async function submit(): Promise<void> {
 onMounted(async () => {
   document.title = 'Editar decisión · The Arkenstone';
   try {
-    const [, lines] = await Promise.all([
+    const [, lines, ownershipsResponse] = await Promise.all([
       store.fetchEvents(),
       planApi.getEventBudgetLines(eventId.value),
+      premiumOwnershipApi.getOwnerships(),
     ]);
     context.value = lines.data;
+    ownerships.value = ownershipsResponse.data ?? [];
     initialize();
   } finally {
     loading.value = false;
@@ -331,6 +347,10 @@ onMounted(async () => {
           <label>
             <span>Categoría</span>
             <ASelect v-model="form.event_type" :options="templateOptions" :searchable="false" />
+          </label>
+          <label>
+            <span>Titularidad</span>
+            <ASelect v-model="form.ownershipId" :options="ownershipOptions" />
           </label>
           <label>
             <span>Fecha de la decisión</span>
