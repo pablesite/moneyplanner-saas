@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.49.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.0...moneyplanner-saas-v0.49.1) (2026-08-15)
+
+
+### Bug Fixes
+
+* **net-worth:** keep mobile content clear of add button ([63caec0](https://github.com/pablesite/moneyplanner-saas/commit/63caec0d9333a35c07517ae116ab6e45f311330a))
+* **plan:** edit ownership for planned decisions ([394f5d4](https://github.com/pablesite/moneyplanner-saas/commit/394f5d462d169907af17647869577c56035b55dc))
+
 ## [0.49.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.48.0...moneyplanner-saas-v0.49.0) (2026-08-14)
 
 
