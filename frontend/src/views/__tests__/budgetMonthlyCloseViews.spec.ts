@@ -427,7 +427,8 @@ describe('Budget & Monthly close views', () => {
     expect(wrapper.text()).toContain('+2.000,00 €');
     expect(wrapper.text()).toContain('ahorro e inversión netos');
     expect(wrapper.text()).toContain('1.000,00 €');
-    expect(wrapper.text()).toContain('aportados a ahorro e inversión');
+    expect(wrapper.text()).toContain('aportados a inversión financiera');
+    expect(wrapper.text()).toContain('inversión financiera 1.000,00 €');
     expect(wrapper.text()).toContain('Formación inmobiliaria500,00');
     expect(wrapper.text()).toContain('activos materiales 200,00 €');
     expect(wrapper.text()).not.toContain('Residual del mes');

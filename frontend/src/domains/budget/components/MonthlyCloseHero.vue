@@ -47,7 +47,7 @@ const savingsRateLabel = computed(() =>
           <span class="mc-hero-dot" aria-hidden="true"></span>
           <span>
             <span class="mono">{{ formatMoney(financialContributions) }} €</span>
-            aportados a ahorro e inversión
+            aportados a inversión financiera
           </span>
         </template>
       </AHero>
@@ -56,11 +56,26 @@ const savingsRateLabel = computed(() =>
         <template #meta-0> base de la tasa · excluye ventas de activos </template>
         <template #meta-1> salidas totales {{ formatMoney(totalOutflows) }} € </template>
         <template #meta-2>
-          <span v-if="debtPrincipalRepayment > 0 || tangibleAssetPurchases > 0">
+          <span
+            v-if="
+              financialContributions > 0 || debtPrincipalRepayment > 0 || tangibleAssetPurchases > 0
+            "
+          >
+            <template v-if="financialContributions > 0">
+              inversión financiera {{ formatMoney(financialContributions) }} €
+            </template>
+            <template v-if="financialContributions > 0 && debtPrincipalRepayment > 0"> · </template>
             <template v-if="debtPrincipalRepayment > 0">
               deuda amortizada {{ formatMoney(debtPrincipalRepayment) }} €
             </template>
-            <template v-if="debtPrincipalRepayment > 0 && tangibleAssetPurchases > 0"> · </template>
+            <template
+              v-if="
+                (financialContributions > 0 || debtPrincipalRepayment > 0) &&
+                tangibleAssetPurchases > 0
+              "
+            >
+              ·
+            </template>
             <template v-if="tangibleAssetPurchases > 0">
               activos materiales {{ formatMoney(tangibleAssetPurchases) }} €
             </template>
