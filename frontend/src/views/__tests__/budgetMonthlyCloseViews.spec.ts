@@ -444,7 +444,7 @@ describe('Budget & Monthly close views', () => {
     expect(wrapper.text()).toContain('Libro contable activo');
     expect(wrapper.text()).toContain('Saldo cierre189,44 €');
     expect(wrapper.text()).toContain('Desviación -10,56 €');
-    expect(wrapper.text()).toContain('Ajustar manualmente');
+    expect(wrapper.text()).toContain('Ajustar');
     expect(wrapper.find('input[placeholder="Saldo real"]').exists()).toBe(false);
     expect(wrapper.find('.ui-budget-checkin-confirm').exists()).toBe(false);
   });
@@ -611,9 +611,13 @@ describe('Budget & Monthly close views', () => {
         (text) => text.includes('Cuentas remuneradas') && text.includes('3 posiciones'),
       ),
     ).toBe(true);
-    expect(summaries.some((text) => text.includes('Depositos liquidos'))).toBe(true);
+    expect(summaries.some((text) => text.includes('Depósitos líquidos'))).toBe(true);
     expect(summaries.some((text) => text.includes('Tarjetas de crédito'))).toBe(true);
-    expect(summaries.some((text) => text.includes('Otros liquidos'))).toBe(true);
+    expect(summaries.some((text) => text.includes('Otros líquidos'))).toBe(true);
+    expect(summaries.every((text) => text.includes('Cierre'))).toBe(true);
+    expect(summaries.every((text) => text.includes('Previsto'))).toBe(true);
+    expect(summaries.every((text) => text.includes('Desviación'))).toBe(true);
+    expect(summaries.some((text) => text.includes('revisadas'))).toBe(true);
     expect(wrapper.text()).toContain('Cuenta bancaria - Cuenta nomina');
     expect(wrapper.text()).toContain('Spot/Earn - Spot Binance');
     expect(wrapper.text()).toContain('Cuenta bancaria - MyInvestor cuenta ahorro');
@@ -673,13 +677,13 @@ describe('Budget & Monthly close views', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Saldo cierre10.000,00 €');
-    expect(wrapper.text()).toContain('Ajustar manualmente');
+    expect(wrapper.text()).toContain('Ajustar');
     expect(wrapper.find('input[placeholder="Saldo real"]').exists()).toBe(false);
     expect(wrapper.find('.ui-budget-checkin-confirm').exists()).toBe(false);
 
     const adjustButton = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('Ajustar manualmente'));
+      .find((candidate) => candidate.text() === 'Ajustar');
     await adjustButton?.trigger('click');
     await flushPromises();
 
@@ -773,7 +777,7 @@ describe('Budget & Monthly close views', () => {
 
     const adjustButton = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('Ajustar manualmente'));
+      .find((candidate) => candidate.text() === 'Ajustar');
     await adjustButton?.trigger('click');
     await flushPromises();
 
@@ -841,7 +845,7 @@ describe('Budget & Monthly close views', () => {
 
     const adjustButton = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('Ajustar manualmente'));
+      .find((candidate) => candidate.text() === 'Ajustar');
     await adjustButton?.trigger('click');
     await flushPromises();
 
