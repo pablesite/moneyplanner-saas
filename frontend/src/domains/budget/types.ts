@@ -179,6 +179,17 @@ export type MonthlyCloseStateResponse = {
       amount: string;
     }>;
   };
+  financial_result?: {
+    eligible_income: string;
+    total_outflows: string;
+    living_expense: string;
+    financial_contributions: string;
+    financial_savings: string;
+    savings_rate: string | null;
+    real_estate_formation: string;
+    tangible_asset_purchases: string;
+    other_outflows: string;
+  };
   has_gaps: boolean;
   suggestions: {
     income: Record<string, string>;

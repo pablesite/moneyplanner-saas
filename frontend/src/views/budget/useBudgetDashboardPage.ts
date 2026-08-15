@@ -1762,6 +1762,67 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return monthlySummaryExecutedTotal(selectedExpenseSummaryMonth.value) ?? groupedTotal;
   });
 
+  const selectedMonthlyFinancialResult = computed(() => {
+    const backendResult = monthlyCloseData.value?.financial_result;
+    if (ownershipFilter.value === 'all' && backendResult) {
+      return {
+        eligibleIncome: toNumberOrZero(backendResult.eligible_income),
+        totalOutflows: toNumberOrZero(backendResult.total_outflows),
+        livingExpense: toNumberOrZero(backendResult.living_expense),
+        financialContributions: toNumberOrZero(backendResult.financial_contributions),
+        financialSavings: toNumberOrZero(backendResult.financial_savings),
+        savingsRate:
+          backendResult.savings_rate == null
+            ? null
+            : toNumberOrZero(backendResult.savings_rate) * 100,
+        realEstateFormation: toNumberOrZero(backendResult.real_estate_formation),
+        tangibleAssetPurchases: toNumberOrZero(backendResult.tangible_asset_purchases),
+      };
+    }
+
+    const eligibleIncome = groupedMonthlyIncomeExecutionEntries.value.reduce(
+      (sum, group) => (group.categoryKey === 'capital_gains' ? sum : sum + group.executedTotal),
+      0,
+    );
+    const financialContributions = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) =>
+        group.categoryKey === 'savings_allocation' || group.categoryKey === 'financial_investments'
+          ? sum + group.executedTotal
+          : sum,
+      0,
+    );
+    const livingExpense = groupedMonthlyExpenseExecutionEntries.value.reduce((sum, group) => {
+      const isLiving =
+        group.categoryKey === 'consumption_expenses' ||
+        group.subcategoryKey === 'real_estate_fees_taxes';
+      return isLiving ? sum + group.executedTotal : sum;
+    }, 0);
+    const realEstateFormation = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) =>
+        group.categoryKey === 'real_estate_assets' &&
+        group.subcategoryKey !== 'real_estate_fees_taxes'
+          ? sum + group.executedTotal
+          : sum,
+      0,
+    );
+    const tangibleAssetPurchases = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) => (group.categoryKey === 'tangible_assets' ? sum + group.executedTotal : sum),
+      0,
+    );
+    const totalOutflows = selectedExpenseMonthExecuted.value;
+    const financialSavings = eligibleIncome - (totalOutflows - financialContributions);
+    return {
+      eligibleIncome,
+      totalOutflows,
+      livingExpense,
+      financialContributions,
+      financialSavings,
+      savingsRate: eligibleIncome > 0 ? (financialSavings / eligibleIncome) * 100 : null,
+      realEstateFormation,
+      tangibleAssetPurchases,
+    };
+  });
+
   function buildMonthlyResultBreakdown<
     TEntry extends { category: string; subcategory: string },
     TRow extends {
@@ -4795,6 +4856,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     monthlyLiquidityExecutionRows,
     monthlyExpenseExecutionEntries,
     selectedExpenseMonthExecuted,
+    selectedMonthlyFinancialResult,
     groupedMonthlyExpenseExecutionEntries,
     buildMonthlyResultBreakdown,
     monthlyIncomeResultBreakdown,

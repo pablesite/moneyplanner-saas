@@ -101,6 +101,7 @@ const {
   selectedIncomeMonthExecuted,
   selectedIncomeMonthPlanned,
   selectedExpenseMonthExecuted,
+  selectedMonthlyFinancialResult,
   selectedExpenseMonthPlanned,
   // Expense step
   expenseMonthlySummary,
@@ -533,13 +534,14 @@ async function closeSettlementConfiguration(): Promise<void> {
 
     <MonthlyCloseHero
       :month-label="selectedExecutionMonthLabel"
-      :residual="selectedMonthlyCloseResidual"
-      :liquidity-start="selectedLiquidityStartBase"
-      :liquidity-end="selectedLiquidityMonthExecuted"
-      :income-executed="selectedIncomeMonthExecuted"
-      :income-planned="selectedIncomeMonthPlanned"
-      :expense-executed="selectedExpenseMonthExecuted"
-      :expense-planned="selectedExpenseMonthPlanned"
+      :eligible-income="selectedMonthlyFinancialResult.eligibleIncome"
+      :total-outflows="selectedMonthlyFinancialResult.totalOutflows"
+      :living-expense="selectedMonthlyFinancialResult.livingExpense"
+      :financial-contributions="selectedMonthlyFinancialResult.financialContributions"
+      :financial-savings="selectedMonthlyFinancialResult.financialSavings"
+      :savings-rate="selectedMonthlyFinancialResult.savingsRate"
+      :real-estate-formation="selectedMonthlyFinancialResult.realEstateFormation"
+      :tangible-asset-purchases="selectedMonthlyFinancialResult.tangibleAssetPurchases"
       :format-money="formatMoney"
       :format-signed-money="formatSignedMoney"
     />

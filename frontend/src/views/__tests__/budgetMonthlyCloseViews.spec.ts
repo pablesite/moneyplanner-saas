@@ -265,6 +265,17 @@ function makeMonthlyCloseState(overrides: Record<string, unknown> = {}) {
       completion_ratio: 0,
       has_checkins: false,
     },
+    financial_result: {
+      eligible_income: '0.00',
+      total_outflows: '0.00',
+      living_expense: '0.00',
+      financial_contributions: '0.00',
+      financial_savings: '0.00',
+      savings_rate: null,
+      real_estate_formation: '0.00',
+      tangible_asset_purchases: '0.00',
+      other_outflows: '0.00',
+    },
     has_gaps: false,
     suggestions: {
       income: {},
@@ -381,6 +392,41 @@ describe('Budget & Monthly close views', () => {
     mockBudgetAnnualEntriesPage.annualExpenseEntries.value = [];
     mockBudgetAnnualEntriesPage.openIncomeModal.mockClear();
     mockBudgetAnnualEntriesPage.openExpenseModal.mockClear();
+  });
+
+  it('prioritizes role-aware savings in the monthly close hero', async () => {
+    configureCoreApi({
+      monthlyCloseState: {
+        financial_result: {
+          eligible_income: '5000.00',
+          total_outflows: '4700.00',
+          living_expense: '3000.00',
+          financial_contributions: '1000.00',
+          financial_savings: '1300.00',
+          savings_rate: '0.2600',
+          real_estate_formation: '500.00',
+          tangible_asset_purchases: '200.00',
+          other_outflows: '0.00',
+        },
+      },
+    });
+    mockAccountingApi.getMonthlySummary.mockResolvedValue({
+      data: { fiscal_year: currentYear, months: [] },
+    } as never);
+    mockAccountingApi.getTransactions.mockResolvedValue({ data: [] } as never);
+
+    const wrapper = mountMonthlyCloseView();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Tasa de ahorro e inversión');
+    expect(wrapper.text()).toContain('26 %');
+    expect(wrapper.text()).toContain('+1.300,00 €');
+    expect(wrapper.text()).toContain('ahorro financiero');
+    expect(wrapper.text()).toContain('1.000,00 €');
+    expect(wrapper.text()).toContain('aportados a ahorro e inversión');
+    expect(wrapper.text()).toContain('Formación inmobiliaria500,00');
+    expect(wrapper.text()).toContain('mobiliario 200,00 € no incluido en la tasa');
+    expect(wrapper.text()).not.toContain('Residual del mes');
   });
 
   it('opens a budget income entry from a settlement readiness deep link', async () => {

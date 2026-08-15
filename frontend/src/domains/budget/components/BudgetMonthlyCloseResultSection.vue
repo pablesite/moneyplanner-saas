@@ -180,10 +180,9 @@ const resultBridgeRows = computed(() =>
 
     <div class="mc-result-hero">
       <article
-        class="mc-result-card mc-result-card-primary"
+        class="mc-result-card"
         :class="{
-          'mc-result-card-danger': selectedMonthlyCloseResidual < 0,
-          'mc-result-card-good': selectedMonthlyCloseResidual > 0,
+          'mc-result-card-danger': selectedMonthlyResidualSeverity === 'alert',
         }"
       >
         <div class="mc-result-card-head">
