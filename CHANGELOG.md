@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.3](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.2...moneyplanner-saas-v0.49.3) (2026-08-15)
+
+
+### Bug Fixes
+
+* **settlement:** align wallet checks with activation date ([ba1bbec](https://github.com/pablesite/moneyplanner-saas/commit/ba1bbec494d860d6c440191ddce74bc36e61df20))
+
 ## [0.49.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.1...moneyplanner-saas-v0.49.2) (2026-08-15)
 
 
