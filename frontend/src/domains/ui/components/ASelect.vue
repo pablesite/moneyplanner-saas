@@ -110,13 +110,19 @@ function computePosition() {
   if (!triggerRef.value || !panelRef.value) return;
   const rect = triggerRef.value.getBoundingClientRect();
   const viewportPadding = 8;
-  const panelHeight = Math.min(panelRef.value.getBoundingClientRect().height || 320, 320);
-  const below = window.innerHeight - rect.bottom - viewportPadding;
+  // `100vh` can exceed the visible mobile viewport. Keep the list within the
+  // space on the chosen side of its trigger so every option remains reachable.
+  const viewport = window.visualViewport;
+  const viewportHeight = viewport?.height ?? window.innerHeight;
+  const viewportWidth = viewport?.width ?? window.innerWidth;
+  const preferredPanelHeight = Math.min(panelRef.value.getBoundingClientRect().height || 320, 320);
+  const below = viewportHeight - rect.bottom - viewportPadding;
   const above = rect.top - viewportPadding;
-  const showBelow = below >= panelHeight || below >= above;
+  const showBelow = below >= preferredPanelHeight || below >= above;
+  const availableHeight = Math.max(0, showBelow ? below : above);
   const left = Math.min(
     Math.max(viewportPadding, rect.left),
-    Math.max(viewportPadding, window.innerWidth - Math.max(rect.width, 180) - viewportPadding),
+    Math.max(viewportPadding, viewportWidth - Math.max(rect.width, 180) - viewportPadding),
   );
 
   panelStyle.value = {
@@ -124,13 +130,13 @@ function computePosition() {
       ? {
           top: `${Math.max(
             viewportPadding,
-            Math.min(rect.bottom + 4, window.innerHeight - panelHeight - viewportPadding),
+            Math.min(rect.bottom + 4, viewportHeight - availableHeight - viewportPadding),
           )}px`,
         }
-      : { bottom: `${Math.max(viewportPadding, window.innerHeight - rect.top + 4)}px` }),
+      : { bottom: `${Math.max(viewportPadding, viewportHeight - rect.top + 4)}px` }),
     left: `${left}px`,
     minWidth: `${Math.max(rect.width, 180)}px`,
-    maxHeight: `calc(100vh - ${viewportPadding * 2}px)`,
+    maxHeight: `${Math.min(320, availableHeight)}px`,
   };
 }
 
@@ -198,8 +204,25 @@ function onOutsideMousedown(e: MouseEvent) {
   if (!triggerRef.value?.contains(target) && !panelRef.value?.contains(target)) closePanel();
 }
 
-onMounted(() => document.addEventListener('mousedown', onOutsideMousedown, true));
-onBeforeUnmount(() => document.removeEventListener('mousedown', onOutsideMousedown, true));
+function repositionPanel() {
+  if (open.value) computePosition();
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onOutsideMousedown, true);
+  window.addEventListener('resize', repositionPanel);
+  window.addEventListener('scroll', repositionPanel, true);
+  window.visualViewport?.addEventListener('resize', repositionPanel);
+  window.visualViewport?.addEventListener('scroll', repositionPanel);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onOutsideMousedown, true);
+  window.removeEventListener('resize', repositionPanel);
+  window.removeEventListener('scroll', repositionPanel, true);
+  window.visualViewport?.removeEventListener('resize', repositionPanel);
+  window.visualViewport?.removeEventListener('scroll', repositionPanel);
+});
 
 watch(query, () => {
   highlightIdx.value = 0;

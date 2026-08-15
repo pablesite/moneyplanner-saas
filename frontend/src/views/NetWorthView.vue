@@ -8,6 +8,7 @@ import {
 } from '@/domains/net-worth';
 import NetWorthItemModals from '@/domains/net-worth/components/NetWorthItemModals.vue';
 import type {
+  FxConversion,
   NetWorthWritePayload,
   TimelineComparisonPoint,
   TimelineComparisons,
@@ -751,9 +752,14 @@ const balanceGroups = computed<BalanceGroup[]>(() => {
 });
 
 const balanceSearch = ref('');
-const balanceCollapse = useCollapsibleGroups();
+const balanceCollapse = useCollapsibleGroups({ defaultCollapsed: true });
 const mobileCreateMenuOpen = ref(false);
 const selectedBalanceDetailRow = ref<PositionRow | null>(null);
+const showFxDetailsModal = ref(false);
+const fxDetailsLoading = ref(false);
+const fxDetailsRefreshing = ref(false);
+const fxDetailsError = ref<string | null>(null);
+const fxDetails = ref<FxConversion | null>(null);
 
 function balanceRowMatchesMobileFilters(row: PositionRow): boolean {
   const query = balanceSearch.value.trim().toLocaleLowerCase('es');
@@ -806,6 +812,7 @@ function balanceGroupKey(group: BalanceGroup): string {
 }
 
 function isBalanceGroupCollapsed(group: BalanceGroup): boolean {
+  if (balanceSearch.value.trim()) return false;
   return balanceCollapse.isCollapsed(balanceGroupKey(group));
 }
 
@@ -902,6 +909,89 @@ function foreignAmountLabel(row: PositionRow): string | null {
   return `(${formatNumber(toNumber(rawAmount), isCryptoPosition(row) ? 8 : 2)} ${sourceCurrency})`;
 }
 
+function fxDetailsSource(row: PositionRow | null) {
+  if (!row || row.type !== 'asset') return null;
+  const source = sourceItemForRow(row);
+  const from = String(source?.currency ?? '')
+    .trim()
+    .toUpperCase();
+  const to = String(store.baseCurrency ?? store.summary?.base_currency ?? '')
+    .trim()
+    .toUpperCase();
+  return from && to && from !== to ? { from, to } : null;
+}
+
+const selectedFxDetailsSource = computed(() => fxDetailsSource(selectedBalanceDetailRow.value));
+
+function formatFxDate(value: string | null): string {
+  if (!value) return 'Sin fecha disponible';
+  return new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(parseDate(value));
+}
+
+function fxResolutionLabel(resolution: FxConversion['resolution']): string {
+  if (resolution === 'synced') return 'Sincronizado al consultar';
+  if (resolution === 'fallback') return 'Última cotización disponible';
+  if (resolution === 'same') return 'Sin conversión necesaria';
+  return 'Cotización del día';
+}
+
+async function loadFxDetails(): Promise<void> {
+  const source = selectedFxDetailsSource.value;
+  if (!source) return;
+  fxDetailsLoading.value = true;
+  fxDetailsError.value = null;
+  try {
+    const response = await coreNetWorthApi.getFxConversion({
+      amount: '1',
+      from: source.from,
+      to: source.to,
+    });
+    fxDetails.value = response.data;
+  } catch (error: unknown) {
+    fxDetails.value = null;
+    fxDetailsError.value = toApiErrorMessage(error);
+  } finally {
+    fxDetailsLoading.value = false;
+  }
+}
+
+async function openFxDetails(): Promise<void> {
+  if (!selectedFxDetailsSource.value) return;
+  showFxDetailsModal.value = true;
+  await loadFxDetails();
+}
+
+function closeFxDetails(): void {
+  showFxDetailsModal.value = false;
+  fxDetails.value = null;
+  fxDetailsError.value = null;
+}
+
+function refreshSelectedBalanceDetail(): void {
+  const selected = selectedBalanceDetailRow.value;
+  if (!selected) return;
+  const rows =
+    selected.type === 'asset' ? allAssetPositionRows.value : allLiabilityPositionRows.value;
+  selectedBalanceDetailRow.value = rows.find((row) => row.id === selected.id) ?? selected;
+}
+
+async function refreshFxDetails(): Promise<void> {
+  const source = selectedFxDetailsSource.value;
+  if (!source) return;
+  fxDetailsRefreshing.value = true;
+  fxDetailsError.value = null;
+  try {
+    const response = await coreNetWorthApi.refreshFxRate(source);
+    fxDetails.value = response.data;
+    await store.refreshAll();
+    refreshSelectedBalanceDetail();
+  } catch (error: unknown) {
+    fxDetailsError.value = toApiErrorMessage(error);
+  } finally {
+    fxDetailsRefreshing.value = false;
+  }
+}
+
 function positionSourceLabel(row: PositionRow): string {
   const source = sourceItemForRow(row);
   if (source?.tracking_mode === 'accounting' && source.accounting_account_id) return 'Contable';
@@ -947,6 +1037,7 @@ async function openBalanceDetail(row: PositionRow): Promise<void> {
 
 function closeBalanceDetail(): void {
   selectedBalanceDetailRow.value = null;
+  closeFxDetails();
 }
 
 function editBalanceDetail(row: PositionRow): void {
@@ -992,7 +1083,6 @@ const {
   timelineChartPoints,
   timelineSummaryLabel,
   displayedTimelineSeriesColor,
-  timelineYAxisStartsAtZero,
 } = useNetWorthTimeline({
   ownershipFilter,
   selectedPosition,
@@ -1496,7 +1586,7 @@ watch(
       </div>
     </section>
 
-    <section v-if="activeNetWorthTab === 'general'" class="sect">
+    <section v-if="activeNetWorthTab === 'general'" class="sect a-nw-general-section">
       <div class="hero">
         <div class="hero-top">
           <AHero class="hero-headline" eyebrow="Patrimonio neto">
@@ -1743,7 +1833,6 @@ watch(
               :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
               :series-label="activeEvolutionLabel"
               :series-color="displayedTimelineSeriesColor"
-              :y-axis-min-zero="timelineYAxisStartsAtZero"
               :markers="activeEvolutionMarkers"
             />
             <p
@@ -1982,7 +2071,7 @@ watch(
       </div>
     </section>
 
-    <div v-if="activeNetWorthTab === 'balance'" class="a-nw-mobile-create-wrap">
+    <div class="a-nw-mobile-create-wrap">
       <div v-if="mobileCreateMenuOpen" class="a-nw-mobile-create-menu">
         <AButton variant="ghost" size="sm" @click="openMobileCreateModal('asset')">
           Añadir activo
@@ -2160,11 +2249,35 @@ watch(
             :unit="displayCurrencyUnit(store.timeline?.base_currency ?? unitLabel())"
             :series-label="activeEvolutionLabel"
             :series-color="displayedTimelineSeriesColor"
-            :y-axis-min-zero="timelineYAxisStartsAtZero"
           />
         </div>
 
         <div class="a-nw-detail-actions" aria-label="Acciones de la posición">
+          <button
+            v-if="selectedFxDetailsSource"
+            class="a-nw-detail-action-btn"
+            type="button"
+            aria-label="Detalles del cambio de moneda"
+            title="Detalles del cambio de moneda"
+            @click="openFxDetails"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M7 7h11l-3-3" />
+              <path d="M17 17H6l3 3" />
+              <path d="M18 7a7 7 0 0 1 1 3.5" />
+              <path d="M6 17a7 7 0 0 1-1-3.5" />
+            </svg>
+          </button>
           <button
             class="a-nw-detail-action-btn"
             type="button"
@@ -2235,6 +2348,51 @@ watch(
               <path d="M14 11v6" />
             </svg>
           </button>
+        </div>
+      </div>
+    </BaseModal>
+
+    <BaseModal
+      :open="showFxDetailsModal"
+      title="Cambio de moneda"
+      variant="sheet"
+      panel-class="a-nw-modal-panel a-nw-fx-detail-sheet dir-a dir-a-sheet"
+      @close="closeFxDetails"
+    >
+      <div class="a-nw-fx-detail">
+        <p v-if="selectedFxDetailsSource" class="a-nw-fx-detail-intro">
+          El valor de este activo se convierte de {{ selectedFxDetailsSource.from }} a
+          {{ selectedFxDetailsSource.to }} con la siguiente cotización.
+        </p>
+        <AState v-if="fxDetailsLoading" status="loading">Consultando cambio…</AState>
+        <AState v-else-if="fxDetailsError" status="error">{{ fxDetailsError }}</AState>
+        <template v-else-if="fxDetails">
+          <div class="a-nw-fx-rate-card">
+            <span>1 {{ fxDetails.from_currency }}</span>
+            <strong class="mono"
+              >{{ formatNumber(toNumber(fxDetails.rate), 8) }} {{ fxDetails.to_currency }}</strong
+            >
+          </div>
+          <dl class="a-nw-fx-detail-list">
+            <div>
+              <dt>Fecha de la cotización</dt>
+              <dd>{{ formatFxDate(fxDetails.rate_date) }}</dd>
+            </div>
+            <div>
+              <dt>Origen</dt>
+              <dd>{{ fxResolutionLabel(fxDetails.resolution) }}</dd>
+            </div>
+          </dl>
+        </template>
+        <div class="a-nw-fx-detail-actions">
+          <AButton
+            variant="ghost"
+            :loading="fxDetailsRefreshing"
+            :disabled="fxDetailsRefreshing"
+            @click="refreshFxDetails"
+          >
+            Actualizar cambio
+          </AButton>
         </div>
       </div>
     </BaseModal>

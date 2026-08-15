@@ -109,6 +109,15 @@ export type Settings = {
   inflation_region: string;
 };
 
+export type FxConversion = {
+  from_currency: string;
+  to_currency: string;
+  rate: string;
+  rate_date: string | null;
+  resolution: 'same' | 'exact' | 'synced' | 'fallback';
+  requested_date: string;
+};
+
 export type TimelineRow = {
   date: string;
   total_assets: string;

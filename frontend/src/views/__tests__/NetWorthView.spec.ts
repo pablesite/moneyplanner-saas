@@ -12,6 +12,8 @@ const mockAnnualExpenseStore = {
 const mockCoreNetWorthApi = vi.hoisted(() => ({
   getAssetTimeline: vi.fn(),
   getLiabilityTimeline: vi.fn(),
+  getFxConversion: vi.fn(),
+  refreshFxRate: vi.fn(),
 }));
 
 vi.mock('vue-router', () => ({
@@ -34,6 +36,10 @@ vi.mock('@/domains/net-worth', () => ({
   coreNetWorthApi: mockCoreNetWorthApi,
   useNetWorthViewState: () => mockUseNetWorthViewState(),
   useNetWorthViewExtensions: () => mockUseNetWorthViewExtensions(),
+}));
+
+vi.mock('@/domains/net-worth/api', () => ({
+  coreNetWorthApi: mockCoreNetWorthApi,
 }));
 
 vi.mock('@/domains/net-worth/components/NetWorthItemModals.vue', () => ({
@@ -382,6 +388,8 @@ describe('NetWorthView', () => {
     mockAnnualExpenseStore.listBySourceLiability.mockClear();
     mockCoreNetWorthApi.getAssetTimeline.mockReset();
     mockCoreNetWorthApi.getLiabilityTimeline.mockReset();
+    mockCoreNetWorthApi.getFxConversion.mockReset();
+    mockCoreNetWorthApi.refreshFxRate.mockReset();
   });
 
   it('renders the direction-a sections and visible euro amounts', () => {
@@ -643,15 +651,13 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).toContain('60,00 €');
   });
 
-  it('opens the asset modal from the mobile balance action', async () => {
+  it('opens the asset modal from the mobile action in any tab', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
 
     const wrapper = mount(NetWorthView);
     expect(wrapper.text()).not.toContain('Hoy');
-    expect(wrapper.find('.a-nw-mobile-create').exists()).toBe(false);
-
-    await openTab(wrapper, 'Balance');
+    expect(wrapper.find('.a-nw-mobile-create').exists()).toBe(true);
     await wrapper.get('.a-nw-mobile-create').trigger('click');
 
     expect(wrapper.find('[data-test="asset-modal"]').exists()).toBe(false);
@@ -697,6 +703,7 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
+    await wrapper.findAll('tr.grp-row')[0]!.trigger('click');
     await wrapper.findAll('tr.clickable')[1]!.trigger('click');
 
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
@@ -710,9 +717,10 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
     const mobileRows = wrapper.findAll('.a-nw-mobile-row');
 
-    expect(mobileRows).toHaveLength(2);
+    expect(mobileRows).toHaveLength(1);
     await mobileRows[0]!.trigger('click');
 
     expect(state.store.fetchPositionTimeline).toHaveBeenCalledWith('asset', 11);
@@ -736,6 +744,67 @@ describe('NetWorthView', () => {
     expect(wrapper.text()).not.toContain('Editar posición');
   });
 
+  it('shows and refreshes the FX quote for a foreign-currency asset', async () => {
+    const state = makeState({
+      store: {
+        ...makeState().store,
+        assets: [
+          {
+            ...makeState().store.assets[0],
+            currency: 'USD',
+            amount: '1000',
+            amount_base: '910',
+          },
+        ],
+      },
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+    mockCoreNetWorthApi.getFxConversion.mockResolvedValue({
+      data: {
+        from_currency: 'USD',
+        to_currency: 'EUR',
+        rate: '0.91',
+        rate_date: '2026-08-14',
+        resolution: 'exact',
+        requested_date: '2026-08-14',
+      },
+    });
+    mockCoreNetWorthApi.refreshFxRate.mockResolvedValue({
+      data: {
+        from_currency: 'USD',
+        to_currency: 'EUR',
+        rate: '0.92',
+        rate_date: '2026-08-14',
+        resolution: 'exact',
+        requested_date: '2026-08-14',
+      },
+    });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
+    await wrapper.get('.a-nw-mobile-row').trigger('click');
+    await wrapper.get('[aria-label="Detalles del cambio de moneda"]').trigger('click');
+    await flushPromises();
+
+    expect(mockCoreNetWorthApi.getFxConversion).toHaveBeenCalledWith({
+      amount: '1',
+      from: 'USD',
+      to: 'EUR',
+    });
+    expect(wrapper.text()).toContain('Cambio de moneda');
+    expect(wrapper.text()).toContain('1 USD');
+    expect(wrapper.text()).toContain('0,91000000 EUR');
+    expect(wrapper.text()).toContain('14 de agosto de 2026');
+
+    await wrapper.get('.a-nw-fx-detail-actions .btn').trigger('click');
+    await flushPromises();
+
+    expect(mockCoreNetWorthApi.refreshFxRate).toHaveBeenCalledWith({ from: 'USD', to: 'EUR' });
+    expect(state.store.refreshAll).toHaveBeenCalledOnce();
+  });
+
   it('filters the mobile balance list by search text', async () => {
     mockUseNetWorthViewState.mockReturnValue(makeState());
     mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
@@ -757,19 +826,19 @@ describe('NetWorthView', () => {
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
 
-    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(0);
 
     const firstGroup = wrapper.get('.a-nw-mobile-group-head');
+    expect(firstGroup.attributes('aria-expanded')).toBe('false');
+
+    await firstGroup.trigger('click');
     expect(firstGroup.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
+    expect(wrapper.get('.a-nw-mobile-balance-list').text()).toContain('Cuenta principal');
 
     await firstGroup.trigger('click');
     expect(firstGroup.attributes('aria-expanded')).toBe('false');
-    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(1);
-    expect(wrapper.get('.a-nw-mobile-balance-list').text()).not.toContain('Cuenta principal');
-
-    await firstGroup.trigger('click');
-    expect(firstGroup.attributes('aria-expanded')).toBe('true');
-    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(2);
+    expect(wrapper.findAll('.a-nw-mobile-row')).toHaveLength(0);
   });
 
   it('renders each balance kind label once around its collapsible groups', async () => {
@@ -849,6 +918,7 @@ describe('NetWorthView', () => {
 
     const wrapper = mount(NetWorthView);
     await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
 
     expect(wrapper.text()).toContain('(0,17123456 ETH)');
   });

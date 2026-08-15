@@ -23,7 +23,9 @@ import { useAnnualExpenseStore } from '@/domains/budget/annual-entries/annualExp
 import { useAnnualIncomeStore } from '@/domains/budget/annual-entries/annualIncomeStore';
 import { parseAnnualAmount } from '@/domains/budget/annual-entries/annualEntryUtils';
 import { coreNetWorthApi } from '@/domains/net-worth/api';
-import type { Asset } from '@/domains/net-worth/models';
+import { premiumOwnershipApi } from '@/domains/net-worth/api';
+import type { Asset, Ownership } from '@/domains/net-worth/models';
+import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
 import { formatMoney } from '@/lib/format';
 import '@/domains/plan/plan.css';
 
@@ -55,6 +57,7 @@ const today = new Date().toISOString().slice(0, 10);
 const form = reactive({
   name: '',
   event_type: 'housing' as PlanScenarioTemplate,
+  ownershipId: null as number | null,
   kind: 'sale' as DecisionKind,
   decision_date: today,
   transaction_year: currentYear,
@@ -81,6 +84,7 @@ const selectedAssets = reactive(new Set<number>());
 const selectedLiabilities = reactive(new Set<number>());
 const assets = ref<Asset[]>([]);
 const liabilities = ref<Asset[]>([]);
+const ownerships = ref<Ownership[]>([]);
 // `?buscar=` permite llegar desde Mi Plan con la partida ya filtrada (CTA "Añadir a
 // una decisión" de los movimientos puntuales que aún no cuentan en la previsión).
 const search = ref(
@@ -132,6 +136,13 @@ const monthOptions: ASelectItem[] = [
   'Noviembre',
   'Diciembre',
 ].map((label, index) => ({ value: index + 1, label }));
+const ownershipOptions = computed<ASelectItem[]>(() => [
+  { value: null, label: 'Sin asignar', disabled: true },
+  ...ownerships.value.map((ownership) => ({
+    value: ownership.id,
+    label: ownershipDisplayLabel(ownership),
+  })),
+]);
 
 const isSale = computed(() => form.kind === 'sale');
 
@@ -363,6 +374,7 @@ async function refreshDecisionPreview(): Promise<void> {
     const { data } = await planApi.previewPlannedDecision({
       name: form.name.trim() || 'Nueva decisión',
       event_type: form.event_type,
+      ownership_id: form.ownershipId,
       decision_date: form.decision_date,
       transaction_year: Number(form.transaction_year),
       transaction_month: Number(form.transaction_month),
@@ -423,6 +435,7 @@ async function submit(): Promise<void> {
     await store.registerPlannedDecision({
       name: form.name.trim(),
       event_type: form.event_type,
+      ownership_id: form.ownershipId,
       decision_date: form.decision_date,
       transaction_year: Number(form.transaction_year),
       transaction_month: Number(form.transaction_month),
@@ -449,14 +462,16 @@ async function submit(): Promise<void> {
 onMounted(async () => {
   loadingLines.value = true;
   try {
-    const [, , assetsRes, liabilitiesRes] = await Promise.all([
+    const [, , assetsRes, liabilitiesRes, ownershipsRes] = await Promise.all([
       expenseStore.loadAll(),
       incomeStore.loadAll(),
       coreNetWorthApi.getAssets(),
       coreNetWorthApi.getLiabilities(),
+      premiumOwnershipApi.getOwnerships(),
     ]);
     assets.value = assetsRes.data ?? [];
     liabilities.value = liabilitiesRes.data ?? [];
+    ownerships.value = ownershipsRes.data ?? [];
   } finally {
     loadingLines.value = false;
   }
@@ -503,6 +518,10 @@ onMounted(async () => {
             class="filter-ctrl"
             :searchable="false"
           />
+        </label>
+        <label>
+          <span>Titularidad</span>
+          <ASelect v-model="form.ownershipId" :options="ownershipOptions" class="filter-ctrl" />
         </label>
         <label>
           <span>Fecha de la decisión</span>

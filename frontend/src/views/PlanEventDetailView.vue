@@ -17,8 +17,7 @@ const registration = computed(() => {
 const canEdit = computed(
   () =>
     event.value?.status === 'planned' &&
-    Array.isArray(registration.value?.adopted_lines) &&
-    event.value.source_scenario == null,
+    (event.value.source_scenario != null || Array.isArray(registration.value?.adopted_lines)),
 );
 
 onMounted(async () => {
