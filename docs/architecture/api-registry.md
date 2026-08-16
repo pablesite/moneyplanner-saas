@@ -119,6 +119,18 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `GET` | `/api/net-worth/timeline/` | Net worth timeline. Monthly `rows` include `assets_by_category` in the user's base currency; `comparisons` exposes the baselines `previous_month_close`, `same_day_previous_month`, `previous_year_close`, and `same_day_previous_year` for summary UIs. |
 | `GET` | `/api/net-worth/liquidity/monthly-summary/` | Monthly liquidity summary; includes cash, cards, and interest-bearing investments. Asset rows include `annual_interest_tae` to identify remunerated liquidity. |
 
+### Investment Portfolio — `/api/portfolio/`
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/POST` | `/api/portfolio/provider-mappings/` | User-owned provider mappings. Automatic prices require explicit symbol, quote currency, market where applicable, and confirmation. |
+| `GET/PATCH/DELETE` | `/api/portfolio/provider-mappings/{id}/` | Maintains a custom instrument mapping; canonical mappings are not user-editable. |
+| `GET` | `/api/portfolio/prices/` | Read-only daily closes visible through the authenticated user's positions. |
+| `POST` | `/api/portfolio/instruments/{id}/refresh/` | Refreshes confirmed mappings on demand. A failed provider call preserves the last valid close and returns an explicit error. |
+| `GET` | `/api/portfolio/positions/{id}/valuation/` | Resolves the effective dated value with freshness and provenance. |
+| `GET/POST` | `/api/portfolio/valuations/` | Lists total valuations and creates dated manual values for user-owned positions. |
+| `GET/PATCH/DELETE` | `/api/portfolio/valuations/{id}/` | Maintains manual values; legacy-derived rows are read-only. |
+| `GET` | `/api/portfolio/valuation-health/` | Aggregates fresh/stale/missing counts plus mapping, price and provenance issues. |
+
 ### Financial Plan — `/api/plan/`
 | Method | Route | Description |
 |--------|-------|-------------|
