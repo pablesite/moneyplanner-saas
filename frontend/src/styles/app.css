@@ -29,6 +29,12 @@
   --shell-bottom-inset: env(safe-area-inset-bottom, 0px);
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
@@ -1149,6 +1155,9 @@ main[tabindex='-1']:focus-visible {
 
 .ui-shell-content-stage {
   min-height: calc(100vh - 57px);
+  /* Los context rails desplazan su contenido internamente; el stage impide que
+     ese ancho desplazable se convierta además en scroll horizontal de página. */
+  overflow-x: hidden;
   /* La tab bar es `position: fixed`: sin esta reserva, el último bloque de cada
      vista (típicamente su acción principal) queda debajo de la barra y no hay
      scroll que lo rescate porque el documento ya ha terminado. */

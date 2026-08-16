@@ -32,16 +32,15 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 ```
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` - dominio y rutas.
-- [ ] `docs/frontend/frontend-visual-guide.md` - contrato de Cartera.
-- [ ] `docs/frontend/frontend-visual-contract.md` - solo si nace una primitiva compartida.
-- [ ] `docs/architecture/capabilities-matrix.md` y `docs/project-status.md`.
+- [x] `docs/frontend/domain-map.md` - dominio y rutas.
+- [x] `docs/frontend/frontend-visual-guide.md` - contrato de Cartera.
+- [x] `docs/frontend/frontend-visual-contract.md` - no nació una primitiva compartida.
+- [x] `docs/architecture/capabilities-matrix.md` y `docs/project-status.md`.
 
 ## Risks
 Una tabla densa no escala a movil. No convertir cada fila en una tarjeta gigante ni permitir overflow horizontal del contenido primario.
 
 ## Completion Criteria
-- [ ] Vista usable a 360 px y desktop con datos reales.
-- [ ] Navegacion Patrimonio <-> Cartera sin friccion.
-- [ ] Estados, accesibilidad, tests, docs y commit completados.
-
+- [x] Vista usable a 360 px y desktop con contratos Core y datos reales del entorno.
+- [x] Navegacion Patrimonio <-> Cartera sin friccion.
+- [x] Estados, accesibilidad, tests y docs completados; commit al cierre de la tarea.

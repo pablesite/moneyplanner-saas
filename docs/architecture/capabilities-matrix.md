@@ -15,7 +15,7 @@ Separar packaging comercial de capacidades t�cnicas.
 4. `core.familyLogicalModel` -> base family/ownership
 5. `core.simulatorBasic` -> simulaci�n base (evolutiva)
 6. `core.plan` -> Mi Plan (planificación financiera: proyección, escenarios, cimientos, hallazgos y recomendaciones). Motor en Core backend (app `plan`); UI del MVP solo en frontend SaaS. Desde la fase 5 sustituye la navegación de Estado financiero en SaaS y gobierna el antiguo helper compatible `canUseGuide()`. Packaging pendiente de decisión comercial; durante el desarrollo se expone en el piloto mediante `canUsePlan()` en el frontend SaaS. Specs: `core/docs/tasks/financial-plan/`.
-7. `core.portfolio` -> cartera de inversión familiar consolidada. Dominio y cálculos planificados en Core; primera UI completa en frontend SaaS bajo `/cartera`, dentro de la familia de navegación de Patrimonio. No se activa hasta entregar la fase visible correspondiente. Plan: `core/docs/tasks/investment-portfolio/README.md`.
+7. `core.portfolio` -> cartera de inversión familiar consolidada. Activa en el piloto mediante `canUsePortfolio()`: Core posee dominio y cálculos; el frontend SaaS expone el workspace de solo lectura `/cartera` dentro de la familia de navegación de Patrimonio. Plan: `core/docs/tasks/investment-portfolio/README.md`.
 
 ## Capacidades SaaS (infra / extra)
 1. `platform.cloudHosting`
