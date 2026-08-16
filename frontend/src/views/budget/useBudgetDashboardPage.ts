@@ -1525,12 +1525,16 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   const selectedExpenseMonthExternalExecuted = computed(() =>
     Math.max(0, selectedExpenseMonthExecuted.value - selectedPerimeterInternalExpenseTotal.value),
   );
+  const selectedLiquidityAdjustmentTotal = computed(() =>
+    toNumberOrZero(monthlyCloseData.value?.liquidity_adjustments?.total),
+  );
   const selectedLiquidityStartBase = computed(() => selectedLiquidityMonthPlanned.value);
   const selectedMonthlyCloseExpected = computed(
     () =>
       selectedLiquidityStartBase.value +
       selectedIncomeMonthExecuted.value -
-      selectedExpenseMonthExternalExecuted.value,
+      selectedExpenseMonthExternalExecuted.value +
+      selectedLiquidityAdjustmentTotal.value,
   );
   const selectedMonthlyCloseResidual = computed(
     () => selectedLiquidityMonthExecuted.value - selectedMonthlyCloseExpected.value,
@@ -1756,6 +1760,70 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       0,
     );
     return monthlySummaryExecutedTotal(selectedExpenseSummaryMonth.value) ?? groupedTotal;
+  });
+
+  const selectedMonthlyFinancialResult = computed(() => {
+    const backendResult = monthlyCloseData.value?.financial_result;
+    if (ownershipFilter.value === 'all' && backendResult) {
+      return {
+        eligibleIncome: toNumberOrZero(backendResult.eligible_income),
+        totalOutflows: toNumberOrZero(backendResult.total_outflows),
+        livingExpense: toNumberOrZero(backendResult.living_expense),
+        financialContributions: toNumberOrZero(backendResult.financial_contributions),
+        netSavings: toNumberOrZero(backendResult.net_savings),
+        savingsRate:
+          backendResult.savings_rate == null
+            ? null
+            : toNumberOrZero(backendResult.savings_rate) * 100,
+        realEstateFormation: toNumberOrZero(backendResult.real_estate_formation),
+        tangibleAssetPurchases: toNumberOrZero(backendResult.tangible_asset_purchases),
+        debtPrincipalRepayment: toNumberOrZero(backendResult.debt_principal_repayment),
+      };
+    }
+
+    const eligibleIncome = groupedMonthlyIncomeExecutionEntries.value.reduce(
+      (sum, group) => (group.categoryKey === 'capital_gains' ? sum : sum + group.executedTotal),
+      0,
+    );
+    const financialContributions = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) =>
+        group.categoryKey === 'savings_allocation' || group.categoryKey === 'financial_investments'
+          ? sum + group.executedTotal
+          : sum,
+      0,
+    );
+    const livingExpense = groupedMonthlyExpenseExecutionEntries.value.reduce((sum, group) => {
+      const isLiving =
+        group.categoryKey === 'consumption_expenses' ||
+        group.subcategoryKey === 'real_estate_fees_taxes';
+      return isLiving ? sum + group.executedTotal : sum;
+    }, 0);
+    const realEstateFormation = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) =>
+        group.categoryKey === 'real_estate_assets' &&
+        group.subcategoryKey !== 'real_estate_fees_taxes'
+          ? sum + group.executedTotal
+          : sum,
+      0,
+    );
+    const tangibleAssetPurchases = groupedMonthlyExpenseExecutionEntries.value.reduce(
+      (sum, group) => (group.categoryKey === 'tangible_assets' ? sum + group.executedTotal : sum),
+      0,
+    );
+    const totalOutflows = selectedExpenseMonthExecuted.value;
+    const financialSavings = eligibleIncome - (totalOutflows - financialContributions);
+    const netSavings = financialSavings + realEstateFormation + tangibleAssetPurchases;
+    return {
+      eligibleIncome,
+      totalOutflows,
+      livingExpense,
+      financialContributions,
+      netSavings,
+      savingsRate: eligibleIncome > 0 ? (netSavings / eligibleIncome) * 100 : null,
+      realEstateFormation,
+      tangibleAssetPurchases,
+      debtPrincipalRepayment: 0,
+    };
   });
 
   function buildMonthlyResultBreakdown<
@@ -2730,17 +2798,31 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           },
         ]
       : []),
+    ...(selectedLiquidityAdjustmentTotal.value !== 0
+      ? [
+          {
+            id: 'liquidity-adjustments',
+            label: 'Ajustes de conciliación',
+            amount: selectedLiquidityAdjustmentTotal.value,
+            tone:
+              selectedLiquidityAdjustmentTotal.value < 0
+                ? ('negative' as const)
+                : ('positive' as const),
+            meta: 'Ajustes explícitos en cuentas dentro del perímetro',
+          },
+        ]
+      : []),
     {
       id: 'expected-close',
       label: 'Cierre esperado',
       amount: selectedMonthlyCloseExpected.value,
       tone: 'neutral' as const,
-      meta: 'Perimetro inicio + ingresos - gastos externos',
+      meta: 'Perímetro inicial + ingresos - gastos externos + ajustes',
       isResult: true,
     },
     {
       id: 'residual',
-      label: 'Ajuste de conciliacion (residual)',
+      label: 'Residual sin explicar',
       amount: selectedMonthlyCloseResidual.value,
       tone: selectedMonthlyCloseResidual.value < 0 ? ('negative' as const) : ('positive' as const),
       meta:
@@ -2777,7 +2859,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       },
       {
         id: 'residual',
-        label: 'Ajuste de conciliacion (residual)',
+        label: 'Residual sin explicar',
         amount: selectedMonthlyCloseResidual.value,
         shareOfVolume: volume > 0 ? selectedMonthlyResidualAbs.value / volume : null,
         tone: selectedMonthlyCloseResidual.value < 0 ? ('negative' as const) : ('neutral' as const),
@@ -4777,6 +4859,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     monthlyLiquidityExecutionRows,
     monthlyExpenseExecutionEntries,
     selectedExpenseMonthExecuted,
+    selectedMonthlyFinancialResult,
     groupedMonthlyExpenseExecutionEntries,
     buildMonthlyResultBreakdown,
     monthlyIncomeResultBreakdown,
@@ -4795,6 +4878,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     incomeInvestmentRotationSubcategoryAdjustment,
     selectedMonthlyExecutedVolume,
     selectedPerimeterInternalExpenseTotal,
+    selectedLiquidityAdjustmentTotal,
     selectedMonthlyResidualAbs,
     selectedMonthlyResidualVolumeRatio,
     selectedMonthlyResidualIncomeRatio,

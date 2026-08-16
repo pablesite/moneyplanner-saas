@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.51.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.50.1...moneyplanner-saas-v0.51.0) (2026-08-16)
+
+
+### Features
+
+* **portfolio:** add SaaS portfolio workspace ([beb08d6](https://github.com/pablesite/moneyplanner-saas/commit/beb08d6875d99e264ec771e15e360377da81c1b4))
+* **portfolio:** expose performance read APIs ([e9d7c40](https://github.com/pablesite/moneyplanner-saas/commit/e9d7c40292c8af866b8116603f019c007d135471))
+* **portfolio:** integrate hybrid valuations ([6d740d3](https://github.com/pablesite/moneyplanner-saas/commit/6d740d3cc84653bcb28235146cbfde1f035f629b))
+
+## [0.50.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.50.0...moneyplanner-saas-v0.50.1) (2026-08-15)
+
+
+### Bug Fixes
+
+* **monthly-close:** detail financial investment contributions ([6d7be7a](https://github.com/pablesite/moneyplanner-saas/commit/6d7be7a17c2a3a37df3c1a2a33dc2ac90844e12d))
+* **monthly-close:** show net savings in close result ([5075ffd](https://github.com/pablesite/moneyplanner-saas/commit/5075ffd2131623bd5dd7d4d74883aa93a6ad9558))
+
+## [0.50.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.3...moneyplanner-saas-v0.50.0) (2026-08-15)
+
+
+### Features
+
+* **monthly-close:** prioritize savings in final view ([6f8dbc7](https://github.com/pablesite/moneyplanner-saas/commit/6f8dbc7db7ffb445c4e0ae51517abea8894f139b))
+
+
+### Bug Fixes
+
+* **monthly-close:** show unexplained residual after adjustments ([bf5e5dd](https://github.com/pablesite/moneyplanner-saas/commit/bf5e5dd387bee490027d6bb4c69cfcd8a6ffce03))
+
+## [0.49.3](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.2...moneyplanner-saas-v0.49.3) (2026-08-15)
+
+
+### Bug Fixes
+
+* **settlement:** align wallet checks with activation date ([ba1bbec](https://github.com/pablesite/moneyplanner-saas/commit/ba1bbec494d860d6c440191ddce74bc36e61df20))
+
 ## [0.49.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.49.1...moneyplanner-saas-v0.49.2) (2026-08-15)
 
 

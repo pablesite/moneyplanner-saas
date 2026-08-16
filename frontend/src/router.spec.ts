@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   createWebHistory: vi.fn(() => 'history'),
   afterEach: vi.fn(),
   canUsePlan: vi.fn(() => true),
+  canUsePortfolio: vi.fn(() => true),
 }));
 
 vi.mock('vue-router', () => ({
@@ -19,6 +20,7 @@ vi.mock('@/domains/auth', () => ({
 
 vi.mock('@/domains/capabilities', () => ({
   canUsePlan: mocks.canUsePlan,
+  canUsePortfolio: mocks.canUsePortfolio,
 }));
 
 vi.mock('./views/NetWorthView.vue', () => ({ default: { name: 'NetWorthView' } }));
@@ -53,6 +55,7 @@ vi.mock('./views/PlanEventDetailView.vue', () => ({
 vi.mock('./views/PlanDecisionEditView.vue', () => ({
   default: { name: 'PlanDecisionEditView' },
 }));
+vi.mock('./views/PortfolioView.vue', () => ({ default: { name: 'PortfolioView' } }));
 
 describe('router (core)', () => {
   beforeEach(() => {
@@ -75,6 +78,7 @@ describe('router (core)', () => {
           expect.objectContaining({ path: '/data' }),
           expect.objectContaining({ path: '/contabilidad' }),
           expect.objectContaining({ path: '/contabilidad/cuentas' }),
+          expect.objectContaining({ path: '/cartera' }),
           expect.objectContaining({ path: '/movimientos' }),
           expect.objectContaining({ path: '/estado-financiero', redirect: '/plan' }),
           expect.objectContaining({

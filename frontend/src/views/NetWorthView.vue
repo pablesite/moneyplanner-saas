@@ -50,9 +50,14 @@ import { toApiErrorMessage } from '@/lib/errors';
 import { coreAccountingApi } from '@/domains/accounting/api';
 import type { LedgerDailyBalanceSeriesRow } from '@/domains/accounting/models';
 import { coreNetWorthApi } from '@/domains/net-worth/api';
+import { canUsePortfolio } from '@/domains/capabilities';
 
 const route = useRoute();
 const router = useRouter();
+
+function openPortfolioWorkspace() {
+  void router.push({ path: '/cartera', query: { return: route.fullPath } });
+}
 
 const {
   store,
@@ -1511,6 +1516,9 @@ watch(
         <span v-if="valueMode === 'real'">{{ modeLabel() }}</span>
       </template>
       <template #actions>
+        <AButton v-if="canUsePortfolio()" variant="ghost" @click="openPortfolioWorkspace">
+          Ver cartera
+        </AButton>
         <AButton variant="ghost" @click="openCreateModal('liability', null)">
           Añadir pasivo
         </AButton>
@@ -1531,6 +1539,15 @@ watch(
           {{ tab.label }}
         </button>
       </div>
+      <AButton
+        v-if="canUsePortfolio()"
+        class="a-nw-portfolio-entry"
+        size="sm"
+        variant="ghost"
+        @click="openPortfolioWorkspace"
+      >
+        Cartera
+      </AButton>
     </nav>
 
     <section class="sect a-nw-read-section" aria-label="Opciones de lectura de patrimonio">

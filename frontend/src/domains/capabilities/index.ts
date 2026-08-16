@@ -19,6 +19,7 @@ export type AppCapabilitiesV2 = {
     budget: boolean;
     accountingBasic: boolean;
     accountingMovementsManual: boolean;
+    portfolio: boolean;
     investmentPortfolioBasic: boolean;
     statsBasic: boolean;
     dataPortabilityBasic: boolean;
@@ -89,6 +90,7 @@ export const capabilities: AppCapabilities = {
     budget: true,
     accountingBasic: true,
     accountingMovementsManual: false,
+    portfolio: true,
     investmentPortfolioBasic: false,
     statsBasic: true,
     dataPortabilityBasic: true,
@@ -148,6 +150,7 @@ export type CapabilityPath =
   | 'core.budget'
   | 'core.accountingBasic'
   | 'core.accountingMovementsManual'
+  | 'core.portfolio'
   | 'core.investmentPortfolioBasic'
   | 'core.statsBasic'
   | 'core.dataPortabilityBasic'
@@ -209,6 +212,10 @@ export function canUseGuide(source: AppCapabilities = capabilities): boolean {
 
 export function canUsePlan(source: AppCapabilities = capabilities): boolean {
   return source.core.plan;
+}
+
+export function canUsePortfolio(source: AppCapabilities = capabilities): boolean {
+  return source.core.portfolio;
 }
 
 export function canUseFamilyMode(source: AppCapabilities = capabilities): boolean {

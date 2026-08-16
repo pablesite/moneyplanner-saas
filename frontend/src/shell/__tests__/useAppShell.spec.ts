@@ -61,6 +61,9 @@ describe('useAppShell', () => {
     mocks.route.path = '/patrimonio';
     expect(shell.isNavItemActive(shell.navItems.value[1]!)).toBe(true);
 
+    mocks.route.path = '/cartera';
+    expect(shell.isNavItemActive(shell.navItems.value[1]!)).toBe(true);
+
     mocks.route.path = '/presupuesto';
     expect(shell.isNavItemActive(shell.navItems.value[2]!)).toBe(true);
 

@@ -101,6 +101,7 @@ const {
   selectedIncomeMonthExecuted,
   selectedIncomeMonthPlanned,
   selectedExpenseMonthExecuted,
+  selectedMonthlyFinancialResult,
   selectedExpenseMonthPlanned,
   // Expense step
   expenseMonthlySummary,
@@ -179,6 +180,7 @@ const {
   selectedMonthlyResidualExpenseRatio,
   selectedMonthlyResidualExpectedCloseRatio,
   selectedPerimeterInternalExpenseTotal,
+  selectedLiquidityAdjustmentTotal,
   resultReconciliationFlowRows,
   resultReconciliationCompositionRows,
   monthlyIncomeExecutionEntries,
@@ -532,13 +534,15 @@ async function closeSettlementConfiguration(): Promise<void> {
 
     <MonthlyCloseHero
       :month-label="selectedExecutionMonthLabel"
-      :residual="selectedMonthlyCloseResidual"
-      :liquidity-start="selectedLiquidityStartBase"
-      :liquidity-end="selectedLiquidityMonthExecuted"
-      :income-executed="selectedIncomeMonthExecuted"
-      :income-planned="selectedIncomeMonthPlanned"
-      :expense-executed="selectedExpenseMonthExecuted"
-      :expense-planned="selectedExpenseMonthPlanned"
+      :eligible-income="selectedMonthlyFinancialResult.eligibleIncome"
+      :total-outflows="selectedMonthlyFinancialResult.totalOutflows"
+      :living-expense="selectedMonthlyFinancialResult.livingExpense"
+      :financial-contributions="selectedMonthlyFinancialResult.financialContributions"
+      :net-savings="selectedMonthlyFinancialResult.netSavings"
+      :savings-rate="selectedMonthlyFinancialResult.savingsRate"
+      :real-estate-formation="selectedMonthlyFinancialResult.realEstateFormation"
+      :tangible-asset-purchases="selectedMonthlyFinancialResult.tangibleAssetPurchases"
+      :debt-principal-repayment="selectedMonthlyFinancialResult.debtPrincipalRepayment"
       :format-money="formatMoney"
       :format-signed-money="formatSignedMoney"
     />
@@ -662,6 +666,7 @@ async function closeSettlementConfiguration(): Promise<void> {
       :selected-monthly-residual-expense-ratio="selectedMonthlyResidualExpenseRatio"
       :selected-monthly-residual-expected-close-ratio="selectedMonthlyResidualExpectedCloseRatio"
       :selected-perimeter-internal-expense-total="selectedPerimeterInternalExpenseTotal"
+      :selected-liquidity-adjustment-total="selectedLiquidityAdjustmentTotal"
       :result-reconciliation-flow-rows="resultReconciliationFlowRows"
       :result-reconciliation-composition-rows="resultReconciliationCompositionRows"
       :monthly-income-execution-entries="monthlyIncomeExecutionEntries"

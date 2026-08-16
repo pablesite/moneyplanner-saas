@@ -64,7 +64,12 @@ export function useAppShell() {
       return route.path === item.to || route.path.startsWith(`${item.to}/`);
     }
     if (item.id === 'net-worth') {
-      return route.path === '/' || route.path === item.to || route.path.startsWith(`${item.to}/`);
+      return (
+        route.path === '/' ||
+        route.path === item.to ||
+        route.path.startsWith(`${item.to}/`) ||
+        route.path === '/cartera'
+      );
     }
     return route.path === item.to || route.path.startsWith(`${item.to}/`);
   }

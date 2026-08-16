@@ -82,14 +82,21 @@ Core settlement execution endpoints after explicit confirmation.
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET/PUT` | `/api/budget/settlement/configuration/` | Reads or atomically replaces the disabled profile's participating accounts and zero-sum opening adjustments. |
-| `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M` | Returns period blockers, warnings and ownership ledger coverage without changing balances. |
+| `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M&balance_date=YYYY-MM-DD` | Returns blockers, warnings, ownership coverage and per-wallet reconciliation for the exact optional activation date without changing balances. |
 | `POST` | `/api/budget/settlement/activate/` | Activates a ready profile and captures its immutable member/account opening baseline; repeated calls are idempotent. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/apply/` | Atomically applies every remaining non-cancelled recommendation for a finalized close. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |
 | `GET` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/candidates/` | Lists conservatively matched posted transfers eligible for explicit reconciliation. |
 
-`GET /api/budget/monthly-close/{year}/{month}/` now includes additive `ownership_settlement`.
+`GET /api/budget/monthly-close/{year}/{month}/` includes additive `ownership_settlement`,
+`liquidity_adjustments` and `financial_result`. The latter is the role-aware monthly outcome:
+eligible income excludes asset sales; `financial_savings` is retained cash after financial
+contributions, while `net_savings` also includes real-estate/tangible formation and debt-principal
+repayments. Ledger account type separates principal from interest; the detailed formation fields are
+`real_estate_formation`, `tangible_asset_purchases` and `debt_principal_repayment`.
+`liquidity_adjustments` lists posted `adjustment` entries within the liquidity
+perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with
 allocations, per-member economic balances, account targets, recurrent reserves, transaction-traced
 compensations, transfer recommendations, reconciliation and quality. Finalized/locked closes return
@@ -111,6 +118,23 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `GET` | `/api/net-worth/summary/` | Aggregated net worth summary |
 | `GET` | `/api/net-worth/timeline/` | Net worth timeline. Monthly `rows` include `assets_by_category` in the user's base currency; `comparisons` exposes the baselines `previous_month_close`, `same_day_previous_month`, `previous_year_close`, and `same_day_previous_year` for summary UIs. |
 | `GET` | `/api/net-worth/liquidity/monthly-summary/` | Monthly liquidity summary; includes cash, cards, and interest-bearing investments. Asset rows include `annual_interest_tae` to identify remunerated liquidity. |
+
+### Investment Portfolio — `/api/portfolio/`
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET/POST` | `/api/portfolio/provider-mappings/` | User-owned provider mappings. Automatic prices require explicit symbol, quote currency, market where applicable, and confirmation. |
+| `GET/PATCH/DELETE` | `/api/portfolio/provider-mappings/{id}/` | Maintains a custom instrument mapping; canonical mappings are not user-editable. |
+| `GET` | `/api/portfolio/prices/` | Read-only daily closes visible through the authenticated user's positions. |
+| `POST` | `/api/portfolio/instruments/{id}/refresh/` | Refreshes confirmed mappings on demand. A failed provider call preserves the last valid close and returns an explicit error. |
+| `GET` | `/api/portfolio/positions/{id}/valuation/` | Resolves the effective dated value with freshness and provenance. |
+| `GET/POST` | `/api/portfolio/valuations/` | Lists total valuations and creates dated manual values for user-owned positions. |
+| `GET/PATCH/DELETE` | `/api/portfolio/valuations/{id}/` | Maintains manual values; legacy-derived rows are read-only. |
+| `GET` | `/api/portfolio/valuation-health/` | Aggregates fresh/stale/missing counts plus mapping, price and provenance issues. |
+| `GET` | `/api/portfolio/overview/?date_from=&date_to=&member_id=` | Portfolio hero read model: value, net contribution, monetary result, nominal/real return and per-metric coverage. |
+| `GET` | `/api/portfolio/positions/performance/?date_from=&date_to=&member_id=` | Position read models with native/base values, freshness, TWR/Dietz/MWR, P&L/cost and asset/FX attribution. |
+| `GET` | `/api/portfolio/timeline/?date_from=&date_to=&member_id=` | Bounded monthly value/contribution/result series; maximum requested range is 20 years and gaps stay explicit. |
+| `GET` | `/api/portfolio/performance/?date_from=&date_to=&member_id=` | Detailed aggregate flows, reconciliation, nominal/real TWR or declared Dietz fallback, MWR/XIRR and coverage. |
+| `GET` | `/api/portfolio/quality/?date_from=&date_to=&member_id=` | Value, ownership, FX and metric readiness for the requested historical perimeter. |
 
 ### Financial Plan — `/api/plan/`
 | Method | Route | Description |

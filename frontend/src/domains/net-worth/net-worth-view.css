@@ -58,6 +58,10 @@
   }
 }
 
+.a-nw-portfolio-entry {
+  display: none;
+}
+
 @container page (max-width: 560px) {
   .a-nw-page {
     --a-nw-mobile-fab-clearance: 122px;
@@ -66,6 +70,18 @@
   /* El alta móvil se concentra en un único FAB para las pestañas de Patrimonio. */
   .a-nw-page .page-head .actions {
     display: none;
+  }
+
+  .a-nw-page .a-nw-tabs-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .a-nw-page .a-nw-portfolio-entry {
+    display: inline-flex;
+    flex: 0 0 auto;
   }
 
   .a-nw-scope-seg {

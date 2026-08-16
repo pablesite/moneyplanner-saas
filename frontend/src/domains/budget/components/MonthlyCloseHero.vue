@@ -2,75 +2,86 @@
 import { computed } from 'vue';
 import { AHero, AKpiBand, type AKpiItem } from '@/domains/ui';
 
-// Hero del Cierre mensual (Direction A): residual grande + variación de
-// liquidez + 3 KPIs (Ingresos / Gastos / Tasa de ahorro) vs previsto.
 const props = defineProps<{
   monthLabel: string;
-  residual: number;
-  liquidityStart: number;
-  liquidityEnd: number;
-  incomeExecuted: number;
-  incomePlanned: number;
-  expenseExecuted: number;
-  expensePlanned: number;
+  eligibleIncome: number;
+  totalOutflows: number;
+  livingExpense: number;
+  financialContributions: number;
+  netSavings: number;
+  savingsRate: number | null;
+  realEstateFormation: number;
+  tangibleAssetPurchases: number;
+  debtPrincipalRepayment: number;
   formatMoney: (value: number, decimals?: number) => string;
   formatSignedMoney: (value: number, decimals?: number) => string;
 }>();
 
-const liquidityDelta = computed(() => props.liquidityEnd - props.liquidityStart);
-const incomeDelta = computed(() => props.incomeExecuted - props.incomePlanned);
-const expenseDelta = computed(() => props.expenseExecuted - props.expensePlanned);
-const savingsRate = computed(() =>
-  props.incomeExecuted > 0
-    ? ((props.incomeExecuted - props.expenseExecuted) / props.incomeExecuted) * 100
-    : 0,
-);
-
 const kpiItems = computed<AKpiItem[]>(() => [
-  { label: 'Ingresos', value: props.formatMoney(props.incomeExecuted) },
-  { label: 'Gastos', value: props.formatMoney(props.expenseExecuted) },
-  { label: 'Tasa de ahorro', value: `${savingsRate.value.toFixed(0)}%` },
+  { label: 'Ingresos disponibles', value: props.formatMoney(props.eligibleIncome) },
+  { label: 'Gasto e intereses', value: props.formatMoney(props.livingExpense) },
+  { label: 'Formación inmobiliaria', value: props.formatMoney(props.realEstateFormation) },
 ]);
+
+const savingsRateLabel = computed(() =>
+  props.savingsRate == null ? '—' : `${props.savingsRate.toFixed(0)} %`,
+);
 </script>
 
 <template>
   <section class="sect mc-hero">
     <div class="a-hero-shell mc-hero-grid">
-      <AHero
-        class="mc-hero-main"
-        :eyebrow="`Residual del mes · ${monthLabel}`"
-        :value="formatMoney(residual)"
-      >
+      <AHero class="mc-hero-main" :eyebrow="`Tasa de ahorro e inversión · ${monthLabel}`">
+        <template #value>
+          <div class="hero-value mono" :class="netSavings >= 0 ? 'pos' : 'neg'">
+            {{ savingsRateLabel }}
+          </div>
+        </template>
         <template #delta>
-          <span
-            >Liquidez inicial · <span class="mono">{{ formatMoney(liquidityStart) }}</span></span
-          >
-          <span class="mc-hero-dot" aria-hidden="true"></span>
-          <span
-            >Liquidez final · <span class="mono">{{ formatMoney(liquidityEnd) }}</span></span
-          >
-          <span class="mc-hero-dot" aria-hidden="true"></span>
-          <span class="mono" :class="liquidityDelta >= 0 ? 'pos' : 'neg'">
-            {{ formatSignedMoney(liquidityDelta) }}
+          <span>
+            <span class="mono" :class="netSavings >= 0 ? 'pos' : 'neg'">
+              {{ formatSignedMoney(netSavings) }} €
+            </span>
+            ahorro e inversión netos
           </span>
-          <span>variación</span>
+          <span class="mc-hero-dot" aria-hidden="true"></span>
+          <span>
+            <span class="mono">{{ formatMoney(financialContributions) }} €</span>
+            aportados a inversión financiera
+          </span>
         </template>
       </AHero>
 
       <AKpiBand class="mc-hero-kpis" :items="kpiItems">
-        <template #meta-0>
-          previsto {{ formatMoney(incomePlanned) }} ·
-          <span :class="incomeDelta >= 0 ? 'pos' : 'neg'">{{
-            formatSignedMoney(incomeDelta)
-          }}</span>
+        <template #meta-0> base de la tasa · excluye ventas de activos </template>
+        <template #meta-1> salidas totales {{ formatMoney(totalOutflows) }} € </template>
+        <template #meta-2>
+          <span
+            v-if="
+              financialContributions > 0 || debtPrincipalRepayment > 0 || tangibleAssetPurchases > 0
+            "
+          >
+            <template v-if="financialContributions > 0">
+              inversión financiera {{ formatMoney(financialContributions) }} €
+            </template>
+            <template v-if="financialContributions > 0 && debtPrincipalRepayment > 0"> · </template>
+            <template v-if="debtPrincipalRepayment > 0">
+              deuda amortizada {{ formatMoney(debtPrincipalRepayment) }} €
+            </template>
+            <template
+              v-if="
+                (financialContributions > 0 || debtPrincipalRepayment > 0) &&
+                tangibleAssetPurchases > 0
+              "
+            >
+              ·
+            </template>
+            <template v-if="tangibleAssetPurchases > 0">
+              activos materiales {{ formatMoney(tangibleAssetPurchases) }} €
+            </template>
+          </span>
+          <span v-else>incluye la formación de patrimonio del mes</span>
         </template>
-        <template #meta-1>
-          previsto {{ formatMoney(expensePlanned) }} ·
-          <span :class="expenseDelta <= 0 ? 'pos' : 'neg'">{{
-            formatSignedMoney(expenseDelta)
-          }}</span>
-        </template>
-        <template #meta-2> ingresos − gastos del mes </template>
       </AKpiBand>
     </div>
   </section>

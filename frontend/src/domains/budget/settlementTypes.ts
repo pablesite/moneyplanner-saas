@@ -67,6 +67,18 @@ export type SettlementReadinessItem = {
   [key: string]: unknown;
 };
 
+export type SettlementWalletReconciliation = {
+  account_id: number;
+  asset_id: number;
+  asset_name: string;
+  currency: string;
+  balance_date: string;
+  modeled_balance: string;
+  accepted_physical_balance: string;
+  difference: string;
+  normalization_recorded: boolean;
+};
+
 export type SettlementReadiness = {
   status: 'ready' | 'blocked';
   is_enabled: boolean;
@@ -75,6 +87,7 @@ export type SettlementReadiness = {
   target_period: { year: number; month: number };
   blockers: SettlementReadinessItem[];
   warnings: SettlementReadinessItem[];
+  wallet_reconciliations: SettlementWalletReconciliation[];
   allocation_coverage: {
     ownership_id: number;
     allocation_basis: string;

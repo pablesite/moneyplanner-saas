@@ -168,6 +168,30 @@ export type MonthlyCloseStateResponse = {
     completion_ratio: number;
     has_checkins: boolean;
   };
+  liquidity_adjustments?: {
+    total: string;
+    count: number;
+    entries: Array<{
+      transaction_id: number;
+      booking_date: string;
+      description: string;
+      account_name: string;
+      amount: string;
+    }>;
+  };
+  financial_result?: {
+    eligible_income: string;
+    total_outflows: string;
+    living_expense: string;
+    financial_contributions: string;
+    financial_savings: string;
+    net_savings: string;
+    savings_rate: string | null;
+    real_estate_formation: string;
+    tangible_asset_purchases: string;
+    debt_principal_repayment: string;
+    other_outflows: string;
+  };
   has_gaps: boolean;
   suggestions: {
     income: Record<string, string>;

@@ -265,6 +265,19 @@ function makeMonthlyCloseState(overrides: Record<string, unknown> = {}) {
       completion_ratio: 0,
       has_checkins: false,
     },
+    financial_result: {
+      eligible_income: '0.00',
+      total_outflows: '0.00',
+      living_expense: '0.00',
+      financial_contributions: '0.00',
+      financial_savings: '0.00',
+      net_savings: '0.00',
+      savings_rate: null,
+      real_estate_formation: '0.00',
+      tangible_asset_purchases: '0.00',
+      debt_principal_repayment: '0.00',
+      other_outflows: '0.00',
+    },
     has_gaps: false,
     suggestions: {
       income: {},
@@ -381,6 +394,44 @@ describe('Budget & Monthly close views', () => {
     mockBudgetAnnualEntriesPage.annualExpenseEntries.value = [];
     mockBudgetAnnualEntriesPage.openIncomeModal.mockClear();
     mockBudgetAnnualEntriesPage.openExpenseModal.mockClear();
+  });
+
+  it('prioritizes role-aware savings in the monthly close hero', async () => {
+    configureCoreApi({
+      monthlyCloseState: {
+        financial_result: {
+          eligible_income: '5000.00',
+          total_outflows: '4700.00',
+          living_expense: '3000.00',
+          financial_contributions: '1000.00',
+          financial_savings: '1300.00',
+          net_savings: '2000.00',
+          savings_rate: '0.4000',
+          real_estate_formation: '500.00',
+          tangible_asset_purchases: '200.00',
+          debt_principal_repayment: '0.00',
+          other_outflows: '0.00',
+        },
+      },
+    });
+    mockAccountingApi.getMonthlySummary.mockResolvedValue({
+      data: { fiscal_year: currentYear, months: [] },
+    } as never);
+    mockAccountingApi.getTransactions.mockResolvedValue({ data: [] } as never);
+
+    const wrapper = mountMonthlyCloseView();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Tasa de ahorro e inversión');
+    expect(wrapper.text()).toContain('40 %');
+    expect(wrapper.text()).toContain('+2.000,00 €');
+    expect(wrapper.text()).toContain('ahorro e inversión netos');
+    expect(wrapper.text()).toContain('1.000,00 €');
+    expect(wrapper.text()).toContain('aportados a inversión financiera');
+    expect(wrapper.text()).toContain('inversión financiera 1.000,00 €');
+    expect(wrapper.text()).toContain('Formación inmobiliaria500,00');
+    expect(wrapper.text()).toContain('activos materiales 200,00 €');
+    expect(wrapper.text()).not.toContain('Residual del mes');
   });
 
   it('opens a budget income entry from a settlement readiness deep link', async () => {
@@ -729,13 +780,53 @@ describe('Budget & Monthly close views', () => {
 
     await openMonthlyStep(wrapper, 'Resultado');
 
-    expect(wrapper.text()).toContain('Residual contable');
+    expect(wrapper.text()).toContain('Residual sin explicar');
     expect(wrapper.text()).toContain('Conciliación de cierre');
     expect(wrapper.text()).toContain('Diagnóstico del residual');
     expect(wrapper.find('.mc-bridge').exists()).toBe(true);
     expect(wrapper.find('.mc-diag').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('Composición del movimiento');
     expect(wrapper.text()).not.toContain('Variación perímetro');
+  });
+
+  it('deducts explicit liquidity adjustments before showing the unexplained residual', async () => {
+    configureCoreApi({
+      monthlyCloseState: {
+        liquidity: {
+          current_total: '110.00',
+          previous_total: '100.00',
+          delta: '10.00',
+          completion_ratio: 1,
+          has_checkins: true,
+        },
+        liquidity_adjustments: {
+          total: '10.00',
+          count: 1,
+          entries: [
+            {
+              transaction_id: 7,
+              booking_date: '2026-03-10',
+              description: 'Ajuste banco',
+              account_name: 'Cuenta corriente',
+              amount: '10.00',
+            },
+          ],
+        },
+      },
+      liquiditySummary: {
+        planned_total: '100.00',
+        executed_total: '110.00',
+        completion_ratio: 1,
+      },
+    });
+
+    const wrapper = mountMonthlyCloseView();
+    await flushPromises();
+    await openMonthlyStep(wrapper, 'Resultado');
+
+    expect(wrapper.text()).toContain('Ajustes de conciliación');
+    expect(wrapper.text()).toContain('+10,00 € en ajustes explícitos');
+    expect(wrapper.text()).toContain('0,00 €');
   });
 
   it('opens ledger liquidity manual editing without persisting until the user confirms', async () => {

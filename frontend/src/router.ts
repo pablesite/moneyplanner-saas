@@ -19,8 +19,9 @@ import PlanScenarioDetailView from './views/PlanScenarioDetailView.vue';
 import PlanImprovementsView from './views/PlanImprovementsView.vue';
 import PlanEventDetailView from './views/PlanEventDetailView.vue';
 import PlanDecisionEditView from './views/PlanDecisionEditView.vue';
+import PortfolioView from './views/PortfolioView.vue';
 import { registerAuthGuard } from '@/domains/auth';
-import { canUsePlan } from '@/domains/capabilities';
+import { canUsePlan, canUsePortfolio } from '@/domains/capabilities';
 
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: LoginView },
@@ -34,6 +35,12 @@ const routes: RouteRecordRaw[] = [
     redirect: '/plan',
   },
   { path: '/patrimonio', redirect: '/' },
+  {
+    path: '/cartera',
+    name: 'portfolio',
+    component: PortfolioView,
+    beforeEnter: () => (canUsePortfolio() ? true : '/'),
+  },
   { path: '/presupuesto', name: 'budget-dashboard', component: BudgetView },
   { path: '/cierre-mensual', name: 'monthly-close', component: MonthlyCloseView },
   { path: '/data', name: 'aux-data', component: AuxDataView },
