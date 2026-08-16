@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.51.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.50.1...moneyplanner-saas-v0.51.0) (2026-08-16)
+
+
+### Features
+
+* **portfolio:** add SaaS portfolio workspace ([beb08d6](https://github.com/pablesite/moneyplanner-saas/commit/beb08d6875d99e264ec771e15e360377da81c1b4))
+* **portfolio:** expose performance read APIs ([e9d7c40](https://github.com/pablesite/moneyplanner-saas/commit/e9d7c40292c8af866b8116603f019c007d135471))
+* **portfolio:** integrate hybrid valuations ([6d740d3](https://github.com/pablesite/moneyplanner-saas/commit/6d740d3cc84653bcb28235146cbfde1f035f629b))
+
 ## [0.50.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.50.0...moneyplanner-saas-v0.50.1) (2026-08-15)
 
 
