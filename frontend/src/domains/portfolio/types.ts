@@ -89,6 +89,7 @@ export type PortfolioTimelinePoint = {
   date: string;
   value: string | null;
   net_contributed: string;
+  contributed_to_date: string;
   monetary_result: string | null;
   coverage: 'complete' | 'partial';
 };

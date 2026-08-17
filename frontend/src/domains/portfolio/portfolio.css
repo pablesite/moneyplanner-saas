@@ -339,7 +339,9 @@
 
 .dir-a .a-pf-chart-legend {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-4);
+  align-items: baseline;
   color: var(--muted);
   font-size: 0.75rem;
 }
@@ -379,9 +381,11 @@
   font-size: 11px;
 }
 
+/* Marca fina: 2px de trazo, como el gráfico de Patrimonio. Un 3px sobre relleno
+   degradado engorda la serie y compite con el propio área. */
 .dir-a .a-pf-chart-line {
   fill: none;
-  stroke-width: 3;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -392,14 +396,40 @@
 
 .dir-a .a-pf-chart-line.is-contributed {
   stroke: var(--muted);
-  stroke-width: 2;
   stroke-dasharray: 7 7;
 }
 
-.dir-a .a-pf-chart-points circle {
+.dir-a .a-pf-chart-area {
+  stroke: none;
+}
+
+.dir-a .a-pf-chart-cursor line {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.dir-a .a-pf-chart-cursor circle {
   fill: var(--bg);
   stroke: var(--accent);
   stroke-width: 2;
+}
+
+/* Banda de captura del cursor: más ancha que la marca, invisible y sin robar foco. */
+.dir-a .a-pf-chart-hit {
+  fill: transparent;
+}
+
+.dir-a .a-pf-chart-readout {
+  margin-left: auto;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dir-a .a-pf-chart-readout small {
+  margin-left: 8px;
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .dir-a .a-pf-chart-data summary {
