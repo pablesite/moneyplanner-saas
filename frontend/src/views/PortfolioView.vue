@@ -38,6 +38,7 @@ import {
 } from '@/domains/ui';
 import { currencySymbol, formatAmount, formatMoney, formatPct, toNumber } from '@/lib/format';
 import { dateToIso, formatShortMonthYear } from '@/lib/dates';
+import { toApiErrorMessage } from '@/lib/errors';
 
 type PortfolioTab = 'summary' | 'positions' | 'evolution';
 type PeriodPreset = '1m' | 'ytd' | '1y' | '3y' | 'all' | 'custom';
@@ -73,6 +74,8 @@ const operationPositionId = ref<number | null>(null);
 const operationType = ref<PortfolioOperationType>('buy');
 const reviewOnly = ref(false);
 const successMessage = ref<string | null>(null);
+const resyncing = ref(false);
+const resyncError = ref<string | null>(null);
 const returnTo =
   typeof route.query.return === 'string' &&
   route.query.return.startsWith('/') &&
@@ -293,6 +296,23 @@ function showReviewQueue() {
   setTab('positions');
 }
 
+async function resyncFromAccounting() {
+  resyncing.value = true;
+  resyncError.value = null;
+  try {
+    const { data } = await corePortfolioApi.resyncValuations();
+    await store.refresh(query.value);
+    successMessage.value =
+      data.valuations_created > 0
+        ? `Cartera actualizada: ${data.valuations_created} valoraciones traídas de contabilidad.`
+        : 'La cartera ya estaba al día con contabilidad.';
+  } catch (caught: unknown) {
+    resyncError.value = toApiErrorMessage(caught);
+  } finally {
+    resyncing.value = false;
+  }
+}
+
 function openSelectedValuation() {
   const position = selectedPosition.value;
   if (!position) return;
@@ -340,6 +360,9 @@ onMounted(() => {
         <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
         <AButton variant="ghost" @click="setupOpen = true">
           Configurar posiciones<span v-if="pendingSetupCount"> · {{ pendingSetupCount }}</span>
+        </AButton>
+        <AButton variant="ghost" :loading="resyncing" @click="resyncFromAccounting">
+          Actualizar desde contabilidad
         </AButton>
         <AButton variant="ghost" @click="returnToNetWorth">Volver a Patrimonio</AButton>
       </template>
@@ -456,6 +479,7 @@ onMounted(() => {
         {{ qualityMessage }}.
         <AButton size="sm" @click="showReviewQueue">Revisar ahora</AButton>
       </AState>
+      <AState v-if="resyncError" status="error" layout="inline">{{ resyncError }}</AState>
 
       <template v-if="activeTab === 'summary'">
         <section class="sect a-pf-hero-section">

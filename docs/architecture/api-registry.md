@@ -138,6 +138,7 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `POST` | `/api/portfolio/positions/{id}/archive/` | Archives a position and its backing asset without deleting history. |
 | `POST` | `/api/portfolio/positions/{id}/reopen/` | Reopens an archived position and its backing asset. |
 | `POST` | `/api/portfolio/positions/{id}/confirm-setup/` | Confirms tracking style and reconstructed/cutoff history mode without mutating ledger history. |
+| `POST` | `/api/portfolio/positions/resync-valuations/` | Pulls into the portfolio any revaluation the ledger already holds, for drift that reached the database underneath the ORM (a restore or bulk load fires no signal). Returns `positions_checked` and `valuations_created`. |
 | `GET` | `/api/portfolio/operations/options/` | User-scoped positions, independent performance/detail coverage and available container cash. |
 | `POST` | `/api/portfolio/operations/preview/` | Validates an operation and returns the signed token required for direct confirmation. For a valuation it adds `ledger_effect` with the revaluation delta to be posted, or `syncs_accounting=false` plus a reason. |
 | `POST` | `/api/portfolio/operations/confirm/` | Atomically confirms the unchanged previewed transfer, trade, income, fee, valuation or corporate action. A manual valuation returns `ledger_transaction_id` with the revaluation it posted, or `null` when it stays analytic. |

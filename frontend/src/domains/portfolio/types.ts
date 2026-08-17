@@ -245,3 +245,8 @@ export type PortfolioImportBatch = {
   duplicate_file?: boolean;
   rows: PortfolioImportRow[];
 };
+
+export type PortfolioValuationResync = {
+  positions_checked: number;
+  valuations_created: number;
+};

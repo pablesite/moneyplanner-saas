@@ -139,7 +139,7 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 
 | Archivo | Contenido |
 | ------- | --------- |
-| `api.ts` | Lecturas coordinadas del workspace y escrituras de operaciones, onboarding de posiciones e importación CSV con preview. |
+| `api.ts` | Lecturas coordinadas del workspace y escrituras de operaciones, onboarding de posiciones, importación CSV con preview y resincronización de valoraciones desde contabilidad. |
 | `store.ts` | Store Pinia `usePortfolioStore`; publica el workspace de forma atómica y descarta respuestas antiguas al cambiar periodo o titularidad. |
 | `types.ts` | Contratos TypeScript de rendimiento, cobertura, freshness, posiciones y timeline servidos por Core. |
 | `presentation.ts` | Etiquetas y colores de clase, freshness y método de rentabilidad; no replica cálculos financieros. |
@@ -150,6 +150,8 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 | `portfolio.css` | Patrones locales `a-pf-*` para hero, composición, tabla/lista, gráfico y detalle responsive. |
 
 Desde Fase 5 la vista conserva sus tabs URL-synced `Resumen`, `Posiciones` y `Evolución` y añade tres entradas operativas: registrar, importar CSV y configurar posiciones migradas. Toda operación directa separa preview de confirmación; la compra usa solo efectivo disponible del mismo contenedor. El onboarding no reescribe historia y presenta por separado cobertura de rentabilidad y detalle de unidades. Periodo y titularidad recalculan el workspace completo en Core; contenedor, clase y divisa filtran inventario/composición sin fingir una TWR filtrada. En desktop Posiciones es tabla; bajo `sm`, lista compacta con sheet. `/cartera` sigue activa bajo Patrimonio y mantiene retorno visible a `/patrimonio`.
+
+La acción "Actualizar desde contabilidad" vive en las acciones de página, no en el banner de calidad: una cartera puede estar desfasada con todas sus posiciones marcadas como "Al día", y en ese caso el banner no se muestra. Cubre el desfase que las señales de Core no pueden ver porque llegó por debajo del ORM (un restore, una carga masiva).
 
 **Requiere:** `canUsePortfolio()` → `core.portfolio`.
 
