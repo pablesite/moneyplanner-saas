@@ -33,6 +33,8 @@ export function positionBaseValue(position: PositionPerformance): number {
 export function freshnessLabel(status: PositionPerformance['value_status']): string {
   if (status === 'fresh') return 'Al día';
   if (status === 'stale') return 'Desactualizada';
+  // The balance is today's, so it is not outdated; what is missing is a valuation.
+  if (status === 'at_cost') return 'A coste';
   return 'Sin valoración';
 }
 

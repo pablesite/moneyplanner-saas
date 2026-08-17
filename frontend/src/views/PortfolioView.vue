@@ -125,8 +125,11 @@ const filteredPositions = computed(() =>
     );
   }),
 );
+// "A coste" is a statement about provenance, not a pending task: the balance is current.
 const reviewPositions = computed(() =>
-  filteredPositions.value.filter((position) => position.value_status !== 'fresh'),
+  filteredPositions.value.filter(
+    (position) => position.value_status !== 'fresh' && position.value_status !== 'at_cost',
+  ),
 );
 const visiblePositions = computed(() =>
   reviewOnly.value ? reviewPositions.value : filteredPositions.value,

@@ -69,7 +69,7 @@ export type PositionPerformance = {
   native_value: string | null;
   native_currency: string | null;
   observed_on: string | null;
-  value_status: 'fresh' | 'stale' | 'missing';
+  value_status: 'fresh' | 'stale' | 'missing' | 'at_cost';
   performance: PortfolioPerformance;
   attribution: {
     asset: string | null;
@@ -103,7 +103,7 @@ export type PortfolioTimeline = {
 export type PortfolioQuality = {
   period: PortfolioPeriod;
   status: 'ready' | 'stale' | 'needs_review';
-  positions: { total: number; fresh: number; stale: number; missing: number };
+  positions: { total: number; fresh: number; stale: number; missing: number; at_cost: number };
   ownership_missing: number;
   cash_ownership_missing: boolean;
   metric_coverage: PortfolioCoverage;

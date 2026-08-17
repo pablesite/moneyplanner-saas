@@ -275,6 +275,12 @@
   color: var(--neg);
 }
 
+/* Neutral on purpose: a carrying value is neither current nor pending review. */
+.dir-a .a-pf-freshness.is-at_cost {
+  border-color: var(--line-strong);
+  color: var(--muted);
+}
+
 .dir-a .a-pf-position-list {
   display: none;
 }

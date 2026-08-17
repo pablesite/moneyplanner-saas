@@ -14,6 +14,7 @@ describe('portfolio presentation', () => {
   it('explains freshness and estimated returns in product language', () => {
     expect(freshnessLabel('fresh')).toBe('Al día');
     expect(freshnessLabel('stale')).toBe('Desactualizada');
+    expect(freshnessLabel('at_cost')).toBe('A coste');
     expect(freshnessLabel('missing')).toBe('Sin valoración');
     expect(returnLabel('linked_dietz', true)).toBe('TWR encadenada');
     expect(returnLabel('modified_dietz', true)).toBe('TWR estimada');
