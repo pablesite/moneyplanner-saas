@@ -155,6 +155,8 @@ El hero, la tabla de posiciones y el detalle distinguen ahora **rentabilidad del
 
 La paleta de clases de activo vive en `portfolio.css` como tokens `--a-pf-*`, con variante para tema claro, y está validada con el checker de la skill `dataviz` en ambos modos. Antes el mapa apuntaba a una familia `--color-*` inexistente en el proyecto (el design system usa `--accent`, `--muted`, `--line`, `--pos`, `--neg`), por lo que cinco de las siete clases se pintaban sin color.
 
+La tabla de posiciones usa la cabecera compartida `.data-table`, igual que Movimientos, y es ordenable por cualquier columna: texto ascendente por defecto, importes y rentabilidades descendente, y las filas sin dato se hunden siempre en vez de contar como el valor más bajo. El pie suma valor y resultado —magnitudes aditivas en moneda base— y deja TWR y MWR en guion, porque una rentabilidad no se suma entre posiciones: la agregada vive en el hero.
+
 El freshness distingue cuatro estados: `fresh` ("Al día"), `stale` ("Desactualizada"), `missing` ("Sin valoración") y `at_cost` ("A coste"). Este último es el de una posición valorada por su saldo contable: el número es de hoy, pero viene del coste y no de una valoración de mercado, así que se muestra en tono neutro y queda fuera de la cola de revisión — no es una tarea pendiente, es una declaración de procedencia.
 
 Las posiciones archivadas no aparecen en el inventario ni en la composición. Se exponen como en Patrimonio: un contador "N archivadas" en el meta de la cabecera abre un sheet donde se pueden restaurar una por una. Siguen contando en los agregados históricos, porque en el pasado sí formaban parte de la cartera.

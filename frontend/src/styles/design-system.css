@@ -597,6 +597,21 @@
   text-align: left;
 }
 
+/* Signo de un importe o una rentabilidad dentro de una tabla de datos. Movimientos lo
+   tenía local y Cartera habría sido el segundo consumidor. Con `:where()` la
+   especificidad queda a cero, así que cualquier regla de dominio sigue ganando. */
+.dir-a :where(.is-positive) {
+  color: var(--pos);
+}
+
+.dir-a :where(.is-negative) {
+  color: var(--neg);
+}
+
+.dir-a :where(.is-neutral) {
+  color: var(--muted);
+}
+
 /* Campo dentro de una barra o rail de contexto: no se encoge ni parte la etiqueta.
    Acompaña a `.context-rail` / `.context-bar`; estaba repetido en Patrimonio,
    Presupuesto y Cierre. */
