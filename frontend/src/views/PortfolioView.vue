@@ -75,7 +75,8 @@ const operationType = ref<PortfolioOperationType>('buy');
 const reviewOnly = ref(false);
 const successMessage = ref<string | null>(null);
 const resyncing = ref(false);
-const resyncError = ref<string | null>(null);
+const actionError = ref<string | null>(null);
+const showArchivedModal = ref(false);
 const returnTo =
   typeof route.query.return === 'string' &&
   route.query.return.startsWith('/') &&
@@ -110,10 +111,14 @@ const query = computed<PortfolioQuery>(() => {
 
 const instrumentsById = computed(() => instrumentMap(store.instruments));
 const allPositions = computed(() => store.positions?.results ?? []);
+const archivedPositions = computed(() =>
+  allPositions.value.filter((position) => position.status === 'archived'),
+);
 const filteredPositions = computed(() =>
   allPositions.value.filter((position) => {
     const instrument = instrumentsById.value.get(position.instrument_id);
     return (
+      position.status !== 'archived' &&
       (containerId.value === 'all' || String(position.container_id) === containerId.value) &&
       (assetClass.value === 'all' || instrument?.asset_class === assetClass.value) &&
       (currency.value === 'all' || position.native_currency === currency.value)
@@ -298,7 +303,7 @@ function showReviewQueue() {
 
 async function resyncFromAccounting() {
   resyncing.value = true;
-  resyncError.value = null;
+  actionError.value = null;
   try {
     const { data } = await corePortfolioApi.resyncValuations();
     await store.refresh(query.value);
@@ -307,9 +312,21 @@ async function resyncFromAccounting() {
         ? `Cartera actualizada: ${data.valuations_created} valoraciones traídas de contabilidad.`
         : 'La cartera ya estaba al día con contabilidad.';
   } catch (caught: unknown) {
-    resyncError.value = toApiErrorMessage(caught);
+    actionError.value = toApiErrorMessage(caught);
   } finally {
     resyncing.value = false;
+  }
+}
+
+async function restorePosition(position: PositionPerformance) {
+  actionError.value = null;
+  try {
+    await corePortfolioApi.reopenPosition(position.position_id);
+    await Promise.all([store.refresh(query.value), loadOperationOptions()]);
+    successMessage.value = `${position.instrument_name} vuelve a la cartera.`;
+    if (!archivedPositions.value.length) showArchivedModal.value = false;
+  } catch (caught: unknown) {
+    actionError.value = toApiErrorMessage(caught);
   }
 }
 
@@ -353,6 +370,14 @@ onMounted(() => {
             formatShortMonthYear(store.overview.period.to)
           }}
         </AMetaPill>
+        <AButton
+          v-if="archivedPositions.length"
+          size="sm"
+          variant="ghost"
+          @click="showArchivedModal = true"
+        >
+          {{ archivedPositions.length }} archivadas
+        </AButton>
         <span v-if="scopeIsFiltered">Los filtros de inventario no alteran el hero familiar</span>
       </template>
       <template #actions>
@@ -479,7 +504,7 @@ onMounted(() => {
         {{ qualityMessage }}.
         <AButton size="sm" @click="showReviewQueue">Revisar ahora</AButton>
       </AState>
-      <AState v-if="resyncError" status="error" layout="inline">{{ resyncError }}</AState>
+      <AState v-if="actionError" status="error" layout="inline">{{ actionError }}</AState>
 
       <template v-if="activeTab === 'summary'">
         <section class="sect a-pf-hero-section">
@@ -791,6 +816,32 @@ onMounted(() => {
           <AButton variant="primary" @click="openSelectedValuation">
             Actualizar valoración
           </AButton>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="showArchivedModal"
+      title="Posiciones archivadas"
+      variant="sheet"
+      panel-class="a-pf-detail-sheet"
+      @close="showArchivedModal = false"
+    >
+      <AState v-if="!archivedPositions.length" status="empty">
+        No hay posiciones archivadas.
+      </AState>
+      <dl v-else class="a-pf-detail-grid">
+        <div v-for="position in archivedPositions" :key="position.position_id">
+          <dt>{{ position.instrument_name }}</dt>
+          <dd>
+            {{ position.container_name }}
+            <AButton variant="ghost" @click="restorePosition(position)">Restaurar</AButton>
+          </dd>
+        </div>
+      </dl>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
+          <AButton variant="ghost" @click="showArchivedModal = false">Cerrar</AButton>
         </div>
       </template>
     </BaseModal>
