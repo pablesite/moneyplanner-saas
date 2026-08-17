@@ -139,8 +139,8 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `POST` | `/api/portfolio/positions/{id}/reopen/` | Reopens an archived position and its backing asset. |
 | `POST` | `/api/portfolio/positions/{id}/confirm-setup/` | Confirms tracking style and reconstructed/cutoff history mode without mutating ledger history. |
 | `GET` | `/api/portfolio/operations/options/` | User-scoped positions, independent performance/detail coverage and available container cash. |
-| `POST` | `/api/portfolio/operations/preview/` | Validates an operation and returns the signed token required for direct confirmation. |
-| `POST` | `/api/portfolio/operations/confirm/` | Atomically confirms the unchanged previewed transfer, trade, income, fee, valuation or corporate action. |
+| `POST` | `/api/portfolio/operations/preview/` | Validates an operation and returns the signed token required for direct confirmation. For a valuation it adds `ledger_effect` with the revaluation delta to be posted, or `syncs_accounting=false` plus a reason. |
+| `POST` | `/api/portfolio/operations/confirm/` | Atomically confirms the unchanged previewed transfer, trade, income, fee, valuation or corporate action. A manual valuation returns `ledger_transaction_id` with the revaluation it posted, or `null` when it stays analytic. |
 | `POST` | `/api/portfolio/imports/upload/` | Stages a generic UTF-8 CSV and returns detected headers and rows; exact file reuploads are idempotent. |
 | `GET` | `/api/portfolio/imports/{id}/` | Returns a user-owned import batch and its row-level status/errors. |
 | `POST` | `/api/portfolio/imports/{id}/preview/` | Applies explicit column mapping, normalization, duplicate detection and row validation. |
