@@ -1,9 +1,31 @@
+/* Categorical palette for asset classes, in fixed order per class so a filter that
+   changes the visible set never repaints the survivors. Validated in both modes with the
+   dataviz palette checker: adjacent-pair CVD ΔE 8.4 dark / 9.1 light, normal-vision 19.3
+   dark / 19.6 light, chroma and lightness bands clear. Three light-mode steps sit under
+   3:1 against the light surface and the CVD band needs secondary encoding; both are
+   covered because the legend always prints the class name and its amount, so identity is
+   never carried by colour alone. */
 .dir-a .page.a-pf-page {
-  --a-pf-real-assets: #d9925b;
-  --a-pf-crypto: #f1c75b;
+  --a-pf-equity: #3987e5;
+  --a-pf-real-assets: #d95926;
+  --a-pf-fixed-income: #199e70;
+  --a-pf-crypto: #c98500;
+  --a-pf-other: #d55181;
+  --a-pf-cash: #008300;
+  --a-pf-mixed: #9085e9;
   display: grid;
   gap: var(--space-6);
   overflow-x: hidden;
+}
+
+.dir-a.theme-light .page.a-pf-page {
+  --a-pf-equity: #2a78d6;
+  --a-pf-real-assets: #eb6834;
+  --a-pf-fixed-income: #1baf7a;
+  --a-pf-crypto: #eda100;
+  --a-pf-other: #e87ba4;
+  --a-pf-cash: #008300;
+  --a-pf-mixed: #4a3aa7;
 }
 
 .dir-a .a-pf-tabs-bar {
@@ -11,7 +33,7 @@
   top: 0;
   z-index: 20;
   padding-top: var(--space-2);
-  background: color-mix(in srgb, var(--color-canvas) 92%, transparent);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(14px);
 }
 
@@ -46,7 +68,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 
@@ -56,7 +78,7 @@
 
 .dir-a .a-pf-hero-section {
   padding-block: var(--space-4) var(--space-8);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
 }
 
 .dir-a .a-pf-hero-grid {
@@ -88,7 +110,7 @@
 
 .dir-a .a-pf-return-line span,
 .dir-a .a-pf-hero-grid .a-hero-shell > p {
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.78rem;
 }
 
@@ -111,7 +133,7 @@
 
 .dir-a .a-pf-composition-list {
   display: grid;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--line);
 }
 
 .dir-a .a-pf-composition-row {
@@ -120,27 +142,30 @@
   gap: var(--space-3);
   align-items: center;
   min-height: 48px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
 }
 
 .dir-a .a-pf-composition-row i {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--color-text-soft);
+  background: var(--muted);
 }
 
 .dir-a .a-pf-composition-row i.is-cash {
-  background: var(--color-info);
+  background: var(--a-pf-cash);
 }
 .dir-a .a-pf-composition-row i.is-fixed_income {
-  background: var(--color-accent-alt);
+  background: var(--a-pf-fixed-income);
 }
 .dir-a .a-pf-composition-row i.is-equity {
-  background: var(--color-accent);
+  background: var(--a-pf-equity);
 }
 .dir-a .a-pf-composition-row i.is-mixed {
-  background: var(--color-warning);
+  background: var(--a-pf-mixed);
+}
+.dir-a .a-pf-composition-row i.is-other {
+  background: var(--a-pf-other);
 }
 .dir-a .a-pf-composition-row i.is-real_assets {
   background: var(--a-pf-real-assets);
@@ -155,20 +180,20 @@
 }
 
 .dir-a .a-pf-composition-row small {
-  color: var(--color-text-soft);
+  color: var(--muted);
 }
 
 .dir-a .a-pf-quality-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-block: 1px solid var(--color-border);
+  border-block: 1px solid var(--line);
 }
 
 .dir-a .a-pf-quality-grid > div {
   display: grid;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid var(--line);
 }
 
 .dir-a .a-pf-quality-grid > div:last-child {
@@ -176,7 +201,7 @@
 }
 
 .dir-a .a-pf-quality-grid span {
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 
@@ -199,14 +224,14 @@
 
 .dir-a .a-pf-position-table tbody tr:hover,
 .dir-a .a-pf-position-table tbody tr:focus-visible {
-  background: var(--color-surface-muted);
+  background: var(--hover);
   outline: none;
 }
 
 .dir-a .a-pf-position-table th,
 .dir-a .a-pf-position-table td {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
   text-align: left;
   white-space: nowrap;
 }
@@ -226,7 +251,7 @@
 
 .dir-a .a-pf-position-table td:first-child small {
   margin-top: 3px;
-  color: var(--color-text-soft);
+  color: var(--muted);
 }
 
 .dir-a .a-pf-freshness {
@@ -234,20 +259,20 @@
   align-items: center;
   min-height: 24px;
   padding-inline: 9px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.72rem;
 }
 
 .dir-a .a-pf-freshness.is-fresh {
-  border-color: color-mix(in srgb, var(--color-positive) 45%, var(--color-border));
-  color: var(--color-positive);
+  border-color: color-mix(in srgb, var(--pos) 45%, var(--line));
+  color: var(--pos);
 }
 
 .dir-a .a-pf-freshness.is-missing {
-  border-color: color-mix(in srgb, var(--color-negative) 45%, var(--color-border));
-  color: var(--color-negative);
+  border-color: color-mix(in srgb, var(--neg) 45%, var(--line));
+  color: var(--neg);
 }
 
 .dir-a .a-pf-position-list {
@@ -262,7 +287,7 @@
 .dir-a .a-pf-chart-legend {
   display: flex;
   gap: var(--space-4);
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 
@@ -275,11 +300,11 @@
 .dir-a .a-pf-chart-legend i {
   width: 20px;
   height: 2px;
-  background: var(--color-accent);
+  background: var(--accent);
 }
 
 .dir-a .a-pf-chart-legend i.is-contributed {
-  background: var(--color-text-soft);
+  background: var(--muted);
 }
 
 .dir-a .a-pf-chart {
@@ -290,13 +315,13 @@
 }
 
 .dir-a .a-pf-chart-grid line {
-  stroke: var(--color-border);
+  stroke: var(--line);
   stroke-width: 1;
 }
 
 .dir-a .a-pf-chart-grid text,
 .dir-a .a-pf-chart-axis text {
-  fill: var(--color-text-soft);
+  fill: var(--muted);
   font-family: var(--font-mono);
   font-size: 11px;
 }
@@ -309,25 +334,25 @@
 }
 
 .dir-a .a-pf-chart-line.is-value {
-  stroke: var(--color-accent);
+  stroke: var(--accent);
 }
 
 .dir-a .a-pf-chart-line.is-contributed {
-  stroke: var(--color-text-soft);
+  stroke: var(--muted);
   stroke-width: 2;
   stroke-dasharray: 7 7;
 }
 
 .dir-a .a-pf-chart-points circle {
-  fill: var(--color-canvas);
-  stroke: var(--color-accent);
+  fill: var(--bg);
+  stroke: var(--accent);
   stroke-width: 2;
 }
 
 .dir-a .a-pf-chart-data summary {
   width: fit-content;
   cursor: pointer;
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.78rem;
 }
 
@@ -344,7 +369,7 @@
 .dir-a .a-pf-chart-data th,
 .dir-a .a-pf-chart-data td {
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
   text-align: left;
 }
 
@@ -362,11 +387,11 @@
   grid-template-columns: minmax(130px, 1fr) minmax(0, 1.4fr);
   gap: var(--space-4);
   padding-block: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
 }
 
 .dir-a .a-pf-detail-list dt {
-  color: var(--color-text-soft);
+  color: var(--muted);
 }
 
 .dir-a .a-pf-detail-list dd {
@@ -384,26 +409,26 @@
   justify-content: space-between;
   gap: var(--space-4);
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
 }
 
 .dir-a .a-pf-import-heading span,
 .dir-a .a-pf-import-rows span,
 .dir-a .a-pf-import-rows small {
-  color: var(--color-text-soft);
+  color: var(--muted);
 }
 
 .dir-a .a-pf-import-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-block: 1px solid var(--color-border);
+  border-block: 1px solid var(--line);
 }
 
 .dir-a .a-pf-import-summary > div {
   display: grid;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid var(--line);
 }
 
 .dir-a .a-pf-import-summary > div:last-child {
@@ -411,7 +436,7 @@
 }
 
 .dir-a .a-pf-import-summary span {
-  color: var(--color-text-soft);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 
@@ -424,7 +449,7 @@
   display: grid;
   max-height: 320px;
   overflow-y: auto;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--line);
 }
 
 .dir-a .a-pf-import-rows > div {
@@ -432,23 +457,23 @@
   grid-template-columns: 70px minmax(0, 1fr) auto;
   gap: var(--space-3);
   padding-block: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--line);
 }
 
 .dir-a .a-pf-import-rows p {
   grid-column: 1 / -1;
   margin: 0;
-  color: var(--color-negative);
+  color: var(--neg);
   font-size: 0.75rem;
 }
 
 .dir-a .a-pf-import-rows small.is-valid,
 .dir-a .a-pf-import-rows small.is-confirmed {
-  color: var(--color-positive);
+  color: var(--pos);
 }
 
 .dir-a .a-pf-import-rows small.is-error {
-  color: var(--color-negative);
+  color: var(--neg);
 }
 
 .dir-a .a-pf-setup-flow {
@@ -458,7 +483,7 @@
 
 .dir-a .a-pf-setup-flow > p {
   margin: 0;
-  color: var(--color-text-soft);
+  color: var(--muted);
 }
 
 .dir-a .a-pf-setup-context,
@@ -477,15 +502,15 @@
   display: grid;
   gap: var(--space-1);
   padding: var(--space-4);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--color-surface-muted);
+  background: var(--hover);
 }
 
 .dir-a .a-pf-setup-context dt,
 .dir-a .a-pf-setup-coverage span,
 .dir-a .a-pf-setup-coverage small {
-  color: var(--color-text-soft);
+  color: var(--muted);
 }
 
 .dir-a .a-pf-setup-context dd {
@@ -510,7 +535,7 @@
   }
 
   .dir-a .a-pf-quality-grid > div:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--line);
   }
 }
 
@@ -550,7 +575,7 @@
 
   .dir-a .a-pf-position-list {
     display: grid;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--line);
   }
 
   .dir-a .a-pf-position-list button {
@@ -561,7 +586,7 @@
     min-height: 68px;
     padding: var(--space-3) 0;
     border: 0;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--line);
     background: transparent;
     color: inherit;
     text-align: left;
@@ -582,7 +607,7 @@
 
   .dir-a .a-pf-position-main small,
   .dir-a .a-pf-position-value small {
-    color: var(--color-text-soft);
+    color: var(--muted);
     font-size: 0.72rem;
   }
 
@@ -601,7 +626,7 @@
   .dir-a .a-pf-import-summary > div {
     grid-template-columns: 1fr auto;
     border-right: 0;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--line);
   }
 
   .dir-a .a-pf-setup-context,
@@ -617,7 +642,7 @@
 
   .dir-a .a-pf-quality-grid > div {
     border-right: 0;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--line);
   }
 
   .dir-a .a-pf-composition-row {

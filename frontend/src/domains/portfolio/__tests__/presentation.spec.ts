@@ -15,6 +15,7 @@ describe('portfolio presentation', () => {
     expect(freshnessLabel('fresh')).toBe('Al día');
     expect(freshnessLabel('stale')).toBe('Desactualizada');
     expect(freshnessLabel('missing')).toBe('Sin valoración');
+    expect(returnLabel('linked_dietz', true)).toBe('TWR encadenada');
     expect(returnLabel('modified_dietz', true)).toBe('TWR estimada');
     expect(returnLabel('unavailable', false)).toBe('Rentabilidad no disponible');
   });

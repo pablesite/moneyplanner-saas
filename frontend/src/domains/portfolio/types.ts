@@ -8,7 +8,8 @@ export type PortfolioReturn = {
   real: string | null;
   twr: string | null;
   mwr_xirr: string | null;
-  method: 'twr' | 'modified_dietz' | 'unavailable';
+  twr_annualized: string | null;
+  method: 'twr' | 'linked_dietz' | 'modified_dietz' | 'unavailable';
   estimated: boolean;
 };
 

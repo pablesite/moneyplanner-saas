@@ -174,6 +174,11 @@ const heroKpis = computed(() => [
     meta: 'Entradas menos retiradas',
   },
   {
+    label: 'Rentabilidad de tu dinero',
+    value: pct(store.performance?.return.mwr_xirr),
+    meta: 'MWR anual: pondera cuándo aportaste',
+  },
+  {
     label: 'Ingresos / costes',
     value: `${money(store.performance?.income)} / ${money(store.performance?.costs)}`,
     meta: 'Durante el periodo',
@@ -293,6 +298,17 @@ function openOperation(
   operationPositionId.value = position?.position_id ?? null;
   operationOpen.value = true;
   if (!operationOptionsData.value) void loadOperationOptions();
+}
+
+function pct(value: string | null | undefined): string {
+  return value == null ? '—' : formatPct(toNumber(value), 1);
+}
+
+// Mobile has no room for two columns, so both returns share one labelled line.
+function positionReturnPair(position: PositionPerformance): string {
+  return `TWR ${pct(position.performance.return.nominal)} · MWR ${pct(
+    position.performance.return.mwr_xirr,
+  )}`;
 }
 
 function showReviewQueue() {
@@ -516,6 +532,9 @@ onMounted(() => {
                   <span>{{
                     returnLabel(store.overview.return.method, store.overview.return.estimated)
                   }}</span>
+                  <span v-if="store.overview.return.twr_annualized"
+                    >{{ pct(store.overview.return.twr_annualized) }} anualizada</span
+                  >
                 </div>
               </template>
               <p>
@@ -643,6 +662,7 @@ onMounted(() => {
                   <th class="num">Valor</th>
                   <th class="num">Resultado</th>
                   <th class="num">TWR</th>
+                  <th class="num">MWR</th>
                 </tr>
               </thead>
               <tbody>
@@ -684,6 +704,13 @@ onMounted(() => {
                         : formatPct(toNumber(position.performance.return.nominal), 1)
                     }}
                   </td>
+                  <td class="num mono">
+                    {{
+                      position.performance.return.mwr_xirr === null
+                        ? '—'
+                        : formatPct(toNumber(position.performance.return.mwr_xirr), 1)
+                    }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -707,7 +734,7 @@ onMounted(() => {
                 ><small
                   :class="toNumber(position.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
                   >{{ signedMoney(position.performance.monetary_result) }}</small
-                ></span
+                ><small>{{ positionReturnPair(position) }}</small></span
               >
             </button>
           </div>
@@ -760,13 +787,26 @@ onMounted(() => {
           </dd>
         </div>
         <div>
-          <dt>Rentabilidad</dt>
+          <dt>Rentabilidad del activo</dt>
           <dd>
-            {{
-              selectedPosition.performance.return.nominal === null
-                ? 'No disponible'
-                : formatPct(toNumber(selectedPosition.performance.return.nominal), 1)
-            }}
+            {{ pct(selectedPosition.performance.return.nominal) }}
+            <small
+              >{{
+                returnLabel(
+                  selectedPosition.performance.return.method,
+                  selectedPosition.performance.return.estimated,
+                )
+              }}<template v-if="selectedPosition.performance.return.twr_annualized">
+                · {{ pct(selectedPosition.performance.return.twr_annualized) }} anualizada</template
+              ></small
+            >
+          </dd>
+        </div>
+        <div>
+          <dt>Rentabilidad de tu dinero</dt>
+          <dd>
+            {{ pct(selectedPosition.performance.return.mwr_xirr) }}
+            <small>MWR anual: pondera cuándo aportaste</small>
           </dd>
         </div>
         <div>
