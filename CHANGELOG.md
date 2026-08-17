@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.52.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.51.0...moneyplanner-saas-v0.52.0) (2026-08-17)
+
+
+### Features
+
+* **portfolio:** add operations workspace ([14416b0](https://github.com/pablesite/moneyplanner-saas/commit/14416b0444c7b6ed8bdfba538b52a08c5c06b230))
+
 ## [0.51.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.50.1...moneyplanner-saas-v0.51.0) (2026-08-16)
 
 
