@@ -28,15 +28,14 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 ```
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md`.
-- [ ] `docs/frontend/frontend-visual-guide.md`.
-- [ ] `docs/project-status.md`.
+- [x] `docs/frontend/domain-map.md`.
+- [x] `docs/frontend/frontend-visual-guide.md`.
+- [x] `docs/project-status.md`.
 
 ## Risks
 El usuario puede confundir importe objetivo con ejecucion real. La UI debe separar plan, preview y confirmacion contabilizada.
 
 ## Completion Criteria
-- [ ] Operativa completa usable a 360 px.
-- [ ] Importacion nunca confirma sin preview.
-- [ ] Estados, tests, docs y commit completados.
-
+- [x] Operativa completa usable a 360 px.
+- [x] Importacion nunca confirma sin preview.
+- [x] Estados, tests y docs completados; commit registrado al finalizar la fase.

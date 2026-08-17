@@ -139,14 +139,17 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 
 | Archivo | Contenido |
 | ------- | --------- |
-| `api.ts` | Lecturas coordinadas de `overview`, `performance`, `positions/performance`, `timeline`, `quality`, instrumentos y miembros. |
+| `api.ts` | Lecturas coordinadas del workspace y escrituras de operaciones, onboarding de posiciones e importación CSV con preview. |
 | `store.ts` | Store Pinia `usePortfolioStore`; publica el workspace de forma atómica y descarta respuestas antiguas al cambiar periodo o titularidad. |
 | `types.ts` | Contratos TypeScript de rendimiento, cobertura, freshness, posiciones y timeline servidos por Core. |
 | `presentation.ts` | Etiquetas y colores de clase, freshness y método de rentabilidad; no replica cálculos financieros. |
 | `components/PortfolioEvolutionChart.vue` | Gráfico SVG responsive valor/aportaciones con tabla accesible de respaldo. |
+| `components/PortfolioOperationModal.vue` | Sheet contextual para transferencias, compras/ventas, ingresos, fees, valoraciones y corporate actions; exige preview antes de contabilizar. |
+| `components/PortfolioImportModal.vue` | Wizard CSV de fichero, mapeo, preview, incidencias por fila y confirmación de filas válidas. |
+| `components/PortfolioSetupModal.vue` | Onboarding de posiciones migradas: tracking por valor/unidades, histórico reconstruido/cutoff y coberturas independientes. |
 | `portfolio.css` | Patrones locales `a-pf-*` para hero, composición, tabla/lista, gráfico y detalle responsive. |
 
-La vista es de solo lectura en Fase 4 y usa tabs URL-synced `Resumen`, `Posiciones` y `Evolución`. Periodo y titularidad recalculan el workspace completo en Core. Contenedor, clase y divisa filtran el inventario y su composición sin presentar como TWR filtrada una agregación que Core todavía no calcula. En desktop Posiciones es una tabla profesional; bajo `sm` pasa a lista compacta con sheet de detalle. La barra global conserva cinco destinos: `/cartera` activa Patrimonio, que ofrece entrada persistente también a 360 px, y Cartera mantiene el retorno visible a `/patrimonio`.
+Desde Fase 5 la vista conserva sus tabs URL-synced `Resumen`, `Posiciones` y `Evolución` y añade tres entradas operativas: registrar, importar CSV y configurar posiciones migradas. Toda operación directa separa preview de confirmación; la compra usa solo efectivo disponible del mismo contenedor. El onboarding no reescribe historia y presenta por separado cobertura de rentabilidad y detalle de unidades. Periodo y titularidad recalculan el workspace completo en Core; contenedor, clase y divisa filtran inventario/composición sin fingir una TWR filtrada. En desktop Posiciones es tabla; bajo `sm`, lista compacta con sheet. `/cartera` sigue activa bajo Patrimonio y mantiene retorno visible a `/patrimonio`.
 
 **Requiere:** `canUsePortfolio()` → `core.portfolio`.
 

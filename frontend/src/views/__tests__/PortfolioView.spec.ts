@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   getWorkspace: vi.fn(),
   getMembers: vi.fn(),
+  getOperationOptions: vi.fn(),
   route: { query: {} as Record<string, string> },
 }));
 
@@ -21,6 +22,7 @@ vi.mock('@/domains/portfolio/api', () => ({
   corePortfolioApi: {
     getWorkspace: mocks.getWorkspace,
     getMembers: mocks.getMembers,
+    getOperationOptions: mocks.getOperationOptions,
   },
 }));
 
@@ -82,6 +84,32 @@ describe('PortfolioView', () => {
     vi.clearAllMocks();
     mocks.route.query = {};
     mocks.getMembers.mockResolvedValue({ data: [] });
+    mocks.getOperationOptions.mockResolvedValue({
+      data: {
+        positions: [
+          {
+            id: 3,
+            name: 'Fondo Global',
+            container_id: 2,
+            container_name: 'Broker familiar',
+            tracking_style: 'units_based',
+            status: 'active',
+            operational: true,
+            history_mode: 'reconstructed',
+            history_start_date: null,
+            setup_confirmed: false,
+            performance_coverage: {
+              status: 'complete',
+              start_date: '2025-01-01',
+              has_flows: true,
+              has_valuations: true,
+            },
+            position_detail_coverage: { status: 'complete', tracks_units: true },
+          },
+        ],
+        cash_accounts: [],
+      },
+    });
     mocks.getWorkspace.mockResolvedValue({
       overview: {
         period: performance.period,
@@ -154,6 +182,9 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('Valor de cartera');
     expect(wrapper.text()).toContain('12.000,00');
     expect(wrapper.text()).toContain('Dónde está invertida');
+    expect(wrapper.text()).toContain('Registrar');
+    expect(wrapper.text()).toContain('Importar CSV');
+    expect(wrapper.text()).toContain('Configurar posiciones · 1');
 
     await wrapper.findAll('.a-pf-tabs-bar .tab')[1]!.trigger('click');
     await wrapper.get('.a-pf-position-list button').trigger('click');

@@ -135,6 +135,16 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `GET` | `/api/portfolio/timeline/?date_from=&date_to=&member_id=` | Bounded monthly value/contribution/result series; maximum requested range is 20 years and gaps stay explicit. |
 | `GET` | `/api/portfolio/performance/?date_from=&date_to=&member_id=` | Detailed aggregate flows, reconciliation, nominal/real TWR or declared Dietz fallback, MWR/XIRR and coverage. |
 | `GET` | `/api/portfolio/quality/?date_from=&date_to=&member_id=` | Value, ownership, FX and metric readiness for the requested historical perimeter. |
+| `POST` | `/api/portfolio/positions/{id}/archive/` | Archives a position and its backing asset without deleting history. |
+| `POST` | `/api/portfolio/positions/{id}/reopen/` | Reopens an archived position and its backing asset. |
+| `POST` | `/api/portfolio/positions/{id}/confirm-setup/` | Confirms tracking style and reconstructed/cutoff history mode without mutating ledger history. |
+| `GET` | `/api/portfolio/operations/options/` | User-scoped positions, independent performance/detail coverage and available container cash. |
+| `POST` | `/api/portfolio/operations/preview/` | Validates an operation and returns the signed token required for direct confirmation. |
+| `POST` | `/api/portfolio/operations/confirm/` | Atomically confirms the unchanged previewed transfer, trade, income, fee, valuation or corporate action. |
+| `POST` | `/api/portfolio/imports/upload/` | Stages a generic UTF-8 CSV and returns detected headers and rows; exact file reuploads are idempotent. |
+| `GET` | `/api/portfolio/imports/{id}/` | Returns a user-owned import batch and its row-level status/errors. |
+| `POST` | `/api/portfolio/imports/{id}/preview/` | Applies explicit column mapping, normalization, duplicate detection and row validation. |
+| `POST` | `/api/portfolio/imports/{id}/confirm/` | Atomically confirms all or selected valid rows through the portfolio operation service. |
 
 ### Financial Plan — `/api/plan/`
 | Method | Route | Description |

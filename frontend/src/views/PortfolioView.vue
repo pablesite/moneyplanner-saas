@@ -3,6 +3,10 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   PortfolioEvolutionChart,
+  PortfolioImportModal,
+  PortfolioOperationModal,
+  PortfolioSetupModal,
+  corePortfolioApi,
   freshnessLabel,
   instrumentMap,
   portfolioAssetClassColors,
@@ -12,6 +16,8 @@ import {
   usePortfolioStore,
   type PositionPerformance,
   type PortfolioQuery,
+  type PortfolioOperationOptions,
+  type PortfolioOperationType,
 } from '@/domains/portfolio';
 import '@/domains/portfolio/portfolio.css';
 import {
@@ -25,6 +31,7 @@ import {
   ASectHead,
   ASelect,
   AState,
+  AToast,
   BaseModal,
   type ADonutSlice,
   type ASelectItem,
@@ -58,6 +65,14 @@ const currency = ref(String(route.query.currency ?? 'all'));
 const customFrom = ref(String(route.query.from ?? ''));
 const customTo = ref(String(route.query.to ?? dateToIso(new Date())));
 const selectedPosition = ref<PositionPerformance | null>(null);
+const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
+const operationOpen = ref(false);
+const importOpen = ref(false);
+const setupOpen = ref(false);
+const operationPositionId = ref<number | null>(null);
+const operationType = ref<PortfolioOperationType>('buy');
+const reviewOnly = ref(false);
+const successMessage = ref<string | null>(null);
 const returnTo =
   typeof route.query.return === 'string' &&
   route.query.return.startsWith('/') &&
@@ -101,6 +116,12 @@ const filteredPositions = computed(() =>
       (currency.value === 'all' || position.native_currency === currency.value)
     );
   }),
+);
+const reviewPositions = computed(() =>
+  filteredPositions.value.filter((position) => position.value_status !== 'fresh'),
+);
+const visiblePositions = computed(() =>
+  reviewOnly.value ? reviewPositions.value : filteredPositions.value,
 );
 
 const baseCurrency = computed(() => store.overview?.currency ?? 'EUR');
@@ -218,6 +239,11 @@ const qualityMessage = computed(() => {
   if (quality.fx_issues.length) parts.push(`${quality.fx_issues.length} incidencias de divisa`);
   return parts.join(' · ');
 });
+const pendingSetupCount = computed(
+  () =>
+    operationOptionsData.value?.positions.filter((position) => !position.setup_confirmed).length ??
+    0,
+);
 
 function setTab(tab: PortfolioTab) {
   activeTab.value = tab;
@@ -243,6 +269,42 @@ function returnToNetWorth() {
   void router.push(returnTo);
 }
 
+async function loadOperationOptions() {
+  try {
+    operationOptionsData.value = (await corePortfolioApi.getOperationOptions()).data;
+  } catch {
+    operationOptionsData.value = null;
+  }
+}
+
+function openOperation(
+  type: PortfolioOperationType = 'buy',
+  position: PositionPerformance | null = null,
+) {
+  operationType.value = type;
+  operationPositionId.value = position?.position_id ?? null;
+  operationOpen.value = true;
+  if (!operationOptionsData.value) void loadOperationOptions();
+}
+
+function showReviewQueue() {
+  reviewOnly.value = true;
+  selectedPosition.value = null;
+  setTab('positions');
+}
+
+function openSelectedValuation() {
+  const position = selectedPosition.value;
+  if (!position) return;
+  selectedPosition.value = null;
+  openOperation('valuation', position);
+}
+
+async function onPortfolioSaved(message: string) {
+  successMessage.value = message;
+  await Promise.all([store.refresh(query.value), loadOperationOptions()]);
+}
+
 watch(
   [activeTab, period, memberId, containerId, assetClass, currency, customFrom, customTo],
   syncUrl,
@@ -258,6 +320,7 @@ watch(
 onMounted(() => {
   void store.loadMembers();
   void store.refresh(query.value);
+  void loadOperationOptions();
 });
 </script>
 
@@ -273,6 +336,11 @@ onMounted(() => {
         <span v-if="scopeIsFiltered">Los filtros de inventario no alteran el hero familiar</span>
       </template>
       <template #actions>
+        <AButton variant="primary" @click="openOperation()">Registrar</AButton>
+        <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
+        <AButton variant="ghost" @click="setupOpen = true">
+          Configurar posiciones<span v-if="pendingSetupCount"> · {{ pendingSetupCount }}</span>
+        </AButton>
         <AButton variant="ghost" @click="returnToNetWorth">Volver a Patrimonio</AButton>
       </template>
     </APageHead>
@@ -386,6 +454,7 @@ onMounted(() => {
           store.quality.status === 'stale' ? 'Valoraciones desactualizadas.' : 'Datos que revisar.'
         }}</strong>
         {{ qualityMessage }}.
+        <AButton size="sm" @click="showReviewQueue">Revisar ahora</AButton>
       </AState>
 
       <template v-if="activeTab === 'summary'">
@@ -447,7 +516,21 @@ onMounted(() => {
             eyebrow="Calidad"
             title="Cobertura de los datos"
             subtitle="Valoración, titularidad y divisas se evalúan por separado."
-          />
+          >
+            <template #actions>
+              <AButton v-if="pendingSetupCount" size="sm" variant="ghost" @click="setupOpen = true">
+                Configurar {{ pendingSetupCount }} posiciones
+              </AButton>
+              <AButton
+                v-if="reviewPositions.length"
+                size="sm"
+                variant="primary"
+                @click="showReviewQueue"
+              >
+                Revisar {{ reviewPositions.length }} valoraciones
+              </AButton>
+            </template>
+          </ASectHead>
           <div class="a-pf-quality-grid">
             <div>
               <span>Al día</span
@@ -479,9 +562,24 @@ onMounted(() => {
         <ASectHead
           eyebrow="Inventario"
           title="Posiciones"
-          :subtitle="`${filteredPositions.length} de ${allPositions.length} posiciones`"
-        />
-        <AState v-if="!filteredPositions.length" status="empty" layout="panel"
+          :subtitle="
+            reviewOnly
+              ? `${visiblePositions.length} posiciones necesitan valoración`
+              : `${visiblePositions.length} de ${allPositions.length} posiciones`
+          "
+        >
+          <template #actions>
+            <AButton
+              v-if="reviewPositions.length"
+              size="sm"
+              variant="ghost"
+              @click="reviewOnly = !reviewOnly"
+            >
+              {{ reviewOnly ? 'Ver todas' : 'Solo por revisar' }}
+            </AButton>
+          </template>
+        </ASectHead>
+        <AState v-if="!visiblePositions.length" status="empty" layout="panel"
           >No hay posiciones para estos filtros.</AState
         >
         <template v-else>
@@ -500,7 +598,7 @@ onMounted(() => {
               </thead>
               <tbody>
                 <tr
-                  v-for="position in filteredPositions"
+                  v-for="position in visiblePositions"
                   :key="position.position_id"
                   tabindex="0"
                   @click="selectedPosition = position"
@@ -543,7 +641,7 @@ onMounted(() => {
           </div>
           <div class="a-pf-position-list">
             <button
-              v-for="position in filteredPositions"
+              v-for="position in visiblePositions"
               :key="position.position_id"
               type="button"
               @click="selectedPosition = position"
@@ -663,6 +761,37 @@ onMounted(() => {
           <dd class="mono">{{ money(selectedPosition.attribution.fx) }}</dd>
         </div>
       </dl>
+      <template #footer>
+        <div v-if="selectedPosition" class="ui-modal-foot-actions">
+          <AButton variant="ghost" @click="selectedPosition = null">Cerrar</AButton>
+          <AButton variant="primary" @click="openSelectedValuation">
+            Actualizar valoración
+          </AButton>
+        </div>
+      </template>
     </BaseModal>
+
+    <PortfolioOperationModal
+      :open="operationOpen"
+      :options="operationOptionsData"
+      :initial-position-id="operationPositionId"
+      :initial-type="operationType"
+      @close="operationOpen = false"
+      @saved="onPortfolioSaved"
+    />
+    <PortfolioImportModal
+      :open="importOpen"
+      @close="importOpen = false"
+      @saved="onPortfolioSaved"
+    />
+    <PortfolioSetupModal
+      :open="setupOpen"
+      :options="operationOptionsData"
+      @close="setupOpen = false"
+      @saved="onPortfolioSaved"
+    />
+    <AToast :open="!!successMessage" @close="successMessage = null">
+      {{ successMessage }}
+    </AToast>
   </div>
 </template>

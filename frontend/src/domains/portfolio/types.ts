@@ -131,3 +131,117 @@ export type PortfolioWorkspacePayload = {
   quality: PortfolioQuality;
   instruments: PortfolioInstrument[];
 };
+
+export type PortfolioOperationType =
+  | 'transfer'
+  | 'buy'
+  | 'sell'
+  | 'dividend'
+  | 'interest'
+  | 'fee'
+  | 'valuation'
+  | 'split'
+  | 'identifier_change'
+  | 'position_transfer'
+  | 'adjustment';
+
+export type PortfolioOperationPosition = {
+  id: number;
+  name: string;
+  container_id: number;
+  container_name: string;
+  tracking_style: string;
+  status: 'active' | 'archived';
+  operational: boolean;
+  history_mode: 'reconstructed' | 'cutoff';
+  history_start_date: string | null;
+  setup_confirmed: boolean;
+  performance_coverage: {
+    status: 'complete' | 'partial' | 'missing';
+    start_date: string | null;
+    has_flows: boolean;
+    has_valuations: boolean;
+  };
+  position_detail_coverage: {
+    status: 'complete' | 'partial' | 'missing' | 'value_only';
+    tracks_units: boolean;
+  };
+};
+
+export type PortfolioPositionSetupPayload = {
+  tracking_style: 'value_based' | 'units_based';
+  history_mode: 'reconstructed' | 'cutoff';
+  history_start_date: string | null;
+};
+
+export type PortfolioCashAccount = {
+  id: number;
+  container_id: number;
+  name: string;
+  currency: string;
+  available: string;
+};
+
+export type PortfolioOperationOptions = {
+  positions: PortfolioOperationPosition[];
+  cash_accounts: PortfolioCashAccount[];
+};
+
+export type PortfolioOperationPayload = {
+  operation_type: PortfolioOperationType;
+  booking_date: string;
+  position_id?: number;
+  target_position_id?: number;
+  cash_account_id?: number;
+  target_cash_account_id?: number;
+  amount?: string;
+  destination_amount?: string;
+  units?: string;
+  unit_price?: string;
+  fee?: string;
+  currency?: string;
+  new_identifier?: string;
+  ratio_denominator?: string;
+  description?: string;
+  external_id?: string;
+  note?: string;
+  preview_token?: string;
+};
+
+export type PortfolioOperationPreview = {
+  preview: {
+    operation_type: PortfolioOperationType;
+    position: { id: number; name: string } | null;
+    amount: string;
+    fee: string;
+    booking_date: string;
+    cash?: {
+      id: number;
+      name: string;
+      currency: string;
+      available_before: string;
+    };
+  };
+  preview_token: string;
+};
+
+export type PortfolioImportRow = {
+  id: number;
+  row_number: number;
+  raw_data: Record<string, string>;
+  normalized_data: Record<string, string | number>;
+  status: 'pending' | 'valid' | 'error' | 'duplicate' | 'confirmed';
+  errors: Record<string, string>;
+};
+
+export type PortfolioImportBatch = {
+  id: number;
+  filename: string;
+  status: 'uploaded' | 'previewed' | 'partial' | 'confirmed' | 'failed';
+  headers: string[];
+  mapping: Record<string, string>;
+  row_count: number;
+  confirmed_count: number;
+  duplicate_file?: boolean;
+  rows: PortfolioImportRow[];
+};
