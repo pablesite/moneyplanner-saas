@@ -137,7 +137,7 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `GET` | `/api/portfolio/quality/?date_from=&date_to=&member_id=` | Value, ownership, FX and metric readiness for the requested historical perimeter. |
 | `POST` | `/api/portfolio/positions/{id}/archive/` | Archives a position and its backing asset without deleting history. |
 | `POST` | `/api/portfolio/positions/{id}/reopen/` | Reopens an archived position and its backing asset. |
-| `POST` | `/api/portfolio/positions/{id}/confirm-setup/` | Confirms tracking style and reconstructed/cutoff history mode without mutating ledger history. |
+| `POST` | `/api/portfolio/positions/{id}/confirm-setup/` | Confirms tracking style and reconstructed/cutoff history mode without mutating ledger history, and optionally reassigns `container_id` and the instrument's `asset_class`. Reclassifying is refused for canonical instruments, which are shared across portfolios. Re-callable: confirming does not lock the position. |
 | `POST` | `/api/portfolio/positions/resync-valuations/` | Pulls into the portfolio any revaluation the ledger already holds, for drift that reached the database underneath the ORM (a restore or bulk load fires no signal). Returns `positions_checked` and `valuations_created`. |
 | `GET` | `/api/portfolio/operations/options/` | User-scoped positions, independent performance/detail coverage and available container cash. |
 | — | `value_status` on position reads | `fresh`, `stale`, `missing` or `at_cost`. `at_cost` means the value is the posted ledger balance rather than a valuation: current by definition, so never stale, and excluded from the review counters. `quality.positions` counts it in its own `at_cost` bucket. |

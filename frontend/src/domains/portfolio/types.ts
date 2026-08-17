@@ -157,6 +157,8 @@ export type PortfolioOperationPosition = {
   history_mode: 'reconstructed' | 'cutoff';
   history_start_date: string | null;
   setup_confirmed: boolean;
+  asset_class: string;
+  instrument_is_custom: boolean;
   performance_coverage: {
     status: 'complete' | 'partial' | 'missing';
     start_date: string | null;
@@ -173,6 +175,8 @@ export type PortfolioPositionSetupPayload = {
   tracking_style: 'value_based' | 'units_based';
   history_mode: 'reconstructed' | 'cutoff';
   history_start_date: string | null;
+  container_id?: number;
+  asset_class?: string;
 };
 
 export type PortfolioCashAccount = {
@@ -186,6 +190,8 @@ export type PortfolioCashAccount = {
 export type PortfolioOperationOptions = {
   positions: PortfolioOperationPosition[];
   cash_accounts: PortfolioCashAccount[];
+  containers: { id: number; name: string; container_type: string }[];
+  asset_classes: { value: string; label: string }[];
 };
 
 export type PortfolioOperationPayload = {

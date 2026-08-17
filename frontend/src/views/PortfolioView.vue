@@ -383,6 +383,7 @@ function signClass(value: number): string {
 const visibleTotalValue = computed(() =>
   sortedPositions.value.reduce((total, position) => total + positionBaseValue(position), 0),
 );
+const totalReturn = computed(() => store.performance?.return);
 const visibleTotalResult = computed(() =>
   sortedPositions.value.reduce(
     (total, position) => total + toNumber(position.performance.monetary_result),
@@ -810,16 +811,25 @@ onMounted(() => {
               </tbody>
               <tfoot>
                 <tr>
-                  <td>Total visible</td>
-                  <td colspan="2">{{ sortedPositions.length }} posiciones</td>
+                  <td>Total</td>
+                  <td colspan="2">
+                    {{ sortedPositions.length }} posiciones{{
+                      scopeIsFiltered ? ' · filtrado' : ''
+                    }}
+                  </td>
                   <td class="num mono">{{ money(visibleTotalValue) }}</td>
                   <td class="num mono" :class="signClass(visibleTotalResult)">
                     {{ signedMoney(visibleTotalResult) }}
                   </td>
-                  <!-- A return is not additive across positions: the hero carries the
-                       portfolio figure, computed over the whole scope. -->
-                  <td class="num mono">—</td>
-                  <td class="num mono">—</td>
+                  <!-- Not a sum: a return does not add up across positions. This is the
+                       portfolio figure, which Core computes over the whole scope, so an
+                       active inventory filter would make it describe something else. -->
+                  <td class="num mono" :class="signClass(toNumber(totalReturn?.nominal))">
+                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.nominal) }}
+                  </td>
+                  <td class="num mono" :class="signClass(toNumber(totalReturn?.mwr_xirr))">
+                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.mwr_xirr) }}
+                  </td>
                 </tr>
               </tfoot>
             </table>

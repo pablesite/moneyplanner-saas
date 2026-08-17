@@ -231,10 +231,19 @@
 /* La cabecera la gobierna `.data-table` del design system, igual que en Movimientos;
    aquí solo se define la celda de datos. */
 .dir-a .a-pf-position-table td {
-  padding: var(--space-3) var(--space-4);
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
   text-align: left;
+  vertical-align: middle;
   white-space: nowrap;
+}
+
+/* Misma escala que la tabla de Movimientos: 13.5px de dato y 12.5px de apoyo. */
+.dir-a .a-pf-position-table td small {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
 }
 
 .dir-a .a-pf-position-table .num {
