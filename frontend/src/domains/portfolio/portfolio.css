@@ -15,6 +15,11 @@
   --a-pf-alternatives: #9085e9;
   --a-pf-other: #e66767;
   --a-pf-neutral: var(--muted);
+  /* Serie de la banda de barras del gráfico de evolución. Par propio, fuera de la
+     paleta de clases: reutilizar un color de clase haría creer que la barra habla de
+     esa clase. Validado con el checker de `dataviz` contra ambas superficies. */
+  --a-pf-contribution: #616ada;
+  --a-pf-revaluation: #b57f1a;
   display: grid;
   gap: var(--space-6);
   overflow-x: hidden;
@@ -426,7 +431,24 @@
 }
 
 .dir-a .a-pf-chart-legend i.is-contributed {
-  background: var(--muted);
+  background: var(--a-pf-contribution);
+}
+
+/* Las entradas de barra se dibujan como bloque, no como trazo: en la leyenda tienen
+   que parecerse a lo que representan. */
+.dir-a .a-pf-chart-legend i.is-bar-contribution,
+.dir-a .a-pf-chart-legend i.is-bar-revaluation {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.dir-a .a-pf-chart-legend i.is-bar-contribution {
+  background: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-legend i.is-bar-revaluation {
+  background: var(--a-pf-revaluation);
 }
 
 .dir-a .a-pf-chart {
@@ -462,8 +484,110 @@
 }
 
 .dir-a .a-pf-chart-line.is-contributed {
-  stroke: var(--muted);
+  stroke: var(--a-pf-contribution);
   stroke-dasharray: 7 7;
+}
+
+.dir-a .a-pf-chart-plot {
+  position: relative;
+}
+
+.dir-a .a-pf-chart-bars-axis {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.dir-a .a-pf-chart-bar {
+  fill-opacity: 0.62;
+}
+
+.dir-a .a-pf-chart-bar.is-active {
+  fill-opacity: 1;
+}
+
+.dir-a .a-pf-chart-bar.is-contribution {
+  fill: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-bar.is-revaluation {
+  fill: var(--a-pf-revaluation);
+}
+
+.dir-a .a-pf-chart-axis text.is-active {
+  fill: var(--text);
+}
+
+/* Recuadro flotante como el de Patrimonio: sigue al cursor sobre el gráfico en vez de
+   obligar a leer la cifra en una esquina fija. */
+.dir-a .a-pf-chart-tip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.dir-a .a-pf-chart-tip-label {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dir-a .a-pf-chart-tip strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dir-a .a-pf-chart-tip dl {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 2px;
+}
+
+.dir-a .a-pf-chart-tip dl > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  font-size: 11.5px;
+}
+
+.dir-a .a-pf-chart-tip dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.dir-a .a-pf-chart-tip dt i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.dir-a .a-pf-chart-tip dt i.is-bar-contribution {
+  background: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-tip dt i.is-bar-revaluation {
+  background: var(--a-pf-revaluation);
+}
+
+.dir-a .a-pf-chart-tip dd {
+  margin: 0;
+}
+
+.dir-a .a-pf-chart-tip small {
+  color: var(--muted);
+  font-size: 10.5px;
 }
 
 .dir-a .a-pf-chart-area {
@@ -690,6 +814,15 @@
 }
 
 @container page (max-width: 560px) {
+  /* En pantalla estrecha el recuadro flotante tapaba el gráfico entero, y en táctil no
+     hay forma de quitarlo. Deja de flotar y se coloca encima, junto a la leyenda. */
+  .dir-a .a-pf-chart-tip {
+    position: static;
+    transform: none;
+    white-space: normal;
+    box-shadow: none;
+  }
+
   .dir-a .a-pf-page {
     gap: var(--space-4);
   }
