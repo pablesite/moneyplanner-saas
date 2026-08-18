@@ -14,6 +14,7 @@ import type {
   PortfolioOperationPayload,
   PortfolioOperationPreview,
   PortfolioPositionSetupPayload,
+  PortfolioValuationResync,
 } from './types';
 
 export const corePortfolioApi = {
@@ -57,6 +58,12 @@ export const corePortfolioApi = {
       `/api/portfolio/positions/${positionId}/confirm-setup/`,
       payload,
     );
+  },
+  resyncValuations() {
+    return coreApi.post<PortfolioValuationResync>('/api/portfolio/positions/resync-valuations/');
+  },
+  reopenPosition(positionId: number) {
+    return coreApi.post<void>(`/api/portfolio/positions/${positionId}/reopen/`);
   },
   uploadImport(file: File) {
     const body = new FormData();

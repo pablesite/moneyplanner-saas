@@ -38,6 +38,7 @@ import {
 } from '@/domains/ui';
 import { currencySymbol, formatAmount, formatMoney, formatPct, toNumber } from '@/lib/format';
 import { dateToIso, formatShortMonthYear } from '@/lib/dates';
+import { toApiErrorMessage } from '@/lib/errors';
 
 type PortfolioTab = 'summary' | 'positions' | 'evolution';
 type PeriodPreset = '1m' | 'ytd' | '1y' | '3y' | 'all' | 'custom';
@@ -73,6 +74,9 @@ const operationPositionId = ref<number | null>(null);
 const operationType = ref<PortfolioOperationType>('buy');
 const reviewOnly = ref(false);
 const successMessage = ref<string | null>(null);
+const resyncing = ref(false);
+const actionError = ref<string | null>(null);
+const showArchivedModal = ref(false);
 const returnTo =
   typeof route.query.return === 'string' &&
   route.query.return.startsWith('/') &&
@@ -107,18 +111,25 @@ const query = computed<PortfolioQuery>(() => {
 
 const instrumentsById = computed(() => instrumentMap(store.instruments));
 const allPositions = computed(() => store.positions?.results ?? []);
+const archivedPositions = computed(() =>
+  allPositions.value.filter((position) => position.status === 'archived'),
+);
 const filteredPositions = computed(() =>
   allPositions.value.filter((position) => {
     const instrument = instrumentsById.value.get(position.instrument_id);
     return (
+      position.status !== 'archived' &&
       (containerId.value === 'all' || String(position.container_id) === containerId.value) &&
       (assetClass.value === 'all' || instrument?.asset_class === assetClass.value) &&
       (currency.value === 'all' || position.native_currency === currency.value)
     );
   }),
 );
+// "A coste" is a statement about provenance, not a pending task: the balance is current.
 const reviewPositions = computed(() =>
-  filteredPositions.value.filter((position) => position.value_status !== 'fresh'),
+  filteredPositions.value.filter(
+    (position) => position.value_status !== 'fresh' && position.value_status !== 'at_cost',
+  ),
 );
 const visiblePositions = computed(() =>
   reviewOnly.value ? reviewPositions.value : filteredPositions.value,
@@ -137,7 +148,7 @@ function money(value: string | number | null | undefined, displayCurrency = base
   return `${formatAmount(value, { currency: displayCurrency })} ${currencySymbol(displayCurrency)}`;
 }
 
-function signedMoney(value: string | null | undefined): string {
+function signedMoney(value: string | number | null | undefined): string {
   if (value == null) return '—';
   const number = toNumber(value);
   return `${number > 0 ? '+' : ''}${money(number)}`;
@@ -164,6 +175,11 @@ const heroKpis = computed(() => [
     label: 'Aportaciones netas',
     value: signedMoney(store.performance?.net_contributed),
     meta: 'Entradas menos retiradas',
+  },
+  {
+    label: 'Rentabilidad de tu dinero',
+    value: pct(store.performance?.return.mwr_xirr),
+    meta: 'MWR anual: pondera cuándo aportaste',
   },
   {
     label: 'Ingresos / costes',
@@ -287,10 +303,138 @@ function openOperation(
   if (!operationOptionsData.value) void loadOperationOptions();
 }
 
+type SortKey = 'name' | 'container' | 'assetClass' | 'value' | 'result' | 'twr' | 'mwr';
+const textSortKeys: SortKey[] = ['name', 'container', 'assetClass'];
+const positionColumns: { key: SortKey; label: string; numeric: boolean }[] = [
+  { key: 'name', label: 'Posición', numeric: false },
+  { key: 'container', label: 'Contenedor', numeric: false },
+  { key: 'assetClass', label: 'Clase', numeric: false },
+  { key: 'value', label: 'Valor', numeric: true },
+  { key: 'result', label: 'Resultado', numeric: true },
+  { key: 'twr', label: 'TWR', numeric: true },
+  { key: 'mwr', label: 'MWR', numeric: true },
+];
+const sortKey = ref<SortKey>('value');
+const sortDir = ref<'asc' | 'desc'>('desc');
+
+function assetClassLabel(position: PositionPerformance): string {
+  const key = instrumentsById.value.get(position.instrument_id)?.asset_class ?? 'other';
+  return portfolioAssetClassLabels[key] ?? key;
+}
+
+function sortableValue(position: PositionPerformance, key: SortKey): string | number | null {
+  if (key === 'name') return position.instrument_name;
+  if (key === 'container') return position.container_name;
+  if (key === 'assetClass') return assetClassLabel(position);
+  if (key === 'value') return positionBaseValue(position);
+  if (key === 'result') {
+    const result = position.performance.monetary_result;
+    return result == null ? null : toNumber(result);
+  }
+  const figure =
+    key === 'twr' ? position.performance.return.nominal : position.performance.return.mwr_xirr;
+  return figure == null ? null : toNumber(figure);
+}
+
+const sortedPositions = computed(() => {
+  const direction = sortDir.value === 'asc' ? 1 : -1;
+  return [...visiblePositions.value].sort((left, right) => {
+    const a = sortableValue(left, sortKey.value);
+    const b = sortableValue(right, sortKey.value);
+    // A row with no figure sinks whichever way the column is sorted: it is missing
+    // data, not the smallest value.
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a.localeCompare(b, 'es') * direction;
+    }
+    return (Number(a) - Number(b)) * direction;
+  });
+});
+
+function toggleSort(key: SortKey) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
+    return;
+  }
+  sortKey.value = key;
+  // Names read better A→Z; amounts and returns are almost always asked for largest first.
+  sortDir.value = textSortKeys.includes(key) ? 'asc' : 'desc';
+}
+
+function ariaSort(key: SortKey): 'ascending' | 'descending' | 'none' {
+  if (sortKey.value !== key) return 'none';
+  return sortDir.value === 'asc' ? 'ascending' : 'descending';
+}
+
+function sortMark(key: SortKey): string {
+  if (sortKey.value !== key) return '';
+  return sortDir.value === 'asc' ? '↑' : '↓';
+}
+
+function signClass(value: number): string {
+  if (value > 0) return 'is-positive';
+  if (value < 0) return 'is-negative';
+  return 'is-neutral';
+}
+
+// Amounts in base currency add up; a return does not, so the footer leaves it out.
+const visibleTotalValue = computed(() =>
+  sortedPositions.value.reduce((total, position) => total + positionBaseValue(position), 0),
+);
+const totalReturn = computed(() => store.performance?.return);
+const visibleTotalResult = computed(() =>
+  sortedPositions.value.reduce(
+    (total, position) => total + toNumber(position.performance.monetary_result),
+    0,
+  ),
+);
+
+function pct(value: string | null | undefined): string {
+  return value == null ? '—' : formatPct(toNumber(value), 1);
+}
+
+// Mobile has no room for two columns, so both returns share one labelled line.
+function positionReturnPair(position: PositionPerformance): string {
+  return `TWR ${pct(position.performance.return.nominal)} · MWR ${pct(
+    position.performance.return.mwr_xirr,
+  )}`;
+}
+
 function showReviewQueue() {
   reviewOnly.value = true;
   selectedPosition.value = null;
   setTab('positions');
+}
+
+async function resyncFromAccounting() {
+  resyncing.value = true;
+  actionError.value = null;
+  try {
+    const { data } = await corePortfolioApi.resyncValuations();
+    await store.refresh(query.value);
+    successMessage.value =
+      data.valuations_created > 0
+        ? `Cartera actualizada: ${data.valuations_created} valoraciones traídas de contabilidad.`
+        : 'La cartera ya estaba al día con contabilidad.';
+  } catch (caught: unknown) {
+    actionError.value = toApiErrorMessage(caught);
+  } finally {
+    resyncing.value = false;
+  }
+}
+
+async function restorePosition(position: PositionPerformance) {
+  actionError.value = null;
+  try {
+    await corePortfolioApi.reopenPosition(position.position_id);
+    await Promise.all([store.refresh(query.value), loadOperationOptions()]);
+    successMessage.value = `${position.instrument_name} vuelve a la cartera.`;
+    if (!archivedPositions.value.length) showArchivedModal.value = false;
+  } catch (caught: unknown) {
+    actionError.value = toApiErrorMessage(caught);
+  }
 }
 
 function openSelectedValuation() {
@@ -333,6 +477,14 @@ onMounted(() => {
             formatShortMonthYear(store.overview.period.to)
           }}
         </AMetaPill>
+        <AButton
+          v-if="archivedPositions.length"
+          size="sm"
+          variant="ghost"
+          @click="showArchivedModal = true"
+        >
+          {{ archivedPositions.length }} archivadas
+        </AButton>
         <span v-if="scopeIsFiltered">Los filtros de inventario no alteran el hero familiar</span>
       </template>
       <template #actions>
@@ -340,6 +492,9 @@ onMounted(() => {
         <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
         <AButton variant="ghost" @click="setupOpen = true">
           Configurar posiciones<span v-if="pendingSetupCount"> · {{ pendingSetupCount }}</span>
+        </AButton>
+        <AButton variant="ghost" :loading="resyncing" @click="resyncFromAccounting">
+          Actualizar desde contabilidad
         </AButton>
         <AButton variant="ghost" @click="returnToNetWorth">Volver a Patrimonio</AButton>
       </template>
@@ -456,6 +611,7 @@ onMounted(() => {
         {{ qualityMessage }}.
         <AButton size="sm" @click="showReviewQueue">Revisar ahora</AButton>
       </AState>
+      <AState v-if="actionError" status="error" layout="inline">{{ actionError }}</AState>
 
       <template v-if="activeTab === 'summary'">
         <section class="sect a-pf-hero-section">
@@ -467,6 +623,9 @@ onMounted(() => {
                   <span>{{
                     returnLabel(store.overview.return.method, store.overview.return.estimated)
                   }}</span>
+                  <span v-if="store.overview.return.twr_annualized"
+                    >{{ pct(store.overview.return.twr_annualized) }} anualizada</span
+                  >
                 </div>
               </template>
               <p>
@@ -583,65 +742,101 @@ onMounted(() => {
           >No hay posiciones para estos filtros.</AState
         >
         <template v-else>
-          <div class="a-pf-position-table data-table">
-            <table>
+          <div class="a-pf-position-table">
+            <table class="data-table a-pf-positions-table">
               <thead>
                 <tr>
-                  <th>Posición</th>
-                  <th>Contenedor</th>
-                  <th>Clase</th>
-                  <th>Freshness</th>
-                  <th class="num">Valor</th>
-                  <th class="num">Resultado</th>
-                  <th class="num">TWR</th>
+                  <th
+                    v-for="column in positionColumns"
+                    :key="column.key"
+                    :class="{ num: column.numeric }"
+                    :aria-sort="ariaSort(column.key)"
+                  >
+                    <button type="button" class="a-pf-sort" @click="toggleSort(column.key)">
+                      {{ column.label
+                      }}<span class="a-pf-sort-mark" aria-hidden="true">{{
+                        sortMark(column.key)
+                      }}</span>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="position in visiblePositions"
+                  v-for="position in sortedPositions"
                   :key="position.position_id"
                   tabindex="0"
                   @click="selectedPosition = position"
                   @keydown.enter="selectedPosition = position"
                 >
-                  <td>
+                  <td data-label="Posición">
                     <strong>{{ position.instrument_name }}</strong
-                    ><small>{{ position.native_currency ?? 'Sin divisa' }}</small>
+                    ><small
+                      >{{ position.native_currency ?? 'Sin divisa'
+                      }}<template v-if="position.value_status !== 'fresh'">
+                        ·
+                        <span class="a-pf-freshness" :class="`is-${position.value_status}`">{{
+                          freshnessLabel(position.value_status)
+                        }}</span>
+                      </template></small
+                    >
                   </td>
-                  <td>{{ position.container_name }}</td>
-                  <td>
-                    {{
-                      portfolioAssetClassLabels[
-                        instrumentsById.get(position.instrument_id)?.asset_class ?? 'other'
-                      ]
-                    }}
+                  <td data-label="Contenedor">{{ position.container_name }}</td>
+                  <td data-label="Clase">{{ assetClassLabel(position) }}</td>
+                  <td class="num mono" data-label="Valor">
+                    {{ money(positionBaseValue(position)) }}
                   </td>
-                  <td>
-                    <span class="a-pf-freshness" :class="`is-${position.value_status}`">{{
-                      freshnessLabel(position.value_status)
-                    }}</span>
-                  </td>
-                  <td class="num mono">{{ money(positionBaseValue(position)) }}</td>
                   <td
                     class="num mono"
-                    :class="toNumber(position.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
+                    :class="signClass(toNumber(position.performance.monetary_result))"
+                    data-label="Resultado"
                   >
                     {{ signedMoney(position.performance.monetary_result) }}
                   </td>
-                  <td class="num mono">
-                    {{
-                      position.performance.return.nominal === null
-                        ? '—'
-                        : formatPct(toNumber(position.performance.return.nominal), 1)
-                    }}
+                  <td
+                    class="num mono"
+                    :class="signClass(toNumber(position.performance.return.nominal))"
+                    data-label="TWR"
+                  >
+                    {{ pct(position.performance.return.nominal) }}
+                  </td>
+                  <td
+                    class="num mono"
+                    :class="signClass(toNumber(position.performance.return.mwr_xirr))"
+                    data-label="MWR"
+                  >
+                    {{ pct(position.performance.return.mwr_xirr) }}
                   </td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td colspan="2">
+                    {{ sortedPositions.length }} posiciones{{
+                      scopeIsFiltered ? ' · filtrado' : ''
+                    }}
+                  </td>
+                  <td class="num mono">{{ money(visibleTotalValue) }}</td>
+                  <td class="num mono" :class="signClass(visibleTotalResult)">
+                    {{ signedMoney(visibleTotalResult) }}
+                  </td>
+                  <!-- Not a sum: a return does not add up across positions. This is the
+                       portfolio figure, which Core computes over the whole scope, so an
+                       active inventory filter would make it describe something else. -->
+                  <td class="num mono" :class="signClass(toNumber(totalReturn?.nominal))">
+                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.nominal) }}
+                  </td>
+                  <td class="num mono" :class="signClass(toNumber(totalReturn?.mwr_xirr))">
+                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.mwr_xirr) }}
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
           <div class="a-pf-position-list">
             <button
-              v-for="position in visiblePositions"
+              v-for="position in sortedPositions"
               :key="position.position_id"
               type="button"
               @click="selectedPosition = position"
@@ -658,7 +853,7 @@ onMounted(() => {
                 ><small
                   :class="toNumber(position.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
                   >{{ signedMoney(position.performance.monetary_result) }}</small
-                ></span
+                ><small>{{ positionReturnPair(position) }}</small></span
               >
             </button>
           </div>
@@ -711,13 +906,26 @@ onMounted(() => {
           </dd>
         </div>
         <div>
-          <dt>Rentabilidad</dt>
+          <dt>Rentabilidad del activo</dt>
           <dd>
-            {{
-              selectedPosition.performance.return.nominal === null
-                ? 'No disponible'
-                : formatPct(toNumber(selectedPosition.performance.return.nominal), 1)
-            }}
+            {{ pct(selectedPosition.performance.return.nominal) }}
+            <small
+              >{{
+                returnLabel(
+                  selectedPosition.performance.return.method,
+                  selectedPosition.performance.return.estimated,
+                )
+              }}<template v-if="selectedPosition.performance.return.twr_annualized">
+                · {{ pct(selectedPosition.performance.return.twr_annualized) }} anualizada</template
+              ></small
+            >
+          </dd>
+        </div>
+        <div>
+          <dt>Rentabilidad de tu dinero</dt>
+          <dd>
+            {{ pct(selectedPosition.performance.return.mwr_xirr) }}
+            <small>MWR anual: pondera cuándo aportaste</small>
           </dd>
         </div>
         <div>
@@ -767,6 +975,32 @@ onMounted(() => {
           <AButton variant="primary" @click="openSelectedValuation">
             Actualizar valoración
           </AButton>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseModal
+      :open="showArchivedModal"
+      title="Posiciones archivadas"
+      variant="sheet"
+      panel-class="a-pf-detail-sheet"
+      @close="showArchivedModal = false"
+    >
+      <AState v-if="!archivedPositions.length" status="empty">
+        No hay posiciones archivadas.
+      </AState>
+      <dl v-else class="a-pf-detail-grid">
+        <div v-for="position in archivedPositions" :key="position.position_id">
+          <dt>{{ position.instrument_name }}</dt>
+          <dd>
+            {{ position.container_name }}
+            <AButton variant="ghost" @click="restorePosition(position)">Restaurar</AButton>
+          </dd>
+        </div>
+      </dl>
+      <template #footer>
+        <div class="ui-modal-foot-actions">
+          <AButton variant="ghost" @click="showArchivedModal = false">Cerrar</AButton>
         </div>
       </template>
     </BaseModal>

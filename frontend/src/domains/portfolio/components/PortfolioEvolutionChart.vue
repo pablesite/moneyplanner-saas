@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, useId } from 'vue';
 import { formatCompact, formatMoney, toNumber } from '@/lib/format';
 import { formatShortMonthYear } from '@/lib/dates';
 import type { PortfolioTimelinePoint } from '../types';
@@ -9,50 +9,64 @@ const props = defineProps<{
   currency: string;
 }>();
 
-const width = 960;
-const height = 330;
-const padding = { top: 24, right: 24, bottom: 42, left: 72 };
+// Misma geometría que el gráfico de Patrimonio: viewBox fijo y ancho 100%, así el SVG
+// escala con el contenedor y las dos vistas comparten proporciones.
+const W = 1280;
+const padL = 78;
+const padR = 28;
+const padT = 18;
+const padB = 34;
+const H = 300;
+
+const chartId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+const areaGradientId = `a-pf-evo-grad-${chartId}`;
+const hoverIndex = ref<number | null>(null);
 
 const usablePoints = computed(() =>
   props.points.filter(
     (point): point is PortfolioTimelinePoint & { value: string } => point.value !== null,
   ),
 );
-const values = computed(() =>
-  usablePoints.value.flatMap((point) => [toNumber(point.value), toNumber(point.net_contributed)]),
-);
+
 const bounds = computed(() => {
-  const min = Math.min(...values.value, 0);
-  const max = Math.max(...values.value, 1);
+  const values = usablePoints.value.flatMap((point) => [
+    toNumber(point.value),
+    toNumber(point.contributed_to_date),
+  ]);
+  const min = Math.min(...values, 0);
+  const max = Math.max(...values, 1);
   const span = Math.max(max - min, 1);
   return { min: min - span * 0.08, max: max + span * 0.08 };
 });
-const plotWidth = width - padding.left - padding.right;
-const plotHeight = height - padding.top - padding.bottom;
+
+const plotWidth = W - padL - padR;
+const plotHeight = H - padT - padB;
 
 function x(index: number): number {
-  if (usablePoints.value.length <= 1) return padding.left + plotWidth / 2;
-  return padding.left + (index / (usablePoints.value.length - 1)) * plotWidth;
+  if (usablePoints.value.length <= 1) return padL + plotWidth / 2;
+  return padL + (index / (usablePoints.value.length - 1)) * plotWidth;
 }
 
 function y(value: number): number {
   const span = bounds.value.max - bounds.value.min || 1;
-  return padding.top + (1 - (value - bounds.value.min) / span) * plotHeight;
+  return padT + (1 - (value - bounds.value.min) / span) * plotHeight;
 }
 
-const valuePath = computed(() =>
-  usablePoints.value
-    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(index)} ${y(toNumber(point.value))}`)
-    .join(' '),
-);
-const contributionPath = computed(() =>
-  usablePoints.value
-    .map(
-      (point, index) =>
-        `${index === 0 ? 'M' : 'L'} ${x(index)} ${y(toNumber(point.net_contributed))}`,
-    )
-    .join(' '),
-);
+function linePath(read: (point: PortfolioTimelinePoint) => number): string {
+  return usablePoints.value
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(index)} ${y(read(point))}`)
+    .join(' ');
+}
+
+const valuePath = computed(() => linePath((point) => toNumber(point.value)));
+const contributionPath = computed(() => linePath((point) => toNumber(point.contributed_to_date)));
+const valueAreaPath = computed(() => {
+  if (!usablePoints.value.length) return '';
+  const baseline = y(Math.max(bounds.value.min, 0));
+  const last = usablePoints.value.length - 1;
+  return `${valuePath.value} L ${x(last)} ${baseline} L ${x(0)} ${baseline} Z`;
+});
+
 const yTicks = computed(() =>
   [0, 1, 2, 3, 4].map((index) => {
     const value = bounds.value.min + ((bounds.value.max - bounds.value.min) * index) / 4;
@@ -69,6 +83,11 @@ const xTicks = computed(() => {
   return [...new Set(indexes)].map((index) => ({ index, point: usablePoints.value[index]! }));
 });
 
+const activeIndex = computed(() =>
+  hoverIndex.value === null ? usablePoints.value.length - 1 : hoverIndex.value,
+);
+const activePoint = computed(() => usablePoints.value[activeIndex.value] ?? null);
+
 function money(value: string): string {
   return formatMoney(value, props.currency === 'USD' ? 'USD' : 'EUR');
 }
@@ -76,48 +95,75 @@ function money(value: string): string {
 
 <template>
   <div class="a-pf-chart-shell">
-    <div class="a-pf-chart-legend" aria-hidden="true">
+    <div class="a-pf-chart-legend">
       <span><i class="is-value"></i> Valor</span>
-      <span><i class="is-contributed"></i> Aportado neto</span>
+      <span><i class="is-contributed"></i> Capital aportado</span>
+      <strong v-if="activePoint" class="a-pf-chart-readout">
+        {{ formatShortMonthYear(activePoint.date) }} · {{ money(activePoint.value) }}
+        <small>aportado {{ money(activePoint.contributed_to_date) }}</small>
+      </strong>
     </div>
     <svg
       class="a-pf-chart"
-      :viewBox="`0 0 ${width} ${height}`"
+      :viewBox="`0 0 ${W} ${H}`"
       role="img"
-      aria-label="Evolución mensual del valor de cartera y las aportaciones netas"
+      aria-label="Evolución mensual del valor de cartera frente al capital aportado"
+      @mouseleave="hoverIndex = null"
     >
+      <defs>
+        <linearGradient :id="areaGradientId" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.26" />
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+
       <g class="a-pf-chart-grid">
         <template v-for="tick in yTicks" :key="tick.y">
-          <line :x1="padding.left" :x2="width - padding.right" :y1="tick.y" :y2="tick.y" />
-          <text :x="padding.left - 12" :y="tick.y + 4" text-anchor="end">
+          <line :x1="padL" :x2="W - padR" :y1="tick.y" :y2="tick.y" />
+          <text :x="padL - 12" :y="tick.y + 4" text-anchor="end">
             {{ formatCompact(tick.value) }}
           </text>
         </template>
       </g>
+
+      <path class="a-pf-chart-area" :d="valueAreaPath" :fill="`url(#${areaGradientId})`" />
       <path class="a-pf-chart-line is-contributed" :d="contributionPath" />
       <path class="a-pf-chart-line is-value" :d="valuePath" />
+
       <g class="a-pf-chart-axis">
         <text
           v-for="tick in xTicks"
           :key="tick.point.date"
           :x="x(tick.index)"
-          :y="height - 10"
+          :y="H - 10"
           text-anchor="middle"
         >
           {{ formatShortMonthYear(tick.point.date) }}
         </text>
       </g>
-      <g class="a-pf-chart-points">
-        <circle
-          v-for="(point, index) in usablePoints"
-          :key="point.date"
-          :cx="x(index)"
-          :cy="y(toNumber(point.value))"
-          r="4"
-        >
-          <title>{{ formatShortMonthYear(point.date) }}: {{ money(point.value) }}</title>
-        </circle>
+
+      <!-- Una marca por punto competía con la propia línea: solo se dibuja la del punto
+           bajo el cursor, y por defecto la del cierre. -->
+      <g v-if="activePoint" class="a-pf-chart-cursor">
+        <line :x1="x(activeIndex)" :x2="x(activeIndex)" :y1="padT" :y2="H - padB" />
+        <circle :cx="x(activeIndex)" :cy="y(toNumber(activePoint.value))" r="5" />
       </g>
+
+      <rect
+        v-for="(point, index) in usablePoints"
+        :key="point.date"
+        class="a-pf-chart-hit"
+        :x="x(index) - plotWidth / Math.max(usablePoints.length - 1, 1) / 2"
+        :y="padT"
+        :width="plotWidth / Math.max(usablePoints.length - 1, 1)"
+        :height="plotHeight"
+        @mouseenter="hoverIndex = index"
+      >
+        <title>
+          {{ formatShortMonthYear(point.date) }}: {{ money(point.value) }} · aportado
+          {{ money(point.contributed_to_date) }}
+        </title>
+      </rect>
     </svg>
 
     <details class="a-pf-chart-data">
@@ -128,7 +174,8 @@ function money(value: string): string {
             <tr>
               <th>Fecha</th>
               <th class="num">Valor</th>
-              <th class="num">Aportado neto</th>
+              <th class="num">Capital aportado</th>
+              <th class="num">Aportado en el periodo</th>
               <th>Datos</th>
             </tr>
           </thead>
@@ -136,6 +183,7 @@ function money(value: string): string {
             <tr v-for="point in points" :key="point.date">
               <td>{{ formatShortMonthYear(point.date) }}</td>
               <td class="num mono">{{ point.value === null ? '—' : money(point.value) }}</td>
+              <td class="num mono">{{ money(point.contributed_to_date) }}</td>
               <td class="num mono">{{ money(point.net_contributed) }}</td>
               <td>{{ point.coverage === 'complete' ? 'Completos' : 'Parciales' }}</td>
             </tr>
