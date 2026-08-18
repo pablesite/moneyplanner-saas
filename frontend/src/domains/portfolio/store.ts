@@ -18,6 +18,7 @@ export const usePortfolioStore = defineStore('portfolio', {
     error: null as string | null,
     overview: null as PortfolioOverview | null,
     performance: null as PortfolioPerformance | null,
+    scopedPerformance: null as PortfolioPerformance | null,
     positions: null as PortfolioPositionsResponse | null,
     timeline: null as PortfolioTimeline | null,
     quality: null as PortfolioQuality | null,
@@ -43,6 +44,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         const payload = await corePortfolioApi.getWorkspace(query);
         if (sequence !== this.requestSequence) return;
         this.overview = payload.overview;
+        this.scopedPerformance = payload.scoped_performance;
         this.performance = payload.performance;
         this.positions = payload.positions;
         this.timeline = payload.timeline;

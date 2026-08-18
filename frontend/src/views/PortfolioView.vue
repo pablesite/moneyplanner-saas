@@ -96,6 +96,12 @@ function subtractMonths(date: Date, months: number): Date {
 const query = computed<PortfolioQuery>(() => {
   const result: PortfolioQuery = {};
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
+  // Container and class travel to Core so it can return the filtered subset's return,
+  // which is not derivable here: a return does not add up across positions. Currency
+  // stays a client-side filter, since it never changes which positions are in scope for
+  // the calculation, only which rows are worth looking at.
+  if (containerId.value !== 'all') result.container_id = Number(containerId.value);
+  if (assetClass.value !== 'all') result.asset_class = assetClass.value;
   if (period.value === 'all') return result;
   if (period.value === 'custom') {
     if (customFrom.value) result.date_from = customFrom.value;
@@ -400,7 +406,13 @@ function signClass(value: number): string {
 const visibleTotalValue = computed(() =>
   sortedPositions.value.reduce((total, position) => total + positionBaseValue(position), 0),
 );
-const totalReturn = computed(() => store.performance?.return);
+// Core computes the return for the container/class filter; currency is not part of that
+// scope, so with it active the footer states nothing rather than a figure for a different
+// set of positions.
+const totalReturn = computed(() => {
+  if (currency.value !== 'all') return null;
+  return (store.scopedPerformance ?? store.performance)?.return ?? null;
+});
 const visibleTotalResult = computed(() =>
   sortedPositions.value.reduce(
     (total, position) => total + toNumber(position.performance.monetary_result),
@@ -835,14 +847,14 @@ onMounted(() => {
                   <td class="num mono" :class="signClass(visibleTotalResult)">
                     {{ signedMoney(visibleTotalResult) }}
                   </td>
-                  <!-- Not a sum: a return does not add up across positions. This is the
-                       portfolio figure, which Core computes over the whole scope, so an
-                       active inventory filter would make it describe something else. -->
+                  <!-- Not a sum: a return does not add up across positions. Core computes
+                       it over whatever container/class filter is active, so it describes
+                       exactly the rows above. -->
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.nominal))">
-                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.nominal) }}
+                    {{ pct(totalReturn?.nominal) }}
                   </td>
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.mwr_xirr))">
-                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.mwr_xirr) }}
+                    {{ pct(totalReturn?.mwr_xirr) }}
                   </td>
                 </tr>
               </tfoot>

@@ -123,9 +123,14 @@ export type PortfolioQuery = {
   date_from?: string;
   date_to?: string;
   member_id?: number;
+  container_id?: number;
+  asset_class?: string;
 };
 
 export type PortfolioWorkspacePayload = {
+  // Metrics for the active inventory filter, or null when there is none. Kept apart from
+  // `performance`, which stays family-wide whatever the inventory filter says.
+  scoped_performance: PortfolioPerformance | null;
   overview: PortfolioOverview;
   performance: PortfolioPerformance;
   positions: PortfolioPositionsResponse;
