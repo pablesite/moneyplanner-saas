@@ -15,6 +15,8 @@ import type {
   PortfolioOperationPreview,
   PortfolioPositionSetupPayload,
   PortfolioValuationResync,
+  PortfolioContainer,
+  PortfolioContainerPayload,
 } from './types';
 
 export const corePortfolioApi = {
@@ -61,6 +63,12 @@ export const corePortfolioApi = {
   },
   resyncValuations() {
     return coreApi.post<PortfolioValuationResync>('/api/portfolio/positions/resync-valuations/');
+  },
+  createContainer(payload: PortfolioContainerPayload) {
+    return coreApi.post<PortfolioContainer>('/api/portfolio/containers/', payload);
+  },
+  updateContainer(id: number, payload: PortfolioContainerPayload) {
+    return coreApi.patch<PortfolioContainer>(`/api/portfolio/containers/${id}/`, payload);
   },
   reopenPosition(positionId: number) {
     return coreApi.post<void>(`/api/portfolio/positions/${positionId}/reopen/`);

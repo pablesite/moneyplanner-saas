@@ -6,6 +6,7 @@ import {
   PortfolioImportModal,
   PortfolioOperationModal,
   PortfolioSetupModal,
+  PortfolioContainersModal,
   corePortfolioApi,
   freshnessLabel,
   instrumentMap,
@@ -71,6 +72,7 @@ const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
 const operationOpen = ref(false);
 const importOpen = ref(false);
 const setupOpen = ref(false);
+const containersOpen = ref(false);
 const operationPositionId = ref<number | null>(null);
 const operationType = ref<PortfolioOperationType>('buy');
 const reviewOnly = ref(false);
@@ -515,6 +517,7 @@ onMounted(() => {
         <AButton variant="ghost" @click="setupOpen = true">
           Configurar posiciones<span v-if="pendingSetupCount"> · {{ pendingSetupCount }}</span>
         </AButton>
+        <AButton variant="ghost" @click="containersOpen = true">Contenedores</AButton>
         <AButton variant="ghost" :loading="resyncing" @click="resyncFromAccounting">
           Actualizar desde contabilidad
         </AButton>
@@ -1067,6 +1070,12 @@ onMounted(() => {
     <PortfolioImportModal
       :open="importOpen"
       @close="importOpen = false"
+      @saved="onPortfolioSaved"
+    />
+    <PortfolioContainersModal
+      :open="containersOpen"
+      :options="operationOptionsData"
+      @close="containersOpen = false"
       @saved="onPortfolioSaved"
     />
     <PortfolioSetupModal

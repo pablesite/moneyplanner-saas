@@ -196,8 +196,24 @@ export type PortfolioCashAccount = {
 export type PortfolioOperationOptions = {
   positions: PortfolioOperationPosition[];
   cash_accounts: PortfolioCashAccount[];
-  containers: { id: number; name: string; container_type: string }[];
+  containers: PortfolioContainer[];
   asset_classes: { value: string; label: string }[];
+  container_types: { value: string; label: string }[];
+};
+
+export type PortfolioContainer = {
+  id: number;
+  name: string;
+  container_type: string;
+  is_active: boolean;
+  position_count: number;
+};
+
+export type PortfolioContainerPayload = {
+  name: string;
+  container_type: string;
+  is_active?: boolean;
+  notes?: string;
 };
 
 export type PortfolioOperationPayload = {

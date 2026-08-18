@@ -6,3 +6,4 @@ export { default as PortfolioEvolutionChart } from './components/PortfolioEvolut
 export { default as PortfolioOperationModal } from './components/PortfolioOperationModal.vue';
 export { default as PortfolioImportModal } from './components/PortfolioImportModal.vue';
 export { default as PortfolioSetupModal } from './components/PortfolioSetupModal.vue';
+export { default as PortfolioContainersModal } from './components/PortfolioContainersModal.vue';
