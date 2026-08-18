@@ -71,6 +71,7 @@ export type PositionPerformance = {
   holding_currency: string;
   observed_on: string | null;
   asset_class: string;
+  class_breakdown: { asset_class: string; percent: string }[];
   value_status: 'fresh' | 'stale' | 'missing' | 'at_cost';
   performance: PortfolioPerformance;
   attribution: {
@@ -128,6 +129,7 @@ export type PortfolioQuery = {
   container_id?: number;
   asset_class?: string;
   currency?: string;
+  class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
 export type PortfolioWorkspacePayload = {
@@ -168,6 +170,7 @@ export type PortfolioOperationPosition = {
   history_start_date: string | null;
   setup_confirmed: boolean;
   asset_class: string;
+  class_breakdown: PortfolioClassBreakdownRow[];
   performance_coverage: {
     status: 'complete' | 'partial' | 'missing';
     start_date: string | null;
@@ -180,6 +183,11 @@ export type PortfolioOperationPosition = {
   };
 };
 
+export type PortfolioClassBreakdownRow = {
+  asset_class: string;
+  percent: string;
+};
+
 export type PortfolioPositionSetupPayload = {
   tracking_style: 'value_based' | 'units_based';
   history_mode: 'reconstructed' | 'cutoff';
@@ -187,6 +195,7 @@ export type PortfolioPositionSetupPayload = {
   container_id?: number;
   asset_class?: string;
   currency?: string;
+  class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
 export type PortfolioCashAccount = {

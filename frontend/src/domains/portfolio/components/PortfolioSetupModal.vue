@@ -7,6 +7,7 @@ import type { OwnershipRead } from '@/domains/people/types';
 import { formatShortDate } from '@/lib/dates';
 import { corePortfolioApi } from '../api';
 import type {
+  PortfolioClassBreakdownRow,
   PortfolioOperationOptions,
   PortfolioPositionSetupPayload,
   PositionOwnershipPeriod,
@@ -28,6 +29,28 @@ const containerId = ref('');
 const assetClass = ref('');
 const saving = ref(false);
 const error = ref<string | null>(null);
+
+// Reparto interno. Una cartera de roboadvisor o un fondo mixto no son de una sola clase,
+// y contarlos enteros en la dominante desplaza el gráfico tanto como pesen.
+const breakdown = ref<PortfolioClassBreakdownRow[]>([]);
+const breakdownTotal = computed(() =>
+  breakdown.value.reduce((sum, row) => sum + Number(row.percent || 0), 0),
+);
+const breakdownValid = computed(
+  () => breakdown.value.length === 0 || Math.abs(breakdownTotal.value - 100) < 0.001,
+);
+
+function addBreakdownRow() {
+  const used = new Set(breakdown.value.map((row) => row.asset_class));
+  const next = assetClassOptions.value.find((option) => !used.has(String(option.value)));
+  breakdown.value.push({
+    asset_class: String(next?.value ?? assetClass.value),
+    percent: breakdown.value.length ? '' : '100',
+  });
+}
+function removeBreakdownRow(index: number) {
+  breakdown.value.splice(index, 1);
+}
 
 // Titularidad por tramos. El backend la guarda desde siempre y nunca hubo dónde tocarla,
 // así que un activo que se compartió y luego dejó de compartirse no se podía contar.
@@ -59,7 +82,7 @@ const historyOptions: ASelectItem[] = [
 const containerOptions = computed<ASelectItem[]>(() =>
   (props.options?.containers ?? []).map((row) => ({ value: String(row.id), label: row.name })),
 );
-const assetClassOptions = computed<ASelectItem[]>(() =>
+const assetClassOptions = computed(() =>
   (props.options?.asset_classes ?? []).map((row) => ({ value: row.value, label: row.label })),
 );
 
@@ -170,6 +193,7 @@ function loadPosition(id: string) {
   historyStartDate.value = position.history_start_date ?? '';
   containerId.value = String(position.container_id);
   assetClass.value = position.asset_class;
+  breakdown.value = position.class_breakdown.map((row) => ({ ...row }));
   error.value = null;
 }
 
@@ -201,6 +225,10 @@ async function save() {
     error.value = 'Indica la fecha desde la que comenzará el seguimiento.';
     return;
   }
+  if (!breakdownValid.value) {
+    error.value = 'El reparto interno debe sumar 100%.';
+    return;
+  }
   saving.value = true;
   error.value = null;
   try {
@@ -210,6 +238,9 @@ async function save() {
       history_start_date: historyMode.value === 'cutoff' ? historyStartDate.value : null,
       container_id: Number(containerId.value),
       asset_class: assetClass.value,
+      class_breakdown: breakdown.value
+        .filter((row) => row.percent !== '')
+        .map((row) => ({ asset_class: row.asset_class, percent: String(row.percent) })),
     });
     emit('saved', `Configuración guardada para ${selectedPosition.value.name}.`);
     emit('close');
@@ -276,6 +307,36 @@ async function save() {
               :searchable="false"
               class="select"
             />
+          </label>
+          <label class="ui-item-form-field a-pf-breakdown-toggle">
+            <span class="ui-item-form-label">
+              Reparto interno
+              <AInfoHint
+                label="Para posiciones que no son de una sola clase: una cartera de roboadvisor o un fondo mixto. Sin esto se cuentan enteras en la clase dominante y el gráfico de composición se desplaza tanto como pese la posición. Solo afecta a la composición; el resto de cálculos usa la clase de arriba."
+              />
+            </span>
+            <div class="a-pf-breakdown">
+              <div v-for="(row, index) in breakdown" :key="index" class="a-pf-breakdown-row">
+                <ASelect
+                  v-model="row.asset_class"
+                  :options="assetClassOptions"
+                  :searchable="false"
+                  class="select"
+                />
+                <input v-model="row.percent" class="input" inputmode="decimal" placeholder="0" />
+                <span>%</span>
+                <AButton variant="ghost" size="sm" @click="removeBreakdownRow(index)">
+                  Quitar
+                </AButton>
+              </div>
+              <div class="a-pf-breakdown-foot">
+                <AButton variant="ghost" size="sm" @click="addBreakdownRow">Añadir clase</AButton>
+                <small v-if="breakdown.length" :class="{ 'is-negative': !breakdownValid }">
+                  Suma {{ breakdownTotal }}%
+                </small>
+                <small v-else>Sin reparto: cuenta entera en su clase.</small>
+              </div>
+            </div>
           </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">

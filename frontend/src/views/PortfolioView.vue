@@ -237,21 +237,37 @@ const heroKpis = computed(() => [
   },
 ]);
 
+// Una posición puede repartirse entre varias clases (una cartera de roboadvisor, un
+// fondo mixto): sin eso, contarla entera en la dominante desplaza el gráfico tanto como
+// pese la posición, y una cartera 60/40 hacía desaparecer toda su renta fija.
+function positionSlices(position: PositionPerformance): { key: string; value: number }[] {
+  const total = positionBaseValue(position);
+  if (!position.class_breakdown.length) {
+    return [{ key: position.asset_class || 'other', value: total }];
+  }
+  return position.class_breakdown.map((row) => ({
+    key: row.asset_class,
+    value: (total * toNumber(row.percent)) / 100,
+  }));
+}
+
 const composition = computed(() => {
-  const groups = new Map<string, PositionPerformance[]>();
+  const groups = new Map<string, { position: PositionPerformance; value: number }[]>();
   for (const position of filteredPositions.value) {
-    const key = position.asset_class || 'other';
-    const bucket = groups.get(key);
-    if (bucket) bucket.push(position);
-    else groups.set(key, [position]);
+    for (const slice of positionSlices(position)) {
+      const bucket = groups.get(slice.key);
+      const entry = { position, value: slice.value };
+      if (bucket) bucket.push(entry);
+      else groups.set(slice.key, [entry]);
+    }
   }
   const rows = [...groups.entries()]
     .map(([key, members]) => ({
       key,
       label: portfolioAssetClassLabels[key] ?? key,
-      value: members.reduce((sum, position) => sum + positionBaseValue(position), 0),
+      value: members.reduce((sum, member) => sum + member.value, 0),
       color: portfolioAssetClassColors[key] ?? portfolioAssetClassColors.other!,
-      members: [...members].sort((a, b) => positionBaseValue(b) - positionBaseValue(a)),
+      members: [...members].sort((a, b) => b.value - a.value),
     }))
     .sort((a, b) => b.value - a.value);
   // Only eight hues survive the palette checker, so a longer tail is aggregated rather
@@ -267,9 +283,7 @@ const composition = computed(() => {
       label: `Otras clases · ${tail.length}`,
       value: tail.reduce((sum, row) => sum + row.value, 0),
       color: 'var(--a-pf-neutral)',
-      members: tail
-        .flatMap((row) => row.members)
-        .sort((a, b) => positionBaseValue(b) - positionBaseValue(a)),
+      members: tail.flatMap((row) => row.members).sort((a, b) => b.value - a.value),
     },
   ];
 });
@@ -821,18 +835,19 @@ onMounted(() => {
                 <!-- El peso de dentro es sobre la clase, no sobre la cartera: la pregunta
                      al abrir una clase es cuánto pesa cada activo dentro de ella. -->
                 <ul v-if="expandedClasses.has(item.key)" class="a-pf-composition-members">
-                  <li v-for="member in item.members" :key="member.position_id">
+                  <li v-for="member in item.members" :key="member.position.position_id">
                     <button
                       type="button"
                       class="a-pf-composition-member"
-                      :title="`Configurar ${member.instrument_name}`"
-                      @click="editPosition(member.position_id)"
+                      :title="`Configurar ${member.position.instrument_name}`"
+                      @click="editPosition(member.position.position_id)"
                     >
-                      <span>{{ member.instrument_name }}</span>
-                      <strong class="mono">{{ money(positionBaseValue(member)) }}</strong>
-                      <small>{{
-                        formatPct(positionBaseValue(member) / Math.max(item.value, 1), 0)
-                      }}</small>
+                      <span>
+                        {{ member.position.instrument_name }}
+                        <em v-if="member.position.class_breakdown.length">parcial</em>
+                      </span>
+                      <strong class="mono">{{ money(member.value) }}</strong>
+                      <small>{{ formatPct(member.value / Math.max(item.value, 1), 0) }}</small>
                     </button>
                   </li>
                 </ul>

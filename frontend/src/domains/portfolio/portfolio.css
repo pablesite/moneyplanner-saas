@@ -7,13 +7,13 @@
    never carried by colour alone. */
 .dir-a .page.a-pf-page {
   --a-pf-equity: #3987e5;
-  --a-pf-real-estate: #d95926;
   --a-pf-fixed-income: #199e70;
+  --a-pf-real-estate: #d95926;
+  --a-pf-private-debt: #0f9bb5;
   --a-pf-commodities: #c98500;
-  --a-pf-safe-haven: #d55181;
-  --a-pf-trading: #008300;
-  --a-pf-alternatives: #9085e9;
-  --a-pf-other: #e66767;
+  --a-pf-private-equity: #9085e9;
+  --a-pf-crypto: #d55181;
+  --a-pf-cash: #8a9a35;
   --a-pf-neutral: var(--muted);
   /* Serie de la banda de barras del gráfico de evolución. Par propio, fuera de la
      paleta de clases: reutilizar un color de clase haría creer que la barra habla de
@@ -27,13 +27,13 @@
 
 .dir-a.theme-light .page.a-pf-page {
   --a-pf-equity: #2a78d6;
-  --a-pf-real-estate: #eb6834;
   --a-pf-fixed-income: #1baf7a;
+  --a-pf-real-estate: #eb6834;
+  --a-pf-private-debt: #0f8ca3;
   --a-pf-commodities: #eda100;
-  --a-pf-safe-haven: #e87ba4;
-  --a-pf-trading: #008300;
-  --a-pf-alternatives: #4a3aa7;
-  --a-pf-other: #e34948;
+  --a-pf-private-equity: #4a3aa7;
+  --a-pf-crypto: #e87ba4;
+  --a-pf-cash: #7c8a2f;
 }
 
 .dir-a .a-pf-tabs-bar {
@@ -221,29 +221,29 @@
   background: var(--muted);
 }
 
-.dir-a .a-pf-composition-row i.is-fixed_income {
-  background: var(--a-pf-fixed-income);
-}
 .dir-a .a-pf-composition-row i.is-equity {
   background: var(--a-pf-equity);
+}
+.dir-a .a-pf-composition-row i.is-fixed_income {
+  background: var(--a-pf-fixed-income);
 }
 .dir-a .a-pf-composition-row i.is-real_estate {
   background: var(--a-pf-real-estate);
 }
-.dir-a .a-pf-composition-row i.is-safe_haven {
-  background: var(--a-pf-safe-haven);
+.dir-a .a-pf-composition-row i.is-private_debt {
+  background: var(--a-pf-private-debt);
 }
 .dir-a .a-pf-composition-row i.is-commodities {
   background: var(--a-pf-commodities);
 }
-.dir-a .a-pf-composition-row i.is-alternatives {
-  background: var(--a-pf-alternatives);
+.dir-a .a-pf-composition-row i.is-private_equity {
+  background: var(--a-pf-private-equity);
 }
-.dir-a .a-pf-composition-row i.is-trading {
-  background: var(--a-pf-trading);
+.dir-a .a-pf-composition-row i.is-crypto {
+  background: var(--a-pf-crypto);
 }
-.dir-a .a-pf-composition-row i.is-other {
-  background: var(--a-pf-other);
+.dir-a .a-pf-composition-row i.is-cash {
+  background: var(--a-pf-cash);
 }
 
 .dir-a .a-pf-composition-row strong,
@@ -671,6 +671,32 @@
 .dir-a .a-pf-detail-list dd {
   margin: 0;
   text-align: right;
+}
+
+.dir-a-sheet .a-pf-item-form .a-pf-breakdown-toggle {
+  align-items: start;
+}
+
+.dir-a-sheet .a-pf-breakdown {
+  flex: 1 1 0;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.dir-a-sheet .a-pf-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px auto auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.dir-a-sheet .a-pf-breakdown-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .dir-a-sheet .a-pf-ownership {

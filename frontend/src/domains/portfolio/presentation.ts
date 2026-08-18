@@ -1,34 +1,34 @@
 import { toNumber } from '@/lib/format';
 import type { PositionPerformance, PortfolioInstrument } from './types';
 
+// Una sola dimensión: de qué depende que la posición suba o baje. El rol (refugio), la
+// estrategia (trading) y el propósito (liquidez para oportunidades) son ejes distintos y
+// al mezclarlos aquí sacaban a cada activo de su clase real.
 export const portfolioAssetClassLabels: Record<string, string> = {
-  fixed_income: 'Renta fija',
   equity: 'Renta variable',
+  fixed_income: 'Renta fija',
   real_estate: 'Inmobiliario',
-  private_equity: 'Capital privado',
-  safe_haven: 'Activos refugio',
+  private_debt: 'Deuda privada',
   commodities: 'Materias primas',
-  alternatives: 'Inversiones alternativas',
-  trading: 'Trading',
-  opportunity_cash: 'Liquidez para oportunidades',
+  private_equity: 'Capital privado',
+  crypto: 'Criptoactivos',
+  cash: 'Liquidez',
   other: 'Otros',
 };
 
 // Tokens defined in portfolio.css, where the palette and its validation are documented.
-// Only eight categorical hues survive the palette checker, so the two classes least
-// likely to share a chart with the rest take the neutral token and the donut folds
-// anything past eight into a single "Otras clases" slice.
+// Ocho tonos son el máximo que aguanta el checker, así que las ocho clases reales llevan
+// tono propio y "Otros" —que es un cajón, no una clase— toma el neutro.
 export const portfolioAssetClassColors: Record<string, string> = {
-  fixed_income: 'var(--a-pf-fixed-income)',
   equity: 'var(--a-pf-equity)',
+  fixed_income: 'var(--a-pf-fixed-income)',
   real_estate: 'var(--a-pf-real-estate)',
-  safe_haven: 'var(--a-pf-safe-haven)',
+  private_debt: 'var(--a-pf-private-debt)',
   commodities: 'var(--a-pf-commodities)',
-  alternatives: 'var(--a-pf-alternatives)',
-  trading: 'var(--a-pf-trading)',
-  other: 'var(--a-pf-other)',
-  private_equity: 'var(--a-pf-neutral)',
-  opportunity_cash: 'var(--a-pf-neutral)',
+  private_equity: 'var(--a-pf-private-equity)',
+  crypto: 'var(--a-pf-crypto)',
+  cash: 'var(--a-pf-cash)',
+  other: 'var(--a-pf-neutral)',
 };
 
 // Beyond this the palette cannot keep hues apart, so the tail is aggregated.
