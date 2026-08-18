@@ -127,12 +127,12 @@ function subtractMonths(date: Date, months: number): Date {
 const query = computed<PortfolioQuery>(() => {
   const result: PortfolioQuery = {};
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
-  // Container and class travel to Core so it can return the filtered subset's return,
-  // which is not derivable here: a return does not add up across positions. Currency
-  // stays a client-side filter, since it never changes which positions are in scope for
-  // the calculation, only which rows are worth looking at.
+  // Los tres filtros de inventario viajan a Core, que recalcula sobre ese subconjunto:
+  // una rentabilidad no se suma entre posiciones, así que no es derivable aquí. La tabla
+  // filtra además en cliente, pero sobre el mismo conjunto del que habla el resto.
   if (containerId.value !== 'all') result.container_id = Number(containerId.value);
   if (assetClass.value !== 'all') result.asset_class = assetClass.value;
+  if (currency.value !== 'all') result.currency = currency.value;
   if (period.value === 'all') return result;
   if (period.value === 'custom') {
     if (customFrom.value) result.date_from = customFrom.value;
@@ -189,6 +189,10 @@ function signedMoney(value: string | number | null | undefined): string {
   const number = toNumber(value);
   return `${number > 0 ? '+' : ''}${money(number)}`;
 }
+
+// Una recarga con datos ya en pantalla: las cifras visibles son del filtro anterior y
+// se leen como si fueran las nuevas, así que se marcan como en cálculo mientras llegan.
+const refreshing = computed(() => store.loading && !!store.overview);
 
 const heroValue = computed(() => {
   if (!store.overview) return '—';
@@ -459,17 +463,12 @@ function signClass(value: number | string | null): string {
   return 'is-neutral';
 }
 
-// Amounts in base currency add up; a return does not, so the footer leaves it out.
 const visibleTotalValue = computed(() =>
   sortedPositions.value.reduce((total, position) => total + positionBaseValue(position), 0),
 );
-// Core computes the return for the container/class filter; currency is not part of that
-// scope, so with it active the footer states nothing rather than a figure for a different
-// set of positions.
-const totalReturn = computed(() => {
-  if (currency.value !== 'all') return null;
-  return (store.scopedPerformance ?? store.performance)?.return ?? null;
-});
+// Core ya calcula sobre el subconjunto filtrado, así que el pie muestra su rentabilidad
+// sin más: una rentabilidad no se suma entre posiciones, pero esta no es una suma.
+const totalReturn = computed(() => store.performance?.return ?? null);
 const visibleTotalResult = computed(() =>
   sortedPositions.value.reduce(
     (total, position) => total + toNumber(position.performance.monetary_result),
@@ -557,7 +556,7 @@ onMounted(() => {
         >
           {{ archivedPositions.length }} archivadas
         </AButton>
-        <span v-if="scopeIsFiltered">Los filtros de inventario no alteran el hero familiar</span>
+        <span v-if="scopeIsFiltered">Todo el panel describe el subconjunto filtrado</span>
       </template>
       <!-- Los tres recurrentes van como icono: se usan a menudo, su etiqueta ocupaba la
            mitad de la cabecera y el nombre completo queda en `title` y `aria-label`. -->
@@ -740,9 +739,13 @@ onMounted(() => {
         <section class="sect a-pf-hero-section">
           <div class="a-pf-hero-grid">
             <AHero eyebrow="Valor de cartera" :value="heroValue">
+              <template v-if="refreshing" #value>
+                <div class="hero-value mono"><span class="skel a-pf-skel-hero"></span></div>
+              </template>
               <template #delta>
                 <div class="a-pf-return-line">
-                  <strong :class="returnTone">{{ headlineReturn }}</strong>
+                  <span v-if="refreshing" class="skel a-pf-skel-return"></span>
+                  <strong v-else :class="returnTone">{{ headlineReturn }}</strong>
                   <span>
                     ha rendido tu dinero, al año
                     <AInfoHint>
@@ -751,7 +754,7 @@ onMounted(() => {
                       que aportar después. En la ficha técnica se llama MWR o TIR.
                     </AInfoHint>
                   </span>
-                  <span v-if="store.overview.return.twr_annualized"
+                  <span v-if="!refreshing && store.overview.return.twr_annualized"
                     >tus activos: {{ pct(store.overview.return.twr_annualized) }} ·
                     {{
                       returnLabel(store.overview.return.method, store.overview.return.estimated)
@@ -759,12 +762,12 @@ onMounted(() => {
                   >
                 </div>
               </template>
-              <p>
+              <p v-if="!refreshing">
                 {{ store.overview.position_count }} posiciones ·
                 {{ store.overview.fresh_position_count }} valoradas al día
               </p>
             </AHero>
-            <AKpiBand :items="heroKpis">
+            <AKpiBand :items="heroKpis" :pending="refreshing">
               <template #meta-2>
                 anual
                 <AInfoHint>
@@ -989,14 +992,16 @@ onMounted(() => {
                   <td class="num mono" :class="signClass(visibleTotalResult)">
                     {{ signedMoney(visibleTotalResult) }}
                   </td>
-                  <!-- Not a sum: a return does not add up across positions. Core computes
-                       it over whatever container/class filter is active, so it describes
-                       exactly the rows above. -->
+                  <!-- No es una suma: una rentabilidad no se suma entre posiciones. Core la
+                       calcula sobre el filtro activo, así que describe exactamente las filas
+                       de arriba; mientras la recalcula no se deja a la vista la anterior. -->
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.nominal))">
-                    {{ pct(totalReturn?.nominal) }}
+                    <span v-if="refreshing" class="skel"></span>
+                    <template v-else>{{ pct(totalReturn?.nominal) }}</template>
                   </td>
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.mwr_xirr))">
-                    {{ pct(totalReturn?.mwr_xirr) }}
+                    <span v-if="refreshing" class="skel"></span>
+                    <template v-else>{{ pct(totalReturn?.mwr_xirr) }}</template>
                   </td>
                 </tr>
               </tfoot>
@@ -1079,7 +1084,7 @@ onMounted(() => {
       <div v-if="selectedPosition" class="a-pf-detail-body">
         <!-- Primero cuánto vale y cómo ha ido; el resto es contexto de esa cifra. -->
         <div class="a-pf-detail-headline">
-          <span>Valor de cierre</span>
+          <span class="a-pf-detail-headline-label">Valor de cierre</span>
           <strong class="mono">{{ money(positionBaseValue(selectedPosition)) }}</strong>
           <small
             v-if="
@@ -1096,7 +1101,7 @@ onMounted(() => {
 
         <div class="a-pf-detail-returns">
           <div>
-            <span>
+            <span class="a-pf-detail-return-label">
               Ha rendido tu dinero
               <AInfoHint>
                 Tiene en cuenta cuándo pusiste cada euro. En la ficha técnica, MWR o TIR.
@@ -1108,7 +1113,7 @@ onMounted(() => {
             <small>anual</small>
           </div>
           <div>
-            <span>
+            <span class="a-pf-detail-return-label">
               Ha rendido el activo
               <AInfoHint>
                 Al margen de cuándo aportaste: sirve para comparar con un índice. En la ficha

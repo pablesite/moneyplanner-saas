@@ -27,6 +27,17 @@ export function formatShortMonthYear(date: string): string {
   );
 }
 
+// "YYYY-MM-DD" -> "14 mar 2024". Para tramos con día concreto, como los periodos de
+// titularidad, donde el mes solo no basta para saber cuándo cambió.
+export function formatShortDate(date: string): string {
+  if (!date) return '';
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(parseIsoToDate(date.slice(0, 10)));
+}
+
 // "YYYY-MM-DD" -> "enero de 2039". Para horizontes lejanos, donde el año de dos
 // digitos de `formatMonthYearLabel` deja de ser legible ("oct 39").
 export function formatLongMonthYear(date: string): string {

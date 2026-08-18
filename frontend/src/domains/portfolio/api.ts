@@ -17,6 +17,8 @@ import type {
   PortfolioValuationResync,
   PortfolioContainer,
   PortfolioContainerPayload,
+  PositionOwnershipPeriod,
+  PositionOwnershipPeriodPayload,
 } from './types';
 
 export const corePortfolioApi = {
@@ -91,6 +93,17 @@ export const corePortfolioApi = {
   // One request instead of five: each of the old endpoints rebuilt the whole performance
   // context, so every filter change paid that cost five times over. Instruments stay
   // separate because they are a catalogue, not part of the period read.
+  getOwnershipPeriods(positionId: number) {
+    return coreApi.get<PositionOwnershipPeriod[]>('/api/portfolio/ownership-periods/', {
+      params: { position_id: positionId },
+    });
+  },
+  createOwnershipPeriod(payload: PositionOwnershipPeriodPayload) {
+    return coreApi.post<PositionOwnershipPeriod>('/api/portfolio/ownership-periods/', payload);
+  },
+  deleteOwnershipPeriod(id: number) {
+    return coreApi.delete(`/api/portfolio/ownership-periods/${id}/`);
+  },
   async getWorkspace(params: PortfolioQuery): Promise<PortfolioWorkspacePayload> {
     const [workspace, instruments] = await Promise.all([
       coreApi.get<Omit<PortfolioWorkspacePayload, 'instruments'>>('/api/portfolio/workspace/', {

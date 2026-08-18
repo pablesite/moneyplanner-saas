@@ -127,12 +127,13 @@ export type PortfolioQuery = {
   member_id?: number;
   container_id?: number;
   asset_class?: string;
+  currency?: string;
 };
 
 export type PortfolioWorkspacePayload = {
-  // Metrics for the active inventory filter, or null when there is none. Kept apart from
-  // `performance`, which stays family-wide whatever the inventory filter says.
-  scoped_performance: PortfolioPerformance | null;
+  // Las posiciones que el filtro de inventario deja dentro, o null si no hay filtro. Todo
+  // lo demás del payload —hero, evolución y rentabilidad— describe ya ese subconjunto.
+  scope: number[] | null;
   overview: PortfolioOverview;
   performance: PortfolioPerformance;
   positions: PortfolioPositionsResponse;
@@ -185,6 +186,7 @@ export type PortfolioPositionSetupPayload = {
   history_start_date: string | null;
   container_id?: number;
   asset_class?: string;
+  currency?: string;
 };
 
 export type PortfolioCashAccount = {
@@ -281,4 +283,26 @@ export type PortfolioImportBatch = {
 export type PortfolioValuationResync = {
   positions_checked: number;
   valuations_created: number;
+};
+
+export type PositionOwnershipShare = {
+  member_id: number;
+  percent: string;
+};
+
+export type PositionOwnershipPeriod = {
+  id: number;
+  position_id: number;
+  ownership_id: number;
+  start_date: string;
+  end_date: string | null;
+  shares: PositionOwnershipShare[];
+  created_at: string;
+};
+
+export type PositionOwnershipPeriodPayload = {
+  position_id: number;
+  ownership_id: number;
+  start_date: string;
+  shares: PositionOwnershipShare[];
 };

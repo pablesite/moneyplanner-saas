@@ -2,8 +2,15 @@
 import { computed, ref, watch } from 'vue';
 import { AButton, AInfoHint, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { toApiErrorMessage } from '@/lib/errors';
+import { peopleApi } from '@/domains/people/api';
+import type { OwnershipRead } from '@/domains/people/types';
+import { formatShortDate } from '@/lib/dates';
 import { corePortfolioApi } from '../api';
-import type { PortfolioOperationOptions, PortfolioPositionSetupPayload } from '../types';
+import type {
+  PortfolioOperationOptions,
+  PortfolioPositionSetupPayload,
+  PositionOwnershipPeriod,
+} from '../types';
 
 const props = defineProps<{
   open: boolean;
@@ -21,6 +28,15 @@ const containerId = ref('');
 const assetClass = ref('');
 const saving = ref(false);
 const error = ref<string | null>(null);
+
+// Titularidad por tramos. El backend la guarda desde siempre y nunca hubo dónde tocarla,
+// así que un activo que se compartió y luego dejó de compartirse no se podía contar.
+const ownerships = ref<OwnershipRead[]>([]);
+const periods = ref<PositionOwnershipPeriod[]>([]);
+const periodOwnershipId = ref('');
+const periodStartDate = ref('');
+const periodBusy = ref(false);
+const periodError = ref<string | null>(null);
 
 const positions = computed(() => props.options?.positions ?? []);
 const selectedPosition = computed(() =>
@@ -46,6 +62,94 @@ const containerOptions = computed<ASelectItem[]>(() =>
 const assetClassOptions = computed<ASelectItem[]>(() =>
   (props.options?.asset_classes ?? []).map((row) => ({ value: row.value, label: row.label })),
 );
+
+const ownershipOptions = computed(() =>
+  ownerships.value.map((row) => ({
+    value: String(row.id),
+    label:
+      row.kind === 'individual'
+        ? (row.member?.name ?? 'Individual')
+        : `Compartida · ${row.splits.map((split) => split.member.name).join(' + ')}`,
+  })),
+);
+const sortedPeriods = computed(() =>
+  [...periods.value].sort((a, b) => b.start_date.localeCompare(a.start_date)),
+);
+
+function ownershipLabel(id: number): string {
+  return (
+    ownershipOptions.value.find((option) => option.value === String(id))?.label ?? 'Titularidad'
+  );
+}
+function periodRange(period: PositionOwnershipPeriod): string {
+  const from = formatShortDate(period.start_date);
+  return period.end_date ? `${from} – ${formatShortDate(period.end_date)}` : `desde ${from}`;
+}
+
+async function loadOwnershipData(id: string) {
+  periodError.value = null;
+  periods.value = [];
+  if (!id) return;
+  try {
+    const [periodRows, ownershipRows] = await Promise.all([
+      corePortfolioApi.getOwnershipPeriods(Number(id)),
+      ownerships.value.length ? null : peopleApi.getOwnerships(),
+    ]);
+    periods.value = periodRows.data;
+    if (ownershipRows) ownerships.value = ownershipRows.data;
+  } catch (caught: unknown) {
+    periodError.value = toApiErrorMessage(caught);
+  }
+}
+
+async function addPeriod() {
+  const position = selectedPosition.value;
+  const ownership = ownerships.value.find((row) => String(row.id) === periodOwnershipId.value);
+  if (!position || !ownership || !periodStartDate.value) {
+    periodError.value = 'Indica desde cuándo manda esta titularidad y cuál es.';
+    return;
+  }
+  // Los tramos guardan el reparto explícito, así que se copia el de la titularidad
+  // elegida: quien la define es Personas, aquí solo se dice desde cuándo aplica.
+  const shares =
+    ownership.kind === 'individual' && ownership.member
+      ? [{ member_id: ownership.member.id, percent: '100' }]
+      : ownership.splits.map((split) => ({
+          member_id: split.member.id,
+          percent: split.percent,
+        }));
+  periodBusy.value = true;
+  periodError.value = null;
+  try {
+    await corePortfolioApi.createOwnershipPeriod({
+      position_id: position.id,
+      ownership_id: ownership.id,
+      start_date: periodStartDate.value,
+      shares,
+    });
+    periodOwnershipId.value = '';
+    periodStartDate.value = '';
+    await loadOwnershipData(positionId.value);
+    emit('saved', `Titularidad actualizada en ${position.name}.`);
+  } catch (caught: unknown) {
+    periodError.value = toApiErrorMessage(caught);
+  } finally {
+    periodBusy.value = false;
+  }
+}
+
+async function removePeriod(id: number) {
+  periodBusy.value = true;
+  periodError.value = null;
+  try {
+    await corePortfolioApi.deleteOwnershipPeriod(id);
+    await loadOwnershipData(positionId.value);
+  } catch (caught: unknown) {
+    periodError.value = toApiErrorMessage(caught);
+  } finally {
+    periodBusy.value = false;
+  }
+}
 
 function coverageLabel(status: string): string {
   return (
@@ -79,7 +183,10 @@ function reset() {
   loadPosition(positionId.value);
 }
 
-watch(positionId, loadPosition);
+watch(positionId, (id) => {
+  loadPosition(id);
+  void loadOwnershipData(id);
+});
 watch(
   [() => props.open, positions],
   ([open]) => {
@@ -207,6 +314,59 @@ async function save() {
             <input v-model="historyStartDate" class="input" type="date" required />
           </label>
         </div>
+
+        <!-- La titularidad no se edita: se escriben tramos. Por eso aquí solo se dice
+             desde cuándo manda cuál, y el tramo anterior se cierra la víspera. -->
+        <section class="a-pf-ownership">
+          <h3>
+            Titularidad
+            <AInfoHint
+              label="De quién es la posición y desde cuándo. Si cambió con el tiempo —empezó compartida y luego dejó de serlo— se añade un tramo nuevo desde la fecha del cambio, sin reescribir el pasado. Las titularidades se definen en Personas."
+            />
+          </h3>
+          <ul v-if="sortedPeriods.length" class="a-pf-ownership-list">
+            <li v-for="period in sortedPeriods" :key="period.id">
+              <span>{{ ownershipLabel(period.ownership_id) }}</span>
+              <small>{{ periodRange(period) }}</small>
+              <AButton
+                variant="ghost"
+                size="sm"
+                :disabled="periodBusy"
+                @click="removePeriod(period.id)"
+              >
+                Deshacer
+              </AButton>
+            </li>
+          </ul>
+          <AState v-else status="empty" layout="inline">
+            Sin tramos registrados: la posición hereda la titularidad del activo en Patrimonio.
+          </AState>
+
+          <div class="a-pf-ownership-add">
+            <label class="ui-item-form-field">
+              <span class="ui-item-form-label">Pasa a ser</span>
+              <ASelect
+                v-model="periodOwnershipId"
+                :options="ownershipOptions"
+                :searchable="false"
+                class="select"
+              />
+            </label>
+            <label class="ui-item-form-field">
+              <span class="ui-item-form-label">Desde</span>
+              <input v-model="periodStartDate" class="input" type="date" />
+            </label>
+            <AButton
+              variant="ghost"
+              :loading="periodBusy"
+              :disabled="!periodOwnershipId || !periodStartDate"
+              @click="addPeriod"
+            >
+              Añadir tramo
+            </AButton>
+          </div>
+          <AState v-if="periodError" status="error" layout="inline">{{ periodError }}</AState>
+        </section>
 
         <div class="a-pf-setup-coverage">
           <div>
