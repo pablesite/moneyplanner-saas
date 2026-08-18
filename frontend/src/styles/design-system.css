@@ -597,6 +597,40 @@
   text-align: left;
 }
 
+/* Segmentado compacto de rangos: los presets se ven todos a la vez en vez de esconderse
+   tras un desplegable, que para elegir un periodo cuesta un clic de más y no deja
+   comparar las opciones. Patrimonio lo tenía como `.a-nw-evolution-mini-seg` y Cartera
+   habría sido el segundo consumidor. */
+.dir-a :where(.mini-seg) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.dir-a :where(.mini-seg) .btn {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 4px 10px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.dir-a :where(.mini-seg) .btn:hover {
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  color: var(--text);
+}
+
+.dir-a :where(.mini-seg) .btn.on {
+  border-color: var(--line-strong);
+  background: var(--panel);
+  color: var(--text);
+}
+
 /* Signo de un importe o una rentabilidad dentro de una tabla de datos. Movimientos lo
    tenía local y Cartera habría sido el segundo consumidor. Con `:where()` la
    especificidad queda a cero, así que cualquier regla de dominio sigue ganando. */

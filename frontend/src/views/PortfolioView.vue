@@ -251,7 +251,9 @@ const currencyOptions = computed<ASelectItem[]>(() => [
     .sort()
     .map((code) => ({ value: code!, label: code! })),
 ]);
-const periodOptions: ASelectItem[] = [
+// Own type rather than ASelectItem: this drives a segmented control, not a select, and
+// ASelectItem admits groups that carry no value/label.
+const periodOptions: { value: PeriodPreset; label: string }[] = [
   { value: '1m', label: '1 mes' },
   { value: 'ytd', label: 'Este año' },
   { value: '1y', label: '1 año' },
@@ -576,16 +578,19 @@ onMounted(() => {
             :searchable="false"
           />
         </label>
-        <label class="context-field">
-          <span class="sr-only">Periodo</span>
-          <ASelect
-            v-model="period"
-            class="filter-ctrl"
-            aria-label="Periodo"
-            :options="periodOptions"
-            :searchable="false"
-          />
-        </label>
+        <div class="context-field mini-seg" role="group" aria-label="Periodo">
+          <AButton
+            v-for="option in periodOptions"
+            :key="option.value"
+            size="sm"
+            variant="ghost"
+            :class="{ on: period === option.value }"
+            :aria-pressed="period === option.value"
+            @click="period = option.value"
+          >
+            {{ option.label }}
+          </AButton>
+        </div>
         <div v-if="period === 'custom'" class="a-pf-custom-range">
           <ADateRange v-model:from="customFrom" v-model:to="customTo" />
         </div>
