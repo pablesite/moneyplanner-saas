@@ -131,7 +131,7 @@ applied/remaining amounts, linked movements and post-application account reconci
 | `GET/PATCH/DELETE` | `/api/portfolio/valuations/{id}/` | Maintains manual values; legacy-derived rows are read-only. |
 | `GET` | `/api/portfolio/valuation-health/` | Aggregates fresh/stale/missing counts plus mapping, price and provenance issues. |
 | `GET` | `/api/portfolio/overview/?date_from=&date_to=&member_id=` | Portfolio hero read model: value, net contribution, monetary result, nominal/real return and per-metric coverage. |
-| `GET` | `/api/portfolio/positions/performance/?date_from=&date_to=&member_id=` | Position read models with native/base values, freshness, TWR/Dietz/MWR, P&L/cost and asset/FX attribution. |
+| `GET` | `/api/portfolio/positions/performance/?date_from=&date_to=&member_id=` | Position read models with native/base values, freshness, TWR/Dietz/MWR, P&L/cost and asset/FX attribution. `holding_currency` is what the position is denominated in (BTC, ETH, USD…), as opposed to `native_currency`, which is what it is valued in — filtering by currency needs the former. |
 | `GET` | `/api/portfolio/timeline/?date_from=&date_to=&member_id=` | Bounded monthly value/contribution/result series; maximum requested range is 20 years and gaps stay explicit. |
 | `GET` | `/api/portfolio/performance/?date_from=&date_to=&member_id=` | Detailed aggregate flows, reconciliation, nominal/real TWR or declared Dietz fallback, MWR/XIRR and coverage. |
 | `GET` | `/api/portfolio/quality/?date_from=&date_to=&member_id=` | Value, ownership, FX and metric readiness for the requested historical perimeter. |

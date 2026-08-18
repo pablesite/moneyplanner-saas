@@ -68,6 +68,7 @@ export type PositionPerformance = {
   tracking_style: string;
   native_value: string | null;
   native_currency: string | null;
+  holding_currency: string;
   observed_on: string | null;
   asset_class: string;
   value_status: 'fresh' | 'stale' | 'missing' | 'at_cost';

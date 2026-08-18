@@ -113,6 +113,81 @@ watch(
         El fichero se prepara primero. Ninguna fila modifica la cartera hasta que revises el preview
         y confirmes explícitamente.
       </AState>
+      <!-- El CSV es genérico: los nombres de columna se mapean después, así que aquí solo
+           hace falta saber qué información tiene que llevar y en qué formato. -->
+      <details v-if="!batch" class="a-pf-import-help">
+        <summary>Cómo preparar el CSV</summary>
+        <p>
+          No hace falta que las columnas se llamen de ninguna forma concreta: tras subir el fichero
+          eliges qué columna es cada cosa. Lo que sí importa es el formato de los valores.
+        </p>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Dato</th>
+              <th>Formato</th>
+              <th>Ejemplo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tipo de operación</strong> · obligatorio</td>
+              <td>
+                <code>buy</code>, <code>sell</code>, <code>dividend</code>, <code>interest</code>,
+                <code>fee</code>, <code>transfer</code>, <code>valuation</code>
+              </td>
+              <td><code>buy</code></td>
+            </tr>
+            <tr>
+              <td><strong>Fecha</strong> · obligatorio</td>
+              <td>AAAA-MM-DD</td>
+              <td><code>2026-08-17</code></td>
+            </tr>
+            <tr>
+              <td><strong>ID de posición</strong> · obligatorio</td>
+              <td>Número. Lo ves en «Configurar posición»</td>
+              <td><code>4</code></td>
+            </tr>
+            <tr>
+              <td><strong>Importe</strong> · obligatorio</td>
+              <td>Punto decimal, sin separador de miles ni símbolo</td>
+              <td><code>1250.40</code></td>
+            </tr>
+            <tr>
+              <td>ID de efectivo</td>
+              <td>
+                Obligatorio en compras, ventas, ingresos y comisiones: de dónde sale o entra el
+                dinero
+              </td>
+              <td><code>2</code></td>
+            </tr>
+            <tr>
+              <td>Unidades y precio unitario</td>
+              <td>Solo si sigues la posición por unidades</td>
+              <td><code>0.0042</code> · <code>55417.16</code></td>
+            </tr>
+            <tr>
+              <td>Comisión</td>
+              <td>Se registra como gasto aparte, no se resta del importe</td>
+              <td><code>1.95</code></td>
+            </tr>
+            <tr>
+              <td>Divisa</td>
+              <td>Código de tres letras. Si falta, se usa la de la posición</td>
+              <td><code>EUR</code></td>
+            </tr>
+            <tr>
+              <td>Identificador externo</td>
+              <td>El de tu bróker. Es lo único que permite detectar duplicados al reimportar</td>
+              <td><code>TR-99812</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Una fila por operación. Si reimportas el mismo fichero no se duplica nada, y las filas con
+          error se listan una a una sin bloquear al resto.
+        </p>
+      </details>
       <label v-if="!batch" class="ui-item-form-field">
         <span class="ui-item-form-label">Fichero CSV</span>
         <input class="input" type="file" accept=".csv,text/csv" @change="onFile" />

@@ -9,7 +9,6 @@ import {
   PortfolioContainersModal,
   corePortfolioApi,
   freshnessLabel,
-  instrumentMap,
   PORTFOLIO_MAX_COMPOSITION_SLICES,
   portfolioAssetClassColors,
   portfolioAssetClassLabels,
@@ -27,6 +26,7 @@ import {
   ADateRange,
   ADonut,
   AHero,
+  AInfoHint,
   AKpiBand,
   AMetaPill,
   APageHead,
@@ -72,6 +72,23 @@ const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
 const operationOpen = ref(false);
 const importOpen = ref(false);
 const setupOpen = ref(false);
+const setupPositionId = ref<number | null>(null);
+const expandedClasses = ref(new Set<string>());
+
+function closeSetup() {
+  setupOpen.value = false;
+  setupPositionId.value = null;
+}
+function toggleClass(key: string) {
+  const next = new Set(expandedClasses.value);
+  if (!next.delete(key)) next.add(key);
+  expandedClasses.value = next;
+}
+function editPosition(id: number) {
+  selectedPosition.value = null;
+  setupPositionId.value = id;
+  setupOpen.value = true;
+}
 const containersOpen = ref(false);
 const operationPositionId = ref<number | null>(null);
 const operationType = ref<PortfolioOperationType>('buy');
@@ -88,6 +105,18 @@ const returnTo =
     : '/patrimonio';
 
 const today = computed(() => new Date());
+
+// Shared geometry for the inline icons, same shape Patrimonio uses.
+const iconAttrs = {
+  width: 18,
+  height: 18,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  'stroke-width': 1.8,
+  'stroke-linecap': 'round',
+  'stroke-linejoin': 'round',
+} as const;
 
 function subtractMonths(date: Date, months: number): Date {
   const result = new Date(date);
@@ -118,7 +147,6 @@ const query = computed<PortfolioQuery>(() => {
   return result;
 });
 
-const instrumentsById = computed(() => instrumentMap(store.instruments));
 const allPositions = computed(() => store.positions?.results ?? []);
 const archivedPositions = computed(() =>
   allPositions.value.filter((position) => position.status === 'archived'),
@@ -129,7 +157,7 @@ const filteredPositions = computed(() =>
       position.status !== 'archived' &&
       (containerId.value === 'all' || String(position.container_id) === containerId.value) &&
       (assetClass.value === 'all' || position.asset_class === assetClass.value) &&
-      (currency.value === 'all' || position.native_currency === currency.value)
+      (currency.value === 'all' || position.holding_currency === currency.value)
     );
   }),
 );
@@ -171,42 +199,55 @@ const heroValue = computed(() => {
 // hero is asked. TWR describes the assets and is kept beside it as context, not hidden.
 const headlineReturn = computed(() => pct(store.overview?.return.mwr_xirr));
 const returnTone = computed(() => (toNumber(store.overview?.return.mwr_xirr) >= 0 ? 'pos' : 'neg'));
+// Plain labels first, acronym only as a footnote: "MWR" and "TWR" said nothing on
+// their own. The distinction is carried by a tooltip that explains it with the two
+// questions each answers, not by the initials. La banda es de tres columnas: una
+// cuarta tarjeta se envolvía bajo la segunda, así que ingresos y costes viajan como
+// pie del resultado, que es de donde salen.
+const resultMeta = computed(() => {
+  const income = toNumber(store.performance?.income);
+  const costs = toNumber(store.performance?.costs);
+  const parts: string[] = [];
+  if (income) parts.push(`${money(store.performance?.income)} de ingresos`);
+  if (costs) parts.push(`${money(store.performance?.costs)} de costes`);
+  if (!parts.length)
+    return store.performance?.gross_result == null ? 'Cobertura parcial' : 'Sin ingresos ni costes';
+  return parts.join(' · ');
+});
 const heroKpis = computed(() => [
   {
-    label: 'Resultado del periodo',
+    label: 'Ganado o perdido',
     value: signedMoney(store.performance?.monetary_result),
-    meta: store.performance?.gross_result == null ? 'Cobertura parcial' : 'Neto de costes',
+    meta: resultMeta.value,
     cellClass: toNumber(store.performance?.monetary_result) >= 0 ? 'pos' : 'neg',
   },
   {
-    label: 'Aportaciones netas',
+    label: 'Dinero que has puesto',
     value: signedMoney(store.performance?.net_contributed),
-    meta: 'Entradas menos retiradas',
+    meta: 'Aportado menos retirado',
   },
   {
-    label: 'Rentabilidad del activo',
+    label: 'Rendimiento de tus activos',
     value: pct(store.performance?.return.twr_annualized),
-    meta: 'TWR anual: neutral a cuándo aportaste',
-  },
-  {
-    label: 'Ingresos / costes',
-    value: `${money(store.performance?.income)} / ${money(store.performance?.costs)}`,
-    meta: 'Durante el periodo',
+    meta: 'anual',
   },
 ]);
 
 const composition = computed(() => {
-  const totals = new Map<string, number>();
+  const groups = new Map<string, PositionPerformance[]>();
   for (const position of filteredPositions.value) {
     const key = position.asset_class || 'other';
-    totals.set(key, (totals.get(key) ?? 0) + positionBaseValue(position));
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(position);
+    else groups.set(key, [position]);
   }
-  const rows = [...totals.entries()]
-    .map(([key, value]) => ({
+  const rows = [...groups.entries()]
+    .map(([key, members]) => ({
       key,
       label: portfolioAssetClassLabels[key] ?? key,
-      value,
+      value: members.reduce((sum, position) => sum + positionBaseValue(position), 0),
       color: portfolioAssetClassColors[key] ?? portfolioAssetClassColors.other!,
+      members: [...members].sort((a, b) => positionBaseValue(b) - positionBaseValue(a)),
     }))
     .sort((a, b) => b.value - a.value);
   // Only eight hues survive the palette checker, so a longer tail is aggregated rather
@@ -222,6 +263,9 @@ const composition = computed(() => {
       label: `Otras clases · ${tail.length}`,
       value: tail.reduce((sum, row) => sum + row.value, 0),
       color: 'var(--a-pf-neutral)',
+      members: tail
+        .flatMap((row) => row.members)
+        .sort((a, b) => positionBaseValue(b) - positionBaseValue(a)),
     },
   ];
 });
@@ -251,11 +295,13 @@ const classOptions = computed<ASelectItem[]>(() => [
     .sort()
     .map((key) => ({ value: key, label: portfolioAssetClassLabels[key] ?? key })),
 ]);
+// Denominations, not valuation currencies: a Bitcoin position is held in BTC and worth
+// euros, and the old list only ever offered the latter, so crypto could not be filtered.
 const currencyOptions = computed<ASelectItem[]>(() => [
-  { value: 'all', label: 'Todas las divisas' },
-  ...[...new Set(allPositions.value.map((row) => row.native_currency).filter(Boolean))]
+  { value: 'all', label: `Todas · convertido a ${baseCurrency.value}` },
+  ...[...new Set(allPositions.value.map((row) => row.holding_currency).filter(Boolean))]
     .sort()
-    .map((code) => ({ value: code!, label: code! })),
+    .map((code) => ({ value: code, label: code })),
 ]);
 // Own type rather than ASelectItem: this drives a segmented control, not a select, and
 // ASelectItem admits groups that carry no value/label.
@@ -397,9 +443,10 @@ function sortMark(key: SortKey): string {
   return sortDir.value === 'asc' ? '↑' : '↓';
 }
 
-function signClass(value: number): string {
-  if (value > 0) return 'is-positive';
-  if (value < 0) return 'is-negative';
+function signClass(value: number | string | null): string {
+  const numeric = toNumber(value);
+  if (numeric > 0) return 'is-positive';
+  if (numeric < 0) return 'is-negative';
   return 'is-neutral';
 }
 
@@ -460,13 +507,6 @@ async function restorePosition(position: PositionPerformance) {
   }
 }
 
-function openSelectedValuation() {
-  const position = selectedPosition.value;
-  if (!position) return;
-  selectedPosition.value = null;
-  openOperation('valuation', position);
-}
-
 async function onPortfolioSaved(message: string) {
   successMessage.value = message;
   await Promise.all([store.refresh(query.value), loadOperationOptions()]);
@@ -510,17 +550,53 @@ onMounted(() => {
         </AButton>
         <span v-if="scopeIsFiltered">Los filtros de inventario no alteran el hero familiar</span>
       </template>
+      <!-- Los tres recurrentes van como icono: se usan a menudo, su etiqueta ocupaba la
+           mitad de la cabecera y el nombre completo queda en `title` y `aria-label`. -->
       <template #actions>
         <AButton variant="primary" @click="openOperation()">Registrar</AButton>
         <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
-        <AButton variant="ghost" @click="setupOpen = true">
-          Configurar posiciones<span v-if="pendingSetupCount"> · {{ pendingSetupCount }}</span>
-        </AButton>
         <AButton variant="ghost" @click="containersOpen = true">Contenedores</AButton>
-        <AButton variant="ghost" :loading="resyncing" @click="resyncFromAccounting">
-          Actualizar desde contabilidad
+        <AButton
+          variant="icon"
+          title="Configurar posiciones"
+          :aria-label="
+            pendingSetupCount
+              ? `Configurar posiciones · ${pendingSetupCount} pendientes`
+              : 'Configurar posiciones'
+          "
+          :class="{ 'has-badge': pendingSetupCount }"
+          @click="setupOpen = true"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+            />
+          </svg>
         </AButton>
-        <AButton variant="ghost" @click="returnToNetWorth">Volver a Patrimonio</AButton>
+        <AButton
+          variant="icon"
+          title="Actualizar desde contabilidad"
+          aria-label="Actualizar desde contabilidad"
+          :loading="resyncing"
+          @click="resyncFromAccounting"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        </AButton>
+        <AButton
+          variant="icon"
+          title="Volver a Patrimonio"
+          aria-label="Volver a Patrimonio"
+          @click="returnToNetWorth"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <path d="M19 12H5" />
+            <path d="m12 19-7-7 7-7" />
+          </svg>
+        </AButton>
       </template>
     </APageHead>
 
@@ -647,9 +723,16 @@ onMounted(() => {
               <template #delta>
                 <div class="a-pf-return-line">
                   <strong :class="returnTone">{{ headlineReturn }}</strong>
-                  <span>MWR anual · tu dinero</span>
+                  <span>
+                    ha rendido tu dinero, al año
+                    <AInfoHint>
+                      Lo que ha rendido <strong>el dinero que tú pusiste</strong>, teniendo en
+                      cuenta cuándo lo pusiste: aportar justo antes de una subida no cuenta igual
+                      que aportar después. En la ficha técnica se llama MWR o TIR.
+                    </AInfoHint>
+                  </span>
                   <span v-if="store.overview.return.twr_annualized"
-                    >TWR {{ pct(store.overview.return.twr_annualized) }} anual ·
+                    >tus activos: {{ pct(store.overview.return.twr_annualized) }} ·
                     {{
                       returnLabel(store.overview.return.method, store.overview.return.estimated)
                     }}</span
@@ -661,7 +744,16 @@ onMounted(() => {
                 {{ store.overview.fresh_position_count }} valoradas al día
               </p>
             </AHero>
-            <AKpiBand :items="heroKpis" />
+            <AKpiBand :items="heroKpis">
+              <template #meta-2>
+                anual
+                <AInfoHint>
+                  Cuánto han subido o bajado tus activos,
+                  <strong>al margen de cuándo pusieras el dinero</strong>. Es la cifra que compara
+                  tu cartera con un índice o con otro inversor. En la ficha técnica se llama TWR.
+                </AInfoHint>
+              </template>
+            </AKpiBand>
           </div>
         </section>
 
@@ -688,11 +780,39 @@ onMounted(() => {
               aria-label="Composición de la cartera por clase de activo"
             />
             <div class="a-pf-composition-list">
-              <div v-for="item in composition" :key="item.key" class="a-pf-composition-row">
-                <i :class="`is-${item.key}`"></i>
-                <span>{{ item.label }}</span>
-                <strong class="mono">{{ money(item.value) }}</strong>
-                <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 0) }}</small>
+              <div v-for="item in composition" :key="item.key" class="a-pf-composition-group">
+                <button
+                  type="button"
+                  class="a-pf-composition-row"
+                  :aria-expanded="expandedClasses.has(item.key)"
+                  @click="toggleClass(item.key)"
+                >
+                  <i :class="`is-${item.key}`"></i>
+                  <span>
+                    {{ item.label }}
+                    <em>{{ item.members.length }}</em>
+                  </span>
+                  <strong class="mono">{{ money(item.value) }}</strong>
+                  <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 0) }}</small>
+                </button>
+                <!-- El peso de dentro es sobre la clase, no sobre la cartera: la pregunta
+                     al abrir una clase es cuánto pesa cada activo dentro de ella. -->
+                <ul v-if="expandedClasses.has(item.key)" class="a-pf-composition-members">
+                  <li v-for="member in item.members" :key="member.position_id">
+                    <button
+                      type="button"
+                      class="a-pf-composition-member"
+                      :title="`Configurar ${member.instrument_name}`"
+                      @click="editPosition(member.position_id)"
+                    >
+                      <span>{{ member.instrument_name }}</span>
+                      <strong class="mono">{{ money(positionBaseValue(member)) }}</strong>
+                      <small>{{
+                        formatPct(positionBaseValue(member) / Math.max(item.value, 1), 0)
+                      }}</small>
+                    </button>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -933,100 +1053,108 @@ onMounted(() => {
       :open="selectedPosition !== null"
       :title="selectedPosition?.instrument_name"
       variant="sheet"
-      panel-class="a-pf-detail-sheet"
+      panel-class="dir-a dir-a-sheet a-pf-detail-sheet"
       @close="selectedPosition = null"
     >
-      <dl v-if="selectedPosition" class="a-pf-detail-list">
-        <div>
-          <dt>Valor de cierre</dt>
-          <dd class="mono">{{ money(positionBaseValue(selectedPosition)) }}</dd>
-        </div>
-        <div>
-          <dt>Valor nativo</dt>
-          <dd class="mono">
-            {{
-              money(selectedPosition.native_value, selectedPosition.native_currency ?? baseCurrency)
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Resultado</dt>
-          <dd
+      <div v-if="selectedPosition" class="a-pf-detail-body">
+        <!-- Primero cuánto vale y cómo ha ido; el resto es contexto de esa cifra. -->
+        <div class="a-pf-detail-headline">
+          <span>Valor de cierre</span>
+          <strong class="mono">{{ money(positionBaseValue(selectedPosition)) }}</strong>
+          <small
+            v-if="
+              selectedPosition.native_currency && selectedPosition.native_currency !== baseCurrency
+            "
             class="mono"
-            :class="toNumber(selectedPosition.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
           >
-            {{ signedMoney(selectedPosition.performance.monetary_result) }}
-          </dd>
+            {{ money(selectedPosition.native_value, selectedPosition.native_currency) }}
+          </small>
+          <em :class="toNumber(selectedPosition.performance.monetary_result) >= 0 ? 'pos' : 'neg'">
+            {{ signedMoney(selectedPosition.performance.monetary_result) }} en el periodo
+          </em>
         </div>
-        <div>
-          <dt>Rentabilidad del activo</dt>
-          <dd>
-            {{ pct(selectedPosition.performance.return.nominal) }}
-            <small
-              >{{
+
+        <div class="a-pf-detail-returns">
+          <div>
+            <span>
+              Ha rendido tu dinero
+              <AInfoHint>
+                Tiene en cuenta cuándo pusiste cada euro. En la ficha técnica, MWR o TIR.
+              </AInfoHint>
+            </span>
+            <strong :class="signClass(selectedPosition.performance.return.mwr_xirr)">
+              {{ pct(selectedPosition.performance.return.mwr_xirr) }}
+            </strong>
+            <small>anual</small>
+          </div>
+          <div>
+            <span>
+              Ha rendido el activo
+              <AInfoHint>
+                Al margen de cuándo aportaste: sirve para comparar con un índice. En la ficha
+                técnica, TWR.
+              </AInfoHint>
+            </span>
+            <strong :class="signClass(selectedPosition.performance.return.nominal)">
+              {{ pct(selectedPosition.performance.return.nominal) }}
+            </strong>
+            <small>
+              {{
                 returnLabel(
                   selectedPosition.performance.return.method,
                   selectedPosition.performance.return.estimated,
                 )
-              }}<template v-if="selectedPosition.performance.return.twr_annualized">
-                · {{ pct(selectedPosition.performance.return.twr_annualized) }} anualizada</template
-              ></small
-            >
-          </dd>
+              }}<template
+                v-if="
+                  selectedPosition.performance.return.twr_annualized &&
+                  selectedPosition.performance.return.twr_annualized !==
+                    selectedPosition.performance.return.nominal
+                "
+              >
+                · {{ pct(selectedPosition.performance.return.twr_annualized) }} anual</template
+              >
+            </small>
+          </div>
         </div>
-        <div>
-          <dt>Rentabilidad de tu dinero</dt>
-          <dd>
-            {{ pct(selectedPosition.performance.return.mwr_xirr) }}
-            <small>MWR anual: pondera cuándo aportaste</small>
-          </dd>
-        </div>
-        <div>
-          <dt>Contenedor</dt>
-          <dd>{{ selectedPosition.container_name }}</dd>
-        </div>
-        <div>
-          <dt>Clase</dt>
-          <dd>
-            {{
-              portfolioAssetClassLabels[
-                instrumentsById.get(selectedPosition.instrument_id)?.asset_class ?? 'other'
-              ]
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Valor observado</dt>
-          <dd>
-            {{
-              selectedPosition.observed_on
-                ? formatShortMonthYear(selectedPosition.observed_on)
-                : 'Sin valoración'
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Freshness</dt>
-          <dd>
-            <span class="a-pf-freshness" :class="`is-${selectedPosition.value_status}`">{{
-              freshnessLabel(selectedPosition.value_status)
-            }}</span>
-          </dd>
-        </div>
-        <div>
-          <dt>Atribución activo</dt>
-          <dd class="mono">{{ money(selectedPosition.attribution.asset) }}</dd>
-        </div>
-        <div>
-          <dt>Atribución divisa</dt>
-          <dd class="mono">{{ money(selectedPosition.attribution.fx) }}</dd>
-        </div>
-      </dl>
+
+        <dl class="a-pf-detail-list">
+          <div>
+            <dt>Contenedor</dt>
+            <dd>{{ selectedPosition.container_name }}</dd>
+          </div>
+          <div>
+            <dt>Clase</dt>
+            <dd>
+              {{ portfolioAssetClassLabels[selectedPosition.asset_class] ?? 'Otros' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Última valoración</dt>
+            <dd>
+              {{
+                selectedPosition.observed_on
+                  ? formatShortMonthYear(selectedPosition.observed_on)
+                  : 'Sin valoración'
+              }}
+              <span class="a-pf-freshness" :class="`is-${selectedPosition.value_status}`">{{
+                freshnessLabel(selectedPosition.value_status)
+              }}</span>
+            </dd>
+          </div>
+          <div v-if="selectedPosition.attribution.method !== 'unavailable'">
+            <dt>Activo / divisa</dt>
+            <dd class="mono">
+              {{ money(selectedPosition.attribution.asset) }} ·
+              {{ money(selectedPosition.attribution.fx) }}
+            </dd>
+          </div>
+        </dl>
+      </div>
       <template #footer>
         <div v-if="selectedPosition" class="ui-modal-foot-actions">
           <AButton variant="ghost" @click="selectedPosition = null">Cerrar</AButton>
-          <AButton variant="primary" @click="openSelectedValuation">
-            Actualizar valoración
+          <AButton variant="primary" @click="editPosition(selectedPosition.position_id)">
+            Configurar posición
           </AButton>
         </div>
       </template>
@@ -1036,7 +1164,7 @@ onMounted(() => {
       :open="showArchivedModal"
       title="Posiciones archivadas"
       variant="sheet"
-      panel-class="a-pf-detail-sheet"
+      panel-class="dir-a dir-a-sheet a-pf-detail-sheet"
       @close="showArchivedModal = false"
     >
       <AState v-if="!archivedPositions.length" status="empty">
@@ -1080,7 +1208,8 @@ onMounted(() => {
     <PortfolioSetupModal
       :open="setupOpen"
       :options="operationOptionsData"
-      @close="setupOpen = false"
+      :initial-position-id="setupPositionId"
+      @close="closeSetup"
       @saved="onPortfolioSaved"
     />
     <AToast :open="!!successMessage" @close="successMessage = null">

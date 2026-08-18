@@ -122,15 +122,17 @@ async function save() {
     panel-class="dir-a dir-a-sheet a-pf-operation-sheet"
     @close="emit('close')"
   >
-    <form :id="FORM_ID" class="a-pf-setup-flow" @submit.prevent="save">
+    <form :id="FORM_ID" class="a-pf-setup-flow a-pf-item-form" @submit.prevent="save">
       <p>
         Define qué es cada posición y cómo seguirla, sin reescribir sus movimientos históricos.
         Puedes volver aquí y cambiarlo tantas veces como quieras: confirmar no cierra nada.
       </p>
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Posición</span>
-        <ASelect v-model="positionId" :options="positionOptions" />
-      </label>
+      <div class="ui-item-form-grid">
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Posición</span>
+          <ASelect v-model="positionId" :options="positionOptions" class="select" />
+        </label>
+      </div>
 
       <template v-if="selectedPosition">
         <dl class="a-pf-setup-context">
@@ -144,50 +146,67 @@ async function save() {
           </div>
         </dl>
 
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Contenedor
-            <AInfoHint
-              label="Dónde está depositada: el bróker, banco, exchange o plataforma. Agrupa y filtra el inventario; no afecta a los cálculos."
+        <div class="ui-item-form-grid">
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Contenedor
+              <AInfoHint
+                label="Dónde está depositada: el bróker, banco, exchange o plataforma. Agrupa y filtra el inventario; no afecta a los cálculos."
+              />
+            </span>
+            <ASelect v-model="containerId" :options="containerOptions" class="select" />
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Clase de activo
+              <AInfoHint
+                label="Qué tipo de activo es. Es lo que alimenta el gráfico de composición de la cartera, así que clasificar bien cambia lo que ese gráfico te cuenta."
+              />
+            </span>
+            <ASelect
+              v-model="assetClass"
+              :options="assetClassOptions"
+              :searchable="false"
+              class="select"
             />
-          </span>
-          <ASelect v-model="containerId" :options="containerOptions" />
-        </label>
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Clase de activo
-            <AInfoHint
-              label="Qué tipo de activo es. Es lo que alimenta el gráfico de composición de la cartera, así que clasificar bien cambia lo que ese gráfico te cuenta."
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Detalle
+              <AInfoHint>
+                <strong>Por valor:</strong> solo registras cuánto vale en total. Sirve para fondos,
+                planes o productos sin precio público. <strong>Por unidades:</strong> registras
+                cuántas participaciones tienes, y el valor sale de multiplicarlas por su precio de
+                mercado. Requiere que el instrumento tenga precio, pero da precio diario automático
+                y coste por operación.
+              </AInfoHint>
+            </span>
+            <ASelect
+              v-model="trackingStyle"
+              :options="trackingOptions"
+              :searchable="false"
+              class="select"
             />
-          </span>
-          <ASelect v-model="assetClass" :options="assetClassOptions" :searchable="false" />
-        </label>
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Detalle de la posición
-            <AInfoHint>
-              <strong>Por valor:</strong> solo registras cuánto vale en total. Sirve para fondos,
-              planes o productos sin precio público. <strong>Por unidades:</strong> registras
-              cuántas participaciones tienes, y el valor sale de multiplicarlas por su precio de
-              mercado. Requiere que el instrumento tenga precio, pero da precio diario automático y
-              coste por operación.
-            </AInfoHint>
-          </span>
-          <ASelect v-model="trackingStyle" :options="trackingOptions" :searchable="false" />
-        </label>
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Histórico
-            <AInfoHint
-              label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Histórico
+              <AInfoHint
+                label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
+              />
+            </span>
+            <ASelect
+              v-model="historyMode"
+              :options="historyOptions"
+              :searchable="false"
+              class="select"
             />
-          </span>
-          <ASelect v-model="historyMode" :options="historyOptions" :searchable="false" />
-        </label>
-        <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">
-          <span class="ui-item-form-label">Fecha de corte</span>
-          <input v-model="historyStartDate" class="input" type="date" required />
-        </label>
+          </label>
+          <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">
+            <span class="ui-item-form-label">Fecha de corte</span>
+            <input v-model="historyStartDate" class="input" type="date" required />
+          </label>
+        </div>
 
         <div class="a-pf-setup-coverage">
           <div>
