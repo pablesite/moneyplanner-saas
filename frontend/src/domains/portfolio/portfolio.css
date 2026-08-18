@@ -673,6 +673,13 @@
   text-align: right;
 }
 
+.dir-a .a-pf-operation-intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
 .dir-a .a-pf-import-flow {
   display: grid;
   gap: var(--space-6);

@@ -187,6 +187,10 @@ Las posiciones archivadas no aparecen en el inventario ni en la composición. Se
 
 La acción "Actualizar desde contabilidad" vive en las acciones de página, no en el banner de calidad: una cartera puede estar desfasada con todas sus posiciones marcadas como "Al día", y en ese caso el banner no se muestra. Cubre el desfase que las señales de Core no pueden ver porque llegó por debajo del ORM (un restore, una carga masiva).
 
+Registrar dinero ya no vive aquí: compras, ventas, dividendos, comisiones, traspasos y valoraciones se registran en Contabilidad, que es donde está el resto del dinero. En Cartera queda `PortfolioOperationModal` restringido a lo que Contabilidad no puede expresar porque no mueve dinero —split, traspaso entre posiciones, cambio de identificador y ajuste auditado— tras un icono de acciones de página, con una nota que dice dónde está lo demás.
+
+Del lado de Contabilidad, el formulario de **Inversión** reconoce cuándo la cuenta elegida es una posición de cartera: lo dice explícitamente, avisa cuando el dinero no sale del efectivo de ese contenedor —el formulario de la cartera solo dejaba financiar desde el mismo contenedor, y aquí se ofrecen todas las cuentas— y pide unidades y precio unitario cuando la posición se sigue por unidades. Sin eso, mover el registro a Contabilidad habría perdido el rastro de cuántas unidades movió cada operación. La correspondencia cuenta→posición se resuelve con `ledger_account_id`, que `operation_options` expone en posiciones y cuentas de efectivo.
+
 **Requiere:** `canUsePortfolio()` → `core.portfolio`.
 
 ---

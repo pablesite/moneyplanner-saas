@@ -157,6 +157,7 @@ export type PortfolioOperationType =
 export type PortfolioOperationPosition = {
   id: number;
   name: string;
+  ledger_account_id: number | null;
   container_id: number;
   container_name: string;
   tracking_style: string;
@@ -189,6 +190,7 @@ export type PortfolioPositionSetupPayload = {
 export type PortfolioCashAccount = {
   id: number;
   container_id: number;
+  ledger_account_id: number;
   name: string;
   currency: string;
   available: string;

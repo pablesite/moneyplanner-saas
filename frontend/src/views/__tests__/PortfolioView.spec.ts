@@ -182,7 +182,10 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('Valor de cartera');
     expect(wrapper.text()).toContain('12.000,00');
     expect(wrapper.text()).toContain('Dónde está invertida');
-    expect(wrapper.text()).toContain('Registrar');
+    // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la
+    // posición, tras un icono.
+    expect(wrapper.text()).not.toContain('Registrar');
+    expect(wrapper.find('[aria-label^="Operaciones de cartera"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Importar CSV');
     // Los recurrentes son botones de icono: su nombre vive en `aria-label`, no en el texto.
     expect(wrapper.find('[aria-label="Configurar posiciones · 1 pendientes"]').exists()).toBe(true);

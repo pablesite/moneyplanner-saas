@@ -363,8 +363,17 @@ async function loadOperationOptions() {
   }
 }
 
+// Registrar dinero es cosa de Contabilidad: aquí solo quedan las operaciones que allí
+// no se pueden expresar, porque no mueven dinero sino la propia posición.
+const MAINTENANCE_OPERATIONS: PortfolioOperationType[] = [
+  'split',
+  'position_transfer',
+  'identifier_change',
+  'adjustment',
+];
+
 function openOperation(
-  type: PortfolioOperationType = 'buy',
+  type: PortfolioOperationType = 'split',
   position: PositionPerformance | null = null,
 ) {
   operationType.value = type;
@@ -553,7 +562,6 @@ onMounted(() => {
       <!-- Los tres recurrentes van como icono: se usan a menudo, su etiqueta ocupaba la
            mitad de la cabecera y el nombre completo queda en `title` y `aria-label`. -->
       <template #actions>
-        <AButton variant="primary" @click="openOperation()">Registrar</AButton>
         <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
         <AButton variant="ghost" @click="containersOpen = true">Contenedores</AButton>
         <AButton
@@ -572,6 +580,18 @@ onMounted(() => {
             <path
               d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
             />
+          </svg>
+        </AButton>
+        <AButton
+          variant="icon"
+          title="Operaciones de cartera"
+          aria-label="Operaciones de cartera: splits, traspasos, identificadores y ajustes"
+          @click="openOperation()"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <path d="M8 3v4M16 3v4M4 11h16" />
+            <rect x="4" y="5" width="16" height="16" rx="2" />
+            <path d="m9 16 2 2 4-4" />
           </svg>
         </AButton>
         <AButton
@@ -1191,6 +1211,9 @@ onMounted(() => {
       :options="operationOptionsData"
       :initial-position-id="operationPositionId"
       :initial-type="operationType"
+      :types="MAINTENANCE_OPERATIONS"
+      title="Operaciones de cartera"
+      intro="Movimientos de dinero (compras, ventas, dividendos, comisiones, traspasos y valoraciones) se registran en Contabilidad. Aquí quedan las operaciones que cambian la propia posición sin mover dinero."
       @close="operationOpen = false"
       @saved="onPortfolioSaved"
     />
