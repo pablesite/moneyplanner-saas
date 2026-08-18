@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.53.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.52.0...moneyplanner-saas-v0.53.0) (2026-08-17)
+
+
+### Features
+
+* **portfolio:** add refresh-from-accounting action to /cartera ([947225e](https://github.com/pablesite/moneyplanner-saas/commit/947225e061da99ad4141888f2e80d39b7fbf35d4))
+* **portfolio:** edit container and class from the setup sheet, with tooltips ([369e449](https://github.com/pablesite/moneyplanner-saas/commit/369e449a39855603a0e7477d919717fdce03a412))
+* **portfolio:** hide archived positions behind a restore sheet ([b80c178](https://github.com/pablesite/moneyplanner-saas/commit/b80c17882475c51d913c92957bb7ecd0965b1654))
+* **portfolio:** restyle the evolution chart after Patrimonio's ([b4cc32d](https://github.com/pablesite/moneyplanner-saas/commit/b4cc32da54f8814e4846f6a063a2f349dfaee45b))
+* **portfolio:** rework the positions table ([8fe3c52](https://github.com/pablesite/moneyplanner-saas/commit/8fe3c52daf6b933708f0a92de4ed2ad0371146b1))
+* **portfolio:** show carrying values as "A coste" in /cartera ([f194b36](https://github.com/pablesite/moneyplanner-saas/commit/f194b360f0135150665cefe4181767d90dd07035))
+
+
+### Bug Fixes
+
+* **portfolio:** document valuation accounting sync in Core pointer ([eac9340](https://github.com/pablesite/moneyplanner-saas/commit/eac93405c8d74eca19cefda0beb37e76647e6a02))
+* **portfolio:** show MWR and repair the asset-class palette ([7fc9719](https://github.com/pablesite/moneyplanner-saas/commit/7fc97194d2e117e377f3c7dbf799d53974116951))
+* **portfolio:** update Core pointer for live accounting sync ([773edbf](https://github.com/pablesite/moneyplanner-saas/commit/773edbfdc20aa45eaae57584da25b78f10a4dd1a))
+* **portfolio:** update Core pointer for pre-opening zero values ([c10f750](https://github.com/pablesite/moneyplanner-saas/commit/c10f75072d746a92778e0ca0ed15ce1f485db090))
+
 ## [0.52.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.51.0...moneyplanner-saas-v0.52.0) (2026-08-17)
 
 

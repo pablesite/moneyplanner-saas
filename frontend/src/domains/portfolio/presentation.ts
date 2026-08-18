@@ -11,14 +11,15 @@ export const portfolioAssetClassLabels: Record<string, string> = {
   other: 'Otros',
 };
 
+// Tokens defined in portfolio.css, where the palette and its validation are documented.
 export const portfolioAssetClassColors: Record<string, string> = {
-  cash: 'var(--color-info)',
-  fixed_income: 'var(--color-accent-alt)',
-  equity: 'var(--color-accent)',
-  mixed: 'var(--color-warning)',
+  cash: 'var(--a-pf-cash)',
+  fixed_income: 'var(--a-pf-fixed-income)',
+  equity: 'var(--a-pf-equity)',
+  mixed: 'var(--a-pf-mixed)',
   real_assets: 'var(--a-pf-real-assets)',
   crypto: 'var(--a-pf-crypto)',
-  other: 'var(--color-text-soft)',
+  other: 'var(--a-pf-other)',
 };
 
 export function instrumentMap(instruments: PortfolioInstrument[]) {
@@ -32,11 +33,14 @@ export function positionBaseValue(position: PositionPerformance): number {
 export function freshnessLabel(status: PositionPerformance['value_status']): string {
   if (status === 'fresh') return 'Al día';
   if (status === 'stale') return 'Desactualizada';
+  // The balance is today's, so it is not outdated; what is missing is a valuation.
+  if (status === 'at_cost') return 'A coste';
   return 'Sin valoración';
 }
 
 export function returnLabel(method: string, estimated: boolean): string {
   if (method === 'twr') return 'TWR exacta';
+  if (method === 'linked_dietz') return 'TWR encadenada';
   if (method === 'modified_dietz' && estimated) return 'TWR estimada';
   return 'Rentabilidad no disponible';
 }

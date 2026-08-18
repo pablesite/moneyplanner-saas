@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { AButton, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, AInfoHint, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
 import type { PortfolioOperationOptions, PortfolioPositionSetupPayload } from '../types';
@@ -17,6 +17,8 @@ const positionId = ref('');
 const trackingStyle = ref<PortfolioPositionSetupPayload['tracking_style']>('value_based');
 const historyMode = ref<PortfolioPositionSetupPayload['history_mode']>('reconstructed');
 const historyStartDate = ref('');
+const containerId = ref('');
+const assetClass = ref('');
 const saving = ref(false);
 const error = ref<string | null>(null);
 
@@ -38,6 +40,12 @@ const historyOptions: ASelectItem[] = [
   { value: 'reconstructed', label: 'Reconstruir el histórico disponible' },
   { value: 'cutoff', label: 'Empezar desde una fecha de corte' },
 ];
+const containerOptions = computed<ASelectItem[]>(() =>
+  (props.options?.containers ?? []).map((row) => ({ value: String(row.id), label: row.name })),
+);
+const assetClassOptions = computed<ASelectItem[]>(() =>
+  (props.options?.asset_classes ?? []).map((row) => ({ value: row.value, label: row.label })),
+);
 
 function coverageLabel(status: string): string {
   return (
@@ -56,6 +64,8 @@ function loadPosition(id: string) {
   trackingStyle.value = position.tracking_style as PortfolioPositionSetupPayload['tracking_style'];
   historyMode.value = position.history_mode;
   historyStartDate.value = position.history_start_date ?? '';
+  containerId.value = String(position.container_id);
+  assetClass.value = position.asset_class;
   error.value = null;
 }
 
@@ -91,6 +101,9 @@ async function save() {
       tracking_style: trackingStyle.value,
       history_mode: historyMode.value,
       history_start_date: historyMode.value === 'cutoff' ? historyStartDate.value : null,
+      container_id: Number(containerId.value),
+      // A canonical instrument is shared, so its class is not the position's to change.
+      ...(selectedPosition.value.instrument_is_custom ? { asset_class: assetClass.value } : {}),
     });
     emit('saved', `Configuración guardada para ${selectedPosition.value.name}.`);
     emit('close');
@@ -111,7 +124,10 @@ async function save() {
     @close="emit('close')"
   >
     <form :id="FORM_ID" class="a-pf-setup-flow" @submit.prevent="save">
-      <p>Define cómo seguir una posición migrada sin reescribir sus movimientos históricos.</p>
+      <p>
+        Define qué es cada posición y cómo seguirla, sin reescribir sus movimientos históricos.
+        Puedes volver aquí y cambiarlo tantas veces como quieras: confirmar no cierra nada.
+      </p>
       <label class="ui-item-form-field">
         <span class="ui-item-form-label">Posición</span>
         <ASelect v-model="positionId" :options="positionOptions" />
@@ -120,21 +136,62 @@ async function save() {
       <template v-if="selectedPosition">
         <dl class="a-pf-setup-context">
           <div>
-            <dt>Contenedor</dt>
-            <dd>{{ selectedPosition.container_name }}</dd>
-          </div>
-          <div>
             <dt>Estado contable</dt>
             <dd>{{ selectedPosition.operational ? 'Operativa' : 'Sin cuenta enlazada' }}</dd>
+          </div>
+          <div>
+            <dt>Configuración</dt>
+            <dd>{{ selectedPosition.setup_confirmed ? 'Confirmada' : 'Pendiente' }}</dd>
           </div>
         </dl>
 
         <label class="ui-item-form-field">
-          <span class="ui-item-form-label">Detalle de la posición</span>
+          <span class="ui-item-form-label">
+            Contenedor
+            <AInfoHint
+              label="Dónde está depositada: el bróker, banco, exchange o plataforma. Agrupa y filtra el inventario; no afecta a los cálculos."
+            />
+          </span>
+          <ASelect v-model="containerId" :options="containerOptions" />
+        </label>
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">
+            Clase de activo
+            <AInfoHint
+              label="Qué tipo de activo es. Es lo que alimenta el gráfico de composición de la cartera, así que clasificar bien cambia lo que ese gráfico te cuenta."
+            />
+          </span>
+          <ASelect
+            v-model="assetClass"
+            :options="assetClassOptions"
+            :searchable="false"
+            :disabled="!selectedPosition.instrument_is_custom"
+          />
+        </label>
+        <AState v-if="!selectedPosition.instrument_is_custom" status="neutral" layout="inline">
+          Este instrumento es canónico y lo comparten varias carteras, así que su clase no se cambia
+          desde aquí.
+        </AState>
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">
+            Detalle de la posición
+            <AInfoHint>
+              <strong>Por valor:</strong> solo registras cuánto vale en total. Sirve para fondos,
+              planes o productos sin precio público. <strong>Por unidades:</strong> registras
+              cuántas participaciones tienes, y el valor sale de multiplicarlas por su precio de
+              mercado. Requiere que el instrumento tenga precio, pero da precio diario automático y
+              coste por operación.
+            </AInfoHint>
+          </span>
           <ASelect v-model="trackingStyle" :options="trackingOptions" :searchable="false" />
         </label>
         <label class="ui-item-form-field">
-          <span class="ui-item-form-label">Histórico</span>
+          <span class="ui-item-form-label">
+            Histórico
+            <AInfoHint
+              label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
+            />
+          </span>
           <ASelect v-model="historyMode" :options="historyOptions" :searchable="false" />
         </label>
         <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">

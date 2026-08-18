@@ -8,7 +8,8 @@ export type PortfolioReturn = {
   real: string | null;
   twr: string | null;
   mwr_xirr: string | null;
-  method: 'twr' | 'modified_dietz' | 'unavailable';
+  twr_annualized: string | null;
+  method: 'twr' | 'linked_dietz' | 'modified_dietz' | 'unavailable';
   estimated: boolean;
 };
 
@@ -68,7 +69,7 @@ export type PositionPerformance = {
   native_value: string | null;
   native_currency: string | null;
   observed_on: string | null;
-  value_status: 'fresh' | 'stale' | 'missing';
+  value_status: 'fresh' | 'stale' | 'missing' | 'at_cost';
   performance: PortfolioPerformance;
   attribution: {
     asset: string | null;
@@ -88,6 +89,7 @@ export type PortfolioTimelinePoint = {
   date: string;
   value: string | null;
   net_contributed: string;
+  contributed_to_date: string;
   monetary_result: string | null;
   coverage: 'complete' | 'partial';
 };
@@ -102,7 +104,7 @@ export type PortfolioTimeline = {
 export type PortfolioQuality = {
   period: PortfolioPeriod;
   status: 'ready' | 'stale' | 'needs_review';
-  positions: { total: number; fresh: number; stale: number; missing: number };
+  positions: { total: number; fresh: number; stale: number; missing: number; at_cost: number };
   ownership_missing: number;
   cash_ownership_missing: boolean;
   metric_coverage: PortfolioCoverage;
@@ -156,6 +158,8 @@ export type PortfolioOperationPosition = {
   history_mode: 'reconstructed' | 'cutoff';
   history_start_date: string | null;
   setup_confirmed: boolean;
+  asset_class: string;
+  instrument_is_custom: boolean;
   performance_coverage: {
     status: 'complete' | 'partial' | 'missing';
     start_date: string | null;
@@ -172,6 +176,8 @@ export type PortfolioPositionSetupPayload = {
   tracking_style: 'value_based' | 'units_based';
   history_mode: 'reconstructed' | 'cutoff';
   history_start_date: string | null;
+  container_id?: number;
+  asset_class?: string;
 };
 
 export type PortfolioCashAccount = {
@@ -185,6 +191,8 @@ export type PortfolioCashAccount = {
 export type PortfolioOperationOptions = {
   positions: PortfolioOperationPosition[];
   cash_accounts: PortfolioCashAccount[];
+  containers: { id: number; name: string; container_type: string }[];
+  asset_classes: { value: string; label: string }[];
 };
 
 export type PortfolioOperationPayload = {
@@ -244,4 +252,9 @@ export type PortfolioImportBatch = {
   confirmed_count: number;
   duplicate_file?: boolean;
   rows: PortfolioImportRow[];
+};
+
+export type PortfolioValuationResync = {
+  positions_checked: number;
+  valuations_created: number;
 };
