@@ -2,25 +2,37 @@ import { toNumber } from '@/lib/format';
 import type { PositionPerformance, PortfolioInstrument } from './types';
 
 export const portfolioAssetClassLabels: Record<string, string> = {
-  cash: 'Efectivo',
   fixed_income: 'Renta fija',
   equity: 'Renta variable',
-  mixed: 'Mixto',
-  real_assets: 'Activos reales',
-  crypto: 'Cripto',
+  real_estate: 'Inmobiliario',
+  private_equity: 'Capital privado',
+  safe_haven: 'Activos refugio',
+  commodities: 'Materias primas',
+  alternatives: 'Inversiones alternativas',
+  trading: 'Trading',
+  opportunity_cash: 'Liquidez para oportunidades',
   other: 'Otros',
 };
 
 // Tokens defined in portfolio.css, where the palette and its validation are documented.
+// Only eight categorical hues survive the palette checker, so the two classes least
+// likely to share a chart with the rest take the neutral token and the donut folds
+// anything past eight into a single "Otras clases" slice.
 export const portfolioAssetClassColors: Record<string, string> = {
-  cash: 'var(--a-pf-cash)',
   fixed_income: 'var(--a-pf-fixed-income)',
   equity: 'var(--a-pf-equity)',
-  mixed: 'var(--a-pf-mixed)',
-  real_assets: 'var(--a-pf-real-assets)',
-  crypto: 'var(--a-pf-crypto)',
+  real_estate: 'var(--a-pf-real-estate)',
+  safe_haven: 'var(--a-pf-safe-haven)',
+  commodities: 'var(--a-pf-commodities)',
+  alternatives: 'var(--a-pf-alternatives)',
+  trading: 'var(--a-pf-trading)',
   other: 'var(--a-pf-other)',
+  private_equity: 'var(--a-pf-neutral)',
+  opportunity_cash: 'var(--a-pf-neutral)',
 };
+
+// Beyond this the palette cannot keep hues apart, so the tail is aggregated.
+export const PORTFOLIO_MAX_COMPOSITION_SLICES = 8;
 
 export function instrumentMap(instruments: PortfolioInstrument[]) {
   return new Map(instruments.map((instrument) => [instrument.id, instrument]));

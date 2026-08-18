@@ -9,6 +9,7 @@ import {
   corePortfolioApi,
   freshnessLabel,
   instrumentMap,
+  PORTFOLIO_MAX_COMPOSITION_SLICES,
   portfolioAssetClassColors,
   portfolioAssetClassLabels,
   positionBaseValue,
@@ -194,7 +195,7 @@ const composition = computed(() => {
     const key = instrumentsById.value.get(position.instrument_id)?.asset_class ?? 'other';
     totals.set(key, (totals.get(key) ?? 0) + positionBaseValue(position));
   }
-  return [...totals.entries()]
+  const rows = [...totals.entries()]
     .map(([key, value]) => ({
       key,
       label: portfolioAssetClassLabels[key] ?? key,
@@ -202,6 +203,21 @@ const composition = computed(() => {
       color: portfolioAssetClassColors[key] ?? portfolioAssetClassColors.other!,
     }))
     .sort((a, b) => b.value - a.value);
+  // Only eight hues survive the palette checker, so a longer tail is aggregated rather
+  // than given invented colours nobody could tell apart. Each class keeps its own hue
+  // whenever it is shown; only the smallest ones merge.
+  if (rows.length <= PORTFOLIO_MAX_COMPOSITION_SLICES) return rows;
+  const head = rows.slice(0, PORTFOLIO_MAX_COMPOSITION_SLICES - 1);
+  const tail = rows.slice(PORTFOLIO_MAX_COMPOSITION_SLICES - 1);
+  return [
+    ...head,
+    {
+      key: 'aggregated',
+      label: `Otras clases · ${tail.length}`,
+      value: tail.reduce((sum, row) => sum + row.value, 0),
+      color: 'var(--a-pf-neutral)',
+    },
+  ];
 });
 const compositionTotal = computed(() =>
   composition.value.reduce((sum, item) => sum + item.value, 0),

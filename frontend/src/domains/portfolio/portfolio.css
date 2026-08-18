@@ -7,12 +7,14 @@
    never carried by colour alone. */
 .dir-a .page.a-pf-page {
   --a-pf-equity: #3987e5;
-  --a-pf-real-assets: #d95926;
+  --a-pf-real-estate: #d95926;
   --a-pf-fixed-income: #199e70;
-  --a-pf-crypto: #c98500;
-  --a-pf-other: #d55181;
-  --a-pf-cash: #008300;
-  --a-pf-mixed: #9085e9;
+  --a-pf-commodities: #c98500;
+  --a-pf-safe-haven: #d55181;
+  --a-pf-trading: #008300;
+  --a-pf-alternatives: #9085e9;
+  --a-pf-other: #e66767;
+  --a-pf-neutral: var(--muted);
   display: grid;
   gap: var(--space-6);
   overflow-x: hidden;
@@ -20,12 +22,13 @@
 
 .dir-a.theme-light .page.a-pf-page {
   --a-pf-equity: #2a78d6;
-  --a-pf-real-assets: #eb6834;
+  --a-pf-real-estate: #eb6834;
   --a-pf-fixed-income: #1baf7a;
-  --a-pf-crypto: #eda100;
-  --a-pf-other: #e87ba4;
-  --a-pf-cash: #008300;
-  --a-pf-mixed: #4a3aa7;
+  --a-pf-commodities: #eda100;
+  --a-pf-safe-haven: #e87ba4;
+  --a-pf-trading: #008300;
+  --a-pf-alternatives: #4a3aa7;
+  --a-pf-other: #e34948;
 }
 
 .dir-a .a-pf-tabs-bar {
@@ -152,26 +155,29 @@
   background: var(--muted);
 }
 
-.dir-a .a-pf-composition-row i.is-cash {
-  background: var(--a-pf-cash);
-}
 .dir-a .a-pf-composition-row i.is-fixed_income {
   background: var(--a-pf-fixed-income);
 }
 .dir-a .a-pf-composition-row i.is-equity {
   background: var(--a-pf-equity);
 }
-.dir-a .a-pf-composition-row i.is-mixed {
-  background: var(--a-pf-mixed);
+.dir-a .a-pf-composition-row i.is-real_estate {
+  background: var(--a-pf-real-estate);
+}
+.dir-a .a-pf-composition-row i.is-safe_haven {
+  background: var(--a-pf-safe-haven);
+}
+.dir-a .a-pf-composition-row i.is-commodities {
+  background: var(--a-pf-commodities);
+}
+.dir-a .a-pf-composition-row i.is-alternatives {
+  background: var(--a-pf-alternatives);
+}
+.dir-a .a-pf-composition-row i.is-trading {
+  background: var(--a-pf-trading);
 }
 .dir-a .a-pf-composition-row i.is-other {
   background: var(--a-pf-other);
-}
-.dir-a .a-pf-composition-row i.is-real_assets {
-  background: var(--a-pf-real-assets);
-}
-.dir-a .a-pf-composition-row i.is-crypto {
-  background: var(--a-pf-crypto);
 }
 
 .dir-a .a-pf-composition-row strong,
