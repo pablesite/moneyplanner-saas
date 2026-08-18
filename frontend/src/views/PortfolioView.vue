@@ -160,11 +160,10 @@ const heroValue = computed(() => {
   const value = store.overview.value ?? store.overview.covered_value;
   return `${store.overview.value === null ? '≥ ' : ''}${money(value)}`;
 });
-const nominalReturn = computed(() => {
-  const value = store.overview?.return.nominal;
-  return value == null ? '—' : formatPct(toNumber(value), 1);
-});
-const returnTone = computed(() => (toNumber(store.overview?.return.nominal) >= 0 ? 'pos' : 'neg'));
+// MWR leads: it answers what the investor's own money did, which is the question the
+// hero is asked. TWR describes the assets and is kept beside it as context, not hidden.
+const headlineReturn = computed(() => pct(store.overview?.return.mwr_xirr));
+const returnTone = computed(() => (toNumber(store.overview?.return.mwr_xirr) >= 0 ? 'pos' : 'neg'));
 const heroKpis = computed(() => [
   {
     label: 'Resultado del periodo',
@@ -178,9 +177,9 @@ const heroKpis = computed(() => [
     meta: 'Entradas menos retiradas',
   },
   {
-    label: 'Rentabilidad de tu dinero',
-    value: pct(store.performance?.return.mwr_xirr),
-    meta: 'MWR anual: pondera cuándo aportaste',
+    label: 'Rentabilidad del activo',
+    value: pct(store.performance?.return.twr_annualized),
+    meta: 'TWR anual: neutral a cuándo aportaste',
   },
   {
     label: 'Ingresos / costes',
@@ -413,13 +412,6 @@ function pct(value: string | null | undefined): string {
   return value == null ? '—' : formatPct(toNumber(value), 1);
 }
 
-// Mobile has no room for two columns, so both returns share one labelled line.
-function positionReturnPair(position: PositionPerformance): string {
-  return `TWR ${pct(position.performance.return.nominal)} · MWR ${pct(
-    position.performance.return.mwr_xirr,
-  )}`;
-}
-
 function showReviewQueue() {
   reviewOnly.value = true;
   selectedPosition.value = null;
@@ -640,12 +632,13 @@ onMounted(() => {
             <AHero eyebrow="Valor de cartera" :value="heroValue">
               <template #delta>
                 <div class="a-pf-return-line">
-                  <strong :class="returnTone">{{ nominalReturn }}</strong>
-                  <span>{{
-                    returnLabel(store.overview.return.method, store.overview.return.estimated)
-                  }}</span>
+                  <strong :class="returnTone">{{ headlineReturn }}</strong>
+                  <span>MWR anual · tu dinero</span>
                   <span v-if="store.overview.return.twr_annualized"
-                    >{{ pct(store.overview.return.twr_annualized) }} anualizada</span
+                    >TWR {{ pct(store.overview.return.twr_annualized) }} anual ·
+                    {{
+                      returnLabel(store.overview.return.method, store.overview.return.estimated)
+                    }}</span
                   >
                 </div>
               </template>
@@ -872,11 +865,36 @@ onMounted(() => {
               <span class="a-pf-position-value"
                 ><strong class="mono">{{ money(positionBaseValue(position)) }}</strong
                 ><small
-                  :class="toNumber(position.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
+                  class="mono"
+                  :class="signClass(toNumber(position.performance.monetary_result))"
                   >{{ signedMoney(position.performance.monetary_result) }}</small
-                ><small>{{ positionReturnPair(position) }}</small></span
+                ><small class="a-pf-position-returns"
+                  ><span :class="signClass(toNumber(position.performance.return.nominal))"
+                    >TWR {{ pct(position.performance.return.nominal) }}</span
+                  ><span :class="signClass(toNumber(position.performance.return.mwr_xirr))"
+                    >MWR {{ pct(position.performance.return.mwr_xirr) }}</span
+                  ></small
+                ></span
               >
             </button>
+            <!-- El móvil pierde las columnas, no los totales: son la misma información
+                 que el pie de la tabla, en la única disposición que cabe aquí. -->
+            <div class="a-pf-position-total">
+              <span class="a-pf-position-main"
+                ><strong>Total</strong
+                ><small
+                  >{{ sortedPositions.length }} posiciones{{
+                    scopeIsFiltered ? ' · filtrado' : ''
+                  }}</small
+                ></span
+              >
+              <span class="a-pf-position-value"
+                ><strong class="mono">{{ money(visibleTotalValue) }}</strong
+                ><small class="mono" :class="signClass(visibleTotalResult)">{{
+                  signedMoney(visibleTotalResult)
+                }}</small></span
+              >
+            </div>
           </div>
         </template>
       </section>

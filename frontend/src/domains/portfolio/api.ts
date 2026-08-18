@@ -80,22 +80,16 @@ export const corePortfolioApi = {
       row_ids: rowIds,
     });
   },
+  // One request instead of five: each of the old endpoints rebuilt the whole performance
+  // context, so every filter change paid that cost five times over. Instruments stay
+  // separate because they are a catalogue, not part of the period read.
   async getWorkspace(params: PortfolioQuery): Promise<PortfolioWorkspacePayload> {
-    const [overview, performance, positions, timeline, quality, instruments] = await Promise.all([
-      this.getOverview(params),
-      this.getPerformance(params),
-      this.getPositions(params),
-      this.getTimeline(params),
-      this.getQuality(params),
+    const [workspace, instruments] = await Promise.all([
+      coreApi.get<Omit<PortfolioWorkspacePayload, 'instruments'>>('/api/portfolio/workspace/', {
+        params,
+      }),
       this.getInstruments(),
     ]);
-    return {
-      overview: overview.data,
-      performance: performance.data,
-      positions: positions.data,
-      timeline: timeline.data,
-      quality: quality.data,
-      instruments: instruments.data,
-    };
+    return { ...workspace.data, instruments: instruments.data };
   },
 };

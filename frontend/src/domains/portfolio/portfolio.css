@@ -688,6 +688,23 @@
     min-width: 0;
   }
 
+  /* Las dos rentabilidades comparten línea porque no caben en columnas, pero cada una
+     conserva su color de signo: el móvil pierde la rejilla, no la información. */
+  .dir-a .a-pf-position-returns {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  .dir-a .a-pf-position-total {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+    min-height: 68px;
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--line-strong);
+  }
+
   .dir-a .a-pf-position-main strong {
     overflow: hidden;
     text-overflow: ellipsis;
