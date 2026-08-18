@@ -29,7 +29,7 @@ const selectedPosition = computed(() =>
 const positionOptions = computed<ASelectItem[]>(() =>
   positions.value.map((position) => ({
     value: String(position.id),
-    label: `${position.name} · ${position.container_name}${position.setup_confirmed ? '' : ' · Pendiente'}`,
+    label: `${position.name}${position.setup_confirmed ? '' : ' · Pendiente'}`,
   })),
 );
 const trackingOptions: ASelectItem[] = [
@@ -102,8 +102,7 @@ async function save() {
       history_mode: historyMode.value,
       history_start_date: historyMode.value === 'cutoff' ? historyStartDate.value : null,
       container_id: Number(containerId.value),
-      // A canonical instrument is shared, so its class is not the position's to change.
-      ...(selectedPosition.value.instrument_is_custom ? { asset_class: assetClass.value } : {}),
+      asset_class: assetClass.value,
     });
     emit('saved', `Configuración guardada para ${selectedPosition.value.name}.`);
     emit('close');
@@ -161,17 +160,8 @@ async function save() {
               label="Qué tipo de activo es. Es lo que alimenta el gráfico de composición de la cartera, así que clasificar bien cambia lo que ese gráfico te cuenta."
             />
           </span>
-          <ASelect
-            v-model="assetClass"
-            :options="assetClassOptions"
-            :searchable="false"
-            :disabled="!selectedPosition.instrument_is_custom"
-          />
+          <ASelect v-model="assetClass" :options="assetClassOptions" :searchable="false" />
         </label>
-        <AState v-if="!selectedPosition.instrument_is_custom" status="neutral" layout="inline">
-          Este instrumento es canónico y lo comparten varias carteras, así que su clase no se cambia
-          desde aquí.
-        </AState>
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">
             Detalle de la posición

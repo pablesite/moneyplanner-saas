@@ -69,6 +69,7 @@ export type PositionPerformance = {
   native_value: string | null;
   native_currency: string | null;
   observed_on: string | null;
+  asset_class: string;
   value_status: 'fresh' | 'stale' | 'missing' | 'at_cost';
   performance: PortfolioPerformance;
   attribution: {
@@ -164,7 +165,6 @@ export type PortfolioOperationPosition = {
   history_start_date: string | null;
   setup_confirmed: boolean;
   asset_class: string;
-  instrument_is_custom: boolean;
   performance_coverage: {
     status: 'complete' | 'partial' | 'missing';
     start_date: string | null;

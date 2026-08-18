@@ -125,11 +125,10 @@ const archivedPositions = computed(() =>
 );
 const filteredPositions = computed(() =>
   allPositions.value.filter((position) => {
-    const instrument = instrumentsById.value.get(position.instrument_id);
     return (
       position.status !== 'archived' &&
       (containerId.value === 'all' || String(position.container_id) === containerId.value) &&
-      (assetClass.value === 'all' || instrument?.asset_class === assetClass.value) &&
+      (assetClass.value === 'all' || position.asset_class === assetClass.value) &&
       (currency.value === 'all' || position.native_currency === currency.value)
     );
   }),
@@ -199,7 +198,7 @@ const heroKpis = computed(() => [
 const composition = computed(() => {
   const totals = new Map<string, number>();
   for (const position of filteredPositions.value) {
-    const key = instrumentsById.value.get(position.instrument_id)?.asset_class ?? 'other';
+    const key = position.asset_class || 'other';
     totals.set(key, (totals.get(key) ?? 0) + positionBaseValue(position));
   }
   const rows = [...totals.entries()]
@@ -343,7 +342,7 @@ const sortKey = ref<SortKey>('value');
 const sortDir = ref<'asc' | 'desc'>('desc');
 
 function assetClassLabel(position: PositionPerformance): string {
-  const key = instrumentsById.value.get(position.instrument_id)?.asset_class ?? 'other';
+  const key = position.asset_class || 'other';
   return portfolioAssetClassLabels[key] ?? key;
 }
 
