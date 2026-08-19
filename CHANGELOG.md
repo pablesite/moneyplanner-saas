@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.54.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.53.0...moneyplanner-saas-v0.54.0) (2026-08-19)
+
+
+### Features
+
+* **portfolio:** break the evolution chart's months into contribution and market ([cea2589](https://github.com/pablesite/moneyplanner-saas/commit/cea25890451046d02958e57b171b8c253b19c9cc))
+* **portfolio:** create and edit containers from /cartera ([53a32aa](https://github.com/pablesite/moneyplanner-saas/commit/53a32aa427a816fcc75fa65c5677d1b7c9876247))
+* **portfolio:** lead with MWR and restore mobile parity ([ff53722](https://github.com/pablesite/moneyplanner-saas/commit/ff53722c79b29280fee3afa6c7f024e8098272a6))
+* **portfolio:** manage ownership stretches, and stop showing figures that no longer apply ([d56189a](https://github.com/pablesite/moneyplanner-saas/commit/d56189adb8d4803e757044a15a6f8f293f533a3b))
+* **portfolio:** move recording out of Cartera and into Contabilidad ([dfa31c0](https://github.com/pablesite/moneyplanner-saas/commit/dfa31c06fb025f6a4f443aa47823913423640608))
+* **portfolio:** pick the period with a segmented control ([2c0e155](https://github.com/pablesite/moneyplanner-saas/commit/2c0e15573ae54ad857d90539b4db6bded83d0b5e))
+* **portfolio:** plain-language KPIs, expandable composition and an editable detail ([226ac95](https://github.com/pablesite/moneyplanner-saas/commit/226ac95217ddf2db29de02a5e6524ae95d69d1e0))
+* **portfolio:** show the filtered class's return in the table footer ([ca1c531](https://github.com/pablesite/moneyplanner-saas/commit/ca1c5318f86633a629119b140b121285717f4296))
+* **portfolio:** show the new classes, and split positions that are not of a single one ([36a799f](https://github.com/pablesite/moneyplanner-saas/commit/36a799f0acc91a0594bc6d60086b487c72e510d3))
+* **portfolio:** show the reworked asset classes in /cartera ([0dee82d](https://github.com/pablesite/moneyplanner-saas/commit/0dee82d4d3daefed966a6afdac49edf9201a7032))
+* **portfolio:** use the position's own name and class in /cartera ([cfd3ba5](https://github.com/pablesite/moneyplanner-saas/commit/cfd3ba5c6851fb6cbad9b6a299e1205c5ea12a2a))
+
+
+### Bug Fixes
+
+* **net-worth:** stop archiving from wiping an item's ownership ([4d19df7](https://github.com/pablesite/moneyplanner-saas/commit/4d19df75bde3cb4bb26e5c7fc558dff6bda64f66))
+
 ## [0.53.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.52.0...moneyplanner-saas-v0.53.0) (2026-08-17)
 
 
