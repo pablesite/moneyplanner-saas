@@ -13,6 +13,9 @@ export const portfolioAssetClassLabels: Record<string, string> = {
   private_equity: 'Capital privado',
   crypto: 'Criptoactivos',
   cash: 'Liquidez',
+  // El satélite: una bolsa acotada para experimentar, no una clase de riesgo. Lo que
+  // importa de ella es cuánto pesa, no de qué está hecha.
+  trading: 'Trading',
   other: 'Otros',
   // Distinta de "Otros": aquella es una respuesta —lo miraste y no encaja— y esta es su
   // ausencia. Un fondo o un ETF pueden ser cualquier cosa, así que aterrizan aquí hasta
@@ -21,8 +24,9 @@ export const portfolioAssetClassLabels: Record<string, string> = {
 };
 
 // Tokens defined in portfolio.css, where the palette and its validation are documented.
-// Ocho tonos son el máximo que aguanta el checker, así que las ocho clases reales llevan
-// tono propio y "Otros" —que es un cajón, no una clase— toma el neutro.
+// Nueve tonos, todos validados con el checker en claro y oscuro; "Otros" —que es un
+// cajón, no una clase— toma el neutro, y "Sin clasificar" el mismo neutro con borde
+// discontinuo, porque tampoco es una clase sino una pregunta sin contestar.
 export const portfolioAssetClassColors: Record<string, string> = {
   equity: 'var(--a-pf-equity)',
   fixed_income: 'var(--a-pf-fixed-income)',
@@ -32,12 +36,13 @@ export const portfolioAssetClassColors: Record<string, string> = {
   private_equity: 'var(--a-pf-private-equity)',
   crypto: 'var(--a-pf-crypto)',
   cash: 'var(--a-pf-cash)',
+  trading: 'var(--a-pf-trading)',
   other: 'var(--a-pf-neutral)',
   unclassified: 'var(--a-pf-neutral)',
 };
 
 // Beyond this the palette cannot keep hues apart, so the tail is aggregated.
-export const PORTFOLIO_MAX_COMPOSITION_SLICES = 8;
+export const PORTFOLIO_MAX_COMPOSITION_SLICES = 9;
 
 export function instrumentMap(instruments: PortfolioInstrument[]) {
   return new Map(instruments.map((instrument) => [instrument.id, instrument]));

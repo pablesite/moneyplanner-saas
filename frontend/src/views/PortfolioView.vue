@@ -5,6 +5,7 @@ import {
   PortfolioEvolutionChart,
   PortfolioImportModal,
   PortfolioOperationModal,
+  PortfolioContributionModal,
   PortfolioSetupModal,
   PortfolioContainersModal,
   corePortfolioApi,
@@ -77,6 +78,7 @@ const operationOpen = ref(false);
 const importOpen = ref(false);
 const setupOpen = ref(false);
 const strategyOpen = ref(false);
+const contributionOpen = ref(false);
 const allocation = ref<PortfolioAllocation | null>(null);
 const allocationLoading = ref(false);
 const allocationError = ref<string | null>(null);
@@ -1177,8 +1179,15 @@ watch(
               aria-label="Ámbito de titularidad"
               class="filter-ctrl"
             />
-            <AButton variant="primary" :disabled="!ownershipId" @click="strategyOpen = true">
+            <AButton variant="ghost" :disabled="!ownershipId" @click="strategyOpen = true">
               {{ allocation?.strategy ? 'Editar política' : 'Escribir política' }}
+            </AButton>
+            <AButton
+              variant="primary"
+              :disabled="!ownershipId || !allocation?.strategy"
+              @click="contributionOpen = true"
+            >
+              Aportar
             </AButton>
           </template>
         </ASectHead>
@@ -1412,6 +1421,20 @@ watch(
       :options="operationOptionsData"
       @close="containersOpen = false"
       @saved="onPortfolioSaved"
+    />
+    <PortfolioContributionModal
+      :open="contributionOpen"
+      :options="operationOptionsData"
+      :ownership-id="ownershipId"
+      :ownership-label="ownershipLabel"
+      :currency="baseCurrency"
+      @close="contributionOpen = false"
+      @saved="
+        (message) => {
+          successMessage = message;
+          void loadAllocation();
+        }
+      "
     />
     <PortfolioStrategyModal
       :open="strategyOpen"

@@ -14,6 +14,7 @@
   --a-pf-private-equity: #9085e9;
   --a-pf-crypto: #d55181;
   --a-pf-cash: #8a9a35;
+  --a-pf-trading: #8f5fa4;
   --a-pf-neutral: var(--muted);
   /* Serie de la banda de barras del gráfico de evolución. Par propio, fuera de la
      paleta de clases: reutilizar un color de clase haría creer que la barra habla de
@@ -34,6 +35,7 @@
   --a-pf-private-equity: #4a3aa7;
   --a-pf-crypto: #e87ba4;
   --a-pf-cash: #7c8a2f;
+  --a-pf-trading: #7d4f92;
 }
 
 .dir-a .a-pf-tabs-bar {
@@ -244,6 +246,9 @@
 }
 .dir-a .a-pf-composition-row i.is-cash {
   background: var(--a-pf-cash);
+}
+.dir-a .a-pf-composition-row i.is-trading {
+  background: var(--a-pf-trading);
 }
 
 /* Sin clasificar no es una clase: es una pregunta sin contestar. Se dibuja hueca para
@@ -1259,6 +1264,9 @@
 .dir-a .a-pf-dot.is-cash {
   background: var(--a-pf-cash);
 }
+.dir-a .a-pf-dot.is-trading {
+  background: var(--a-pf-trading);
+}
 .dir-a .a-pf-dot.is-unclassified {
   background: none;
   border: 1.5px dashed var(--muted);
@@ -1372,4 +1380,65 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-3);
   align-items: center;
+}
+
+.dir-a-sheet .a-pf-contribution-flow {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.dir-a-sheet .a-pf-contribution-note {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.dir-a-sheet .a-pf-contribution-lines {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-contribution-lines li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.dir-a-sheet .a-pf-contribution-lines small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a-sheet .a-pf-contribution-total {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.dir-a-sheet .a-pf-contribution-total dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a-sheet .a-pf-contribution-total dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
 }
