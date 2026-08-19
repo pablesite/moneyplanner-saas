@@ -246,6 +246,13 @@
   background: var(--a-pf-cash);
 }
 
+/* Sin clasificar no es una clase: es una pregunta sin contestar. Se dibuja hueca para
+   que no se confunda con "Otros", que sí es una decisión. */
+.dir-a .a-pf-composition-row i.is-unclassified {
+  background: none;
+  border: 1.5px dashed var(--muted);
+}
+
 .dir-a .a-pf-composition-row strong,
 .dir-a .a-pf-composition-row small {
   text-align: right;

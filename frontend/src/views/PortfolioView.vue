@@ -828,6 +828,10 @@ onMounted(() => {
                   <span>
                     {{ item.label }}
                     <em>{{ item.members.length }}</em>
+                    <AInfoHint
+                      v-if="item.key === 'unclassified'"
+                      label="Nadie ha dicho todavía qué son. Un fondo, un ETF, un plan o una cartera gestionada pueden ser de cualquier clase, así que la app no lo adivina. Ábrelo y clasifícalos: hasta entonces no cuentan en ninguna clase real."
+                    />
                   </span>
                   <strong class="mono">{{ money(item.value) }}</strong>
                   <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 0) }}</small>

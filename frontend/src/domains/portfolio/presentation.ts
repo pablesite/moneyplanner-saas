@@ -14,6 +14,10 @@ export const portfolioAssetClassLabels: Record<string, string> = {
   crypto: 'Criptoactivos',
   cash: 'Liquidez',
   other: 'Otros',
+  // Distinta de "Otros": aquella es una respuesta —lo miraste y no encaja— y esta es su
+  // ausencia. Un fondo o un ETF pueden ser cualquier cosa, así que aterrizan aquí hasta
+  // que alguien lo diga, en vez de colarse en "Otros" como si estuviera decidido.
+  unclassified: 'Sin clasificar',
 };
 
 // Tokens defined in portfolio.css, where the palette and its validation are documented.
@@ -29,6 +33,7 @@ export const portfolioAssetClassColors: Record<string, string> = {
   crypto: 'var(--a-pf-crypto)',
   cash: 'var(--a-pf-cash)',
   other: 'var(--a-pf-neutral)',
+  unclassified: 'var(--a-pf-neutral)',
 };
 
 // Beyond this the palette cannot keep hues apart, so the tail is aggregated.
