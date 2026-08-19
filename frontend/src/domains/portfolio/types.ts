@@ -68,7 +68,10 @@ export type PositionPerformance = {
   tracking_style: string;
   native_value: string | null;
   native_currency: string | null;
+  holding_currency: string;
   observed_on: string | null;
+  asset_class: string;
+  class_breakdown: { asset_class: string; percent: string }[];
   value_status: 'fresh' | 'stale' | 'missing' | 'at_cost';
   performance: PortfolioPerformance;
   attribution: {
@@ -123,9 +126,16 @@ export type PortfolioQuery = {
   date_from?: string;
   date_to?: string;
   member_id?: number;
+  container_id?: number;
+  asset_class?: string;
+  currency?: string;
+  class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
 export type PortfolioWorkspacePayload = {
+  // Las posiciones que el filtro de inventario deja dentro, o null si no hay filtro. Todo
+  // lo demás del payload —hero, evolución y rentabilidad— describe ya ese subconjunto.
+  scope: number[] | null;
   overview: PortfolioOverview;
   performance: PortfolioPerformance;
   positions: PortfolioPositionsResponse;
@@ -150,6 +160,7 @@ export type PortfolioOperationType =
 export type PortfolioOperationPosition = {
   id: number;
   name: string;
+  ledger_account_id: number | null;
   container_id: number;
   container_name: string;
   tracking_style: string;
@@ -159,7 +170,7 @@ export type PortfolioOperationPosition = {
   history_start_date: string | null;
   setup_confirmed: boolean;
   asset_class: string;
-  instrument_is_custom: boolean;
+  class_breakdown: PortfolioClassBreakdownRow[];
   performance_coverage: {
     status: 'complete' | 'partial' | 'missing';
     start_date: string | null;
@@ -172,17 +183,25 @@ export type PortfolioOperationPosition = {
   };
 };
 
+export type PortfolioClassBreakdownRow = {
+  asset_class: string;
+  percent: string;
+};
+
 export type PortfolioPositionSetupPayload = {
   tracking_style: 'value_based' | 'units_based';
   history_mode: 'reconstructed' | 'cutoff';
   history_start_date: string | null;
   container_id?: number;
   asset_class?: string;
+  currency?: string;
+  class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
 export type PortfolioCashAccount = {
   id: number;
   container_id: number;
+  ledger_account_id: number;
   name: string;
   currency: string;
   available: string;
@@ -191,8 +210,24 @@ export type PortfolioCashAccount = {
 export type PortfolioOperationOptions = {
   positions: PortfolioOperationPosition[];
   cash_accounts: PortfolioCashAccount[];
-  containers: { id: number; name: string; container_type: string }[];
+  containers: PortfolioContainer[];
   asset_classes: { value: string; label: string }[];
+  container_types: { value: string; label: string }[];
+};
+
+export type PortfolioContainer = {
+  id: number;
+  name: string;
+  container_type: string;
+  is_active: boolean;
+  position_count: number;
+};
+
+export type PortfolioContainerPayload = {
+  name: string;
+  container_type: string;
+  is_active?: boolean;
+  notes?: string;
 };
 
 export type PortfolioOperationPayload = {
@@ -257,4 +292,26 @@ export type PortfolioImportBatch = {
 export type PortfolioValuationResync = {
   positions_checked: number;
   valuations_created: number;
+};
+
+export type PositionOwnershipShare = {
+  member_id: number;
+  percent: string;
+};
+
+export type PositionOwnershipPeriod = {
+  id: number;
+  position_id: number;
+  ownership_id: number;
+  start_date: string;
+  end_date: string | null;
+  shares: PositionOwnershipShare[];
+  created_at: string;
+};
+
+export type PositionOwnershipPeriodPayload = {
+  position_id: number;
+  ownership_id: number;
+  start_date: string;
+  shares: PositionOwnershipShare[];
 };

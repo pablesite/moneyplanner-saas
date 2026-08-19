@@ -6,9 +6,10 @@ import {
   PortfolioImportModal,
   PortfolioOperationModal,
   PortfolioSetupModal,
+  PortfolioContainersModal,
   corePortfolioApi,
   freshnessLabel,
-  instrumentMap,
+  PORTFOLIO_MAX_COMPOSITION_SLICES,
   portfolioAssetClassColors,
   portfolioAssetClassLabels,
   positionBaseValue,
@@ -25,6 +26,7 @@ import {
   ADateRange,
   ADonut,
   AHero,
+  AInfoHint,
   AKpiBand,
   AMetaPill,
   APageHead,
@@ -70,6 +72,24 @@ const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
 const operationOpen = ref(false);
 const importOpen = ref(false);
 const setupOpen = ref(false);
+const setupPositionId = ref<number | null>(null);
+const expandedClasses = ref(new Set<string>());
+
+function closeSetup() {
+  setupOpen.value = false;
+  setupPositionId.value = null;
+}
+function toggleClass(key: string) {
+  const next = new Set(expandedClasses.value);
+  if (!next.delete(key)) next.add(key);
+  expandedClasses.value = next;
+}
+function editPosition(id: number) {
+  selectedPosition.value = null;
+  setupPositionId.value = id;
+  setupOpen.value = true;
+}
+const containersOpen = ref(false);
 const operationPositionId = ref<number | null>(null);
 const operationType = ref<PortfolioOperationType>('buy');
 const reviewOnly = ref(false);
@@ -86,6 +106,18 @@ const returnTo =
 
 const today = computed(() => new Date());
 
+// Shared geometry for the inline icons, same shape Patrimonio uses.
+const iconAttrs = {
+  width: 18,
+  height: 18,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  'stroke-width': 1.8,
+  'stroke-linecap': 'round',
+  'stroke-linejoin': 'round',
+} as const;
+
 function subtractMonths(date: Date, months: number): Date {
   const result = new Date(date);
   result.setMonth(result.getMonth() - months);
@@ -95,6 +127,12 @@ function subtractMonths(date: Date, months: number): Date {
 const query = computed<PortfolioQuery>(() => {
   const result: PortfolioQuery = {};
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
+  // Los tres filtros de inventario viajan a Core, que recalcula sobre ese subconjunto:
+  // una rentabilidad no se suma entre posiciones, así que no es derivable aquí. La tabla
+  // filtra además en cliente, pero sobre el mismo conjunto del que habla el resto.
+  if (containerId.value !== 'all') result.container_id = Number(containerId.value);
+  if (assetClass.value !== 'all') result.asset_class = assetClass.value;
+  if (currency.value !== 'all') result.currency = currency.value;
   if (period.value === 'all') return result;
   if (period.value === 'custom') {
     if (customFrom.value) result.date_from = customFrom.value;
@@ -109,19 +147,17 @@ const query = computed<PortfolioQuery>(() => {
   return result;
 });
 
-const instrumentsById = computed(() => instrumentMap(store.instruments));
 const allPositions = computed(() => store.positions?.results ?? []);
 const archivedPositions = computed(() =>
   allPositions.value.filter((position) => position.status === 'archived'),
 );
 const filteredPositions = computed(() =>
   allPositions.value.filter((position) => {
-    const instrument = instrumentsById.value.get(position.instrument_id);
     return (
       position.status !== 'archived' &&
       (containerId.value === 'all' || String(position.container_id) === containerId.value) &&
-      (assetClass.value === 'all' || instrument?.asset_class === assetClass.value) &&
-      (currency.value === 'all' || position.native_currency === currency.value)
+      (assetClass.value === 'all' || position.asset_class === assetClass.value) &&
+      (currency.value === 'all' || position.holding_currency === currency.value)
     );
   }),
 );
@@ -154,54 +190,102 @@ function signedMoney(value: string | number | null | undefined): string {
   return `${number > 0 ? '+' : ''}${money(number)}`;
 }
 
+// Una recarga con datos ya en pantalla: las cifras visibles son del filtro anterior y
+// se leen como si fueran las nuevas, así que se marcan como en cálculo mientras llegan.
+const refreshing = computed(() => store.loading && !!store.overview);
+
 const heroValue = computed(() => {
   if (!store.overview) return '—';
   const value = store.overview.value ?? store.overview.covered_value;
   return `${store.overview.value === null ? '≥ ' : ''}${money(value)}`;
 });
-const nominalReturn = computed(() => {
-  const value = store.overview?.return.nominal;
-  return value == null ? '—' : formatPct(toNumber(value), 1);
+// MWR leads: it answers what the investor's own money did, which is the question the
+// hero is asked. TWR describes the assets and is kept beside it as context, not hidden.
+const headlineReturn = computed(() => pct(store.overview?.return.mwr_xirr));
+const returnTone = computed(() => (toNumber(store.overview?.return.mwr_xirr) >= 0 ? 'pos' : 'neg'));
+// Plain labels first, acronym only as a footnote: "MWR" and "TWR" said nothing on
+// their own. The distinction is carried by a tooltip that explains it with the two
+// questions each answers, not by the initials. La banda es de tres columnas: una
+// cuarta tarjeta se envolvía bajo la segunda, así que ingresos y costes viajan como
+// pie del resultado, que es de donde salen.
+const resultMeta = computed(() => {
+  const income = toNumber(store.performance?.income);
+  const costs = toNumber(store.performance?.costs);
+  const parts: string[] = [];
+  if (income) parts.push(`${money(store.performance?.income)} de ingresos`);
+  if (costs) parts.push(`${money(store.performance?.costs)} de costes`);
+  if (!parts.length)
+    return store.performance?.gross_result == null ? 'Cobertura parcial' : 'Sin ingresos ni costes';
+  return parts.join(' · ');
 });
-const returnTone = computed(() => (toNumber(store.overview?.return.nominal) >= 0 ? 'pos' : 'neg'));
 const heroKpis = computed(() => [
   {
-    label: 'Resultado del periodo',
+    label: 'Ganado o perdido',
     value: signedMoney(store.performance?.monetary_result),
-    meta: store.performance?.gross_result == null ? 'Cobertura parcial' : 'Neto de costes',
+    meta: resultMeta.value,
     cellClass: toNumber(store.performance?.monetary_result) >= 0 ? 'pos' : 'neg',
   },
   {
-    label: 'Aportaciones netas',
+    label: 'Dinero que has puesto',
     value: signedMoney(store.performance?.net_contributed),
-    meta: 'Entradas menos retiradas',
+    meta: 'Aportado menos retirado',
   },
   {
-    label: 'Rentabilidad de tu dinero',
-    value: pct(store.performance?.return.mwr_xirr),
-    meta: 'MWR anual: pondera cuándo aportaste',
-  },
-  {
-    label: 'Ingresos / costes',
-    value: `${money(store.performance?.income)} / ${money(store.performance?.costs)}`,
-    meta: 'Durante el periodo',
+    label: 'Rendimiento de tus activos',
+    value: pct(store.performance?.return.twr_annualized),
+    meta: 'anual',
   },
 ]);
 
-const composition = computed(() => {
-  const totals = new Map<string, number>();
-  for (const position of filteredPositions.value) {
-    const key = instrumentsById.value.get(position.instrument_id)?.asset_class ?? 'other';
-    totals.set(key, (totals.get(key) ?? 0) + positionBaseValue(position));
+// Una posición puede repartirse entre varias clases (una cartera de roboadvisor, un
+// fondo mixto): sin eso, contarla entera en la dominante desplaza el gráfico tanto como
+// pese la posición, y una cartera 60/40 hacía desaparecer toda su renta fija.
+function positionSlices(position: PositionPerformance): { key: string; value: number }[] {
+  const total = positionBaseValue(position);
+  if (!position.class_breakdown.length) {
+    return [{ key: position.asset_class || 'other', value: total }];
   }
-  return [...totals.entries()]
-    .map(([key, value]) => ({
+  return position.class_breakdown.map((row) => ({
+    key: row.asset_class,
+    value: (total * toNumber(row.percent)) / 100,
+  }));
+}
+
+const composition = computed(() => {
+  const groups = new Map<string, { position: PositionPerformance; value: number }[]>();
+  for (const position of filteredPositions.value) {
+    for (const slice of positionSlices(position)) {
+      const bucket = groups.get(slice.key);
+      const entry = { position, value: slice.value };
+      if (bucket) bucket.push(entry);
+      else groups.set(slice.key, [entry]);
+    }
+  }
+  const rows = [...groups.entries()]
+    .map(([key, members]) => ({
       key,
       label: portfolioAssetClassLabels[key] ?? key,
-      value,
+      value: members.reduce((sum, member) => sum + member.value, 0),
       color: portfolioAssetClassColors[key] ?? portfolioAssetClassColors.other!,
+      members: [...members].sort((a, b) => b.value - a.value),
     }))
     .sort((a, b) => b.value - a.value);
+  // Only eight hues survive the palette checker, so a longer tail is aggregated rather
+  // than given invented colours nobody could tell apart. Each class keeps its own hue
+  // whenever it is shown; only the smallest ones merge.
+  if (rows.length <= PORTFOLIO_MAX_COMPOSITION_SLICES) return rows;
+  const head = rows.slice(0, PORTFOLIO_MAX_COMPOSITION_SLICES - 1);
+  const tail = rows.slice(PORTFOLIO_MAX_COMPOSITION_SLICES - 1);
+  return [
+    ...head,
+    {
+      key: 'aggregated',
+      label: `Otras clases · ${tail.length}`,
+      value: tail.reduce((sum, row) => sum + row.value, 0),
+      color: 'var(--a-pf-neutral)',
+      members: tail.flatMap((row) => row.members).sort((a, b) => b.value - a.value),
+    },
+  ];
 });
 const compositionTotal = computed(() =>
   composition.value.reduce((sum, item) => sum + item.value, 0),
@@ -229,13 +313,17 @@ const classOptions = computed<ASelectItem[]>(() => [
     .sort()
     .map((key) => ({ value: key, label: portfolioAssetClassLabels[key] ?? key })),
 ]);
+// Denominations, not valuation currencies: a Bitcoin position is held in BTC and worth
+// euros, and the old list only ever offered the latter, so crypto could not be filtered.
 const currencyOptions = computed<ASelectItem[]>(() => [
-  { value: 'all', label: 'Todas las divisas' },
-  ...[...new Set(allPositions.value.map((row) => row.native_currency).filter(Boolean))]
+  { value: 'all', label: `Todas · convertido a ${baseCurrency.value}` },
+  ...[...new Set(allPositions.value.map((row) => row.holding_currency).filter(Boolean))]
     .sort()
-    .map((code) => ({ value: code!, label: code! })),
+    .map((code) => ({ value: code, label: code })),
 ]);
-const periodOptions: ASelectItem[] = [
+// Own type rather than ASelectItem: this drives a segmented control, not a select, and
+// ASelectItem admits groups that carry no value/label.
+const periodOptions: { value: PeriodPreset; label: string }[] = [
   { value: '1m', label: '1 mes' },
   { value: 'ytd', label: 'Este año' },
   { value: '1y', label: '1 año' },
@@ -293,8 +381,17 @@ async function loadOperationOptions() {
   }
 }
 
+// Registrar dinero es cosa de Contabilidad: aquí solo quedan las operaciones que allí
+// no se pueden expresar, porque no mueven dinero sino la propia posición.
+const MAINTENANCE_OPERATIONS: PortfolioOperationType[] = [
+  'split',
+  'position_transfer',
+  'identifier_change',
+  'adjustment',
+];
+
 function openOperation(
-  type: PortfolioOperationType = 'buy',
+  type: PortfolioOperationType = 'split',
   position: PositionPerformance | null = null,
 ) {
   operationType.value = type;
@@ -318,7 +415,7 @@ const sortKey = ref<SortKey>('value');
 const sortDir = ref<'asc' | 'desc'>('desc');
 
 function assetClassLabel(position: PositionPerformance): string {
-  const key = instrumentsById.value.get(position.instrument_id)?.asset_class ?? 'other';
+  const key = position.asset_class || 'other';
   return portfolioAssetClassLabels[key] ?? key;
 }
 
@@ -373,17 +470,19 @@ function sortMark(key: SortKey): string {
   return sortDir.value === 'asc' ? '↑' : '↓';
 }
 
-function signClass(value: number): string {
-  if (value > 0) return 'is-positive';
-  if (value < 0) return 'is-negative';
+function signClass(value: number | string | null): string {
+  const numeric = toNumber(value);
+  if (numeric > 0) return 'is-positive';
+  if (numeric < 0) return 'is-negative';
   return 'is-neutral';
 }
 
-// Amounts in base currency add up; a return does not, so the footer leaves it out.
 const visibleTotalValue = computed(() =>
   sortedPositions.value.reduce((total, position) => total + positionBaseValue(position), 0),
 );
-const totalReturn = computed(() => store.performance?.return);
+// Core ya calcula sobre el subconjunto filtrado, así que el pie muestra su rentabilidad
+// sin más: una rentabilidad no se suma entre posiciones, pero esta no es una suma.
+const totalReturn = computed(() => store.performance?.return ?? null);
 const visibleTotalResult = computed(() =>
   sortedPositions.value.reduce(
     (total, position) => total + toNumber(position.performance.monetary_result),
@@ -393,13 +492,6 @@ const visibleTotalResult = computed(() =>
 
 function pct(value: string | null | undefined): string {
   return value == null ? '—' : formatPct(toNumber(value), 1);
-}
-
-// Mobile has no room for two columns, so both returns share one labelled line.
-function positionReturnPair(position: PositionPerformance): string {
-  return `TWR ${pct(position.performance.return.nominal)} · MWR ${pct(
-    position.performance.return.mwr_xirr,
-  )}`;
 }
 
 function showReviewQueue() {
@@ -435,13 +527,6 @@ async function restorePosition(position: PositionPerformance) {
   } catch (caught: unknown) {
     actionError.value = toApiErrorMessage(caught);
   }
-}
-
-function openSelectedValuation() {
-  const position = selectedPosition.value;
-  if (!position) return;
-  selectedPosition.value = null;
-  openOperation('valuation', position);
 }
 
 async function onPortfolioSaved(message: string) {
@@ -485,18 +570,66 @@ onMounted(() => {
         >
           {{ archivedPositions.length }} archivadas
         </AButton>
-        <span v-if="scopeIsFiltered">Los filtros de inventario no alteran el hero familiar</span>
+        <span v-if="scopeIsFiltered">Todo el panel describe el subconjunto filtrado</span>
       </template>
+      <!-- Los tres recurrentes van como icono: se usan a menudo, su etiqueta ocupaba la
+           mitad de la cabecera y el nombre completo queda en `title` y `aria-label`. -->
       <template #actions>
-        <AButton variant="primary" @click="openOperation()">Registrar</AButton>
         <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
-        <AButton variant="ghost" @click="setupOpen = true">
-          Configurar posiciones<span v-if="pendingSetupCount"> · {{ pendingSetupCount }}</span>
+        <AButton variant="ghost" @click="containersOpen = true">Contenedores</AButton>
+        <AButton
+          variant="icon"
+          title="Configurar posiciones"
+          :aria-label="
+            pendingSetupCount
+              ? `Configurar posiciones · ${pendingSetupCount} pendientes`
+              : 'Configurar posiciones'
+          "
+          :class="{ 'has-badge': pendingSetupCount }"
+          @click="setupOpen = true"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+            />
+          </svg>
         </AButton>
-        <AButton variant="ghost" :loading="resyncing" @click="resyncFromAccounting">
-          Actualizar desde contabilidad
+        <AButton
+          variant="icon"
+          title="Operaciones de cartera"
+          aria-label="Operaciones de cartera: splits, traspasos, identificadores y ajustes"
+          @click="openOperation()"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <path d="M8 3v4M16 3v4M4 11h16" />
+            <rect x="4" y="5" width="16" height="16" rx="2" />
+            <path d="m9 16 2 2 4-4" />
+          </svg>
         </AButton>
-        <AButton variant="ghost" @click="returnToNetWorth">Volver a Patrimonio</AButton>
+        <AButton
+          variant="icon"
+          title="Actualizar desde contabilidad"
+          aria-label="Actualizar desde contabilidad"
+          :loading="resyncing"
+          @click="resyncFromAccounting"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        </AButton>
+        <AButton
+          variant="icon"
+          title="Volver a Patrimonio"
+          aria-label="Volver a Patrimonio"
+          @click="returnToNetWorth"
+        >
+          <svg v-bind="iconAttrs" aria-hidden="true">
+            <path d="M19 12H5" />
+            <path d="m12 19-7-7 7-7" />
+          </svg>
+        </AButton>
       </template>
     </APageHead>
 
@@ -560,16 +693,19 @@ onMounted(() => {
             :searchable="false"
           />
         </label>
-        <label class="context-field">
-          <span class="sr-only">Periodo</span>
-          <ASelect
-            v-model="period"
-            class="filter-ctrl"
-            aria-label="Periodo"
-            :options="periodOptions"
-            :searchable="false"
-          />
-        </label>
+        <div class="context-field mini-seg" role="group" aria-label="Periodo">
+          <AButton
+            v-for="option in periodOptions"
+            :key="option.value"
+            size="sm"
+            variant="ghost"
+            :class="{ on: period === option.value }"
+            :aria-pressed="period === option.value"
+            @click="period = option.value"
+          >
+            {{ option.label }}
+          </AButton>
+        </div>
         <div v-if="period === 'custom'" class="a-pf-custom-range">
           <ADateRange v-model:from="customFrom" v-model:to="customTo" />
         </div>
@@ -617,23 +753,44 @@ onMounted(() => {
         <section class="sect a-pf-hero-section">
           <div class="a-pf-hero-grid">
             <AHero eyebrow="Valor de cartera" :value="heroValue">
+              <template v-if="refreshing" #value>
+                <div class="hero-value mono"><span class="skel a-pf-skel-hero"></span></div>
+              </template>
               <template #delta>
                 <div class="a-pf-return-line">
-                  <strong :class="returnTone">{{ nominalReturn }}</strong>
-                  <span>{{
-                    returnLabel(store.overview.return.method, store.overview.return.estimated)
-                  }}</span>
-                  <span v-if="store.overview.return.twr_annualized"
-                    >{{ pct(store.overview.return.twr_annualized) }} anualizada</span
+                  <span v-if="refreshing" class="skel a-pf-skel-return"></span>
+                  <strong v-else :class="returnTone">{{ headlineReturn }}</strong>
+                  <span>
+                    ha rendido tu dinero, al año
+                    <AInfoHint>
+                      Lo que ha rendido <strong>el dinero que tú pusiste</strong>, teniendo en
+                      cuenta cuándo lo pusiste: aportar justo antes de una subida no cuenta igual
+                      que aportar después. En la ficha técnica se llama MWR o TIR.
+                    </AInfoHint>
+                  </span>
+                  <span v-if="!refreshing && store.overview.return.twr_annualized"
+                    >tus activos: {{ pct(store.overview.return.twr_annualized) }} ·
+                    {{
+                      returnLabel(store.overview.return.method, store.overview.return.estimated)
+                    }}</span
                   >
                 </div>
               </template>
-              <p>
+              <p v-if="!refreshing">
                 {{ store.overview.position_count }} posiciones ·
                 {{ store.overview.fresh_position_count }} valoradas al día
               </p>
             </AHero>
-            <AKpiBand :items="heroKpis" />
+            <AKpiBand :items="heroKpis" :pending="refreshing">
+              <template #meta-2>
+                anual
+                <AInfoHint>
+                  Cuánto han subido o bajado tus activos,
+                  <strong>al margen de cuándo pusieras el dinero</strong>. Es la cifra que compara
+                  tu cartera con un índice o con otro inversor. En la ficha técnica se llama TWR.
+                </AInfoHint>
+              </template>
+            </AKpiBand>
           </div>
         </section>
 
@@ -660,11 +817,40 @@ onMounted(() => {
               aria-label="Composición de la cartera por clase de activo"
             />
             <div class="a-pf-composition-list">
-              <div v-for="item in composition" :key="item.key" class="a-pf-composition-row">
-                <i :class="`is-${item.key}`"></i>
-                <span>{{ item.label }}</span>
-                <strong class="mono">{{ money(item.value) }}</strong>
-                <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 0) }}</small>
+              <div v-for="item in composition" :key="item.key" class="a-pf-composition-group">
+                <button
+                  type="button"
+                  class="a-pf-composition-row"
+                  :aria-expanded="expandedClasses.has(item.key)"
+                  @click="toggleClass(item.key)"
+                >
+                  <i :class="`is-${item.key}`"></i>
+                  <span>
+                    {{ item.label }}
+                    <em>{{ item.members.length }}</em>
+                  </span>
+                  <strong class="mono">{{ money(item.value) }}</strong>
+                  <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 0) }}</small>
+                </button>
+                <!-- El peso de dentro es sobre la clase, no sobre la cartera: la pregunta
+                     al abrir una clase es cuánto pesa cada activo dentro de ella. -->
+                <ul v-if="expandedClasses.has(item.key)" class="a-pf-composition-members">
+                  <li v-for="member in item.members" :key="member.position.position_id">
+                    <button
+                      type="button"
+                      class="a-pf-composition-member"
+                      :title="`Configurar ${member.position.instrument_name}`"
+                      @click="editPosition(member.position.position_id)"
+                    >
+                      <span>
+                        {{ member.position.instrument_name }}
+                        <em v-if="member.position.class_breakdown.length">parcial</em>
+                      </span>
+                      <strong class="mono">{{ money(member.value) }}</strong>
+                      <small>{{ formatPct(member.value / Math.max(item.value, 1), 0) }}</small>
+                    </button>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -821,14 +1007,16 @@ onMounted(() => {
                   <td class="num mono" :class="signClass(visibleTotalResult)">
                     {{ signedMoney(visibleTotalResult) }}
                   </td>
-                  <!-- Not a sum: a return does not add up across positions. This is the
-                       portfolio figure, which Core computes over the whole scope, so an
-                       active inventory filter would make it describe something else. -->
+                  <!-- No es una suma: una rentabilidad no se suma entre posiciones. Core la
+                       calcula sobre el filtro activo, así que describe exactamente las filas
+                       de arriba; mientras la recalcula no se deja a la vista la anterior. -->
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.nominal))">
-                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.nominal) }}
+                    <span v-if="refreshing" class="skel"></span>
+                    <template v-else>{{ pct(totalReturn?.nominal) }}</template>
                   </td>
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.mwr_xirr))">
-                    {{ scopeIsFiltered ? '—' : pct(totalReturn?.mwr_xirr) }}
+                    <span v-if="refreshing" class="skel"></span>
+                    <template v-else>{{ pct(totalReturn?.mwr_xirr) }}</template>
                   </td>
                 </tr>
               </tfoot>
@@ -851,11 +1039,36 @@ onMounted(() => {
               <span class="a-pf-position-value"
                 ><strong class="mono">{{ money(positionBaseValue(position)) }}</strong
                 ><small
-                  :class="toNumber(position.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
+                  class="mono"
+                  :class="signClass(toNumber(position.performance.monetary_result))"
                   >{{ signedMoney(position.performance.monetary_result) }}</small
-                ><small>{{ positionReturnPair(position) }}</small></span
+                ><small class="a-pf-position-returns"
+                  ><span :class="signClass(toNumber(position.performance.return.nominal))"
+                    >TWR {{ pct(position.performance.return.nominal) }}</span
+                  ><span :class="signClass(toNumber(position.performance.return.mwr_xirr))"
+                    >MWR {{ pct(position.performance.return.mwr_xirr) }}</span
+                  ></small
+                ></span
               >
             </button>
+            <!-- El móvil pierde las columnas, no los totales: son la misma información
+                 que el pie de la tabla, en la única disposición que cabe aquí. -->
+            <div class="a-pf-position-total">
+              <span class="a-pf-position-main"
+                ><strong>Total</strong
+                ><small
+                  >{{ sortedPositions.length }} posiciones{{
+                    scopeIsFiltered ? ' · filtrado' : ''
+                  }}</small
+                ></span
+              >
+              <span class="a-pf-position-value"
+                ><strong class="mono">{{ money(visibleTotalValue) }}</strong
+                ><small class="mono" :class="signClass(visibleTotalResult)">{{
+                  signedMoney(visibleTotalResult)
+                }}</small></span
+              >
+            </div>
           </div>
         </template>
       </section>
@@ -880,100 +1093,108 @@ onMounted(() => {
       :open="selectedPosition !== null"
       :title="selectedPosition?.instrument_name"
       variant="sheet"
-      panel-class="a-pf-detail-sheet"
+      panel-class="dir-a dir-a-sheet a-pf-detail-sheet"
       @close="selectedPosition = null"
     >
-      <dl v-if="selectedPosition" class="a-pf-detail-list">
-        <div>
-          <dt>Valor de cierre</dt>
-          <dd class="mono">{{ money(positionBaseValue(selectedPosition)) }}</dd>
-        </div>
-        <div>
-          <dt>Valor nativo</dt>
-          <dd class="mono">
-            {{
-              money(selectedPosition.native_value, selectedPosition.native_currency ?? baseCurrency)
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Resultado</dt>
-          <dd
+      <div v-if="selectedPosition" class="a-pf-detail-body">
+        <!-- Primero cuánto vale y cómo ha ido; el resto es contexto de esa cifra. -->
+        <div class="a-pf-detail-headline">
+          <span class="a-pf-detail-headline-label">Valor de cierre</span>
+          <strong class="mono">{{ money(positionBaseValue(selectedPosition)) }}</strong>
+          <small
+            v-if="
+              selectedPosition.native_currency && selectedPosition.native_currency !== baseCurrency
+            "
             class="mono"
-            :class="toNumber(selectedPosition.performance.monetary_result) >= 0 ? 'pos' : 'neg'"
           >
-            {{ signedMoney(selectedPosition.performance.monetary_result) }}
-          </dd>
+            {{ money(selectedPosition.native_value, selectedPosition.native_currency) }}
+          </small>
+          <em :class="toNumber(selectedPosition.performance.monetary_result) >= 0 ? 'pos' : 'neg'">
+            {{ signedMoney(selectedPosition.performance.monetary_result) }} en el periodo
+          </em>
         </div>
-        <div>
-          <dt>Rentabilidad del activo</dt>
-          <dd>
-            {{ pct(selectedPosition.performance.return.nominal) }}
-            <small
-              >{{
+
+        <div class="a-pf-detail-returns">
+          <div>
+            <span class="a-pf-detail-return-label">
+              Ha rendido tu dinero
+              <AInfoHint>
+                Tiene en cuenta cuándo pusiste cada euro. En la ficha técnica, MWR o TIR.
+              </AInfoHint>
+            </span>
+            <strong :class="signClass(selectedPosition.performance.return.mwr_xirr)">
+              {{ pct(selectedPosition.performance.return.mwr_xirr) }}
+            </strong>
+            <small>anual</small>
+          </div>
+          <div>
+            <span class="a-pf-detail-return-label">
+              Ha rendido el activo
+              <AInfoHint>
+                Al margen de cuándo aportaste: sirve para comparar con un índice. En la ficha
+                técnica, TWR.
+              </AInfoHint>
+            </span>
+            <strong :class="signClass(selectedPosition.performance.return.nominal)">
+              {{ pct(selectedPosition.performance.return.nominal) }}
+            </strong>
+            <small>
+              {{
                 returnLabel(
                   selectedPosition.performance.return.method,
                   selectedPosition.performance.return.estimated,
                 )
-              }}<template v-if="selectedPosition.performance.return.twr_annualized">
-                · {{ pct(selectedPosition.performance.return.twr_annualized) }} anualizada</template
-              ></small
-            >
-          </dd>
+              }}<template
+                v-if="
+                  selectedPosition.performance.return.twr_annualized &&
+                  selectedPosition.performance.return.twr_annualized !==
+                    selectedPosition.performance.return.nominal
+                "
+              >
+                · {{ pct(selectedPosition.performance.return.twr_annualized) }} anual</template
+              >
+            </small>
+          </div>
         </div>
-        <div>
-          <dt>Rentabilidad de tu dinero</dt>
-          <dd>
-            {{ pct(selectedPosition.performance.return.mwr_xirr) }}
-            <small>MWR anual: pondera cuándo aportaste</small>
-          </dd>
-        </div>
-        <div>
-          <dt>Contenedor</dt>
-          <dd>{{ selectedPosition.container_name }}</dd>
-        </div>
-        <div>
-          <dt>Clase</dt>
-          <dd>
-            {{
-              portfolioAssetClassLabels[
-                instrumentsById.get(selectedPosition.instrument_id)?.asset_class ?? 'other'
-              ]
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Valor observado</dt>
-          <dd>
-            {{
-              selectedPosition.observed_on
-                ? formatShortMonthYear(selectedPosition.observed_on)
-                : 'Sin valoración'
-            }}
-          </dd>
-        </div>
-        <div>
-          <dt>Freshness</dt>
-          <dd>
-            <span class="a-pf-freshness" :class="`is-${selectedPosition.value_status}`">{{
-              freshnessLabel(selectedPosition.value_status)
-            }}</span>
-          </dd>
-        </div>
-        <div>
-          <dt>Atribución activo</dt>
-          <dd class="mono">{{ money(selectedPosition.attribution.asset) }}</dd>
-        </div>
-        <div>
-          <dt>Atribución divisa</dt>
-          <dd class="mono">{{ money(selectedPosition.attribution.fx) }}</dd>
-        </div>
-      </dl>
+
+        <dl class="a-pf-detail-list">
+          <div>
+            <dt>Contenedor</dt>
+            <dd>{{ selectedPosition.container_name }}</dd>
+          </div>
+          <div>
+            <dt>Clase</dt>
+            <dd>
+              {{ portfolioAssetClassLabels[selectedPosition.asset_class] ?? 'Otros' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Última valoración</dt>
+            <dd>
+              {{
+                selectedPosition.observed_on
+                  ? formatShortMonthYear(selectedPosition.observed_on)
+                  : 'Sin valoración'
+              }}
+              <span class="a-pf-freshness" :class="`is-${selectedPosition.value_status}`">{{
+                freshnessLabel(selectedPosition.value_status)
+              }}</span>
+            </dd>
+          </div>
+          <div v-if="selectedPosition.attribution.method !== 'unavailable'">
+            <dt>Activo / divisa</dt>
+            <dd class="mono">
+              {{ money(selectedPosition.attribution.asset) }} ·
+              {{ money(selectedPosition.attribution.fx) }}
+            </dd>
+          </div>
+        </dl>
+      </div>
       <template #footer>
         <div v-if="selectedPosition" class="ui-modal-foot-actions">
           <AButton variant="ghost" @click="selectedPosition = null">Cerrar</AButton>
-          <AButton variant="primary" @click="openSelectedValuation">
-            Actualizar valoración
+          <AButton variant="primary" @click="editPosition(selectedPosition.position_id)">
+            Configurar posición
           </AButton>
         </div>
       </template>
@@ -983,7 +1204,7 @@ onMounted(() => {
       :open="showArchivedModal"
       title="Posiciones archivadas"
       variant="sheet"
-      panel-class="a-pf-detail-sheet"
+      panel-class="dir-a dir-a-sheet a-pf-detail-sheet"
       @close="showArchivedModal = false"
     >
       <AState v-if="!archivedPositions.length" status="empty">
@@ -1010,6 +1231,9 @@ onMounted(() => {
       :options="operationOptionsData"
       :initial-position-id="operationPositionId"
       :initial-type="operationType"
+      :types="MAINTENANCE_OPERATIONS"
+      title="Operaciones de cartera"
+      intro="Movimientos de dinero (compras, ventas, dividendos, comisiones, traspasos y valoraciones) se registran en Contabilidad. Aquí quedan las operaciones que cambian la propia posición sin mover dinero."
       @close="operationOpen = false"
       @saved="onPortfolioSaved"
     />
@@ -1018,10 +1242,17 @@ onMounted(() => {
       @close="importOpen = false"
       @saved="onPortfolioSaved"
     />
+    <PortfolioContainersModal
+      :open="containersOpen"
+      :options="operationOptionsData"
+      @close="containersOpen = false"
+      @saved="onPortfolioSaved"
+    />
     <PortfolioSetupModal
       :open="setupOpen"
       :options="operationOptionsData"
-      @close="setupOpen = false"
+      :initial-position-id="setupPositionId"
+      @close="closeSetup"
       @saved="onPortfolioSaved"
     />
     <AToast :open="!!successMessage" @close="successMessage = null">

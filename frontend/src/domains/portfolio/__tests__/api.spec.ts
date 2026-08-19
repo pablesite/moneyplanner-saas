@@ -10,20 +10,17 @@ vi.mock('@/lib/api', () => ({ coreApi: mocks.coreApi }));
 describe('portfolio api', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('loads the five analytical reads with the same server scope', async () => {
+  // Las cinco lecturas analíticas viajan en una sola petición: cargarlas por separado
+  // reconstruía el mismo contexto cinco veces en el servidor.
+  it('loads every analytical read in one workspace call with the same server scope', async () => {
     mocks.coreApi.get.mockResolvedValue({ data: [] });
     const params = { date_from: '2025-01-01', date_to: '2025-12-31', member_id: 7 };
 
     await corePortfolioApi.getWorkspace(params);
 
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/overview/', { params });
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/performance/', { params });
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/positions/performance/', {
-      params,
-    });
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/timeline/', { params });
-    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/quality/', { params });
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/workspace/', { params });
     expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/instruments/');
+    expect(mocks.coreApi.get).toHaveBeenCalledTimes(2);
   });
 
   it('keeps preview, confirmation, setup and CSV staging as separate writes', async () => {

@@ -1,26 +1,38 @@
 import { toNumber } from '@/lib/format';
 import type { PositionPerformance, PortfolioInstrument } from './types';
 
+// Una sola dimensión: de qué depende que la posición suba o baje. El rol (refugio), la
+// estrategia (trading) y el propósito (liquidez para oportunidades) son ejes distintos y
+// al mezclarlos aquí sacaban a cada activo de su clase real.
 export const portfolioAssetClassLabels: Record<string, string> = {
-  cash: 'Efectivo',
-  fixed_income: 'Renta fija',
   equity: 'Renta variable',
-  mixed: 'Mixto',
-  real_assets: 'Activos reales',
-  crypto: 'Cripto',
+  fixed_income: 'Renta fija',
+  real_estate: 'Inmobiliario',
+  private_debt: 'Deuda privada',
+  commodities: 'Materias primas',
+  private_equity: 'Capital privado',
+  crypto: 'Criptoactivos',
+  cash: 'Liquidez',
   other: 'Otros',
 };
 
 // Tokens defined in portfolio.css, where the palette and its validation are documented.
+// Ocho tonos son el máximo que aguanta el checker, así que las ocho clases reales llevan
+// tono propio y "Otros" —que es un cajón, no una clase— toma el neutro.
 export const portfolioAssetClassColors: Record<string, string> = {
-  cash: 'var(--a-pf-cash)',
-  fixed_income: 'var(--a-pf-fixed-income)',
   equity: 'var(--a-pf-equity)',
-  mixed: 'var(--a-pf-mixed)',
-  real_assets: 'var(--a-pf-real-assets)',
+  fixed_income: 'var(--a-pf-fixed-income)',
+  real_estate: 'var(--a-pf-real-estate)',
+  private_debt: 'var(--a-pf-private-debt)',
+  commodities: 'var(--a-pf-commodities)',
+  private_equity: 'var(--a-pf-private-equity)',
   crypto: 'var(--a-pf-crypto)',
-  other: 'var(--a-pf-other)',
+  cash: 'var(--a-pf-cash)',
+  other: 'var(--a-pf-neutral)',
 };
+
+// Beyond this the palette cannot keep hues apart, so the tail is aggregated.
+export const PORTFOLIO_MAX_COMPOSITION_SLICES = 8;
 
 export function instrumentMap(instruments: PortfolioInstrument[]) {
   return new Map(instruments.map((instrument) => [instrument.id, instrument]));

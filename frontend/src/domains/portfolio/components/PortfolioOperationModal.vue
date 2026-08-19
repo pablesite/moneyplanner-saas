@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
-import { AButton, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, ASelect, AState, BaseModal } from '@/domains/ui';
 import { dateToIso } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
@@ -16,11 +16,15 @@ const props = defineProps<{
   options: PortfolioOperationOptions | null;
   initialPositionId?: number | null;
   initialType?: PortfolioOperationType;
+  /** Restringe los tipos ofrecidos. Sin esto se ofrecen todos. */
+  types?: PortfolioOperationType[];
+  title?: string;
+  intro?: string;
 }>();
 const emit = defineEmits<{ close: []; saved: [message: string] }>();
 const FORM_ID = 'portfolio-operation-form';
 
-const operationOptions: ASelectItem[] = [
+const allOperationOptions: Array<{ value: PortfolioOperationType; label: string }> = [
   { value: 'buy', label: 'Compra' },
   { value: 'sell', label: 'Venta' },
   { value: 'dividend', label: 'Dividendo' },
@@ -33,6 +37,14 @@ const operationOptions: ASelectItem[] = [
   { value: 'identifier_change', label: 'Cambio de identificador' },
   { value: 'adjustment', label: 'Ajuste auditado' },
 ];
+
+// El registro de dinero vive en Contabilidad; aquí solo queda lo que allí no se puede
+// expresar, así que la lista de tipos es filtrable en vez de fija.
+const operationOptions = computed(() =>
+  props.types
+    ? allOperationOptions.filter((option) => props.types!.includes(option.value))
+    : allOperationOptions,
+);
 
 const form = reactive({
   operationType: 'buy' as PortfolioOperationType,
@@ -98,7 +110,7 @@ const amountLabel = computed(() => {
 });
 
 function reset() {
-  form.operationType = props.initialType ?? 'buy';
+  form.operationType = props.initialType ?? operationOptions.value[0]?.value ?? 'buy';
   form.bookingDate = dateToIso(new Date());
   form.positionId = props.initialPositionId ? String(props.initialPositionId) : '';
   form.targetPositionId = '';
@@ -193,12 +205,13 @@ watch([() => form.positionId, () => form.operationType], () => {
 <template>
   <BaseModal
     :open="open"
-    title="Registrar en cartera"
+    :title="title ?? 'Registrar en cartera'"
     variant="sheet"
     panel-class="dir-a dir-a-sheet a-pf-operation-sheet"
     @close="emit('close')"
   >
     <form :id="FORM_ID" class="ui-item-form-grid" @submit.prevent="previewOperation">
+      <p v-if="intro" class="ui-item-form-field md:col-span-2 a-pf-operation-intro">{{ intro }}</p>
       <label class="ui-item-form-field md:col-span-2">
         <span class="ui-item-form-label">Operación</span>
         <ASelect v-model="form.operationType" :options="operationOptions" :searchable="false" />

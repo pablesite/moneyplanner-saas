@@ -11,14 +11,19 @@ export interface AKpiItem {
   cellClass?: string | Record<string, boolean>;
 }
 
-defineProps<{ items?: AKpiItem[] }>();
+// `pending`: las cifras están recalculándose. Se sustituyen por un marcador en vez de
+// dejar a la vista las del filtro anterior, que se leen como si fueran las buenas.
+defineProps<{ items?: AKpiItem[]; pending?: boolean }>();
 </script>
 
 <template>
   <div class="kpis a-kpi-band">
     <div v-for="(kpi, i) in items ?? []" :key="i" class="kpi" :class="kpi.cellClass">
       <p class="kpi-label">{{ kpi.label }}</p>
-      <div class="kpi-value mono">{{ kpi.value }}</div>
+      <div class="kpi-value mono">
+        <span v-if="pending" class="skel"></span>
+        <template v-else>{{ kpi.value }}</template>
+      </div>
       <div v-if="$slots[`meta-${i}`] || kpi.meta" class="kpi-meta">
         <slot :name="`meta-${i}`">{{ kpi.meta }}</slot>
       </div>

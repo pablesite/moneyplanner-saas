@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue';
 import { formatCompact, formatMoney, toNumber } from '@/lib/format';
-import { formatShortMonthYear } from '@/lib/dates';
+import { formatShortMonthYear, formatLongMonthYear } from '@/lib/dates';
 import type { PortfolioTimelinePoint } from '../types';
 
 const props = defineProps<{
@@ -10,22 +10,44 @@ const props = defineProps<{
 }>();
 
 // Misma geometría que el gráfico de Patrimonio: viewBox fijo y ancho 100%, así el SVG
-// escala con el contenedor y las dos vistas comparten proporciones.
+// escala con el contenedor y las dos vistas comparten proporciones. Bajo la serie va
+// una banda de barras, como allí, pero aquí descompone el mes en sus dos causas.
 const W = 1280;
 const padL = 78;
 const padR = 28;
 const padT = 18;
-const padB = 34;
-const H = 300;
+const padB = 30;
+const gap = 14;
+const lineH = 280;
+const barsH = 96;
+// Fila propia para las fechas: sin ella las barras negativas más largas se metían
+// debajo de las etiquetas y se leían cortadas.
+const labelRow = 22;
+const totalH = lineH + gap + barsH + labelRow;
 
+const wrapRef = ref<HTMLElement | null>(null);
+const hoverIndex = ref<number | null>(null);
 const chartId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
 const areaGradientId = `a-pf-evo-grad-${chartId}`;
-const hoverIndex = ref<number | null>(null);
 
 const usablePoints = computed(() =>
   props.points.filter(
     (point): point is PortfolioTimelinePoint & { value: string } => point.value !== null,
   ),
+);
+
+// Cada mes se parte en sus dos causas: lo que entró o salió de tu bolsillo y lo que
+// hizo el mercado. Δvalor = aportación + revalorización por construcción, así que la
+// segunda se deriva restando y no puede descuadrar con la primera.
+const movements = computed(() =>
+  usablePoints.value.map((point, index) => {
+    const previous = index === 0 ? null : usablePoints.value[index - 1]!;
+    if (!previous) return { contribution: 0, revaluation: 0, hasPrevious: false };
+    const contribution =
+      toNumber(point.contributed_to_date) - toNumber(previous.contributed_to_date);
+    const change = toNumber(point.value) - toNumber(previous.value);
+    return { contribution, revaluation: change - contribution, hasPrevious: true };
+  }),
 );
 
 const bounds = computed(() => {
@@ -36,11 +58,12 @@ const bounds = computed(() => {
   const min = Math.min(...values, 0);
   const max = Math.max(...values, 1);
   const span = Math.max(max - min, 1);
-  return { min: min - span * 0.08, max: max + span * 0.08 };
+  // Sin valores negativos el suelo es el cero: dejar aire por debajo solo regalaba un
+  // tick negativo que ninguna serie llega a tocar.
+  return { min: min < 0 ? min - span * 0.08 : 0, max: max + span * 0.08 };
 });
 
 const plotWidth = W - padL - padR;
-const plotHeight = H - padT - padB;
 
 function x(index: number): number {
   if (usablePoints.value.length <= 1) return padL + plotWidth / 2;
@@ -49,7 +72,7 @@ function x(index: number): number {
 
 function y(value: number): number {
   const span = bounds.value.max - bounds.value.min || 1;
-  return padT + (1 - (value - bounds.value.min) / span) * plotHeight;
+  return padT + (1 - (value - bounds.value.min) / span) * (lineH - padT - padB);
 }
 
 function linePath(read: (point: PortfolioTimelinePoint) => number): string {
@@ -62,7 +85,7 @@ const valuePath = computed(() => linePath((point) => toNumber(point.value)));
 const contributionPath = computed(() => linePath((point) => toNumber(point.contributed_to_date)));
 const valueAreaPath = computed(() => {
   if (!usablePoints.value.length) return '';
-  const baseline = y(Math.max(bounds.value.min, 0));
+  const baseline = lineH - padB;
   const last = usablePoints.value.length - 1;
   return `${valuePath.value} L ${x(last)} ${baseline} L ${x(0)} ${baseline} Z`;
 });
@@ -73,98 +96,217 @@ const yTicks = computed(() =>
     return { value, y: y(value) };
   }),
 );
-const xTicks = computed(() => {
-  const total = usablePoints.value.length;
-  if (!total) return [];
-  const indexes =
-    total <= 6
-      ? usablePoints.value.map((_, index) => index)
-      : [0, Math.floor((total - 1) / 2), total - 1];
-  return [...new Set(indexes)].map((index) => ({ index, point: usablePoints.value[index]! }));
+
+// Ticks legibles a cualquier ventana: hasta trece puntos cabe el mes de cada uno; por
+// encima se rotula uno de cada N para dejar unas ocho fechas, siempre con el cierre
+// incluido, y el punto bajo el cursor recupera su mes. Antes se pintaban tres fechas
+// fijas —inicio, medio y fin— y en tres años no se sabía dónde caía nada. Etiquetar
+// solo el primer mes de cada año tampoco valía: una ventana de un año son trece
+// puntos y se quedaba en dos marcas.
+const labelStride = computed(() =>
+  usablePoints.value.length <= 13 ? 1 : Math.ceil(usablePoints.value.length / 8),
+);
+const xAxisLabels = computed(() => {
+  const points = usablePoints.value;
+  const last = points.length - 1;
+  return points.map((point, index) => ({
+    label: formatShortMonthYear(point.date),
+    show: index === last || (last - index) % labelStride.value === 0,
+  }));
 });
+// El mes bajo el cursor se rotula siempre, así que el tick fijo que le queda debajo se
+// calla: si no, las dos fechas se imprimen una encima de otra y no se lee ninguna.
+function showAxisLabel(entry: { show: boolean }, index: number): boolean {
+  if (activeIndex.value === index) return true;
+  if (!entry.show) return false;
+  return !showTip.value || Math.abs(index - activeIndex.value) >= labelStride.value;
+}
+
+const barsCenter = lineH + gap + barsH / 2;
+const barsScale = computed(() =>
+  Math.max(
+    1,
+    ...movements.value.flatMap((movement) => [
+      Math.abs(movement.contribution),
+      Math.abs(movement.revaluation),
+    ]),
+  ),
+);
+const barSlot = computed(() => plotWidth / Math.max(usablePoints.value.length - 1, 1));
+// Dos barras por mes con 2 px de hueco entre ellas: agrupadas, no apiladas. Apilarlas
+// mentiría en cuanto los signos se separan (aportas mientras el mercado cae).
+const barWidth = computed(() => Math.max(2, Math.min(14, barSlot.value * 0.32)));
+
+function barHeight(amount: number): number {
+  return Math.max(1, (Math.abs(amount) / barsScale.value) * (barsH / 2 - 6));
+}
+function barTop(amount: number): number {
+  return amount >= 0 ? barsCenter - barHeight(amount) : barsCenter;
+}
 
 const activeIndex = computed(() =>
   hoverIndex.value === null ? usablePoints.value.length - 1 : hoverIndex.value,
 );
+// El recuadro flotante solo aparece al recorrer el gráfico; en reposo la cifra de
+// cierre vive en la leyenda, donde no tapa la propia serie.
+const showTip = computed(() => hoverIndex.value !== null);
 const activePoint = computed(() => usablePoints.value[activeIndex.value] ?? null);
+const activeMovement = computed(() => movements.value[activeIndex.value] ?? null);
+// El recuadro se ancla al punto y se recorta a los bordes para no salirse del panel.
+const tipLeftPct = computed(() => Math.min(88, Math.max(12, (x(activeIndex.value) / W) * 100)));
 
-function money(value: string): string {
+function handleMove(event: MouseEvent): void {
+  const element = wrapRef.value;
+  const total = usablePoints.value.length;
+  if (!element || !total) return;
+  const rect = element.getBoundingClientRect();
+  // Un contenedor sin ancho (pestaña oculta, impresión) devolvía NaN y dejaba el
+  // gráfico sin punto activo, así que sin ancho no hay cursor que resolver.
+  if (!rect.width) return;
+  const position = ((event.clientX - rect.left) / rect.width) * W;
+  const index = Math.round(((position - padL) / plotWidth) * (total - 1));
+  hoverIndex.value = Math.max(0, Math.min(total - 1, index));
+}
+
+function money(value: string | number): string {
   return formatMoney(value, props.currency === 'USD' ? 'USD' : 'EUR');
+}
+function signedMoney(value: number): string {
+  return `${value >= 0 ? '+' : ''}${money(value)}`;
 }
 </script>
 
 <template>
-  <div class="a-pf-chart-shell">
+  <div
+    ref="wrapRef"
+    class="a-pf-chart-shell"
+    @mousemove="handleMove"
+    @mouseleave="hoverIndex = null"
+  >
     <div class="a-pf-chart-legend">
       <span><i class="is-value"></i> Valor</span>
       <span><i class="is-contributed"></i> Capital aportado</span>
-      <strong v-if="activePoint" class="a-pf-chart-readout">
+      <span><i class="is-bar-contribution"></i> Aportación del mes</span>
+      <span><i class="is-bar-revaluation"></i> Revalorización del mes</span>
+      <strong v-if="activePoint && !showTip" class="a-pf-chart-readout">
         {{ formatShortMonthYear(activePoint.date) }} · {{ money(activePoint.value) }}
         <small>aportado {{ money(activePoint.contributed_to_date) }}</small>
       </strong>
     </div>
-    <svg
-      class="a-pf-chart"
-      :viewBox="`0 0 ${W} ${H}`"
-      role="img"
-      aria-label="Evolución mensual del valor de cartera frente al capital aportado"
-      @mouseleave="hoverIndex = null"
-    >
-      <defs>
-        <linearGradient :id="areaGradientId" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.26" />
-          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
-        </linearGradient>
-      </defs>
 
-      <g class="a-pf-chart-grid">
-        <template v-for="tick in yTicks" :key="tick.y">
-          <line :x1="padL" :x2="W - padR" :y1="tick.y" :y2="tick.y" />
-          <text :x="padL - 12" :y="tick.y + 4" text-anchor="end">
-            {{ formatCompact(tick.value) }}
-          </text>
-        </template>
-      </g>
-
-      <path class="a-pf-chart-area" :d="valueAreaPath" :fill="`url(#${areaGradientId})`" />
-      <path class="a-pf-chart-line is-contributed" :d="contributionPath" />
-      <path class="a-pf-chart-line is-value" :d="valuePath" />
-
-      <g class="a-pf-chart-axis">
-        <text
-          v-for="tick in xTicks"
-          :key="tick.point.date"
-          :x="x(tick.index)"
-          :y="H - 10"
-          text-anchor="middle"
-        >
-          {{ formatShortMonthYear(tick.point.date) }}
-        </text>
-      </g>
-
-      <!-- Una marca por punto competía con la propia línea: solo se dibuja la del punto
-           bajo el cursor, y por defecto la del cierre. -->
-      <g v-if="activePoint" class="a-pf-chart-cursor">
-        <line :x1="x(activeIndex)" :x2="x(activeIndex)" :y1="padT" :y2="H - padB" />
-        <circle :cx="x(activeIndex)" :cy="y(toNumber(activePoint.value))" r="5" />
-      </g>
-
-      <rect
-        v-for="(point, index) in usablePoints"
-        :key="point.date"
-        class="a-pf-chart-hit"
-        :x="x(index) - plotWidth / Math.max(usablePoints.length - 1, 1) / 2"
-        :y="padT"
-        :width="plotWidth / Math.max(usablePoints.length - 1, 1)"
-        :height="plotHeight"
-        @mouseenter="hoverIndex = index"
+    <div class="a-pf-chart-plot">
+      <svg
+        class="a-pf-chart"
+        :viewBox="`0 0 ${W} ${totalH}`"
+        role="img"
+        aria-label="Evolución mensual del valor de cartera frente al capital aportado, con la aportación y la revalorización de cada mes"
       >
-        <title>
-          {{ formatShortMonthYear(point.date) }}: {{ money(point.value) }} · aportado
-          {{ money(point.contributed_to_date) }}
-        </title>
-      </rect>
-    </svg>
+        <defs>
+          <linearGradient :id="areaGradientId" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.26" />
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+
+        <g class="a-pf-chart-grid">
+          <template v-for="tick in yTicks" :key="tick.y">
+            <line :x1="padL" :x2="W - padR" :y1="tick.y" :y2="tick.y" />
+            <text :x="padL - 12" :y="tick.y + 4" text-anchor="end">
+              {{ formatCompact(tick.value) }}
+            </text>
+          </template>
+        </g>
+
+        <path class="a-pf-chart-area" :d="valueAreaPath" :fill="`url(#${areaGradientId})`" />
+        <path class="a-pf-chart-line is-contributed" :d="contributionPath" />
+        <path class="a-pf-chart-line is-value" :d="valuePath" />
+
+        <!-- Banda de barras: dos por mes, con la dirección marcando el signo. Así el
+             color identifica la causa y no compite con positivo/negativo. -->
+        <line
+          class="a-pf-chart-bars-axis"
+          :x1="padL"
+          :x2="W - padR"
+          :y1="barsCenter"
+          :y2="barsCenter"
+        />
+        <template v-for="(movement, index) in movements" :key="`bars-${index}`">
+          <template v-if="movement.hasPrevious">
+            <rect
+              class="a-pf-chart-bar is-contribution"
+              :class="{ 'is-active': activeIndex === index }"
+              :x="x(index) - barWidth - 1"
+              :y="barTop(movement.contribution)"
+              :width="barWidth"
+              :height="barHeight(movement.contribution)"
+              rx="1.5"
+            />
+            <rect
+              class="a-pf-chart-bar is-revaluation"
+              :class="{ 'is-active': activeIndex === index }"
+              :x="x(index) + 1"
+              :y="barTop(movement.revaluation)"
+              :width="barWidth"
+              :height="barHeight(movement.revaluation)"
+              rx="1.5"
+            />
+          </template>
+        </template>
+
+        <g class="a-pf-chart-axis">
+          <template v-for="(entry, index) in xAxisLabels" :key="`x-${index}`">
+            <text
+              v-if="showAxisLabel(entry, index)"
+              :x="x(index)"
+              :y="totalH - 6"
+              text-anchor="middle"
+              :class="{ 'is-active': activeIndex === index }"
+            >
+              {{
+                activeIndex === index
+                  ? formatShortMonthYear(usablePoints[index]!.date)
+                  : entry.label
+              }}
+            </text>
+          </template>
+        </g>
+
+        <!-- Una marca por punto competía con la propia línea: solo se dibuja la del punto
+             bajo el cursor, y por defecto la del cierre. -->
+        <g v-if="activePoint" class="a-pf-chart-cursor">
+          <line
+            v-if="showTip"
+            :x1="x(activeIndex)"
+            :x2="x(activeIndex)"
+            :y1="padT"
+            :y2="totalH - labelRow"
+          />
+          <circle :cx="x(activeIndex)" :cy="y(toNumber(activePoint.value))" r="5" />
+        </g>
+      </svg>
+
+      <div
+        v-if="activePoint && showTip"
+        class="a-pf-chart-tip"
+        :style="{ left: `${tipLeftPct}%` }"
+        role="status"
+      >
+        <span class="a-pf-chart-tip-label">{{ formatLongMonthYear(activePoint.date) }}</span>
+        <strong class="mono">{{ money(activePoint.value) }}</strong>
+        <dl v-if="activeMovement?.hasPrevious">
+          <div>
+            <dt><i class="is-bar-contribution"></i> Aportación</dt>
+            <dd class="mono">{{ signedMoney(activeMovement.contribution) }}</dd>
+          </div>
+          <div>
+            <dt><i class="is-bar-revaluation"></i> Revalorización</dt>
+            <dd class="mono">{{ signedMoney(activeMovement.revaluation) }}</dd>
+          </div>
+        </dl>
+        <small>Aportado acumulado {{ money(activePoint.contributed_to_date) }}</small>
+        <small v-if="activePoint.coverage !== 'complete'">Datos parciales este mes</small>
+      </div>
+    </div>
 
     <details class="a-pf-chart-data">
       <summary>Ver datos del gráfico</summary>
@@ -174,17 +316,27 @@ function money(value: string): string {
             <tr>
               <th>Fecha</th>
               <th class="num">Valor</th>
+              <th class="num">Aportación del mes</th>
+              <th class="num">Revalorización del mes</th>
               <th class="num">Capital aportado</th>
-              <th class="num">Aportado en el periodo</th>
               <th>Datos</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="point in points" :key="point.date">
+            <tr v-for="(point, index) in usablePoints" :key="point.date">
               <td>{{ formatShortMonthYear(point.date) }}</td>
-              <td class="num mono">{{ point.value === null ? '—' : money(point.value) }}</td>
+              <td class="num mono">{{ money(point.value) }}</td>
+              <td class="num mono">
+                {{
+                  movements[index]!.hasPrevious ? signedMoney(movements[index]!.contribution) : '—'
+                }}
+              </td>
+              <td class="num mono">
+                {{
+                  movements[index]!.hasPrevious ? signedMoney(movements[index]!.revaluation) : '—'
+                }}
+              </td>
               <td class="num mono">{{ money(point.contributed_to_date) }}</td>
-              <td class="num mono">{{ money(point.net_contributed) }}</td>
               <td>{{ point.coverage === 'complete' ? 'Completos' : 'Parciales' }}</td>
             </tr>
           </tbody>

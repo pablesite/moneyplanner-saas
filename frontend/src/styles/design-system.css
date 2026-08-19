@@ -597,6 +597,40 @@
   text-align: left;
 }
 
+/* Segmentado compacto de rangos: los presets se ven todos a la vez en vez de esconderse
+   tras un desplegable, que para elegir un periodo cuesta un clic de más y no deja
+   comparar las opciones. Patrimonio lo tenía como `.a-nw-evolution-mini-seg` y Cartera
+   habría sido el segundo consumidor. */
+.dir-a :where(.mini-seg) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.dir-a :where(.mini-seg) .btn {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 4px 10px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.dir-a :where(.mini-seg) .btn:hover {
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  color: var(--text);
+}
+
+.dir-a :where(.mini-seg) .btn.on {
+  border-color: var(--line-strong);
+  background: var(--panel);
+  color: var(--text);
+}
+
 /* Signo de un importe o una rentabilidad dentro de una tabla de datos. Movimientos lo
    tenía local y Cartera habría sido el segundo consumidor. Con `:where()` la
    especificidad queda a cero, así que cualquier regla de dominio sigue ganando. */
@@ -1306,5 +1340,35 @@
 @media (max-width: 480px) {
   .dir-a {
     --pad-x: 14px;
+  }
+}
+
+/* Marcador de cifra en cálculo. Una cifra que ya no corresponde al filtro activo
+   engaña más que un hueco, así que mientras se recalcula se muestra esto en su
+   lugar, del ancho aproximado del dato que sustituye. */
+.dir-a .skel {
+  display: inline-block;
+  min-width: 3.5ch;
+  width: var(--skel-w, 5ch);
+  height: 1em;
+  vertical-align: -0.12em;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--line) 25%, var(--hover) 50%, var(--line) 75%);
+  background-size: 220% 100%;
+  animation: skel-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes skel-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dir-a .skel {
+    animation: none;
   }
 }

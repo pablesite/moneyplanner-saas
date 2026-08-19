@@ -220,13 +220,18 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.loading = true;
       this.error = null;
       try {
-        const { ownership_id = null, ...corePayload } = payload;
+        const { ownership_id, ...corePayload } = payload;
         await coreNetWorthApi.updateAsset(id, corePayload);
-        await premiumOwnershipApi.syncOwnershipLink({
-          target_type: 'asset',
-          target_id: id,
-          ownership_id,
-        });
+        // Sync only when the caller actually supplied a value: the endpoint reads null as
+        // "delete the link", so defaulting to null made a plain patch destroy ownership —
+        // archiving sends just is_active, and the asset came back with none.
+        if ('ownership_id' in payload) {
+          await premiumOwnershipApi.syncOwnershipLink({
+            target_type: 'asset',
+            target_id: id,
+            ownership_id: ownership_id ?? null,
+          });
+        }
         await this.refreshAll();
       } catch (e: unknown) {
         this.error = toApiErrorMessage(e);
@@ -301,13 +306,17 @@ export const useNetWorthStore = defineStore('netWorth', {
       this.loading = true;
       this.error = null;
       try {
-        const { ownership_id = null, ...corePayload } = payload;
+        const { ownership_id, ...corePayload } = payload;
         await coreNetWorthApi.updateLiability(id, corePayload);
-        await premiumOwnershipApi.syncOwnershipLink({
-          target_type: 'liability',
-          target_id: id,
-          ownership_id,
-        });
+        // Same guard as assets: archiving a liability is a plain is_active patch and must
+        // not be read as "clear the ownership".
+        if ('ownership_id' in payload) {
+          await premiumOwnershipApi.syncOwnershipLink({
+            target_type: 'liability',
+            target_id: id,
+            ownership_id: ownership_id ?? null,
+          });
+        }
         await this.refreshAll();
       } catch (e: unknown) {
         this.error = toApiErrorMessage(e);
