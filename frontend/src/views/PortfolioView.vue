@@ -1457,6 +1457,7 @@ watch(
       :ownership-id="ownershipId"
       :ownership-label="ownershipLabel"
       :currency="baseCurrency"
+      :suggested="allocation?.suggested_contribution ?? '0'"
       @close="contributionOpen = false"
       @saved="
         (message) => {

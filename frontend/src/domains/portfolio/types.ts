@@ -375,6 +375,9 @@ export type PortfolioAllocation = {
   strategy: { id: number; effective_from: string; note: string; target_total: string } | null;
   total_value: string;
   position_count: number;
+  // Lo que el presupuesto tenía previsto invertir este mes. Es un punto de partida
+  // editable: elegir otra cifra no reescribe el presupuesto.
+  suggested_contribution: string;
   by_class: AllocationRow[];
   by_position: AllocationRow[];
 };

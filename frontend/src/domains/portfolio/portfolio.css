@@ -1544,6 +1544,13 @@
   cursor: pointer;
 }
 
+/* Objetivo tactil: la casilla nativa es de 13px y en movil se falla. La etiqueta entera
+   alterna la linea, pero la casilla tambien tiene que poder pulsarse. */
+.dir-a .a-pf-basket-lines input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+}
+
 .dir-a .a-pf-basket-lines small {
   display: block;
   color: var(--muted);
@@ -1581,4 +1588,9 @@
   .dir-a .a-pf-basket-buttons {
     justify-content: stretch;
   }
+}
+
+.dir-a-sheet .a-pf-contribution-hint {
+  color: var(--muted);
+  font-size: 0.75rem;
 }

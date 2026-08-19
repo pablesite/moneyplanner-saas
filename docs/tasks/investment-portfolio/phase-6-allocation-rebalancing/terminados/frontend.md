@@ -31,14 +31,14 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 ```
 
 ## Required Documentation Updates
-- [ ] `docs/frontend/domain-map.md` y visual guide.
-- [ ] `docs/project-status.md`.
+- [x] `docs/frontend/domain-map.md` y visual guide.
+- [x] `docs/project-status.md`.
 
 ## Risks
 La densidad de dos niveles y restricciones puede saturar movil; usar disclosure progresivo y mantener una unica accion primaria.
 
 ## Completion Criteria
-- [ ] Asignacion y cesta utilizables a 360 px.
-- [ ] Confirmacion distingue objetivo de ejecucion real.
-- [ ] Tests, docs y commit completados.
-- [ ] Spec movida a `terminados/`.
+- [x] Asignacion y cesta utilizables a 360 px. Verificado en navegador real a 360x780: sin scroll horizontal, acciones apiladas y la fila de linea como objetivo tactil.
+- [x] Confirmacion distingue objetivo de ejecucion real. La cesta se guarda sin tocar contabilidad, se confirma entera o por lineas y contabilizar pide un segundo clic que dice que va a crear movimientos reales.
+- [x] Tests, docs y commit completados. 329 tests de frontend en verde y recorrido completo en navegador con datos reales.
+- [x] Spec movida a `terminados/`.

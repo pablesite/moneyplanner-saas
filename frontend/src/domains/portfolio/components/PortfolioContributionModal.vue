@@ -13,6 +13,7 @@ const props = defineProps<{
   ownershipId: number | null;
   ownershipLabel: string;
   currency: string;
+  suggested: string;
 }>();
 const emit = defineEmits<{ close: []; saved: [message: string] }>();
 
@@ -80,7 +81,9 @@ watch(
   () => props.open,
   (open) => {
     if (!open) return;
-    amount.value = '';
+    // Se abre con lo que el presupuesto tenía previsto invertir: es el importe que ya
+    // habías decidido, y sigue siendo editable.
+    amount.value = Number(props.suggested) > 0 ? props.suggested : '';
     sourceAccountId.value = '';
     solved.value = null;
     error.value = null;
@@ -106,6 +109,9 @@ watch(
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">Importe</span>
           <input v-model="amount" class="input" inputmode="decimal" placeholder="0,00" />
+          <small v-if="Number(suggested) > 0" class="a-pf-contribution-hint">
+            El presupuesto tenía previsto invertir {{ money(suggested) }} este mes.
+          </small>
         </label>
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">
