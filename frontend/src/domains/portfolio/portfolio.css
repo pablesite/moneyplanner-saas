@@ -7,12 +7,19 @@
    never carried by colour alone. */
 .dir-a .page.a-pf-page {
   --a-pf-equity: #3987e5;
-  --a-pf-real-assets: #d95926;
   --a-pf-fixed-income: #199e70;
-  --a-pf-crypto: #c98500;
-  --a-pf-other: #d55181;
-  --a-pf-cash: #008300;
-  --a-pf-mixed: #9085e9;
+  --a-pf-real-estate: #d95926;
+  --a-pf-private-debt: #0f9bb5;
+  --a-pf-commodities: #c98500;
+  --a-pf-private-equity: #9085e9;
+  --a-pf-crypto: #d55181;
+  --a-pf-cash: #8a9a35;
+  --a-pf-neutral: var(--muted);
+  /* Serie de la banda de barras del gráfico de evolución. Par propio, fuera de la
+     paleta de clases: reutilizar un color de clase haría creer que la barra habla de
+     esa clase. Validado con el checker de `dataviz` contra ambas superficies. */
+  --a-pf-contribution: #616ada;
+  --a-pf-revaluation: #b57f1a;
   display: grid;
   gap: var(--space-6);
   overflow-x: hidden;
@@ -20,12 +27,13 @@
 
 .dir-a.theme-light .page.a-pf-page {
   --a-pf-equity: #2a78d6;
-  --a-pf-real-assets: #eb6834;
   --a-pf-fixed-income: #1baf7a;
-  --a-pf-crypto: #eda100;
-  --a-pf-other: #e87ba4;
-  --a-pf-cash: #008300;
-  --a-pf-mixed: #4a3aa7;
+  --a-pf-real-estate: #eb6834;
+  --a-pf-private-debt: #0f8ca3;
+  --a-pf-commodities: #eda100;
+  --a-pf-private-equity: #4a3aa7;
+  --a-pf-crypto: #e87ba4;
+  --a-pf-cash: #7c8a2f;
 }
 
 .dir-a .a-pf-tabs-bar {
@@ -125,10 +133,9 @@
 
 .dir-a .a-pf-composition-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.65fr) minmax(340px, 1.35fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   align-items: center;
   gap: var(--space-8);
-  max-width: 900px;
 }
 
 .dir-a .a-pf-composition-list {
@@ -136,13 +143,75 @@
   border-top: 1px solid var(--line);
 }
 
+.dir-a .a-pf-composition-group {
+  border-bottom: 1px solid var(--line);
+}
+
 .dir-a .a-pf-composition-row {
   display: grid;
   grid-template-columns: 10px minmax(110px, 1fr) auto 54px;
   gap: var(--space-3);
   align-items: center;
+  width: 100%;
   min-height: 48px;
-  border-bottom: 1px solid var(--line);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dir-a .a-pf-composition-row:hover {
+  background: var(--hover);
+}
+
+.dir-a .a-pf-composition-row span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* El contador de activos no compite con la cifra: es contexto de la etiqueta. */
+.dir-a .a-pf-composition-row em {
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.dir-a .a-pf-composition-members {
+  margin: 0;
+  padding: 0 0 var(--space-2) 0;
+  list-style: none;
+}
+
+.dir-a .a-pf-composition-member {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) auto 54px;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+  padding-left: calc(10px + var(--space-3));
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dir-a .a-pf-composition-member:hover {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.dir-a .a-pf-composition-member strong,
+.dir-a .a-pf-composition-member small {
+  text-align: right;
+  font-weight: 500;
 }
 
 .dir-a .a-pf-composition-row i {
@@ -152,26 +221,29 @@
   background: var(--muted);
 }
 
-.dir-a .a-pf-composition-row i.is-cash {
-  background: var(--a-pf-cash);
+.dir-a .a-pf-composition-row i.is-equity {
+  background: var(--a-pf-equity);
 }
 .dir-a .a-pf-composition-row i.is-fixed_income {
   background: var(--a-pf-fixed-income);
 }
-.dir-a .a-pf-composition-row i.is-equity {
-  background: var(--a-pf-equity);
+.dir-a .a-pf-composition-row i.is-real_estate {
+  background: var(--a-pf-real-estate);
 }
-.dir-a .a-pf-composition-row i.is-mixed {
-  background: var(--a-pf-mixed);
+.dir-a .a-pf-composition-row i.is-private_debt {
+  background: var(--a-pf-private-debt);
 }
-.dir-a .a-pf-composition-row i.is-other {
-  background: var(--a-pf-other);
+.dir-a .a-pf-composition-row i.is-commodities {
+  background: var(--a-pf-commodities);
 }
-.dir-a .a-pf-composition-row i.is-real_assets {
-  background: var(--a-pf-real-assets);
+.dir-a .a-pf-composition-row i.is-private_equity {
+  background: var(--a-pf-private-equity);
 }
 .dir-a .a-pf-composition-row i.is-crypto {
   background: var(--a-pf-crypto);
+}
+.dir-a .a-pf-composition-row i.is-cash {
+  background: var(--a-pf-cash);
 }
 
 .dir-a .a-pf-composition-row strong,
@@ -359,7 +431,24 @@
 }
 
 .dir-a .a-pf-chart-legend i.is-contributed {
-  background: var(--muted);
+  background: var(--a-pf-contribution);
+}
+
+/* Las entradas de barra se dibujan como bloque, no como trazo: en la leyenda tienen
+   que parecerse a lo que representan. */
+.dir-a .a-pf-chart-legend i.is-bar-contribution,
+.dir-a .a-pf-chart-legend i.is-bar-revaluation {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.dir-a .a-pf-chart-legend i.is-bar-contribution {
+  background: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-legend i.is-bar-revaluation {
+  background: var(--a-pf-revaluation);
 }
 
 .dir-a .a-pf-chart {
@@ -395,8 +484,110 @@
 }
 
 .dir-a .a-pf-chart-line.is-contributed {
-  stroke: var(--muted);
+  stroke: var(--a-pf-contribution);
   stroke-dasharray: 7 7;
+}
+
+.dir-a .a-pf-chart-plot {
+  position: relative;
+}
+
+.dir-a .a-pf-chart-bars-axis {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.dir-a .a-pf-chart-bar {
+  fill-opacity: 0.62;
+}
+
+.dir-a .a-pf-chart-bar.is-active {
+  fill-opacity: 1;
+}
+
+.dir-a .a-pf-chart-bar.is-contribution {
+  fill: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-bar.is-revaluation {
+  fill: var(--a-pf-revaluation);
+}
+
+.dir-a .a-pf-chart-axis text.is-active {
+  fill: var(--text);
+}
+
+/* Recuadro flotante como el de Patrimonio: sigue al cursor sobre el gráfico en vez de
+   obligar a leer la cifra en una esquina fija. */
+.dir-a .a-pf-chart-tip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.dir-a .a-pf-chart-tip-label {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dir-a .a-pf-chart-tip strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dir-a .a-pf-chart-tip dl {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 2px;
+}
+
+.dir-a .a-pf-chart-tip dl > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  font-size: 11.5px;
+}
+
+.dir-a .a-pf-chart-tip dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.dir-a .a-pf-chart-tip dt i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.dir-a .a-pf-chart-tip dt i.is-bar-contribution {
+  background: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-tip dt i.is-bar-revaluation {
+  background: var(--a-pf-revaluation);
+}
+
+.dir-a .a-pf-chart-tip dd {
+  margin: 0;
+}
+
+.dir-a .a-pf-chart-tip small {
+  color: var(--muted);
+  font-size: 10.5px;
 }
 
 .dir-a .a-pf-chart-area {
@@ -480,6 +671,113 @@
 .dir-a .a-pf-detail-list dd {
   margin: 0;
   text-align: right;
+}
+
+.dir-a-sheet .a-pf-item-form .a-pf-breakdown-toggle {
+  align-items: start;
+}
+
+.dir-a-sheet .a-pf-breakdown {
+  flex: 1 1 0;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.dir-a-sheet .a-pf-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px auto auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.dir-a-sheet .a-pf-breakdown-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a-sheet .a-pf-ownership {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-ownership h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.dir-a-sheet .a-pf-ownership-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dir-a-sheet .a-pf-ownership-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 38px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.dir-a-sheet .a-pf-ownership-list small {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.dir-a-sheet .a-pf-ownership-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 150px) auto;
+  gap: var(--space-3);
+  align-items: end;
+  padding-top: var(--space-2);
+}
+
+/* Aquí la etiqueta va encima: la fila etiqueta-izquierda del formulario dejaba los tres
+   controles sin sitio y el botón partido en dos líneas. */
+.dir-a-sheet .a-pf-item-form .a-pf-ownership-add .ui-item-form-field {
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  border-top: 0;
+}
+
+.dir-a-sheet .a-pf-item-form .a-pf-ownership-add .ui-item-form-label {
+  flex: none;
+  max-width: none;
+}
+
+@media (max-width: 560px) {
+  .dir-a-sheet .a-pf-ownership-add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dir-a .a-pf-skel-hero {
+  --skel-w: 7ch;
+}
+
+.dir-a .a-pf-skel-return {
+  --skel-w: 4ch;
+}
+
+.dir-a .a-pf-operation-intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
 .dir-a .a-pf-import-flow {
@@ -623,6 +921,15 @@
 }
 
 @container page (max-width: 560px) {
+  /* En pantalla estrecha el recuadro flotante tapaba el gráfico entero, y en táctil no
+     hay forma de quitarlo. Deja de flotar y se coloca encima, junto a la leyenda. */
+  .dir-a .a-pf-chart-tip {
+    position: static;
+    transform: none;
+    white-space: normal;
+    box-shadow: none;
+  }
+
   .dir-a .a-pf-page {
     gap: var(--space-4);
   }
@@ -682,6 +989,23 @@
     min-width: 0;
   }
 
+  /* Las dos rentabilidades comparten línea porque no caben en columnas, pero cada una
+     conserva su color de signo: el móvil pierde la rejilla, no la información. */
+  .dir-a .a-pf-position-returns {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  .dir-a .a-pf-position-total {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+    min-height: 68px;
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--line-strong);
+  }
+
   .dir-a .a-pf-position-main strong {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -732,4 +1056,125 @@
     grid-template-columns: 10px minmax(90px, 1fr) auto 44px;
     gap: var(--space-2);
   }
+}
+
+/* Detalle de posición: la cifra manda, el resto queda como contexto. */
+.dir-a .a-pf-detail-body,
+.a-pf-detail-sheet .a-pf-detail-body {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+.a-pf-detail-sheet .a-pf-detail-body > * {
+  min-width: 0;
+}
+
+.a-pf-detail-sheet .a-pf-detail-headline {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.a-pf-detail-sheet .a-pf-detail-headline-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.a-pf-detail-sheet .a-pf-detail-headline strong {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.a-pf-detail-sheet .a-pf-detail-headline small {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.a-pf-detail-sheet .a-pf-detail-headline em {
+  font-style: normal;
+  font-size: 0.8125rem;
+}
+
+.a-pf-detail-sheet .a-pf-detail-returns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.a-pf-detail-sheet .a-pf-detail-returns > div {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+}
+
+/* Solo la etiqueta, no cualquier span: `.info-hint-tip` también es un span y con un
+   selector abierto ganaba en especificidad al `display: none` del sistema, así que el
+   tooltip se quedaba desplegado y desbordaba el panel a lo ancho. */
+.a-pf-detail-sheet .a-pf-detail-return-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.a-pf-detail-sheet .a-pf-detail-returns strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.a-pf-detail-sheet .a-pf-detail-returns small {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@media (max-width: 560px) {
+  .a-pf-detail-sheet .a-pf-detail-returns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Formulario de configuración con la misma fila etiqueta/valor que los módulos
+   consolidados: la etiqueta a la izquierda y el control a la derecha, en vez de
+   apilados, que hacía parecer el panel mucho más largo de lo que es. */
+.dir-a-sheet .a-pf-item-form .ui-item-form-grid {
+  /* Una fila por campo: la rejilla de dos columnas del sistema emparejaba
+     "Contenedor" con "Clase de activo" y las etiquetas se solapaban. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.dir-a-sheet .a-pf-item-form .ui-item-form-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.dir-a-sheet .a-pf-item-form .ui-item-form-field + .ui-item-form-field {
+  border-top: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-item-form .ui-item-form-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 38%;
+  max-width: 148px;
+  line-height: 1.2;
+}
+
+.dir-a-sheet .a-pf-item-form .ui-item-form-field > .input,
+.dir-a-sheet .a-pf-item-form .ui-item-form-field > .select {
+  flex: 1 1 0;
+  min-width: 0;
 }

@@ -15,6 +15,10 @@ import type {
   PortfolioOperationPreview,
   PortfolioPositionSetupPayload,
   PortfolioValuationResync,
+  PortfolioContainer,
+  PortfolioContainerPayload,
+  PositionOwnershipPeriod,
+  PositionOwnershipPeriodPayload,
 } from './types';
 
 export const corePortfolioApi = {
@@ -62,6 +66,12 @@ export const corePortfolioApi = {
   resyncValuations() {
     return coreApi.post<PortfolioValuationResync>('/api/portfolio/positions/resync-valuations/');
   },
+  createContainer(payload: PortfolioContainerPayload) {
+    return coreApi.post<PortfolioContainer>('/api/portfolio/containers/', payload);
+  },
+  updateContainer(id: number, payload: PortfolioContainerPayload) {
+    return coreApi.patch<PortfolioContainer>(`/api/portfolio/containers/${id}/`, payload);
+  },
   reopenPosition(positionId: number) {
     return coreApi.post<void>(`/api/portfolio/positions/${positionId}/reopen/`);
   },
@@ -80,22 +90,27 @@ export const corePortfolioApi = {
       row_ids: rowIds,
     });
   },
+  // One request instead of five: each of the old endpoints rebuilt the whole performance
+  // context, so every filter change paid that cost five times over. Instruments stay
+  // separate because they are a catalogue, not part of the period read.
+  getOwnershipPeriods(positionId: number) {
+    return coreApi.get<PositionOwnershipPeriod[]>('/api/portfolio/ownership-periods/', {
+      params: { position_id: positionId },
+    });
+  },
+  createOwnershipPeriod(payload: PositionOwnershipPeriodPayload) {
+    return coreApi.post<PositionOwnershipPeriod>('/api/portfolio/ownership-periods/', payload);
+  },
+  deleteOwnershipPeriod(id: number) {
+    return coreApi.delete(`/api/portfolio/ownership-periods/${id}/`);
+  },
   async getWorkspace(params: PortfolioQuery): Promise<PortfolioWorkspacePayload> {
-    const [overview, performance, positions, timeline, quality, instruments] = await Promise.all([
-      this.getOverview(params),
-      this.getPerformance(params),
-      this.getPositions(params),
-      this.getTimeline(params),
-      this.getQuality(params),
+    const [workspace, instruments] = await Promise.all([
+      coreApi.get<Omit<PortfolioWorkspacePayload, 'instruments'>>('/api/portfolio/workspace/', {
+        params,
+      }),
       this.getInstruments(),
     ]);
-    return {
-      overview: overview.data,
-      performance: performance.data,
-      positions: positions.data,
-      timeline: timeline.data,
-      quality: quality.data,
-      instruments: instruments.data,
-    };
+    return { ...workspace.data, instruments: instruments.data };
   },
 };

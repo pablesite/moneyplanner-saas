@@ -1,8 +1,11 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props */
 import { computed, nextTick, onMounted, ref, watch, type PropType } from 'vue';
-import { AButton, ASelect, BaseModal, type ASelectItem } from '@/domains/ui';
+import { AButton, AInfoHint, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { movementKindGlyph } from '@/domains/accounting/movementKind';
+import { canUsePortfolio } from '@/domains/capabilities';
+import { corePortfolioApi } from '@/domains/portfolio/api';
+import type { PortfolioOperationOptions } from '@/domains/portfolio/types';
 
 const props = defineProps({
   page: {
@@ -268,6 +271,64 @@ const quickEntryCurrency = computed(() => {
   if (!accountId) return null;
   const account = (props.page.accounts as AccountOption[]).find((a) => a.id === accountId);
   return account?.currency ?? null;
+});
+
+// Registrar dinero de la cartera pasó a vivir aquí, así que el formulario tiene que
+// saber cuándo la cuenta de inversión elegida es una posición: sin eso el usuario no ve
+// que el movimiento alimenta su cartera, ni se le pueden pedir las unidades.
+const portfolioOptions = ref<PortfolioOperationOptions | null>(null);
+const portfolioLoadFailed = ref(false);
+
+async function loadPortfolioOptions() {
+  if (portfolioOptions.value || !canUsePortfolio()) return;
+  try {
+    portfolioOptions.value = (await corePortfolioApi.getOperationOptions()).data;
+    portfolioLoadFailed.value = false;
+  } catch {
+    portfolioLoadFailed.value = true;
+  }
+}
+
+watch(
+  () => props.page.quickEntryForm.movement_type,
+  (type) => {
+    if (type === 'investment') void loadPortfolioOptions();
+  },
+  { immediate: true },
+);
+
+const investmentAccountId = computed(() =>
+  investmentDirection.value === 'outflow'
+    ? investmentOriginModel.value
+    : investmentDestinationModel.value,
+);
+const investmentPosition = computed(() => {
+  const accountId = Number(investmentAccountId.value ?? 0);
+  if (!accountId) return null;
+  return (
+    portfolioOptions.value?.positions.find((row) => row.ledger_account_id === accountId) ?? null
+  );
+});
+const investmentTracksUnits = computed(
+  () => investmentPosition.value?.tracking_style === 'units_based',
+);
+// El formulario de la cartera sólo dejaba financiar una compra con el efectivo del mismo
+// contenedor. Aquí se ofrecen todas las cuentas de liquidez, así que al menos se avisa
+// cuando el dinero sale de otro sitio: el saldo del contenedor deja de cuadrar.
+const investmentLiquidityId = computed(() =>
+  investmentDirection.value === 'outflow'
+    ? investmentDestinationModel.value
+    : investmentOriginModel.value,
+);
+const investmentContainerMismatch = computed(() => {
+  const position = investmentPosition.value;
+  const liquidityId = Number(investmentLiquidityId.value ?? 0);
+  if (!position || !liquidityId || !portfolioOptions.value) return false;
+  const containerCash = portfolioOptions.value.cash_accounts.filter(
+    (row) => row.container_id === position.container_id,
+  );
+  if (!containerCash.length) return false;
+  return !containerCash.some((row) => row.ledger_account_id === liquidityId);
 });
 
 // Chips carousel arrow navigation (desktop only — mobile uses touch scroll)
@@ -577,6 +638,43 @@ const quickEntryHint = computed(() => {
               v-model="investmentDestinationModel"
               class="select"
               :options="investmentDestinationSelectOptions"
+            />
+          </label>
+        </div>
+
+        <!-- Que el movimiento alimenta la cartera no se veía en ninguna parte, y ahora
+             que registrar dinero de inversión solo se hace aquí, hay que decirlo. -->
+        <p v-if="investmentPosition" class="ui-accounting-balance-feedback">
+          Alimenta la posición <strong>{{ investmentPosition.name }}</strong> de
+          {{ investmentPosition.container_name }} en tu cartera.
+        </p>
+        <AState v-if="investmentContainerMismatch" status="neutral" layout="inline">
+          El dinero no sale del efectivo de {{ investmentPosition?.container_name }}. El movimiento
+          se registra igual, pero el saldo de ese contenedor dejará de cuadrar con la operación.
+        </AState>
+
+        <div v-if="investmentTracksUnits" class="ui-accounting-form-grid">
+          <label class="ui-accounting-field">
+            <span>
+              Unidades
+              <AInfoHint
+                label="Cuántas participaciones, acciones o monedas movió la operación. Esta posición se sigue por unidades, así que sin este dato se pierde el rastro de cuántas movió cada compra o venta."
+              />
+            </span>
+            <input
+              v-model="page.quickEntryForm.investment_units"
+              class="input"
+              inputmode="decimal"
+              placeholder="0,00"
+            />
+          </label>
+          <label class="ui-accounting-field">
+            <span>Precio unitario</span>
+            <input
+              v-model="page.quickEntryForm.investment_unit_price"
+              class="input"
+              inputmode="decimal"
+              placeholder="0,00"
             />
           </label>
         </div>

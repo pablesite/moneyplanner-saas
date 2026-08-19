@@ -199,6 +199,8 @@ export type LedgerTransactionWritePayload = {
 export type QuickLedgerTransactionWritePayload = {
   movement_type: QuickLedgerMovementType;
   investment_direction?: '' | InvestmentDirection;
+  investment_units?: string | null;
+  investment_unit_price?: string | null;
   booking_date: string;
   value_date: string;
   description: string;

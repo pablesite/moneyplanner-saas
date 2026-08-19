@@ -2,8 +2,16 @@
 import { computed, ref, watch } from 'vue';
 import { AButton, AInfoHint, ASelect, AState, BaseModal, type ASelectItem } from '@/domains/ui';
 import { toApiErrorMessage } from '@/lib/errors';
+import { peopleApi } from '@/domains/people/api';
+import type { OwnershipRead } from '@/domains/people/types';
+import { formatShortDate } from '@/lib/dates';
 import { corePortfolioApi } from '../api';
-import type { PortfolioOperationOptions, PortfolioPositionSetupPayload } from '../types';
+import type {
+  PortfolioClassBreakdownRow,
+  PortfolioOperationOptions,
+  PortfolioPositionSetupPayload,
+  PositionOwnershipPeriod,
+} from '../types';
 
 const props = defineProps<{
   open: boolean;
@@ -22,6 +30,37 @@ const assetClass = ref('');
 const saving = ref(false);
 const error = ref<string | null>(null);
 
+// Reparto interno. Una cartera de roboadvisor o un fondo mixto no son de una sola clase,
+// y contarlos enteros en la dominante desplaza el gráfico tanto como pesen.
+const breakdown = ref<PortfolioClassBreakdownRow[]>([]);
+const breakdownTotal = computed(() =>
+  breakdown.value.reduce((sum, row) => sum + Number(row.percent || 0), 0),
+);
+const breakdownValid = computed(
+  () => breakdown.value.length === 0 || Math.abs(breakdownTotal.value - 100) < 0.001,
+);
+
+function addBreakdownRow() {
+  const used = new Set(breakdown.value.map((row) => row.asset_class));
+  const next = assetClassOptions.value.find((option) => !used.has(String(option.value)));
+  breakdown.value.push({
+    asset_class: String(next?.value ?? assetClass.value),
+    percent: breakdown.value.length ? '' : '100',
+  });
+}
+function removeBreakdownRow(index: number) {
+  breakdown.value.splice(index, 1);
+}
+
+// Titularidad por tramos. El backend la guarda desde siempre y nunca hubo dónde tocarla,
+// así que un activo que se compartió y luego dejó de compartirse no se podía contar.
+const ownerships = ref<OwnershipRead[]>([]);
+const periods = ref<PositionOwnershipPeriod[]>([]);
+const periodOwnershipId = ref('');
+const periodStartDate = ref('');
+const periodBusy = ref(false);
+const periodError = ref<string | null>(null);
+
 const positions = computed(() => props.options?.positions ?? []);
 const selectedPosition = computed(() =>
   positions.value.find((position) => String(position.id) === positionId.value),
@@ -29,7 +68,7 @@ const selectedPosition = computed(() =>
 const positionOptions = computed<ASelectItem[]>(() =>
   positions.value.map((position) => ({
     value: String(position.id),
-    label: `${position.name} · ${position.container_name}${position.setup_confirmed ? '' : ' · Pendiente'}`,
+    label: `${position.name}${position.setup_confirmed ? '' : ' · Pendiente'}`,
   })),
 );
 const trackingOptions: ASelectItem[] = [
@@ -43,9 +82,97 @@ const historyOptions: ASelectItem[] = [
 const containerOptions = computed<ASelectItem[]>(() =>
   (props.options?.containers ?? []).map((row) => ({ value: String(row.id), label: row.name })),
 );
-const assetClassOptions = computed<ASelectItem[]>(() =>
+const assetClassOptions = computed(() =>
   (props.options?.asset_classes ?? []).map((row) => ({ value: row.value, label: row.label })),
 );
+
+const ownershipOptions = computed(() =>
+  ownerships.value.map((row) => ({
+    value: String(row.id),
+    label:
+      row.kind === 'individual'
+        ? (row.member?.name ?? 'Individual')
+        : `Compartida · ${row.splits.map((split) => split.member.name).join(' + ')}`,
+  })),
+);
+const sortedPeriods = computed(() =>
+  [...periods.value].sort((a, b) => b.start_date.localeCompare(a.start_date)),
+);
+
+function ownershipLabel(id: number): string {
+  return (
+    ownershipOptions.value.find((option) => option.value === String(id))?.label ?? 'Titularidad'
+  );
+}
+function periodRange(period: PositionOwnershipPeriod): string {
+  const from = formatShortDate(period.start_date);
+  return period.end_date ? `${from} – ${formatShortDate(period.end_date)}` : `desde ${from}`;
+}
+
+async function loadOwnershipData(id: string) {
+  periodError.value = null;
+  periods.value = [];
+  if (!id) return;
+  try {
+    const [periodRows, ownershipRows] = await Promise.all([
+      corePortfolioApi.getOwnershipPeriods(Number(id)),
+      ownerships.value.length ? null : peopleApi.getOwnerships(),
+    ]);
+    periods.value = periodRows.data;
+    if (ownershipRows) ownerships.value = ownershipRows.data;
+  } catch (caught: unknown) {
+    periodError.value = toApiErrorMessage(caught);
+  }
+}
+
+async function addPeriod() {
+  const position = selectedPosition.value;
+  const ownership = ownerships.value.find((row) => String(row.id) === periodOwnershipId.value);
+  if (!position || !ownership || !periodStartDate.value) {
+    periodError.value = 'Indica desde cuándo manda esta titularidad y cuál es.';
+    return;
+  }
+  // Los tramos guardan el reparto explícito, así que se copia el de la titularidad
+  // elegida: quien la define es Personas, aquí solo se dice desde cuándo aplica.
+  const shares =
+    ownership.kind === 'individual' && ownership.member
+      ? [{ member_id: ownership.member.id, percent: '100' }]
+      : ownership.splits.map((split) => ({
+          member_id: split.member.id,
+          percent: split.percent,
+        }));
+  periodBusy.value = true;
+  periodError.value = null;
+  try {
+    await corePortfolioApi.createOwnershipPeriod({
+      position_id: position.id,
+      ownership_id: ownership.id,
+      start_date: periodStartDate.value,
+      shares,
+    });
+    periodOwnershipId.value = '';
+    periodStartDate.value = '';
+    await loadOwnershipData(positionId.value);
+    emit('saved', `Titularidad actualizada en ${position.name}.`);
+  } catch (caught: unknown) {
+    periodError.value = toApiErrorMessage(caught);
+  } finally {
+    periodBusy.value = false;
+  }
+}
+
+async function removePeriod(id: number) {
+  periodBusy.value = true;
+  periodError.value = null;
+  try {
+    await corePortfolioApi.deleteOwnershipPeriod(id);
+    await loadOwnershipData(positionId.value);
+  } catch (caught: unknown) {
+    periodError.value = toApiErrorMessage(caught);
+  } finally {
+    periodBusy.value = false;
+  }
+}
 
 function coverageLabel(status: string): string {
   return (
@@ -66,6 +193,7 @@ function loadPosition(id: string) {
   historyStartDate.value = position.history_start_date ?? '';
   containerId.value = String(position.container_id);
   assetClass.value = position.asset_class;
+  breakdown.value = position.class_breakdown.map((row) => ({ ...row }));
   error.value = null;
 }
 
@@ -79,7 +207,10 @@ function reset() {
   loadPosition(positionId.value);
 }
 
-watch(positionId, loadPosition);
+watch(positionId, (id) => {
+  loadPosition(id);
+  void loadOwnershipData(id);
+});
 watch(
   [() => props.open, positions],
   ([open]) => {
@@ -94,6 +225,10 @@ async function save() {
     error.value = 'Indica la fecha desde la que comenzará el seguimiento.';
     return;
   }
+  if (!breakdownValid.value) {
+    error.value = 'El reparto interno debe sumar 100%.';
+    return;
+  }
   saving.value = true;
   error.value = null;
   try {
@@ -102,8 +237,10 @@ async function save() {
       history_mode: historyMode.value,
       history_start_date: historyMode.value === 'cutoff' ? historyStartDate.value : null,
       container_id: Number(containerId.value),
-      // A canonical instrument is shared, so its class is not the position's to change.
-      ...(selectedPosition.value.instrument_is_custom ? { asset_class: assetClass.value } : {}),
+      asset_class: assetClass.value,
+      class_breakdown: breakdown.value
+        .filter((row) => row.percent !== '')
+        .map((row) => ({ asset_class: row.asset_class, percent: String(row.percent) })),
     });
     emit('saved', `Configuración guardada para ${selectedPosition.value.name}.`);
     emit('close');
@@ -123,15 +260,17 @@ async function save() {
     panel-class="dir-a dir-a-sheet a-pf-operation-sheet"
     @close="emit('close')"
   >
-    <form :id="FORM_ID" class="a-pf-setup-flow" @submit.prevent="save">
+    <form :id="FORM_ID" class="a-pf-setup-flow a-pf-item-form" @submit.prevent="save">
       <p>
         Define qué es cada posición y cómo seguirla, sin reescribir sus movimientos históricos.
         Puedes volver aquí y cambiarlo tantas veces como quieras: confirmar no cierra nada.
       </p>
-      <label class="ui-item-form-field">
-        <span class="ui-item-form-label">Posición</span>
-        <ASelect v-model="positionId" :options="positionOptions" />
-      </label>
+      <div class="ui-item-form-grid">
+        <label class="ui-item-form-field">
+          <span class="ui-item-form-label">Posición</span>
+          <ASelect v-model="positionId" :options="positionOptions" class="select" />
+        </label>
+      </div>
 
       <template v-if="selectedPosition">
         <dl class="a-pf-setup-context">
@@ -145,59 +284,150 @@ async function save() {
           </div>
         </dl>
 
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Contenedor
-            <AInfoHint
-              label="Dónde está depositada: el bróker, banco, exchange o plataforma. Agrupa y filtra el inventario; no afecta a los cálculos."
+        <div class="ui-item-form-grid">
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Contenedor
+              <AInfoHint
+                label="Dónde está depositada: el bróker, banco, exchange o plataforma. Agrupa y filtra el inventario; no afecta a los cálculos."
+              />
+            </span>
+            <ASelect v-model="containerId" :options="containerOptions" class="select" />
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Clase de activo
+              <AInfoHint
+                label="Qué tipo de activo es. Es lo que alimenta el gráfico de composición de la cartera, así que clasificar bien cambia lo que ese gráfico te cuenta."
+              />
+            </span>
+            <ASelect
+              v-model="assetClass"
+              :options="assetClassOptions"
+              :searchable="false"
+              class="select"
             />
-          </span>
-          <ASelect v-model="containerId" :options="containerOptions" />
-        </label>
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Clase de activo
-            <AInfoHint
-              label="Qué tipo de activo es. Es lo que alimenta el gráfico de composición de la cartera, así que clasificar bien cambia lo que ese gráfico te cuenta."
+          </label>
+          <label class="ui-item-form-field a-pf-breakdown-toggle">
+            <span class="ui-item-form-label">
+              Reparto interno
+              <AInfoHint
+                label="Para posiciones que no son de una sola clase: una cartera de roboadvisor o un fondo mixto. Sin esto se cuentan enteras en la clase dominante y el gráfico de composición se desplaza tanto como pese la posición. Solo afecta a la composición; el resto de cálculos usa la clase de arriba."
+              />
+            </span>
+            <div class="a-pf-breakdown">
+              <div v-for="(row, index) in breakdown" :key="index" class="a-pf-breakdown-row">
+                <ASelect
+                  v-model="row.asset_class"
+                  :options="assetClassOptions"
+                  :searchable="false"
+                  class="select"
+                />
+                <input v-model="row.percent" class="input" inputmode="decimal" placeholder="0" />
+                <span>%</span>
+                <AButton variant="ghost" size="sm" @click="removeBreakdownRow(index)">
+                  Quitar
+                </AButton>
+              </div>
+              <div class="a-pf-breakdown-foot">
+                <AButton variant="ghost" size="sm" @click="addBreakdownRow">Añadir clase</AButton>
+                <small v-if="breakdown.length" :class="{ 'is-negative': !breakdownValid }">
+                  Suma {{ breakdownTotal }}%
+                </small>
+                <small v-else>Sin reparto: cuenta entera en su clase.</small>
+              </div>
+            </div>
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Detalle
+              <AInfoHint>
+                <strong>Por valor:</strong> solo registras cuánto vale en total. Sirve para fondos,
+                planes o productos sin precio público. <strong>Por unidades:</strong> registras
+                cuántas participaciones tienes, y el valor sale de multiplicarlas por su precio de
+                mercado. Requiere que el instrumento tenga precio, pero da precio diario automático
+                y coste por operación.
+              </AInfoHint>
+            </span>
+            <ASelect
+              v-model="trackingStyle"
+              :options="trackingOptions"
+              :searchable="false"
+              class="select"
             />
-          </span>
-          <ASelect
-            v-model="assetClass"
-            :options="assetClassOptions"
-            :searchable="false"
-            :disabled="!selectedPosition.instrument_is_custom"
-          />
-        </label>
-        <AState v-if="!selectedPosition.instrument_is_custom" status="neutral" layout="inline">
-          Este instrumento es canónico y lo comparten varias carteras, así que su clase no se cambia
-          desde aquí.
-        </AState>
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Detalle de la posición
-            <AInfoHint>
-              <strong>Por valor:</strong> solo registras cuánto vale en total. Sirve para fondos,
-              planes o productos sin precio público. <strong>Por unidades:</strong> registras
-              cuántas participaciones tienes, y el valor sale de multiplicarlas por su precio de
-              mercado. Requiere que el instrumento tenga precio, pero da precio diario automático y
-              coste por operación.
-            </AInfoHint>
-          </span>
-          <ASelect v-model="trackingStyle" :options="trackingOptions" :searchable="false" />
-        </label>
-        <label class="ui-item-form-field">
-          <span class="ui-item-form-label">
-            Histórico
-            <AInfoHint
-              label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Histórico
+              <AInfoHint
+                label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
+              />
+            </span>
+            <ASelect
+              v-model="historyMode"
+              :options="historyOptions"
+              :searchable="false"
+              class="select"
             />
-          </span>
-          <ASelect v-model="historyMode" :options="historyOptions" :searchable="false" />
-        </label>
-        <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">
-          <span class="ui-item-form-label">Fecha de corte</span>
-          <input v-model="historyStartDate" class="input" type="date" required />
-        </label>
+          </label>
+          <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">
+            <span class="ui-item-form-label">Fecha de corte</span>
+            <input v-model="historyStartDate" class="input" type="date" required />
+          </label>
+        </div>
+
+        <!-- La titularidad no se edita: se escriben tramos. Por eso aquí solo se dice
+             desde cuándo manda cuál, y el tramo anterior se cierra la víspera. -->
+        <section class="a-pf-ownership">
+          <h3>
+            Titularidad
+            <AInfoHint
+              label="De quién es la posición y desde cuándo. Si cambió con el tiempo —empezó compartida y luego dejó de serlo— se añade un tramo nuevo desde la fecha del cambio, sin reescribir el pasado. Las titularidades se definen en Personas."
+            />
+          </h3>
+          <ul v-if="sortedPeriods.length" class="a-pf-ownership-list">
+            <li v-for="period in sortedPeriods" :key="period.id">
+              <span>{{ ownershipLabel(period.ownership_id) }}</span>
+              <small>{{ periodRange(period) }}</small>
+              <AButton
+                variant="ghost"
+                size="sm"
+                :disabled="periodBusy"
+                @click="removePeriod(period.id)"
+              >
+                Deshacer
+              </AButton>
+            </li>
+          </ul>
+          <AState v-else status="empty" layout="inline">
+            Sin tramos registrados: la posición hereda la titularidad del activo en Patrimonio.
+          </AState>
+
+          <div class="a-pf-ownership-add">
+            <label class="ui-item-form-field">
+              <span class="ui-item-form-label">Pasa a ser</span>
+              <ASelect
+                v-model="periodOwnershipId"
+                :options="ownershipOptions"
+                :searchable="false"
+                class="select"
+              />
+            </label>
+            <label class="ui-item-form-field">
+              <span class="ui-item-form-label">Desde</span>
+              <input v-model="periodStartDate" class="input" type="date" />
+            </label>
+            <AButton
+              variant="ghost"
+              :loading="periodBusy"
+              :disabled="!periodOwnershipId || !periodStartDate"
+              @click="addPeriod"
+            >
+              Añadir tramo
+            </AButton>
+          </div>
+          <AState v-if="periodError" status="error" layout="inline">{{ periodError }}</AState>
+        </section>
 
         <div class="a-pf-setup-coverage">
           <div>

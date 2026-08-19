@@ -254,6 +254,10 @@ export function useAccountingPage() {
     subcategory_key: '',
     notes: '',
     revaluation_new_value: '',
+    // Detalle de la operación cuando la cuenta de inversión es una posición seguida por
+    // unidades; el resto de movimientos lo ignoran.
+    investment_units: '',
+    investment_unit_price: '',
   });
   const lastQuickClassification = reactive<
     Record<'income' | 'expense' | 'debt_payment', LastQuickClassification>
@@ -1410,6 +1414,8 @@ export function useAccountingPage() {
       quickEntryForm.destination_amount = '';
       quickEntryForm.flow_family = '';
       quickEntryForm.revaluation_new_value = '';
+      quickEntryForm.investment_units = '';
+      quickEntryForm.investment_unit_price = '';
       quickEntryForm.investment_direction = 'inflow';
       const remembered =
         movementType === 'income' || movementType === 'expense' || movementType === 'debt_payment'
@@ -2292,6 +2298,8 @@ export function useAccountingPage() {
     quickEntryForm.subcategory_key = '';
     quickEntryForm.notes = '';
     quickEntryForm.revaluation_new_value = '';
+    quickEntryForm.investment_units = '';
+    quickEntryForm.investment_unit_price = '';
   }
   function resetEditTransactionForm() {
     editTransactionId.value = null;
@@ -3877,6 +3885,12 @@ export function useAccountingPage() {
             ...(quickInvestmentIsCrossCurrency.value
               ? { destination_amount: formatDecimalInput(quickEntryForm.destination_amount) }
               : {}),
+            ...(quickEntryForm.investment_units.trim()
+              ? { investment_units: formatDecimalInput(quickEntryForm.investment_units) }
+              : {}),
+            ...(quickEntryForm.investment_unit_price.trim()
+              ? { investment_unit_price: formatDecimalInput(quickEntryForm.investment_unit_price) }
+              : {}),
           }
         : {}),
       ...(quickEntryForm.movement_type === 'debt_payment'
@@ -4015,6 +4029,8 @@ export function useAccountingPage() {
     quickEntryForm.subcategory_key = classifiedEntry?.subcategory_key ?? '';
     quickEntryForm.notes = transaction.notes ?? '';
     quickEntryForm.revaluation_new_value = '';
+    quickEntryForm.investment_units = '';
+    quickEntryForm.investment_unit_price = '';
   }
 
   return {

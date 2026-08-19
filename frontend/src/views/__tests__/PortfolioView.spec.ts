@@ -73,7 +73,10 @@ const position = {
   tracking_style: 'units_based',
   native_value: '12000',
   native_currency: 'EUR',
+  holding_currency: 'EUR',
   observed_on: '2025-12-31',
+  asset_class: 'equity',
+  class_breakdown: [],
   value_status: 'fresh',
   performance,
   attribution: { asset: '1000', fx: '0', total: '1000', method: 'closing_fx_residual' },
@@ -182,15 +185,19 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('Valor de cartera');
     expect(wrapper.text()).toContain('12.000,00');
     expect(wrapper.text()).toContain('Dónde está invertida');
-    expect(wrapper.text()).toContain('Registrar');
+    // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la
+    // posición, tras un icono.
+    expect(wrapper.text()).not.toContain('Registrar');
+    expect(wrapper.find('[aria-label^="Operaciones de cartera"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Importar CSV');
-    expect(wrapper.text()).toContain('Configurar posiciones · 1');
+    // Los recurrentes son botones de icono: su nombre vive en `aria-label`, no en el texto.
+    expect(wrapper.find('[aria-label="Configurar posiciones · 1 pendientes"]').exists()).toBe(true);
 
     await wrapper.findAll('.a-pf-tabs-bar .tab')[1]!.trigger('click');
     await wrapper.get('.a-pf-position-list button').trigger('click');
 
     expect(document.body.textContent).toContain('Fondo Global');
-    expect(document.body.textContent).toContain('Atribución divisa');
+    expect(document.body.textContent).toContain('Ha rendido tu dinero');
     expect(document.body.querySelector('form')).toBeNull();
   });
 
@@ -198,10 +205,7 @@ describe('PortfolioView', () => {
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
     await flushPromises();
 
-    const button = wrapper
-      .findAll('button')
-      .find((item) => item.text().includes('Volver a Patrimonio'));
-    await button!.trigger('click');
+    await wrapper.get('[aria-label="Volver a Patrimonio"]').trigger('click');
 
     expect(mocks.push).toHaveBeenCalledWith('/patrimonio');
   });
@@ -211,10 +215,7 @@ describe('PortfolioView', () => {
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
     await flushPromises();
 
-    const button = wrapper
-      .findAll('button')
-      .find((item) => item.text().includes('Volver a Patrimonio'));
-    await button!.trigger('click');
+    await wrapper.get('[aria-label="Volver a Patrimonio"]').trigger('click');
 
     expect(mocks.push).toHaveBeenCalledWith('/?tab=evolution&range=3a');
   });
