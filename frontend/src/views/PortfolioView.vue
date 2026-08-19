@@ -15,6 +15,9 @@ import {
   positionBaseValue,
   returnLabel,
   usePortfolioStore,
+  type AllocationRow,
+  type AllocationScope,
+  type PortfolioAllocation,
   type PositionPerformance,
   type PortfolioQuery,
   type PortfolioOperationOptions,
@@ -41,15 +44,16 @@ import {
 import { currencySymbol, formatAmount, formatMoney, formatPct, toNumber } from '@/lib/format';
 import { dateToIso, formatShortMonthYear } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
+import PortfolioStrategyModal from '@/domains/portfolio/components/PortfolioStrategyModal.vue';
 
-type PortfolioTab = 'summary' | 'positions' | 'evolution';
+type PortfolioTab = 'summary' | 'positions' | 'allocation' | 'evolution';
 type PeriodPreset = '1m' | 'ytd' | '1y' | '3y' | 'all' | 'custom';
 
 const route = useRoute();
 const router = useRouter();
 const store = usePortfolioStore();
 
-const validTabs: PortfolioTab[] = ['summary', 'positions', 'evolution'];
+const validTabs: PortfolioTab[] = ['summary', 'positions', 'allocation', 'evolution'];
 const validPeriods: PeriodPreset[] = ['1m', 'ytd', '1y', '3y', 'all', 'custom'];
 const activeTab = ref<PortfolioTab>(
   validTabs.includes(route.query.tab as PortfolioTab)
@@ -72,6 +76,67 @@ const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
 const operationOpen = ref(false);
 const importOpen = ref(false);
 const setupOpen = ref(false);
+const strategyOpen = ref(false);
+const allocation = ref<PortfolioAllocation | null>(null);
+const allocationLoading = ref(false);
+const allocationError = ref<string | null>(null);
+// La política es de un ámbito de titularidad, no del miembro: "lo de Pablo", "lo de
+// Lucas" y "lo compartido" son mandatos distintos y una política única no diría nada.
+const ownershipId = ref<number | null>(null);
+const scopes = ref<AllocationScope[]>([]);
+
+// El selector dice cuánto hay en cada ámbito, y se aterriza en el que más pesa: es casi
+// siempre el que vienes a mirar. Sin esto la vista abría en el primero que llegara, que
+// podía ser el de un menor con cuatrocientos euros o el de alguien sin posiciones.
+const ownershipOptions = computed<ASelectItem[]>(() =>
+  scopes.value.map((row) => ({
+    value: String(row.ownership_id),
+    label: `${row.label} · ${row.position_count} posiciones`,
+  })),
+);
+const ownershipLabel = computed(
+  () => scopes.value.find((row) => row.ownership_id === ownershipId.value)?.label ?? 'la cartera',
+);
+
+async function loadOwnerships() {
+  if (scopes.value.length) return;
+  try {
+    scopes.value = (await corePortfolioApi.getAllocationScopes()).data;
+    if (ownershipId.value === null && scopes.value.length) {
+      ownershipId.value = scopes.value[0]!.ownership_id;
+    }
+  } catch {
+    scopes.value = [];
+  }
+}
+
+async function loadAllocation() {
+  if (ownershipId.value === null) return;
+  allocationLoading.value = true;
+  allocationError.value = null;
+  try {
+    allocation.value = (await corePortfolioApi.getAllocation(ownershipId.value)).data;
+  } catch (error: unknown) {
+    allocationError.value = toApiErrorMessage(error);
+    allocation.value = null;
+  } finally {
+    allocationLoading.value = false;
+  }
+}
+
+// Sin banda escrita la celda decía "—–—", tres guiones que no significan nada.
+function bandRange(row: AllocationRow): string {
+  if (!row.min_percent && !row.max_percent) return '—';
+  return `${row.min_percent ?? '—'}–${row.max_percent ?? '—'}`;
+}
+
+function bandLabel(band: string): string {
+  return (
+    { within: 'En banda', above: 'Por encima', below: 'Por debajo', unplanned: 'Sin planear' }[
+      band
+    ] ?? band
+  );
+}
 const setupPositionId = ref<number | null>(null);
 const expandedClasses = ref(new Set<string>());
 
@@ -551,6 +616,20 @@ onMounted(() => {
   void store.refresh(query.value);
   void loadOperationOptions();
 });
+
+// La asignación se carga al entrar en su pestaña y al cambiar de ámbito: es una lectura
+// aparte del workspace, porque su alcance lo decide la titularidad y no el periodo.
+// `immediate` porque se puede entrar directo por URL a la pestaña: sin él, al abrir
+// /cartera?tab=allocation no se cargaba nada, ya que el watcher espera un cambio.
+watch(
+  [activeTab, ownershipId],
+  async ([tab]) => {
+    if (tab !== 'allocation') return;
+    await loadOwnerships();
+    await loadAllocation();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -639,6 +718,7 @@ onMounted(() => {
           v-for="tab in [
             { id: 'summary', label: 'Resumen' },
             { id: 'positions', label: 'Posiciones' },
+            { id: 'allocation', label: 'Asignación' },
             { id: 'evolution', label: 'Evolución' },
           ]"
           :key="tab.id"
@@ -1077,6 +1157,85 @@ onMounted(() => {
         </template>
       </section>
 
+      <section v-else-if="activeTab === 'allocation'" class="sect a-pf-allocation-section">
+        <ASectHead
+          eyebrow="Asignación"
+          title="Dónde quieres estar"
+          :subtitle="
+            allocation?.strategy
+              ? `Política vigente desde ${formatShortMonthYear(allocation.strategy.effective_from)}`
+              : 'Sin política escrita todavía: la cartera puede decirte dónde estás, pero no si es donde querías estar.'
+          "
+        >
+          <template #actions>
+            <ASelect
+              v-model="ownershipId"
+              :options="ownershipOptions"
+              :searchable="false"
+              aria-label="Ámbito de titularidad"
+              class="filter-ctrl"
+            />
+            <AButton variant="primary" :disabled="!ownershipId" @click="strategyOpen = true">
+              {{ allocation?.strategy ? 'Editar política' : 'Escribir política' }}
+            </AButton>
+          </template>
+        </ASectHead>
+
+        <AState v-if="allocationLoading" status="loading" layout="panel">
+          Calculando la desviación…
+        </AState>
+        <AState v-else-if="allocationError" status="error" layout="panel">
+          {{ allocationError }}
+        </AState>
+        <AState
+          v-else-if="!allocation || !allocation.by_class.length"
+          status="empty"
+          layout="panel"
+        >
+          Este ámbito no tiene posiciones.
+        </AState>
+        <div v-else class="a-pf-table-scroll">
+          <table class="data-table a-pf-allocation-table">
+            <thead>
+              <tr>
+                <th>Clase</th>
+                <th class="num">Valor</th>
+                <th class="num">Actual</th>
+                <th class="num">Objetivo</th>
+                <th class="num">Banda</th>
+                <th class="num">
+                  Desvío
+                  <AInfoHint
+                    label="Cuánto habría que mover para llegar al objetivo. Positivo significa que le falta dinero; negativo, que va sobrado."
+                  />
+                </th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in allocation.by_class" :key="row.asset_class">
+                <td>
+                  <i class="a-pf-dot" :class="`is-${row.asset_class}`"></i>
+                  {{ portfolioAssetClassLabels[row.asset_class ?? 'other'] ?? row.asset_class }}
+                </td>
+                <td class="num mono">{{ money(row.value) }}</td>
+                <td class="num mono">{{ formatPct(Number(row.actual_percent) / 100, 1) }}</td>
+                <td class="num mono">
+                  {{ row.target_percent ? formatPct(Number(row.target_percent) / 100, 1) : '—' }}
+                </td>
+                <td class="num mono">{{ bandRange(row) }}</td>
+                <td class="num mono" :class="signClass(row.drift_value)">
+                  {{ row.drift_value ? signedMoney(row.drift_value) : '—' }}
+                </td>
+                <td>
+                  <span class="a-pf-band" :class="`is-${row.band}`">{{ bandLabel(row.band) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section v-else class="sect">
         <ASectHead
           eyebrow="Evolución"
@@ -1251,6 +1410,19 @@ onMounted(() => {
       :options="operationOptionsData"
       @close="containersOpen = false"
       @saved="onPortfolioSaved"
+    />
+    <PortfolioStrategyModal
+      :open="strategyOpen"
+      :options="operationOptionsData"
+      :ownership-id="ownershipId"
+      :ownership-label="ownershipLabel"
+      @close="strategyOpen = false"
+      @saved="
+        (message) => {
+          successMessage = message;
+          void loadAllocation();
+        }
+      "
     />
     <PortfolioSetupModal
       :open="setupOpen"

@@ -315,3 +315,116 @@ export type PositionOwnershipPeriodPayload = {
   start_date: string;
   shares: PositionOwnershipShare[];
 };
+
+export type AllocationTarget = {
+  id?: number;
+  asset_class: string;
+  position_id?: number | null;
+  target_percent: string;
+  min_percent: string | null;
+  max_percent: string | null;
+};
+
+export type AllocationStrategy = {
+  id: number;
+  ownership_id: number;
+  effective_from: string;
+  note: string;
+  max_cost_share: string;
+  min_line_amount: string;
+  targets: AllocationTarget[];
+  target_total: string;
+  created_at: string;
+};
+
+export type AllocationStrategyPayload = {
+  ownership_id: number;
+  effective_from: string;
+  note?: string;
+  min_line_amount?: string;
+  max_cost_share?: string;
+  targets: Omit<AllocationTarget, 'id'>[];
+};
+
+// `band` dice si la clase está dentro de su banda de tolerancia, fuera por arriba o por
+// abajo, o si es algo que tienes sin haberlo planeado.
+export type AllocationRow = {
+  asset_class?: string;
+  position_id?: number;
+  value: string;
+  actual_percent: string;
+  target_percent: string | null;
+  min_percent: string | null;
+  max_percent: string | null;
+  drift_value: string | null;
+  band: 'within' | 'above' | 'below' | 'unplanned';
+};
+
+export type PortfolioAllocation = {
+  ownership_id: number;
+  on_date: string;
+  currency: string;
+  strategy: { id: number; effective_from: string; note: string; target_total: string } | null;
+  total_value: string;
+  position_count: number;
+  by_class: AllocationRow[];
+  by_position: AllocationRow[];
+};
+
+export type AllocationScope = {
+  ownership_id: number;
+  kind: 'individual' | 'shared';
+  label: string;
+  position_count: number;
+  value: string;
+  has_strategy: boolean;
+};
+
+export type ContributionLine = {
+  position_id: number;
+  name: string;
+  asset_class: string;
+  amount: string;
+  tax_transferable: boolean;
+  target_percent: string;
+  gap_before: string;
+};
+
+export type ContributionSolve = {
+  status: 'ok' | 'no_strategy' | 'incomplete_strategy';
+  declared_percent?: string;
+  amount: string;
+  reserved_cash?: string;
+  leftover?: string;
+  lines: ContributionLine[];
+  commitments?: { position_id: number; amount: string; period: string; reason: string }[];
+  accumulate?: { cash_account_id: number; container: string; amount: string; reason: string }[];
+  skipped?: { position_id: number; reason: string }[];
+};
+
+export type ContributionBasketLine = {
+  id: number;
+  position_id: number | null;
+  cash_account_id: number | null;
+  name: string;
+  amount: string;
+  reason: string;
+  status: 'pending' | 'confirmed' | 'skipped';
+  confirmed_at: string | null;
+};
+
+export type ContributionBasket = {
+  id: number;
+  ownership_id: number;
+  strategy_id: number;
+  booking_date: string;
+  amount: string;
+  reserved_cash: string;
+  leftover: string;
+  status: 'draft' | 'confirmed' | 'discarded';
+  source_account_id: number | null;
+  explanation: Record<string, unknown>;
+  lines: ContributionBasketLine[];
+  created_at: string;
+  confirmed_at: string | null;
+};

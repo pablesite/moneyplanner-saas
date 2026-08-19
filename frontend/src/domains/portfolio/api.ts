@@ -19,6 +19,12 @@ import type {
   PortfolioContainerPayload,
   PositionOwnershipPeriod,
   PositionOwnershipPeriodPayload,
+  AllocationStrategy,
+  AllocationStrategyPayload,
+  AllocationScope,
+  PortfolioAllocation,
+  ContributionSolve,
+  ContributionBasket,
 } from './types';
 
 export const corePortfolioApi = {
@@ -93,6 +99,50 @@ export const corePortfolioApi = {
   // One request instead of five: each of the old endpoints rebuilt the whole performance
   // context, so every filter change paid that cost five times over. Instruments stay
   // separate because they are a catalogue, not part of the period read.
+  getStrategies(ownershipId: number) {
+    return coreApi.get<AllocationStrategy[]>('/api/portfolio/strategies/', {
+      params: { ownership_id: ownershipId },
+    });
+  },
+  createStrategy(payload: AllocationStrategyPayload) {
+    return coreApi.post<AllocationStrategy>('/api/portfolio/strategies/', payload);
+  },
+  updateStrategy(id: number, payload: Partial<AllocationStrategyPayload>) {
+    return coreApi.patch<AllocationStrategy>(`/api/portfolio/strategies/${id}/`, payload);
+  },
+  getAllocationScopes() {
+    return coreApi.get<AllocationScope[]>('/api/portfolio/allocation/scopes/');
+  },
+  getAllocation(ownershipId: number, onDate?: string) {
+    return coreApi.get<PortfolioAllocation>('/api/portfolio/allocation/', {
+      params: { ownership_id: ownershipId, ...(onDate ? { on_date: onDate } : {}) },
+    });
+  },
+  solveContribution(ownershipId: number, amount: string) {
+    return coreApi.post<ContributionSolve>('/api/portfolio/contribution/solve/', {
+      ownership_id: ownershipId,
+      amount,
+    });
+  },
+  getBaskets() {
+    return coreApi.get<ContributionBasket[]>('/api/portfolio/baskets/');
+  },
+  createBasket(ownershipId: number, amount: string, sourceAccountId?: number) {
+    return coreApi.post<ContributionBasket>('/api/portfolio/baskets/', {
+      ownership_id: ownershipId,
+      amount,
+      ...(sourceAccountId ? { source_account_id: sourceAccountId } : {}),
+    });
+  },
+  confirmBasket(id: number, lineIds?: number[], sourceAccountId?: number) {
+    return coreApi.post<ContributionBasket>(`/api/portfolio/baskets/${id}/confirm/`, {
+      ...(lineIds ? { line_ids: lineIds } : {}),
+      ...(sourceAccountId ? { source_account_id: sourceAccountId } : {}),
+    });
+  },
+  discardBasket(id: number) {
+    return coreApi.post<ContributionBasket>(`/api/portfolio/baskets/${id}/discard/`, {});
+  },
   getOwnershipPeriods(positionId: number) {
     return coreApi.get<PositionOwnershipPeriod[]>('/api/portfolio/ownership-periods/', {
       params: { position_id: positionId },
