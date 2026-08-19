@@ -124,10 +124,12 @@ async function loadAllocation() {
   }
 }
 
-// Sin banda escrita la celda decía "—–—", tres guiones que no significan nada.
+// Son porcentajes, y llegan con tres decimales: sin formatear, una banda de 45 a 65 se
+// leía como "45.000–65.000", que en tipografía mono parece decenas de miles.
 function bandRange(row: AllocationRow): string {
   if (!row.min_percent && !row.max_percent) return '—';
-  return `${row.min_percent ?? '—'}–${row.max_percent ?? '—'}`;
+  const edge = (value: string | null) => (value === null ? '—' : formatPct(Number(value) / 100, 0));
+  return `${edge(row.min_percent)} – ${edge(row.max_percent)}`;
 }
 
 function bandLabel(band: string): string {
