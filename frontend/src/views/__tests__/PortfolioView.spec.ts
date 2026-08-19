@@ -114,6 +114,7 @@ describe('PortfolioView', () => {
       },
     });
     mocks.getWorkspace.mockResolvedValue({
+      cash: { value: '0' },
       overview: {
         period: performance.period,
         member_id: null,

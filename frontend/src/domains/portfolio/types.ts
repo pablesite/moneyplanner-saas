@@ -136,6 +136,9 @@ export type PortfolioWorkspacePayload = {
   // Las posiciones que el filtro de inventario deja dentro, o null si no hay filtro. Todo
   // lo demás del payload —hero, evolución y rentabilidad— describe ya ese subconjunto.
   scope: number[] | null;
+  // Efectivo de contenedor, que cuenta en el valor pero no es ninguna posición: sin él
+  // la composición sumaba menos que el hero y la liquidez no salía por ningún lado.
+  cash: { value: string };
   overview: PortfolioOverview;
   performance: PortfolioPerformance;
   positions: PortfolioPositionsResponse;

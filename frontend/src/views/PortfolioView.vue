@@ -330,11 +330,16 @@ const composition = computed(() => {
       else groups.set(slice.key, [entry]);
     }
   }
+  // El efectivo enlazado cuenta en el valor de la cartera pero no es ninguna posición:
+  // sin sumarlo aquí el gráfico daba menos que el hero y la liquidez no salía por ningún
+  // lado. Se suma a la clase Liquidez, que puede existir ya con posiciones propias.
+  const cash = toNumber(store.cashValue);
+  if (cash > 0 && !groups.has('cash')) groups.set('cash', []);
   const rows = [...groups.entries()]
     .map(([key, members]) => ({
       key,
       label: portfolioAssetClassLabels[key] ?? key,
-      value: members.reduce((sum, member) => sum + member.value, 0),
+      value: (key === 'cash' ? cash : 0) + members.reduce((sum, member) => sum + member.value, 0),
       color: portfolioAssetClassColors[key] ?? portfolioAssetClassColors.other!,
       members: [...members].sort((a, b) => b.value - a.value),
     }))
@@ -906,15 +911,20 @@ watch(
                   type="button"
                   class="a-pf-composition-row"
                   :aria-expanded="expandedClasses.has(item.key)"
+                  :disabled="!item.members.length"
                   @click="toggleClass(item.key)"
                 >
                   <i :class="`is-${item.key}`"></i>
                   <span>
                     {{ item.label }}
-                    <em>{{ item.members.length }}</em>
+                    <em v-if="item.members.length">{{ item.members.length }}</em>
                     <AInfoHint
                       v-if="item.key === 'unclassified'"
                       label="Nadie ha dicho todavía qué son. Un fondo, un ETF, un plan o una cartera gestionada pueden ser de cualquier clase, así que la app no lo adivina. Ábrelo y clasifícalos: hasta entonces no cuentan en ninguna clase real."
+                    />
+                    <AInfoHint
+                      v-else-if="item.key === 'cash' && !item.members.length"
+                      label="El efectivo enlazado a tus contenedores: el dinero que espera dentro de la plataforma antes de invertirse. Cuenta en el valor de la cartera, así que cuenta también aquí."
                     />
                   </span>
                   <strong class="mono">{{ money(item.value) }}</strong>

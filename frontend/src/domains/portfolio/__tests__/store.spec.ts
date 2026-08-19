@@ -22,6 +22,7 @@ describe('portfolio store', () => {
 
   it('publishes the workspace atomically', async () => {
     const payload = {
+      cash: { value: '0' },
       overview: { value: '100' },
       performance: { monetary_result: '10' },
       positions: { results: [] },

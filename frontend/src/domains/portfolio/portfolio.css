@@ -165,11 +165,20 @@
   cursor: pointer;
 }
 
-.dir-a .a-pf-composition-row:hover {
+.dir-a .a-pf-composition-row:hover:not(:disabled) {
   background: var(--hover);
 }
 
-.dir-a .a-pf-composition-row span {
+/* La liquidez de contenedor no tiene posiciones detrás que desplegar: la fila informa,
+   no abre nada. */
+.dir-a .a-pf-composition-row:disabled {
+  cursor: default;
+}
+
+/* Hijo directo, no cualquier span: el tooltip de `AInfoHint` también es un span y con un
+   selector abierto ganaba en especificidad al `display: none` del sistema, así que se
+   quedaba desplegado en la fila. Mismo caso que en la ficha de posición. */
+.dir-a .a-pf-composition-row > span {
   display: flex;
   align-items: center;
   gap: var(--space-2);
