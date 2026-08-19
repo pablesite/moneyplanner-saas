@@ -21,6 +21,64 @@ const isActive = ref(true);
 const saving = ref(false);
 const error = ref<string | null>(null);
 
+// Enlazar una cuenta mete su saldo en la cartera, así que solo debería enlazarse el
+// efectivo que de verdad es munición de inversión: el monedero de una plataforma o una
+// cuenta que no se usa para gastar. Una cuenta operativa metería la compra semanal en el
+// valor de la cartera y arrastraría la rentabilidad.
+const linkAccountId = ref('');
+const linking = ref(false);
+
+const cashAccounts = computed(() =>
+  (props.options?.cash_accounts ?? []).filter(
+    (row) => String(row.container_id) === editingId.value,
+  ),
+);
+// Core decide qué es enlazable: solo cuentas de liquidez y solo las libres. Ofrecer
+// cualquier cuenta de activo dejaba elegir la cuenta contable de una posición, que no es
+// efectivo de nada.
+const accountOptions = computed(() => [
+  { value: '', label: 'Elige una cuenta…' },
+  ...(props.options?.linkable_cash_accounts ?? []).map((row) => ({
+    value: String(row.id),
+    label: `${row.name} · ${row.currency}`,
+  })),
+]);
+
+async function linkCash() {
+  const account = (props.options?.linkable_cash_accounts ?? []).find(
+    (row) => String(row.id) === linkAccountId.value,
+  );
+  if (!editing.value || !account) return;
+  linking.value = true;
+  error.value = null;
+  try {
+    await corePortfolioApi.linkCashAccount({
+      container_id: editing.value.id,
+      ledger_account_id: account.id,
+      currency: account.currency,
+    });
+    linkAccountId.value = '';
+    emit('saved', `Efectivo enlazado a ${editing.value.name}.`);
+  } catch (caught: unknown) {
+    error.value = toApiErrorMessage(caught);
+  } finally {
+    linking.value = false;
+  }
+}
+
+async function unlinkCash(id: number) {
+  linking.value = true;
+  error.value = null;
+  try {
+    await corePortfolioApi.unlinkCashAccount(id);
+    emit('saved', 'Efectivo desenlazado.');
+  } catch (caught: unknown) {
+    error.value = toApiErrorMessage(caught);
+  } finally {
+    linking.value = false;
+  }
+}
+
 const containers = computed(() => props.options?.containers ?? []);
 const typeOptions = computed<ASelectItem[]>(() =>
   (props.options?.container_types ?? []).map((row) => ({ value: row.value, label: row.label })),
@@ -148,6 +206,46 @@ async function save() {
         {{ editing.position_count }}
         {{ editing.position_count === 1 ? 'posición usa' : 'posiciones usan' }} este contenedor.
       </AState>
+
+      <section v-if="editing" class="a-pf-container-cash">
+        <h3>
+          Efectivo del contenedor
+          <AInfoHint>
+            El dinero que espera dentro de la plataforma antes de invertirse: el monedero de
+            Urbanitae, el saldo sin invertir de un exchange. Enlazarlo lo
+            <strong>mete en la cartera</strong>, así que solo debería enlazarse el efectivo que de
+            verdad es munición de inversión. Una cuenta con la que también pagas la compra metería
+            ese gasto en el valor de tu cartera y arrastraría tu rentabilidad.
+          </AInfoHint>
+        </h3>
+
+        <ul v-if="cashAccounts.length" class="a-pf-container-cash-list">
+          <li v-for="row in cashAccounts" :key="row.id">
+            <span>{{ row.name }}</span>
+            <small class="mono">{{ row.available }} {{ row.currency }}</small>
+            <AButton variant="ghost" size="sm" :disabled="linking" @click="unlinkCash(row.id)">
+              Desenlazar
+            </AButton>
+          </li>
+        </ul>
+        <AState v-else status="empty" layout="inline">
+          Sin efectivo enlazado. No hace falta: solo lo necesitas si quieres que ese dinero cuente
+          como parte de la cartera.
+        </AState>
+
+        <div class="a-pf-container-cash-add">
+          <ASelect
+            v-model="linkAccountId"
+            :options="accountOptions"
+            :searchable="false"
+            aria-label="Cuenta a enlazar"
+            class="select"
+          />
+          <AButton variant="ghost" :loading="linking" :disabled="!linkAccountId" @click="linkCash">
+            Enlazar
+          </AButton>
+        </div>
+      </section>
 
       <dl v-if="containers.length" class="a-pf-setup-context">
         <div v-for="row in containers" :key="row.id">

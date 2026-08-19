@@ -15,6 +15,7 @@ import type {
   PortfolioOperationPreview,
   PortfolioPositionSetupPayload,
   PortfolioValuationResync,
+  PortfolioCashAccount,
   PortfolioContainer,
   PortfolioContainerPayload,
   PositionOwnershipPeriod,
@@ -109,6 +110,12 @@ export const corePortfolioApi = {
   },
   updateStrategy(id: number, payload: Partial<AllocationStrategyPayload>) {
     return coreApi.patch<AllocationStrategy>(`/api/portfolio/strategies/${id}/`, payload);
+  },
+  linkCashAccount(payload: { container_id: number; ledger_account_id: number; currency: string }) {
+    return coreApi.post<PortfolioCashAccount>('/api/portfolio/cash-accounts/', payload);
+  },
+  unlinkCashAccount(id: number) {
+    return coreApi.delete(`/api/portfolio/cash-accounts/${id}/`);
   },
   getAllocationScopes() {
     return coreApi.get<AllocationScope[]>('/api/portfolio/allocation/scopes/');

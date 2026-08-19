@@ -210,6 +210,7 @@ export type PortfolioCashAccount = {
 export type PortfolioOperationOptions = {
   positions: PortfolioOperationPosition[];
   cash_accounts: PortfolioCashAccount[];
+  linkable_cash_accounts: { id: number; name: string; currency: string; balance: string }[];
   containers: PortfolioContainer[];
   asset_classes: { value: string; label: string }[];
   container_types: { value: string; label: string }[];

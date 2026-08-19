@@ -1328,3 +1328,48 @@
     grid-template-columns: minmax(0, 1fr) 64px 64px 64px;
   }
 }
+
+.dir-a-sheet .a-pf-container-cash {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-container-cash h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.dir-a-sheet .a-pf-container-cash-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dir-a-sheet .a-pf-container-cash-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 38px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.dir-a-sheet .a-pf-container-cash-list small {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.dir-a-sheet .a-pf-container-cash-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+}
