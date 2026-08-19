@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.55.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.54.0...moneyplanner-saas-v0.55.0) (2026-08-19)
+
+
+### Features
+
+* **portfolio:** add the Asignación tab and the policy editor ([0ec756e](https://github.com/pablesite/moneyplanner-saas/commit/0ec756ea4f4592c3b140bad1732049038f227010))
+* **portfolio:** link a container's cash from the Contenedores modal ([ae623c2](https://github.com/pablesite/moneyplanner-saas/commit/ae623c2767b2b6d7f363871445ace5674a437994))
+* **portfolio:** open a contribution with what the budget planned, and close phase 6 ([3096c1e](https://github.com/pablesite/moneyplanner-saas/commit/3096c1e02dc0bd1601282ef0a363c1a6bd9c6937))
+* **portfolio:** review, confirm or discard a saved basket ([2e98371](https://github.com/pablesite/moneyplanner-saas/commit/2e9837142ff22f613f88cbdf2956abc3a83fb09c))
+* **portfolio:** show "Sin clasificar" as the open question it is ([bbed0e0](https://github.com/pablesite/moneyplanner-saas/commit/bbed0e06c8ef73cd6b0c4ad5a9e799c46675d457))
+* **portfolio:** show the liquidity in the composition of the summary ([1d598b0](https://github.com/pablesite/moneyplanner-saas/commit/1d598b04e85a0dfd9c262329963466f5a66cb765))
+* **portfolio:** simulate a contribution and keep it as a basket ([a0fe0c2](https://github.com/pablesite/moneyplanner-saas/commit/a0fe0c2996d9d6c3c3687508fda21210051e3dc8))
+
+
+### Bug Fixes
+
+* **portfolio:** read the tolerance band as percentages, at the shared table scale ([5aee836](https://github.com/pablesite/moneyplanner-saas/commit/5aee8366bf41a6ebe0b58995c77f14116e644d85))
+
 ## [0.54.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.53.0...moneyplanner-saas-v0.54.0) (2026-08-19)
 
 
