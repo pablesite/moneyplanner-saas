@@ -131,8 +131,8 @@ export const corePortfolioApi = {
       amount,
     });
   },
-  getBaskets() {
-    return coreApi.get<ContributionBasket[]>('/api/portfolio/baskets/');
+  getBaskets(params: { ownership_id?: number; status?: string } = {}) {
+    return coreApi.get<ContributionBasket[]>('/api/portfolio/baskets/', { params });
   },
   createBasket(ownershipId: number, amount: string, sourceAccountId?: number) {
     return coreApi.post<ContributionBasket>('/api/portfolio/baskets/', {

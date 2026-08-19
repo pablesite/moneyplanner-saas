@@ -214,6 +214,10 @@ export type PortfolioOperationOptions = {
   positions: PortfolioOperationPosition[];
   cash_accounts: PortfolioCashAccount[];
   linkable_cash_accounts: { id: number; name: string; currency: string; balance: string }[];
+  // De dónde puede salir el dinero: toda cuenta de liquidez propia, enlazada a un
+  // contenedor o no. Las enlazables excluyen justo las que financian una compra dentro
+  // de su propia plataforma.
+  funding_accounts: { id: number; name: string; currency: string; balance: string }[];
   containers: PortfolioContainer[];
   asset_classes: { value: string; label: string }[];
   container_types: { value: string; label: string }[];

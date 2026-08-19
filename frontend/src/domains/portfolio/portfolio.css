@@ -1451,3 +1451,134 @@
   font-size: 1rem;
   font-weight: 600;
 }
+
+/* Cestas de aportación: lo decidido que todavía no se ha ejecutado. Vive debajo de la
+   tabla de desviación, que es lo que las justifica. */
+.dir-a .a-pf-baskets {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.dir-a .a-pf-baskets-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dir-a .a-pf-baskets-head h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.dir-a .a-pf-basket {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.dir-a .a-pf-basket > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dir-a .a-pf-basket > header strong {
+  font-size: 1.0625rem;
+}
+
+.dir-a .a-pf-basket > header small {
+  margin-left: var(--space-2);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a .a-pf-basket-state {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dir-a .a-pf-basket-state.is-confirmed {
+  border-color: var(--pos);
+  color: var(--pos);
+}
+
+.dir-a .a-pf-basket-lines {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a .a-pf-basket-lines li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.dir-a .a-pf-basket-lines li.is-done {
+  color: var(--muted);
+}
+
+.dir-a .a-pf-basket-lines label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.dir-a .a-pf-basket-lines small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a .a-pf-basket-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a .a-pf-basket-actions {
+  display: grid;
+  gap: var(--space-3);
+  align-items: end;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+}
+
+.dir-a .a-pf-basket-actions .a-pf-basket-note {
+  grid-column: 1 / -1;
+}
+
+.dir-a .a-pf-basket-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .dir-a .a-pf-basket-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .dir-a .a-pf-basket-buttons {
+    justify-content: stretch;
+  }
+}

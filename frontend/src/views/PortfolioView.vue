@@ -5,6 +5,7 @@ import {
   PortfolioEvolutionChart,
   PortfolioImportModal,
   PortfolioOperationModal,
+  PortfolioBasketsPanel,
   PortfolioContributionModal,
   PortfolioSetupModal,
   PortfolioContainersModal,
@@ -79,6 +80,7 @@ const importOpen = ref(false);
 const setupOpen = ref(false);
 const strategyOpen = ref(false);
 const contributionOpen = ref(false);
+const basketsPanel = ref<InstanceType<typeof PortfolioBasketsPanel> | null>(null);
 const allocation = ref<PortfolioAllocation | null>(null);
 const allocationLoading = ref(false);
 const allocationError = ref<string | null>(null);
@@ -601,6 +603,13 @@ async function restorePosition(position: PositionPerformance) {
   } catch (caught: unknown) {
     actionError.value = toApiErrorMessage(caught);
   }
+}
+
+// Confirmar una cesta escribe en el ledger: la cartera entera cambia, no solo la
+// desviación de su ámbito.
+async function onBasketSaved(message: string) {
+  successMessage.value = message;
+  await Promise.all([store.refresh(query.value), loadOperationOptions(), loadAllocation()]);
 }
 
 async function onPortfolioSaved(message: string) {
@@ -1255,6 +1264,16 @@ watch(
             </tbody>
           </table>
         </div>
+
+        <!-- Lo que has decidido aportar y todavía no has ejecutado vive aquí, debajo de
+             la desviación que lo justifica. -->
+        <PortfolioBasketsPanel
+          ref="basketsPanel"
+          :ownership-id="ownershipId"
+          :options="operationOptionsData"
+          :currency="baseCurrency"
+          @saved="onBasketSaved"
+        />
       </section>
 
       <section v-else class="sect">
@@ -1443,6 +1462,7 @@ watch(
         (message) => {
           successMessage = message;
           void loadAllocation();
+          void basketsPanel?.reload();
         }
       "
     />

@@ -25,9 +25,9 @@ const error = ref<string | null>(null);
 
 const sourceOptions = computed(() => [
   { value: '', label: 'Sin declarar todavía' },
-  ...(props.options?.linkable_cash_accounts ?? []).map((row) => ({
+  ...(props.options?.funding_accounts ?? []).map((row) => ({
     value: String(row.id),
-    label: `${row.name} · ${row.currency}`,
+    label: `${row.name} · ${formatMoney(row.balance, row.currency === 'USD' ? 'USD' : 'EUR')}`,
   })),
 ]);
 const placed = computed(() =>
