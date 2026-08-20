@@ -462,7 +462,16 @@ export type ContributionSolve = {
   reserved_cash?: string;
   leftover?: string;
   lines: ContributionLine[];
-  commitments?: { position_id: number; amount: string; period: string; reason: string }[];
+  commitments?: {
+    position_id: number;
+    amount: string;
+    period: string;
+    reason: string;
+    // Lo que pide el compromiso en su periodo y lo que ya llevas puesto: sin esto, 150
+    // sobre un mínimo de 300 parece un incumplimiento cuando los otros 150 ya estaban.
+    target?: string;
+    contributed?: string;
+  }[];
   accumulate?: { cash_account_id: number; container: string; amount: string; reason: string }[];
   skipped?: {
     position_id: number;
@@ -506,7 +515,16 @@ export type ContributionBasket = {
   status: 'draft' | 'confirmed' | 'discarded';
   source_account_id: number | null;
   explanation: {
-    commitments?: { position_id: number; amount: string; period: string; reason: string }[];
+    commitments?: {
+      position_id: number;
+      amount: string;
+      period: string;
+      reason: string;
+      // Lo que pide el compromiso en su periodo y lo que ya llevas puesto: sin esto, 150
+      // sobre un mínimo de 300 parece un incumplimiento cuando los otros 150 ya estaban.
+      target?: string;
+      contributed?: string;
+    }[];
     skipped?: {
       position_id: number;
       reason: string;

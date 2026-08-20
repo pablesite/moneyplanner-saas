@@ -179,7 +179,14 @@ watch(
         <div v-if="solved.commitments?.length" class="a-pf-contribution-note">
           <strong>Compromisos primero</strong>
           <span v-for="row in solved.commitments" :key="row.position_id">
-            {{ money(row.amount) }} · {{ row.reason || 'compromiso' }}
+            {{ positionName(row.position_id) }}: {{ money(row.amount) }} ·
+            {{ row.reason || 'compromiso' }}
+            <!-- Con lo ya aportado delante: 150 sobre un mínimo de 300 no es un
+                 incumplimiento si los otros 150 ya estaban dentro este mes. -->
+            <template v-if="row.target && Number(row.contributed) > 0">
+              (llevas {{ money(row.contributed ?? '0') }} de {{ money(row.target) }}
+              {{ row.period === 'year' ? 'este año' : 'este mes' }})
+            </template>
           </span>
         </div>
 
