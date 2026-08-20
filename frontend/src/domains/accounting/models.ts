@@ -201,6 +201,7 @@ export type QuickLedgerTransactionWritePayload = {
   investment_direction?: '' | InvestmentDirection;
   investment_units?: string | null;
   investment_unit_price?: string | null;
+  fee_amount?: string | null;
   booking_date: string;
   value_date: string;
   description: string;

@@ -297,6 +297,13 @@ watch(
   { immediate: true },
 );
 
+// La comisión la paga la cuenta que el movimiento usa como origen contable, que en una
+// retirada es la que recibe el dinero.
+const investmentFeeCurrency = computed(() =>
+  investmentDirection.value === 'outflow'
+    ? props.page.quickInvestmentDestinationCurrency
+    : props.page.quickInvestmentOriginCurrency,
+);
 const investmentAccountId = computed(() =>
   investmentDirection.value === 'outflow'
     ? investmentOriginModel.value
@@ -621,6 +628,34 @@ const quickEntryHint = computed(() => {
               : `Rellenado automáticamente con el cambio del ${page.quickInvestmentFxNote.rateDate}.`
           }}
           Si quieres afinar con el tipo real de tu broker, edítalo.
+        </p>
+
+        <label v-if="!page.quickEntryIsEditing" class="ui-accounting-field">
+          <span>
+            Comisión{{ investmentFeeCurrency ? ` (${investmentFeeCurrency})` : '' }}
+            <AInfoHint
+              label="Lo que cobra el broker por ejecutar la operación. Se registra como gasto aparte, así que el importe de arriba sigue siendo el capital que llega a la posición y la cuenta que paga cuadra con el extracto."
+            />
+          </span>
+          <input
+            v-model="page.quickEntryForm.fee_amount"
+            class="input"
+            inputmode="decimal"
+            placeholder="0,00"
+          />
+        </label>
+        <p v-if="page.quickInvestmentFeePreview" class="ui-accounting-balance-feedback">
+          {{
+            page.quickInvestmentFeePreview.kind === 'credited'
+              ? 'Abono neto en la cuenta de destino:'
+              : 'Cargo total en la cuenta de origen:'
+          }}
+          <strong>{{
+            page.formatMoney(
+              page.quickInvestmentFeePreview.amount,
+              page.quickInvestmentFeePreview.currency,
+            )
+          }}</strong>
         </p>
 
         <div class="ui-accounting-form-grid ui-accounting-form-grid-wide">

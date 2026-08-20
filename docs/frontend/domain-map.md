@@ -217,6 +217,8 @@ Registrar dinero ya no vive aquí: compras, ventas, dividendos, comisiones, tras
 
 Del lado de Contabilidad, el formulario de **Inversión** reconoce cuándo la cuenta elegida es una posición de cartera: lo dice explícitamente, avisa cuando el dinero no sale del efectivo de ese contenedor —el formulario de la cartera solo dejaba financiar desde el mismo contenedor, y aquí se ofrecen todas las cuentas— y pide unidades y precio unitario cuando la posición se sigue por unidades. Sin eso, mover el registro a Contabilidad habría perdido el rastro de cuántas unidades movió cada operación. La correspondencia cuenta→posición se resuelve con `ledger_account_id`, que `operation_options` expone en posiciones y cuentas de efectivo.
 
+El formulario acepta también la **comisión** del broker, que hasta ahora no se podía indicar al registrar la operación: el importe es el capital que llega a la posición, así que sin un campo aparte había que elegir entre cuadrar la posición o cuadrar el banco. Se envía como `fee_amount` y Core la contabiliza como gasto propio vinculado, de modo que la posición recibe el importe limpio y la cuenta que paga se mueve por el total. Debajo del campo se dice cuál es ese total —«Cargo total en la cuenta de origen» en un aporte o una reinversión, «Abono neto en la cuenta de destino» en una retirada, porque la comisión la paga siempre la cuenta que el movimiento usa como origen contable—. No aparece al editar: la comisión ya existe entonces como movimiento propio y se corrige en su propia fila.
+
 **Requiere:** `canUsePortfolio()` → `core.portfolio`.
 
 ---

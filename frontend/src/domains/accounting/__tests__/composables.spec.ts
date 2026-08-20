@@ -79,6 +79,20 @@ function seedRefreshResponses() {
         created_at: '',
         updated_at: '',
       },
+      {
+        id: 2,
+        name: 'Fondo indexado',
+        account_type: 'asset',
+        currency: 'EUR',
+        origin: 'user',
+        asset_id: 7,
+        liability_id: null,
+        is_active: true,
+        notes: '',
+        current_balance: '5000.00',
+        created_at: '',
+        updated_at: '',
+      },
     ],
   } as never);
   vi.mocked(coreAccountingApi.getTransactions).mockResolvedValue({
@@ -102,6 +116,35 @@ function seedRefreshResponses() {
 function seedNetWorthResponses() {
   vi.mocked(coreNetWorthApi.getAssets).mockResolvedValue({ data: [] } as never);
   vi.mocked(coreNetWorthApi.getLiabilities).mockResolvedValue({ data: [] } as never);
+}
+
+async function mountInvestmentHarness(
+  overrides: { fee_amount?: string; investment_direction?: 'inflow' | 'outflow' } = {},
+) {
+  const Harness = defineComponent({
+    setup() {
+      return useAccountingPage();
+    },
+    template: '<div />',
+  });
+  const wrapper = mount(Harness);
+  await wrapper.vm.$nextTick();
+
+  // El tipo de movimiento limpia el formulario al cambiar, así que el resto se rellena
+  // después de que ese reinicio haya corrido.
+  wrapper.vm.quickEntryForm.movement_type = 'investment';
+  await wrapper.vm.$nextTick();
+  wrapper.vm.quickEntryForm.investment_direction = overrides.investment_direction ?? 'inflow';
+  wrapper.vm.quickEntryForm.booking_date = '2026-03-15';
+  wrapper.vm.quickEntryForm.value_date = '2026-03-15';
+  wrapper.vm.quickEntryForm.description = 'Compra fondo marzo';
+  wrapper.vm.quickEntryForm.amount = '250.00';
+  wrapper.vm.quickEntryForm.account_id = 1;
+  wrapper.vm.quickEntryForm.counterparty_account_id = 2;
+  wrapper.vm.quickEntryForm.fee_amount = overrides.fee_amount ?? '';
+  vi.mocked(coreAccountingApi.createQuickEntry).mockResolvedValue({ data: {} } as never);
+  await wrapper.vm.$nextTick();
+  return wrapper;
 }
 
 describe('useAccountingPage', () => {
@@ -145,6 +188,63 @@ describe('useAccountingPage', () => {
       }),
     );
     expect(store.transactionCreationLoading).toBe(false);
+
+    wrapper.unmount();
+  });
+
+  it('sends the broker fee alongside an investment', async () => {
+    const wrapper = await mountInvestmentHarness({ fee_amount: '3,50' });
+
+    await wrapper.vm.submitQuickEntry();
+
+    expect(coreAccountingApi.createQuickEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        movement_type: 'investment',
+        investment_direction: 'inflow',
+        amount: '250.00',
+        fee_amount: '3.50',
+      }),
+    );
+
+    wrapper.unmount();
+  });
+
+  it('omits the fee when the investment did not carry one', async () => {
+    const wrapper = await mountInvestmentHarness();
+
+    await wrapper.vm.submitQuickEntry();
+
+    const payload = vi.mocked(coreAccountingApi.createQuickEntry).mock.calls[0][0];
+    expect(payload).not.toHaveProperty('fee_amount');
+
+    wrapper.unmount();
+  });
+
+  it('announces what the funding account really pays for an aporte', async () => {
+    // El importe es el capital que llega a la posición, así que sin decirlo el saldo de la
+    // cuenta que paga no cuadraría con lo que se acaba de teclear.
+    const wrapper = await mountInvestmentHarness({ fee_amount: '3.50' });
+
+    expect(wrapper.vm.quickInvestmentFeePreview).toEqual({
+      kind: 'charged',
+      amount: 253.5,
+      currency: 'EUR',
+    });
+
+    wrapper.unmount();
+  });
+
+  it('announces the net credit for a retirada', async () => {
+    const wrapper = await mountInvestmentHarness({
+      fee_amount: '3.50',
+      investment_direction: 'outflow',
+    });
+
+    expect(wrapper.vm.quickInvestmentFeePreview).toEqual({
+      kind: 'credited',
+      amount: 246.5,
+      currency: 'EUR',
+    });
 
     wrapper.unmount();
   });

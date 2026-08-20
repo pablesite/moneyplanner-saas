@@ -258,6 +258,9 @@ export function useAccountingPage() {
     // unidades; el resto de movimientos lo ignoran.
     investment_units: '',
     investment_unit_price: '',
+    // Lo que cobra el broker por ejecutar la operación. Se registra aparte, como gasto
+    // propio, para no desviar hacia el coste el capital que llega a la posición.
+    fee_amount: '',
   });
   const lastQuickClassification = reactive<
     Record<'income' | 'expense' | 'debt_payment', LastQuickClassification>
@@ -684,6 +687,34 @@ export function useAccountingPage() {
     const origin = quickInvestmentOriginCurrency.value.trim().toUpperCase();
     const destination = quickInvestmentDestinationCurrency.value.trim().toUpperCase();
     return Boolean(origin && destination && origin !== destination);
+  });
+
+  // La comisión no cambia lo que llega a la posición, pero sí lo que se mueve en la cuenta
+  // que la paga: sin decirlo, el saldo del banco no cuadraría con lo que se acaba de teclear.
+  // Siempre la paga la cuenta que el movimiento usa como origen contable: la de liquidez en
+  // un aporte, la que recibe el dinero en una retirada y la de partida en una reinversión.
+  const quickInvestmentFeePreview = computed(() => {
+    if (quickEntryForm.movement_type !== 'investment') return null;
+    const fee = toNumber(quickEntryForm.fee_amount);
+    if (!(fee > 0)) return null;
+    const amount = toNumber(quickEntryForm.amount);
+    if (!(amount > 0)) return null;
+    if (quickEntryForm.investment_direction === 'outflow') {
+      const credited = quickInvestmentIsCrossCurrency.value
+        ? toNumber(quickEntryForm.destination_amount)
+        : amount;
+      if (!(credited > 0)) return null;
+      return {
+        kind: 'credited' as const,
+        amount: credited - fee,
+        currency: quickInvestmentDestinationCurrency.value || 'EUR',
+      };
+    }
+    return {
+      kind: 'charged' as const,
+      amount: amount + fee,
+      currency: quickInvestmentOriginCurrency.value || 'EUR',
+    };
   });
 
   // Autorrelleno del importe destino en inversión multimoneda usando el cambio
@@ -1416,6 +1447,7 @@ export function useAccountingPage() {
       quickEntryForm.revaluation_new_value = '';
       quickEntryForm.investment_units = '';
       quickEntryForm.investment_unit_price = '';
+      quickEntryForm.fee_amount = '';
       quickEntryForm.investment_direction = 'inflow';
       const remembered =
         movementType === 'income' || movementType === 'expense' || movementType === 'debt_payment'
@@ -2300,6 +2332,7 @@ export function useAccountingPage() {
     quickEntryForm.revaluation_new_value = '';
     quickEntryForm.investment_units = '';
     quickEntryForm.investment_unit_price = '';
+    quickEntryForm.fee_amount = '';
   }
   function resetEditTransactionForm() {
     editTransactionId.value = null;
@@ -3891,6 +3924,9 @@ export function useAccountingPage() {
             ...(quickEntryForm.investment_unit_price.trim()
               ? { investment_unit_price: formatDecimalInput(quickEntryForm.investment_unit_price) }
               : {}),
+            ...(quickEntryForm.fee_amount.trim()
+              ? { fee_amount: formatDecimalInput(quickEntryForm.fee_amount) }
+              : {}),
           }
         : {}),
       ...(quickEntryForm.movement_type === 'debt_payment'
@@ -4089,6 +4125,7 @@ export function useAccountingPage() {
     quickInvestmentDestinationCurrency,
     quickInvestmentIsCrossCurrency,
     quickInvestmentFxNote,
+    quickInvestmentFeePreview,
     quickTransferOriginCurrency,
     quickTransferDestinationCurrency,
     quickTransferIsCrossCurrency,
