@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.57.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.56.0...moneyplanner-saas-v0.57.0) (2026-08-20)
+
+
+### Features
+
+* **portfolio:** explain what the split leaves out, and simplify configurar posición ([5d9c802](https://github.com/pablesite/moneyplanner-saas/commit/5d9c802b230d5bbce7a00f507cd3ec211ed4462d))
+* **portfolio:** show the commitment with its position and what is already in ([48d6df4](https://github.com/pablesite/moneyplanner-saas/commit/48d6df49e9e2604ad0679f93b5013922cab99050))
+* **portfolio:** the Diversificación tab answers where the money really is ([f65d44b](https://github.com/pablesite/moneyplanner-saas/commit/f65d44be3d13924bef1e138d816eb25f0a780da0))
+
 ## [0.56.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.55.0...moneyplanner-saas-v0.56.0) (2026-08-20)
 
 
