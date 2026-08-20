@@ -116,6 +116,12 @@ export const corePortfolioApi = {
   linkCashAccount(payload: { container_id: number; ledger_account_id: number; currency: string }) {
     return coreApi.post<PortfolioCashAccount>('/api/portfolio/cash-accounts/', payload);
   },
+  // Mudar el efectivo de un contenedor a otra plataforma es cambiar la cuenta, no
+  // desenlazar y volver a enlazar: la cesta que ya apunte a este efectivo sigue
+  // hablando del mismo contenedor.
+  changeCashAccount(id: number, payload: { ledger_account_id: number; currency: string }) {
+    return coreApi.patch<PortfolioCashAccount>(`/api/portfolio/cash-accounts/${id}/`, payload);
+  },
   unlinkCashAccount(id: number) {
     return coreApi.delete(`/api/portfolio/cash-accounts/${id}/`);
   },

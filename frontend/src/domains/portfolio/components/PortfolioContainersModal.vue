@@ -52,6 +52,20 @@ async function linkCash() {
   linking.value = true;
   error.value = null;
   try {
+    // Si el contenedor ya tiene efectivo en esa moneda, esto es mudarlo de plataforma:
+    // se cambia la cuenta del enlace en vez de crear otro. Desenlazar y volver a
+    // enlazar no sirve —una cesta guardada bloquea el borrado— y además choca con el
+    // único enlace por contenedor y moneda.
+    const current = cashAccounts.value.find((row) => row.currency === account.currency);
+    if (current) {
+      await corePortfolioApi.changeCashAccount(current.id, {
+        ledger_account_id: account.id,
+        currency: account.currency,
+      });
+      linkAccountId.value = '';
+      emit('saved', `Ahora el efectivo de ${editing.value.name} es ${account.name}.`);
+      return;
+    }
     await corePortfolioApi.linkCashAccount({
       container_id: editing.value.id,
       ledger_account_id: account.id,
@@ -232,6 +246,10 @@ async function save() {
           Sin efectivo enlazado. No hace falta: solo lo necesitas si quieres que ese dinero cuente
           como parte de la cartera.
         </AState>
+        <p v-if="cashAccounts.length" class="a-pf-container-cash-hint">
+          ¿Has movido el dinero a otra plataforma? Elige la cuenta nueva y pulsa Cambiar: no hace
+          falta desenlazar, y las cestas que ya apunten a este efectivo se conservan.
+        </p>
 
         <div class="a-pf-container-cash-add">
           <ASelect
@@ -242,7 +260,7 @@ async function save() {
             class="select"
           />
           <AButton variant="ghost" :loading="linking" :disabled="!linkAccountId" @click="linkCash">
-            Enlazar
+            {{ cashAccounts.length ? 'Cambiar' : 'Enlazar' }}
           </AButton>
         </div>
       </section>
