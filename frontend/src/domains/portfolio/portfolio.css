@@ -1705,3 +1705,145 @@
   border-color: var(--warn, var(--neg));
   color: var(--text);
 }
+
+/* Diversificación: barras rankeadas por magnitud, una sola serie y un solo tono. No es
+   identidad entre gráficos, así que inventar un color por sector solo añadiría ruido. */
+.dir-a .a-pf-exposure-section {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.dir-a .a-pf-exposure-block {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dir-a .a-pf-exposure-block > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.dir-a .a-pf-exposure-block h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.dir-a .a-pf-exposure-block header small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a .a-pf-exposure-bars {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a .a-pf-exposure-bars li {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.2fr) minmax(80px, 2fr) 62px 112px;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 40px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.dir-a .a-pf-exposure-bars li small {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.dir-a .a-pf-exposure-bars strong {
+  text-align: right;
+}
+
+.dir-a .a-pf-exposure-bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--hover);
+  overflow: hidden;
+}
+
+.dir-a .a-pf-exposure-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--a-pf-equity);
+}
+
+.dir-a .a-pf-band.is-partial {
+  border-color: var(--line-strong);
+}
+
+.dir-a .a-pf-band.is-insufficient {
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.dir-a .a-pf-band.is-ready {
+  border-color: var(--pos);
+  color: var(--pos);
+}
+
+.dir-a .a-pf-exposure-overlap {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a .a-pf-exposure-overlap li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px auto;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.dir-a .a-pf-exposure-overlap em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.dir-a .a-pf-exposure-overlap span small {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.dir-a .a-pf-exposure-overlap > li > small {
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+@container page (max-width: 560px) {
+  .dir-a .a-pf-exposure-bars li {
+    grid-template-columns: minmax(0, 1fr) 56px 88px;
+  }
+
+  .dir-a .a-pf-exposure-bars .a-pf-exposure-bar {
+    display: none;
+  }
+
+  .dir-a .a-pf-exposure-overlap li {
+    grid-template-columns: minmax(0, 1fr) 56px;
+  }
+
+  .dir-a .a-pf-exposure-overlap > li > small {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}

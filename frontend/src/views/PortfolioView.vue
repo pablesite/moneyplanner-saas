@@ -7,6 +7,7 @@ import {
   PortfolioOperationModal,
   PortfolioBasketsPanel,
   PortfolioContributionModal,
+  PortfolioExposureModal,
   PortfolioRulesModal,
   PortfolioSetupModal,
   PortfolioContainersModal,
@@ -15,12 +16,15 @@ import {
   PORTFOLIO_MAX_COMPOSITION_SLICES,
   portfolioAssetClassColors,
   portfolioAssetClassLabels,
+  portfolioExposureBucketLabels,
+  portfolioExposureDimensionLabels,
   positionBaseValue,
   returnLabel,
   usePortfolioStore,
   type AllocationRow,
   type AllocationScope,
   type PortfolioAllocation,
+  type PortfolioExposure,
   type PositionPerformance,
   type PortfolioQuery,
   type PortfolioOperationOptions,
@@ -50,14 +54,14 @@ import { dateToIso, formatShortMonthYear } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import PortfolioStrategyModal from '@/domains/portfolio/components/PortfolioStrategyModal.vue';
 
-type PortfolioTab = 'summary' | 'positions' | 'allocation' | 'evolution';
+type PortfolioTab = 'summary' | 'positions' | 'allocation' | 'exposure' | 'evolution';
 type PeriodPreset = '1m' | 'ytd' | '1y' | '3y' | 'all' | 'custom';
 
 const route = useRoute();
 const router = useRouter();
 const store = usePortfolioStore();
 
-const validTabs: PortfolioTab[] = ['summary', 'positions', 'allocation', 'evolution'];
+const validTabs: PortfolioTab[] = ['summary', 'positions', 'allocation', 'exposure', 'evolution'];
 const validPeriods: PeriodPreset[] = ['1m', 'ytd', '1y', '3y', 'all', 'custom'];
 const activeTab = ref<PortfolioTab>(
   validTabs.includes(route.query.tab as PortfolioTab)
@@ -83,6 +87,43 @@ const setupOpen = ref(false);
 const strategyOpen = ref(false);
 const contributionOpen = ref(false);
 const rulesOpen = ref(false);
+const exposureOpen = ref(false);
+const exposurePositionId = ref<number | null>(null);
+const exposure = ref<PortfolioExposure | null>(null);
+const exposureLoading = ref(false);
+const exposureError = ref<string | null>(null);
+
+// La exposición no depende del periodo ni de los filtros de inventario: describe la
+// cartera de hoy, que es la que puedes cambiar.
+async function loadExposure() {
+  exposureLoading.value = true;
+  exposureError.value = null;
+  try {
+    exposure.value = (await corePortfolioApi.getExposure()).data;
+  } catch (error: unknown) {
+    exposureError.value = toApiErrorMessage(error);
+    exposure.value = null;
+  } finally {
+    exposureLoading.value = false;
+  }
+}
+
+function exposureBucketLabel(bucket: string): string {
+  return portfolioExposureBucketLabels[bucket] ?? bucket;
+}
+
+function coverageLabel(status: string): string {
+  return (
+    { ready: 'Cobertura suficiente', partial: 'Cobertura parcial', insufficient: 'Sin declarar' }[
+      status
+    ] ?? status
+  );
+}
+
+function openExposure(positionId: number | null) {
+  exposurePositionId.value = positionId;
+  exposureOpen.value = true;
+}
 const basketsPanel = ref<InstanceType<typeof PortfolioBasketsPanel> | null>(null);
 const allocation = ref<PortfolioAllocation | null>(null);
 const allocationLoading = ref(false);
@@ -681,6 +722,15 @@ watch(
   },
   { immediate: true },
 );
+
+// Mismo motivo que la asignación: es una lectura aparte y se puede entrar por URL.
+watch(
+  activeTab,
+  (tab) => {
+    if (tab === 'exposure' && exposure.value === null) void loadExposure();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -770,6 +820,7 @@ watch(
             { id: 'summary', label: 'Resumen' },
             { id: 'positions', label: 'Posiciones' },
             { id: 'allocation', label: 'Asignación' },
+            { id: 'exposure', label: 'Diversificación' },
             { id: 'evolution', label: 'Evolución' },
           ]"
           :key="tab.id"
@@ -1365,6 +1416,106 @@ watch(
         />
       </section>
 
+      <section v-else-if="activeTab === 'exposure'" class="sect a-pf-exposure-section">
+        <ASectHead
+          eyebrow="Diversificación"
+          title="Dónde estás metido de verdad"
+          subtitle="La clase dice de qué depende que suba o baje; esto dice en qué está invertido por dentro."
+        >
+          <template #actions>
+            <AButton variant="primary" @click="openExposure(null)">Declarar exposición</AButton>
+          </template>
+        </ASectHead>
+
+        <AState v-if="exposureLoading" status="loading" layout="panel">
+          Calculando la exposición…
+        </AState>
+        <AState v-else-if="exposureError" status="error" layout="panel">{{ exposureError }}</AState>
+        <template v-else-if="exposure">
+          <section
+            v-for="dimension in exposure.dimensions"
+            :key="dimension.dimension"
+            class="a-pf-exposure-block"
+          >
+            <header>
+              <h3>{{ dimension.label }}</h3>
+              <span class="a-pf-band" :class="`is-${dimension.status}`">
+                {{ coverageLabel(dimension.status) }}
+              </span>
+              <small v-if="dimension.status !== 'insufficient'">
+                Declarado el {{ formatPct(Number(dimension.covered_percent) / 100, 1) }} de la
+                cartera<template v-if="dimension.observed_from">
+                  · ficha más antigua {{ formatShortMonthYear(dimension.observed_from) }}</template
+                >
+              </small>
+            </header>
+            <!-- El reparto es sobre lo declarado, no sobre el total: si no, las partes no
+                 suman cien y el gráfico miente por los dos lados. -->
+            <ul v-if="dimension.rows.length" class="a-pf-exposure-bars">
+              <li v-for="row in dimension.rows" :key="row.bucket">
+                <span>{{ exposureBucketLabel(row.bucket) }}</span>
+                <span class="a-pf-exposure-bar" aria-hidden="true">
+                  <i :style="{ width: `${Math.min(Number(row.percent), 100)}%` }"></i>
+                </span>
+                <strong class="mono">{{ formatPct(Number(row.percent) / 100, 1) }}</strong>
+                <small class="mono">{{ money(row.value) }}</small>
+              </li>
+            </ul>
+            <AState v-else status="empty" layout="inline">
+              Nadie ha declarado todavía esta dimensión. El dato está en la ficha de cada producto:
+              se copia una vez y se revisa cada trimestre.
+            </AState>
+          </section>
+
+          <section class="a-pf-exposure-block">
+            <header>
+              <h3>Concentración</h3>
+              <small>
+                <template v-if="exposure.concentration.effective_positions">
+                  Reparto equivalente a
+                  {{ formatAmount(exposure.concentration.effective_positions, { maxDecimals: 1 }) }}
+                  posiciones iguales ·
+                </template>
+                las cinco mayores pesan
+                {{ formatPct(Number(exposure.concentration.top_five_percent) / 100, 1) }}
+                <AInfoHint
+                  label="Si el dinero estuviera repartido a partes iguales, este es el número de posiciones que harían falta para concentrar lo mismo que concentras hoy. Cuanto más bajo, más depende tu cartera de pocas cosas."
+                />
+              </small>
+            </header>
+            <ul class="a-pf-exposure-bars">
+              <li v-for="row in exposure.concentration.top_positions" :key="row.position_id">
+                <span>{{ row.name }}</span>
+                <span class="a-pf-exposure-bar" aria-hidden="true">
+                  <i :style="{ width: `${Math.min(Number(row.percent), 100)}%` }"></i>
+                </span>
+                <strong class="mono">{{ formatPct(Number(row.percent) / 100, 1) }}</strong>
+                <small></small>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Lo que se compró como cosas distintas y por dentro es lo mismo. Es la
+               pregunta que nadie se hace hasta que ve el número. -->
+          <section v-if="exposure.overlap.length" class="a-pf-exposure-block">
+            <header>
+              <h3>Solapamiento</h3>
+              <small>Productos que comparten exposición, de mayor a menor.</small>
+            </header>
+            <ul class="a-pf-exposure-overlap">
+              <li v-for="(row, index) in exposure.overlap" :key="index">
+                <span>
+                  {{ row.left_name }} <em>y</em> {{ row.right_name }}
+                  <small>{{ portfolioExposureDimensionLabels[row.dimension] }}</small>
+                </span>
+                <strong class="mono">{{ formatPct(Number(row.percent) / 100, 0) }}</strong>
+                <small class="mono">{{ money(row.shared_value) }} expuestos a lo mismo</small>
+              </li>
+            </ul>
+          </section>
+        </template>
+      </section>
+
       <section v-else class="sect">
         <ASectHead
           eyebrow="Evolución"
@@ -1553,6 +1704,18 @@ watch(
           successMessage = message;
           void loadAllocation();
           void basketsPanel?.reload();
+        }
+      "
+    />
+    <PortfolioExposureModal
+      :open="exposureOpen"
+      :options="operationOptionsData"
+      :initial-position-id="exposurePositionId"
+      @close="exposureOpen = false"
+      @saved="
+        (message) => {
+          successMessage = message;
+          void loadExposure();
         }
       "
     />

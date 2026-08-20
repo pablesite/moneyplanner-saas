@@ -66,3 +66,81 @@ export function returnLabel(method: string, estimated: boolean): string {
   if (method === 'modified_dietz' && estimated) return 'TWR estimada';
   return 'Rentabilidad no disponible';
 }
+
+// Etiquetas de exposición. Son las que usan las fichas de fondo, para que copiar el dato
+// sea leerlo y escribirlo sin traducir nada.
+export const portfolioExposureBucketLabels: Record<string, string> = {
+  north_america: 'Norteamérica',
+  europe: 'Europa',
+  spain: 'España',
+  japan: 'Japón',
+  asia_pacific: 'Asia-Pacífico',
+  emerging: 'Emergentes',
+  global: 'Global',
+  technology: 'Tecnología',
+  financials: 'Financiero',
+  health_care: 'Salud',
+  consumer_discretionary: 'Consumo discrecional',
+  consumer_staples: 'Consumo básico',
+  industrials: 'Industrial',
+  energy: 'Energía',
+  materials: 'Materiales',
+  utilities: 'Servicios públicos',
+  real_estate_sector: 'Inmobiliario',
+  communication: 'Comunicación',
+  index_fund: 'Fondo indexado',
+  active_fund: 'Fondo activo',
+  etf: 'ETF',
+  pension_plan: 'Plan de pensiones',
+  direct_equity: 'Acciones directas',
+  crowdfunding: 'Crowdfunding',
+  crypto: 'Criptoactivo',
+  deposit: 'Depósito',
+  other: 'Otros',
+};
+
+// Qué buckets se ofrecen en cada dimensión: mezclarlos dejaría poner "Tecnología" como
+// geografía, que no significa nada.
+export const portfolioExposureBuckets: Record<string, string[]> = {
+  geography: [
+    'north_america',
+    'europe',
+    'spain',
+    'japan',
+    'asia_pacific',
+    'emerging',
+    'global',
+    'other',
+  ],
+  sector: [
+    'technology',
+    'financials',
+    'health_care',
+    'consumer_discretionary',
+    'consumer_staples',
+    'industrials',
+    'energy',
+    'materials',
+    'utilities',
+    'real_estate_sector',
+    'communication',
+    'other',
+  ],
+  vehicle: [
+    'index_fund',
+    'active_fund',
+    'etf',
+    'pension_plan',
+    'direct_equity',
+    'crowdfunding',
+    'crypto',
+    'deposit',
+    'other',
+  ],
+};
+
+export const portfolioExposureDimensionLabels: Record<string, string> = {
+  geography: 'Geografía',
+  sector: 'Sector',
+  vehicle: 'Vehículo',
+};

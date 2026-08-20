@@ -514,3 +514,51 @@ export type ContributionBasket = {
   created_at: string;
   confirmed_at: string | null;
 };
+
+// Exposición real: dónde está metido el dinero, no en qué envoltorio. Los pesos se
+// declaran a mano desde la ficha del fondo, con la fecha de la que salieron.
+export type PositionExposure = {
+  id: number;
+  position_id: number;
+  dimension: 'geography' | 'sector' | 'vehicle';
+  bucket: string;
+  percent: string;
+  observed_on: string;
+};
+
+export type ExposureDimension = {
+  dimension: string;
+  label: string;
+  // `insufficient` cuando nadie ha declarado nada; `partial` mientras falte cartera por
+  // declarar. El reparto se calcula sobre lo cubierto, no sobre el total.
+  status: 'ready' | 'partial' | 'insufficient';
+  covered_percent: string;
+  covered_value: string;
+  observed_from: string | null;
+  rows: { bucket: string; value: string; percent: string }[];
+};
+
+export type PortfolioExposure = {
+  on_date: string;
+  currency: string;
+  total_value: string;
+  position_count: number;
+  dimensions: ExposureDimension[];
+  concentration: {
+    top_positions: { position_id: number; name: string; percent: string }[];
+    top_five_percent: string;
+    diversification_index: string | null;
+    // A cuántas posiciones iguales equivale la cartera. Un índice normalizado dice poco;
+    // "equivale a 6,7 iguales" se entiende sin explicación.
+    effective_positions: string | null;
+  };
+  overlap: {
+    dimension: string;
+    left_id: number;
+    left_name: string;
+    right_id: number;
+    right_name: string;
+    percent: string;
+    shared_value: string;
+  }[];
+};

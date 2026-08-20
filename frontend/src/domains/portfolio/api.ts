@@ -27,7 +27,9 @@ import type {
   ContributionSolve,
   ContributionBasket,
   ContributionCommitment,
+  PortfolioExposure,
   PositionAllocationRule,
+  PositionExposure,
 } from './types';
 
 export const corePortfolioApi = {
@@ -150,6 +152,25 @@ export const corePortfolioApi = {
   },
   deleteCommitment(id: number) {
     return coreApi.delete(`/api/portfolio/commitments/${id}/`);
+  },
+  getExposure(onDate?: string) {
+    return coreApi.get<PortfolioExposure>('/api/portfolio/exposure/', {
+      params: onDate ? { on_date: onDate } : {},
+    });
+  },
+  getPositionExposures(positionId: number) {
+    return coreApi.get<PositionExposure[]>('/api/portfolio/exposures/', {
+      params: { position_id: positionId },
+    });
+  },
+  createPositionExposure(payload: Omit<PositionExposure, 'id'>) {
+    return coreApi.post<PositionExposure>('/api/portfolio/exposures/', payload);
+  },
+  updatePositionExposure(id: number, payload: Partial<Omit<PositionExposure, 'id'>>) {
+    return coreApi.patch<PositionExposure>(`/api/portfolio/exposures/${id}/`, payload);
+  },
+  deletePositionExposure(id: number) {
+    return coreApi.delete(`/api/portfolio/exposures/${id}/`);
   },
   getAllocationScopes() {
     return coreApi.get<AllocationScope[]>('/api/portfolio/allocation/scopes/');
