@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { AButton, AInfoHint, ASelect, AState, BaseModal } from '@/domains/ui';
-import { formatMoney, normalizeNumberInput } from '@/lib/format';
+import { formatMoney, formatPct, normalizeNumberInput } from '@/lib/format';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
 import { portfolioAssetClassLabels } from '../presentation';
@@ -40,6 +40,35 @@ function money(value: string | number): string {
 }
 function className(key: string): string {
   return portfolioAssetClassLabels[key] ?? key;
+}
+
+function positionName(id: number): string {
+  return (props.options?.positions ?? []).find((row) => row.id === id)?.name ?? `#${id}`;
+}
+
+// Lo que el reparto aparta tiene que decir por qué, y sobre todo qué hacer: la más
+// frecuente —no llega al mínimo y no hay dónde esperar— se arregla enlazando el efectivo
+// del contenedor, y eso no se adivina.
+function skippedText(row: {
+  position_id: number;
+  reason: string;
+  amount?: string;
+  minimum?: string;
+  container?: string;
+  operation_cost?: string;
+}): string {
+  const name = positionName(row.position_id);
+  if (row.reason === 'below_minimum_no_cash') {
+    return `${name}: le tocaban ${money(row.amount ?? '0')} pero su mínimo de entrada es ${money(
+      row.minimum ?? '0',
+    )}, y ${row.container ?? 'su contenedor'} no tiene efectivo enlazado donde esperar. Ese dinero va a las demás; enlaza su cuenta de liquidez para que se acumule ahí.`;
+  }
+  if (row.reason === 'cost_exceeds_ticket') {
+    return `${name}: la comisión de ${money(row.operation_cost ?? '0')} se comería la operación.`;
+  }
+  if (row.reason === 'excluded') return `${name}: excluida del reparto por tu regla.`;
+  if (row.reason === 'no_target') return `${name}: sin objetivo en la política, no recibe nada.`;
+  return `${name}: ${row.reason}`;
 }
 
 async function solve() {
@@ -154,6 +183,13 @@ watch(
           </span>
         </div>
 
+        <!-- Lo que se aparta se explica: una posición que desaparece de la propuesta sin
+             motivo parece un fallo del reparto. -->
+        <div v-if="solved.skipped?.length" class="a-pf-contribution-note">
+          <strong>Fuera del reparto</strong>
+          <span v-for="row in solved.skipped" :key="row.position_id">{{ skippedText(row) }}</span>
+        </div>
+
         <!-- Un compromiso sin cubrir no es una línea que falta: es una ventaja que se
              pierde, y suele costar más que la propia aportación. -->
         <div v-if="solved.unmet_commitments?.length" class="a-pf-contribution-note is-warning">
@@ -172,8 +208,9 @@ watch(
         <div v-if="solved.unreachable?.length" class="a-pf-contribution-note">
           <strong>Sin dónde colocarlo</strong>
           <span v-for="row in solved.unreachable" :key="row.asset_class">
-            {{ className(row.asset_class) }} pide un {{ row.target_percent }}% y no tienes ningún
-            producto de esa clase. Ese dinero va a las demás.
+            {{ className(row.asset_class) }} pide un
+            {{ formatPct(Number(row.target_percent) / 100, 1) }} y no tienes ningún producto de esa
+            clase. Ese dinero va a las demás.
           </span>
         </div>
 

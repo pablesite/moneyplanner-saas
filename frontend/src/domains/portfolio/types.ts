@@ -464,7 +464,14 @@ export type ContributionSolve = {
   lines: ContributionLine[];
   commitments?: { position_id: number; amount: string; period: string; reason: string }[];
   accumulate?: { cash_account_id: number; container: string; amount: string; reason: string }[];
-  skipped?: { position_id: number; reason: string }[];
+  skipped?: {
+    position_id: number;
+    reason: string;
+    amount?: string;
+    minimum?: string;
+    container?: string;
+    operation_cost?: string;
+  }[];
   // Clases con objetivo escrito y ningún producto donde colocar el dinero.
   unreachable?: { asset_class: string; target_percent: string; reason: string }[];
   // Compromisos que esta aportación no cubre, con lo que cuesta romperlos.
@@ -500,7 +507,14 @@ export type ContributionBasket = {
   source_account_id: number | null;
   explanation: {
     commitments?: { position_id: number; amount: string; period: string; reason: string }[];
-    skipped?: { position_id: number; reason: string }[];
+    skipped?: {
+      position_id: number;
+      reason: string;
+      amount?: string;
+      minimum?: string;
+      container?: string;
+      operation_cost?: string;
+    }[];
     unreachable?: { asset_class: string; target_percent: string; reason: string }[];
     unmet_commitments?: {
       position_id: number;

@@ -273,16 +273,13 @@ async function save() {
       </div>
 
       <template v-if="selectedPosition">
-        <dl class="a-pf-setup-context">
-          <div>
-            <dt>Estado contable</dt>
-            <dd>{{ selectedPosition.operational ? 'Operativa' : 'Sin cuenta enlazada' }}</dd>
-          </div>
-          <div>
-            <dt>Configuración</dt>
-            <dd>{{ selectedPosition.setup_confirmed ? 'Confirmada' : 'Pendiente' }}</dd>
-          </div>
-        </dl>
+        <!-- Antes había dos filas de estado siempre visibles: una decía "Confirmada",
+             que habla del formulario y no de la posición, y la otra decía "Operativa"
+             cuando todo iba bien, que es decoración. Solo se avisa de lo accionable. -->
+        <AState v-if="!selectedPosition.operational" status="neutral" layout="inline">
+          Esta posición no tiene cuenta contable enlazada, así que no se le pueden registrar compras
+          ni ventas desde Contabilidad. Su valor sí cuenta.
+        </AState>
 
         <div class="ui-item-form-grid">
           <label class="ui-item-form-field">
@@ -308,7 +305,7 @@ async function save() {
               class="select"
             />
           </label>
-          <label class="ui-item-form-field a-pf-breakdown-toggle">
+          <label class="ui-item-form-field a-pf-breakdown-toggle is-wide">
             <span class="ui-item-form-label">
               Reparto interno
               <AInfoHint
@@ -356,25 +353,33 @@ async function save() {
               class="select"
             />
           </label>
-          <label class="ui-item-form-field">
-            <span class="ui-item-form-label">
-              Histórico
-              <AInfoHint
-                label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
-              />
-            </span>
-            <ASelect
-              v-model="historyMode"
-              :options="historyOptions"
-              :searchable="false"
-              class="select"
-            />
-          </label>
-          <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">
-            <span class="ui-item-form-label">Fecha de corte</span>
-            <input v-model="historyStartDate" class="input" type="date" required />
-          </label>
         </div>
+
+        <!-- El histórico se decide una vez, al incorporar la posición, y no se vuelve a
+             mirar. Ocupaba sitio permanente entre los campos que sí se tocan. -->
+        <details class="a-pf-setup-advanced" :open="historyMode === 'cutoff'">
+          <summary>Histórico de rentabilidad</summary>
+          <div class="ui-item-form-grid">
+            <label class="ui-item-form-field">
+              <span class="ui-item-form-label">
+                Desde cuándo cuenta
+                <AInfoHint
+                  label="Reconstruir usa todos los movimientos y valoraciones que ya existen. Empezar desde una fecha de corte ignora lo anterior para el cálculo de rentabilidad, sin borrar nada."
+                />
+              </span>
+              <ASelect
+                v-model="historyMode"
+                :options="historyOptions"
+                :searchable="false"
+                class="select"
+              />
+            </label>
+            <label v-if="historyMode === 'cutoff'" class="ui-item-form-field">
+              <span class="ui-item-form-label">Fecha de corte</span>
+              <input v-model="historyStartDate" class="input" type="date" required />
+            </label>
+          </div>
+        </details>
 
         <!-- La titularidad no se edita: se escriben tramos. Por eso aquí solo se dice
              desde cuándo manda cuál, y el tramo anterior se cierra la víspera. -->

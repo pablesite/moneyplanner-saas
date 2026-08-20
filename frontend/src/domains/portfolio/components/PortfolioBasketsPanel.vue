@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { AButton, AInfoHint, ASelect, AState } from '@/domains/ui';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, formatPct } from '@/lib/format';
 import { formatShortDate } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
@@ -262,8 +262,9 @@ watch([() => props.ownershipId, showHistory], load, { immediate: true });
         :key="row.asset_class"
         class="a-pf-basket-note"
       >
-        {{ classLabel(row.asset_class) }} pide un {{ row.target_percent }}% y no tenías ningún
-        producto de esa clase: ese dinero fue a las demás.
+        {{ classLabel(row.asset_class) }} pide un
+        {{ formatPct(Number(row.target_percent) / 100, 1) }} y no tenías ningún producto de esa
+        clase: ese dinero fue a las demás.
       </p>
       <p v-if="Number(basket.reserved_cash) > 0" class="a-pf-basket-note">
         {{ money(basket.reserved_cash) }} se quedan como liquidez, sin movimiento.

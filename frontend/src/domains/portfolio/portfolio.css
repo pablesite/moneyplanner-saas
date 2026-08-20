@@ -1847,3 +1847,20 @@
     text-align: left;
   }
 }
+
+/* El histórico se decide una vez al incorporar la posición: vive plegado para no ocupar
+   sitio permanente entre los campos que sí se tocan. */
+.dir-a-sheet .a-pf-setup-advanced > summary {
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.dir-a-sheet .a-pf-setup-advanced > summary::marker {
+  color: var(--muted);
+}
+
+.dir-a-sheet .a-pf-setup-advanced[open] > summary {
+  color: var(--text);
+}
