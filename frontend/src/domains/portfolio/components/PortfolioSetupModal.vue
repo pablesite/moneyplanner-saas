@@ -281,6 +281,22 @@ async function save() {
           ni ventas desde Contabilidad. Su valor sí cuenta.
         </AState>
 
+        <!-- Con qué cuenta el sistema para esta posición. Va arriba, con el resto del
+             diagnóstico: al final del formulario quedaba detrás de la titularidad, que es
+             otra cosa, y se leía como un pie de página. -->
+        <div class="a-pf-setup-coverage">
+          <div>
+            <span>Rentabilidad</span>
+            <strong>{{ coverageLabel(selectedPosition.performance_coverage.status) }}</strong>
+            <small>Flujos y valoraciones disponibles.</small>
+          </div>
+          <div>
+            <span>Detalle de posición</span>
+            <strong>{{ coverageLabel(selectedPosition.position_detail_coverage.status) }}</strong>
+            <small>Unidades y trazabilidad operativa.</small>
+          </div>
+        </div>
+
         <div class="ui-item-form-grid">
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">
@@ -433,19 +449,6 @@ async function save() {
           </div>
           <AState v-if="periodError" status="error" layout="inline">{{ periodError }}</AState>
         </section>
-
-        <div class="a-pf-setup-coverage">
-          <div>
-            <span>Rentabilidad</span>
-            <strong>{{ coverageLabel(selectedPosition.performance_coverage.status) }}</strong>
-            <small>Flujos y valoraciones disponibles.</small>
-          </div>
-          <div>
-            <span>Detalle de posición</span>
-            <strong>{{ coverageLabel(selectedPosition.position_detail_coverage.status) }}</strong>
-            <small>Unidades y trazabilidad operativa.</small>
-          </div>
-        </div>
       </template>
 
       <AState v-if="error" status="error" layout="inline">{{ error }}</AState>
