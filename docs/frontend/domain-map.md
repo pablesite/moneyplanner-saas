@@ -147,7 +147,7 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 | `components/PortfolioOperationModal.vue` | Sheet contextual para transferencias, compras/ventas, ingresos, fees, valoraciones y corporate actions; exige preview antes de contabilizar. |
 | `components/PortfolioImportModal.vue` | Wizard CSV de fichero, mapeo, preview, incidencias por fila y confirmación de filas válidas. |
 | `components/PortfolioSetupModal.vue` | Onboarding de posiciones migradas: tracking por valor/unidades, histórico reconstruido/cutoff y coberturas independientes. |
-| `components/PortfolioContainersModal.vue` | Contenedores y su efectivo enlazado: enlazar una cuenta de liquidez mete ese saldo en la cartera, así que solo ofrece cuentas de liquidez libres. |
+| `components/PortfolioContainersModal.vue` | Contenedores en lista → detalle, con el efectivo enlazado visible desde la propia lista. Enlazar una cuenta de liquidez mete ese saldo en la cartera, así que solo ofrece cuentas de liquidez libres; mudar el efectivo de plataforma es cambiar la cuenta del enlace, no desenlazar. |
 | `components/PortfolioStrategyModal.vue` | Política de asignación del ámbito: objetivos por clase con banda, versionada por fecha efectiva. Exige que sume 100%. |
 | `components/PortfolioContributionModal.vue` | Simulador de aportación: abre con lo que el presupuesto tenía previsto invertir ese mes, reparte según la política y guarda el resultado como cesta pendiente. |
 | `components/PortfolioBasketsPanel.vue` | Cestas guardadas: revisar, confirmar entera o línea a línea con la cuenta de origen de cada tanda, o descartar. |

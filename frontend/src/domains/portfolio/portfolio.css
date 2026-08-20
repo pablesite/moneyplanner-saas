@@ -1371,7 +1371,7 @@
 
 .dir-a-sheet .a-pf-container-cash-list li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: var(--space-3);
   align-items: center;
   min-height: 38px;
@@ -1863,4 +1863,62 @@
 
 .dir-a-sheet .a-pf-setup-advanced[open] > summary {
   color: var(--text);
+}
+
+/* Contenedores: lista primero, detalle después. Antes elegías en un desplegable mientras
+   la lista entera se veía debajo sin poder pulsarla. */
+.dir-a-sheet .a-pf-container-browser {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.dir-a-sheet .a-pf-container-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-container-list button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dir-a-sheet .a-pf-container-list button:hover {
+  background: var(--hover);
+}
+
+.dir-a-sheet .a-pf-container-name {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dir-a-sheet .a-pf-container-name small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dir-a-sheet .a-pf-container-cash-tag {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.dir-a-sheet .a-pf-container-back {
+  justify-self: start;
+  padding-left: 0;
 }
