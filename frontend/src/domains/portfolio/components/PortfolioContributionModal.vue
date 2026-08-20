@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { AButton, AInfoHint, ASelect, AState, BaseModal } from '@/domains/ui';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, normalizeNumberInput } from '@/lib/format';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
 import { portfolioAssetClassLabels } from '../presentation';
@@ -48,7 +48,12 @@ async function solve() {
   error.value = null;
   solved.value = null;
   try {
-    solved.value = (await corePortfolioApi.solveContribution(props.ownershipId, amount.value)).data;
+    solved.value = (
+      await corePortfolioApi.solveContribution(
+        props.ownershipId,
+        normalizeNumberInput(amount.value),
+      )
+    ).data;
   } catch (caught: unknown) {
     error.value = toApiErrorMessage(caught);
   } finally {
@@ -65,7 +70,7 @@ async function keep() {
     // aparte. Una propuesta que se ejecuta sola no se puede revisar.
     await corePortfolioApi.createBasket(
       props.ownershipId,
-      amount.value,
+      normalizeNumberInput(amount.value),
       sourceAccountId.value ? Number(sourceAccountId.value) : undefined,
     );
     emit('saved', 'Cesta guardada. Nada se ha contabilizado todavía.');
@@ -146,6 +151,17 @@ watch(
           <strong>Compromisos primero</strong>
           <span v-for="row in solved.commitments" :key="row.position_id">
             {{ money(row.amount) }} · {{ row.reason || 'compromiso' }}
+          </span>
+        </div>
+
+        <!-- Una clase que no se puede cumplir se dice, no se omite: su parte se la
+             acaban repartiendo las demás y sin esto parecía que el reparto ignora la
+             política sin motivo. -->
+        <div v-if="solved.unreachable?.length" class="a-pf-contribution-note">
+          <strong>Sin dónde colocarlo</strong>
+          <span v-for="row in solved.unreachable" :key="row.asset_class">
+            {{ className(row.asset_class) }} pide un {{ row.target_percent }}% y no tienes ningún
+            producto de esa clase. Ese dinero va a las demás.
           </span>
         </div>
 

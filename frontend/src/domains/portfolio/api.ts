@@ -26,6 +26,8 @@ import type {
   PortfolioAllocation,
   ContributionSolve,
   ContributionBasket,
+  ContributionCommitment,
+  PositionAllocationRule,
 } from './types';
 
 export const corePortfolioApi = {
@@ -116,6 +118,27 @@ export const corePortfolioApi = {
   },
   unlinkCashAccount(id: number) {
     return coreApi.delete(`/api/portfolio/cash-accounts/${id}/`);
+  },
+  getAllocationRules() {
+    return coreApi.get<PositionAllocationRule[]>('/api/portfolio/allocation-rules/');
+  },
+  createAllocationRule(payload: Partial<PositionAllocationRule> & { position_id: number }) {
+    return coreApi.post<PositionAllocationRule>('/api/portfolio/allocation-rules/', payload);
+  },
+  updateAllocationRule(id: number, payload: Partial<PositionAllocationRule>) {
+    return coreApi.patch<PositionAllocationRule>(`/api/portfolio/allocation-rules/${id}/`, payload);
+  },
+  getCommitments() {
+    return coreApi.get<ContributionCommitment[]>('/api/portfolio/commitments/');
+  },
+  createCommitment(payload: Omit<ContributionCommitment, 'id'>) {
+    return coreApi.post<ContributionCommitment>('/api/portfolio/commitments/', payload);
+  },
+  updateCommitment(id: number, payload: Partial<ContributionCommitment>) {
+    return coreApi.patch<ContributionCommitment>(`/api/portfolio/commitments/${id}/`, payload);
+  },
+  deleteCommitment(id: number) {
+    return coreApi.delete(`/api/portfolio/commitments/${id}/`);
   },
   getAllocationScopes() {
     return coreApi.get<AllocationScope[]>('/api/portfolio/allocation/scopes/');

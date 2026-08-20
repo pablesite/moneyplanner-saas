@@ -7,6 +7,7 @@ import {
   PortfolioOperationModal,
   PortfolioBasketsPanel,
   PortfolioContributionModal,
+  PortfolioRulesModal,
   PortfolioSetupModal,
   PortfolioContainersModal,
   corePortfolioApi,
@@ -28,6 +29,7 @@ import {
 import '@/domains/portfolio/portfolio.css';
 import {
   AButton,
+  AChevron,
   ADateRange,
   ADonut,
   AHero,
@@ -80,6 +82,7 @@ const importOpen = ref(false);
 const setupOpen = ref(false);
 const strategyOpen = ref(false);
 const contributionOpen = ref(false);
+const rulesOpen = ref(false);
 const basketsPanel = ref<InstanceType<typeof PortfolioBasketsPanel> | null>(null);
 const allocation = ref<PortfolioAllocation | null>(null);
 const allocationLoading = ref(false);
@@ -136,12 +139,28 @@ function bandRange(row: AllocationRow): string {
   return `${edge(row.min_percent)} – ${edge(row.max_percent)}`;
 }
 
+// Verde dentro de banda, rojo fuera, neutro lo que no se planeó: el color responde a
+// "¿tengo que hacer algo?", que es la pregunta que se le hace a esta columna.
+function driftTone(band: string): string {
+  if (band === 'within') return 'is-positive';
+  if (band === 'above' || band === 'below') return 'is-negative';
+  return 'is-neutral';
+}
+
 function bandLabel(band: string): string {
   return (
-    { within: 'En banda', above: 'Por encima', below: 'Por debajo', unplanned: 'Sin planear' }[
-      band
-    ] ?? band
+    {
+      within: 'En banda',
+      above: 'Por encima',
+      below: 'Por debajo',
+      unplanned: 'Sin planear',
+      derived: 'Hereda',
+    }[band] ?? band
   );
+}
+
+function positionsOfClass(assetClass: string) {
+  return (allocation.value?.by_position ?? []).filter((row) => row.asset_class === assetClass);
 }
 const setupPositionId = ref<number | null>(null);
 const expandedClasses = ref(new Set<string>());
@@ -369,7 +388,7 @@ const compositionTotal = computed(() =>
 const donutSlices = computed<ADonutSlice[]>(() =>
   composition.value.map((item) => ({
     ...item,
-    hoverValue: `${formatPct(item.value / Math.max(compositionTotal.value, 1), 0)} · ${money(item.value)}`,
+    hoverValue: `${formatPct(item.value / Math.max(compositionTotal.value, 1), 1)} · ${money(item.value)}`,
   })),
 );
 
@@ -484,8 +503,10 @@ const positionColumns: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: 'assetClass', label: 'Clase', numeric: false },
   { key: 'value', label: 'Valor', numeric: true },
   { key: 'result', label: 'Resultado', numeric: true },
-  { key: 'twr', label: 'TWR', numeric: true },
-  { key: 'mwr', label: 'MWR', numeric: true },
+  // Una sola rentabilidad y con nombre llano: "TWR" y "MWR" no le dicen nada a nadie
+  // que no venga del oficio. Se enseña la del dinero, que es la que responde a "¿cómo
+  // me ha ido?"; la del activo sigue en la ficha de la posición, explicada.
+  { key: 'mwr', label: 'Rentabilidad', numeric: true },
 ];
 const sortKey = ref<SortKey>('value');
 const sortDir = ref<'asc' | 'desc'>('desc');
@@ -525,6 +546,18 @@ const sortedPositions = computed(() => {
     return (Number(a) - Number(b)) * direction;
   });
 });
+
+const sortOptions = computed<ASelectItem[]>(() =>
+  positionColumns.map((column) => ({ value: column.key, label: column.label })),
+);
+
+// El selector de móvil no alterna dirección: elegir campo la fija en la que se suele
+// querer, y el botón de al lado la invierte si hace falta.
+function applySort(key: string) {
+  if (!positionColumns.some((column) => column.key === key)) return;
+  sortKey.value = key as SortKey;
+  sortDir.value = textSortKeys.includes(key as SortKey) ? 'asc' : 'desc';
+}
 
 function toggleSort(key: SortKey) {
   if (sortKey.value === key) {
@@ -937,7 +970,7 @@ watch(
                     />
                   </span>
                   <strong class="mono">{{ money(item.value) }}</strong>
-                  <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 0) }}</small>
+                  <small>{{ formatPct(item.value / Math.max(compositionTotal, 1), 1) }}</small>
                 </button>
                 <!-- El peso de dentro es sobre la clase, no sobre la cartera: la pregunta
                      al abrir una clase es cuánto pesa cada activo dentro de ella. -->
@@ -1088,15 +1121,8 @@ watch(
                   </td>
                   <td
                     class="num mono"
-                    :class="signClass(toNumber(position.performance.return.nominal))"
-                    data-label="TWR"
-                  >
-                    {{ pct(position.performance.return.nominal) }}
-                  </td>
-                  <td
-                    class="num mono"
                     :class="signClass(toNumber(position.performance.return.mwr_xirr))"
-                    data-label="MWR"
+                    data-label="Rentabilidad"
                   >
                     {{ pct(position.performance.return.mwr_xirr) }}
                   </td>
@@ -1117,10 +1143,6 @@ watch(
                   <!-- No es una suma: una rentabilidad no se suma entre posiciones. Core la
                        calcula sobre el filtro activo, así que describe exactamente las filas
                        de arriba; mientras la recalcula no se deja a la vista la anterior. -->
-                  <td class="num mono" :class="signClass(toNumber(totalReturn?.nominal))">
-                    <span v-if="refreshing" class="skel"></span>
-                    <template v-else>{{ pct(totalReturn?.nominal) }}</template>
-                  </td>
                   <td class="num mono" :class="signClass(toNumber(totalReturn?.mwr_xirr))">
                     <span v-if="refreshing" class="skel"></span>
                     <template v-else>{{ pct(totalReturn?.mwr_xirr) }}</template>
@@ -1128,6 +1150,26 @@ watch(
                 </tr>
               </tfoot>
             </table>
+          </div>
+          <!-- El orden vivía solo en las cabeceras de la tabla, que en móvil no existen:
+               ordenar por rentabilidad o por valor era imposible desde el teléfono. -->
+          <div class="a-pf-position-sort">
+            <ASelect
+              :model-value="sortKey"
+              :options="sortOptions"
+              :searchable="false"
+              aria-label="Ordenar por"
+              class="filter-ctrl"
+              @update:model-value="(value) => applySort(String(value))"
+            />
+            <AButton
+              variant="ghost"
+              size="sm"
+              :aria-label="sortDir === 'asc' ? 'Orden ascendente' : 'Orden descendente'"
+              @click="sortDir = sortDir === 'asc' ? 'desc' : 'asc'"
+            >
+              {{ sortDir === 'asc' ? '↑ Menor primero' : '↓ Mayor primero' }}
+            </AButton>
           </div>
           <div class="a-pf-position-list">
             <button
@@ -1150,10 +1192,8 @@ watch(
                   :class="signClass(toNumber(position.performance.monetary_result))"
                   >{{ signedMoney(position.performance.monetary_result) }}</small
                 ><small class="a-pf-position-returns"
-                  ><span :class="signClass(toNumber(position.performance.return.nominal))"
-                    >TWR {{ pct(position.performance.return.nominal) }}</span
                   ><span :class="signClass(toNumber(position.performance.return.mwr_xirr))"
-                    >MWR {{ pct(position.performance.return.mwr_xirr) }}</span
+                    >{{ pct(position.performance.return.mwr_xirr) }} de rentabilidad</span
                   ></small
                 ></span
               >
@@ -1173,7 +1213,13 @@ watch(
                 ><strong class="mono">{{ money(visibleTotalValue) }}</strong
                 ><small class="mono" :class="signClass(visibleTotalResult)">{{
                   signedMoney(visibleTotalResult)
-                }}</small></span
+                }}</small
+                ><small class="a-pf-position-returns"
+                  ><span v-if="refreshing" class="skel"></span
+                  ><span v-else :class="signClass(toNumber(totalReturn?.mwr_xirr))"
+                    >{{ pct(totalReturn?.mwr_xirr) }} de rentabilidad</span
+                  ></small
+                ></span
               >
             </div>
           </div>
@@ -1201,6 +1247,7 @@ watch(
             <AButton variant="ghost" :disabled="!ownershipId" @click="strategyOpen = true">
               {{ allocation?.strategy ? 'Editar política' : 'Escribir política' }}
             </AButton>
+            <AButton variant="ghost" @click="rulesOpen = true">Restricciones</AButton>
             <AButton
               variant="primary"
               :disabled="!ownershipId || !allocation?.strategy"
@@ -1233,37 +1280,79 @@ watch(
                 <th class="num">Actual</th>
                 <th class="num">Objetivo</th>
                 <th class="num">Banda</th>
-                <th class="num">
-                  Desvío
-                  <AInfoHint
-                    label="Cuánto habría que mover para llegar al objetivo. Positivo significa que le falta dinero; negativo, que va sobrado."
-                  />
-                </th>
+                <th class="num">Desvío</th>
                 <th>Estado</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in allocation.by_class" :key="row.asset_class">
-                <td>
-                  <i class="a-pf-dot" :class="`is-${row.asset_class}`"></i>
-                  {{ portfolioAssetClassLabels[row.asset_class ?? 'other'] ?? row.asset_class }}
-                </td>
-                <td class="num mono">{{ money(row.value) }}</td>
-                <td class="num mono">{{ formatPct(Number(row.actual_percent) / 100, 1) }}</td>
-                <td class="num mono">
-                  {{ row.target_percent ? formatPct(Number(row.target_percent) / 100, 1) : '—' }}
-                </td>
-                <td class="num mono">{{ bandRange(row) }}</td>
-                <td class="num mono" :class="signClass(row.drift_value)">
-                  {{ row.drift_value ? signedMoney(row.drift_value) : '—' }}
-                </td>
-                <td>
-                  <span class="a-pf-band" :class="`is-${row.band}`">{{ bandLabel(row.band) }}</span>
-                </td>
-              </tr>
+              <template v-for="row in allocation.by_class" :key="row.asset_class">
+                <tr class="a-pf-allocation-class" @click="toggleClass(row.asset_class ?? 'other')">
+                  <td>
+                    <AChevron :expanded="expandedClasses.has(row.asset_class ?? 'other')" />
+                    <i class="a-pf-dot" :class="`is-${row.asset_class}`"></i>
+                    {{ portfolioAssetClassLabels[row.asset_class ?? 'other'] ?? row.asset_class }}
+                  </td>
+                  <td class="num mono">{{ money(row.value) }}</td>
+                  <td class="num mono">{{ formatPct(Number(row.actual_percent) / 100, 1) }}</td>
+                  <td class="num mono">
+                    {{ row.target_percent ? formatPct(Number(row.target_percent) / 100, 1) : '—' }}
+                  </td>
+                  <td class="num mono">{{ bandRange(row) }}</td>
+                  <!-- El color dice si hay que actuar, no si la cifra es positiva: una
+                     clase dentro de banda está bien aunque no clave el objetivo. -->
+                  <td class="num mono" :class="driftTone(row.band)">
+                    {{ row.drift_value ? signedMoney(row.drift_value) : '—' }}
+                  </td>
+                  <td>
+                    <span class="a-pf-band" :class="`is-${row.band}`">{{
+                      bandLabel(row.band)
+                    }}</span>
+                  </td>
+                </tr>
+                <!-- El segundo nivel: dentro de la clase, qué le toca a cada producto. El
+                   objetivo de uno sin línea propia no es cero, es lo que hereda de su
+                   clase repartido por lo que ya pesa. -->
+                <tr
+                  v-for="item in positionsOfClass(row.asset_class ?? 'other')"
+                  v-show="expandedClasses.has(row.asset_class ?? 'other')"
+                  :key="`${row.asset_class}-${item.position_id}`"
+                  class="a-pf-allocation-position"
+                >
+                  <td>{{ item.name }}</td>
+                  <td class="num mono">{{ money(item.value) }}</td>
+                  <td class="num mono">{{ formatPct(Number(item.actual_percent) / 100, 1) }}</td>
+                  <td class="num mono">
+                    {{
+                      item.target_percent ? formatPct(Number(item.target_percent) / 100, 1) : '—'
+                    }}
+                  </td>
+                  <td class="num mono">
+                    {{
+                      item.class_share
+                        ? `${formatPct(Number(item.class_share) / 100, 0)} de la clase`
+                        : '—'
+                    }}
+                  </td>
+                  <td class="num mono" :class="driftTone(item.band)">
+                    {{ item.drift_value ? signedMoney(item.drift_value) : '—' }}
+                  </td>
+                  <td>
+                    <span class="a-pf-band" :class="`is-${item.band}`">{{
+                      bandLabel(item.band)
+                    }}</span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
+        <!-- Fuera de la tabla a propósito: dentro de un contenedor con scroll el globo
+             de ayuda se recorta y en móvil no se llega a leer. -->
+        <p class="a-pf-allocation-note">
+          El desvío es cuánto te separas del objetivo: <strong>positivo</strong> si vas sobrado,
+          <strong>negativo</strong> si te quedas corto. Solo se marca en rojo lo que se ha salido de
+          su banda, que es lo único que pide una decisión.
+        </p>
 
         <!-- Lo que has decidido aportar y todavía no has ejecutado vive aquí, debajo de
              la desviación que lo justifica. -->
@@ -1464,6 +1553,17 @@ watch(
           successMessage = message;
           void loadAllocation();
           void basketsPanel?.reload();
+        }
+      "
+    />
+    <PortfolioRulesModal
+      :open="rulesOpen"
+      :options="operationOptionsData"
+      @close="rulesOpen = false"
+      @saved="
+        (message) => {
+          successMessage = message;
+          void loadAllocation();
         }
       "
     />

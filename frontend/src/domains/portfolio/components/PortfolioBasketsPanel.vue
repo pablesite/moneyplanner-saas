@@ -5,6 +5,7 @@ import { formatMoney } from '@/lib/format';
 import { formatShortDate } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
+import { portfolioAssetClassLabels } from '../presentation';
 import type { ContributionBasket, PortfolioOperationOptions } from '../types';
 
 const props = defineProps<{
@@ -48,6 +49,10 @@ const reasonLabels: Record<string, string> = {
 
 function lineReason(reason: string): string {
   return reasonLabels[reason] ?? reason;
+}
+
+function classLabel(key: string): string {
+  return portfolioAssetClassLabels[key] ?? key;
 }
 
 function pendingLines(basket: ContributionBasket) {
@@ -238,6 +243,14 @@ watch([() => props.ownershipId, showHistory], load, { immediate: true });
 
       <!-- Lo que no aparece como línea también forma parte del reparto: la liquidez que
            se queda quieta no genera ningún movimiento, y por eso no se confirma. -->
+      <p
+        v-for="row in basket.explanation?.unreachable ?? []"
+        :key="row.asset_class"
+        class="a-pf-basket-note"
+      >
+        {{ classLabel(row.asset_class) }} pide un {{ row.target_percent }}% y no tenías ningún
+        producto de esa clase: ese dinero fue a las demás.
+      </p>
       <p v-if="Number(basket.reserved_cash) > 0" class="a-pf-basket-note">
         {{ money(basket.reserved_cash) }} se quedan como liquidez, sin movimiento.
       </p>

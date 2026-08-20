@@ -1594,3 +1594,100 @@
   color: var(--muted);
   font-size: 0.75rem;
 }
+
+/* Leyenda de la tabla de asignación. Vive fuera del contenedor con scroll: dentro, el
+   globo de ayuda de la cabecera se recortaba y en móvil no había forma de leerlo. */
+.dir-a .a-pf-allocation-note {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Orden en móvil: la tabla y sus cabeceras ordenables desaparecen bajo `sm`, así que
+   sin esto no había forma de ordenar desde el teléfono. */
+.dir-a .a-pf-position-sort {
+  display: none;
+}
+
+/* Mismo corte que usa la lista compacta: `@container page`, no `@media`, porque quien
+   decide aquí es el ancho del contenido, no el del dispositivo. */
+@container page (max-width: 560px) {
+  .dir-a .a-pf-position-sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .dir-a .a-pf-position-sort .filter-ctrl {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.dir-a-sheet .a-pf-rules-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  font-size: 0.9375rem;
+}
+
+.dir-a-sheet .a-pf-rules-summary h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dir-a-sheet .a-pf-rules-summary ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-rules-summary li {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.dir-a-sheet .a-pf-rules-summary small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Fila del segundo nivel: producto, porcentaje dentro de su clase y de qué clase es. */
+.dir-a-sheet .a-pf-strategy-row.is-position {
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr) auto;
+}
+
+.dir-a-sheet .a-pf-strategy-class {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Clase desplegable en la tabla de asignación: dentro vive el segundo nivel. */
+.dir-a .a-pf-allocation-table tr.a-pf-allocation-class {
+  cursor: pointer;
+}
+
+.dir-a .a-pf-allocation-table tr.a-pf-allocation-class td:first-child {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dir-a .a-pf-allocation-table tr.a-pf-allocation-position td {
+  color: var(--muted);
+}
+
+.dir-a .a-pf-allocation-table tr.a-pf-allocation-position td:first-child {
+  padding-left: var(--space-6);
+}

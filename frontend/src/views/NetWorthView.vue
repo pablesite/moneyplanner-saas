@@ -964,6 +964,11 @@ async function openFxDetails(): Promise<void> {
   if (!selectedFxDetailsSource.value) return;
   showFxDetailsModal.value = true;
   await loadFxDetails();
+  // Una cotización de ayer no es la de hoy: si está caducada se pide sola, para que las
+  // cifras salgan actualizadas sin tener que pulsar nada. Si ya es de hoy no se llama a
+  // nadie, que las cuotas de los proveedores son limitadas.
+  const quoted = fxDetails.value?.rate_date ?? null;
+  if (quoted && quoted < isoDate(new Date())) await refreshFxDetails();
 }
 
 function closeFxDetails(): void {

@@ -324,14 +324,23 @@ export type PositionOwnershipPeriodPayload = {
   shares: PositionOwnershipShare[];
 };
 
-export type AllocationTarget = {
+// Una línea de política es de una clase o de un producto, nunca de las dos. La de clase
+// se declara en % de cartera; la de producto, en % de su clase.
+export type AllocationClassTarget = {
   id?: number;
   asset_class: string;
-  position_id?: number | null;
   target_percent: string;
   min_percent: string | null;
   max_percent: string | null;
 };
+
+export type AllocationPositionTarget = {
+  id?: number;
+  position_id: number;
+  target_percent: string;
+};
+
+export type AllocationTarget = AllocationClassTarget & { position_id?: number | null };
 
 export type AllocationStrategy = {
   id: number;
@@ -351,7 +360,7 @@ export type AllocationStrategyPayload = {
   note?: string;
   min_line_amount?: string;
   max_cost_share?: string;
-  targets: Omit<AllocationTarget, 'id'>[];
+  targets: (Omit<AllocationClassTarget, 'id'> | Omit<AllocationPositionTarget, 'id'>)[];
 };
 
 // `band` dice si la clase está dentro de su banda de tolerancia, fuera por arriba o por
@@ -368,6 +377,22 @@ export type AllocationRow = {
   band: 'within' | 'above' | 'below' | 'unplanned';
 };
 
+// Fila del segundo nivel: qué le toca a cada producto dentro de su clase. `band` es
+// `derived` cuando el objetivo se hereda del reparto de la clase en vez de escribirse.
+export type AllocationPositionRow = {
+  position_id: number;
+  name: string;
+  asset_class: string;
+  value: string;
+  actual_percent: string;
+  target_percent: string | null;
+  class_share: string | null;
+  min_percent: string | null;
+  max_percent: string | null;
+  drift_value: string | null;
+  band: string;
+};
+
 export type PortfolioAllocation = {
   ownership_id: number;
   on_date: string;
@@ -379,7 +404,30 @@ export type PortfolioAllocation = {
   // editable: elegir otra cifra no reescribe el presupuesto.
   suggested_contribution: string;
   by_class: AllocationRow[];
-  by_position: AllocationRow[];
+  by_position: AllocationPositionRow[];
+};
+
+// Restricciones reales de compra de una posición: lo que hace que una propuesta sea
+// ejecutable de verdad y no solo aritméticamente correcta.
+export type PositionAllocationRule = {
+  id: number;
+  position_id: number;
+  excluded: boolean;
+  min_contribution: string;
+  rounding_step: string;
+  operation_cost: string;
+  fee_free_plan: boolean;
+};
+
+// Lo que tiene que llegar a una posición pase lo que pase con la desviación: un mínimo
+// mensual que conserva una ventaja del banco, o un cupo anual que además es techo.
+export type ContributionCommitment = {
+  id: number;
+  position_id: number;
+  period: 'month' | 'year';
+  amount: string;
+  reason: string;
+  is_active: boolean;
 };
 
 export type AllocationScope = {
@@ -411,6 +459,8 @@ export type ContributionSolve = {
   commitments?: { position_id: number; amount: string; period: string; reason: string }[];
   accumulate?: { cash_account_id: number; container: string; amount: string; reason: string }[];
   skipped?: { position_id: number; reason: string }[];
+  // Clases con objetivo escrito y ningún producto donde colocar el dinero.
+  unreachable?: { asset_class: string; target_percent: string; reason: string }[];
 };
 
 export type ContributionBasketLine = {
@@ -434,7 +484,11 @@ export type ContributionBasket = {
   leftover: string;
   status: 'draft' | 'confirmed' | 'discarded';
   source_account_id: number | null;
-  explanation: Record<string, unknown>;
+  explanation: {
+    commitments?: { position_id: number; amount: string; period: string; reason: string }[];
+    skipped?: { position_id: number; reason: string }[];
+    unreachable?: { asset_class: string; target_percent: string; reason: string }[];
+  };
   lines: ContributionBasketLine[];
   created_at: string;
   confirmed_at: string | null;

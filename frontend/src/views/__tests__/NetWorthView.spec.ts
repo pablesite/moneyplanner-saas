@@ -795,14 +795,58 @@ describe('NetWorthView', () => {
     });
     expect(wrapper.text()).toContain('Cambio de moneda');
     expect(wrapper.text()).toContain('1 USD');
-    expect(wrapper.text()).toContain('0,91000000 EUR');
     expect(wrapper.text()).toContain('14 de agosto de 2026');
+    // La cotización guardada es de un día anterior a hoy, así que se pide sola: las
+    // cifras salen al día sin tener que pulsar nada.
+    expect(mockCoreNetWorthApi.refreshFxRate).toHaveBeenCalledWith({ from: 'USD', to: 'EUR' });
+    expect(wrapper.text()).toContain('0,92000000 EUR');
 
     await wrapper.get('.a-nw-fx-detail-actions .btn').trigger('click');
     await flushPromises();
 
-    expect(mockCoreNetWorthApi.refreshFxRate).toHaveBeenCalledWith({ from: 'USD', to: 'EUR' });
-    expect(state.store.refreshAll).toHaveBeenCalledOnce();
+    expect(mockCoreNetWorthApi.refreshFxRate).toHaveBeenCalledTimes(2);
+    expect(state.store.refreshAll).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not call the provider when the stored quote is already from today', async () => {
+    // Las cuotas de los proveedores son limitadas: si la cotización ya es de hoy, abrir
+    // el detalle no tiene por qué gastar una llamada.
+    const today = new Date().toISOString().slice(0, 10);
+    const state = makeState({
+      store: {
+        ...makeState().store,
+        assets: [
+          {
+            ...makeState().store.assets[0],
+            currency: 'USD',
+            amount: '1000',
+            amount_base: '910',
+          },
+        ],
+      },
+    });
+    mockUseNetWorthViewState.mockReturnValue(state);
+    mockUseNetWorthViewExtensions.mockReturnValue({ itemFormProps: {} });
+    mockCoreNetWorthApi.getFxConversion.mockResolvedValue({
+      data: {
+        from_currency: 'USD',
+        to_currency: 'EUR',
+        rate: '0.91',
+        rate_date: today,
+        resolution: 'exact',
+        requested_date: today,
+      },
+    });
+
+    const wrapper = mount(NetWorthView);
+    await openTab(wrapper, 'Balance');
+    await wrapper.get('.a-nw-mobile-group-head').trigger('click');
+    await wrapper.get('.a-nw-mobile-row').trigger('click');
+    await wrapper.get('[aria-label="Detalles del cambio de moneda"]').trigger('click');
+    await flushPromises();
+
+    expect(mockCoreNetWorthApi.refreshFxRate).not.toHaveBeenCalled();
+    expect(wrapper.text()).toContain('0,91000000 EUR');
   });
 
   it('filters the mobile balance list by search text', async () => {

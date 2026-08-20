@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { AButton, AInfoHint, ASelect, AState, BaseModal } from '@/domains/ui';
+import { normalizeNumberInput, toNumber } from '@/lib/format';
+import { portfolioAssetClassLabels } from '../presentation';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
-import type { AllocationStrategy, AllocationTarget, PortfolioOperationOptions } from '../types';
+import type {
+  AllocationStrategy,
+  AllocationStrategyPayload,
+  AllocationTarget,
+  PortfolioOperationOptions,
+} from '../types';
 
 const props = defineProps<{
   open: boolean;
@@ -18,6 +25,10 @@ const strategy = ref<AllocationStrategy | null>(null);
 const effectiveFrom = ref('');
 const minLineAmount = ref('0');
 const rows = ref<AllocationTarget[]>([]);
+// Segundo nivel: dentro de una clase, qué parte va a cada producto. Se declara en % de
+// la clase, no de la cartera, que es como se piensa ("de mi renta variable, un 60% al
+// indexado") y lo único que no se descuadra solo al cambiar el objetivo de la clase.
+const positionRows = ref<{ position_id: number | string; target_percent: string }[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref<string | null>(null);
@@ -29,12 +40,53 @@ const classOptions = computed(() =>
     .filter((row) => row.value !== 'unclassified')
     .map((row) => ({ value: row.value, label: row.label })),
 );
+// `toNumber` y no `Number`: el teclado numérico del iPhone en español escribe coma, y
+// `Number("12,5")` es NaN, así que la política no llegaba a sumar 100 y no se dejaba
+// guardar sin que nada explicara por qué.
 const total = computed(() =>
-  rows.value.reduce((sum, row) => sum + Number(row.target_percent || 0), 0),
+  rows.value.reduce((sum, row) => sum + toNumber(row.target_percent || 0), 0),
 );
 // La política se guarda entera o no se guarda: una que no suma 100 calcularía el ideal
 // sobre una cartera que no es la tuya, y el reparto resultante sería inventado.
 const balanced = computed(() => Math.abs(total.value - 100) < 0.001);
+
+const positionOptions = computed(() =>
+  (props.options?.positions ?? [])
+    .filter((row) => row.status !== 'archived')
+    .map((row) => ({ value: String(row.id), label: row.name })),
+);
+
+function positionClass(id: number | string): string {
+  const position = (props.options?.positions ?? []).find((row) => String(row.id) === String(id));
+  return position ? (portfolioAssetClassLabels[position.asset_class] ?? position.asset_class) : '—';
+}
+
+// Dentro de una clase no se puede repartir más del 100%: sería repartir un pastel que no
+// existe. Se avisa aquí en vez de dejar que lo rechace el servidor.
+const overAllocated = computed(() => {
+  const claimed = new Map<string, number>();
+  for (const row of positionRows.value) {
+    const position = (props.options?.positions ?? []).find(
+      (item) => String(item.id) === String(row.position_id),
+    );
+    if (!position) continue;
+    const key = position.asset_class;
+    claimed.set(key, (claimed.get(key) ?? 0) + toNumber(row.target_percent || 0));
+  }
+  return [...claimed.entries()]
+    .filter(([, value]) => value > 100.001)
+    .map(([key]) => portfolioAssetClassLabels[key] ?? key);
+});
+
+function addPositionRow() {
+  const used = new Set(positionRows.value.map((row) => String(row.position_id)));
+  const next = positionOptions.value.find((option) => !used.has(String(option.value)));
+  if (!next) return;
+  positionRows.value.push({ position_id: next.value, target_percent: '' });
+}
+function removePositionRow(index: number) {
+  positionRows.value.splice(index, 1);
+}
 
 function addRow() {
   const used = new Set(rows.value.map((row) => row.asset_class));
@@ -61,7 +113,15 @@ async function load() {
     strategy.value = current;
     effectiveFrom.value = current?.effective_from ?? new Date().toISOString().slice(0, 10);
     minLineAmount.value = current?.min_line_amount ?? '0';
-    rows.value = (current?.targets ?? []).map((row) => ({ ...row }));
+    rows.value = (current?.targets ?? [])
+      .filter((row) => row.asset_class)
+      .map((row) => ({ ...row }));
+    positionRows.value = (current?.targets ?? [])
+      .filter((row) => row.position_id)
+      .map((row) => ({
+        position_id: row.position_id!,
+        target_percent: String(row.target_percent),
+      }));
   } catch (caught: unknown) {
     error.value = toApiErrorMessage(caught);
   } finally {
@@ -75,19 +135,31 @@ async function save() {
     error.value = 'Los objetivos tienen que sumar 100%.';
     return;
   }
+  if (overAllocated.value.length) {
+    error.value = `Dentro de ${overAllocated.value.join(', ')} estás repartiendo más del 100%.`;
+    return;
+  }
   saving.value = true;
   error.value = null;
-  const payload = {
+  const payload: AllocationStrategyPayload = {
     ownership_id: props.ownershipId,
     effective_from: effectiveFrom.value,
-    min_line_amount: minLineAmount.value || '0',
+    min_line_amount: normalizeNumberInput(minLineAmount.value) || '0',
     targets: rows.value.map((row) => ({
       asset_class: row.asset_class,
-      target_percent: String(row.target_percent),
-      min_percent: row.min_percent === '' ? null : row.min_percent,
-      max_percent: row.max_percent === '' ? null : row.max_percent,
+      target_percent: normalizeNumberInput(row.target_percent),
+      min_percent: normalizeNumberInput(row.min_percent) || null,
+      max_percent: normalizeNumberInput(row.max_percent) || null,
     })),
   };
+  payload.targets.push(
+    ...positionRows.value
+      .filter((row) => toNumber(row.target_percent) > 0)
+      .map((row) => ({
+        position_id: Number(row.position_id),
+        target_percent: normalizeNumberInput(row.target_percent),
+      })),
+  );
   try {
     // Editar la vigente en vez de crear otra versión: una versión nueva se escribe
     // cambiando la fecha, y eso es una decisión distinta que se toma a propósito.
@@ -179,6 +251,40 @@ watch(
               Suma {{ total.toFixed(2) }}%
             </strong>
             <small v-if="!balanced">Tiene que sumar 100 para poder guardarse.</small>
+          </div>
+        </div>
+
+        <div class="a-pf-strategy-targets">
+          <h3 class="a-pf-rules-heading">
+            Dentro de una clase
+            <AInfoHint>
+              Opcional. Sin esto, lo que quieres en una clase se reparte entre sus productos según
+              lo que ya pesa cada uno. Aquí decides tú: el porcentaje es
+              <strong>de la clase</strong>, no de la cartera, así que un 60% del indexado con la
+              renta variable al 55% son 33 puntos de cartera. Lo que no repartas se lo queda el
+              resto de la clase.
+            </AInfoHint>
+          </h3>
+          <div
+            v-for="(row, index) in positionRows"
+            :key="`p-${index}`"
+            class="a-pf-strategy-row is-position"
+          >
+            <ASelect
+              v-model="row.position_id"
+              :options="positionOptions"
+              :searchable="true"
+              class="select"
+            />
+            <input v-model="row.target_percent" class="input" inputmode="decimal" placeholder="0" />
+            <small class="a-pf-strategy-class">de {{ positionClass(row.position_id) }}</small>
+            <AButton variant="ghost" size="sm" @click="removePositionRow(index)">Quitar</AButton>
+          </div>
+          <div class="a-pf-strategy-foot">
+            <AButton variant="ghost" size="sm" @click="addPositionRow">Añadir producto</AButton>
+            <strong v-if="overAllocated.length" class="is-negative">
+              Te pasas del 100% en {{ overAllocated.join(', ') }}
+            </strong>
           </div>
         </div>
 

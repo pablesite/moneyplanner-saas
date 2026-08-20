@@ -11,10 +11,14 @@ const decimalsByCurrency: Record<string, number> = {
 };
 
 export function normalizeNumberInput(raw: unknown) {
-  return String(raw ?? '')
+  const text = String(raw ?? '')
     .trim()
-    .replace(/\s/g, '')
-    .replace(/,/g, '.');
+    .replace(/\s/g, '');
+  // Con coma decimal, los puntos solo pueden ser separadores de miles: "1.500,50" es
+  // lo que teclea cualquiera aquí, y el teclado numérico del iPhone en español ni
+  // siquiera ofrece el punto.
+  if (text.includes(',')) return text.replace(/\./g, '').replace(/,/g, '.');
+  return text;
 }
 
 export function getMaxDecimals(currency?: string) {
