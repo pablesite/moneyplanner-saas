@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.56.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.55.0...moneyplanner-saas-v0.56.0) (2026-08-20)
+
+
+### Features
+
+* **portfolio:** say what breaking a commitment costs, and warn when it is not covered ([9e3edba](https://github.com/pablesite/moneyplanner-saas/commit/9e3edbae92333131bf33cfb3cba000edc5be4c89))
+* **portfolio:** write a commitment against a platform, not only a product ([61ca15a](https://github.com/pablesite/moneyplanner-saas/commit/61ca15ab69383ff515a22e5c2c7d4acd6307fbb0))
+
+
+### Bug Fixes
+
+* **portfolio:** change a container's cash account instead of unlinking it ([b7de674](https://github.com/pablesite/moneyplanner-saas/commit/b7de6747b105bc98a11d4a51683ef830ea3ffa44))
+* **portfolio:** the review round on allocation, positions and mobile ([5cbf06f](https://github.com/pablesite/moneyplanner-saas/commit/5cbf06f2d52a80fd8ffdd85bc449dcdad5744846))
+
 ## [0.55.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.54.0...moneyplanner-saas-v0.55.0) (2026-08-19)
 
 
