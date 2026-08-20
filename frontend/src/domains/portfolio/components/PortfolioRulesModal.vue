@@ -17,7 +17,13 @@ const props = defineProps<{
 const emit = defineEmits<{ close: []; saved: [message: string] }>();
 const FORM_ID = 'portfolio-rules-form';
 
-const positionId = ref('');
+// El destino es un producto (`p:<id>`) o una plataforma (`c:<id>`): las restricciones de
+// compra son del producto, pero el mínimo mensual suele ser de la plataforma entera.
+const targetId = ref('');
+const positionId = computed(() => (targetId.value.startsWith('p:') ? targetId.value.slice(2) : ''));
+const containerId = computed(() =>
+  targetId.value.startsWith('c:') ? targetId.value.slice(2) : '',
+);
 const rules = ref<PositionAllocationRule[]>([]);
 const commitments = ref<ContributionCommitment[]>([]);
 const loading = ref(false);
@@ -35,10 +41,13 @@ const commitmentReason = ref('');
 const breachCost = ref('');
 
 const positionOptions = computed(() => [
-  { value: '', label: 'Elige una posición…' },
+  { value: '', label: 'Elige dónde se aplica…' },
+  ...(props.options?.containers ?? [])
+    .filter((row) => row.is_active)
+    .map((row) => ({ value: `c:${row.id}`, label: `Plataforma · ${row.name}` })),
   ...(props.options?.positions ?? [])
     .filter((row) => row.status !== 'archived')
-    .map((row) => ({ value: String(row.id), label: `${row.name} · ${row.container_name}` })),
+    .map((row) => ({ value: `p:${row.id}`, label: `${row.name} · ${row.container_name}` })),
 ]);
 const periodOptions = [
   { value: 'month', label: 'Cada mes' },
@@ -55,36 +64,54 @@ const rule = computed(
 const commitment = computed(
   () =>
     commitments.value.find(
-      (row) => String(row.position_id) === positionId.value && row.is_active,
+      (row) =>
+        row.is_active &&
+        (containerId.value
+          ? String(row.container_id) === containerId.value
+          : String(row.position_id) === positionId.value),
     ) ?? null,
 );
+function ruleDetail(row: PositionAllocationRule): string {
+  const parts: string[] = [];
+  if (row.excluded) parts.push('excluida del reparto');
+  if (toNumber(row.min_contribution) > 0) parts.push(`mínimo ${row.min_contribution} €`);
+  if (toNumber(row.rounding_step) > 0) parts.push(`múltiplos de ${row.rounding_step} €`);
+  if (toNumber(row.operation_cost) > 0) parts.push(`comisión ${row.operation_cost} €`);
+  if (row.fee_free_plan) parts.push('plan periódico sin comisión');
+  return parts.join(' · ');
+}
+
+function commitmentDetail(row: ContributionCommitment): string {
+  return (
+    `${row.amount} € ${row.period === 'year' ? 'al año' : 'al mes'}` +
+    (toNumber(row.breach_cost) > 0 ? ` · romperlo cuesta ${row.breach_cost} €/año` : '') +
+    (row.reason ? ` · ${row.reason}` : '')
+  );
+}
+
 // Lo ya configurado, para no tener que ir posición por posición averiguando qué hay.
 const configured = computed(() => {
   const names = new Map((props.options?.positions ?? []).map((row) => [row.id, row.name] as const));
+  const containers = new Map(
+    (props.options?.containers ?? []).map((row) => [row.id, row.name] as const),
+  );
   const rows: { id: string; name: string; detail: string }[] = [];
   for (const row of rules.value) {
-    const parts: string[] = [];
-    if (row.excluded) parts.push('excluida del reparto');
-    if (toNumber(row.min_contribution) > 0) parts.push(`mínimo ${row.min_contribution} €`);
-    if (toNumber(row.rounding_step) > 0) parts.push(`múltiplos de ${row.rounding_step} €`);
-    if (toNumber(row.operation_cost) > 0) parts.push(`comisión ${row.operation_cost} €`);
-    if (row.fee_free_plan) parts.push('plan periódico sin comisión');
-    if (parts.length) {
-      rows.push({
-        id: `rule-${row.id}`,
-        name: names.get(row.position_id) ?? `Posición ${row.position_id}`,
-        detail: parts.join(' · '),
-      });
-    }
+    const detail = ruleDetail(row);
+    if (!detail) continue;
+    rows.push({
+      id: `rule-${row.id}`,
+      name: names.get(row.position_id) ?? `Posición ${row.position_id}`,
+      detail,
+    });
   }
   for (const row of commitments.value.filter((item) => item.is_active)) {
     rows.push({
       id: `commitment-${row.id}`,
-      name: names.get(row.position_id) ?? `Posición ${row.position_id}`,
-      detail:
-        `${row.amount} € ${row.period === 'year' ? 'al año' : 'al mes'}` +
-        (toNumber(row.breach_cost) > 0 ? ` · romperlo cuesta ${row.breach_cost} €/año` : '') +
-        (row.reason ? ` · ${row.reason}` : ''),
+      name: row.container_id
+        ? `Plataforma · ${containers.get(row.container_id) ?? row.container_id}`
+        : (names.get(row.position_id ?? 0) ?? `Posición ${row.position_id}`),
+      detail: commitmentDetail(row),
     });
   }
   return rows.sort((a, b) => a.name.localeCompare(b.name, 'es'));
@@ -123,31 +150,35 @@ async function load() {
 }
 
 async function save() {
-  if (!positionId.value) {
-    error.value = 'Elige la posición a la que se aplica.';
+  if (!targetId.value) {
+    error.value = 'Elige dónde se aplica.';
     return;
   }
   saving.value = true;
   error.value = null;
-  const target = Number(positionId.value);
+  const target = Number(positionId.value || containerId.value);
   try {
-    const payload = {
-      position_id: target,
-      excluded: excluded.value,
-      min_contribution: normalizeNumberInput(minContribution.value) || '0',
-      rounding_step: normalizeNumberInput(roundingStep.value) || '0',
-      operation_cost: normalizeNumberInput(operationCost.value) || '0',
-      fee_free_plan: feeFreePlan.value,
-    };
-    if (rule.value) await corePortfolioApi.updateAllocationRule(rule.value.id, payload);
-    else await corePortfolioApi.createAllocationRule(payload);
+    // Las restricciones de compra son de un producto: una plataforma no tiene mínimo de
+    // entrada ni comisión propia, solo el suelo que exige cada mes.
+    if (positionId.value) {
+      const payload = {
+        position_id: target,
+        excluded: excluded.value,
+        min_contribution: normalizeNumberInput(minContribution.value) || '0',
+        rounding_step: normalizeNumberInput(roundingStep.value) || '0',
+        operation_cost: normalizeNumberInput(operationCost.value) || '0',
+        fee_free_plan: feeFreePlan.value,
+      };
+      if (rule.value) await corePortfolioApi.updateAllocationRule(rule.value.id, payload);
+      else await corePortfolioApi.createAllocationRule(payload);
+    }
 
     // Un compromiso sin importe es no tener compromiso: se desactiva en vez de quedarse
     // reclamando cero cada mes.
     const amount = normalizeNumberInput(commitmentAmount.value);
     if (toNumber(amount) > 0) {
       const pledge = {
-        position_id: target,
+        ...(positionId.value ? { position_id: target } : { container_id: target }),
         period: commitmentPeriod.value,
         amount,
         reason: commitmentReason.value.trim(),
@@ -168,12 +199,12 @@ async function save() {
   }
 }
 
-watch(positionId, loadForm);
+watch(targetId, loadForm);
 watch(
   () => props.open,
   (open) => {
     if (!open) return;
-    positionId.value = '';
+    targetId.value = '';
     error.value = null;
     void load();
   },
@@ -200,9 +231,14 @@ watch(
 
       <template v-else>
         <label class="ui-item-form-field">
-          <span class="ui-item-form-label">Posición</span>
+          <span class="ui-item-form-label">
+            Se aplica a
+            <AInfoHint
+              label="Un producto concreto, o la plataforma entera. El mínimo mensual de MyInvestor son 300 € en la plataforma y da igual si van al plan o al roboadvisor: eso se escribe sobre la plataforma, y el reparto se ocupa de repartirlo entre sus productos."
+            />
+          </span>
           <ASelect
-            v-model="positionId"
+            v-model="targetId"
             :options="positionOptions"
             :searchable="true"
             class="select"
@@ -267,7 +303,11 @@ watch(
               />
             </label>
           </div>
+        </template>
 
+        <!-- El compromiso vale para las dos formas del destino: un producto tiene su cupo
+             y una plataforma tiene su suelo mensual. -->
+        <template v-if="targetId">
           <h3 class="a-pf-rules-heading">
             Compromiso
             <AInfoHint>
@@ -343,7 +383,7 @@ watch(
           type="submit"
           :form="FORM_ID"
           :loading="saving"
-          :disabled="!positionId"
+          :disabled="!targetId"
         >
           Guardar
         </AButton>

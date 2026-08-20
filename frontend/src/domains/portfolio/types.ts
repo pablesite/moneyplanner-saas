@@ -423,7 +423,10 @@ export type PositionAllocationRule = {
 // mensual que conserva una ventaja del banco, o un cupo anual que además es techo.
 export type ContributionCommitment = {
   id: number;
-  position_id: number;
+  // O cuelga de un producto o de la plataforma entera: el mínimo de MyInvestor son 300 €
+  // al mes en la plataforma, y da igual cómo se repartan por dentro.
+  position_id: number | null;
+  container_id: number | null;
   period: 'month' | 'year';
   amount: string;
   reason: string;

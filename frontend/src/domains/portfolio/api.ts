@@ -137,7 +137,12 @@ export const corePortfolioApi = {
   getCommitments() {
     return coreApi.get<ContributionCommitment[]>('/api/portfolio/commitments/');
   },
-  createCommitment(payload: Omit<ContributionCommitment, 'id'>) {
+  createCommitment(
+    payload: Omit<ContributionCommitment, 'id' | 'position_id' | 'container_id'> & {
+      position_id?: number;
+      container_id?: number;
+    },
+  ) {
     return coreApi.post<ContributionCommitment>('/api/portfolio/commitments/', payload);
   },
   updateCommitment(id: number, payload: Partial<ContributionCommitment>) {
