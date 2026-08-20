@@ -1698,3 +1698,10 @@
   font-size: 0.75rem;
   line-height: 1.5;
 }
+
+/* Un compromiso sin cubrir no es información de contexto: es dinero que se pierde. */
+.dir-a .a-pf-basket-note.is-warning,
+.dir-a-sheet .a-pf-contribution-note.is-warning {
+  border-color: var(--warn, var(--neg));
+  color: var(--text);
+}

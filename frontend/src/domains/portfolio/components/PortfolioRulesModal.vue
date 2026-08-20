@@ -32,6 +32,7 @@ const feeFreePlan = ref(false);
 const commitmentPeriod = ref<'month' | 'year'>('month');
 const commitmentAmount = ref('');
 const commitmentReason = ref('');
+const breachCost = ref('');
 
 const positionOptions = computed(() => [
   { value: '', label: 'Elige una posición…' },
@@ -80,7 +81,10 @@ const configured = computed(() => {
     rows.push({
       id: `commitment-${row.id}`,
       name: names.get(row.position_id) ?? `Posición ${row.position_id}`,
-      detail: `${row.amount} € ${row.period === 'year' ? 'al año' : 'al mes'}${row.reason ? ` · ${row.reason}` : ''}`,
+      detail:
+        `${row.amount} € ${row.period === 'year' ? 'al año' : 'al mes'}` +
+        (toNumber(row.breach_cost) > 0 ? ` · romperlo cuesta ${row.breach_cost} €/año` : '') +
+        (row.reason ? ` · ${row.reason}` : ''),
     });
   }
   return rows.sort((a, b) => a.name.localeCompare(b.name, 'es'));
@@ -97,6 +101,7 @@ function loadForm() {
   commitmentPeriod.value = pledge?.period ?? 'month';
   commitmentAmount.value = pledge && toNumber(pledge.amount) > 0 ? pledge.amount : '';
   commitmentReason.value = pledge?.reason ?? '';
+  breachCost.value = pledge && toNumber(pledge.breach_cost) > 0 ? pledge.breach_cost : '';
 }
 
 async function load() {
@@ -146,6 +151,7 @@ async function save() {
         period: commitmentPeriod.value,
         amount,
         reason: commitmentReason.value.trim(),
+        breach_cost: normalizeNumberInput(breachCost.value) || '0',
         is_active: true,
       };
       if (commitment.value) await corePortfolioApi.updateCommitment(commitment.value.id, pledge);
@@ -286,6 +292,20 @@ watch(
               <ASelect v-model="commitmentPeriod" :options="periodOptions" :searchable="false" />
             </label>
           </div>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Si no lo cumples, cuesta
+              <AInfoHint>
+                Al año, y en euros. Un compromiso no vale por su importe sino por lo que se pierde
+                al romperlo: dejar la aportación periódica del roboadvisor puede tirar la
+                remuneración del <strong>saldo entero</strong> de tu cuenta del banco, que es mucho
+                más dinero que la aportación. Con 12.000 € al 2,5 % frente al 0 % sin plan, aquí van
+                300 €. Cuando la aportación no llegue para todos los compromisos, se atiende primero
+                al más caro de romper.
+              </AInfoHint>
+            </span>
+            <input v-model="breachCost" class="input" inputmode="decimal" placeholder="0" />
+          </label>
           <label class="ui-item-form-field">
             <span class="ui-item-form-label">Por qué</span>
             <input

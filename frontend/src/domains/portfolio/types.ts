@@ -427,6 +427,9 @@ export type ContributionCommitment = {
   period: 'month' | 'year';
   amount: string;
   reason: string;
+  // Lo que cuesta al año no cumplirlo: un compromiso no vale por su importe sino por lo
+  // que se pierde al romperlo. Decide a quién se atiende cuando no llega para todos.
+  breach_cost: string;
   is_active: boolean;
 };
 
@@ -461,6 +464,14 @@ export type ContributionSolve = {
   skipped?: { position_id: number; reason: string }[];
   // Clases con objetivo escrito y ningún producto donde colocar el dinero.
   unreachable?: { asset_class: string; target_percent: string; reason: string }[];
+  // Compromisos que esta aportación no cubre, con lo que cuesta romperlos.
+  unmet_commitments?: {
+    position_id: number;
+    amount: string;
+    period: string;
+    reason: string;
+    breach_cost: string;
+  }[];
 };
 
 export type ContributionBasketLine = {
@@ -488,6 +499,13 @@ export type ContributionBasket = {
     commitments?: { position_id: number; amount: string; period: string; reason: string }[];
     skipped?: { position_id: number; reason: string }[];
     unreachable?: { asset_class: string; target_percent: string; reason: string }[];
+    unmet_commitments?: {
+      position_id: number;
+      amount: string;
+      period: string;
+      reason: string;
+      breach_cost: string;
+    }[];
   };
   lines: ContributionBasketLine[];
   created_at: string;

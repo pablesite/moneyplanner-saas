@@ -241,6 +241,20 @@ watch([() => props.ownershipId, showHistory], load, { immediate: true });
         </li>
       </ul>
 
+      <!-- Un compromiso sin cubrir no es una línea que falta: es una ventaja que se
+           pierde, y suele costar más que la propia aportación. -->
+      <p
+        v-for="row in basket.explanation?.unmet_commitments ?? []"
+        :key="`unmet-${row.position_id}`"
+        class="a-pf-basket-note is-warning"
+      >
+        Compromiso sin cubrir: faltan {{ money(row.amount)
+        }}<template v-if="row.reason"> · {{ row.reason }}</template
+        ><template v-if="Number(row.breach_cost) > 0">
+          — romperlo cuesta {{ money(row.breach_cost) }} al año</template
+        >.
+      </p>
+
       <!-- Lo que no aparece como línea también forma parte del reparto: la liquidez que
            se queda quieta no genera ningún movimiento, y por eso no se confirma. -->
       <p

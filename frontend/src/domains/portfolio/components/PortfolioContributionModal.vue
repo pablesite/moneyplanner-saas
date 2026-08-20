@@ -154,6 +154,18 @@ watch(
           </span>
         </div>
 
+        <!-- Un compromiso sin cubrir no es una línea que falta: es una ventaja que se
+             pierde, y suele costar más que la propia aportación. -->
+        <div v-if="solved.unmet_commitments?.length" class="a-pf-contribution-note is-warning">
+          <strong>Compromisos sin cubrir</strong>
+          <span v-for="row in solved.unmet_commitments" :key="row.position_id">
+            Faltan {{ money(row.amount) }}{{ row.reason ? ` · ${row.reason}` : '' }}
+            <template v-if="Number(row.breach_cost) > 0">
+              — no cumplirlo cuesta {{ money(row.breach_cost) }} al año
+            </template>
+          </span>
+        </div>
+
         <!-- Una clase que no se puede cumplir se dice, no se omite: su parte se la
              acaban repartiendo las demás y sin esto parecía que el reparto ignora la
              política sin motivo. -->
