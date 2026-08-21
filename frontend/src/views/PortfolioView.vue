@@ -69,10 +69,13 @@ const activeTab = ref<PortfolioTab>(
     ? (route.query.tab as PortfolioTab)
     : 'summary',
 );
+// Sin periodo en la URL se abre con todo el historial: una cartera de acumulacion se
+// mira para saber como ha ido desde que empezo, y arrancar en los ultimos doce meses
+// escondia justo la parte que da sentido a la cifra.
 const period = ref<PeriodPreset>(
   validPeriods.includes(route.query.period as PeriodPreset)
     ? (route.query.period as PeriodPreset)
-    : '1y',
+    : 'all',
 );
 const memberId = ref(String(route.query.member ?? 'all'));
 const containerId = ref(String(route.query.container ?? 'all'));
@@ -502,7 +505,7 @@ async function syncUrl() {
   const nextQuery: Record<string, string> = {};
   if (returnTo !== '/patrimonio') nextQuery.return = returnTo;
   if (activeTab.value !== 'summary') nextQuery.tab = activeTab.value;
-  if (period.value !== '1y') nextQuery.period = period.value;
+  if (period.value !== 'all') nextQuery.period = period.value;
   if (memberId.value !== 'all') nextQuery.member = memberId.value;
   if (containerId.value !== 'all') nextQuery.container = containerId.value;
   if (assetClass.value !== 'all') nextQuery.class = assetClass.value;
