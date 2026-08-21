@@ -992,8 +992,14 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     entry: (typeof expenseEntries.value)[number],
     month: number,
   ): number {
+    // The owner-adjusted entries are already annualized. Raw entries still need the
+    // same term adjustment as the backend monthly summary before they become a weight.
+    const amountAnnual =
+      'baseAmountAnnual' in entry
+        ? entry.amountAnnual
+        : effectiveAnnualAmountForEntry(entry, entry.fiscalYear);
     if (entry.expenseType === 'one_off') {
-      return entry.targetMonth === month ? toNumberOrZero(entry.amountAnnual) : 0;
+      return entry.targetMonth === month ? toNumberOrZero(amountAnnual) : 0;
     }
     if (
       entry.timeProfile === 'term_recurrent' &&
@@ -1001,9 +1007,9 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     ) {
       const endMonth = Math.min(12, Math.max(1, Number(entry.termEndMonth ?? 12)));
       if (month > endMonth) return 0;
-      return toNumberOrZero(entry.amountAnnual) / endMonth;
+      return toNumberOrZero(amountAnnual) / endMonth;
     }
-    return toNumberOrZero(entry.amountAnnual) / 12;
+    return toNumberOrZero(amountAnnual) / 12;
   }
 
   function monthlyPlannedAmountForIncomeEntry(

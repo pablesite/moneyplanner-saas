@@ -77,8 +77,10 @@ function expenseEntry(overrides: Record<string, unknown>) {
     expenseType: 'recurrent',
     timeProfile: 'structural_recurrent',
     targetMonth: null,
+    termStartMonth: null,
     termEndYear: null,
     termEndMonth: null,
+    amountInputPeriod: 'annual',
     owner: 'Pablo',
     ownershipId: null,
     isActive: true,
@@ -88,10 +90,10 @@ function expenseEntry(overrides: Record<string, unknown>) {
 
 // Un mes de ejecución real por la vía del resumen del backend, que no viene repartido por
 // titularidad: es el camino que se rompía.
-function summaryWithExecution(executed: number) {
+function summaryWithExecution(executed: number, planned = 200) {
   return {
     fiscal_year: YEAR,
-    planned_total: '200.00',
+    planned_total: String(planned),
     executed_total: String(executed),
     pending_total: '0.00',
     variance_total: '0.00',
@@ -106,9 +108,7 @@ function summaryWithExecution(executed: number) {
             {
               subcategory: 'housing_home',
               has_budgeted_line: true,
-              months: [
-                { month: 1, planned: 200, executed_budgeted: executed, executed_unbudgeted: 0 },
-              ],
+              months: [{ month: 1, planned, executed_budgeted: executed, executed_unbudgeted: 0 }],
             },
           ],
         },
@@ -262,6 +262,63 @@ describe('useBudgetDashboardPage · filtro por titularidad en gastos', () => {
     wrapper.vm.ownershipFilter = 'Ana';
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.plannedExpenseTotal).toBeCloseTo(357.1, 2);
+
+    wrapper.unmount();
+  });
+
+  it('alinea el previsto de una cuota limitada mensual con su ejecución compartida', async () => {
+    ownerships.value = [
+      {
+        id: 4,
+        kind: 'shared',
+        member: null,
+        splits: [
+          { member: { id: 1, name: 'Pablo', role: 'adult' }, percent: '50.00' },
+          { member: { id: 2, name: 'Ana', role: 'adult' }, percent: '50.00' },
+        ],
+        allocation_basis: 'explicit_split',
+      },
+    ];
+    accountingTransactions.value = [
+      {
+        id: 2,
+        booking_date: `${YEAR}-01-05`,
+        ownership_id: 4,
+        member_tag: '',
+        quick_entry_kind: 'expense',
+        entries: [
+          {
+            amount: '100.00',
+            amount_base: '100.00',
+            side: 'debit',
+            flow_family: 'expense',
+            category_key: 'consumption_expenses',
+            subcategory_key: 'housing_home',
+            asset_id: null,
+            liability_id: null,
+          },
+        ],
+      },
+    ];
+    expenseEntries.value = [
+      expenseEntry({
+        amountAnnual: 1200,
+        ownershipId: 4,
+        owner: 'Compartido (Ana 50% / Pablo 50%)',
+        timeProfile: 'term_recurrent',
+        amountInputPeriod: 'monthly',
+        termEndMonth: 9,
+      }),
+    ];
+
+    const wrapper = await mountDashboard();
+    wrapper.vm.expenseMonthlySummary = summaryWithExecution(100, 100) as never;
+    await wrapper.vm.$nextTick();
+
+    wrapper.vm.ownershipFilter = 'Pablo';
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.expenseExecutionYtdTotals.planned).toBeCloseTo(50, 2);
+    expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(50, 2);
 
     wrapper.unmount();
   });
