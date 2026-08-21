@@ -83,6 +83,7 @@ type TransactionFormState = {
   initial_kind: EditableActivityKind;
   investment_direction: 'inflow' | 'outflow' | 'reinvestment';
   fee_amount: string;
+  destination_fee_amount: string;
   category_key: string;
   subcategory_key: string;
   kind_label: string;
@@ -274,8 +275,10 @@ export function useAccountingPage() {
     investment_units: '',
     investment_unit_price: '',
     // Lo que cobra el broker por ejecutar la operación. Se registra aparte, como gasto
-    // propio, para no desviar hacia el coste el capital que llega a la posición.
+    // propio, para no desviar hacia el coste el capital que llega a la posición. Un
+    // traspaso entre fondos cobra dos veces, y cada una la paga una posición distinta.
     fee_amount: '',
+    destination_fee_amount: '',
   });
   const lastQuickClassification = reactive<
     Record<'income' | 'expense' | 'debt_payment', LastQuickClassification>
@@ -348,6 +351,7 @@ export function useAccountingPage() {
     initial_kind: 'transfer',
     investment_direction: 'inflow',
     fee_amount: '',
+    destination_fee_amount: '',
     category_key: '',
     subcategory_key: '',
     kind_label: '',
@@ -726,25 +730,44 @@ export function useAccountingPage() {
   // un aporte, la que recibe el dinero en una retirada y la de partida en una reinversión.
   const quickInvestmentFeePreview = computed(() => {
     if (quickEntryForm.movement_type !== 'investment') return null;
-    const fee = toNumber(quickEntryForm.fee_amount);
-    if (!(fee > 0)) return null;
     const amount = toNumber(quickEntryForm.amount);
     if (!(amount > 0)) return null;
+    const fee = toNumber(quickEntryForm.fee_amount);
+    const destinationFee =
+      quickEntryForm.investment_direction === 'reinvestment'
+        ? toNumber(quickEntryForm.destination_fee_amount)
+        : 0;
+    if (!(fee > 0) && !(destinationFee > 0)) return null;
+    const destinationAmount = quickInvestmentIsCrossCurrency.value
+      ? toNumber(quickEntryForm.destination_amount)
+      : amount;
     if (quickEntryForm.investment_direction === 'outflow') {
-      const credited = quickInvestmentIsCrossCurrency.value
-        ? toNumber(quickEntryForm.destination_amount)
-        : amount;
-      if (!(credited > 0)) return null;
+      if (!(destinationAmount > 0)) return null;
       return {
-        kind: 'credited' as const,
-        amount: credited - fee,
-        currency: quickInvestmentDestinationCurrency.value || 'EUR',
+        charged: null,
+        credited: {
+          amount: destinationAmount - fee,
+          currency: quickInvestmentDestinationCurrency.value || 'EUR',
+        },
       };
     }
     return {
-      kind: 'charged' as const,
-      amount: amount + fee,
-      currency: quickInvestmentOriginCurrency.value || 'EUR',
+      charged:
+        fee > 0
+          ? {
+              amount: amount + fee,
+              currency: quickInvestmentOriginCurrency.value || 'EUR',
+            }
+          : null,
+      // En un traspaso entre fondos la comisión de compra la paga la posición que
+      // recibe, así que llega menos de lo que sale.
+      credited:
+        destinationFee > 0 && destinationAmount > 0
+          ? {
+              amount: destinationAmount - destinationFee,
+              currency: quickInvestmentDestinationCurrency.value || 'EUR',
+            }
+          : null,
     };
   });
 
@@ -1473,6 +1496,7 @@ export function useAccountingPage() {
       quickEntryForm.investment_units = '';
       quickEntryForm.investment_unit_price = '';
       quickEntryForm.fee_amount = '';
+      quickEntryForm.destination_fee_amount = '';
       quickEntryForm.investment_direction = 'inflow';
       const remembered =
         movementType === 'income' || movementType === 'expense' || movementType === 'debt_payment'
@@ -2358,6 +2382,7 @@ export function useAccountingPage() {
     quickEntryForm.investment_units = '';
     quickEntryForm.investment_unit_price = '';
     quickEntryForm.fee_amount = '';
+    quickEntryForm.destination_fee_amount = '';
   }
   function resetEditTransactionForm() {
     editTransactionId.value = null;
@@ -2377,6 +2402,7 @@ export function useAccountingPage() {
     editTransactionForm.principal_amount = '';
     editTransactionForm.interest_amount = '';
     editTransactionForm.fee_amount = '';
+    editTransactionForm.destination_fee_amount = '';
     editTransactionForm.kind = 'transfer';
     editTransactionForm.initial_kind = 'transfer';
     editTransactionForm.investment_direction = 'inflow';
@@ -3660,14 +3686,24 @@ export function useAccountingPage() {
     editTransactionForm.principal_amount = quickEntryForm.principal_amount;
     editTransactionForm.interest_amount = quickEntryForm.interest_amount;
     editTransactionForm.fee_amount = quickEntryForm.fee_amount;
+    editTransactionForm.destination_fee_amount = quickEntryForm.destination_fee_amount;
   }
 
   // Solo se manda cuando el movimiento admite comisión. Enviar '' o 0 en el resto
   // borraría la comisión de un movimiento que nunca habló de ella.
-  function editedFeePayload(): { fee_amount?: string } {
+  function editedFeePayload(): { fee_amount?: string; destination_fee_amount?: string } {
     if (editTransactionForm.kind !== 'investment') return {};
     const raw = editTransactionForm.fee_amount.trim();
-    return { fee_amount: raw ? formatDecimalInput(raw) : '0' };
+    const payload: { fee_amount?: string; destination_fee_amount?: string } = {
+      fee_amount: raw ? formatDecimalInput(raw) : '0',
+    };
+    // Solo una reinversión tiene un segundo lado que cobre; mandarlo en un aporte lo
+    // rechaza el backend, con razón.
+    if (editTransactionForm.investment_direction === 'reinvestment') {
+      const destination = editTransactionForm.destination_fee_amount.trim();
+      payload.destination_fee_amount = destination ? formatDecimalInput(destination) : '0';
+    }
+    return payload;
   }
 
   // eslint-disable-next-line complexity
@@ -3964,6 +4000,12 @@ export function useAccountingPage() {
             ...(quickEntryForm.fee_amount.trim()
               ? { fee_amount: formatDecimalInput(quickEntryForm.fee_amount) }
               : {}),
+            ...(quickEntryForm.investment_direction === 'reinvestment' &&
+            quickEntryForm.destination_fee_amount.trim()
+              ? {
+                  destination_fee_amount: formatDecimalInput(quickEntryForm.destination_fee_amount),
+                }
+              : {}),
           }
         : {}),
       ...(quickEntryForm.movement_type === 'debt_payment'
@@ -4109,6 +4151,10 @@ export function useAccountingPage() {
     quickEntryForm.fee_amount =
       movementType === 'investment' && transaction.fee_amount
         ? formatDecimalInput(String(transaction.fee_amount))
+        : '';
+    quickEntryForm.destination_fee_amount =
+      movementType === 'investment' && transaction.destination_fee_amount
+        ? formatDecimalInput(String(transaction.destination_fee_amount))
         : '';
   }
 

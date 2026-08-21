@@ -56,8 +56,10 @@ export type LedgerTransaction = {
   investment_direction: '' | InvestmentDirection;
   realized_cost_basis: string | null;
   realized_gain_loss: string | null;
-  // Lo que costó ejecutarlo, leído de la comisión que cuelga del movimiento.
+  // Lo que costó ejecutarlo, leído de las comisiones que cuelgan del movimiento. Un
+  // traspaso entre fondos paga dos, una por lado.
   fee_amount?: string | null;
+  destination_fee_amount?: string | null;
   activity_kind: string;
   needs_review?: boolean;
   account_balance_after?: string | null;
@@ -197,6 +199,7 @@ export type LedgerTransactionWritePayload = {
   investment_direction?: string;
   // Omitirla no toca la comisión del movimiento; '0' la borra.
   fee_amount?: string | null;
+  destination_fee_amount?: string | null;
   entries?: LedgerEntryWritePayload[];
 };
 
@@ -206,6 +209,7 @@ export type QuickLedgerTransactionWritePayload = {
   investment_units?: string | null;
   investment_unit_price?: string | null;
   fee_amount?: string | null;
+  destination_fee_amount?: string | null;
   booking_date: string;
   value_date: string;
   description: string;

@@ -630,30 +630,68 @@ const quickEntryHint = computed(() => {
           Si quieres afinar con el tipo real de tu broker, edítalo.
         </p>
 
-        <label class="ui-accounting-field">
-          <span>
-            Comisión{{ investmentFeeCurrency ? ` (${investmentFeeCurrency})` : '' }}
-            <AInfoHint
-              label="Lo que cobra el broker por ejecutar la operación. Se registra como gasto aparte, así que el importe de arriba sigue siendo el capital que llega a la posición y la cuenta que paga cuadra con el extracto."
+        <!-- Un traspaso entre fondos paga dos comisiones y cada una la paga una posición
+             distinta: sumarlas en una sola atribuiría a la compra lo que costó la venta. -->
+        <div
+          :class="investmentDirection === 'reinvestment' ? 'ui-accounting-form-grid' : undefined"
+        >
+          <label class="ui-accounting-field">
+            <span>
+              {{ investmentDirection === 'reinvestment' ? 'Comisión de venta' : 'Comisión'
+              }}{{ investmentFeeCurrency ? ` (${investmentFeeCurrency})` : '' }}
+              <AInfoHint
+                label="Lo que cobra el broker por ejecutar la operación. Se registra como gasto aparte, así que el importe de arriba sigue siendo el capital que se mueve y la cuenta que paga cuadra con el extracto."
+              />
+            </span>
+            <input
+              v-model="page.quickEntryForm.fee_amount"
+              class="input"
+              inputmode="decimal"
+              placeholder="0,00"
             />
-          </span>
-          <input
-            v-model="page.quickEntryForm.fee_amount"
-            class="input"
-            inputmode="decimal"
-            placeholder="0,00"
-          />
-        </label>
-        <p v-if="page.quickInvestmentFeePreview" class="ui-accounting-balance-feedback">
+          </label>
+          <label v-if="investmentDirection === 'reinvestment'" class="ui-accounting-field">
+            <span>
+              Comisión de compra{{
+                page.quickInvestmentDestinationCurrency
+                  ? ` (${page.quickInvestmentDestinationCurrency})`
+                  : ''
+              }}
+              <AInfoHint
+                label="La que cobra el fondo de destino por entrar. La paga esa posición, no la de salida, así que llega menos de lo que sale."
+              />
+            </span>
+            <input
+              v-model="page.quickEntryForm.destination_fee_amount"
+              class="input"
+              inputmode="decimal"
+              placeholder="0,00"
+            />
+          </label>
+        </div>
+        <p v-if="page.quickInvestmentFeePreview?.charged" class="ui-accounting-balance-feedback">
           {{
-            page.quickInvestmentFeePreview.kind === 'credited'
-              ? 'Abono neto en la cuenta de destino:'
+            investmentDirection === 'reinvestment'
+              ? 'Sale de la cuenta de origen:'
               : 'Cargo total en la cuenta de origen:'
           }}
           <strong>{{
             page.formatMoney(
-              page.quickInvestmentFeePreview.amount,
-              page.quickInvestmentFeePreview.currency,
+              page.quickInvestmentFeePreview.charged.amount,
+              page.quickInvestmentFeePreview.charged.currency,
+            )
+          }}</strong>
+        </p>
+        <p v-if="page.quickInvestmentFeePreview?.credited" class="ui-accounting-balance-feedback">
+          {{
+            investmentDirection === 'reinvestment'
+              ? 'Llega a la cuenta de destino:'
+              : 'Abono neto en la cuenta de destino:'
+          }}
+          <strong>{{
+            page.formatMoney(
+              page.quickInvestmentFeePreview.credited.amount,
+              page.quickInvestmentFeePreview.credited.currency,
             )
           }}</strong>
         </p>

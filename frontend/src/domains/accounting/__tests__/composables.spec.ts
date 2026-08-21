@@ -158,7 +158,11 @@ function seedNetWorthResponses() {
 }
 
 async function mountInvestmentHarness(
-  overrides: { fee_amount?: string; investment_direction?: 'inflow' | 'outflow' } = {},
+  overrides: {
+    fee_amount?: string;
+    destination_fee_amount?: string;
+    investment_direction?: 'inflow' | 'outflow' | 'reinvestment';
+  } = {},
 ) {
   const Harness = defineComponent({
     setup() {
@@ -181,6 +185,7 @@ async function mountInvestmentHarness(
   wrapper.vm.quickEntryForm.account_id = 1;
   wrapper.vm.quickEntryForm.counterparty_account_id = 2;
   wrapper.vm.quickEntryForm.fee_amount = overrides.fee_amount ?? '';
+  wrapper.vm.quickEntryForm.destination_fee_amount = overrides.destination_fee_amount ?? '';
   vi.mocked(coreAccountingApi.createQuickEntry).mockResolvedValue({ data: {} } as never);
   await wrapper.vm.$nextTick();
   return wrapper;
@@ -259,15 +264,65 @@ describe('useAccountingPage', () => {
     wrapper.unmount();
   });
 
+  it('keeps the two commissions of a traspaso apart', async () => {
+    // Cada lado lo cobra una posición distinta: sumarlas en una sola atribuiría a la
+    // compra lo que costó la venta.
+    const wrapper = await mountInvestmentHarness({
+      fee_amount: '1.20',
+      investment_direction: 'reinvestment',
+      destination_fee_amount: '0.80',
+    });
+
+    await wrapper.vm.submitQuickEntry();
+
+    expect(coreAccountingApi.createQuickEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        investment_direction: 'reinvestment',
+        fee_amount: '1.20',
+        destination_fee_amount: '0.80',
+      }),
+    );
+
+    wrapper.unmount();
+  });
+
+  it('never sends a purchase commission outside a traspaso', async () => {
+    const wrapper = await mountInvestmentHarness({
+      fee_amount: '1.20',
+      destination_fee_amount: '0.80',
+    });
+
+    await wrapper.vm.submitQuickEntry();
+
+    const payload = vi.mocked(coreAccountingApi.createQuickEntry).mock.calls[0][0];
+    expect(payload).not.toHaveProperty('destination_fee_amount');
+
+    wrapper.unmount();
+  });
+
+  it('says what leaves and what arrives in a traspaso with both commissions', async () => {
+    const wrapper = await mountInvestmentHarness({
+      fee_amount: '1.20',
+      investment_direction: 'reinvestment',
+      destination_fee_amount: '0.80',
+    });
+
+    expect(wrapper.vm.quickInvestmentFeePreview).toEqual({
+      charged: { amount: 251.2, currency: 'EUR' },
+      credited: { amount: 249.2, currency: 'EUR' },
+    });
+
+    wrapper.unmount();
+  });
+
   it('announces what the funding account really pays for an aporte', async () => {
     // El importe es el capital que llega a la posición, así que sin decirlo el saldo de la
     // cuenta que paga no cuadraría con lo que se acaba de teclear.
     const wrapper = await mountInvestmentHarness({ fee_amount: '3.50' });
 
     expect(wrapper.vm.quickInvestmentFeePreview).toEqual({
-      kind: 'charged',
-      amount: 253.5,
-      currency: 'EUR',
+      charged: { amount: 253.5, currency: 'EUR' },
+      credited: null,
     });
 
     wrapper.unmount();
@@ -308,9 +363,8 @@ describe('useAccountingPage', () => {
     });
 
     expect(wrapper.vm.quickInvestmentFeePreview).toEqual({
-      kind: 'credited',
-      amount: 246.5,
-      currency: 'EUR',
+      charged: null,
+      credited: { amount: 246.5, currency: 'EUR' },
     });
 
     wrapper.unmount();
