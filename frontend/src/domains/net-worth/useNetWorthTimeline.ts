@@ -128,8 +128,22 @@ export function useNetWorthTimeline(params: {
     }
   });
 
+  // La serie filtrada se compone pidiendo una timeline por posicion, y esas peticiones
+  // tardan. Mientras falte alguna, sumar solo las que han llegado no da una version
+  // aproximada de la serie: da una serie mas baja que la real, y como el valor de hoy se
+  // calcula aparte y si esta completo, las comparaciones contra meses o anos anteriores se
+  // disparaban. Media serie no es media verdad, asi que hasta tenerla entera no hay serie.
+  const ownershipTimelineComplete = computed(
+    () =>
+      params.ownershipFilter.value === 'all' ||
+      ownershipScopedRows.value.every(
+        (row) => ownershipTimelineCache.value[positionCacheKey(row.type, row.id)],
+      ),
+  );
+
   const ownershipTimelineRows = computed<TimelinePoint[]>(() => {
     if (params.ownershipFilter.value === 'all') return [];
+    if (!ownershipTimelineComplete.value) return [];
 
     const byDate = new Map<string, TimelinePoint>();
     for (const row of ownershipScopedRows.value) {
@@ -294,6 +308,7 @@ export function useNetWorthTimeline(params: {
 
   return {
     activeTimelineRows,
+    ownershipTimelineComplete,
     displayedTimelineLoading,
     visibleTimelineRows,
     timelineWindow,

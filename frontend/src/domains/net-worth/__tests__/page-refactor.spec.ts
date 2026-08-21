@@ -180,6 +180,79 @@ describe('net-worth page refactor composables', () => {
     ]);
   });
 
+  it('publishes no filtered series until every position timeline has arrived', async () => {
+    // La serie filtrada se compone pidiendo una timeline por posicion. Con una sola dentro,
+    // sumar las que han llegado daba una serie mas baja que la real, y como el valor de hoy
+    // se calcula aparte y si esta completo, la comparacion contra meses anteriores se
+    // disparaba. Hasta tenerla entera no hay serie.
+    let resolveSlow: (value: unknown) => void = () => {};
+    mocks.coreNetWorthApi.getAssetTimeline.mockImplementation((id: number) =>
+      id === 1
+        ? Promise.resolve({
+            data: { rows: [{ date: '2025-01-01', value_base: '80' }] },
+          })
+        : new Promise((resolve) => {
+            resolveSlow = resolve;
+          }),
+    );
+
+    const timeline = useNetWorthTimeline({
+      ownershipFilter: ref<'all' | number>(7),
+      selectedPosition: computed(() => null),
+      selectedPositionType: ref<'asset' | 'liability' | null>(null),
+      selectedPositionId: ref<number | null>(null),
+      selectedTimelineCategory: ref<string | null>(null),
+      selectedTimelineCategoryType: ref<'asset' | 'liability'>('asset'),
+      selectedTimelinePreset: ref<'3m' | '6m' | '1a' | '3a' | '5a' | 'all' | 'custom'>('all'),
+      customTimelineWindow: ref<{ start: number; end: number } | null>(null),
+      timelineRows: computed(() => []),
+      availablePositionRows: computed(() => []),
+      allAssetPositionRows: computed(() => [
+        {
+          id: 1,
+          type: 'asset' as const,
+          category: 'cash',
+          name: 'Rapida',
+          subtitle: 'cash',
+          value: 80,
+          currency: 'EUR',
+          ownershipFraction: 1,
+        },
+        {
+          id: 2,
+          type: 'asset' as const,
+          category: 'cash',
+          name: 'Lenta',
+          subtitle: 'cash',
+          value: 500,
+          currency: 'EUR',
+          ownershipFraction: 1,
+        },
+      ]),
+      allLiabilityPositionRows: computed(() => []),
+      positionTimelineRows: computed(() => []),
+      storeTimelineLoading: ref(false),
+      storePositionTimelineLoading: ref(false),
+      setStoreError: vi.fn(),
+      resetPositionSelection: vi.fn(),
+      getTimelineMetricValue: (row) => row.netWorth,
+    });
+
+    await nextTick();
+    await flushPromises();
+
+    expect(timeline.ownershipTimelineComplete.value).toBe(false);
+    expect(timeline.activeTimelineRows.value).toEqual([]);
+
+    resolveSlow({ data: { rows: [{ date: '2025-01-01', value_base: '500' }] } });
+    await flushPromises();
+    await nextTick();
+
+    expect(timeline.ownershipTimelineComplete.value).toBe(true);
+    expect(timeline.activeTimelineRows.value).toHaveLength(1);
+    expect(timeline.activeTimelineRows.value[0]?.netWorth).toBe(580);
+  });
+
   it('builds ownership-scoped timeline rows and chart metadata', async () => {
     const ownershipFilter = ref<'all' | number>(7);
     const selectedPositionType = ref<'asset' | 'liability' | null>(null);
