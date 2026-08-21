@@ -132,6 +132,14 @@ export type ClassifiedPlanAsset = {
   associated_liabilities: string;
   net_value: string;
   currency: string;
+  valuation_source: 'portfolio' | 'net_worth';
+};
+
+export type PortfolioValuationCoverage = {
+  status: 'ready' | 'partial' | 'unavailable';
+  as_of: string | null;
+  position_count: number;
+  usable_position_count: number;
 };
 
 export type PlanAssetFunction =
@@ -146,6 +154,7 @@ export type AssetFunctionResponse = {
   total_assets: string;
   total_liabilities: string;
   net_worth: string;
+  portfolio_valuation: PortfolioValuationCoverage;
   assets: ClassifiedPlanAsset[];
 };
 

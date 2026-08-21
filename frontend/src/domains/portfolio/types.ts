@@ -115,6 +115,33 @@ export type PortfolioQuality = {
   fx_issues: string[];
 };
 
+export type PortfolioAlertAction = {
+  kind:
+    | 'review_valuations'
+    | 'configure_positions'
+    | 'open_net_worth'
+    | 'open_allocation'
+    | 'open_exposure'
+    | 'open_baskets';
+  ownership_id?: number;
+  position_id?: number;
+};
+
+export type PortfolioAlert = {
+  code: string;
+  category: 'quality' | 'structure' | 'execution';
+  severity: 'critical' | 'warning' | 'info';
+  title: string;
+  detail: string;
+  action: PortfolioAlertAction;
+};
+
+export type PortfolioAlerts = {
+  on_date: string;
+  summary: Record<PortfolioAlert['severity'], number>;
+  alerts: PortfolioAlert[];
+};
+
 export type PortfolioInstrument = {
   id: number;
   name: string;

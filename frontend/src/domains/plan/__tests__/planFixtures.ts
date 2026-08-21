@@ -61,6 +61,12 @@ const emptyClassification: AssetFunctionResponse = {
   total_assets: '0.00',
   total_liabilities: '0.00',
   net_worth: '0.00',
+  portfolio_valuation: {
+    status: 'unavailable',
+    as_of: null,
+    position_count: 0,
+    usable_position_count: 0,
+  },
   assets: [],
 };
 

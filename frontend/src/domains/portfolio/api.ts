@@ -6,6 +6,7 @@ import type {
   PortfolioPerformance,
   PortfolioPositionsResponse,
   PortfolioQuality,
+  PortfolioAlerts,
   PortfolioQuery,
   PortfolioTimeline,
   PortfolioWorkspacePayload,
@@ -52,6 +53,9 @@ export const corePortfolioApi = {
   },
   getQuality(params: PortfolioQuery) {
     return coreApi.get<PortfolioQuality>('/api/portfolio/quality/', { params });
+  },
+  getAlerts() {
+    return coreApi.get<PortfolioAlerts>('/api/portfolio/alerts/');
   },
   getInstruments() {
     return coreApi.get<PortfolioInstrument[]>('/api/portfolio/instruments/');

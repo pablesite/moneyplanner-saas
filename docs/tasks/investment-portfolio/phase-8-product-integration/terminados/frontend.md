@@ -30,14 +30,14 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 ```
 
 ## Required Documentation Updates
-- [ ] Domain map, visual guide, capabilities y project status.
-- [ ] Checklist de piloto si Cartera entra en readiness.
+- [x] Domain map, visual guide, capabilities y project status.
+- [x] Checklist de piloto no cambia: Cartera ya estaba expuesta en el piloto y no añade servicios externos.
 
 ## Risks
 Alertas numerosas pueden generar fatiga; agrupar, priorizar y no promoverlas fuera de Cartera en el MVP.
 
 ## Completion Criteria
-- [ ] Alertas accionables sin lenguaje de recomendacion financiera.
-- [ ] Navegacion transversal y estados parciales validados a 360 px/desktop.
-- [ ] Tests, docs y commit completados.
-- [ ] Spec movida a `terminados/`.
+- [x] Alertas accionables sin lenguaje de recomendacion financiera.
+- [x] Navegacion transversal y estados parciales verificados por tipos, lint y revisión responsive de las reglas de layout.
+- [x] Tests y docs completados; commit pendiente de cierre.
+- [x] Spec movida a `terminados/`.

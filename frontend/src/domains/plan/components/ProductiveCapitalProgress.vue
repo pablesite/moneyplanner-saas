@@ -15,6 +15,15 @@ const progress = computed(() =>
 );
 const productiveCapital = computed(() => props.projection.summary.productive_capital.value);
 const targetCapital = computed(() => props.projection.summary.target_capital.value);
+const portfolioValuation = computed(() => props.projection.classification.portfolio_valuation);
+const portfolioValuationCopy = computed(() => {
+  const coverage = portfolioValuation.value;
+  if (coverage.status === 'unavailable') return '';
+  if (coverage.status === 'ready') {
+    return `Incluye ${coverage.usable_position_count} posiciones valoradas desde Cartera.`;
+  }
+  return `Cartera aporta ${coverage.usable_position_count} de ${coverage.position_count} posiciones; el resto conserva su valoración de Patrimonio.`;
+});
 
 const withdrawalRate = computed(() => Number(props.projection.assumptions?.withdrawal_rate ?? 0));
 
@@ -260,6 +269,12 @@ const milestonesHint = computed(() => {
         </dd>
       </div>
     </dl>
+    <p v-if="portfolioValuationCopy" class="plan-progress-portfolio-note">
+      {{ portfolioValuationCopy }}
+      <RouterLink :to="{ path: '/cartera', query: { return: '/plan' } }"
+        >Revisar cartera</RouterLink
+      >
+    </p>
 
     <div class="plan-milestones-head">
       <span>{{ usingBudgetMilestones ? 'Qué cubre ya tu capital' : 'Hitos del camino' }}</span>

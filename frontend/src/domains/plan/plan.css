@@ -497,6 +497,18 @@
   text-align: right;
 }
 
+.plan-progress-portfolio-note {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.plan-progress-portfolio-note a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .plan-progress-meta dt {
   font-size: 10.5px;
   letter-spacing: 0.14em;

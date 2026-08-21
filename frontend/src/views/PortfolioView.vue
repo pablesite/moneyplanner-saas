@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   PortfolioEvolutionChart,
@@ -26,6 +26,9 @@ import {
   type AllocationScope,
   type PortfolioAllocation,
   type PortfolioExposure,
+  type PortfolioAlert,
+  type PortfolioAlertAction,
+  type PortfolioAlerts,
   type PositionPerformance,
   type PortfolioQuery,
   type PortfolioOperationOptions,
@@ -96,6 +99,50 @@ const exposurePositionId = ref<number | null>(null);
 const exposure = ref<PortfolioExposure | null>(null);
 const exposureLoading = ref(false);
 const exposureError = ref<string | null>(null);
+const alerts = ref<PortfolioAlerts | null>(null);
+const alertsLoading = ref(false);
+const alertsError = ref<string | null>(null);
+
+const alertGroups = computed(() =>
+  (
+    [
+      { key: 'quality', label: 'Calidad de datos' },
+      { key: 'structure', label: 'Estructura y riesgo' },
+      { key: 'execution', label: 'Acciones pendientes' },
+    ] as const
+  )
+    .map((group) => ({
+      ...group,
+      alerts: (alerts.value?.alerts ?? []).filter((alert) => alert.category === group.key),
+    }))
+    .filter((group) => group.alerts.length),
+);
+
+function alertActionLabel(alert: PortfolioAlert): string {
+  return (
+    {
+      review_valuations: 'Revisar valoraciones',
+      configure_positions: 'Configurar posiciones',
+      open_net_worth: 'Abrir Patrimonio',
+      open_allocation: 'Ver asignación',
+      open_exposure: 'Completar exposición',
+      open_baskets: 'Revisar cestas',
+    }[alert.action.kind] ?? 'Abrir'
+  );
+}
+
+async function loadAlerts() {
+  alertsLoading.value = true;
+  alertsError.value = null;
+  try {
+    alerts.value = (await corePortfolioApi.getAlerts()).data;
+  } catch (error: unknown) {
+    alertsError.value = toApiErrorMessage(error);
+    alerts.value = null;
+  } finally {
+    alertsLoading.value = false;
+  }
+}
 
 // La exposición no depende del periodo ni de los filtros de inventario: describe la
 // cartera de hoy, que es la que puedes cambiar.
@@ -668,12 +715,43 @@ function showReviewQueue() {
   setTab('positions');
 }
 
+async function handleAlertAction(action: PortfolioAlertAction) {
+  if (action.kind === 'review_valuations') {
+    showReviewQueue();
+    return;
+  }
+  if (action.kind === 'configure_positions') {
+    setupPositionId.value = null;
+    setupOpen.value = true;
+    return;
+  }
+  if (action.kind === 'open_net_worth') {
+    await router.push({ path: '/patrimonio', query: { return: route.fullPath } });
+    return;
+  }
+  if (action.kind === 'open_allocation') {
+    await loadOwnerships();
+    if (action.ownership_id) ownershipId.value = action.ownership_id;
+    setTab('allocation');
+    return;
+  }
+  if (action.kind === 'open_exposure') {
+    setTab('exposure');
+    await loadExposure();
+    openExposure(action.position_id ?? null);
+    return;
+  }
+  setTab('allocation');
+  await nextTick();
+  basketsPanel.value?.reload();
+}
+
 async function resyncFromAccounting() {
   resyncing.value = true;
   actionError.value = null;
   try {
     const { data } = await corePortfolioApi.resyncValuations();
-    await store.refresh(query.value);
+    await Promise.all([store.refresh(query.value), loadAlerts()]);
     successMessage.value =
       data.valuations_created > 0
         ? `Cartera actualizada: ${data.valuations_created} valoraciones traídas de contabilidad.`
@@ -701,12 +779,17 @@ async function restorePosition(position: PositionPerformance) {
 // desviación de su ámbito.
 async function onBasketSaved(message: string) {
   successMessage.value = message;
-  await Promise.all([store.refresh(query.value), loadOperationOptions(), loadAllocation()]);
+  await Promise.all([
+    store.refresh(query.value),
+    loadOperationOptions(),
+    loadAllocation(),
+    loadAlerts(),
+  ]);
 }
 
 async function onPortfolioSaved(message: string) {
   successMessage.value = message;
-  await Promise.all([store.refresh(query.value), loadOperationOptions()]);
+  await Promise.all([store.refresh(query.value), loadOperationOptions(), loadAlerts()]);
 }
 
 watch(
@@ -725,6 +808,7 @@ onMounted(() => {
   void store.loadMembers();
   void store.refresh(query.value);
   void loadOperationOptions();
+  void loadAlerts();
 });
 
 // La asignación se carga al entrar en su pestaña y al cambiar de ámbito: es una lectura
@@ -991,6 +1075,49 @@ watch(
                 </AInfoHint>
               </template>
             </AKpiBand>
+          </div>
+        </section>
+
+        <section class="sect a-pf-alerts-section" aria-label="Atención de cartera">
+          <ASectHead
+            eyebrow="Atención"
+            title="Lo que merece una decisión"
+            subtitle="Señales de datos, estructura y operaciones aún sin cerrar."
+          />
+          <AState v-if="alertsLoading" status="loading" layout="inline"
+            >Comprobando la cartera…</AState
+          >
+          <AState v-else-if="alertsError" status="error" layout="inline">
+            {{ alertsError }}
+            <AButton size="sm" variant="ghost" @click="loadAlerts">Reintentar</AButton>
+          </AState>
+          <AState v-else-if="!alerts?.alerts.length" status="success" layout="inline"
+            >No hay incidencias accionables en la cartera.</AState
+          >
+          <div v-else class="a-pf-alert-groups">
+            <div v-for="group in alertGroups" :key="group.key" class="a-pf-alert-group">
+              <p class="a-pf-alert-group-label">{{ group.label }}</p>
+              <ul class="a-pf-alert-list">
+                <li v-for="alert in group.alerts" :key="alert.code" class="a-pf-alert-row">
+                  <span class="a-pf-alert-severity" :class="`is-${alert.severity}`">
+                    {{
+                      alert.severity === 'critical'
+                        ? 'Crítica'
+                        : alert.severity === 'warning'
+                          ? 'Revisar'
+                          : 'Info'
+                    }}
+                  </span>
+                  <div>
+                    <strong>{{ alert.title }}</strong>
+                    <p>{{ alert.detail }}</p>
+                  </div>
+                  <AButton size="sm" variant="ghost" @click="handleAlertAction(alert.action)">
+                    {{ alertActionLabel(alert) }}
+                  </AButton>
+                </li>
+              </ul>
+            </div>
           </div>
         </section>
 
