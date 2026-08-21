@@ -19,7 +19,7 @@ import {
 } from '@/domains/accounting';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 import type { Asset, Ownership } from '@/domains/net-worth/models';
-import { ownershipDisplayLabel } from '@/domains/people/ownershipPresentation';
+import { ownershipDisplaySplits } from '@/domains/people/ownershipPresentation';
 import {
   expenseCategories,
   normalizeExpenseTaxonomy,
@@ -362,13 +362,32 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     () =>
       new Map(accountingOwnerships.value.map((ownership) => [ownership.id, ownership] as const)),
   );
-  // Etiqueta compatible con allocationFractionForOwnerLabel/parseSharedOwnerShares:
-  // individual -> nombre; compartida -> "Compartido (Ana 50% / Pablo 50%)".
-  function ownershipLabelById(id: number | null | undefined): string {
-    if (id == null) return '';
-    const ownership = ownershipById.value.get(id);
-    if (!ownership) return '';
-    return ownershipDisplayLabel(ownership);
+  function allocationFractionForOwnership(
+    ownership: Ownership | undefined,
+    selectedOwner: string,
+  ): number {
+    if (selectedOwner === 'all') return 1;
+    if (!ownership) return 0;
+    if (ownership.kind === 'individual') {
+      return ownership.member?.name.localeCompare(selectedOwner, 'es', { sensitivity: 'base' }) ===
+        0
+        ? 1
+        : 0;
+    }
+
+    const splits = ownershipDisplaySplits(ownership)
+      .map((split) => ({
+        name: split.memberName,
+        share: Number(split.percent),
+      }))
+      .filter((split) => Number.isFinite(split.share) && split.share > 0);
+    const totalShare = splits.reduce((sum, split) => sum + split.share, 0);
+    const matchedShare = splits
+      .filter(
+        (split) => split.name.localeCompare(selectedOwner, 'es', { sensitivity: 'base' }) === 0,
+      )
+      .reduce((sum, split) => sum + split.share, 0);
+    return totalShare > 0 ? clamp(matchedShare / totalShare, 0, 1) : 0;
   }
   const budgetSuggestionsLoading = ref(false);
   const budgetSuggestionsError = ref<string | null>(null);
@@ -913,9 +932,10 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     // Titularidad del movimiento (dueño económico) vía transaction.ownership_id;
     // fallback a member_tag si no hubiera ownership. Reparte proporcionalmente en
     // cuentas/partidas compartidas, igual que el previsto.
-    const ownerLabel =
-      ownershipLabelById(entry.transactionOwnershipId) || (entry.transactionMemberTag ?? '');
-    const ownershipFraction = allocationFractionForOwnerLabel(ownerLabel, ownershipFilter.value);
+    const ownership = ownershipById.value.get(entry.transactionOwnershipId ?? 0);
+    const ownershipFraction = ownership
+      ? allocationFractionForOwnership(ownership, ownershipFilter.value)
+      : allocationFractionForOwnerLabel(entry.transactionMemberTag ?? '', ownershipFilter.value);
     if (ownershipFraction <= 0) return;
     const amount = toNumberOrZero(entry.amount_base ?? entry.amount) * ownershipFraction;
     const bookingMonth = entry.bookingMonth;

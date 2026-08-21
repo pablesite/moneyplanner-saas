@@ -10,6 +10,8 @@ const YEAR = new Date().getFullYear();
 const expenseEntries = vi.hoisted(() => ({ value: [] as unknown[] }));
 const incomeEntries = vi.hoisted(() => ({ value: [] as unknown[] }));
 const budgetGet = vi.hoisted(() => vi.fn());
+const accountingTransactions = vi.hoisted(() => ({ value: [] as Record<string, unknown>[] }));
+const ownerships = vi.hoisted(() => ({ value: [] as Record<string, unknown>[] }));
 
 vi.mock('@/domains/budget', () => ({
   budgetApi: {
@@ -29,7 +31,9 @@ vi.mock('@/domains/budget', () => ({
 vi.mock('@/domains/accounting', () => ({
   coreAccountingApi: {
     getMonthlySummary: vi.fn(async () => ({ data: { fiscal_year: YEAR, months: [] } })),
-    getTransactions: vi.fn(async () => ({ data: { results: [], next_cursor: null } })),
+    getTransactions: vi.fn(async () => ({
+      data: { results: accountingTransactions.value, next_cursor: null },
+    })),
     getBudgetSuggestions: vi.fn(async () => ({
       data: {
         fiscal_year: YEAR,
@@ -43,7 +47,7 @@ vi.mock('@/domains/accounting', () => ({
 
 vi.mock('@/domains/net-worth/api', () => ({
   coreNetWorthApi: { getAssets: vi.fn(async () => ({ data: [] })) },
-  premiumOwnershipApi: { getOwnerships: vi.fn(async () => ({ data: [] })) },
+  premiumOwnershipApi: { getOwnerships: vi.fn(async () => ({ data: ownerships.value })) },
 }));
 
 vi.mock('@/domains/budget/annual-entries', () => ({
@@ -133,6 +137,8 @@ describe('useBudgetDashboardPage · filtro por titularidad en gastos', () => {
     vi.clearAllMocks();
     budgetGet.mockImplementation(async () => ({ data: [] }));
     incomeEntries.value = [];
+    accountingTransactions.value = [];
+    ownerships.value = [];
     // 100 €/mes de Pablo y 100 €/mes compartidos al 50%: a Pablo le corresponden 150 de los
     // 200 previstos, así que también 150 de los 200 ejecutados.
     expenseEntries.value = [
@@ -164,6 +170,59 @@ describe('useBudgetDashboardPage · filtro por titularidad en gastos', () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(50, 2);
+
+    wrapper.unmount();
+  });
+
+  it('reparte el libro con la titularidad compartida estructurada', async () => {
+    // El libro recibe el formato vigente de ownershipDisplayLabel ("Compartido - ..."),
+    // que no debe convertirse a texto para calcular el reparto.
+    ownerships.value = [
+      {
+        id: 10,
+        kind: 'shared',
+        member: null,
+        splits: [
+          { member: { id: 1, name: 'Pablo', role: 'adult' }, percent: '50.00' },
+          { member: { id: 2, name: 'Ana', role: 'adult' }, percent: '50.00' },
+        ],
+        allocation_basis: 'explicit_split',
+      },
+    ];
+    accountingTransactions.value = [
+      {
+        id: 1,
+        booking_date: `${YEAR}-01-15`,
+        ownership_id: 10,
+        member_tag: '',
+        quick_entry_kind: 'expense',
+        entries: [
+          {
+            amount: '200.00',
+            amount_base: '200.00',
+            side: 'debit',
+            flow_family: 'expense',
+            category_key: 'consumption_expenses',
+            subcategory_key: 'housing_home',
+            asset_id: null,
+            liability_id: null,
+          },
+        ],
+      },
+    ];
+    expenseEntries.value = [expenseEntry({ owner: 'Compartido (Pablo 50% / Ana 50%)' })];
+
+    const wrapper = await mountDashboard();
+
+    expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(200, 2);
+
+    wrapper.vm.ownershipFilter = 'Pablo';
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(100, 2);
+
+    wrapper.vm.ownershipFilter = 'Ana';
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(100, 2);
 
     wrapper.unmount();
   });
