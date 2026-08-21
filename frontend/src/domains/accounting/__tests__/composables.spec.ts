@@ -93,6 +93,20 @@ function seedRefreshResponses() {
         created_at: '',
         updated_at: '',
       },
+      {
+        id: 3,
+        name: 'Bitcoin',
+        account_type: 'asset',
+        currency: 'BTC',
+        origin: 'user',
+        asset_id: 9,
+        liability_id: null,
+        is_active: true,
+        notes: '',
+        current_balance: '0.05000000',
+        created_at: '',
+        updated_at: '',
+      },
     ],
   } as never);
   vi.mocked(coreAccountingApi.getTransactions).mockResolvedValue({
@@ -114,7 +128,32 @@ function seedRefreshResponses() {
 }
 
 function seedNetWorthResponses() {
-  vi.mocked(coreNetWorthApi.getAssets).mockResolvedValue({ data: [] } as never);
+  vi.mocked(coreNetWorthApi.getAssets).mockResolvedValue({
+    data: [
+      {
+        id: 7,
+        name: 'Fondo indexado',
+        category: 'investments',
+        subcategory: 'index_funds',
+        currency: 'EUR',
+        amount: '5000.00',
+        amount_base: '5000.00',
+        is_active: true,
+        tracking_mode: 'accounting',
+      },
+      {
+        id: 9,
+        name: 'Bitcoin',
+        category: 'investments',
+        subcategory: 'cryptocurrencies',
+        currency: 'BTC',
+        amount: '0.05',
+        amount_base: '3000.00',
+        is_active: true,
+        tracking_mode: 'accounting',
+      },
+    ],
+  } as never);
   vi.mocked(coreNetWorthApi.getLiabilities).mockResolvedValue({ data: [] } as never);
 }
 
@@ -230,6 +269,34 @@ describe('useAccountingPage', () => {
       amount: 253.5,
       currency: 'EUR',
     });
+
+    wrapper.unmount();
+  });
+
+  it('lets a crypto account be reconciled by adjustment', async () => {
+    // Cripto no se marca a mercado —su valor en € sale del cambio—, así que sin esto una
+    // cuenta descuadrada no tenía ninguna vía para cuadrarse.
+    const wrapper = await mountInvestmentHarness();
+
+    const options = wrapper.vm.quickAdjustmentAccountOptions.map(
+      (account: { id: number }) => account.id,
+    );
+    expect(options).toContain(3);
+    // Un fondo sí se marca a mercado: su diferencia es ganancia o pérdida.
+    expect(options).not.toContain(7);
+
+    wrapper.unmount();
+  });
+
+  it('lets an expense be charged to an investment account', async () => {
+    // Un exchange cobra su comisión en cripto, del propio saldo: si esa cuenta no se
+    // puede elegir como origen del gasto, el descuadre no hay forma de explicarlo.
+    const wrapper = await mountInvestmentHarness();
+
+    const options = wrapper.vm.quickExpenseAccountOptions.map(
+      (account: { id: number }) => account.id,
+    );
+    expect(options).toContain(3);
 
     wrapper.unmount();
   });

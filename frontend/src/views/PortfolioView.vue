@@ -1698,6 +1698,8 @@ watch(
       :ownership-label="ownershipLabel"
       :currency="baseCurrency"
       :suggested="allocation?.suggested_contribution ?? '0'"
+      :planned="allocation?.planned_contribution ?? '0'"
+      :contributed="allocation?.contributed_this_month ?? '0'"
       @close="contributionOpen = false"
       @saved="
         (message) => {

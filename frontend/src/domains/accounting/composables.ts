@@ -82,6 +82,7 @@ type TransactionFormState = {
   kind: EditableActivityKind;
   initial_kind: EditableActivityKind;
   investment_direction: 'inflow' | 'outflow' | 'reinvestment';
+  fee_amount: string;
   category_key: string;
   subcategory_key: string;
   kind_label: string;
@@ -209,6 +210,20 @@ function roundByCurrency(value: number, currency: string): number {
   return Math.round(value * factor) / factor;
 }
 
+// Revalorización = marcar a mercado posiciones de inversión cuyo valor en € el usuario
+// lee del banco/plataforma pero cuyas participaciones no puede contabilizar (fondos,
+// ETFs, acciones, roboadvisor, planes de pensiones). Se EXCLUYE:
+//  - cripto: se gestiona en su propia moneda y su valor en € deriva del cambio (FX);
+//  - crowdlending / crowdfunding inmobiliario: no se marcan a mercado por esta vía;
+//  - liquidez, depósitos, monederos, bienes e inmuebles.
+// Lo excluido aquí se concilia por ajuste: cada cuenta tiene exactamente una vía.
+const REVALUATION_EXCLUDED_SUBCATEGORIES = new Set([
+  'cryptocurrencies',
+  'crypto_spot_earn',
+  'crowdlending',
+  'real_estate_crowd',
+]);
+
 export function useAccountingPage() {
   const store = useAccountingStore();
   const incomeStore = useAnnualIncomeStore('core');
@@ -332,6 +347,7 @@ export function useAccountingPage() {
     kind: 'transfer',
     initial_kind: 'transfer',
     investment_direction: 'inflow',
+    fee_amount: '',
     category_key: '',
     subcategory_key: '',
     kind_label: '',
@@ -426,17 +442,23 @@ export function useAccountingPage() {
     accounts.value.filter((account) => account.account_type === 'asset'),
   );
   // Ajuste de conciliación = forzar el saldo contable al saldo real de un extracto,
-  // cuadrando la diferencia contra patrimonio ("Ajustes de conciliación"). Solo
-  // procede donde el saldo es un hecho externo: liquidez (cuentas, monederos,
-  // depósitos, ahorro) y pasivos. Se EXCLUYE inversiones (su diferencia es
-  // ganancia/pérdida → Revalorización), inmuebles, y cripto (se gestiona en su
-  // moneda + FX; los cambios son movimientos reales).
+  // cuadrando la diferencia contra patrimonio ("Ajustes de conciliación"). Procede
+  // donde el saldo es un hecho externo: liquidez (cuentas, monederos, depósitos,
+  // ahorro) y pasivos. Y también donde no hay otra vía: lo que Revalorización no
+  // admite —cripto, crowdlending, crowdfunding inmobiliario— se descuadraba sin
+  // manera de cuadrarlo. Una inversión que sí se marca a mercado sigue fuera: su
+  // diferencia es ganancia o pérdida, no un descuadre.
   const quickAdjustmentAccountOptions = computed(() =>
     accounts.value.filter((account) => {
       if (account.account_type === 'liability') return true;
-      if (!isLiquidityAssetAccount(account)) return false;
-      const meta = accountPositionMetaByAccountId.value.get(account.id);
-      return meta?.subcategory !== 'crypto_spot_earn';
+      // Lo que no se puede marcar a mercado se concilia por ajuste: si no, una cuenta de
+      // cripto o de crowdlending que se descuadra no tiene forma de cuadrarse, porque
+      // Revalorización tampoco la admite. Cada cuenta con exactamente una vía.
+      if (isInvestmentAssetAccount(account)) {
+        const meta = accountPositionMetaByAccountId.value.get(account.id);
+        return REVALUATION_EXCLUDED_SUBCATEGORIES.has(String(meta?.subcategory ?? ''));
+      }
+      return isLiquidityAssetAccount(account);
     }),
   );
   const manualPositionTypeOptions: { value: ManualPositionType; label: string }[] = [
@@ -549,7 +571,14 @@ export function useAccountingPage() {
       return account.account_type === 'asset' || account.account_type === 'liability';
     }
     if (movementType === 'expense') {
-      return account.account_type === 'liability' || isLiquidityAssetAccount(account);
+      // Una cuenta de inversión también paga gastos: un exchange cobra su comisión en
+      // cripto, del propio saldo, y un bróker la descuenta de la posición. Espeja la
+      // regla del backend, que solo lo admite para activos de categoría inversión.
+      return (
+        account.account_type === 'liability' ||
+        isLiquidityAssetAccount(account) ||
+        isInvestmentCategoryAccount(account)
+      );
     }
     if (movementType === 'transfer') {
       return isTransferAccount(account);
@@ -586,8 +615,10 @@ export function useAccountingPage() {
     const category = (accountPositionMetaByAccountId.value.get(account.id)?.category ?? '').trim();
     return category !== '' && category !== 'cash';
   }
-  // La reinversión exige (backend) categoría `investments` en ambos lados.
-  function isReinvestmentAssetAccount(account: LedgerAccount): boolean {
+  // Categoría `investments` estricta, que es lo que el backend exige para reinvertir,
+  // para cobrar un gasto contra la cuenta y para conciliar por ajuste lo que no se
+  // puede marcar a mercado.
+  function isInvestmentCategoryAccount(account: LedgerAccount): boolean {
     if (!isInvestmentAssetAccount(account)) return false;
     const category = (accountPositionMetaByAccountId.value.get(account.id)?.category ?? '').trim();
     return category === 'investments';
@@ -603,7 +634,7 @@ export function useAccountingPage() {
     accounts.value.filter((account) => {
       if (account.id === normalizeAccountId(quickEntryForm.account_id)) return false;
       return quickEntryForm.investment_direction === 'reinvestment'
-        ? isReinvestmentAssetAccount(account)
+        ? isInvestmentCategoryAccount(account)
         : isInvestmentAssetAccount(account);
     }),
   );
@@ -611,7 +642,7 @@ export function useAccountingPage() {
   const investmentOriginOptions = computed(() =>
     accounts.value.filter((account) => {
       if (account.id === normalizeAccountId(quickEntryForm.counterparty_account_id)) return false;
-      return isReinvestmentAssetAccount(account);
+      return isInvestmentCategoryAccount(account);
     }),
   );
   function normalizeAccountId(value: unknown): number | null {
@@ -789,18 +820,6 @@ export function useAccountingPage() {
   onBeforeUnmount(() => {
     if (fxDebounceTimer) clearTimeout(fxDebounceTimer);
   });
-  // Revalorización = marcar a mercado posiciones de inversión cuyo valor en € el
-  // usuario lee del banco/plataforma pero cuyas participaciones no puede contabilizar
-  // (fondos, ETFs, acciones, roboadvisor, planes de pensiones). Se EXCLUYE:
-  //  - cripto: se gestiona en su propia moneda y su valor en € deriva del cambio (FX);
-  //  - crowdlending / crowdfunding inmobiliario: no se marcan a mercado por esta vía;
-  //  - liquidez, depósitos, monederos, bienes e inmuebles.
-  const REVALUATION_EXCLUDED_SUBCATEGORIES = new Set([
-    'cryptocurrencies',
-    'crypto_spot_earn',
-    'crowdlending',
-    'real_estate_crowd',
-  ]);
   const revaluationAccountOptions = computed(() =>
     accounts.value.filter((account) => {
       if (account.account_type !== 'asset' || account.asset_id == null) return false;
@@ -1293,9 +1312,15 @@ export function useAccountingPage() {
   // (retirada) para registrar correctamente la plusvalía/minusvalía.
   // El INGRESO no necesita este filtro: el backend permite ingresos sobre activos
   // de inversión (rendimiento reinvertido tipo EARN), así que usa editAccountOptions.
+  // La cuenta que paga un gasto: liquidez, un pasivo (tarjeta) y también una cuenta de
+  // inversión, porque un exchange cobra su comisión en cripto del propio saldo y un
+  // bróker la descuenta de la posición.
   const quickExpenseAccountOptions = computed(() =>
     editAccountOptions.value.filter(
-      (account) => account.account_type === 'liability' || isLiquidityAssetAccount(account),
+      (account) =>
+        account.account_type === 'liability' ||
+        isLiquidityAssetAccount(account) ||
+        isInvestmentCategoryAccount(account),
     ),
   );
   function kindUsesClassification(
@@ -1486,7 +1511,7 @@ export function useAccountingPage() {
         const account = accountId != null ? accountMap.value.get(accountId) : null;
         const accountOk = account
           ? reinvest
-            ? isReinvestmentAssetAccount(account)
+            ? isInvestmentCategoryAccount(account)
             : isLiquidityAssetAccount(account)
           : true;
         if (!accountOk) quickEntryForm.account_id = null;
@@ -1494,7 +1519,7 @@ export function useAccountingPage() {
         const counterparty = cpId != null ? accountMap.value.get(cpId) : null;
         const counterpartyOk = counterparty
           ? reinvest
-            ? isReinvestmentAssetAccount(counterparty)
+            ? isInvestmentCategoryAccount(counterparty)
             : isInvestmentAssetAccount(counterparty)
           : true;
         if (!counterpartyOk) quickEntryForm.counterparty_account_id = null;
@@ -2351,6 +2376,7 @@ export function useAccountingPage() {
     editTransactionForm.interest_account_id = null;
     editTransactionForm.principal_amount = '';
     editTransactionForm.interest_amount = '';
+    editTransactionForm.fee_amount = '';
     editTransactionForm.kind = 'transfer';
     editTransactionForm.initial_kind = 'transfer';
     editTransactionForm.investment_direction = 'inflow';
@@ -3633,6 +3659,15 @@ export function useAccountingPage() {
     editTransactionForm.interest_account_id = quickEntryForm.interest_account_id;
     editTransactionForm.principal_amount = quickEntryForm.principal_amount;
     editTransactionForm.interest_amount = quickEntryForm.interest_amount;
+    editTransactionForm.fee_amount = quickEntryForm.fee_amount;
+  }
+
+  // Solo se manda cuando el movimiento admite comisión. Enviar '' o 0 en el resto
+  // borraría la comisión de un movimiento que nunca habló de ella.
+  function editedFeePayload(): { fee_amount?: string } {
+    if (editTransactionForm.kind !== 'investment') return {};
+    const raw = editTransactionForm.fee_amount.trim();
+    return { fee_amount: raw ? formatDecimalInput(raw) : '0' };
   }
 
   // eslint-disable-next-line complexity
@@ -3711,6 +3746,7 @@ export function useAccountingPage() {
           editTransactionForm.kind === 'investment' ? 'investment' : editTransactionForm.kind,
         investment_direction:
           editTransactionForm.kind === 'investment' ? editTransactionForm.investment_direction : '',
+        ...editedFeePayload(),
         entries: compatibilityEntries.map((entry) => ({
           account_id: entry.account_id,
           side: entry.side,
@@ -3763,6 +3799,7 @@ export function useAccountingPage() {
       quick_entry_kind: kindToQuickEntryKind[editTransactionForm.kind] ?? '',
       investment_direction:
         editTransactionForm.kind === 'investment' ? editTransactionForm.investment_direction : '',
+      ...editedFeePayload(),
       entries: payloadEntries.map((entry) => ({
         account_id: entry.account_id,
         side: entry.side,
@@ -4067,6 +4104,12 @@ export function useAccountingPage() {
     quickEntryForm.revaluation_new_value = '';
     quickEntryForm.investment_units = '';
     quickEntryForm.investment_unit_price = '';
+    // La comisión vive en su propio movimiento, pero se corrige desde el que la provocó:
+    // buscar la otra fila para cambiar un euro no es editar la compra.
+    quickEntryForm.fee_amount =
+      movementType === 'investment' && transaction.fee_amount
+        ? formatDecimalInput(String(transaction.fee_amount))
+        : '';
   }
 
   return {

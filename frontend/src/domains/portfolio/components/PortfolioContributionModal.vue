@@ -14,6 +14,8 @@ const props = defineProps<{
   ownershipLabel: string;
   currency: string;
   suggested: string;
+  planned: string;
+  contributed: string;
 }>();
 const emit = defineEmits<{ close: []; saved: [message: string] }>();
 
@@ -33,6 +35,11 @@ const sourceOptions = computed(() => [
 ]);
 const placed = computed(() =>
   (solved.value?.lines ?? []).reduce((sum, row) => sum + Number(row.amount), 0),
+);
+// Lo que se aparca esperando un mínimo de entrada no aparecía en ningún total, así que
+// la suma de la caja no llegaba al importe repartido y parecía que faltaba dinero.
+const parked = computed(() =>
+  (solved.value?.accumulate ?? []).reduce((sum, row) => sum + Number(row.amount), 0),
 );
 
 function money(value: string | number): string {
@@ -143,8 +150,14 @@ watch(
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">Importe</span>
           <input v-model="amount" class="input" inputmode="decimal" placeholder="0,00" />
-          <small v-if="Number(suggested) > 0" class="a-pf-contribution-hint">
-            El presupuesto tenía previsto invertir {{ money(suggested) }} este mes.
+          <!-- Sugerir el mes entero cuando ya has aportado la mitad propone aportar dos
+               veces lo planeado. Y una recolocación no es dinero nuevo: lo que cuenta es
+               lo aportado menos lo desinvertido. -->
+          <small v-if="Number(planned) > 0" class="a-pf-contribution-hint">
+            El presupuesto preveía {{ money(planned) }} este mes y llevas
+            {{ money(contributed) }} aportados, ya descontadas las desinversiones.
+            <template v-if="Number(suggested) > 0"> Quedan {{ money(suggested) }}. </template>
+            <template v-else> El mes ya está cubierto. </template>
           </small>
         </label>
         <label class="ui-item-form-field">
@@ -240,11 +253,25 @@ watch(
 
         <dl class="a-pf-contribution-total">
           <div>
-            <dt>Invertido</dt>
+            <dt>A invertir</dt>
             <dd class="mono">{{ money(placed) }}</dd>
           </div>
+          <div v-if="parked > 0">
+            <dt>
+              A acumular
+              <AInfoHint
+                label="Se transfiere al efectivo de esa plataforma y espera ahí hasta que alcance su mínimo de entrada. Es dinero aportado, todavía sin colocar en la posición."
+              />
+            </dt>
+            <dd class="mono">{{ money(parked) }}</dd>
+          </div>
           <div>
-            <dt>Liquidez táctica</dt>
+            <dt>
+              Liquidez táctica
+              <AInfoHint
+                label="La parte que tu política reserva a liquidez. No se contabiliza nada por ella: se queda donde está."
+              />
+            </dt>
             <dd class="mono">{{ money(solved.reserved_cash ?? '0') }}</dd>
           </div>
           <div v-if="Number(solved.leftover ?? 0) > 0">

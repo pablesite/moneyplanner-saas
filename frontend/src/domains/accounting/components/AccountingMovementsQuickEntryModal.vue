@@ -630,7 +630,7 @@ const quickEntryHint = computed(() => {
           Si quieres afinar con el tipo real de tu broker, edítalo.
         </p>
 
-        <label v-if="!page.quickEntryIsEditing" class="ui-accounting-field">
+        <label class="ui-accounting-field">
           <span>
             Comisión{{ investmentFeeCurrency ? ` (${investmentFeeCurrency})` : '' }}
             <AInfoHint
