@@ -1480,8 +1480,15 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
               subcategory.subcategory,
             );
             if (weight <= 0) continue;
-            executedBudgeted += toNumberOrZero(monthRow.executed_budgeted) * weight;
-            executedUnbudgeted += toNumberOrZero(monthRow.executed_unbudgeted) * weight;
+            const executed = expenseExecutedChunkForMonth(
+              monthRow,
+              category.category,
+              subcategory.subcategory,
+              subcategory.has_budgeted_line,
+              weight,
+            );
+            executedBudgeted += executed.budgeted;
+            executedUnbudgeted += executed.unbudgeted;
           }
         }
       }
@@ -2168,9 +2175,12 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return Math.max(0, Math.min(1, viewModePlanned / allPlanned));
   }
 
+  // Sin titularidad aplicada: es el denominador con el que se mide qué parte del previsto
+  // se queda el titular filtrado. Repartido ya, el cociente daba siempre 1 y lo ejecutado
+  // no se filtraba nunca. Ahorro queda fuera en los dos lados del cociente.
   const expensePlannedTotalsByMonthTaxonomy = computed(() => {
     const map = new Map<string, number>();
-    for (const entry of ownerAdjustedExpenseEntries.value) {
+    for (const entry of expenseEntries.value) {
       if (entry.fiscalYear !== fiscalYear.value) continue;
       if (entry.category === 'savings_allocation') continue;
       for (let month = 1; month <= 12; month++) {
@@ -2197,6 +2207,22 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return map;
   });
 
+  const expensePlannedViewModeByMonthTaxonomy = computed(() => {
+    const map = new Map<string, number>();
+    for (const entry of expenseEntries.value) {
+      if (entry.fiscalYear !== fiscalYear.value) continue;
+      if (entry.category === 'savings_allocation') continue;
+      if (!matchesExpenseViewMode(entry, expenseViewMode.value)) continue;
+      for (let month = 1; month <= 12; month++) {
+        const planned = monthlyPlannedAmountForExpenseEntry(entry, month);
+        if (planned <= 0) continue;
+        const key = budgetMonthTaxonomyKey(month, entry.category, entry.subcategory);
+        map.set(key, (map.get(key) ?? 0) + planned);
+      }
+    }
+    return map;
+  });
+
   function expensePlannedTaxonomyWeight(
     month: number,
     category: string,
@@ -2207,6 +2233,22 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     if (allPlanned <= 0) return expenseViewMode.value === 'all' ? 1 : 0;
     const filteredPlanned = expensePlannedFilteredByMonthTaxonomy.value.get(key) ?? 0;
     return Math.max(0, Math.min(1, filteredPlanned / allPlanned));
+  }
+
+  // Para lo ejecutado cuando viene del bucket contable, que ya está repartido por la
+  // titularidad del movimiento: aplicarle además la de las partidas lo contaría dos veces.
+  // Aquí solo queda el modo de vista.
+  function expenseExecutionTaxonomyWeight(
+    month: number,
+    category: string,
+    subcategory: string,
+  ): number {
+    if (expenseViewMode.value === 'all') return 1;
+    const key = budgetMonthTaxonomyKey(month, category, subcategory);
+    const allPlanned = expensePlannedTotalsByMonthTaxonomy.value.get(key) ?? 0;
+    if (allPlanned <= 0) return 0;
+    const viewModePlanned = expensePlannedViewModeByMonthTaxonomy.value.get(key) ?? 0;
+    return Math.max(0, Math.min(1, viewModePlanned / allPlanned));
   }
 
   type IncomeCoverageYtdAggregate = BudgetActualAggregateRow & {
@@ -2481,6 +2523,33 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return map;
   });
 
+  // Lo ejecutado de un mes, repartido por titularidad. El resumen del backend no lo está,
+  // así que cuando hay filtro manda el bucket contable —repartido por la titularidad de
+  // cada movimiento— y el peso solo aporta el modo de vista. Sin filtro, el resumen sirve
+  // tal cual. Es la misma regla que ya seguían los ingresos.
+  function expenseExecutedChunkForMonth(
+    monthRow: { month: number; executed_budgeted?: unknown; executed_unbudgeted?: unknown },
+    category: string,
+    subcategory: string,
+    hasBudgetedLine: boolean,
+    plannedWeight: number,
+  ): { budgeted: number; unbudgeted: number } {
+    const taxonomyKey = budgetMonthTaxonomyKey(monthRow.month, category, subcategory);
+    const taxonomyExecuted =
+      accountingExecutionBuckets.value.expenseCategorizedByMonthTaxonomy.get(taxonomyKey) ?? null;
+    if (taxonomyExecuted == null) {
+      return {
+        budgeted: toNumberOrZero(monthRow.executed_budgeted) * plannedWeight,
+        unbudgeted: toNumberOrZero(monthRow.executed_unbudgeted) * plannedWeight,
+      };
+    }
+    const executionWeight = expenseExecutionTaxonomyWeight(monthRow.month, category, subcategory);
+    const chunk = taxonomyExecuted * executionWeight;
+    return hasBudgetedLine
+      ? { budgeted: chunk, unbudgeted: 0 }
+      : { budgeted: 0, unbudgeted: chunk };
+  }
+
   type ExpenseCoverageYtdAggregate = BudgetActualAggregateRow & {
     executedBudgeted: number;
     executedUnbudgeted: number;
@@ -2516,8 +2585,15 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           );
           if (weight <= 0) continue;
           row.planned += toNumberOrZero(monthRow.planned) * weight;
-          row.executedBudgeted += toNumberOrZero(monthRow.executed_budgeted) * weight;
-          row.executedUnbudgeted += toNumberOrZero(monthRow.executed_unbudgeted) * weight;
+          const executed = expenseExecutedChunkForMonth(
+            monthRow,
+            category.category,
+            subcategory.subcategory,
+            subcategory.has_budgeted_line,
+            weight,
+          );
+          row.executedBudgeted += executed.budgeted;
+          row.executedUnbudgeted += executed.unbudgeted;
         }
       }
       row.executed = row.executedBudgeted + row.executedUnbudgeted;
@@ -2547,8 +2623,15 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           );
           if (weight <= 0) continue;
           row.planned += toNumberOrZero(monthRow.planned) * weight;
-          row.executedBudgeted += toNumberOrZero(monthRow.executed_budgeted) * weight;
-          row.executedUnbudgeted += toNumberOrZero(monthRow.executed_unbudgeted) * weight;
+          const executed = expenseExecutedChunkForMonth(
+            monthRow,
+            category.category,
+            subcategory.subcategory,
+            subcategory.has_budgeted_line,
+            weight,
+          );
+          row.executedBudgeted += executed.budgeted;
+          row.executedUnbudgeted += executed.unbudgeted;
         }
         row.executed = row.executedBudgeted + row.executedUnbudgeted;
         row.expectedCount = row.planned > 0 ? 1 : 0;
@@ -3345,13 +3428,24 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
         let detectedExecutedYtd = 0;
         for (const monthRow of subcategory.months) {
           if (monthRow.month < 1 || monthRow.month > monthsCount) continue;
-          const weight = expensePlannedTaxonomyWeight(
+          const weight = expenseExecutionTaxonomyWeight(
             monthRow.month,
             category.category,
             subcategory.subcategory,
           );
           if (weight <= 0) continue;
-          detectedExecutedYtd += toNumberOrZero(monthRow.executed_unbudgeted) * weight;
+          const taxonomyKey = budgetMonthTaxonomyKey(
+            monthRow.month,
+            category.category,
+            subcategory.subcategory,
+          );
+          const taxonomyExecuted =
+            accountingExecutionBuckets.value.expenseCategorizedByMonthTaxonomy.get(taxonomyKey) ??
+            null;
+          detectedExecutedYtd +=
+            (taxonomyExecuted != null
+              ? taxonomyExecuted
+              : toNumberOrZero(monthRow.executed_unbudgeted)) * weight;
         }
         if (detectedExecutedYtd <= 0) continue;
 
