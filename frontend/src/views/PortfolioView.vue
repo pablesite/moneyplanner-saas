@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   PortfolioEvolutionChart,
+  PortfolioRiskPanel,
   PortfolioImportModal,
   PortfolioOperationModal,
   PortfolioBasketsPanel,
@@ -277,6 +278,14 @@ const query = computed<PortfolioQuery>(() => {
   if (period.value === '3y') result.date_from = dateToIso(subtractMonths(today.value, 36));
   return result;
 });
+
+// El periodo del riesgo es el mismo que el del resto de la vista: dos periodos distintos
+// en la misma pantalla no se pueden leer juntos. Sin fecha explícita, Core resuelve la
+// suya por defecto y aquí se manda vacío.
+const riskPeriod = computed(() => ({
+  from: String(query.value.date_from ?? ''),
+  to: String(query.value.date_to ?? ''),
+}));
 
 const allPositions = computed(() => store.positions?.results ?? []);
 const archivedPositions = computed(() =>
@@ -1529,6 +1538,21 @@ watch(
           >No hay una serie con cobertura suficiente para este periodo.</AState
         >
         <PortfolioEvolutionChart v-else :points="store.timeline.results" :currency="baseCurrency" />
+      </section>
+
+      <!-- Fase 7. El riesgo es detalle, no titular: vive debajo de la evolución y después
+           del valor y la rentabilidad, que siguen siendo lo que se viene a mirar. -->
+      <section class="sect">
+        <ASectHead
+          eyebrow="Riesgo"
+          title="Cómo se ha comportado, y contra qué"
+          subtitle="Cierres de mes completos del periodo. Cada cifra dice sobre cuántos meses se ha calculado, y lo que no tiene cobertura no se pinta."
+        />
+        <PortfolioRiskPanel
+          :ownership-id="ownershipId"
+          :date-from="riskPeriod.from"
+          :date-to="riskPeriod.to"
+        />
       </section>
     </template>
 

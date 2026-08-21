@@ -597,3 +597,98 @@ export type PortfolioExposure = {
     shared_value: string;
   }[];
 };
+
+// Fase 7. Cada metrica viaja con su estado: `available` trae valor, `insufficient` trae el
+// motivo. No hay un tercer caso, y no se pinta un cero cuando no hay dato.
+export type RiskMetric = {
+  status: 'available' | 'insufficient' | 'unavailable';
+  value: string | null;
+  reason?: string;
+  observations?: number;
+  required?: number;
+  period?: string;
+  peak_period?: string | null;
+  trough_period?: string | null;
+  risk_free_rate?: string;
+  frequency?: string;
+};
+
+export type PortfolioBenchmarkPoint = {
+  period: string;
+  from: string;
+  to: string;
+  portfolio: string | null;
+  benchmark: string | null;
+  reason: string;
+};
+
+export type PortfolioBenchmark = {
+  ownership_id: number;
+  currency: string;
+  period: { from: string; to: string };
+  calendar: { frequency: string; boundaries: string };
+  status: 'ok' | 'insufficient';
+  reason: string;
+  months: number;
+  months_with_benchmark?: number;
+  unreachable_classes?: string[];
+  cash_excluded?: boolean;
+  portfolio_return: string | null;
+  benchmark_return: string | null;
+  excess_return: string | null;
+  points: PortfolioBenchmarkPoint[];
+  secondary: {
+    status: 'available' | 'unavailable';
+    reason?: string;
+    instrument: { id: number; name: string } | null;
+    cumulative_return?: string | null;
+  };
+};
+
+export type PortfolioRisk = {
+  ownership_id: number;
+  currency: string;
+  period: { from: string; to: string };
+  calendar: { frequency: string; boundaries: string };
+  risk_free_rate: string;
+  observations: number;
+  coverage: {
+    months_in_period: number;
+    months_used: number;
+    window: { from: string | null; to: string | null };
+    months_without_data: string[];
+  };
+  annualized_return: RiskMetric;
+  volatility: RiskMetric;
+  max_drawdown: RiskMetric;
+  best_period: RiskMetric;
+  worst_period: RiskMetric;
+  sharpe: RiskMetric;
+  advanced: Record<string, { status: string; reason: string }>;
+};
+
+export type PortfolioDecisionLog = {
+  ownership_id: number;
+  currency: string;
+  on_date: string;
+  worst_drift_now: string | null;
+  summary: { decisions: number; followed: number; ignored: number; pending: number };
+  entries: {
+    id: number;
+    date: string;
+    status: string;
+    recommended: { amount: string; lines: { target: string; amount: string; status: string }[] };
+    did: {
+      executed_amount: string;
+      followed: string;
+      lines_confirmed: number;
+      lines_total: number;
+    };
+    outcome: {
+      worst_drift_at_decision: string | null;
+      worst_drift_now: string | null;
+      measurable: boolean;
+    };
+  }[];
+  method: { kind: string; note: string };
+};

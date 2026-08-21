@@ -1922,3 +1922,25 @@
   justify-self: start;
   padding-left: 0;
 }
+
+/* La tabla de riesgo la gobierna `.data-table` del design system; aquí solo se dice que
+   la fila es etiqueta a la izquierda y cifra a la derecha, que es lo que la diferencia de
+   las tablas de inventario. */
+.dir-a .a-pf-risk-table th[scope='row'] {
+  font-weight: 500;
+  text-align: left;
+}
+
+.dir-a .a-pf-risk-table td {
+  text-align: right;
+}
+
+.dir-a .a-pf-risk-table td small {
+  color: var(--muted);
+  margin-left: var(--space-1);
+}
+
+.dir-a .a-pf-risk-table td em {
+  color: var(--muted);
+  font-style: normal;
+}

@@ -24,6 +24,9 @@ import type {
   AllocationStrategyPayload,
   AllocationScope,
   PortfolioAllocation,
+  PortfolioBenchmark,
+  PortfolioDecisionLog,
+  PortfolioRisk,
   ContributionSolve,
   ContributionBasket,
   ContributionCommitment,
@@ -178,6 +181,21 @@ export const corePortfolioApi = {
   getAllocation(ownershipId: number, onDate?: string) {
     return coreApi.get<PortfolioAllocation>('/api/portfolio/allocation/', {
       params: { ownership_id: ownershipId, ...(onDate ? { on_date: onDate } : {}) },
+    });
+  },
+  getBenchmark(ownershipId: number, params: { date_from?: string; date_to?: string } = {}) {
+    return coreApi.get<PortfolioBenchmark>('/api/portfolio/benchmark/', {
+      params: { ownership_id: ownershipId, ...params },
+    });
+  },
+  getRisk(ownershipId: number, params: { date_from?: string; date_to?: string } = {}) {
+    return coreApi.get<PortfolioRisk>('/api/portfolio/risk/', {
+      params: { ownership_id: ownershipId, ...params },
+    });
+  },
+  getDecisionLog(ownershipId: number) {
+    return coreApi.get<PortfolioDecisionLog>('/api/portfolio/decisions/', {
+      params: { ownership_id: ownershipId },
     });
   },
   solveContribution(ownershipId: number, amount: string) {
