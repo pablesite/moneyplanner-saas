@@ -39,5 +39,5 @@ Alertas numerosas pueden generar fatiga; agrupar, priorizar y no promoverlas fue
 ## Completion Criteria
 - [x] Alertas accionables sin lenguaje de recomendacion financiera.
 - [x] Navegacion transversal y estados parciales verificados por tipos, lint y revisión responsive de las reglas de layout.
-- [x] Tests y docs completados; commit pendiente de cierre.
+- [x] Tests, docs y commit completados.
 - [x] Spec movida a `terminados/`.
