@@ -1551,7 +1551,7 @@ watch(
 
       <!-- Fase 7. El riesgo es detalle, no titular: vive debajo de la evolución y después
            del valor y la rentabilidad, que siguen siendo lo que se viene a mirar. -->
-      <section class="sect">
+      <section v-if="activeTab === 'evolution'" class="sect">
         <ASectHead
           eyebrow="Riesgo"
           title="Cómo se ha comportado, y contra qué"

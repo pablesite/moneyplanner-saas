@@ -75,6 +75,88 @@ async function mockPortfolio(page: Page) {
         },
       ]);
     }
+    if (path === '/api/portfolio/workspace/') {
+      return json(route, {
+        scope: null,
+        cash: { value: '0' },
+        overview: {
+          period: performance.period,
+          member_id: null,
+          currency: 'EUR',
+          value: '12000',
+          covered_value: '12000',
+          net_contributed: '1000',
+          monetary_result: '1000',
+          return: returns,
+          coverage,
+          position_count: 1,
+          fresh_position_count: 1,
+        },
+        performance,
+        positions: {
+          period: performance.period,
+          member_id: null,
+          results: [
+            {
+              position_id: 3,
+              instrument_id: 5,
+              instrument_name: 'Fondo Global',
+              container_id: 2,
+              container_name: 'Broker familiar',
+              status: 'active',
+              tracking_style: 'units_based',
+              native_value: '12000',
+              native_currency: 'EUR',
+              holding_currency: 'EUR',
+              observed_on: '2025-12-31',
+              asset_class: 'equity',
+              class_breakdown: [],
+              value_status: 'fresh',
+              performance,
+              attribution: {
+                asset: '1000',
+                fx: '0',
+                total: '1000',
+                method: 'closing_fx_residual',
+              },
+            },
+          ],
+        },
+        timeline: {
+          period: performance.period,
+          member_id: null,
+          currency: 'EUR',
+          results: [
+            {
+              date: '2025-01-01',
+              value: '10000',
+              net_contributed: '0',
+              contributed_to_date: '0',
+              monetary_result: '0',
+              coverage: 'complete',
+            },
+            {
+              date: '2025-12-31',
+              value: '12000',
+              net_contributed: '1000',
+              contributed_to_date: '1000',
+              monetary_result: '1000',
+              coverage: 'complete',
+            },
+          ],
+        },
+        quality: {
+          period: performance.period,
+          status: 'ready',
+          positions: { total: 1, fresh: 1, stale: 0, missing: 0, at_cost: 0 },
+          ownership_missing: 0,
+          ownership_unattributed: 0,
+          cash_ownership_missing: false,
+          metric_coverage: coverage,
+          fx_issues: [],
+        },
+      });
+    }
     if (path === '/api/portfolio/overview/') {
       return json(route, {
         period: performance.period,
@@ -179,9 +261,9 @@ test('portfolio workspace exposes summary, positions and evolution on desktop', 
   await loginAndOpenPortfolio(page);
 
   await expect(page.getByText('12.000,00 €').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Posiciones' }).click();
+  await page.getByRole('button', { name: 'Posiciones', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Fondo Global' })).toBeVisible();
-  await page.getByRole('button', { name: 'Evolución' }).click();
+  await page.getByRole('button', { name: 'Evolución', exact: true }).click();
   await expect(page.getByRole('img', { name: /Evolución mensual/ })).toBeVisible();
 });
 
@@ -191,9 +273,16 @@ test('portfolio stays within 360px and preserves the five mobile destinations', 
   await page.setViewportSize({ width: 360, height: 800 });
   await loginAndOpenPortfolio(page);
 
-  await page.getByRole('button', { name: 'Posiciones' }).click();
+  const portfolioTabs = page.locator('.a-pf-tabs-bar');
+  await expect(portfolioTabs.getByRole('button')).toHaveCount(5);
+  const tabOverflow = await portfolioTabs.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(tabOverflow.scrollWidth).toBeGreaterThan(tabOverflow.clientWidth);
+  await page.getByRole('button', { name: 'Posiciones', exact: true }).click();
   await page.locator('.a-pf-position-list button').click();
-  await expect(page.getByRole('dialog')).toContainText('Atribución divisa');
+  await expect(page.getByRole('dialog')).toContainText('Activo / divisa');
   await page.getByRole('button', { name: 'Cerrar modal' }).click();
 
   const mobileNav = page.locator('.ui-shell-bottom-nav');

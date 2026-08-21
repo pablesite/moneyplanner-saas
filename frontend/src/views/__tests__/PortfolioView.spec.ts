@@ -212,6 +212,17 @@ describe('PortfolioView', () => {
     expect(mocks.push).toHaveBeenCalledWith('/patrimonio');
   });
 
+  it('shows risk only inside evolution', async () => {
+    const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain('Cómo se ha comportado, y contra qué');
+
+    await wrapper.findAll('.a-pf-tabs-bar .tab')[4]!.trigger('click');
+
+    expect(wrapper.text()).toContain('Cómo se ha comportado, y contra qué');
+  });
+
   it('restores the Patrimonio context carried by the entry route', async () => {
     mocks.route.query = { return: '/?tab=evolution&range=3a' };
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });

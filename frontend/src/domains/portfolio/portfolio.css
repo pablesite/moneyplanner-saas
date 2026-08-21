@@ -957,6 +957,20 @@
 
   .dir-a .a-pf-tabs-bar {
     margin-inline: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .dir-a .a-pf-tabs-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dir-a .a-pf-tabs-bar .tabs {
+    min-width: max-content;
+  }
+
+  .dir-a .a-pf-tabs-bar .tab {
+    padding-inline: var(--space-3);
   }
 
   .dir-a .a-pf-filters .filter-ctrl {

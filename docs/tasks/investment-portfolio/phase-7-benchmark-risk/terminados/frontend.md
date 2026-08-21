@@ -29,14 +29,14 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev exec saas_frontend 
 ```
 
 ## Required Documentation Updates
-- [ ] Visual guide y domain map.
-- [ ] `docs/project-status.md`.
+- [x] Visual guide y domain map.
+- [x] `docs/project-status.md`.
 
 ## Risks
 Una doble escala puede exagerar diferencias; usar comparaciones normalizadas y tabla accesible con metodologia visible.
 
 ## Completion Criteria
-- [ ] Graficos legibles a 360 px sin doble escala enganosa.
-- [ ] Calidad y metodologia accesibles desde cada metrica.
-- [ ] Tests, docs y commit completados.
-- [ ] Spec movida a `terminados/`.
+- [x] Graficos legibles a 360 px sin doble escala enganosa.
+- [x] Calidad y metodologia accesibles desde cada metrica.
+- [x] Tests, docs y commit completados.
+- [x] Spec movida a `terminados/`.
