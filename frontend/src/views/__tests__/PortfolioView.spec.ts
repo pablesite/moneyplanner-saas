@@ -156,6 +156,7 @@ describe('PortfolioView', () => {
         status: 'ready',
         positions: { total: 1, fresh: 1, stale: 0, missing: 0 },
         ownership_missing: 0,
+        ownership_unattributed: 0,
         cash_ownership_missing: false,
         metric_coverage: coverage,
         fx_issues: [],

@@ -109,6 +109,7 @@ export type PortfolioQuality = {
   status: 'ready' | 'stale' | 'needs_review';
   positions: { total: number; fresh: number; stale: number; missing: number; at_cost: number };
   ownership_missing: number;
+  ownership_unattributed: number;
   cash_ownership_missing: boolean;
   metric_coverage: PortfolioCoverage;
   fx_issues: string[];

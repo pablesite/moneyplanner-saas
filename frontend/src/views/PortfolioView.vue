@@ -487,6 +487,12 @@ const qualityMessage = computed(() => {
   if (quality.positions.stale) parts.push(`${quality.positions.stale} desactualizadas`);
   if (quality.positions.missing) parts.push(`${quality.positions.missing} sin valoración`);
   if (quality.ownership_missing) parts.push(`${quality.ownership_missing} sin titularidad`);
+  // Al mirar por titular, lo que no es de nadie no sale en ninguna vista pero sigue dentro
+  // del total, y sin decirlo las partes no cuadran con el todo sin explicacion posible.
+  if (memberId.value !== 'all' && quality.ownership_unattributed)
+    parts.push(
+      `${quality.ownership_unattributed} sin titularidad fuera del reparto (cuentan en el total)`,
+    );
   if (quality.cash_ownership_missing) parts.push('efectivo sin titularidad individual');
   if (quality.fx_issues.length) parts.push(`${quality.fx_issues.length} incidencias de divisa`);
   return parts.join(' · ');
