@@ -56,6 +56,7 @@ const performance = {
     real: '0.08',
     twr: '0.10',
     mwr_xirr: '0.11',
+    twr_annualized: '0.10',
     method: 'twr',
     estimated: false,
   },
@@ -186,6 +187,9 @@ describe('PortfolioView', () => {
 
     expect(wrapper.text()).toContain('Valor de cartera');
     expect(wrapper.text()).toContain('12.000,00');
+    expect(wrapper.text()).toContain('Rendimiento de tus activos');
+    expect(wrapper.text()).toContain('acumulada');
+    expect(wrapper.text()).toContain('anualizado');
     expect(wrapper.text()).toContain('Dónde está invertida');
     // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la
     // posición, tras un icono.

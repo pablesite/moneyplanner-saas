@@ -75,8 +75,8 @@ const rows = computed<MetricRow[]>(() => {
   return [
     {
       key: 'annualized_return',
-      label: 'Rentabilidad anual media',
-      hint: 'Lo que ha rendido de media cada año, encadenando los meses medidos. No es lo que rendirá el próximo.',
+      label: 'Rentabilidad anual del tramo medido',
+      hint: 'La tasa compuesta de los meses completos medidos. No incluye los días parciales al principio y al final del periodo, por lo que puede no coincidir exactamente con la anualizada del Resumen. No es lo que rendirá el próximo.',
       metric: data?.annualized_return,
     },
     {
@@ -131,9 +131,9 @@ const coverageNote = computed(() => {
   if (!coverage || coverage.months_used === 0) return null;
   const window = `${coverage.window.from} → ${coverage.window.to}`;
   if (coverage.months_used === coverage.months_in_period) {
-    return `Medido sobre los ${coverage.months_used} meses completos del periodo (${window}).`;
+    return `Medido sobre los ${coverage.months_used} meses completos del periodo (${window}). El Resumen incluye los extremos exactos del periodo, así que ambas anualizadas pueden diferir ligeramente.`;
   }
-  return `Medido sobre ${coverage.months_used} de ${coverage.months_in_period} meses (${window}). Sin datos en ${coverage.months_without_data.join(', ')}.`;
+  return `Medido sobre ${coverage.months_used} de ${coverage.months_in_period} meses (${window}). Sin datos en ${coverage.months_without_data.join(', ')}. El Resumen incluye los extremos exactos del periodo, así que ambas anualizadas pueden diferir ligeramente.`;
 });
 </script>
 

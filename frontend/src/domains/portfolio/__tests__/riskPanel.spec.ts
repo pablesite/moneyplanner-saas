@@ -84,6 +84,8 @@ describe('PortfolioRiskPanel', () => {
     const text = wrapper.text();
     expect(text).toContain('Tu política');
     expect(text).toContain('Diferencia');
+    expect(text).toContain('Rentabilidad anual del tramo medido');
+    expect(text).toContain('El Resumen incluye los extremos exactos del periodo');
   });
 
   it('nunca pinta un cero donde no hay dato', async () => {

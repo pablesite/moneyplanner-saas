@@ -393,6 +393,7 @@ const heroValue = computed(() => {
 // hero is asked. TWR describes the assets and is kept beside it as context, not hidden.
 const headlineReturn = computed(() => pct(store.overview?.return.mwr_xirr));
 const returnTone = computed(() => (toNumber(store.overview?.return.mwr_xirr) >= 0 ? 'pos' : 'neg'));
+const assetAnnualizedReturn = computed(() => pct(store.performance?.return.twr_annualized));
 // Plain labels first, acronym only as a footnote: "MWR" and "TWR" said nothing on
 // their own. The distinction is carried by a tooltip that explains it with the two
 // questions each answers, not by the initials. La banda es de tres columnas: una
@@ -422,8 +423,8 @@ const heroKpis = computed(() => [
   },
   {
     label: 'Rendimiento de tus activos',
-    value: pct(store.performance?.return.twr_annualized),
-    meta: 'anual',
+    value: pct(store.performance?.return.nominal),
+    meta: 'acumulada',
   },
 ]);
 
@@ -1045,7 +1046,7 @@ watch(
                   <span v-if="refreshing" class="skel a-pf-skel-return"></span>
                   <strong v-else :class="returnTone">{{ headlineReturn }}</strong>
                   <span>
-                    ha rendido tu dinero, al año
+                    ha rendido tu dinero, anualizado
                     <AInfoHint>
                       Lo que ha rendido <strong>el dinero que tú pusiste</strong>, teniendo en
                       cuenta cuándo lo pusiste: aportar justo antes de una subida no cuenta igual
@@ -1053,7 +1054,8 @@ watch(
                     </AInfoHint>
                   </span>
                   <span v-if="!refreshing && store.overview.return.twr_annualized"
-                    >tus activos: {{ pct(store.overview.return.twr_annualized) }} ·
+                    >tus activos: {{ pct(store.overview.return.nominal) }} acumulada ·
+                    {{ pct(store.overview.return.twr_annualized) }} anual ·
                     {{
                       returnLabel(store.overview.return.method, store.overview.return.estimated)
                     }}</span
@@ -1067,11 +1069,13 @@ watch(
             </AHero>
             <AKpiBand :items="heroKpis" :pending="refreshing">
               <template #meta-2>
-                anual
+                acumulada · {{ assetAnnualizedReturn }} anual
                 <AInfoHint>
-                  Cuánto han subido o bajado tus activos,
-                  <strong>al margen de cuándo pusieras el dinero</strong>. Es la cifra que compara
-                  tu cartera con un índice o con otro inversor. En la ficha técnica se llama TWR.
+                  La cifra principal es todo lo que han subido o bajado tus activos durante el
+                  periodo seleccionado, <strong>al margen de cuándo pusieras el dinero</strong>. La
+                  cifra anual es la tasa compuesta equivalente de ese mismo resultado: al cambiar el
+                  periodo puede cambiar, aunque no haya operaciones nuevas. En la ficha técnica se
+                  llama TWR.
                 </AInfoHint>
               </template>
             </AKpiBand>
@@ -1734,14 +1738,15 @@ watch(
             <span class="a-pf-detail-return-label">
               Ha rendido el activo
               <AInfoHint>
-                Al margen de cuándo aportaste: sirve para comparar con un índice. En la ficha
-                técnica, TWR.
+                Rentabilidad acumulada en el periodo, al margen de cuándo aportaste: sirve para
+                comparar con un índice. En la ficha técnica, TWR.
               </AInfoHint>
             </span>
             <strong :class="signClass(selectedPosition.performance.return.nominal)">
               {{ pct(selectedPosition.performance.return.nominal) }}
             </strong>
             <small>
+              acumulada ·
               {{
                 returnLabel(
                   selectedPosition.performance.return.method,
