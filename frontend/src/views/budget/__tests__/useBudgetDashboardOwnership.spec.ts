@@ -226,4 +226,43 @@ describe('useBudgetDashboardPage · filtro por titularidad en gastos', () => {
 
     wrapper.unmount();
   });
+
+  it('usa el reparto efectivo dinámico para el previsto aunque conserve texto heredado', async () => {
+    ownerships.value = [
+      {
+        id: 40,
+        kind: 'shared',
+        member: null,
+        splits: [
+          { member: { id: 1, name: 'Pablo', role: 'adult' }, percent: '50.00' },
+          { member: { id: 2, name: 'Ana', role: 'adult' }, percent: '50.00' },
+        ],
+        allocation_basis: 'recurring_income_12m',
+        effective_splits: [
+          { member_id: 1, member_name: 'Pablo', percent: '64.29' },
+          { member_id: 2, member_name: 'Ana', percent: '35.71' },
+        ],
+      },
+    ];
+    expenseEntries.value = [
+      expenseEntry({
+        amountAnnual: 1000,
+        owner: 'Compartido (Ana 39% / Pablo 61%)',
+        ownershipId: 40,
+      }),
+    ];
+
+    const wrapper = await mountDashboard();
+
+    wrapper.vm.ownershipFilter = 'Pablo';
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.plannedExpenseTotal).toBeCloseTo(642.9, 2);
+    expect(wrapper.vm.ownerAdjustedExpenseEntries[0].owner).toContain('Compartido dinámico');
+
+    wrapper.vm.ownershipFilter = 'Ana';
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.plannedExpenseTotal).toBeCloseTo(357.1, 2);
+
+    wrapper.unmount();
+  });
 });

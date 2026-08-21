@@ -19,7 +19,10 @@ import {
 } from '@/domains/accounting';
 import { coreNetWorthApi, premiumOwnershipApi } from '@/domains/net-worth/api';
 import type { Asset, Ownership } from '@/domains/net-worth/models';
-import { ownershipDisplaySplits } from '@/domains/people/ownershipPresentation';
+import {
+  ownershipDisplayLabel,
+  ownershipDisplaySplits,
+} from '@/domains/people/ownershipPresentation';
 import {
   expenseCategories,
   normalizeExpenseTaxonomy,
@@ -389,6 +392,23 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       .reduce((sum, split) => sum + split.share, 0);
     return totalShare > 0 ? clamp(matchedShare / totalShare, 0, 1) : 0;
   }
+
+  function allocationForBudgetEntry(
+    ownerLabel: string,
+    ownershipId: number | null | undefined,
+  ): { fraction: number; displayLabel: string } {
+    const ownership = ownershipById.value.get(ownershipId ?? 0);
+    if (!ownership) {
+      return {
+        fraction: allocationFractionForOwnerLabel(ownerLabel, ownershipFilter.value),
+        displayLabel: ownerLabel,
+      };
+    }
+    return {
+      fraction: allocationFractionForOwnership(ownership, ownershipFilter.value),
+      displayLabel: ownershipDisplayLabel(ownership),
+    };
+  }
   const budgetSuggestionsLoading = ref(false);
   const budgetSuggestionsError = ref<string | null>(null);
   const budgetSuggestions = ref<BudgetDerivedSuggestions | null>(null);
@@ -628,16 +648,17 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   const ownerAdjustedIncomeEntries = computed(() =>
     incomeEntries.value
       .map((entry) => {
-        const fraction = allocationFractionForOwnerLabel(entry.owner ?? '', ownershipFilter.value);
+        const allocation = allocationForBudgetEntry(entry.owner ?? '', entry.ownershipId);
         const amountAnnual = effectiveAnnualAmountForEntry(
           {
             ...entry,
-            amountAnnual: entry.amountAnnual * fraction,
+            amountAnnual: entry.amountAnnual * allocation.fraction,
           },
           entry.fiscalYear,
         );
         return {
           ...entry,
+          owner: allocation.displayLabel,
           amountAnnual,
           baseAmountAnnual: entry.amountAnnual,
         };
@@ -648,16 +669,17 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   const ownerAdjustedExpenseEntries = computed(() =>
     expenseEntries.value
       .map((entry) => {
-        const fraction = allocationFractionForOwnerLabel(entry.owner ?? '', ownershipFilter.value);
+        const allocation = allocationForBudgetEntry(entry.owner ?? '', entry.ownershipId);
         const amountAnnual = effectiveAnnualAmountForEntry(
           {
             ...entry,
-            amountAnnual: entry.amountAnnual * fraction,
+            amountAnnual: entry.amountAnnual * allocation.fraction,
           },
           entry.fiscalYear,
         );
         return {
           ...entry,
+          owner: allocation.displayLabel,
           amountAnnual,
           baseAmountAnnual: entry.amountAnnual,
         };
