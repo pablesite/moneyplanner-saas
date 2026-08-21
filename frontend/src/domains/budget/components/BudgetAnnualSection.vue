@@ -352,16 +352,35 @@ function entriesForRow(sectionId: 'income' | 'expense', row: BudgetRow): RowEntr
   return source.filter((entry) => matchesRowTaxonomy(sectionId, entry, row));
 }
 
+// El resumen de una fila suma importes tal cual vienen, y una linea en dolares se sumaba
+// a las de euros y salia rotulada con el simbolo del euro. Aqui no hay tipos de cambio, asi
+// que la unica lectura honesta es decir cada moneda por separado en vez de inventar una
+// conversion. Con una sola moneda —el caso normal— la frase no cambia.
+function currenciesOf(entries: RowEntry[]): string[] {
+  return [...new Set(entries.map((entry) => entry.currency || 'EUR'))];
+}
+
+function moneyByCurrency(entries: RowEntry[], amountOf: (entry: RowEntry) => number): string {
+  const totals = new Map<string, number>();
+  for (const entry of entries) {
+    const code = entry.currency || 'EUR';
+    totals.set(code, (totals.get(code) ?? 0) + amountOf(entry));
+  }
+  return [...totals]
+    .map(([code, amount]) => `${formatMoney(amount)} ${currencySymbol(code)}`)
+    .join(' + ');
+}
+
 function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string {
   const entries = entriesForRow(sectionId, row);
-  const total = entries.reduce(
-    (sum, entry) => sum + effectiveAnnualAmountForEntry(entry, entry.fiscalYear),
-    0,
-  );
+  const money = (rows: RowEntry[], amountOf: (entry: RowEntry) => number) =>
+    moneyByCurrency(rows, amountOf);
+  const annualOf = (entry: RowEntry) => effectiveAnnualAmountForEntry(entry, entry.fiscalYear);
+  const rowSymbol = currencySymbol(currenciesOf(entries)[0] ?? 'EUR');
   const count = entries.length || row.itemsCount;
   const countText = `${count} registro${count === 1 ? '' : 's'}`;
   if (!entries.length) {
-    return `${countText} - ${formatMoney(row.plannedAnnual / 12)} €/mes previsto`;
+    return `${countText} - ${formatMoney(row.plannedAnnual / 12)} ${rowSymbol}/mes previsto`;
   }
   const oneOffEntries = entries.filter((entry) => isOneOffEntry(entry));
   if (oneOffEntries.length === entries.length) {
@@ -372,18 +391,14 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
     );
     if (uniqueMonths.size === 1) {
       const month = Array.from(uniqueMonths)[0];
-      return `${countText} - ${formatMoney(total)} € en ${targetMonthLabel(month)} previsto`;
+      return `${countText} - ${money(entries, annualOf)} en ${targetMonthLabel(month)} previsto`;
     }
-    return `${countText} - ${formatMoney(total)} € puntual previsto`;
+    return `${countText} - ${money(entries, annualOf)} puntual previsto`;
   }
   if (oneOffEntries.length > 0) {
     const recurringEntries = entries.filter((entry) => !isOneOffEntry(entry));
     const recurringMonthly = recurringEntries.reduce(
       (sum, entry) => sum + recurringMonthlyPlannedAmount(entry),
-      0,
-    );
-    const oneOffTotal = oneOffEntries.reduce(
-      (sum, entry) => sum + Number(entry.amountAnnual ?? 0),
       0,
     );
     const uniqueMonths = new Set<number>(
@@ -393,10 +408,10 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
     );
     if (recurringMonthly > 0 && uniqueMonths.size === 1) {
       const month = Array.from(uniqueMonths)[0];
-      return `${countText} - ${formatMoney(recurringMonthly)} €/mes + ${formatMoney(oneOffTotal)} € en ${targetMonthLabel(month)}`;
+      return `${countText} - ${money(recurringEntries, recurringMonthlyPlannedAmount)}/mes + ${money(oneOffEntries, (entry) => Number(entry.amountAnnual ?? 0))} en ${targetMonthLabel(month)}`;
     }
     if (recurringMonthly > 0) {
-      return `${countText} - ${formatMoney(recurringMonthly)} €/mes + ${formatMoney(oneOffTotal)} € puntual`;
+      return `${countText} - ${money(recurringEntries, recurringMonthlyPlannedAmount)}/mes + ${money(oneOffEntries, (entry) => Number(entry.amountAnnual ?? 0))} puntual`;
     }
   }
   const entriesWithTargetMonth = entries.filter((entry) => entry.targetMonth != null);
@@ -408,11 +423,11 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
     );
     if (uniqueMonths.size === 1) {
       const month = Array.from(uniqueMonths)[0];
-      return `${countText} - ${formatMoney(total)} € en ${targetMonthLabel(month)} previsto`;
+      return `${countText} - ${money(entries, annualOf)} en ${targetMonthLabel(month)} previsto`;
     }
-    return `${countText} - ${formatMoney(total)} € en meses previstos`;
+    return `${countText} - ${money(entries, annualOf)} en meses previstos`;
   }
-  return `${countText} - ${formatMoney(total / 12)} €/mes previsto`;
+  return `${countText} - ${money(entries, (entry) => annualOf(entry) / 12)}/mes previsto`;
 }
 
 function groupExecutionPreview(
