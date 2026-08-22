@@ -66,6 +66,7 @@ type PolicyPeriod = {
   from: string;
   to: string | null;
   current: boolean;
+  transition: boolean;
 };
 
 const route = useRoute();
@@ -353,6 +354,9 @@ const policyPeriods = computed<PolicyPeriod[]>(() => {
     from: group.strategies[0]!.effective_from,
     to: groups[index + 1] ? dayBefore(groups[index + 1]!.strategies[0]!.effective_from) : null,
     current: index === groups.length - 1,
+    transition: group.strategies.some((strategy) =>
+      strategy.note.startsWith('Transición de liquidez'),
+    ),
   }));
 });
 
@@ -366,7 +370,9 @@ const policyPeriodOptions = computed<ASelectItem[]>(() =>
     value: row.key,
     label: row.current
       ? `Política vigente · desde ${formatShortMonthYear(row.from)}`
-      : `Política anterior · ${formatShortMonthYear(row.from)}–${formatShortMonthYear(row.to!)}`,
+      : row.transition
+        ? `Transición de liquidez · ${formatShortMonthYear(row.from)}–${formatShortMonthYear(row.to!)}`
+        : `Política anterior · ${formatShortMonthYear(row.from)}–${formatShortMonthYear(row.to!)}`,
   })),
 );
 
@@ -375,7 +381,9 @@ const policyPeriodDescription = computed(() => {
   if (!policy) return 'Sin una política versionada todavía';
   return policy.current
     ? `La estrategia vigente se lee desde ${formatShortMonthYear(policy.from)}.`
-    : `Periodo de estrategia: ${formatShortMonthYear(policy.from)}–${formatShortMonthYear(policy.to!)}.`;
+    : policy.transition
+      ? `Capital en liquidez táctica: ${formatShortMonthYear(policy.from)}–${formatShortMonthYear(policy.to!)}.`
+      : `Periodo de estrategia: ${formatShortMonthYear(policy.from)}–${formatShortMonthYear(policy.to!)}.`;
 });
 
 const query = computed<PortfolioQuery>(() => {
