@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.58.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.57.0...moneyplanner-saas-v0.58.0) (2026-08-22)
+
+
+### Features
+
+* **accounting:** ask for both commissions of a traspaso ([3501ed1](https://github.com/pablesite/moneyplanner-saas/commit/3501ed167627a6a1dfa24c8b8af09b6dd191a12c))
+* **accounting:** let the commission be corrected, and give every account a way back into balance ([728c81a](https://github.com/pablesite/moneyplanner-saas/commit/728c81a6c886aab537a54b8460bc23da68cf3e7e))
+* **accounting:** let the investment form carry the broker fee ([8844b45](https://github.com/pablesite/moneyplanner-saas/commit/8844b454a8d9dd5b99e2c9ad662c9ff1b1a38572))
+* **portfolio:** close Evolución with risk, and with what it cannot measure ([dc90481](https://github.com/pablesite/moneyplanner-saas/commit/dc90481fbc87630a1b1780b8fe57aaa4ff4eebc2))
+* **portfolio:** focus analysis on investment policy ([4313c23](https://github.com/pablesite/moneyplanner-saas/commit/4313c23e52d4ac20a93f4c68569d0e02a3f3f99a))
+* **portfolio:** separate historical return from value ([56cfb3e](https://github.com/pablesite/moneyplanner-saas/commit/56cfb3edcb314f74ec3f20db5e74c0085a77a992))
+* **portfolio:** show historical benchmark trajectory ([19e4fd2](https://github.com/pablesite/moneyplanner-saas/commit/19e4fd22f7ba87003da5e3ed49cdd180b366e599))
+* **portfolio:** surface actionable attention ([2fa60d4](https://github.com/pablesite/moneyplanner-saas/commit/2fa60d41e7b2c6a8816603105ee004ca48ac9347))
+
+
+### Bug Fixes
+
+* **budget:** align term plans with owner execution ([b8e1e66](https://github.com/pablesite/moneyplanner-saas/commit/b8e1e66175bda04d59692be5bff12bc8e8dccd1c))
+* **budget:** split shared ledger execution by owner ([8cdf640](https://github.com/pablesite/moneyplanner-saas/commit/8cdf640fa61b96f2a2443d910f32ed62866482c5))
+* **budget:** stop adding dollars into the euro subtotal of a row ([ad430d3](https://github.com/pablesite/moneyplanner-saas/commit/ad430d397ceecdebc502db69c6ebd2b5112eb769))
+* **budget:** the ownership filter reaches what was executed, not only what was planned ([e85997e](https://github.com/pablesite/moneyplanner-saas/commit/e85997e091ceab75c624d8495bfb8b8c19993ee8))
+* **budget:** use dynamic ownership for planned entries ([6a73ffc](https://github.com/pablesite/moneyplanner-saas/commit/6a73ffc2ad8123a28a78f4ab7d8e689adb4075a5))
+* **net-worth:** no comparison at all beats one against half a history ([91ed1de](https://github.com/pablesite/moneyplanner-saas/commit/91ed1de22d8d36012c6300cfd3618d95c0d8434d))
+* **portfolio:** clarify cumulative and annual returns ([c80ce4d](https://github.com/pablesite/moneyplanner-saas/commit/c80ce4d9a03f283d28081b8358a33f81e518dd71))
+* **portfolio:** fit evolution on mobile ([2c3cd80](https://github.com/pablesite/moneyplanner-saas/commit/2c3cd804cc805cb9d5d79e0312ba2106de350eb0))
+* **portfolio:** label the liquidity transition ([b1375d5](https://github.com/pablesite/moneyplanner-saas/commit/b1375d53b1bc8b19e43e4832ab9a6b314a15fd5c))
+* **portfolio:** open the summary on the whole history, not the last year ([0e7d775](https://github.com/pablesite/moneyplanner-saas/commit/0e7d77519701498e1fe0772f408f7f0a9e53aba7))
+* **portfolio:** say when part of the portfolio belongs to nobody ([a876ad4](https://github.com/pablesite/moneyplanner-saas/commit/a876ad49c1df95f4166931e8a327933979dd54a3))
+* **portfolio:** tighten workspace navigation ([752132d](https://github.com/pablesite/moneyplanner-saas/commit/752132dd42879748e84f4584e727a64f1d2287ee))
+* **pwa:** activate updates without stale assets ([f0939eb](https://github.com/pablesite/moneyplanner-saas/commit/f0939eb9a7d8a08d8589e5cea53029f74074ee50))
+
 ## [0.57.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.56.0...moneyplanner-saas-v0.57.0) (2026-08-20)
 
 
