@@ -26,7 +26,6 @@ function benchmark(overrides: Record<string, unknown> = {}) {
       cash_excluded: false,
       portfolio_return: '0.12',
       benchmark_return: '0.10',
-      benchmark_annualized_return: { status: 'available', value: '0.10' },
       excess_return: '0.02',
       points: [],
       secondary: { status: 'unavailable', reason: 'not_configured', instrument: null },
