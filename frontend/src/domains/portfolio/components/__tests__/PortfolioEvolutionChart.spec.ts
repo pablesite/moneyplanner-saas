@@ -105,6 +105,20 @@ describe('PortfolioEvolutionChart', () => {
     expect(wrapper.find('.a-pf-return-data').text()).not.toContain('Revalorización del mes');
   });
 
+  it('renders complete mobile rows instead of requiring horizontal table scrolling', async () => {
+    const wrapper = mount(PortfolioEvolutionChart, {
+      props: { currency: 'EUR', points: months(2) },
+    });
+
+    expect(wrapper.findAll('.a-pf-chart-mobile-row')).toHaveLength(2);
+    expect(wrapper.find('.a-pf-chart-mobile-row').text()).toContain('Capital aportado');
+
+    await wrapper.get('[aria-label="Lectura del gráfico"] button:last-child').trigger('click');
+
+    expect(wrapper.find('.a-pf-chart-mobile-row').text()).toContain('Anualizada');
+    expect(wrapper.find('.a-pf-chart-mobile-row').text()).not.toContain('Capital aportado');
+  });
+
   it('survives a container with no width instead of losing the active point', async () => {
     const wrapper = mount(PortfolioEvolutionChart, {
       props: { currency: 'EUR', points: months(13) },

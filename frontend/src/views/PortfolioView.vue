@@ -33,6 +33,7 @@ import {
   type PortfolioQuery,
   type PortfolioOperationOptions,
   type PortfolioOperationType,
+  type AllocationStrategy,
 } from '@/domains/portfolio';
 import '@/domains/portfolio/portfolio.css';
 import {
@@ -59,26 +60,32 @@ import { toApiErrorMessage } from '@/lib/errors';
 import PortfolioStrategyModal from '@/domains/portfolio/components/PortfolioStrategyModal.vue';
 
 type PortfolioTab = 'summary' | 'positions' | 'allocation' | 'exposure' | 'evolution';
-type PeriodPreset = '1m' | 'ytd' | '1y' | '3y' | 'all' | 'custom';
+type PeriodPreset = 'policy' | '1m' | 'ytd' | '1y' | '3y' | 'all' | 'custom';
+type PolicyPeriod = {
+  key: string;
+  from: string;
+  to: string | null;
+  current: boolean;
+};
 
 const route = useRoute();
 const router = useRouter();
 const store = usePortfolioStore();
 
 const validTabs: PortfolioTab[] = ['summary', 'positions', 'allocation', 'exposure', 'evolution'];
-const validPeriods: PeriodPreset[] = ['1m', 'ytd', '1y', '3y', 'all', 'custom'];
+const validPeriods: PeriodPreset[] = ['policy', '1m', 'ytd', '1y', '3y', 'all', 'custom'];
 const activeTab = ref<PortfolioTab>(
   validTabs.includes(route.query.tab as PortfolioTab)
     ? (route.query.tab as PortfolioTab)
     : 'summary',
 );
-// Sin periodo en la URL se abre con todo el historial: una cartera de acumulacion se
-// mira para saber como ha ido desde que empezo, y arrancar en los ultimos doce meses
-// escondia justo la parte que da sentido a la cifra.
+// La lectura útil empieza cuando entró en vigor la política que guía la cartera actual.
+// El histórico anterior sigue disponible como comparación, pero no mezcla dos enfoques
+// de inversión que no responden a la misma pregunta.
 const period = ref<PeriodPreset>(
   validPeriods.includes(route.query.period as PeriodPreset)
     ? (route.query.period as PeriodPreset)
-    : 'all',
+    : 'policy',
 );
 const memberId = ref(String(route.query.member ?? 'all'));
 const containerId = ref(String(route.query.container ?? 'all'));
@@ -86,6 +93,8 @@ const assetClass = ref(String(route.query.class ?? 'all'));
 const currency = ref(String(route.query.currency ?? 'all'));
 const customFrom = ref(String(route.query.from ?? ''));
 const customTo = ref(String(route.query.to ?? dateToIso(new Date())));
+const selectedPolicyPeriod = ref(String(route.query.policy ?? 'current'));
+const strategies = ref<AllocationStrategy[]>([]);
 const selectedPosition = ref<PositionPerformance | null>(null);
 const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
 const operationOpen = ref(false);
@@ -306,6 +315,69 @@ function subtractMonths(date: Date, months: number): Date {
   return result;
 }
 
+function strategySignature(strategy: AllocationStrategy): string {
+  const targets = strategy.targets
+    .map((target) => [
+      target.asset_class ?? '',
+      target.position_id ?? 0,
+      target.target_percent,
+      target.min_percent ?? '',
+      target.max_percent ?? '',
+    ])
+    .sort((left, right) => left.join('|').localeCompare(right.join('|')));
+  return JSON.stringify([strategy.ownership_id, targets]);
+}
+
+function dayBefore(date: string): string {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() - 1);
+  return value.toISOString().slice(0, 10);
+}
+
+// Una edición que conserva exactamente los objetivos no abre una política económica
+// nueva. Se agrupa para que el rango sea el mandato efectivo, no la última vez que se
+// abrió el formulario.
+const policyPeriods = computed<PolicyPeriod[]>(() => {
+  const ordered = [...strategies.value].sort((left, right) =>
+    left.effective_from.localeCompare(right.effective_from),
+  );
+  const groups: { strategies: AllocationStrategy[]; signature: string }[] = [];
+  for (const strategy of ordered) {
+    const signature = strategySignature(strategy);
+    const previous = groups.at(-1);
+    if (previous && previous.signature === signature) previous.strategies.push(strategy);
+    else groups.push({ strategies: [strategy], signature });
+  }
+  return groups.map((group, index) => ({
+    key: String(group.strategies[0]!.id),
+    from: group.strategies[0]!.effective_from,
+    to: groups[index + 1] ? dayBefore(groups[index + 1]!.strategies[0]!.effective_from) : null,
+    current: index === groups.length - 1,
+  }));
+});
+
+const activePolicyPeriod = computed(() => {
+  const selected = policyPeriods.value.find((row) => row.key === selectedPolicyPeriod.value);
+  return selected ?? policyPeriods.value.at(-1) ?? null;
+});
+
+const policyPeriodOptions = computed<ASelectItem[]>(() =>
+  policyPeriods.value.map((row) => ({
+    value: row.key,
+    label: row.current
+      ? `Política vigente · desde ${formatShortMonthYear(row.from)}`
+      : `Política anterior · ${formatShortMonthYear(row.from)}–${formatShortMonthYear(row.to!)}`,
+  })),
+);
+
+const policyPeriodDescription = computed(() => {
+  const policy = activePolicyPeriod.value;
+  if (!policy) return 'Sin una política versionada todavía';
+  return policy.current
+    ? `La estrategia vigente se lee desde ${formatShortMonthYear(policy.from)}.`
+    : `Periodo de estrategia: ${formatShortMonthYear(policy.from)}–${formatShortMonthYear(policy.to!)}.`;
+});
+
 const query = computed<PortfolioQuery>(() => {
   const result: PortfolioQuery = {};
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
@@ -315,6 +387,14 @@ const query = computed<PortfolioQuery>(() => {
   if (containerId.value !== 'all') result.container_id = Number(containerId.value);
   if (assetClass.value !== 'all') result.asset_class = assetClass.value;
   if (currency.value !== 'all') result.currency = currency.value;
+  if (period.value === 'policy') {
+    const policy = activePolicyPeriod.value;
+    if (policy) {
+      result.date_from = policy.from;
+      if (policy.to) result.date_to = policy.to;
+    }
+    return result;
+  }
   if (period.value === 'all') return result;
   if (period.value === 'custom') {
     if (customFrom.value) result.date_from = customFrom.value;
@@ -520,6 +600,7 @@ const currencyOptions = computed<ASelectItem[]>(() => [
 // Own type rather than ASelectItem: this drives a segmented control, not a select, and
 // ASelectItem admits groups that carry no value/label.
 const periodOptions: { value: PeriodPreset; label: string }[] = [
+  { value: 'policy', label: 'Mi política' },
   { value: '1m', label: '1 mes' },
   { value: 'ytd', label: 'Este año' },
   { value: '1y', label: '1 año' },
@@ -527,6 +608,14 @@ const periodOptions: { value: PeriodPreset; label: string }[] = [
   { value: 'all', label: 'Todo' },
   { value: 'custom', label: 'Fechas' },
 ];
+
+async function loadStrategies() {
+  try {
+    strategies.value = (await corePortfolioApi.getStrategies()).data;
+  } catch {
+    strategies.value = [];
+  }
+}
 
 const qualityMessage = computed(() => {
   const quality = store.quality;
@@ -568,6 +657,8 @@ async function syncUrl() {
     if (customFrom.value) nextQuery.from = customFrom.value;
     if (customTo.value) nextQuery.to = customTo.value;
   }
+  if (period.value === 'policy' && activePolicyPeriod.value)
+    nextQuery.policy = activePolicyPeriod.value.key;
   await router.replace({ query: nextQuery });
 }
 
@@ -794,7 +885,17 @@ async function onPortfolioSaved(message: string) {
 }
 
 watch(
-  [activeTab, period, memberId, containerId, assetClass, currency, customFrom, customTo],
+  [
+    activeTab,
+    period,
+    memberId,
+    containerId,
+    assetClass,
+    currency,
+    customFrom,
+    customTo,
+    selectedPolicyPeriod,
+  ],
   syncUrl,
 );
 watch(
@@ -810,6 +911,7 @@ onMounted(() => {
   void store.refresh(query.value);
   void loadOperationOptions();
   void loadAlerts();
+  void loadStrategies();
 });
 
 // La asignación se carga al entrar en su pestaña y al cambiar de ámbito: es una lectura
@@ -978,7 +1080,17 @@ watch(
             :searchable="false"
           />
         </label>
-        <div class="context-field mini-seg" role="group" aria-label="Periodo">
+      </div>
+    </section>
+
+    <section class="sect a-pf-period-section" aria-label="Periodo de análisis">
+      <div>
+        <p class="eyebrow">Horizonte de análisis</p>
+        <h2>Desde tu política de inversión</h2>
+        <p class="muted">{{ policyPeriodDescription }}</p>
+      </div>
+      <div class="a-pf-period-controls">
+        <div class="mini-seg a-pf-period-presets" role="group" aria-label="Periodo rápido">
           <AButton
             v-for="option in periodOptions"
             :key="option.value"
@@ -991,9 +1103,21 @@ watch(
             {{ option.label }}
           </AButton>
         </div>
-        <div v-if="period === 'custom'" class="a-pf-custom-range">
-          <ADateRange v-model:from="customFrom" v-model:to="customTo" />
-        </div>
+        <ASelect
+          v-if="policyPeriodOptions.length"
+          v-model="selectedPolicyPeriod"
+          class="a-pf-policy-select"
+          aria-label="Periodo de política"
+          :options="policyPeriodOptions"
+          :searchable="false"
+          @update:model-value="period = 'policy'"
+        />
+        <ADateRange
+          v-if="period === 'custom'"
+          v-model:from="customFrom"
+          v-model:to="customTo"
+          class="a-pf-custom-range"
+        />
       </div>
     </section>
 

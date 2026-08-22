@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   getWorkspace: vi.fn(),
   getMembers: vi.fn(),
+  getStrategies: vi.fn(),
   getOperationOptions: vi.fn(),
   route: { query: {} as Record<string, string> },
 }));
@@ -22,6 +23,7 @@ vi.mock('@/domains/portfolio/api', () => ({
   corePortfolioApi: {
     getWorkspace: mocks.getWorkspace,
     getMembers: mocks.getMembers,
+    getStrategies: mocks.getStrategies,
     getOperationOptions: mocks.getOperationOptions,
   },
 }));
@@ -88,6 +90,36 @@ describe('PortfolioView', () => {
     vi.clearAllMocks();
     mocks.route.query = {};
     mocks.getMembers.mockResolvedValue({ data: [] });
+    mocks.getStrategies.mockResolvedValue({
+      data: [
+        {
+          id: 2,
+          ownership_id: 1,
+          effective_from: '2022-03-01',
+          note: '',
+          max_cost_share: '0.005',
+          min_line_amount: '0',
+          targets: [
+            { asset_class: 'equity', target_percent: '100', min_percent: null, max_percent: null },
+          ],
+          target_total: '100',
+          created_at: '2022-03-01T00:00:00Z',
+        },
+        {
+          id: 1,
+          ownership_id: 1,
+          effective_from: '2026-08-19',
+          note: '',
+          max_cost_share: '0.005',
+          min_line_amount: '0',
+          targets: [
+            { asset_class: 'equity', target_percent: '100', min_percent: null, max_percent: null },
+          ],
+          target_total: '100',
+          created_at: '2026-08-19T00:00:00Z',
+        },
+      ],
+    });
     mocks.getOperationOptions.mockResolvedValue({
       data: {
         positions: [
@@ -227,6 +259,17 @@ describe('PortfolioView', () => {
     await wrapper.findAll('.a-pf-tabs-bar .tab')[4]!.trigger('click');
 
     expect(wrapper.text()).toContain('Cómo se ha comportado, y contra qué');
+  });
+
+  it('opens from the current investment policy and keeps the policy range prominent', async () => {
+    const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Horizonte de análisis');
+    expect(wrapper.text()).toContain('Desde tu política de inversión');
+    expect(wrapper.text()).toContain('La estrategia vigente se lee desde mar 2022.');
+    expect(wrapper.get('[aria-label="Periodo de política"]')).toBeDefined();
+    expect(mocks.getWorkspace).toHaveBeenLastCalledWith({ date_from: '2022-03-01' });
   });
 
   it('restores the Patrimonio context carried by the entry route', async () => {

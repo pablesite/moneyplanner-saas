@@ -69,6 +69,46 @@
   min-width: 148px;
 }
 
+.dir-a .a-pf-period-section {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--line);
+}
+
+.dir-a .a-pf-period-section h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dir-a .a-pf-period-section .eyebrow,
+.dir-a .a-pf-period-section .muted {
+  margin: 0;
+}
+
+.dir-a .a-pf-period-section .muted {
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+
+.dir-a .a-pf-period-controls {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: var(--space-2);
+}
+
+.dir-a .a-pf-period-presets {
+  flex-wrap: wrap;
+}
+
+.dir-a .a-pf-policy-select {
+  min-width: 236px;
+}
+
 .dir-a .a-pf-custom-range {
   display: flex;
   gap: var(--space-2);
@@ -792,6 +832,10 @@
   text-align: right;
 }
 
+.dir-a .a-pf-chart-mobile-data {
+  display: none;
+}
+
 .dir-a .a-pf-detail-list {
   display: grid;
   margin: 0;
@@ -1097,8 +1141,35 @@
     min-width: 134px;
   }
 
+  .dir-a .a-pf-period-section {
+    display: grid;
+    gap: var(--space-3);
+    align-items: start;
+  }
+
+  .dir-a .a-pf-period-controls {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .dir-a .a-pf-period-presets {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dir-a .a-pf-period-presets .btn {
+    min-width: 0;
+    padding-inline: var(--space-2);
+    font-size: 0.6875rem;
+  }
+
+  .dir-a .a-pf-policy-select {
+    min-width: 0;
+  }
+
   .dir-a .a-pf-custom-range {
-    flex: 0 0 auto;
+    display: grid;
+    flex: none;
   }
 
   .dir-a .a-pf-hero-grid .a-kpi-band {
@@ -1209,6 +1280,47 @@
   .dir-a .a-pf-chart-data .data-table td {
     padding: var(--space-2);
     font-size: 0.6875rem;
+  }
+
+  .dir-a .a-pf-table-scroll {
+    display: none;
+  }
+
+  .dir-a .a-pf-chart-mobile-data {
+    display: grid;
+    gap: 0;
+    margin-top: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  .dir-a .a-pf-chart-mobile-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dir-a .a-pf-chart-mobile-row > strong {
+    font-size: 0.875rem;
+  }
+
+  .dir-a .a-pf-chart-mobile-row > dl {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+  }
+
+  .dir-a .a-pf-chart-mobile-row dt {
+    color: var(--muted);
+    font-size: 0.6875rem;
+  }
+
+  .dir-a .a-pf-chart-mobile-row dd {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
   }
 
   .dir-a .a-pf-return-data th:nth-child(4),

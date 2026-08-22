@@ -581,6 +581,53 @@ function pct(value: string | number | null | undefined): string {
           </tbody>
         </table>
       </div>
+      <div class="a-pf-chart-mobile-data">
+        <article
+          v-for="(point, index) in usablePoints"
+          :key="`mobile-${point.date}`"
+          class="a-pf-chart-mobile-row"
+        >
+          <span>{{ formatShortMonthYear(point.date) }}</span>
+          <strong v-if="chartMode === 'value'" class="mono">{{ money(point.value) }}</strong>
+          <strong v-else class="mono">{{ pct(point.return.nominal) }}</strong>
+          <dl v-if="chartMode === 'value'">
+            <div>
+              <dt>Aportación</dt>
+              <dd class="mono">
+                {{
+                  movements[index]!.hasPrevious ? signedMoney(movements[index]!.contribution) : '—'
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>Revalorización</dt>
+              <dd class="mono">
+                {{
+                  movements[index]!.hasPrevious ? signedMoney(movements[index]!.revaluation) : '—'
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>Capital aportado</dt>
+              <dd class="mono">{{ money(point.contributed_to_date) }}</dd>
+            </div>
+            <div>
+              <dt>Rentabilidad</dt>
+              <dd class="mono">{{ pct(point.return.nominal) }}</dd>
+            </div>
+          </dl>
+          <dl v-else>
+            <div>
+              <dt>Anualizada</dt>
+              <dd class="mono">{{ pct(point.return.twr_annualized) }}</dd>
+            </div>
+            <div>
+              <dt>Datos</dt>
+              <dd>{{ point.coverage === 'complete' ? 'Completos' : 'Parciales' }}</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
     </details>
   </div>
 </template>

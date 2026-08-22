@@ -111,9 +111,9 @@ export const corePortfolioApi = {
   // One request instead of five: each of the old endpoints rebuilt the whole performance
   // context, so every filter change paid that cost five times over. Instruments stay
   // separate because they are a catalogue, not part of the period read.
-  getStrategies(ownershipId: number) {
+  getStrategies(ownershipId?: number) {
     return coreApi.get<AllocationStrategy[]>('/api/portfolio/strategies/', {
-      params: { ownership_id: ownershipId },
+      params: ownershipId ? { ownership_id: ownershipId } : {},
     });
   },
   createStrategy(payload: AllocationStrategyPayload) {
