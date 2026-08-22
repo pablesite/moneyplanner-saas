@@ -141,6 +141,7 @@ describe('PortfolioView', () => {
             value: '10000',
             net_contributed: '0',
             monetary_result: '0',
+            return: performance.return,
             coverage: 'complete',
           },
           {
@@ -148,6 +149,7 @@ describe('PortfolioView', () => {
             value: '12000',
             net_contributed: '1000',
             monetary_result: '1000',
+            return: performance.return,
             coverage: 'complete',
           },
         ],
@@ -188,7 +190,7 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('Valor de cartera');
     expect(wrapper.text()).toContain('12.000,00');
     expect(wrapper.text()).toContain('Rendimiento de tus activos');
-    expect(wrapper.text()).toContain('acumulada');
+    expect(wrapper.text()).toContain('TWR exacta');
     expect(wrapper.text()).toContain('anualizado');
     expect(wrapper.text()).toContain('Dónde está invertida');
     // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la

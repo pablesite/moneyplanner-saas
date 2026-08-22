@@ -94,6 +94,7 @@ export type PortfolioTimelinePoint = {
   net_contributed: string;
   contributed_to_date: string;
   monetary_result: string | null;
+  return: Pick<PortfolioReturn, 'nominal' | 'twr_annualized' | 'method' | 'estimated'>;
   coverage: 'complete' | 'partial';
 };
 

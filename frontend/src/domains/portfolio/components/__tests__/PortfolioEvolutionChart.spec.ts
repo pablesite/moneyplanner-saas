@@ -15,6 +15,7 @@ function point(
     net_contributed: '0',
     contributed_to_date: contributedToDate,
     monetary_result: null,
+    return: { nominal: '0.1', twr_annualized: '0.1', method: 'twr', estimated: false },
     coverage: 'complete',
   };
 }
@@ -85,10 +86,22 @@ describe('PortfolioEvolutionChart', () => {
     expect(wrapper.find('.a-pf-chart-tip').exists()).toBe(false);
     expect(wrapper.find('.a-pf-chart-readout').text()).toContain('1.120,00');
 
-    await wrapper.trigger('mousemove', { clientX: 640 });
+    await wrapper.get('.a-pf-chart-plot').trigger('mousemove', { clientX: 640 });
 
     expect(wrapper.find('.a-pf-chart-tip').exists()).toBe(true);
     expect(wrapper.find('.a-pf-chart-readout').exists()).toBe(false);
+  });
+
+  it('separates cumulative return from value and contributions', async () => {
+    const wrapper = mount(PortfolioEvolutionChart, {
+      props: { currency: 'EUR', points: months(13) },
+    });
+
+    await wrapper.get('[aria-label="Lectura del gráfico"] button:last-child').trigger('click');
+
+    expect(wrapper.text()).toContain('Rentabilidad acumulada del activo');
+    expect(wrapper.find('.a-pf-chart-line.is-return').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Rentabilidad acumulada');
   });
 
   it('survives a container with no width instead of losing the active point', async () => {

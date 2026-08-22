@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue';
-import { formatCompact, formatMoney, toNumber } from '@/lib/format';
+import { AButton } from '@/domains/ui';
+import { formatCompact, formatMoney, formatPct, toNumber } from '@/lib/format';
 import { formatShortMonthYear, formatLongMonthYear } from '@/lib/dates';
+import { returnLabel } from '../presentation';
 import type { PortfolioTimelinePoint } from '../types';
 
 const props = defineProps<{
@@ -27,6 +29,8 @@ const totalH = lineH + gap + barsH + labelRow;
 
 const wrapRef = ref<HTMLElement | null>(null);
 const hoverIndex = ref<number | null>(null);
+const returnHoverIndex = ref<number | null>(null);
+const chartMode = ref<'value' | 'return'>('value');
 const chartId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
 const areaGradientId = `a-pf-evo-grad-${chartId}`;
 
@@ -34,6 +38,18 @@ const usablePoints = computed(() =>
   props.points.filter(
     (point): point is PortfolioTimelinePoint & { value: string } => point.value !== null,
   ),
+);
+const returnPoints = computed(() =>
+  (() => {
+    const rows = usablePoints.value
+      .filter((point) => point.return.nominal !== null)
+      .map((point) => ({ point, value: toNumber(point.return.nominal) }));
+    const first = usablePoints.value[0];
+    if (first && rows.length && rows[0]!.point.date !== first.date) {
+      rows.unshift({ point: first, value: 0 });
+    }
+    return rows;
+  })(),
 );
 
 // Cada mes se parte en sus dos causas: lo que entró o salió de tu bolsillo y lo que
@@ -114,6 +130,48 @@ const xAxisLabels = computed(() => {
     show: index === last || (last - index) % labelStride.value === 0,
   }));
 });
+const returnBounds = computed(() => {
+  const values = returnPoints.value.map((row) => row.value);
+  const min = Math.min(...values, 0);
+  const max = Math.max(...values, 0);
+  const span = Math.max(max - min, 0.01);
+  return { min: min - span * 0.08, max: max + span * 0.08 };
+});
+function returnX(index: number): number {
+  if (returnPoints.value.length <= 1) return padL + plotWidth / 2;
+  return padL + (index / (returnPoints.value.length - 1)) * plotWidth;
+}
+function returnY(value: number): number {
+  const span = returnBounds.value.max - returnBounds.value.min || 1;
+  return padT + (1 - (value - returnBounds.value.min) / span) * (lineH - padT - padB);
+}
+const returnPath = computed(() =>
+  returnPoints.value
+    .map((row, index) => `${index === 0 ? 'M' : 'L'} ${returnX(index)} ${returnY(row.value)}`)
+    .join(' '),
+);
+const returnTicks = computed(() =>
+  [0, 1, 2, 3, 4].map((index) => {
+    const value =
+      returnBounds.value.min + ((returnBounds.value.max - returnBounds.value.min) * index) / 4;
+    return { value, y: returnY(value) };
+  }),
+);
+const returnLabelStride = computed(() =>
+  returnPoints.value.length <= 13 ? 1 : Math.ceil(returnPoints.value.length / 8),
+);
+const returnAxisLabels = computed(() => {
+  const last = returnPoints.value.length - 1;
+  return returnPoints.value.map((row, index) => ({
+    label: formatShortMonthYear(row.point.date),
+    show: index === last || (last - index) % returnLabelStride.value === 0,
+  }));
+});
+const activeReturnIndex = computed(() =>
+  returnHoverIndex.value === null ? returnPoints.value.length - 1 : returnHoverIndex.value,
+);
+const activeReturnPoint = computed(() => returnPoints.value[activeReturnIndex.value] ?? null);
+const showReturnTip = computed(() => returnHoverIndex.value !== null);
 // El mes bajo el cursor se rotula siempre, así que el tick fijo que le queda debajo se
 // calla: si no, las dos fechas se imprimen una encima de otra y no se lee ninguna.
 function showAxisLabel(entry: { show: boolean }, index: number): boolean {
@@ -167,6 +225,16 @@ function handleMove(event: MouseEvent): void {
   const index = Math.round(((position - padL) / plotWidth) * (total - 1));
   hoverIndex.value = Math.max(0, Math.min(total - 1, index));
 }
+function handleReturnMove(event: MouseEvent): void {
+  const element = wrapRef.value;
+  const total = returnPoints.value.length;
+  if (!element || !total) return;
+  const rect = element.getBoundingClientRect();
+  if (!rect.width) return;
+  const position = ((event.clientX - rect.left) / rect.width) * W;
+  const index = Math.round(((position - padL) / plotWidth) * (total - 1));
+  returnHoverIndex.value = Math.max(0, Math.min(total - 1, index));
+}
 
 function money(value: string | number): string {
   return formatMoney(value, props.currency === 'USD' ? 'USD' : 'EUR');
@@ -174,27 +242,63 @@ function money(value: string | number): string {
 function signedMoney(value: number): string {
   return `${value >= 0 ? '+' : ''}${money(value)}`;
 }
+function pct(value: string | number | null | undefined): string {
+  return value == null ? '—' : formatPct(Number(value), 2);
+}
 </script>
 
 <template>
-  <div
-    ref="wrapRef"
-    class="a-pf-chart-shell"
-    @mousemove="handleMove"
-    @mouseleave="hoverIndex = null"
-  >
+  <div ref="wrapRef" class="a-pf-chart-shell">
     <div class="a-pf-chart-legend">
-      <span><i class="is-value"></i> Valor</span>
-      <span><i class="is-contributed"></i> Capital aportado</span>
-      <span><i class="is-bar-contribution"></i> Aportación del mes</span>
-      <span><i class="is-bar-revaluation"></i> Revalorización del mes</span>
-      <strong v-if="activePoint && !showTip" class="a-pf-chart-readout">
+      <div class="mini-seg a-pf-chart-mode" role="group" aria-label="Lectura del gráfico">
+        <AButton
+          size="sm"
+          variant="ghost"
+          :class="{ on: chartMode === 'value' }"
+          :aria-pressed="chartMode === 'value'"
+          @click="chartMode = 'value'"
+        >
+          Valor y aportado
+        </AButton>
+        <AButton
+          size="sm"
+          variant="ghost"
+          :class="{ on: chartMode === 'return' }"
+          :aria-pressed="chartMode === 'return'"
+          @click="chartMode = 'return'"
+        >
+          Rentabilidad acumulada
+        </AButton>
+      </div>
+      <template v-if="chartMode === 'value'">
+        <span><i class="is-value"></i> Valor</span>
+        <span><i class="is-contributed"></i> Capital aportado</span>
+        <span><i class="is-bar-contribution"></i> Aportación del mes</span>
+        <span><i class="is-bar-revaluation"></i> Revalorización del mes</span>
+      </template>
+      <template v-else>
+        <span><i class="is-return"></i> Rentabilidad acumulada del activo</span>
+      </template>
+      <strong v-if="chartMode === 'value' && activePoint && !showTip" class="a-pf-chart-readout">
         {{ formatShortMonthYear(activePoint.date) }} · {{ money(activePoint.value) }}
         <small>aportado {{ money(activePoint.contributed_to_date) }}</small>
       </strong>
+      <strong
+        v-else-if="chartMode === 'return' && activeReturnPoint && !showReturnTip"
+        class="a-pf-chart-readout"
+      >
+        {{ formatShortMonthYear(activeReturnPoint.point.date) }} ·
+        {{ pct(activeReturnPoint.value) }}
+        <small>acumulada</small>
+      </strong>
     </div>
 
-    <div class="a-pf-chart-plot">
+    <div
+      v-if="chartMode === 'value'"
+      class="a-pf-chart-plot"
+      @mousemove="handleMove"
+      @mouseleave="hoverIndex = null"
+    >
       <svg
         class="a-pf-chart"
         :viewBox="`0 0 ${W} ${totalH}`"
@@ -308,6 +412,86 @@ function signedMoney(value: number): string {
       </div>
     </div>
 
+    <div
+      v-else-if="returnPoints.length"
+      class="a-pf-chart-plot"
+      @mousemove="handleReturnMove"
+      @mouseleave="returnHoverIndex = null"
+    >
+      <svg
+        class="a-pf-chart"
+        :viewBox="`0 0 ${W} ${lineH + labelRow}`"
+        role="img"
+        aria-label="Rentabilidad acumulada de los activos, neutral a las aportaciones y retiradas"
+      >
+        <g class="a-pf-chart-grid">
+          <template v-for="tick in returnTicks" :key="tick.y">
+            <line :x1="padL" :x2="W - padR" :y1="tick.y" :y2="tick.y" />
+            <text :x="padL - 12" :y="tick.y + 4" text-anchor="end">
+              {{ pct(tick.value) }}
+            </text>
+          </template>
+        </g>
+        <line
+          class="a-pf-chart-return-zero"
+          :x1="padL"
+          :x2="W - padR"
+          :y1="returnY(0)"
+          :y2="returnY(0)"
+        />
+        <path class="a-pf-chart-line is-return" :d="returnPath" />
+        <g class="a-pf-chart-axis">
+          <template v-for="(entry, index) in returnAxisLabels" :key="`return-x-${index}`">
+            <text
+              v-if="entry.show"
+              :x="returnX(index)"
+              :y="lineH + labelRow - 6"
+              text-anchor="middle"
+              :class="{ 'is-active': activeReturnIndex === index }"
+            >
+              {{
+                activeReturnIndex === index
+                  ? formatShortMonthYear(returnPoints[index]!.point.date)
+                  : entry.label
+              }}
+            </text>
+          </template>
+        </g>
+        <g v-if="activeReturnPoint" class="a-pf-chart-cursor">
+          <line
+            v-if="showReturnTip"
+            :x1="returnX(activeReturnIndex)"
+            :x2="returnX(activeReturnIndex)"
+            :y1="padT"
+            :y2="lineH"
+          />
+          <circle :cx="returnX(activeReturnIndex)" :cy="returnY(activeReturnPoint.value)" r="5" />
+        </g>
+      </svg>
+      <div
+        v-if="activeReturnPoint && showReturnTip"
+        class="a-pf-chart-tip"
+        :style="{ left: `${Math.min(88, Math.max(12, (returnX(activeReturnIndex) / W) * 100))}%` }"
+        role="status"
+      >
+        <span class="a-pf-chart-tip-label">{{
+          formatLongMonthYear(activeReturnPoint.point.date)
+        }}</span>
+        <strong class="mono">{{ pct(activeReturnPoint.value) }}</strong>
+        <small>rentabilidad acumulada del activo</small>
+        <small v-if="activeReturnPoint.point.return.twr_annualized">
+          {{ pct(activeReturnPoint.point.return.twr_annualized) }} anual ·
+          {{
+            returnLabel(
+              activeReturnPoint.point.return.method,
+              activeReturnPoint.point.return.estimated,
+            )
+          }}
+        </small>
+      </div>
+    </div>
+    <p v-else class="a-pf-chart-empty">No hay una rentabilidad TWR calculable en este periodo.</p>
+
     <details class="a-pf-chart-data">
       <summary>Ver datos del gráfico</summary>
       <div class="a-pf-table-scroll">
@@ -319,6 +503,7 @@ function signedMoney(value: number): string {
               <th class="num">Aportación del mes</th>
               <th class="num">Revalorización del mes</th>
               <th class="num">Capital aportado</th>
+              <th class="num">Rentabilidad acumulada</th>
               <th>Datos</th>
             </tr>
           </thead>
@@ -337,6 +522,7 @@ function signedMoney(value: number): string {
                 }}
               </td>
               <td class="num mono">{{ money(point.contributed_to_date) }}</td>
+              <td class="num mono">{{ pct(point.return.nominal) }}</td>
               <td>{{ point.coverage === 'complete' ? 'Completos' : 'Parciales' }}</td>
             </tr>
           </tbody>

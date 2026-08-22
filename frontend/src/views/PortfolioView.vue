@@ -1053,13 +1053,6 @@ watch(
                       que aportar después. En la ficha técnica se llama MWR o TIR.
                     </AInfoHint>
                   </span>
-                  <span v-if="!refreshing && store.overview.return.twr_annualized"
-                    >tus activos: {{ pct(store.overview.return.nominal) }} acumulada ·
-                    {{ pct(store.overview.return.twr_annualized) }} anual ·
-                    {{
-                      returnLabel(store.overview.return.method, store.overview.return.estimated)
-                    }}</span
-                  >
                 </div>
               </template>
               <p v-if="!refreshing">
@@ -1069,7 +1062,10 @@ watch(
             </AHero>
             <AKpiBand :items="heroKpis" :pending="refreshing">
               <template #meta-2>
-                acumulada · {{ assetAnnualizedReturn }} anual
+                {{ assetAnnualizedReturn }} anual ·
+                {{
+                  returnLabel(store.performance.return.method, store.performance.return.estimated)
+                }}
                 <AInfoHint>
                   La cifra principal es todo lo que han subido o bajado tus activos durante el
                   periodo seleccionado, <strong>al margen de cuándo pusieras el dinero</strong>. La
@@ -1668,8 +1664,8 @@ watch(
       <section v-else class="sect">
         <ASectHead
           eyebrow="Evolución"
-          title="Valor frente a capital aportado"
-          subtitle="Cierres mensuales del periodo seleccionado; los puntos parciales permanecen identificados en los datos."
+          title="Evolución de la cartera"
+          subtitle="Separa el valor y tus aportaciones de la rentabilidad acumulada del activo. Los cierres parciales permanecen identificados en los datos."
         />
         <AState
           v-if="!store.timeline?.results.some((point) => point.value !== null)"

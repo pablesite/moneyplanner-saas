@@ -527,6 +527,10 @@
   font-size: 0.75rem;
 }
 
+.dir-a .a-pf-chart-mode {
+  flex: 0 0 auto;
+}
+
 .dir-a .a-pf-chart-legend span {
   display: inline-flex;
   align-items: center;
@@ -541,6 +545,10 @@
 
 .dir-a .a-pf-chart-legend i.is-contributed {
   background: var(--a-pf-contribution);
+}
+
+.dir-a .a-pf-chart-legend i.is-return {
+  background: var(--pos);
 }
 
 /* Las entradas de barra se dibujan como bloque, no como trazo: en la leyenda tienen
@@ -597,12 +605,22 @@
   stroke-dasharray: 7 7;
 }
 
+.dir-a .a-pf-chart-line.is-return {
+  stroke: var(--pos);
+}
+
 .dir-a .a-pf-chart-plot {
   position: relative;
 }
 
 .dir-a .a-pf-chart-bars-axis {
   stroke: var(--line);
+  stroke-width: 1;
+}
+
+.dir-a .a-pf-chart-return-zero {
+  stroke: var(--line-strong);
+  stroke-dasharray: 4 4;
   stroke-width: 1;
 }
 
@@ -730,6 +748,12 @@
   margin-left: 8px;
   color: var(--muted);
   font-weight: 400;
+}
+
+.dir-a .a-pf-chart-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
 }
 
 .dir-a .a-pf-chart-data summary {
