@@ -780,6 +780,14 @@
   text-align: left;
 }
 
+.dir-a .a-pf-chart-data .data-table th {
+  font-size: 0.6875rem;
+}
+
+.dir-a .a-pf-chart-data .data-table td {
+  font-size: 0.8125rem;
+}
+
 .dir-a .a-pf-chart-data .num {
   text-align: right;
 }
@@ -1171,6 +1179,43 @@
 
   .dir-a .a-pf-chart {
     min-height: 200px;
+  }
+
+  .dir-a .a-pf-chart-legend {
+    display: grid;
+    gap: var(--space-2);
+    align-items: start;
+  }
+
+  .dir-a .a-pf-chart-mode {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .dir-a .a-pf-chart-mode .btn {
+    min-width: 0;
+    padding-inline: var(--space-2);
+    font-size: 0.6875rem;
+  }
+
+  .dir-a .a-pf-chart-legend span,
+  .dir-a .a-pf-chart-readout {
+    margin-left: 0;
+    font-size: 0.6875rem;
+  }
+
+  .dir-a .a-pf-chart-data .data-table th,
+  .dir-a .a-pf-chart-data .data-table td {
+    padding: var(--space-2);
+    font-size: 0.6875rem;
+  }
+
+  .dir-a .a-pf-return-data th:nth-child(4),
+  .dir-a .a-pf-return-data td:nth-child(4),
+  .dir-a .a-pf-return-data th:nth-child(5),
+  .dir-a .a-pf-return-data td:nth-child(5) {
+    display: none;
   }
 
   .dir-a .a-pf-import-summary {

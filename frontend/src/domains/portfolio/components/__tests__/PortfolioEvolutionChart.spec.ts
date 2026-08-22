@@ -101,7 +101,8 @@ describe('PortfolioEvolutionChart', () => {
 
     expect(wrapper.text()).toContain('Rentabilidad acumulada del activo');
     expect(wrapper.find('.a-pf-chart-line.is-return').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Rentabilidad acumulada');
+    expect(wrapper.find('.a-pf-return-data').text()).toContain('Anualizada');
+    expect(wrapper.find('.a-pf-return-data').text()).not.toContain('Revalorización del mes');
   });
 
   it('survives a container with no width instead of losing the active point', async () => {

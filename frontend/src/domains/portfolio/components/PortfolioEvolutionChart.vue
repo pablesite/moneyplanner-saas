@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue';
+import { computed, onBeforeUnmount, ref, useId, watch } from 'vue';
 import { AButton } from '@/domains/ui';
 import { formatCompact, formatMoney, formatPct, toNumber } from '@/lib/format';
 import { formatShortMonthYear, formatLongMonthYear } from '@/lib/dates';
@@ -11,12 +11,11 @@ const props = defineProps<{
   currency: string;
 }>();
 
-// Misma geometría que el gráfico de Patrimonio: viewBox fijo y ancho 100%, así el SVG
-// escala con el contenedor y las dos vistas comparten proporciones. Bajo la serie va
-// una banda de barras, como allí, pero aquí descompone el mes en sus dos causas.
-const W = 1280;
-const padL = 78;
-const padR = 28;
+// En móvil el lienzo usa el ancho real del contenedor: un viewBox de escritorio encoge
+// texto y recorta el final de la serie. La geometría sigue siendo amplia en escritorio.
+const DEFAULT_WIDTH = 1280;
+const COMPACT_MAX_WIDTH = 560;
+const MIN_COMPACT_WIDTH = 280;
 const padT = 18;
 const padB = 30;
 const gap = 14;
@@ -28,6 +27,38 @@ const labelRow = 22;
 const totalH = lineH + gap + barsH + labelRow;
 
 const wrapRef = ref<HTMLElement | null>(null);
+const containerWidth = ref(0);
+const compact = computed(
+  () => containerWidth.value > 0 && containerWidth.value < COMPACT_MAX_WIDTH,
+);
+const W = computed(() =>
+  compact.value ? Math.max(MIN_COMPACT_WIDTH, Math.round(containerWidth.value)) : DEFAULT_WIDTH,
+);
+const padL = computed(() => (compact.value ? 48 : 78));
+const padR = computed(() => (compact.value ? 16 : 28));
+const plotWidth = computed(() => W.value - padL.value - padR.value);
+let resizeObserver: ResizeObserver | null = null;
+
+function measure(el: HTMLElement): void {
+  const next = Math.round(el.clientWidth);
+  if (next !== containerWidth.value) containerWidth.value = next;
+}
+
+watch(
+  wrapRef,
+  (el) => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    if (!el) return;
+    measure(el);
+    if (typeof ResizeObserver === 'undefined') return;
+    resizeObserver = new ResizeObserver(() => measure(el));
+    resizeObserver.observe(el);
+  },
+  { flush: 'post' },
+);
+
+onBeforeUnmount(() => resizeObserver?.disconnect());
 const hoverIndex = ref<number | null>(null);
 const returnHoverIndex = ref<number | null>(null);
 const chartMode = ref<'value' | 'return'>('value');
@@ -79,11 +110,9 @@ const bounds = computed(() => {
   return { min: min < 0 ? min - span * 0.08 : 0, max: max + span * 0.08 };
 });
 
-const plotWidth = W - padL - padR;
-
 function x(index: number): number {
-  if (usablePoints.value.length <= 1) return padL + plotWidth / 2;
-  return padL + (index / (usablePoints.value.length - 1)) * plotWidth;
+  if (usablePoints.value.length <= 1) return padL.value + plotWidth.value / 2;
+  return padL.value + (index / (usablePoints.value.length - 1)) * plotWidth.value;
 }
 
 function y(value: number): number {
@@ -120,7 +149,9 @@ const yTicks = computed(() =>
 // solo el primer mes de cada año tampoco valía: una ventana de un año son trece
 // puntos y se quedaba en dos marcas.
 const labelStride = computed(() =>
-  usablePoints.value.length <= 13 ? 1 : Math.ceil(usablePoints.value.length / 8),
+  usablePoints.value.length <= 13
+    ? 1
+    : Math.ceil(usablePoints.value.length / (compact.value ? 4 : 8)),
 );
 const xAxisLabels = computed(() => {
   const points = usablePoints.value;
@@ -138,8 +169,8 @@ const returnBounds = computed(() => {
   return { min: min - span * 0.08, max: max + span * 0.08 };
 });
 function returnX(index: number): number {
-  if (returnPoints.value.length <= 1) return padL + plotWidth / 2;
-  return padL + (index / (returnPoints.value.length - 1)) * plotWidth;
+  if (returnPoints.value.length <= 1) return padL.value + plotWidth.value / 2;
+  return padL.value + (index / (returnPoints.value.length - 1)) * plotWidth.value;
 }
 function returnY(value: number): number {
   const span = returnBounds.value.max - returnBounds.value.min || 1;
@@ -158,7 +189,9 @@ const returnTicks = computed(() =>
   }),
 );
 const returnLabelStride = computed(() =>
-  returnPoints.value.length <= 13 ? 1 : Math.ceil(returnPoints.value.length / 8),
+  returnPoints.value.length <= 13
+    ? 1
+    : Math.ceil(returnPoints.value.length / (compact.value ? 4 : 8)),
 );
 const returnAxisLabels = computed(() => {
   const last = returnPoints.value.length - 1;
@@ -190,7 +223,7 @@ const barsScale = computed(() =>
     ]),
   ),
 );
-const barSlot = computed(() => plotWidth / Math.max(usablePoints.value.length - 1, 1));
+const barSlot = computed(() => plotWidth.value / Math.max(usablePoints.value.length - 1, 1));
 // Dos barras por mes con 2 px de hueco entre ellas: agrupadas, no apiladas. Apilarlas
 // mentiría en cuanto los signos se separan (aportas mientras el mercado cae).
 const barWidth = computed(() => Math.max(2, Math.min(14, barSlot.value * 0.32)));
@@ -211,7 +244,9 @@ const showTip = computed(() => hoverIndex.value !== null);
 const activePoint = computed(() => usablePoints.value[activeIndex.value] ?? null);
 const activeMovement = computed(() => movements.value[activeIndex.value] ?? null);
 // El recuadro se ancla al punto y se recorta a los bordes para no salirse del panel.
-const tipLeftPct = computed(() => Math.min(88, Math.max(12, (x(activeIndex.value) / W) * 100)));
+const tipLeftPct = computed(() =>
+  Math.min(88, Math.max(12, (x(activeIndex.value) / W.value) * 100)),
+);
 
 function handleMove(event: MouseEvent): void {
   const element = wrapRef.value;
@@ -221,8 +256,8 @@ function handleMove(event: MouseEvent): void {
   // Un contenedor sin ancho (pestaña oculta, impresión) devolvía NaN y dejaba el
   // gráfico sin punto activo, así que sin ancho no hay cursor que resolver.
   if (!rect.width) return;
-  const position = ((event.clientX - rect.left) / rect.width) * W;
-  const index = Math.round(((position - padL) / plotWidth) * (total - 1));
+  const position = ((event.clientX - rect.left) / rect.width) * W.value;
+  const index = Math.round(((position - padL.value) / plotWidth.value) * (total - 1));
   hoverIndex.value = Math.max(0, Math.min(total - 1, index));
 }
 function handleReturnMove(event: MouseEvent): void {
@@ -231,8 +266,8 @@ function handleReturnMove(event: MouseEvent): void {
   if (!element || !total) return;
   const rect = element.getBoundingClientRect();
   if (!rect.width) return;
-  const position = ((event.clientX - rect.left) / rect.width) * W;
-  const index = Math.round(((position - padL) / plotWidth) * (total - 1));
+  const position = ((event.clientX - rect.left) / rect.width) * W.value;
+  const index = Math.round(((position - padL.value) / plotWidth.value) * (total - 1));
   returnHoverIndex.value = Math.max(0, Math.min(total - 1, index));
 }
 
@@ -495,8 +530,8 @@ function pct(value: string | number | null | undefined): string {
     <details class="a-pf-chart-data">
       <summary>Ver datos del gráfico</summary>
       <div class="a-pf-table-scroll">
-        <table class="data-table">
-          <thead>
+        <table :class="['data-table', { 'a-pf-return-data': chartMode === 'return' }]">
+          <thead v-if="chartMode === 'value'">
             <tr>
               <th>Fecha</th>
               <th class="num">Valor</th>
@@ -507,7 +542,16 @@ function pct(value: string | number | null | undefined): string {
               <th>Datos</th>
             </tr>
           </thead>
-          <tbody>
+          <thead v-else>
+            <tr>
+              <th>Fecha</th>
+              <th class="num">Rentabilidad acumulada</th>
+              <th class="num">Anualizada</th>
+              <th>Método</th>
+              <th>Datos</th>
+            </tr>
+          </thead>
+          <tbody v-if="chartMode === 'value'">
             <tr v-for="(point, index) in usablePoints" :key="point.date">
               <td>{{ formatShortMonthYear(point.date) }}</td>
               <td class="num mono">{{ money(point.value) }}</td>
@@ -523,6 +567,15 @@ function pct(value: string | number | null | undefined): string {
               </td>
               <td class="num mono">{{ money(point.contributed_to_date) }}</td>
               <td class="num mono">{{ pct(point.return.nominal) }}</td>
+              <td>{{ point.coverage === 'complete' ? 'Completos' : 'Parciales' }}</td>
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr v-for="point in usablePoints" :key="point.date">
+              <td>{{ formatShortMonthYear(point.date) }}</td>
+              <td class="num mono">{{ pct(point.return.nominal) }}</td>
+              <td class="num mono">{{ pct(point.return.twr_annualized) }}</td>
+              <td>{{ returnLabel(point.return.method, point.return.estimated) }}</td>
               <td>{{ point.coverage === 'complete' ? 'Completos' : 'Parciales' }}</td>
             </tr>
           </tbody>
