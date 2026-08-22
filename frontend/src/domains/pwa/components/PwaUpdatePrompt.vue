@@ -2,8 +2,8 @@
 import { useRegisterSW } from 'virtual:pwa-register/vue';
 import { AButton } from '@/domains/ui';
 
-// `registerType: 'prompt'`: avisamos de la versión nueva y dejamos que el usuario
-// recargue (no autorecarga → no se pierde estado de formularios a mitad de edición).
+// El SW se activa automáticamente para evitar shells y chunks de versiones distintas.
+// El banner se conserva para comunicar la disponibilidad offline cuando corresponda.
 const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW();
 
 const reload = () => {

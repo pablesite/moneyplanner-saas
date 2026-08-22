@@ -24,7 +24,11 @@ export default defineConfig({
       // Con `disable` el módulo virtual `virtual:pwa-register/vue` sigue
       // resolviéndose (la app compila igual) pero no se genera ningún SW.
       disable: !pwaEnabled,
-      registerType: 'prompt',
+      // Los assets con hash viven dentro de la imagen desplegada. Si una PWA conserva
+      // un shell anterior mientras el servidor ya no contiene sus chunks, Vue puede
+      // quedarse sin poder montar la ruta. Activamos el SW nuevo inmediatamente para
+      // que cada publicación sustituya el shell y sus assets como una sola versión.
+      registerType: 'autoUpdate',
       // No autoinyectar el SW en `vite dev` (evita SW pegajosos en desarrollo).
       // La validación de la PWA se hace sobre `npm run build` + preview.
       devOptions: { enabled: false },
@@ -52,6 +56,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         // Precache del shell estático del build (JS/CSS/HTML/iconos).
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Fallback SPA del shell precacheado, pero NUNCA para `/api/*`:
