@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { AInfoHint, AState } from '@/domains/ui';
+import { AButton, AInfoHint, AState } from '@/domains/ui';
 import { formatPct } from '@/lib/format';
 import { formatShortMonthYear } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
@@ -71,6 +71,14 @@ const excessIsPositive = computed(() => Number(benchmark.value?.excess_return ??
 
 type BenchmarkLine = 'portfolio' | 'benchmark';
 type BenchmarkChartPoint = { period: string; value: number | null };
+type ChartTableRow = {
+  period: string;
+  portfolio: string | null;
+  benchmark: string | null;
+  excess: string | null;
+};
+type ChartMode = 'cumulative' | 'rolling';
+const chartMode = ref<ChartMode>('cumulative');
 
 const chartWidth = 720;
 const chartHeight = 240;
@@ -115,6 +123,36 @@ const chartSeries = computed(() => {
   return { portfolio, benchmark: policy, excess: excessSeries(portfolio, policy) };
 });
 
+const rollingSeries = computed(() => {
+  const rows = benchmark.value?.rolling?.points ?? [];
+  return {
+    portfolio: rows.map((row) => ({ period: row.period, value: toChartValue(row.portfolio) })),
+    benchmark: rows.map((row) => ({ period: row.period, value: toChartValue(row.benchmark) })),
+    excess: rows.map((row) => ({ period: row.period, value: toChartValue(row.excess) })),
+  };
+});
+
+function toChartValue(value: string | null | undefined): number | null {
+  return value == null ? null : Number(value);
+}
+
+const rollingAvailable = computed(() => (benchmark.value?.rolling?.points.length ?? 0) > 0);
+const activeSeries = computed(() =>
+  chartMode.value === 'rolling' ? rollingSeries.value : chartSeries.value,
+);
+const activeRows = computed<ChartTableRow[]>(() => {
+  if (chartMode.value === 'rolling') return benchmark.value?.rolling?.points ?? [];
+  return (benchmark.value?.points ?? []).map((row) => ({
+    period: row.period,
+    portfolio: row.portfolio,
+    benchmark: row.benchmark,
+    excess:
+      row.portfolio !== null && row.benchmark !== null
+        ? String(Number(row.portfolio) - Number(row.benchmark))
+        : null,
+  }));
+});
+
 const comparisonRead = computed(() => {
   const excess = benchmark.value?.excess_return;
   if (excess == null) return null;
@@ -123,7 +161,7 @@ const comparisonRead = computed(() => {
 });
 
 const chartBounds = computed(() => {
-  const values = Object.values(chartSeries.value)
+  const values = Object.values(activeSeries.value)
     .flat()
     .map((point) => point.value)
     .filter((value): value is number => value !== null);
@@ -134,7 +172,7 @@ const chartBounds = computed(() => {
 });
 
 function chartX(index: number): number {
-  const count = benchmark.value?.points.length ?? 0;
+  const count = activeRows.value.length;
   return (
     chartPad.left + (count <= 1 ? chartInnerWidth / 2 : (index / (count - 1)) * chartInnerWidth)
   );
@@ -155,7 +193,7 @@ function chartPath(points: BenchmarkChartPoint[]): string {
 }
 
 const chartLabels = computed(() => {
-  const points = benchmark.value?.points ?? [];
+  const points = activeRows.value;
   const stride = Math.max(1, Math.ceil(points.length / 6));
   return points.map((point, index) => ({
     ...point,
@@ -166,6 +204,13 @@ const chartLabels = computed(() => {
 const benchmarkCoverageNote = computed(() => {
   const data = benchmark.value;
   if (!data || !data.points.length) return null;
+  if (chartMode.value === 'rolling') {
+    const windows = data.rolling.complete_windows;
+    const total = data.rolling.points.length;
+    return windows === total
+      ? `Cada punto compara los mismos ${data.rolling.window_months} meses completos.`
+      : `${windows} de ${total} ventanas de ${data.rolling.window_months} meses tienen cobertura completa.`;
+  }
   const missing = data.points.filter((point) => point.benchmark === null).length;
   if (!missing)
     return 'Cada punto es el acumulado desde el inicio del tramo, usando cierres mensuales completos.';
@@ -173,6 +218,12 @@ const benchmarkCoverageNote = computed(() => {
 });
 
 type MetricRow = { key: string; label: string; hint: string; metric: RiskMetric | undefined };
+type AdvancedMetricRow = {
+  key: 'value_at_risk' | 'beta' | 'correlation';
+  label: string;
+  hint: string;
+  metric: RiskMetric | undefined;
+};
 
 const rows = computed<MetricRow[]>(() => {
   const data = risk.value;
@@ -216,6 +267,34 @@ const rows = computed<MetricRow[]>(() => {
   ];
 });
 
+const advancedRows = computed<AdvancedMetricRow[]>(() => {
+  const advanced = risk.value?.advanced;
+  return [
+    {
+      key: 'value_at_risk',
+      label: 'Pérdida mensual histórica (VaR 95%)',
+      hint: 'En el peor 5% de meses observados, esta es la pérdida de referencia. Es histórica, no predice una pérdida máxima futura, y requiere dos años completos.',
+      metric: advanced?.value_at_risk,
+    },
+    {
+      key: 'beta',
+      label: advanced?.beta?.against
+        ? `Sensibilidad a ${advanced.beta.against.name}`
+        : 'Beta frente a índice',
+      hint: 'Cuánto tiende a moverse la cartera cuando lo hace el índice: 1 se mueve parecido; más de 1 amplifica los movimientos. Solo se calcula con el mismo calendario y moneda.',
+      metric: advanced?.beta,
+    },
+    {
+      key: 'correlation',
+      label: advanced?.correlation?.against
+        ? `Correlación con ${advanced.correlation.against.name}`
+        : 'Correlación con índice',
+      hint: 'Qué parte del movimiento mensual coincide con el índice, entre -1 y 1. No mide si la inversión es buena ni garantiza diversificación futura.',
+      metric: advanced?.correlation,
+    },
+  ];
+});
+
 // Un motivo por métrica, no un "no disponible" mudo: uno se arregla esperando y el otro
 // rellenando una valoración, y son cosas distintas.
 function unavailableText(metric: RiskMetric | undefined): string {
@@ -227,7 +306,17 @@ function unavailableText(metric: RiskMetric | undefined): string {
   if (metric.reason === 'no_variation') return 'Sin variación que medir';
   if (metric.reason === 'non_positive_growth') return 'No aplica con esta trayectoria';
   if (metric.reason === 'no_strategy') return 'Aún no hay política escrita';
+  if (metric.reason === 'benchmark_unavailable') {
+    return 'Elige un índice con precios mensuales en la política';
+  }
   return 'Sin cobertura suficiente';
+}
+
+function advancedValue(row: AdvancedMetricRow): string {
+  const metric = row.metric;
+  if (metric?.status !== 'available') return unavailableText(metric);
+  if (row.key === 'value_at_risk') return pct(metric.value);
+  return Number(metric.value).toLocaleString('es-ES', { maximumFractionDigits: 2 });
 }
 
 const coverageNote = computed(() => {
@@ -284,9 +373,20 @@ const coverageNote = computed(() => {
       <section v-if="benchmark?.points?.length" class="a-pf-benchmark-history">
         <header class="a-pf-benchmark-history-head">
           <div>
-            <h3>Cartera frente a tu política</h3>
+            <h3>
+              {{
+                chartMode === 'cumulative' ? 'Cartera frente a tu política' : 'Ventanas de 12 meses'
+              }}
+            </h3>
             <p>
-              Rentabilidad acumulada desde el inicio del periodo, sobre cierres mensuales completos.
+              <template v-if="chartMode === 'cumulative'">
+                Rentabilidad acumulada desde el inicio del periodo, sobre cierres mensuales
+                completos.
+              </template>
+              <template v-else>
+                Cada punto compara los mismos doce cierres mensuales, sin que un periodo largo pese
+                más.
+              </template>
             </p>
           </div>
           <AInfoHint>
@@ -301,6 +401,27 @@ const coverageNote = computed(() => {
         >
           {{ comparisonRead }}
         </p>
+        <div
+          v-if="rollingAvailable"
+          class="a-pf-benchmark-mode"
+          role="group"
+          aria-label="Horizonte del gráfico"
+        >
+          <AButton
+            size="sm"
+            :variant="chartMode === 'cumulative' ? 'default' : 'ghost'"
+            @click="chartMode = 'cumulative'"
+          >
+            Desde inicio
+          </AButton>
+          <AButton
+            size="sm"
+            :variant="chartMode === 'rolling' ? 'default' : 'ghost'"
+            @click="chartMode = 'rolling'"
+          >
+            12 meses móviles
+          </AButton>
+        </div>
         <div class="a-pf-benchmark-legend" aria-label="Series del gráfico">
           <span><i class="is-portfolio"></i> Cartera</span>
           <span><i class="is-policy"></i> Política</span>
@@ -323,9 +444,9 @@ const coverageNote = computed(() => {
               />
               <text :x="chartPad.left - 8" :y="chartY(0) + 4" text-anchor="end">0 %</text>
             </g>
-            <path class="is-portfolio" :d="chartPath(chartSeries.portfolio)" />
-            <path class="is-policy" :d="chartPath(chartSeries.benchmark)" />
-            <path class="is-excess" :d="chartPath(chartSeries.excess)" />
+            <path class="is-portfolio" :d="chartPath(activeSeries.portfolio)" />
+            <path class="is-policy" :d="chartPath(activeSeries.benchmark)" />
+            <path class="is-excess" :d="chartPath(activeSeries.excess)" />
             <g class="a-pf-benchmark-axis">
               <template v-for="(point, index) in chartLabels" :key="point.period">
                 <text
@@ -352,16 +473,12 @@ const coverageNote = computed(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="point in benchmark.points" :key="point.period">
+              <tr v-for="point in activeRows" :key="point.period">
                 <th scope="row">{{ formatShortMonthYear(`${point.period}-01`) }}</th>
                 <td class="num mono">{{ pct(point.portfolio) }}</td>
                 <td class="num mono">{{ pct(point.benchmark) }}</td>
                 <td class="num mono">
-                  {{
-                    point.portfolio !== null && point.benchmark !== null
-                      ? pct(String(Number(point.portfolio) - Number(point.benchmark)))
-                      : '—'
-                  }}
+                  {{ pct(point.excess) }}
                 </td>
               </tr>
             </tbody>
@@ -403,6 +520,26 @@ const coverageNote = computed(() => {
           </tr>
         </tbody>
       </table>
+
+      <section v-if="risk" class="a-pf-advanced-risk">
+        <header>
+          <h3>Riesgo avanzado</h3>
+          <p>Solo se completa cuando la serie cumple su umbral de observaciones.</p>
+        </header>
+        <table class="data-table a-pf-risk-table">
+          <tbody>
+            <tr v-for="row in advancedRows" :key="row.key">
+              <th scope="row">
+                {{ row.label }}
+                <AInfoHint>{{ row.hint }}</AInfoHint>
+              </th>
+              <td class="mono" :class="row.metric?.status === 'available' ? '' : 'muted'">
+                {{ advancedValue(row) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
 
       <p v-if="coverageNote" class="a-pf-basket-note">{{ coverageNote }}</p>
     </template>

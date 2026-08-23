@@ -28,6 +28,7 @@ function benchmark(overrides: Record<string, unknown> = {}) {
       benchmark_return: '0.10',
       benchmark_annualized_return: { status: 'available', value: '0.10' },
       excess_return: '0.02',
+      rolling: { window_months: 12, complete_windows: 0, points: [] },
       points: [],
       secondary: { status: 'unavailable', reason: 'not_configured', instrument: null },
       ...overrides,
@@ -141,5 +142,42 @@ describe('PortfolioRiskPanel', () => {
 
     expect(wrapper.text()).toContain('Medido sobre 17 de 18 meses');
     expect(wrapper.text()).toContain('Sin datos en 2025-02');
+  });
+
+  it('permite comparar ventanas equivalentes de doce meses', async () => {
+    getBenchmark.mockResolvedValue(
+      benchmark({
+        points: [
+          {
+            period: '2026-01',
+            from: '2025-12-31',
+            to: '2026-01-31',
+            portfolio: '0.01',
+            benchmark: '0.01',
+            reason: '',
+          },
+        ],
+        rolling: {
+          window_months: 12,
+          complete_windows: 1,
+          points: [
+            {
+              period: '2026-01',
+              from: '2025-02-01',
+              to: '2026-01-31',
+              portfolio: '0.12',
+              benchmark: '0.10',
+              excess: '0.02',
+            },
+          ],
+        },
+      }),
+    );
+
+    const wrapper = await mountPanel();
+    await wrapper.get('button:nth-of-type(2)').trigger('click');
+
+    expect(wrapper.text()).toContain('Ventanas de 12 meses');
+    expect(wrapper.text()).toContain('Cada punto compara los mismos 12 meses completos');
   });
 });

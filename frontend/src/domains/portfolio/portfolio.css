@@ -2329,6 +2329,17 @@
   color: var(--negative);
 }
 
+.dir-a .a-pf-benchmark-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dir-a .a-pf-benchmark-mode .btn {
+  min-height: 32px;
+  font-size: 0.78rem;
+}
+
 .dir-a .a-pf-benchmark-legend {
   display: flex;
   flex-wrap: wrap;
@@ -2420,6 +2431,29 @@
 .dir-a .a-pf-benchmark-table th[scope='row'] {
   font-weight: 500;
   text-align: left;
+}
+
+.dir-a .a-pf-advanced-risk {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+.dir-a .a-pf-advanced-risk header h3,
+.dir-a .a-pf-advanced-risk header p {
+  margin: 0;
+}
+
+.dir-a .a-pf-advanced-risk header h3 {
+  font-size: 0.95rem;
+}
+
+.dir-a .a-pf-advanced-risk header p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 @container page (max-width: 560px) {

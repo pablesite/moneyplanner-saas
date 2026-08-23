@@ -376,6 +376,7 @@ export type AllocationStrategy = {
   ownership_id: number;
   effective_from: string;
   note: string;
+  benchmark_instrument_id: number | null;
   max_cost_share: string;
   min_line_amount: string;
   targets: AllocationTarget[];
@@ -387,6 +388,7 @@ export type AllocationStrategyPayload = {
   ownership_id: number;
   effective_from: string;
   note?: string;
+  benchmark_instrument_id?: number | null;
   min_line_amount?: string;
   max_cost_share?: string;
   targets: (Omit<AllocationClassTarget, 'id'> | Omit<AllocationPositionTarget, 'id'>)[];
@@ -701,13 +703,32 @@ export type PortfolioBenchmark = {
   benchmark_return: string | null;
   benchmark_annualized_return: RiskMetric | null;
   excess_return: string | null;
+  rolling: {
+    window_months: number;
+    complete_windows: number;
+    points: {
+      period: string;
+      from: string;
+      to: string;
+      portfolio: string | null;
+      benchmark: string | null;
+      excess: string | null;
+    }[];
+  };
   points: PortfolioBenchmarkPoint[];
   secondary: {
     status: 'available' | 'unavailable';
     reason?: string;
     instrument: { id: number; name: string } | null;
     cumulative_return?: string | null;
+    points?: { period: string; return: string }[];
   };
+};
+
+export type AdvancedRiskMetric = RiskMetric & {
+  against?: { id: number; name: string } | null;
+  confidence?: string;
+  horizon_days?: number;
 };
 
 export type PortfolioRisk = {
@@ -729,7 +750,16 @@ export type PortfolioRisk = {
   best_period: RiskMetric;
   worst_period: RiskMetric;
   sharpe: RiskMetric;
-  advanced: Record<string, { status: string; reason: string }>;
+  advanced: {
+    beta: AdvancedRiskMetric;
+    correlation: AdvancedRiskMetric;
+    value_at_risk: AdvancedRiskMetric;
+    risk_contribution: {
+      status: 'available' | 'insufficient' | 'unavailable';
+      reason?: string;
+      by_position: unknown[] | null;
+    };
+  };
 };
 
 export type PortfolioDecisionLog = {

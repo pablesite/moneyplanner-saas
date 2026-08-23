@@ -9,6 +9,7 @@ import type {
   AllocationStrategy,
   AllocationStrategyPayload,
   AllocationTarget,
+  PortfolioInstrument,
   PortfolioOperationOptions,
 } from '../types';
 
@@ -24,6 +25,8 @@ const FORM_ID = 'portfolio-strategy-form';
 const strategy = ref<AllocationStrategy | null>(null);
 const effectiveFrom = ref('');
 const minLineAmount = ref('0');
+const benchmarkInstrumentId = ref('');
+const instruments = ref<PortfolioInstrument[]>([]);
 const rows = ref<AllocationTarget[]>([]);
 // Segundo nivel: dentro de una clase, qué parte va a cada producto. Se declara en % de
 // la clase, no de la cartera, que es como se piensa ("de mi renta variable, un 60% al
@@ -55,6 +58,13 @@ const positionOptions = computed(() =>
     .filter((row) => row.status !== 'archived')
     .map((row) => ({ value: String(row.id), label: row.name })),
 );
+const benchmarkOptions = computed(() => [
+  { value: '', label: 'Sin índice de referencia' },
+  ...instruments.value.map((row) => ({
+    value: String(row.id),
+    label: `${row.name} · ${row.quote_currency}`,
+  })),
+]);
 
 function positionClass(id: number | string): string {
   const position = (props.options?.positions ?? []).find((row) => String(row.id) === String(id));
@@ -108,11 +118,18 @@ async function load() {
   loading.value = true;
   error.value = null;
   try {
-    const response = await corePortfolioApi.getStrategies(props.ownershipId);
+    const [response, instrumentResponse] = await Promise.all([
+      corePortfolioApi.getStrategies(props.ownershipId),
+      corePortfolioApi.getInstruments(),
+    ]);
     const current = response.data[0] ?? null;
     strategy.value = current;
+    instruments.value = instrumentResponse.data;
     effectiveFrom.value = current?.effective_from ?? new Date().toISOString().slice(0, 10);
     minLineAmount.value = current?.min_line_amount ?? '0';
+    benchmarkInstrumentId.value = current?.benchmark_instrument_id
+      ? String(current.benchmark_instrument_id)
+      : '';
     rows.value = (current?.targets ?? [])
       .filter((row) => row.asset_class)
       .map((row) => ({ ...row }));
@@ -145,6 +162,9 @@ async function save() {
     ownership_id: props.ownershipId,
     effective_from: effectiveFrom.value,
     min_line_amount: normalizeNumberInput(minLineAmount.value) || '0',
+    benchmark_instrument_id: benchmarkInstrumentId.value
+      ? Number(benchmarkInstrumentId.value)
+      : null,
     targets: rows.value.map((row) => ({
       asset_class: row.asset_class,
       target_percent: normalizeNumberInput(row.target_percent),
@@ -222,6 +242,20 @@ watch(
               />
             </span>
             <input v-model="minLineAmount" class="input" inputmode="decimal" />
+          </label>
+          <label class="ui-item-form-field">
+            <span class="ui-item-form-label">
+              Índice de referencia
+              <AInfoHint
+                label="Opcional. Hace medibles beta y correlación contra un índice externo. Debe cotizar en la moneda de tu cartera y tener cierres mensuales completos."
+              />
+            </span>
+            <ASelect
+              v-model="benchmarkInstrumentId"
+              :options="benchmarkOptions"
+              :searchable="true"
+              class="select"
+            />
           </label>
         </div>
 
