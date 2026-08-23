@@ -100,6 +100,16 @@ describe('PortfolioRiskPanel', () => {
     expect(text).not.toContain('0,00 %');
   });
 
+  it('muestra Sharpe como ratio, no como porcentaje', async () => {
+    getRisk.mockResolvedValue(risk({ sharpe: { status: 'available', value: '0.8059' } }));
+
+    const wrapper = await mountPanel();
+
+    expect(wrapper.text()).toContain('Rentabilidad por unidad de riesgo');
+    expect(wrapper.text()).toContain('0,81');
+    expect(wrapper.text()).not.toContain('80,59 %');
+  });
+
   it('explica por qué no hay comparación en vez de enseñar un vacío', async () => {
     getBenchmark.mockResolvedValue(
       benchmark({

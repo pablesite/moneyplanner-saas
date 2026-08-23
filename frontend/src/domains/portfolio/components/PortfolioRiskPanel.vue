@@ -312,6 +312,15 @@ function unavailableText(metric: RiskMetric | undefined): string {
   return 'Sin cobertura suficiente';
 }
 
+function metricValue(row: MetricRow): string {
+  if (row.metric?.status !== 'available') return unavailableText(row.metric);
+  // Sharpe es una relacion adimensional: 0,81 no equivale a 81 % de rentabilidad.
+  if (row.key === 'sharpe') {
+    return Number(row.metric.value).toLocaleString('es-ES', { maximumFractionDigits: 2 });
+  }
+  return pct(row.metric.value);
+}
+
 function advancedValue(row: AdvancedMetricRow): string {
   const metric = row.metric;
   if (metric?.status !== 'available') return unavailableText(metric);
@@ -537,7 +546,7 @@ const coverageNote = computed(() => {
             </th>
             <td class="mono">
               <template v-if="row.metric?.status === 'available'">
-                {{ pct(row.metric.value) }}
+                {{ metricValue(row) }}
                 <small v-if="row.metric.period">· {{ row.metric.period }}</small>
                 <small v-else-if="row.metric.trough_period">
                   · fondo en {{ row.metric.trough_period }}
