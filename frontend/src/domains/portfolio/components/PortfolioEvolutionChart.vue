@@ -307,7 +307,7 @@ function pct(value: string | number | null | undefined): string {
       </div>
       <template v-if="chartMode === 'value'">
         <span><i class="is-value"></i> Valor</span>
-        <span><i class="is-contributed"></i> Capital aportado</span>
+        <span><i class="is-contributed"></i> Capital aportado desde origen</span>
         <span><i class="is-bar-contribution"></i> Aportación del mes</span>
         <span><i class="is-bar-revaluation"></i> Revalorización del mes</span>
       </template>
@@ -316,7 +316,7 @@ function pct(value: string | number | null | undefined): string {
       </template>
       <strong v-if="chartMode === 'value' && activePoint && !showTip" class="a-pf-chart-readout">
         {{ formatShortMonthYear(activePoint.date) }} · {{ money(activePoint.value) }}
-        <small>aportado {{ money(activePoint.contributed_to_date) }}</small>
+        <small>aportado desde origen {{ money(activePoint.contributed_to_date) }}</small>
       </strong>
       <strong
         v-else-if="chartMode === 'return' && activeReturnPoint && !showReturnTip"
@@ -608,7 +608,7 @@ function pct(value: string | number | null | undefined): string {
               </dd>
             </div>
             <div>
-              <dt>Capital aportado</dt>
+              <dt>Capital aportado desde origen</dt>
               <dd class="mono">{{ money(point.contributed_to_date) }}</dd>
             </div>
             <div>

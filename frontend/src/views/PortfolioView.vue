@@ -528,9 +528,9 @@ const heroKpis = computed(() => [
     cellClass: toNumber(store.performance?.monetary_result) >= 0 ? 'pos' : 'neg',
   },
   {
-    label: 'Dinero que has puesto',
+    label: 'Aportado neto del periodo',
     value: signedMoney(store.performance?.net_contributed),
-    meta: 'Aportado menos retirado',
+    meta: 'Entradas menos retiradas del periodo',
   },
   {
     label: 'Rendimiento de tus activos',

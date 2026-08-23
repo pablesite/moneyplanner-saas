@@ -111,12 +111,16 @@ describe('PortfolioEvolutionChart', () => {
     });
 
     expect(wrapper.findAll('.a-pf-chart-mobile-row')).toHaveLength(2);
-    expect(wrapper.find('.a-pf-chart-mobile-row').text()).toContain('Capital aportado');
+    expect(wrapper.find('.a-pf-chart-mobile-row').text()).toContain(
+      'Capital aportado desde origen',
+    );
 
     await wrapper.get('[aria-label="Lectura del gráfico"] button:last-child').trigger('click');
 
     expect(wrapper.find('.a-pf-chart-mobile-row').text()).toContain('Anualizada');
-    expect(wrapper.find('.a-pf-chart-mobile-row').text()).not.toContain('Capital aportado');
+    expect(wrapper.find('.a-pf-chart-mobile-row').text()).not.toContain(
+      'Capital aportado desde origen',
+    );
   });
 
   it('survives a container with no width instead of losing the active point', async () => {
