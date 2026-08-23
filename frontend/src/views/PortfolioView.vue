@@ -945,16 +945,14 @@ onMounted(() => {
   void loadStrategies();
 });
 
-// La asignación se carga al entrar en su pestaña y al cambiar de ámbito: es una lectura
-// aparte del workspace, porque su alcance lo decide la titularidad y no el periodo.
-// `immediate` porque se puede entrar directo por URL a la pestaña: sin él, al abrir
-// /cartera?tab=allocation no se cargaba nada, ya que el watcher espera un cambio.
+// Asignación y riesgo se leen por ámbito de titularidad. `immediate` permite abrir ambas
+// pestañas directamente por URL sin que Riesgo reciba un ámbito vacío y quede en blanco.
 watch(
   [activeTab, ownershipId],
   async ([tab]) => {
-    if (tab !== 'allocation') return;
+    if (tab !== 'allocation' && tab !== 'evolution') return;
     await loadOwnerships();
-    await loadAllocation();
+    if (tab === 'allocation') await loadAllocation();
   },
   { immediate: true },
 );

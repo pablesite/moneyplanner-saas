@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   getWorkspace: vi.fn(),
   getMembers: vi.fn(),
+  getAllocationScopes: vi.fn(),
   getStrategies: vi.fn(),
   getOperationOptions: vi.fn(),
   route: { query: {} as Record<string, string> },
@@ -23,6 +24,7 @@ vi.mock('@/domains/portfolio/api', () => ({
   corePortfolioApi: {
     getWorkspace: mocks.getWorkspace,
     getMembers: mocks.getMembers,
+    getAllocationScopes: mocks.getAllocationScopes,
     getStrategies: mocks.getStrategies,
     getOperationOptions: mocks.getOperationOptions,
   },
@@ -90,6 +92,9 @@ describe('PortfolioView', () => {
     vi.clearAllMocks();
     mocks.route.query = {};
     mocks.getMembers.mockResolvedValue({ data: [] });
+    mocks.getAllocationScopes.mockResolvedValue({
+      data: [{ ownership_id: 1, label: 'Familia', position_count: 1 }],
+    });
     mocks.getStrategies.mockResolvedValue({
       data: [
         {
@@ -257,8 +262,10 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).not.toContain('Cómo se ha comportado, y contra qué');
 
     await wrapper.findAll('.a-pf-tabs-bar .tab')[4]!.trigger('click');
+    await flushPromises();
 
     expect(wrapper.text()).toContain('Cómo se ha comportado, y contra qué');
+    expect(mocks.getAllocationScopes).toHaveBeenCalledTimes(1);
   });
 
   it('opens from the current investment policy and keeps the policy range prominent', async () => {
