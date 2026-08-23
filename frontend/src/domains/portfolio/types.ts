@@ -610,6 +610,12 @@ export type ExposureDimension = {
   status: 'ready' | 'partial' | 'insufficient';
   covered_percent: string;
   covered_value: string;
+  // Sectores se evalúan además contra la parte de la cartera donde un sector bursátil
+  // aplica. Así cripto, oro o deuda privada no rebajan artificialmente su cobertura.
+  applicable_percent: string | null;
+  applicable_value: string | null;
+  applicable_covered_percent: string | null;
+  applicable_status: 'ready' | 'partial' | 'insufficient' | null;
   observed_from: string | null;
   source: 'holdings' | 'manual' | 'mixed';
   rows: { bucket: string; value: string; percent: string }[];

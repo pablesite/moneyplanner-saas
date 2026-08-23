@@ -27,6 +27,7 @@ import {
   type AllocationScope,
   type PortfolioAllocation,
   type PortfolioExposure,
+  type ExposureDimension,
   type PortfolioAlert,
   type PortfolioAlertAction,
   type PortfolioAlerts,
@@ -182,6 +183,12 @@ function coverageLabel(status: string): string {
       status
     ] ?? status
   );
+}
+
+function dimensionCoverageStatus(dimension: ExposureDimension): string {
+  return dimension.dimension === 'sector' && dimension.applicable_status
+    ? dimension.applicable_status
+    : dimension.status;
 }
 
 function openExposure(positionId: number | null) {
@@ -1733,12 +1740,22 @@ watch(
           >
             <header>
               <h3>{{ dimension.label }}</h3>
-              <span class="a-pf-band" :class="`is-${dimension.status}`">
-                {{ coverageLabel(dimension.status) }}
+              <span class="a-pf-band" :class="`is-${dimensionCoverageStatus(dimension)}`">
+                {{ coverageLabel(dimensionCoverageStatus(dimension)) }}
               </span>
               <small v-if="dimension.status !== 'insufficient'">
-                Declarado el {{ formatPct(Number(dimension.covered_percent) / 100, 1) }} de la
-                cartera desde {{ exposureSourceLabel(dimension.source)
+                <template v-if="dimension.dimension === 'sector' && dimension.applicable_percent">
+                  Sectores aplicables al
+                  {{ formatPct(Number(dimension.applicable_percent) / 100, 1) }} de la cartera ·
+                  declarado el
+                  {{ formatPct(Number(dimension.applicable_covered_percent) / 100, 1) }} de esos
+                  activos ({{ formatPct(Number(dimension.covered_percent) / 100, 1) }} del total)
+                </template>
+                <template v-else>
+                  Declarado el {{ formatPct(Number(dimension.covered_percent) / 100, 1) }} de la
+                  cartera
+                </template>
+                desde {{ exposureSourceLabel(dimension.source)
                 }}<template v-if="dimension.observed_from">
                   · ficha más antigua {{ formatShortMonthYear(dimension.observed_from) }}</template
                 >
