@@ -664,6 +664,7 @@ export type PortfolioBenchmark = {
   cash_excluded?: boolean;
   portfolio_return: string | null;
   benchmark_return: string | null;
+  benchmark_annualized_return: RiskMetric | null;
   excess_return: string | null;
   points: PortfolioBenchmarkPoint[];
   secondary: {

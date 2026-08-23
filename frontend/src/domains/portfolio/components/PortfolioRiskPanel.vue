@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { AInfoHint, AState } from '@/domains/ui';
 import { formatPct } from '@/lib/format';
+import { formatShortMonthYear } from '@/lib/dates';
 import { toApiErrorMessage } from '@/lib/errors';
 import { corePortfolioApi } from '../api';
 import type { PortfolioBenchmark, PortfolioRisk, RiskMetric } from '../types';
@@ -67,6 +68,95 @@ const benchmarkGap = computed(() => {
 });
 
 const excessIsPositive = computed(() => Number(benchmark.value?.excess_return ?? 0) >= 0);
+
+type BenchmarkLine = 'portfolio' | 'benchmark' | 'excess';
+type BenchmarkChartPoint = { period: string; value: number | null };
+
+const chartWidth = 720;
+const chartHeight = 240;
+const chartPad = { top: 20, right: 18, bottom: 34, left: 48 };
+const chartInnerWidth = chartWidth - chartPad.left - chartPad.right;
+const chartInnerHeight = chartHeight - chartPad.top - chartPad.bottom;
+
+function cumulativeSeries(line: BenchmarkLine): BenchmarkChartPoint[] {
+  let cumulative = 0;
+  let open = false;
+  return (benchmark.value?.points ?? []).map((point) => {
+    const raw =
+      line === 'portfolio'
+        ? point.portfolio
+        : line === 'benchmark'
+          ? point.benchmark
+          : point.portfolio !== null && point.benchmark !== null
+            ? String(Number(point.portfolio) - Number(point.benchmark))
+            : null;
+    if (raw === null) {
+      open = false;
+      return { period: point.period, value: null };
+    }
+    if (!open) cumulative = 0;
+    cumulative =
+      line === 'excess' ? cumulative + Number(raw) : (1 + cumulative) * (1 + Number(raw)) - 1;
+    open = true;
+    return { period: point.period, value: cumulative };
+  });
+}
+
+const chartSeries = computed(() => ({
+  portfolio: cumulativeSeries('portfolio'),
+  benchmark: cumulativeSeries('benchmark'),
+  excess: cumulativeSeries('excess'),
+}));
+
+const chartBounds = computed(() => {
+  const values = Object.values(chartSeries.value)
+    .flat()
+    .map((point) => point.value)
+    .filter((value): value is number => value !== null);
+  const min = Math.min(...values, 0);
+  const max = Math.max(...values, 0);
+  const padding = Math.max((max - min) * 0.12, 0.01);
+  return { min: min - padding, max: max + padding };
+});
+
+function chartX(index: number): number {
+  const count = benchmark.value?.points.length ?? 0;
+  return (
+    chartPad.left + (count <= 1 ? chartInnerWidth / 2 : (index / (count - 1)) * chartInnerWidth)
+  );
+}
+
+function chartY(value: number): number {
+  const span = chartBounds.value.max - chartBounds.value.min || 1;
+  return chartPad.top + (1 - (value - chartBounds.value.min) / span) * chartInnerHeight;
+}
+
+function chartPath(points: BenchmarkChartPoint[]): string {
+  let path = '';
+  points.forEach((point, index) => {
+    if (point.value === null) return;
+    path += `${path && points[index - 1]?.value !== null ? 'L' : 'M'} ${chartX(index)} ${chartY(point.value)} `;
+  });
+  return path.trim();
+}
+
+const chartLabels = computed(() => {
+  const points = benchmark.value?.points ?? [];
+  const stride = Math.max(1, Math.ceil(points.length / 6));
+  return points.map((point, index) => ({
+    ...point,
+    show: index === points.length - 1 || index % stride === 0,
+  }));
+});
+
+const benchmarkCoverageNote = computed(() => {
+  const data = benchmark.value;
+  if (!data || !data.points.length) return null;
+  const missing = data.points.filter((point) => point.benchmark === null).length;
+  if (!missing)
+    return 'Cada punto es el acumulado desde el inicio del tramo, usando cierres mensuales completos.';
+  return `${missing} ${missing === 1 ? 'mes' : 'meses'} sin benchmark: el gráfico deja un hueco y no encadena ese salto.`;
+});
 
 type MetricRow = { key: string; label: string; hint: string; metric: RiskMetric | undefined };
 
@@ -149,6 +239,9 @@ const coverageNote = computed(() => {
       <div v-else-if="benchmark" class="a-pf-quality-grid">
         <div>
           <span>Tu cartera</span><strong class="mono">{{ pct(benchmark.portfolio_return) }}</strong>
+          <small v-if="risk?.annualized_return.status === 'available'">
+            {{ pct(risk.annualized_return.value) }} anualizada
+          </small>
         </div>
         <div>
           <span>
@@ -160,6 +253,9 @@ const coverageNote = computed(() => {
             </AInfoHint>
           </span>
           <strong class="mono">{{ pct(benchmark.benchmark_return) }}</strong>
+          <small v-if="benchmark.benchmark_annualized_return?.status === 'available'">
+            {{ pct(benchmark.benchmark_annualized_return.value) }} anualizada
+          </small>
         </div>
         <div>
           <span>Diferencia</span>
@@ -168,6 +264,87 @@ const coverageNote = computed(() => {
           </strong>
         </div>
       </div>
+
+      <section v-if="benchmark?.points?.length" class="a-pf-benchmark-history">
+        <header class="a-pf-benchmark-history-head">
+          <div>
+            <h3>Trayectoria frente a la política</h3>
+            <p>
+              Rentabilidad acumulada desde el inicio del periodo, sobre cierres mensuales completos.
+            </p>
+          </div>
+          <AInfoHint>
+            La cartera y la política se encadenan multiplicando cada mes. La diferencia es el exceso
+            acumulado, no la resta de dos valores monetarios.
+          </AInfoHint>
+        </header>
+        <div class="a-pf-benchmark-legend" aria-label="Series del gráfico">
+          <span><i class="is-portfolio"></i> Cartera</span>
+          <span><i class="is-policy"></i> Política</span>
+          <span><i class="is-excess"></i> Diferencia acumulada</span>
+        </div>
+        <div class="a-pf-benchmark-chart-wrap">
+          <svg
+            class="a-pf-benchmark-chart"
+            :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
+            role="img"
+            aria-label="Rentabilidad acumulada de la cartera frente a la política de inversión"
+          >
+            <g class="a-pf-benchmark-grid">
+              <line
+                :x1="chartPad.left"
+                :x2="chartWidth - chartPad.right"
+                :y1="chartY(0)"
+                :y2="chartY(0)"
+                class="is-zero"
+              />
+              <text :x="chartPad.left - 8" :y="chartY(0) + 4" text-anchor="end">0 %</text>
+            </g>
+            <path class="is-portfolio" :d="chartPath(chartSeries.portfolio)" />
+            <path class="is-policy" :d="chartPath(chartSeries.benchmark)" />
+            <path class="is-excess" :d="chartPath(chartSeries.excess)" />
+            <g class="a-pf-benchmark-axis">
+              <template v-for="(point, index) in chartLabels" :key="point.period">
+                <text
+                  v-if="point.show"
+                  :x="chartX(index)"
+                  :y="chartHeight - 8"
+                  text-anchor="middle"
+                >
+                  {{ formatShortMonthYear(`${point.period}-01`) }}
+                </text>
+              </template>
+            </g>
+          </svg>
+        </div>
+        <p class="a-pf-basket-note">{{ benchmarkCoverageNote }}</p>
+        <div class="a-pf-benchmark-table-wrap">
+          <table class="data-table a-pf-benchmark-table">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th class="num">Cartera</th>
+                <th class="num">Política</th>
+                <th class="num">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="point in benchmark.points" :key="point.period">
+                <th scope="row">{{ formatShortMonthYear(`${point.period}-01`) }}</th>
+                <td class="num mono">{{ pct(point.portfolio) }}</td>
+                <td class="num mono">{{ pct(point.benchmark) }}</td>
+                <td class="num mono">
+                  {{
+                    point.portfolio !== null && point.benchmark !== null
+                      ? pct(String(Number(point.portfolio) - Number(point.benchmark)))
+                      : '—'
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <p v-if="benchmark?.cash_excluded" class="a-pf-basket-note">
         La liquidez queda fuera de los dos lados: tu serie son las posiciones, y el efectivo de
