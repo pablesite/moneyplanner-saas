@@ -1174,6 +1174,27 @@
 
   .dir-a .a-pf-hero-grid .a-kpi-band {
     grid-template-columns: 1fr;
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  /* En móvil la alineación subgrid deja de aportar y hace que etiqueta, cifra y nota
+     parezcan tres listas independientes. Cada KPI recupera su propio bloque. */
+  .dir-a .a-pf-hero-grid .a-kpi-band > .kpi {
+    display: grid;
+    grid-template-rows: auto;
+    gap: var(--space-1);
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dir-a .a-pf-hero-grid .a-kpi-band .kpi-label,
+  .dir-a .a-pf-hero-grid .a-kpi-band .kpi-meta {
+    margin: 0;
+  }
+
+  .dir-a .a-pf-hero-grid .a-kpi-band .kpi-value {
+    font-size: 1.35rem;
   }
 
   .dir-a .a-pf-composition-grid {
