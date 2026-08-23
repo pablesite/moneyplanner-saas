@@ -69,7 +69,7 @@ const benchmarkGap = computed(() => {
 
 const excessIsPositive = computed(() => Number(benchmark.value?.excess_return ?? 0) >= 0);
 
-type BenchmarkLine = 'portfolio' | 'benchmark' | 'excess';
+type BenchmarkLine = 'portfolio' | 'benchmark';
 type BenchmarkChartPoint = { period: string; value: number | null };
 
 const chartWidth = 720;
@@ -82,31 +82,45 @@ function cumulativeSeries(line: BenchmarkLine): BenchmarkChartPoint[] {
   let cumulative = 0;
   let open = false;
   return (benchmark.value?.points ?? []).map((point) => {
-    const raw =
-      line === 'portfolio'
-        ? point.portfolio
-        : line === 'benchmark'
-          ? point.benchmark
-          : point.portfolio !== null && point.benchmark !== null
-            ? String(Number(point.portfolio) - Number(point.benchmark))
-            : null;
+    const raw = line === 'portfolio' ? point.portfolio : point.benchmark;
     if (raw === null) {
       open = false;
       return { period: point.period, value: null };
     }
     if (!open) cumulative = 0;
-    cumulative =
-      line === 'excess' ? cumulative + Number(raw) : (1 + cumulative) * (1 + Number(raw)) - 1;
+    cumulative = (1 + cumulative) * (1 + Number(raw)) - 1;
     open = true;
     return { period: point.period, value: cumulative };
   });
 }
 
-const chartSeries = computed(() => ({
-  portfolio: cumulativeSeries('portfolio'),
-  benchmark: cumulativeSeries('benchmark'),
-  excess: cumulativeSeries('excess'),
-}));
+// El exceso no es una tercera rentabilidad que se pueda encadenar sumando los diferenciales
+// de cada mes. Es, en cada cierre, la distancia exacta entre las dos curvas compuestas.
+function excessSeries(
+  portfolio: BenchmarkChartPoint[],
+  benchmark: BenchmarkChartPoint[],
+): BenchmarkChartPoint[] {
+  return portfolio.map((point, index) => ({
+    period: point.period,
+    value:
+      point.value !== null && benchmark[index]?.value !== null
+        ? point.value - benchmark[index].value
+        : null,
+  }));
+}
+
+const chartSeries = computed(() => {
+  const portfolio = cumulativeSeries('portfolio');
+  const policy = cumulativeSeries('benchmark');
+  return { portfolio, benchmark: policy, excess: excessSeries(portfolio, policy) };
+});
+
+const comparisonRead = computed(() => {
+  const excess = benchmark.value?.excess_return;
+  if (excess == null) return null;
+  const direction = Number(excess) >= 0 ? 'supera' : 'queda por debajo de';
+  return `Tu ejecución ${direction} la política en ${pct(String(Math.abs(Number(excess))))} puntos porcentuales acumulados.`;
+});
 
 const chartBounds = computed(() => {
   const values = Object.values(chartSeries.value)
@@ -238,14 +252,15 @@ const coverageNote = computed(() => {
       <AState v-if="benchmarkGap" status="empty" layout="panel">{{ benchmarkGap }}</AState>
       <div v-else-if="benchmark" class="a-pf-quality-grid">
         <div>
-          <span>Tu cartera</span><strong class="mono">{{ pct(benchmark.portfolio_return) }}</strong>
+          <span>Tu cartera · acumulada</span
+          ><strong class="mono">{{ pct(benchmark.portfolio_return) }}</strong>
           <small v-if="risk?.annualized_return.status === 'available'">
             {{ pct(risk.annualized_return.value) }} anualizada
           </small>
         </div>
         <div>
           <span>
-            Tu política
+            Tu política · acumulada
             <AInfoHint>
               Lo que habrían rendido los pesos objetivo que tenías escritos cada mes, con el
               comportamiento real de tus propias clases. Mide si desviarte del plan ayudó, no si
@@ -258,17 +273,18 @@ const coverageNote = computed(() => {
           </small>
         </div>
         <div>
-          <span>Diferencia</span>
+          <span>Exceso frente a tu política</span>
           <strong class="mono" :class="excessIsPositive ? 'pos' : 'neg'">
             {{ pct(benchmark.excess_return) }}
           </strong>
+          <small>puntos porcentuales acumulados</small>
         </div>
       </div>
 
       <section v-if="benchmark?.points?.length" class="a-pf-benchmark-history">
         <header class="a-pf-benchmark-history-head">
           <div>
-            <h3>Trayectoria frente a la política</h3>
+            <h3>Cartera frente a tu política</h3>
             <p>
               Rentabilidad acumulada desde el inicio del periodo, sobre cierres mensuales completos.
             </p>
@@ -278,10 +294,17 @@ const coverageNote = computed(() => {
             acumulado, no la resta de dos valores monetarios.
           </AInfoHint>
         </header>
+        <p
+          v-if="comparisonRead"
+          class="a-pf-benchmark-read"
+          :class="excessIsPositive ? 'pos' : 'neg'"
+        >
+          {{ comparisonRead }}
+        </p>
         <div class="a-pf-benchmark-legend" aria-label="Series del gráfico">
           <span><i class="is-portfolio"></i> Cartera</span>
           <span><i class="is-policy"></i> Política</span>
-          <span><i class="is-excess"></i> Diferencia acumulada</span>
+          <span><i class="is-excess"></i> Exceso en puntos porcentuales</span>
         </div>
         <div class="a-pf-benchmark-chart-wrap">
           <svg
@@ -325,7 +348,7 @@ const coverageNote = computed(() => {
                 <th>Mes</th>
                 <th class="num">Cartera</th>
                 <th class="num">Política</th>
-                <th class="num">Diferencia</th>
+                <th class="num">Exceso</th>
               </tr>
             </thead>
             <tbody>

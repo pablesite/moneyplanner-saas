@@ -2312,6 +2312,23 @@
   font-size: 0.78rem;
 }
 
+.dir-a .a-pf-benchmark-read {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid currentColor;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.dir-a .a-pf-benchmark-read.pos {
+  color: var(--positive);
+}
+
+.dir-a .a-pf-benchmark-read.neg {
+  color: var(--negative);
+}
+
 .dir-a .a-pf-benchmark-legend {
   display: flex;
   flex-wrap: wrap;
