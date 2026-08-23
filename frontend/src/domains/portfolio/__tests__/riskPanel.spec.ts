@@ -79,12 +79,13 @@ describe('PortfolioRiskPanel', () => {
     getRisk.mockResolvedValue(risk());
   });
 
-  it('compara la cartera con su propia política y con la diferencia', async () => {
+  it('compara la cartera con su propia política y muestra el exceso acumulado', async () => {
     const wrapper = await mountPanel();
 
     const text = wrapper.text();
     expect(text).toContain('Tu política');
-    expect(text).toContain('Diferencia');
+    expect(text).toContain('Exceso frente a tu política');
+    expect(text).toContain('puntos porcentuales acumulados');
     expect(text).toContain('Rentabilidad anual del tramo medido');
     expect(text).toContain('El Resumen incluye los extremos exactos del periodo');
   });
