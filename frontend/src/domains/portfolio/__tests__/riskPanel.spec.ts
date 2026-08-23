@@ -144,6 +144,57 @@ describe('PortfolioRiskPanel', () => {
     expect(wrapper.text()).toContain('Sin datos en 2025-02');
   });
 
+  it('explica qué posiciones aportan riesgo y cuáles se mueven juntas', async () => {
+    getRisk.mockResolvedValue(
+      risk({
+        advanced: {
+          beta: { status: 'unavailable', reason: 'benchmark_unavailable' },
+          correlation: { status: 'unavailable', reason: 'benchmark_unavailable' },
+          value_at_risk: { status: 'available', value: '0.08' },
+          risk_contribution: {
+            status: 'available',
+            observations: 12,
+            included_positions: 2,
+            coverage: '0.75',
+            model_volatility: '0.14',
+            by_position: [
+              {
+                position_id: 1,
+                name: 'Fondo global',
+                weight: '0.6',
+                contribution: '0.7',
+                annualized_volatility_contribution: '0.1',
+              },
+            ],
+          },
+          position_correlation: {
+            status: 'available',
+            observations: 12,
+            included_positions: 2,
+            coverage: '0.75',
+            matrix: [],
+            pairs: [
+              {
+                left_id: 1,
+                left_name: 'Fondo global',
+                right_id: 2,
+                right_name: 'Oro',
+                value: '0.4',
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    const wrapper = await mountPanel();
+
+    expect(wrapper.text()).toContain('Qué posiciones explican la volatilidad');
+    expect(wrapper.text()).toContain('Fondo global');
+    expect(wrapper.text()).toContain('Relaciones entre activos');
+    expect(wrapper.text()).toContain('Fondo global · Oro');
+  });
+
   it('permite comparar ventanas equivalentes de doce meses', async () => {
     getBenchmark.mockResolvedValue(
       benchmark({

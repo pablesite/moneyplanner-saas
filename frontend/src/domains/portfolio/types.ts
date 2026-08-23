@@ -757,7 +757,44 @@ export type PortfolioRisk = {
     risk_contribution: {
       status: 'available' | 'insufficient' | 'unavailable';
       reason?: string;
-      by_position: unknown[] | null;
+      observations?: number;
+      required?: number;
+      included_positions?: number;
+      included_value?: string;
+      total_value?: string;
+      coverage?: string;
+      model_volatility?: string;
+      by_position:
+        | {
+            position_id: number;
+            name: string;
+            weight: string;
+            contribution: string;
+            annualized_volatility_contribution: string;
+          }[]
+        | null;
+    };
+    position_correlation: {
+      status: 'available' | 'insufficient' | 'unavailable';
+      reason?: string;
+      observations?: number;
+      required?: number;
+      included_positions?: number;
+      included_value?: string;
+      total_value?: string;
+      coverage?: string;
+      matrix: {
+        position_id: number;
+        name: string;
+        correlations: { position_id: number; value: string | null }[];
+      }[];
+      pairs: {
+        left_id: number;
+        left_name: string;
+        right_id: number;
+        right_name: string;
+        value: string;
+      }[];
     };
   };
 };

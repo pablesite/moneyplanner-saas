@@ -319,6 +319,35 @@ function advancedValue(row: AdvancedMetricRow): string {
   return Number(metric.value).toLocaleString('es-ES', { maximumFractionDigits: 2 });
 }
 
+const riskContribution = computed(() => risk.value?.advanced.risk_contribution);
+const strongestPositionRelations = computed(() =>
+  (risk.value?.advanced.position_correlation?.pairs ?? []).slice(0, 3),
+);
+
+function advancedCoverageText(metric: {
+  coverage?: string;
+  included_positions?: number;
+  observations?: number;
+}): string {
+  const positions = metric.included_positions ?? 0;
+  const months = metric.observations ?? 0;
+  return `Modelo sobre ${positions} ${positions === 1 ? 'posición' : 'posiciones'}, ${months} meses y ${pct(metric.coverage)} del valor actual.`;
+}
+
+function positionRiskUnavailableText(metric: {
+  reason?: string;
+  observations?: number;
+  required?: number;
+}): string {
+  if (metric.reason === 'not_enough_positions') return 'Hace falta más de una posición medible';
+  if (metric.reason === 'not_enough_observations') {
+    return `Faltan meses (${metric.observations ?? 0} de ${metric.required ?? 12})`;
+  }
+  if (metric.reason === 'no_variation') return 'Sin variación suficiente que repartir';
+  if (metric.reason === 'no_value') return 'Sin valor de cierre para ponderar';
+  return 'Sin posiciones con una serie mensual completa';
+}
+
 const coverageNote = computed(() => {
   const coverage = risk.value?.coverage;
   if (!coverage || coverage.months_used === 0) return null;
@@ -539,6 +568,65 @@ const coverageNote = computed(() => {
             </tr>
           </tbody>
         </table>
+
+        <div class="a-pf-risk-detail">
+          <template v-if="riskContribution?.status === 'available'">
+            <div class="a-pf-risk-detail-head">
+              <div>
+                <h4>Qué posiciones explican la volatilidad</h4>
+                <p>
+                  {{ advancedCoverageText(riskContribution) }} Volatilidad modelada:
+                  <strong class="mono">{{ pct(riskContribution.model_volatility) }}</strong> anual.
+                </p>
+              </div>
+              <AInfoHint>
+                Reparte la volatilidad observada entre las posiciones usando sus pesos actuales y
+                cómo se han movido juntas. No atribuye el P&amp;L histórico ni predice el futuro.
+              </AInfoHint>
+            </div>
+            <ol class="a-pf-risk-contributions">
+              <li v-for="position in riskContribution.by_position" :key="position.position_id">
+                <span>{{ position.name }}</span>
+                <strong class="mono">{{ pct(position.contribution) }}</strong>
+                <small>{{ pct(position.weight) }} del valor medido</small>
+              </li>
+            </ol>
+          </template>
+          <p v-else class="a-pf-basket-note">
+            Contribución al riesgo: {{ positionRiskUnavailableText(riskContribution ?? {}) }}.
+          </p>
+
+          <template v-if="risk?.advanced.position_correlation?.status === 'available'">
+            <div class="a-pf-risk-detail-head">
+              <div>
+                <h4>Relaciones entre activos</h4>
+                <p>{{ advancedCoverageText(risk.advanced.position_correlation) }}</p>
+              </div>
+              <AInfoHint>
+                Correlación mensual entre -1 y 1. Cerca de 1 se mueven de forma parecida; cerca de
+                -1 tienden a compensarse. Es histórica y puede cambiar.
+              </AInfoHint>
+            </div>
+            <ul v-if="strongestPositionRelations.length" class="a-pf-risk-relations">
+              <li
+                v-for="pair in strongestPositionRelations"
+                :key="`${pair.left_id}-${pair.right_id}`"
+              >
+                <span>{{ pair.left_name }} · {{ pair.right_name }}</span>
+                <strong class="mono">{{
+                  Number(pair.value).toLocaleString('es-ES', { maximumFractionDigits: 2 })
+                }}</strong>
+              </li>
+            </ul>
+            <p v-else class="a-pf-basket-note">
+              No hay dos series con variación suficiente para relacionar.
+            </p>
+          </template>
+          <p v-else class="a-pf-basket-note">
+            Relaciones entre activos:
+            {{ positionRiskUnavailableText(risk?.advanced.position_correlation ?? {}) }}.
+          </p>
+        </div>
       </section>
 
       <p v-if="coverageNote" class="a-pf-basket-note">{{ coverageNote }}</p>

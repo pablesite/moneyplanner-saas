@@ -2456,6 +2456,72 @@
   font-size: 0.78rem;
 }
 
+.dir-a .a-pf-risk-detail {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.dir-a .a-pf-risk-detail + .a-pf-risk-detail {
+  margin-top: var(--space-2);
+}
+
+.dir-a .a-pf-risk-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dir-a .a-pf-risk-detail-head h4,
+.dir-a .a-pf-risk-detail-head p {
+  margin: 0;
+}
+
+.dir-a .a-pf-risk-detail-head h4 {
+  font-size: 0.875rem;
+}
+
+.dir-a .a-pf-risk-detail-head p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.dir-a .a-pf-risk-contributions,
+.dir-a .a-pf-risk-relations {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dir-a .a-pf-risk-contributions li,
+.dir-a .a-pf-risk-relations li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  font-size: 0.8125rem;
+}
+
+.dir-a .a-pf-risk-contributions li > span,
+.dir-a .a-pf-risk-relations li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dir-a .a-pf-risk-contributions small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
 @container page (max-width: 560px) {
   .dir-a .a-pf-benchmark-history-head {
     gap: var(--space-2);
