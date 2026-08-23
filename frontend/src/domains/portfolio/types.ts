@@ -590,6 +590,18 @@ export type PositionExposure = {
   observed_on: string;
 };
 
+export type PositionHolding = {
+  id: number;
+  position_id: number;
+  underlying_name: string;
+  underlying_identifier: string;
+  asset_class: string;
+  geography: string;
+  sector: string;
+  percent: string;
+  observed_on: string;
+};
+
 export type ExposureDimension = {
   dimension: string;
   label: string;
@@ -599,6 +611,7 @@ export type ExposureDimension = {
   covered_percent: string;
   covered_value: string;
   observed_from: string | null;
+  source: 'holdings' | 'manual' | 'mixed';
   rows: { bucket: string; value: string; percent: string }[];
 };
 
@@ -608,6 +621,12 @@ export type PortfolioExposure = {
   total_value: string;
   position_count: number;
   dimensions: ExposureDimension[];
+  classes: {
+    status: 'ready' | 'partial' | 'insufficient';
+    covered_percent: string;
+    source: 'holdings' | 'manual' | 'mixed';
+    rows: { asset_class: string; value: string; percent: string }[];
+  };
   concentration: {
     top_positions: { position_id: number; name: string; percent: string }[];
     top_five_percent: string;
@@ -622,6 +641,16 @@ export type PortfolioExposure = {
     left_name: string;
     right_id: number;
     right_name: string;
+    percent: string;
+    shared_value: string;
+  }[];
+  holding_overlap: {
+    left_id: number;
+    left_name: string;
+    right_id: number;
+    right_name: string;
+    underlying_name: string;
+    underlying_identifier: string | null;
     percent: string;
     shared_value: string;
   }[];

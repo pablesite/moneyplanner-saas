@@ -9,6 +9,7 @@ import {
   PortfolioBasketsPanel,
   PortfolioContributionModal,
   PortfolioExposureModal,
+  PortfolioHoldingsModal,
   PortfolioRulesModal,
   PortfolioSetupModal,
   PortfolioContainersModal,
@@ -106,6 +107,8 @@ const contributionOpen = ref(false);
 const rulesOpen = ref(false);
 const exposureOpen = ref(false);
 const exposurePositionId = ref<number | null>(null);
+const holdingsOpen = ref(false);
+const holdingsPositionId = ref<number | null>(null);
 const exposure = ref<PortfolioExposure | null>(null);
 const exposureLoading = ref(false);
 const exposureError = ref<string | null>(null);
@@ -184,6 +187,19 @@ function coverageLabel(status: string): string {
 function openExposure(positionId: number | null) {
   exposurePositionId.value = positionId;
   exposureOpen.value = true;
+}
+
+function openHoldings(positionId: number | null) {
+  holdingsPositionId.value = positionId;
+  holdingsOpen.value = true;
+}
+
+function exposureSourceLabel(source: string): string {
+  return (
+    { holdings: 'tenencias', manual: 'declaración manual', mixed: 'tenencias y declaración' }[
+      source
+    ] ?? source
+  );
 }
 const basketsPanel = ref<InstanceType<typeof PortfolioBasketsPanel> | null>(null);
 const allocation = ref<PortfolioAllocation | null>(null);
@@ -1700,7 +1716,8 @@ watch(
           subtitle="La clase dice de qué depende que suba o baje; esto dice en qué está invertido por dentro."
         >
           <template #actions>
-            <AButton variant="primary" @click="openExposure(null)">Declarar exposición</AButton>
+            <AButton variant="ghost" @click="openExposure(null)">Declarar exposición</AButton>
+            <AButton variant="primary" @click="openHoldings(null)">Declarar tenencias</AButton>
           </template>
         </ASectHead>
 
@@ -1721,7 +1738,8 @@ watch(
               </span>
               <small v-if="dimension.status !== 'insufficient'">
                 Declarado el {{ formatPct(Number(dimension.covered_percent) / 100, 1) }} de la
-                cartera<template v-if="dimension.observed_from">
+                cartera desde {{ exposureSourceLabel(dimension.source)
+                }}<template v-if="dimension.observed_from">
                   · ficha más antigua {{ formatShortMonthYear(dimension.observed_from) }}</template
                 >
               </small>
@@ -1742,6 +1760,29 @@ watch(
               Nadie ha declarado todavía esta dimensión. El dato está en la ficha de cada producto:
               se copia una vez y se revisa cada trimestre.
             </AState>
+          </section>
+
+          <section class="a-pf-exposure-block">
+            <header>
+              <h3>Clases de activo</h3>
+              <span class="a-pf-band" :class="`is-${exposure.classes.status}`">
+                {{ coverageLabel(exposure.classes.status) }}
+              </span>
+              <small>
+                {{ exposureSourceLabel(exposure.classes.source) }}: las tenencias prevalecen sobre
+                el reparto manual.
+              </small>
+            </header>
+            <ul class="a-pf-exposure-bars">
+              <li v-for="row in exposure.classes.rows" :key="row.asset_class">
+                <span>{{ portfolioAssetClassLabels[row.asset_class] ?? row.asset_class }}</span>
+                <span class="a-pf-exposure-bar" aria-hidden="true"
+                  ><i :style="{ width: `${Math.min(Number(row.percent), 100)}%` }"></i
+                ></span>
+                <strong class="mono">{{ formatPct(Number(row.percent) / 100, 1) }}</strong>
+                <small class="mono">{{ money(row.value) }}</small>
+              </li>
+            </ul>
           </section>
 
           <section class="a-pf-exposure-block">
@@ -1787,6 +1828,31 @@ watch(
                 </span>
                 <strong class="mono">{{ formatPct(Number(row.percent) / 100, 0) }}</strong>
                 <small class="mono">{{ money(row.shared_value) }} expuestos a lo mismo</small>
+              </li>
+            </ul>
+          </section>
+
+          <section v-if="exposure.holding_overlap.length" class="a-pf-exposure-block">
+            <header>
+              <h3>Solapamiento exacto</h3>
+              <small
+                >El mismo subyacente declarado en dos productos; no es una aproximación por
+                geografía o sector.</small
+              >
+            </header>
+            <ul class="a-pf-exposure-overlap">
+              <li v-for="(row, index) in exposure.holding_overlap" :key="index">
+                <span>
+                  {{ row.underlying_name }}
+                  <small
+                    >{{ row.left_name }} y {{ row.right_name
+                    }}<template v-if="row.underlying_identifier">
+                      · {{ row.underlying_identifier }}</template
+                    ></small
+                  >
+                </span>
+                <strong class="mono">{{ formatPct(Number(row.percent) / 100, 1) }}</strong>
+                <small class="mono">{{ money(row.shared_value) }} en común</small>
               </li>
             </ul>
           </section>
@@ -2007,6 +2073,18 @@ watch(
       :options="operationOptionsData"
       :initial-position-id="exposurePositionId"
       @close="exposureOpen = false"
+      @saved="
+        (message) => {
+          successMessage = message;
+          void loadExposure();
+        }
+      "
+    />
+    <PortfolioHoldingsModal
+      :open="holdingsOpen"
+      :options="operationOptionsData"
+      :initial-position-id="holdingsPositionId"
+      @close="holdingsOpen = false"
       @saved="
         (message) => {
           successMessage = message;

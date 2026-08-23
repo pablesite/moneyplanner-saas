@@ -34,6 +34,7 @@ import type {
   PortfolioExposure,
   PositionAllocationRule,
   PositionExposure,
+  PositionHolding,
 } from './types';
 
 export const corePortfolioApi = {
@@ -178,6 +179,20 @@ export const corePortfolioApi = {
   },
   deletePositionExposure(id: number) {
     return coreApi.delete(`/api/portfolio/exposures/${id}/`);
+  },
+  getPositionHoldings(positionId: number) {
+    return coreApi.get<PositionHolding[]>('/api/portfolio/holdings/', {
+      params: { position_id: positionId },
+    });
+  },
+  createPositionHolding(payload: Omit<PositionHolding, 'id'>) {
+    return coreApi.post<PositionHolding>('/api/portfolio/holdings/', payload);
+  },
+  updatePositionHolding(id: number, payload: Partial<Omit<PositionHolding, 'id'>>) {
+    return coreApi.patch<PositionHolding>(`/api/portfolio/holdings/${id}/`, payload);
+  },
+  deletePositionHolding(id: number) {
+    return coreApi.delete(`/api/portfolio/holdings/${id}/`);
   },
   getAllocationScopes() {
     return coreApi.get<AllocationScope[]>('/api/portfolio/allocation/scopes/');

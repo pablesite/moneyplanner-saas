@@ -2112,6 +2112,32 @@
   text-align: right;
 }
 
+.dir-a-sheet .a-pf-holdings-grid {
+  display: grid;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.dir-a-sheet .a-pf-holdings-head,
+.dir-a-sheet .a-pf-holdings-row {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.2fr) minmax(112px, 0.9fr) minmax(145px, 1fr) minmax(150px, 1fr)
+    minmax(150px, 1fr) 72px auto;
+  gap: var(--space-2);
+  min-width: 940px;
+  align-items: center;
+}
+
+.dir-a-sheet .a-pf-holdings-head {
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 @container page (max-width: 560px) {
   .dir-a .a-pf-exposure-bars li {
     grid-template-columns: minmax(0, 1fr) 56px 88px;
