@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.59.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.58.0...moneyplanner-saas-v0.59.0) (2026-08-23)
+
+
+### Features
+
+* **portfolio:** compare rolling benchmark windows ([5905062](https://github.com/pablesite/moneyplanner-saas/commit/59050627ed9b36a6126a8aa0e84c7b906dff57b9))
+* **portfolio:** show advanced position risk ([7c109b1](https://github.com/pablesite/moneyplanner-saas/commit/7c109b1371193d55ae29a50ecc20fa9e0bfa025a))
+
+
+### Bug Fixes
+
+* **portfolio:** align benchmark comparison ([a030276](https://github.com/pablesite/moneyplanner-saas/commit/a0302760b393b1c1fe6b824c0a54306ab0406594))
+* **portfolio:** clarify contributed capital periods ([c49a3b8](https://github.com/pablesite/moneyplanner-saas/commit/c49a3b8e325fca5e78a0d4bcd6092ea1d9d7a86f))
+* **portfolio:** display sharpe as a ratio ([7c40da5](https://github.com/pablesite/moneyplanner-saas/commit/7c40da500512098b6e39eb219688f5ed3325831c))
+* **portfolio:** group mobile summary metrics ([7f2fa53](https://github.com/pablesite/moneyplanner-saas/commit/7f2fa53cd11889f0be4e2ccb058fdd501b39575e))
+* **portfolio:** load risk scope in evolution ([161ec8d](https://github.com/pablesite/moneyplanner-saas/commit/161ec8dc1384ad68bbe08b7edcb1724dff0a9e8c))
+
 ## [0.58.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.57.0...moneyplanner-saas-v0.58.0) (2026-08-23)
 
 
