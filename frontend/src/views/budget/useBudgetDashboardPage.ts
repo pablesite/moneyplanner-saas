@@ -1378,11 +1378,23 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
           ? (summaryExecutedTotal ??
             Math.max(...group.rows.map((row) => row.categorizedLedgerExecuted ?? 0)))
           : group.ledgerDetectedTotal;
+        const ownershipScopedExecuted =
+          ownershipFilter.value === 'all'
+            ? null
+            : (accountingExecutionBuckets.value.expenseCategorizedByMonthTaxonomy.get(
+                budgetMonthTaxonomyKey(
+                  selectedExecutionMonth.value,
+                  group.categoryKey,
+                  group.subcategoryKey,
+                ),
+              ) ?? 0);
         const executedTotal = hasManualOverride
           ? manualOverrideTotal
-          : (summaryExecutedTotal ??
-            group.executedTotal +
-              (detectedLedgerTotal === group.ledgerDetectedTotal ? 0 : detectedLedgerTotal));
+          : ownershipScopedExecuted != null
+            ? ownershipScopedExecuted
+            : (summaryExecutedTotal ??
+              group.executedTotal +
+                (detectedLedgerTotal === group.ledgerDetectedTotal ? 0 : detectedLedgerTotal));
         return {
           ...group,
           ledgerDetectedTotal: detectedLedgerTotal,
