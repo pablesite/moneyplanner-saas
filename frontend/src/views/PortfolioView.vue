@@ -503,6 +503,7 @@ const heroValue = computed(() => {
 // MWR leads: it answers what the investor's own money did, which is the question the
 // hero is asked. TWR describes the assets and is kept beside it as context, not hidden.
 const headlineReturn = computed(() => pct(store.overview?.return.mwr_xirr));
+const headlineCumulativeReturn = computed(() => pct(store.overview?.return.mwr_cumulative));
 const returnTone = computed(() => (toNumber(store.overview?.return.mwr_xirr) >= 0 ? 'pos' : 'neg'));
 const assetAnnualizedReturn = computed(() => pct(store.performance?.return.twr_annualized));
 // Plain labels first, acronym only as a footnote: "MWR" and "TWR" said nothing on
@@ -1199,11 +1200,12 @@ watch(
                   <span v-if="refreshing" class="skel a-pf-skel-return"></span>
                   <strong v-else :class="returnTone">{{ headlineReturn }}</strong>
                   <span>
-                    ha rendido tu dinero, anualizado
+                    ha rendido tu dinero, anualizado · {{ headlineCumulativeReturn }} acumulada
                     <AInfoHint>
                       Lo que ha rendido <strong>el dinero que tú pusiste</strong>, teniendo en
                       cuenta cuándo lo pusiste: aportar justo antes de una subida no cuenta igual
-                      que aportar después. En la ficha técnica se llama MWR o TIR.
+                      que aportar después. La cifra acumulada es el equivalente de esa TIR durante
+                      el periodo seleccionado. En la ficha técnica se llama MWR o TIR.
                     </AInfoHint>
                   </span>
                 </div>
