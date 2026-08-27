@@ -1231,49 +1231,6 @@ watch(
           </div>
         </section>
 
-        <section class="sect a-pf-alerts-section" aria-label="Atención de cartera">
-          <ASectHead
-            eyebrow="Atención"
-            title="Lo que merece una decisión"
-            subtitle="Señales de datos, estructura y operaciones aún sin cerrar."
-          />
-          <AState v-if="alertsLoading" status="loading" layout="inline"
-            >Comprobando la cartera…</AState
-          >
-          <AState v-else-if="alertsError" status="error" layout="inline">
-            {{ alertsError }}
-            <AButton size="sm" variant="ghost" @click="loadAlerts">Reintentar</AButton>
-          </AState>
-          <AState v-else-if="!alerts?.alerts.length" status="success" layout="inline"
-            >No hay incidencias accionables en la cartera.</AState
-          >
-          <div v-else class="a-pf-alert-groups">
-            <div v-for="group in alertGroups" :key="group.key" class="a-pf-alert-group">
-              <p class="a-pf-alert-group-label">{{ group.label }}</p>
-              <ul class="a-pf-alert-list">
-                <li v-for="alert in group.alerts" :key="alert.code" class="a-pf-alert-row">
-                  <span class="a-pf-alert-severity" :class="`is-${alert.severity}`">
-                    {{
-                      alert.severity === 'critical'
-                        ? 'Crítica'
-                        : alert.severity === 'warning'
-                          ? 'Revisar'
-                          : 'Info'
-                    }}
-                  </span>
-                  <div>
-                    <strong>{{ alert.title }}</strong>
-                    <p>{{ alert.detail }}</p>
-                  </div>
-                  <AButton size="sm" variant="ghost" @click="handleAlertAction(alert.action)">
-                    {{ alertActionLabel(alert) }}
-                  </AButton>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
         <section class="sect a-pf-composition-section">
           <ASectHead
             eyebrow="Composición"
@@ -1341,6 +1298,49 @@ watch(
                   </li>
                 </ul>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sect a-pf-alerts-section" aria-label="Atención de cartera">
+          <ASectHead
+            eyebrow="Atención"
+            title="Lo que merece una decisión"
+            subtitle="Señales de datos, estructura y operaciones aún sin cerrar."
+          />
+          <AState v-if="alertsLoading" status="loading" layout="inline"
+            >Comprobando la cartera…</AState
+          >
+          <AState v-else-if="alertsError" status="error" layout="inline">
+            {{ alertsError }}
+            <AButton size="sm" variant="ghost" @click="loadAlerts">Reintentar</AButton>
+          </AState>
+          <AState v-else-if="!alerts?.alerts.length" status="success" layout="inline"
+            >No hay incidencias accionables en la cartera.</AState
+          >
+          <div v-else class="a-pf-alert-groups">
+            <div v-for="group in alertGroups" :key="group.key" class="a-pf-alert-group">
+              <p class="a-pf-alert-group-label">{{ group.label }}</p>
+              <ul class="a-pf-alert-list">
+                <li v-for="alert in group.alerts" :key="alert.code" class="a-pf-alert-row">
+                  <span class="a-pf-alert-severity" :class="`is-${alert.severity}`">
+                    {{
+                      alert.severity === 'critical'
+                        ? 'Crítica'
+                        : alert.severity === 'warning'
+                          ? 'Revisar'
+                          : 'Info'
+                    }}
+                  </span>
+                  <div>
+                    <strong>{{ alert.title }}</strong>
+                    <p>{{ alert.detail }}</p>
+                  </div>
+                  <AButton size="sm" variant="ghost" @click="handleAlertAction(alert.action)">
+                    {{ alertActionLabel(alert) }}
+                  </AButton>
+                </li>
+              </ul>
             </div>
           </div>
         </section>
