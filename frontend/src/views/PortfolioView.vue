@@ -503,6 +503,7 @@ const heroValue = computed(() => {
 // MWR leads: it answers what the investor's own money did, which is the question the
 // hero is asked. TWR describes the assets and is kept beside it as context, not hidden.
 const headlineReturn = computed(() => pct(store.overview?.return.mwr_xirr));
+const headlineCumulativeReturn = computed(() => pct(store.overview?.return.mwr_cumulative));
 const returnTone = computed(() => (toNumber(store.overview?.return.mwr_xirr) >= 0 ? 'pos' : 'neg'));
 const assetAnnualizedReturn = computed(() => pct(store.performance?.return.twr_annualized));
 // Plain labels first, acronym only as a footnote: "MWR" and "TWR" said nothing on
@@ -1199,11 +1200,12 @@ watch(
                   <span v-if="refreshing" class="skel a-pf-skel-return"></span>
                   <strong v-else :class="returnTone">{{ headlineReturn }}</strong>
                   <span>
-                    ha rendido tu dinero, anualizado
+                    ha rendido tu dinero, anualizado · {{ headlineCumulativeReturn }} acumulada
                     <AInfoHint>
                       Lo que ha rendido <strong>el dinero que tú pusiste</strong>, teniendo en
                       cuenta cuándo lo pusiste: aportar justo antes de una subida no cuenta igual
-                      que aportar después. En la ficha técnica se llama MWR o TIR.
+                      que aportar después. La cifra acumulada es el equivalente de esa TIR durante
+                      el periodo seleccionado. En la ficha técnica se llama MWR o TIR.
                     </AInfoHint>
                   </span>
                 </div>
@@ -1228,49 +1230,6 @@ watch(
                 </AInfoHint>
               </template>
             </AKpiBand>
-          </div>
-        </section>
-
-        <section class="sect a-pf-alerts-section" aria-label="Atención de cartera">
-          <ASectHead
-            eyebrow="Atención"
-            title="Lo que merece una decisión"
-            subtitle="Señales de datos, estructura y operaciones aún sin cerrar."
-          />
-          <AState v-if="alertsLoading" status="loading" layout="inline"
-            >Comprobando la cartera…</AState
-          >
-          <AState v-else-if="alertsError" status="error" layout="inline">
-            {{ alertsError }}
-            <AButton size="sm" variant="ghost" @click="loadAlerts">Reintentar</AButton>
-          </AState>
-          <AState v-else-if="!alerts?.alerts.length" status="success" layout="inline"
-            >No hay incidencias accionables en la cartera.</AState
-          >
-          <div v-else class="a-pf-alert-groups">
-            <div v-for="group in alertGroups" :key="group.key" class="a-pf-alert-group">
-              <p class="a-pf-alert-group-label">{{ group.label }}</p>
-              <ul class="a-pf-alert-list">
-                <li v-for="alert in group.alerts" :key="alert.code" class="a-pf-alert-row">
-                  <span class="a-pf-alert-severity" :class="`is-${alert.severity}`">
-                    {{
-                      alert.severity === 'critical'
-                        ? 'Crítica'
-                        : alert.severity === 'warning'
-                          ? 'Revisar'
-                          : 'Info'
-                    }}
-                  </span>
-                  <div>
-                    <strong>{{ alert.title }}</strong>
-                    <p>{{ alert.detail }}</p>
-                  </div>
-                  <AButton size="sm" variant="ghost" @click="handleAlertAction(alert.action)">
-                    {{ alertActionLabel(alert) }}
-                  </AButton>
-                </li>
-              </ul>
-            </div>
           </div>
         </section>
 
@@ -1341,6 +1300,49 @@ watch(
                   </li>
                 </ul>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sect a-pf-alerts-section" aria-label="Atención de cartera">
+          <ASectHead
+            eyebrow="Atención"
+            title="Lo que merece una decisión"
+            subtitle="Señales de datos, estructura y operaciones aún sin cerrar."
+          />
+          <AState v-if="alertsLoading" status="loading" layout="inline"
+            >Comprobando la cartera…</AState
+          >
+          <AState v-else-if="alertsError" status="error" layout="inline">
+            {{ alertsError }}
+            <AButton size="sm" variant="ghost" @click="loadAlerts">Reintentar</AButton>
+          </AState>
+          <AState v-else-if="!alerts?.alerts.length" status="success" layout="inline"
+            >No hay incidencias accionables en la cartera.</AState
+          >
+          <div v-else class="a-pf-alert-groups">
+            <div v-for="group in alertGroups" :key="group.key" class="a-pf-alert-group">
+              <p class="a-pf-alert-group-label">{{ group.label }}</p>
+              <ul class="a-pf-alert-list">
+                <li v-for="alert in group.alerts" :key="alert.code" class="a-pf-alert-row">
+                  <span class="a-pf-alert-severity" :class="`is-${alert.severity}`">
+                    {{
+                      alert.severity === 'critical'
+                        ? 'Crítica'
+                        : alert.severity === 'warning'
+                          ? 'Revisar'
+                          : 'Info'
+                    }}
+                  </span>
+                  <div>
+                    <strong>{{ alert.title }}</strong>
+                    <p>{{ alert.detail }}</p>
+                  </div>
+                  <AButton size="sm" variant="ghost" @click="handleAlertAction(alert.action)">
+                    {{ alertActionLabel(alert) }}
+                  </AButton>
+                </li>
+              </ul>
             </div>
           </div>
         </section>

@@ -213,12 +213,15 @@ describe('useBudgetDashboardPage · filtro por titularidad en gastos', () => {
     expenseEntries.value = [expenseEntry({ owner: 'Compartido (Pablo 50% / Ana 50%)' })];
 
     const wrapper = await mountDashboard();
+    wrapper.vm.selectedExecutionMonth = 1;
+    await wrapper.vm.$nextTick();
 
     expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(200, 2);
 
     wrapper.vm.ownershipFilter = 'Pablo';
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.expenseExecutionYtdTotals.executedTotal).toBeCloseTo(100, 2);
+    expect(wrapper.vm.selectedExpenseMonthExecuted).toBeCloseTo(100, 2);
 
     wrapper.vm.ownershipFilter = 'Ana';
     await wrapper.vm.$nextTick();
