@@ -98,7 +98,8 @@ repayments. Ledger account type separates principal from interest; the detailed 
 `real_estate_formation`, `tangible_asset_purchases` and `debt_principal_repayment`.
 Within `ownership_settlement.accounts`, automatic credit-card rows have `role: "credit_card"`,
 `asset_id: null` and an additive `liability_id`; they are balance positions and never recommendation
-endpoints.
+endpoints. Automatic EUR investment rows use `role: "investment_position"` or
+`"investment_cash"`, retain their `asset_id` and are likewise never recommendation endpoints.
 `liquidity_adjustments` lists posted `adjustment` entries within the liquidity
 perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with

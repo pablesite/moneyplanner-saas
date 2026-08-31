@@ -103,7 +103,9 @@ export type OwnershipSettlement = {
       | 'personal_destination'
       | 'allocation_destination'
       | 'physical_cash'
-      | 'credit_card';
+      | 'credit_card'
+      | 'investment_position'
+      | 'investment_cash';
     ownership_id: number | null;
     opening: string;
     physical_delta: string;
