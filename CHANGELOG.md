@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.60.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.59.0...moneyplanner-saas-v0.60.0) (2026-08-31)
+
+
+### Features
+
+* **settlement:** expose manual operating reserve adjustment ([e89cb70](https://github.com/pablesite/moneyplanner-saas/commit/e89cb70efd0f7a356c6a22224f6536b7f0d2cadc))
+
+
+### Bug Fixes
+
+* **budget:** select temporary commitment funds ([ee3c824](https://github.com/pablesite/moneyplanner-saas/commit/ee3c82421046e8a0864fc908d1978c6fe404c83d))
+* **monthly-close:** expose settlement rebaseline flow ([227ce55](https://github.com/pablesite/moneyplanner-saas/commit/227ce55039a98c5d5982dea0221d2ec7e77772b2))
+* **monthly-close:** present credit card settlement balances ([48c8972](https://github.com/pablesite/moneyplanner-saas/commit/48c897235608ddde6224b4ee6d0ee6a7740bb3a9))
+* **monthly-close:** reserve individual expenses personally ([7606e24](https://github.com/pablesite/moneyplanner-saas/commit/7606e24ac4e0c3c30c57595f7c5f82f732e5b595))
+* **monthly-close:** show investment settlement positions ([219c1bd](https://github.com/pablesite/moneyplanner-saas/commit/219c1bd156188c74e6e0d9dc330b9092c55f9b5f))
+* **portfolio:** prioritize annualized asset return ([aac3561](https://github.com/pablesite/moneyplanner-saas/commit/aac3561ff10452c05732a5841ffa896352467447))
+* **settlement:** allow negative reserve adjustment on mobile ([86109cc](https://github.com/pablesite/moneyplanner-saas/commit/86109cc104480dee670ee3b3fb18ce5557044b89))
+
 ## [0.59.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.58.0...moneyplanner-saas-v0.59.0) (2026-08-23)
 
 
