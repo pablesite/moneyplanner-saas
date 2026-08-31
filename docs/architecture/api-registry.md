@@ -82,6 +82,7 @@ Core settlement execution endpoints after explicit confirmation.
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET/PUT` | `/api/budget/settlement/configuration/` | Reads or atomically replaces the disabled profile's participating accounts and zero-sum opening adjustments. |
+| `PUT` | `/api/budget/settlement/reserve-adjustment/` | Saves the signed manual adjustment to the calculated shared operating reserve; the next preview recalculates its transfers without changing the budget. |
 | `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M&balance_date=YYYY-MM-DD` | Returns blockers, warnings, ownership coverage and per-wallet reconciliation for the exact optional activation date without changing balances. |
 | `POST` | `/api/budget/settlement/activate/` | Activates a ready profile from the requested first included `start_date`; Core captures the baseline on the preceding day and rejects silent date changes. |
 | `POST` | `/api/budget/settlement/rebaseline/` | Rebuilds the opening baseline, zero-sum economic adjustments and explicit wallet-normalization links while no finalized `ready` settlement exists. |

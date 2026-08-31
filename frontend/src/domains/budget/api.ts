@@ -10,6 +10,7 @@ import type {
   SettlementConfigurationWrite,
   SettlementReadiness,
   SettlementRebaselineWrite,
+  SettlementReserveAdjustmentWrite,
 } from './settlementTypes';
 
 export const budgetApi = coreApi;
@@ -71,6 +72,16 @@ export async function saveSettlementConfiguration(
 ): Promise<SettlementConfiguration> {
   const response = await coreApi.put<SettlementConfiguration>(
     '/api/budget/settlement/configuration/',
+    payload,
+  );
+  return response.data;
+}
+
+export async function saveOperatingReserveAdjustment(
+  payload: SettlementReserveAdjustmentWrite,
+): Promise<SettlementConfiguration> {
+  const response = await coreApi.put<SettlementConfiguration>(
+    '/api/budget/settlement/reserve-adjustment/',
     payload,
   );
   return response.data;

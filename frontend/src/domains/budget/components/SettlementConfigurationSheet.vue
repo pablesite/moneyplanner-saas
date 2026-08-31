@@ -10,6 +10,7 @@ import {
   getSettlementConfiguration,
   getSettlementReadiness,
   rebaselineSettlement,
+  saveOperatingReserveAdjustment,
   saveSettlementConfiguration,
 } from '@/domains/budget/api';
 import type {
@@ -46,6 +47,7 @@ const form = reactive({
   physicalBalances: {} as Record<number, string>,
   walletAdjustments: {} as Record<string, string>,
   normalizationTransactionIds: [] as number[],
+  operatingReserveAdjustment: '0',
 });
 
 const adults = computed(() => people.activeAdults);
@@ -141,6 +143,7 @@ function hydrate(next: SettlementConfiguration): void {
   form.normalizationTransactionIds = next.normalization_transactions.map(
     (row) => row.transaction_id,
   );
+  form.operatingReserveAdjustment = next.operating_reserve_adjustment ?? '0';
   dirty.value = false;
   rebaselineMode.value = false;
 }
@@ -246,6 +249,22 @@ async function save(): Promise<void> {
   try {
     hydrate(await saveSettlementConfiguration(buildPayload()));
     await refreshReadiness();
+  } catch (reason) {
+    error.value = toBudgetErrorMessage(reason);
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function saveReserveAdjustment(): Promise<void> {
+  saving.value = true;
+  error.value = null;
+  try {
+    const next = await saveOperatingReserveAdjustment({
+      operating_reserve_adjustment: form.operatingReserveAdjustment.replace(',', '.'),
+    });
+    hydrate(next);
+    emit('changed', next);
   } catch (reason) {
     error.value = toBudgetErrorMessage(reason);
   } finally {
@@ -453,6 +472,27 @@ function requestClose(): void {
               }
             "
           />
+        </section>
+
+        <section v-if="configuration.is_enabled" class="mc-settlement-section">
+          <p class="eyebrow">Reserva manual</p>
+          <h4>Ajuste sobre la reserva calculada de Kutxa</h4>
+          <p class="subtle">
+            Usa un importe positivo para retener más efectivo o negativo para retener menos. No
+            modifica el presupuesto y las transferencias se recalculan al guardar.
+          </p>
+          <label class="mc-settlement-field">
+            <span>Ajuste manual ({{ currencySymbol(form.baseCurrency) }})</span>
+            <input
+              v-model="form.operatingReserveAdjustment"
+              class="input"
+              inputmode="decimal"
+              placeholder="0,00"
+            />
+          </label>
+          <AButton :loading="saving" size="sm" @click="saveReserveAdjustment">
+            Recalcular reserva
+          </AButton>
         </section>
 
         <section class="mc-settlement-section">

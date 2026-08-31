@@ -39,6 +39,7 @@ export type SettlementConfiguration = {
   start_date: string | null;
   can_rebaseline: boolean;
   base_currency: string;
+  operating_reserve_adjustment: string;
   readiness_status: 'not_checked' | 'ready' | 'blocked';
   readiness_checked_at: string | null;
   accounts: SettlementAccount[];
@@ -78,6 +79,10 @@ export type SettlementRebaselineWrite = {
   wallet_balances: { asset_id: number; accepted_physical_balance: string }[];
   opening_adjustments: SettlementConfigurationWrite['opening_adjustments'];
   normalization_transaction_ids: number[];
+};
+
+export type SettlementReserveAdjustmentWrite = {
+  operating_reserve_adjustment: string;
 };
 
 export type SettlementReadinessItem = {
