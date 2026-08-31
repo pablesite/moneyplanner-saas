@@ -535,8 +535,9 @@ const heroKpis = computed(() => [
   },
   {
     label: 'Rendimiento de tus activos',
-    value: pct(store.performance?.return.nominal),
-    meta: 'acumulada',
+    value: assetAnnualizedReturn.value,
+    meta: 'anualizado',
+    cellClass: toNumber(store.performance?.return.twr_annualized) >= 0 ? 'pos' : 'neg',
   },
 ]);
 
@@ -1200,7 +1201,7 @@ watch(
                   <span v-if="refreshing" class="skel a-pf-skel-return"></span>
                   <strong v-else :class="returnTone">{{ headlineReturn }}</strong>
                   <span>
-                    ha rendido tu dinero, anualizado · {{ headlineCumulativeReturn }} acumulada
+                    TIR anualizada · {{ headlineCumulativeReturn }} acumulada
                     <AInfoHint>
                       Lo que ha rendido <strong>el dinero que tú pusiste</strong>, teniendo en
                       cuenta cuándo lo pusiste: aportar justo antes de una subida no cuenta igual
@@ -1217,15 +1218,14 @@ watch(
             </AHero>
             <AKpiBand :items="heroKpis" :pending="refreshing">
               <template #meta-2>
-                {{ assetAnnualizedReturn }} anual ·
+                {{ pct(store.performance.return.twr) }} acumulada ·
                 {{
                   returnLabel(store.performance.return.method, store.performance.return.estimated)
                 }}
                 <AInfoHint>
-                  La cifra principal es todo lo que han subido o bajado tus activos durante el
-                  periodo seleccionado, <strong>al margen de cuándo pusieras el dinero</strong>. La
-                  cifra anual es la tasa compuesta equivalente de ese mismo resultado: al cambiar el
-                  periodo puede cambiar, aunque no haya operaciones nuevas. En la ficha técnica se
+                  La cifra principal es la tasa anual compuesta equivalente del rendimiento de tus
+                  activos. El acumulado es todo lo que han subido o bajado durante el periodo,
+                  <strong>al margen de cuándo pusieras el dinero</strong>. En la ficha técnica se
                   llama TWR.
                 </AInfoHint>
               </template>

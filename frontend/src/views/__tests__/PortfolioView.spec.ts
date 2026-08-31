@@ -61,7 +61,7 @@ const performance = {
     twr: '0.10',
     mwr_xirr: '0.11',
     mwr_cumulative: '0.11',
-    twr_annualized: '0.10',
+    twr_annualized: '0.08',
     method: 'twr',
     estimated: false,
   },
@@ -229,7 +229,9 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('12.000,00');
     expect(wrapper.text()).toContain('Rendimiento de tus activos');
     expect(wrapper.text()).toContain('TWR exacta');
-    expect(wrapper.text()).toContain('anualizado');
+    expect(wrapper.text()).toMatch(/8,0\s+%/);
+    expect(wrapper.text()).toMatch(/10,0\s+%\s+acumulada/);
+    expect(wrapper.text()).toContain('TIR anualizada');
     expect(wrapper.text()).toMatch(/11,0\s+%\s+acumulada/);
     expect(wrapper.text()).toContain('Dónde está invertida');
     // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la

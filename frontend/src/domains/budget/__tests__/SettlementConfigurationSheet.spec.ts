@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
   getConfiguration: vi.fn().mockResolvedValue({
     is_enabled: false,
     activation_date: null,
+    baseline_date: null,
+    start_date: null,
+    can_rebaseline: true,
     base_currency: 'EUR',
     readiness_status: 'not_checked',
     readiness_checked_at: null,
@@ -68,12 +71,16 @@ const mocks = vi.hoisted(() => ({
     ],
     opening_adjustments: [],
     opening_balances: [],
+    normalization_transactions: [],
   }),
   saveConfiguration: vi.fn(),
+  rebaseline: vi.fn(),
   getReadiness: vi.fn().mockResolvedValue({
     status: 'blocked',
     is_enabled: false,
     activation_date: null,
+    baseline_date: '2026-08-14',
+    start_date: null,
     base_currency: 'EUR',
     target_period: { year: 2026, month: 8 },
     blockers: [{ code: 'income_missing_ownership', entry_id: 47, name: 'Dividendos' }],
@@ -84,13 +91,14 @@ const mocks = vi.hoisted(() => ({
         asset_id: 87,
         asset_name: 'Monedero Compartido',
         currency: 'EUR',
-        balance_date: '2026-08-15',
+        balance_date: '2026-08-14',
         modeled_balance: '178.72',
         accepted_physical_balance: '178.72',
         difference: '0.00',
         normalization_recorded: false,
       },
     ],
+    wallet_normalization_candidates: [],
     allocation_coverage: [],
   }),
 }));
@@ -177,6 +185,7 @@ vi.mock('@/domains/budget/api', () => ({
   disableSettlement: vi.fn(),
   getSettlementConfiguration: mocks.getConfiguration,
   getSettlementReadiness: mocks.getReadiness,
+  rebaselineSettlement: mocks.rebaseline,
   saveSettlementConfiguration: mocks.saveConfiguration,
   toBudgetErrorMessage: (reason: unknown) => String(reason),
 }));
@@ -200,8 +209,8 @@ describe('SettlementConfigurationSheet', () => {
     await flushPromises();
 
     expect(mocks.refreshAll).toHaveBeenCalledOnce();
-    expect(mocks.getReadiness).toHaveBeenCalledWith(2026, 8, '2026-08-15');
-    expect(document.body.textContent).toContain('Saldo contable a 15/8/2026: 178,72 €');
+    expect(mocks.getReadiness).toHaveBeenCalledWith(2026, 8, '2026-08-14');
+    expect(document.body.textContent).toContain('Saldo contable a 14/8/2026: 178,72 €');
     expect(document.body.textContent).toContain('Completa estos puntos antes de activar');
     expect(document.body.textContent).toContain('Abrir partida');
     expect(document.body.textContent).toContain('Dividendos');
@@ -211,7 +220,7 @@ describe('SettlementConfigurationSheet', () => {
     });
   });
 
-  it('keeps the chosen activation date when saving and checks that exact day', async () => {
+  it('keeps the first included day and checks the previous baseline day', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-15T12:00:00'));
     mocks.saveConfiguration.mockImplementation(async () => mocks.getConfiguration());
@@ -235,7 +244,56 @@ describe('SettlementConfigurationSheet', () => {
     await flushPromises();
 
     expect(mocks.saveConfiguration).toHaveBeenCalledOnce();
-    expect(mocks.getReadiness).toHaveBeenLastCalledWith(2026, 8, '2026-08-20');
+    expect(mocks.getReadiness).toHaveBeenLastCalledWith(2026, 8, '2026-08-19');
     expect(dateInput!.value).toBe('2026-08-20');
+  });
+
+  it('requires confirmation and sends an explicit rebaseline payload', async () => {
+    const activeConfiguration = {
+      ...(await mocks.getConfiguration()),
+      is_enabled: true,
+      activation_date: '2026-08-15',
+      baseline_date: '2026-08-15',
+      start_date: '2026-08-16',
+      can_rebaseline: true,
+      opening_balances: [
+        {
+          account_id: 10,
+          asset_id: 87,
+          member_id: 1,
+          member_name: 'Pablo',
+          amount: '178.72',
+          currency: 'EUR',
+        },
+      ],
+    };
+    mocks.getConfiguration.mockResolvedValue(activeConfiguration);
+    mocks.rebaseline.mockResolvedValue(activeConfiguration);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mount(SettlementConfigurationSheet, {
+      attachTo: document.body,
+      props: { open: true, year: 2026, month: 8 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await flushPromises();
+
+    const rebaselineButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Recalibrar apertura'),
+    );
+    rebaselineButton!.click();
+    await flushPromises();
+    const confirmButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Confirmar recalibración'),
+    );
+    confirmButton!.click();
+    await flushPromises();
+
+    expect(window.confirm).toHaveBeenCalledOnce();
+    expect(mocks.rebaseline).toHaveBeenCalledWith({
+      start_date: '2026-08-16',
+      wallet_balances: [{ asset_id: 87, accepted_physical_balance: '178.72' }],
+      opening_adjustments: [],
+      normalization_transaction_ids: [],
+    });
   });
 });

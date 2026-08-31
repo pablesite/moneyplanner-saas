@@ -82,8 +82,10 @@ Core settlement execution endpoints after explicit confirmation.
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET/PUT` | `/api/budget/settlement/configuration/` | Reads or atomically replaces the disabled profile's participating accounts and zero-sum opening adjustments. |
+| `PUT` | `/api/budget/settlement/reserve-adjustment/` | Saves the signed manual adjustment to the calculated shared operating reserve; the next preview recalculates its transfers without changing the budget. |
 | `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M&balance_date=YYYY-MM-DD` | Returns blockers, warnings, ownership coverage and per-wallet reconciliation for the exact optional activation date without changing balances. |
-| `POST` | `/api/budget/settlement/activate/` | Activates a ready profile and captures its immutable member/account opening baseline; repeated calls are idempotent. |
+| `POST` | `/api/budget/settlement/activate/` | Activates a ready profile from the requested first included `start_date`; Core captures the baseline on the preceding day and rejects silent date changes. |
+| `POST` | `/api/budget/settlement/rebaseline/` | Rebuilds the opening baseline, zero-sum economic adjustments and explicit wallet-normalization links while no finalized `ready` settlement exists. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/apply/` | Atomically applies every remaining non-cancelled recommendation for a finalized close. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |
@@ -95,6 +97,12 @@ eligible income excludes asset sales; `financial_savings` is retained cash after
 contributions, while `net_savings` also includes real-estate/tangible formation and debt-principal
 repayments. Ledger account type separates principal from interest; the detailed formation fields are
 `real_estate_formation`, `tangible_asset_purchases` and `debt_principal_repayment`.
+Within `ownership_settlement.accounts`, automatic credit-card rows have `role: "credit_card"`,
+`asset_id: null` and an additive `liability_id`; they are balance positions and never recommendation
+endpoints. Automatic EUR investment rows use `role: "investment_position"` or
+`"investment_cash"`, retain their `asset_id` and are likewise never recommendation endpoints.
+Settlement reserve rows expose additive `funding_mode: "held"` when a temporary commitment is
+already retained in an allocation-destination fund; otherwise `funding_mode` is `"top_up"`.
 `liquidity_adjustments` lists posted `adjustment` entries within the liquidity
 perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with
