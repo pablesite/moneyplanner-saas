@@ -83,7 +83,8 @@ Core settlement execution endpoints after explicit confirmation.
 |--------|-------|-------------|
 | `GET/PUT` | `/api/budget/settlement/configuration/` | Reads or atomically replaces the disabled profile's participating accounts and zero-sum opening adjustments. |
 | `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M&balance_date=YYYY-MM-DD` | Returns blockers, warnings, ownership coverage and per-wallet reconciliation for the exact optional activation date without changing balances. |
-| `POST` | `/api/budget/settlement/activate/` | Activates a ready profile and captures its immutable member/account opening baseline; repeated calls are idempotent. |
+| `POST` | `/api/budget/settlement/activate/` | Activates a ready profile from the requested first included `start_date`; Core captures the baseline on the preceding day and rejects silent date changes. |
+| `POST` | `/api/budget/settlement/rebaseline/` | Rebuilds the opening baseline, zero-sum economic adjustments and explicit wallet-normalization links while no finalized `ready` settlement exists. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/apply/` | Atomically applies every remaining non-cancelled recommendation for a finalized close. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |

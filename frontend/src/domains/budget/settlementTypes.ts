@@ -26,9 +26,18 @@ export type SettlementOpeningAdjustment = {
   note: string;
 };
 
+export type SettlementWalletNormalization = {
+  transaction_id: number;
+  booking_date: string;
+  description: string;
+};
+
 export type SettlementConfiguration = {
   is_enabled: boolean;
   activation_date: string | null;
+  baseline_date: string | null;
+  start_date: string | null;
+  can_rebaseline: boolean;
   base_currency: string;
   readiness_status: 'not_checked' | 'ready' | 'blocked';
   readiness_checked_at: string | null;
@@ -42,6 +51,7 @@ export type SettlementConfiguration = {
     amount: string;
     currency: string;
   }[];
+  normalization_transactions: SettlementWalletNormalization[];
 };
 
 export type SettlementConfigurationWrite = {
@@ -60,6 +70,14 @@ export type SettlementConfigurationWrite = {
     kind: 'wallet_normalization';
     note?: string;
   }[];
+  normalization_transaction_ids?: number[];
+};
+
+export type SettlementRebaselineWrite = {
+  start_date: string;
+  wallet_balances: { asset_id: number; accepted_physical_balance: string }[];
+  opening_adjustments: SettlementConfigurationWrite['opening_adjustments'];
+  normalization_transaction_ids: number[];
 };
 
 export type SettlementReadinessItem = {
@@ -79,15 +97,23 @@ export type SettlementWalletReconciliation = {
   normalization_recorded: boolean;
 };
 
+export type SettlementWalletNormalizationCandidate = SettlementWalletNormalization & {
+  selected: boolean;
+  entries: { asset_id: number; asset_name: string; amount: string }[];
+};
+
 export type SettlementReadiness = {
   status: 'ready' | 'blocked';
   is_enabled: boolean;
   activation_date: string | null;
+  baseline_date: string;
+  start_date: string | null;
   base_currency: string;
   target_period: { year: number; month: number };
   blockers: SettlementReadinessItem[];
   warnings: SettlementReadinessItem[];
   wallet_reconciliations: SettlementWalletReconciliation[];
+  wallet_normalization_candidates: SettlementWalletNormalizationCandidate[];
   allocation_coverage: {
     ownership_id: number;
     allocation_basis: string;

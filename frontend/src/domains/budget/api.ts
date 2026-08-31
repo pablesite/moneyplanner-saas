@@ -9,6 +9,7 @@ import type {
   SettlementConfiguration,
   SettlementConfigurationWrite,
   SettlementReadiness,
+  SettlementRebaselineWrite,
 } from './settlementTypes';
 
 export const budgetApi = coreApi;
@@ -88,10 +89,20 @@ export async function getSettlementReadiness(
   return response.data;
 }
 
-export async function activateSettlement(activationDate: string): Promise<SettlementConfiguration> {
+export async function activateSettlement(startDate: string): Promise<SettlementConfiguration> {
   const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/activate/', {
-    activation_date: activationDate,
+    start_date: startDate,
   });
+  return response.data;
+}
+
+export async function rebaselineSettlement(
+  payload: SettlementRebaselineWrite,
+): Promise<SettlementConfiguration> {
+  const response = await coreApi.post<SettlementConfiguration>(
+    '/api/budget/settlement/rebaseline/',
+    payload,
+  );
   return response.data;
 }
 

@@ -69,6 +69,22 @@
   margin: 0;
 }
 
+.mc-settlement-normalizations {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.mc-settlement-normalizations .mc-settlement-check span {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mc-settlement-normalizations small {
+  color: var(--color-text-muted);
+}
+
 .mc-settlement-readiness ul {
   display: grid;
   gap: 6px;

@@ -10,6 +10,7 @@ import {
   getSettlementReadiness,
   getSettlementCandidates,
   reconcileSettlementRecommendation,
+  rebaselineSettlement,
   reverseSettlementRecommendation,
   saveSettlementConfiguration,
 } from '@/domains/budget/api';
@@ -45,10 +46,22 @@ describe('settlement api', () => {
     mocks.post.mockResolvedValue({ data: { is_enabled: true } });
 
     await activateSettlement('2026-08-01');
+    await rebaselineSettlement({
+      start_date: '2026-08-01',
+      wallet_balances: [],
+      opening_adjustments: [],
+      normalization_transaction_ids: [],
+    });
     await disableSettlement();
 
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/activate/', {
-      activation_date: '2026-08-01',
+      start_date: '2026-08-01',
+    });
+    expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/rebaseline/', {
+      start_date: '2026-08-01',
+      wallet_balances: [],
+      opening_adjustments: [],
+      normalization_transaction_ids: [],
     });
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/disable/');
   });

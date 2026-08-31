@@ -9,6 +9,7 @@ import {
   disableSettlement,
   getSettlementConfiguration,
   getSettlementReadiness,
+  rebaselineSettlement,
   saveSettlementConfiguration,
 } from '@/domains/budget/api';
 import type {
@@ -20,7 +21,7 @@ import type {
 } from '@/domains/budget/settlementTypes';
 import { toBudgetErrorMessage } from '@/domains/budget/api';
 import { currencySymbol, formatAmount } from '@/lib/format';
-import { parseIsoToDate } from '@/lib/dates';
+import { dateToIso, parseIsoToDate } from '@/lib/dates';
 
 const props = defineProps<{ open: boolean; year: number; month: number }>();
 const emit = defineEmits<{ close: []; changed: [configuration: SettlementConfiguration] }>();
@@ -33,16 +34,18 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref<string | null>(null);
 const dirty = ref(false);
+const rebaselineMode = ref(false);
 
 const form = reactive({
   baseCurrency: 'EUR',
-  activationDate: new Date().toISOString().slice(0, 10),
+  startDate: new Date().toISOString().slice(0, 10),
   operatingAssetId: '',
   personalAssetIds: {} as Record<number, string>,
   allocationAssetIds: [] as number[],
   walletAssetIds: [] as number[],
   physicalBalances: {} as Record<number, string>,
   walletAdjustments: {} as Record<string, string>,
+  normalizationTransactionIds: [] as number[],
 });
 
 const adults = computed(() => people.activeAdults);
@@ -84,6 +87,7 @@ function personalOptions(memberId: number): ASelectItem[] {
 
 const existingBaseline = computed(() => Boolean(configuration.value?.opening_balances.length));
 const readOnly = computed(() => Boolean(configuration.value?.is_enabled || existingBaseline.value));
+const baselineEditable = computed(() => !readOnly.value || rebaselineMode.value);
 const selectedAssetIds = computed(() => {
   const ids = new Set<number>();
   if (form.operatingAssetId) ids.add(Number(form.operatingAssetId));
@@ -112,7 +116,7 @@ const canSave = computed(() => {
 function hydrate(next: SettlementConfiguration): void {
   configuration.value = next;
   form.baseCurrency = next.base_currency;
-  if (next.activation_date) form.activationDate = next.activation_date;
+  if (next.start_date) form.startDate = next.start_date;
   form.operatingAssetId = String(
     next.accounts.find((row) => row.role === 'operating')?.asset_id ?? '',
   );
@@ -134,24 +138,31 @@ function hydrate(next: SettlementConfiguration): void {
   next.opening_adjustments.forEach((row) => {
     form.walletAdjustments[`${row.asset_id}:${row.member_id}`] = row.amount;
   });
+  form.normalizationTransactionIds = next.normalization_transactions.map(
+    (row) => row.transaction_id,
+  );
   dirty.value = false;
+  rebaselineMode.value = false;
 }
 
 function activationPeriod(): { year: number; month: number } {
-  const [year, month] = form.activationDate.split('-').map(Number);
+  const [year, month] = form.startDate.split('-').map(Number);
   if (Number.isInteger(year) && Number.isInteger(month) && month >= 1 && month <= 12) {
     return { year, month };
   }
   return { year: props.year, month: props.month };
 }
 
+function baselineDate(): string | undefined {
+  if (!form.startDate) return undefined;
+  const value = new Date(`${form.startDate}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() - 1);
+  return dateToIso(value);
+}
+
 async function refreshReadiness(): Promise<void> {
   const period = activationPeriod();
-  readiness.value = await getSettlementReadiness(
-    period.year,
-    period.month,
-    form.activationDate || undefined,
-  );
+  readiness.value = await getSettlementReadiness(period.year, period.month, baselineDate());
 }
 
 async function load(): Promise<void> {
@@ -220,7 +231,12 @@ function buildPayload(): SettlementConfigurationWrite {
       }))
       .filter((row) => Math.abs(Number(row.amount)) > 0.000001),
   );
-  return { base_currency: form.baseCurrency, accounts, opening_adjustments: openingAdjustments };
+  return {
+    base_currency: form.baseCurrency,
+    accounts,
+    opening_adjustments: openingAdjustments,
+    normalization_transaction_ids: form.normalizationTransactionIds,
+  };
 }
 
 async function save(): Promise<void> {
@@ -241,7 +257,48 @@ async function activate(): Promise<void> {
   saving.value = true;
   error.value = null;
   try {
-    const next = await activateSettlement(form.activationDate);
+    const next = await activateSettlement(form.startDate);
+    hydrate(next);
+    await refreshReadiness();
+    emit('changed', next);
+  } catch (reason) {
+    error.value = toBudgetErrorMessage(reason);
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function beginRebaseline(): Promise<void> {
+  if (!configuration.value?.can_rebaseline) return;
+  if (
+    !window.confirm(
+      'La recalibración sustituirá el saldo de apertura, pero conservará los movimientos y cierres históricos. ¿Continuar?',
+    )
+  ) {
+    return;
+  }
+  rebaselineMode.value = true;
+  readiness.value = null;
+  await refreshReadiness();
+}
+
+async function rebaseline(): Promise<void> {
+  if (!canSave.value) return;
+  saving.value = true;
+  error.value = null;
+  try {
+    const configurationPayload = buildPayload();
+    const next = await rebaselineSettlement({
+      start_date: form.startDate,
+      wallet_balances: configurationPayload.accounts
+        .filter((row) => row.role === 'physical_cash')
+        .map((row) => ({
+          asset_id: row.asset_id,
+          accepted_physical_balance: String(row.accepted_physical_balance),
+        })),
+      opening_adjustments: configurationPayload.opening_adjustments,
+      normalization_transaction_ids: form.normalizationTransactionIds,
+    });
     hydrate(next);
     await refreshReadiness();
     emit('changed', next);
@@ -322,9 +379,13 @@ function walletModeledBalance(assetId: number): unknown {
 }
 
 function walletBalanceDate(assetId: number): string {
-  const raw = walletReconciliation(assetId)?.balance_date ?? form.activationDate;
+  const raw = walletReconciliation(assetId)?.balance_date ?? baselineDate();
   if (!raw) return 'la fecha de activación';
   return new Intl.DateTimeFormat('es-ES').format(parseIsoToDate(raw));
+}
+
+function toggleNormalization(transactionId: number, enabled: boolean): void {
+  toggleId(form.normalizationTransactionIds, transactionId, enabled);
 }
 
 function formattedWalletAmount(assetId: number, value: unknown): string {
@@ -371,8 +432,8 @@ function requestClose(): void {
 
       <template v-else-if="configuration">
         <AState v-if="configuration.is_enabled" status="success" layout="inline">
-          Motor activo desde {{ configuration.activation_date }}. La configuración queda en solo
-          lectura para preservar la trazabilidad.
+          Motor activo desde {{ configuration.start_date }}. El saldo base corresponde al
+          {{ configuration.baseline_date }}.
         </AState>
         <AState v-else-if="existingBaseline" status="neutral" layout="inline">
           Existe un saldo de apertura. Puedes reactivar el motor, pero no reescribir su base.
@@ -469,7 +530,7 @@ function requestClose(): void {
                   v-model="form.physicalBalances[asset.id]"
                   class="input"
                   inputmode="decimal"
-                  :disabled="readOnly"
+                  :disabled="!baselineEditable"
                   @input="markDirty"
                 />
               </label>
@@ -480,7 +541,7 @@ function requestClose(): void {
                   class="input"
                   inputmode="decimal"
                   placeholder="0,00"
-                  :disabled="readOnly"
+                  :disabled="!baselineEditable"
                   @input="markDirty"
                 />
               </label>
@@ -491,6 +552,43 @@ function requestClose(): void {
                 0,00 {{ currencySymbol(asset.currency) }})
               </p>
             </template>
+          </div>
+          <div
+            v-if="readiness?.wallet_normalization_candidates.length"
+            class="mc-settlement-normalizations"
+          >
+            <h4>Transferencias que solo cerraron el sistema anterior</h4>
+            <p class="subtle">
+              Márcalas únicamente si no desplazaron efectivo: el motor conservará su fecha y las
+              usará para cerrar el desfase contable del monedero.
+            </p>
+            <label
+              v-for="candidate in readiness.wallet_normalization_candidates"
+              :key="candidate.transaction_id"
+              class="mc-settlement-check"
+            >
+              <input
+                type="checkbox"
+                :checked="form.normalizationTransactionIds.includes(candidate.transaction_id)"
+                :disabled="!baselineEditable"
+                @change="
+                  toggleNormalization(
+                    candidate.transaction_id,
+                    ($event.target as HTMLInputElement).checked,
+                  )
+                "
+              />
+              <span>
+                {{ candidate.booking_date }} · {{ candidate.description }}
+                <small>
+                  {{
+                    candidate.entries
+                      .map((entry) => `${entry.asset_name}: ${entry.amount}`)
+                      .join(' · ')
+                  }}
+                </small>
+              </span>
+            </label>
           </div>
         </section>
 
@@ -518,14 +616,18 @@ function requestClose(): void {
         </section>
 
         <label class="mc-settlement-field">
-          <span>Fecha de activación</span>
+          <span>Primer día incluido en la liquidación</span>
           <input
-            v-model="form.activationDate"
+            v-model="form.startDate"
             class="input"
             type="date"
-            :disabled="configuration.is_enabled"
+            :disabled="!baselineEditable"
             @input="markDirty"
+            @change="refreshReadiness"
           />
+          <small v-if="baselineDate()" class="subtle">
+            Los saldos de apertura se tomarán al {{ baselineDate() }}.
+          </small>
         </label>
       </template>
     </div>
@@ -546,6 +648,22 @@ function requestClose(): void {
         </AButton>
         <AButton
           v-if="configuration?.is_enabled"
+          variant="ghost"
+          :disabled="saving || !configuration.can_rebaseline || rebaselineMode"
+          @click="beginRebaseline"
+        >
+          Recalibrar apertura
+        </AButton>
+        <AButton
+          v-if="configuration?.is_enabled && rebaselineMode"
+          variant="primary"
+          :disabled="saving || !canSave"
+          @click="rebaseline"
+        >
+          Confirmar recalibración
+        </AButton>
+        <AButton
+          v-if="configuration?.is_enabled && !rebaselineMode"
           class="mc-danger-btn"
           :disabled="saving"
           @click="disable"
