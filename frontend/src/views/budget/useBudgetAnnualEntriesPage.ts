@@ -421,11 +421,15 @@ export function useBudgetAnnualEntriesPage() {
     () =>
       showSettlementFields.value &&
       annualExpenseForm.timeProfile !== 'one_off' &&
-      ['savings', 'investment'].includes(annualExpenseForm.cashflowRole),
+      ['savings', 'investment', 'temporary_commitment'].includes(annualExpenseForm.cashflowRole),
   );
   const settlementAccountOptions = computed(() => {
+    const eligibleRoles =
+      annualExpenseForm.cashflowRole === 'temporary_commitment'
+        ? ['operating', 'allocation_destination']
+        : ['allocation_destination'];
     return (settlementConfiguration.value?.accounts ?? [])
-      .filter((account) => account.role === 'allocation_destination')
+      .filter((account) => eligibleRoles.includes(account.role))
       .map((account) => ({ value: String(account.id), label: account.asset_name }));
   });
 

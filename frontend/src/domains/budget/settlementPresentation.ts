@@ -64,6 +64,9 @@ function buildDestinations(
           personal_destination: 'Cuenta personal',
           allocation_destination: 'Asignación prevista',
           physical_cash: 'Efectivo físico',
+          credit_card: 'Tarjeta de crédito',
+          investment_position: 'Posición de inversión',
+          investment_cash: 'Efectivo de bróker',
         }[account.role],
         ownership: allocationLabel(
           account.ownership_id == null ? undefined : allocationById.get(account.ownership_id),
@@ -74,7 +77,12 @@ function buildDestinations(
         reasons: relatedReserves.map((reserve) => reserve.name),
       };
     })
-    .filter((row) => row.reasons.length > 0 || Math.abs(row.movement) >= 0.005);
+    .filter(
+      (row) =>
+        ['credit_card', 'investment_position', 'investment_cash'].includes(row.role) ||
+        row.reasons.length > 0 ||
+        Math.abs(row.movement) >= 0.005,
+    );
 }
 
 function buildRecommendations(
