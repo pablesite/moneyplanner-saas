@@ -95,9 +95,15 @@ export type OwnershipSettlement = {
   }>;
   accounts?: Array<{
     account_id: number;
-    asset_id: number;
+    asset_id: number | null;
+    liability_id?: number | null;
     name: string;
-    role: 'operating' | 'personal_destination' | 'allocation_destination' | 'physical_cash';
+    role:
+      | 'operating'
+      | 'personal_destination'
+      | 'allocation_destination'
+      | 'physical_cash'
+      | 'credit_card';
     ownership_id: number | null;
     opening: string;
     physical_delta: string;

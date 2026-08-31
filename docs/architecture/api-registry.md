@@ -96,6 +96,9 @@ eligible income excludes asset sales; `financial_savings` is retained cash after
 contributions, while `net_savings` also includes real-estate/tangible formation and debt-principal
 repayments. Ledger account type separates principal from interest; the detailed formation fields are
 `real_estate_formation`, `tangible_asset_purchases` and `debt_principal_repayment`.
+Within `ownership_settlement.accounts`, automatic credit-card rows have `role: "credit_card"`,
+`asset_id: null` and an additive `liability_id`; they are balance positions and never recommendation
+endpoints.
 `liquidity_adjustments` lists posted `adjustment` entries within the liquidity
 perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with
