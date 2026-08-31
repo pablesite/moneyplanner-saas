@@ -100,6 +100,8 @@ Within `ownership_settlement.accounts`, automatic credit-card rows have `role: "
 `asset_id: null` and an additive `liability_id`; they are balance positions and never recommendation
 endpoints. Automatic EUR investment rows use `role: "investment_position"` or
 `"investment_cash"`, retain their `asset_id` and are likewise never recommendation endpoints.
+Settlement reserve rows expose additive `funding_mode: "held"` when a temporary commitment is
+already retained in an allocation-destination fund; otherwise `funding_mode` is `"top_up"`.
 `liquidity_adjustments` lists posted `adjustment` entries within the liquidity
 perimeter and their signed base-currency total, which is already included in the expected close.
 Disabled profiles return `status=disabled`. Active drafts return `ready` or `not_ready` with

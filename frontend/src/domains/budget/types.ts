@@ -123,6 +123,7 @@ export type OwnershipSettlement = {
     settlement_account_id: number;
     amount: string;
     currency: string;
+    funding_mode?: 'held' | 'top_up';
     members: Array<{ member_id: number; amount: string }>;
   }>;
   compensations?: Array<{
