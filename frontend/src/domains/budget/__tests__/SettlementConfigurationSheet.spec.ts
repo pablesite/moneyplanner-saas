@@ -74,6 +74,7 @@ const mocks = vi.hoisted(() => ({
     normalization_transactions: [],
   }),
   saveConfiguration: vi.fn(),
+  saveOperatingReserveAdjustment: vi.fn(),
   rebaseline: vi.fn(),
   getReadiness: vi.fn().mockResolvedValue({
     status: 'blocked',
@@ -186,6 +187,7 @@ vi.mock('@/domains/budget/api', () => ({
   getSettlementConfiguration: mocks.getConfiguration,
   getSettlementReadiness: mocks.getReadiness,
   rebaselineSettlement: mocks.rebaseline,
+  saveOperatingReserveAdjustment: mocks.saveOperatingReserveAdjustment,
   saveSettlementConfiguration: mocks.saveConfiguration,
   toBudgetErrorMessage: (reason: unknown) => String(reason),
 }));
@@ -197,6 +199,44 @@ afterEach(() => {
 });
 
 describe('SettlementConfigurationSheet', () => {
+  it('sends a negative reserve adjustment when retaining less on mobile', async () => {
+    const activeConfiguration = {
+      ...(await mocks.getConfiguration()),
+      is_enabled: true,
+      operating_reserve_adjustment: '0.00',
+    };
+    mocks.getConfiguration.mockResolvedValueOnce(activeConfiguration);
+    mocks.saveOperatingReserveAdjustment.mockResolvedValue({
+      ...activeConfiguration,
+      operating_reserve_adjustment: '-1000.00',
+    });
+    mount(SettlementConfigurationSheet, {
+      attachTo: document.body,
+      props: { open: true, year: 2026, month: 8 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await flushPromises();
+
+    const lessButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Retener menos'),
+    );
+    lessButton!.click();
+    const reserveInput = document.body.querySelector<HTMLInputElement>(
+      '.mc-settlement-reserve-direction + .mc-settlement-field input',
+    );
+    reserveInput!.value = '1000';
+    reserveInput!.dispatchEvent(new Event('input', { bubbles: true }));
+    const recalculateButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Recalcular reserva'),
+    );
+    recalculateButton!.click();
+    await flushPromises();
+
+    expect(mocks.saveOperatingReserveAdjustment).toHaveBeenCalledWith({
+      operating_reserve_adjustment: '-1000',
+    });
+  });
+
   it('refreshes cached net worth data and formats the current wallet balance', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-15T12:00:00'));

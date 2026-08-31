@@ -44,6 +44,17 @@
   font-weight: 650;
 }
 
+.mc-settlement-reserve-direction {
+  display: flex;
+  gap: 8px;
+}
+
+.mc-settlement-reserve-direction .btn.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+}
+
 .mc-settlement-check {
   display: flex;
   align-items: center;

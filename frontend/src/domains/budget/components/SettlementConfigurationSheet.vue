@@ -69,6 +69,22 @@ const operatingOptions = computed<ASelectItem[]>(() => [
   ...operatingAssets.value.map((asset) => ({ value: String(asset.id), label: asset.name })),
 ]);
 
+type ReserveAdjustmentDirection = 'more' | 'less';
+
+function reserveAdjustmentMagnitude(value: string): string {
+  return value.trim().replace(/^-/, '');
+}
+
+const reserveAdjustmentDirection = ref<ReserveAdjustmentDirection>('more');
+
+const operatingReserveAdjustmentMagnitude = computed({
+  get: () => reserveAdjustmentMagnitude(form.operatingReserveAdjustment),
+  set: (value: string) => {
+    form.operatingReserveAdjustment =
+      reserveAdjustmentDirection.value === 'less' && value.trim() ? `-${value}` : value;
+  },
+});
+
 function individualOwnershipId(memberId: number): number | null {
   return (
     netWorth.ownerships.find(
@@ -144,6 +160,8 @@ function hydrate(next: SettlementConfiguration): void {
     (row) => row.transaction_id,
   );
   form.operatingReserveAdjustment = next.operating_reserve_adjustment ?? '0';
+  reserveAdjustmentDirection.value =
+    Number(form.operatingReserveAdjustment.replace(',', '.')) < 0 ? 'less' : 'more';
   dirty.value = false;
   rebaselineMode.value = false;
 }
@@ -481,10 +499,28 @@ function requestClose(): void {
             Usa un importe positivo para retener más efectivo o negativo para retener menos. No
             modifica el presupuesto y las transferencias se recalculan al guardar.
           </p>
+          <div class="mc-settlement-reserve-direction" role="group" aria-label="Sentido del ajuste">
+            <AButton
+              :class="{ 'is-active': reserveAdjustmentDirection === 'less' }"
+              size="sm"
+              variant="ghost"
+              @click="reserveAdjustmentDirection = 'less'"
+            >
+              Retener menos
+            </AButton>
+            <AButton
+              :class="{ 'is-active': reserveAdjustmentDirection === 'more' }"
+              size="sm"
+              variant="ghost"
+              @click="reserveAdjustmentDirection = 'more'"
+            >
+              Retener más
+            </AButton>
+          </div>
           <label class="mc-settlement-field">
             <span>Ajuste manual ({{ currencySymbol(form.baseCurrency) }})</span>
             <input
-              v-model="form.operatingReserveAdjustment"
+              v-model="operatingReserveAdjustmentMagnitude"
               class="input"
               inputmode="decimal"
               placeholder="0,00"
