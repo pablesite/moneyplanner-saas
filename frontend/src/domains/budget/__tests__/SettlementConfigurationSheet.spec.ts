@@ -199,6 +199,35 @@ afterEach(() => {
 });
 
 describe('SettlementConfigurationSheet', () => {
+  it('inverts an existing adjustment when switching to retain less', async () => {
+    const activeConfiguration = {
+      ...(await mocks.getConfiguration()),
+      is_enabled: true,
+      operating_reserve_adjustment: '1000.00',
+    };
+    mocks.getConfiguration.mockResolvedValueOnce(activeConfiguration);
+    mount(SettlementConfigurationSheet, {
+      attachTo: document.body,
+      props: { open: true, year: 2026, month: 8 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await flushPromises();
+
+    const lessButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Retener menos'),
+    );
+    lessButton!.click();
+    const recalculateButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Recalcular reserva'),
+    );
+    recalculateButton!.click();
+    await flushPromises();
+
+    expect(mocks.saveOperatingReserveAdjustment).toHaveBeenCalledWith({
+      operating_reserve_adjustment: '-1000.00',
+    });
+  });
+
   it('normalizes a numeric reserve adjustment returned by older API responses', async () => {
     mocks.getConfiguration.mockResolvedValueOnce({
       ...(await mocks.getConfiguration()),

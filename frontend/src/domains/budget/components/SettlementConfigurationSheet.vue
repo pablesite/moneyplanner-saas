@@ -89,6 +89,12 @@ const operatingReserveAdjustmentMagnitude = computed({
   },
 });
 
+function setReserveAdjustmentDirection(direction: ReserveAdjustmentDirection): void {
+  reserveAdjustmentDirection.value = direction;
+  const magnitude = reserveAdjustmentMagnitude(form.operatingReserveAdjustment);
+  form.operatingReserveAdjustment = direction === 'less' && magnitude ? `-${magnitude}` : magnitude;
+}
+
 function individualOwnershipId(memberId: number): number | null {
   return (
     netWorth.ownerships.find(
@@ -510,7 +516,7 @@ function requestClose(): void {
               :class="{ 'is-active': reserveAdjustmentDirection === 'less' }"
               size="sm"
               variant="ghost"
-              @click="reserveAdjustmentDirection = 'less'"
+              @click="setReserveAdjustmentDirection('less')"
             >
               Retener menos
             </AButton>
@@ -518,7 +524,7 @@ function requestClose(): void {
               :class="{ 'is-active': reserveAdjustmentDirection === 'more' }"
               size="sm"
               variant="ghost"
-              @click="reserveAdjustmentDirection = 'more'"
+              @click="setReserveAdjustmentDirection('more')"
             >
               Retener más
             </AButton>
