@@ -166,6 +166,7 @@ export type MonthlyCloseStateResponse = {
   };
   expense: {
     executed: string;
+    non_liquidity_investment_fees?: string;
     planned: string;
     coverage_mode: CoverageMode;
     completion_ratio: number;

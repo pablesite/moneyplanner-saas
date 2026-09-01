@@ -829,6 +829,36 @@ describe('Budget & Monthly close views', () => {
     expect(wrapper.text()).toContain('0,00 €');
   });
 
+  it('excludes investment fees paid outside liquidity from the close residual', async () => {
+    configureCoreApi({
+      monthlyCloseState: {
+        expense: {
+          non_liquidity_investment_fees: '6.48',
+        },
+        liquidity: {
+          current_total: '100.00',
+          previous_total: '100.00',
+          delta: '0.00',
+          completion_ratio: 1,
+          has_checkins: true,
+        },
+      },
+      liquiditySummary: {
+        planned_total: '100.00',
+        executed_total: '100.00',
+        perimeter_internal_expense_total: '0.00',
+        completion_ratio: 1,
+      },
+    });
+
+    const wrapper = mountMonthlyCloseView();
+    await flushPromises();
+    await openMonthlyStep(wrapper, 'Resultado');
+
+    expect(wrapper.text()).toContain('Residual sin explicar');
+    expect(wrapper.text()).toContain('0,00 €');
+  });
+
   it('opens ledger liquidity manual editing without persisting until the user confirms', async () => {
     configureCoreApi({
       liquiditySummary: {

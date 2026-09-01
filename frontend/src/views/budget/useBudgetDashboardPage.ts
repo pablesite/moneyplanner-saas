@@ -1589,8 +1589,16 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
   const selectedPerimeterInternalExpenseTotal = computed(() =>
     toNumberOrZero(liquidityMonthlySummary.value?.perimeter_internal_expense_total),
   );
+  const selectedNonLiquidityInvestmentFees = computed(() =>
+    toNumberOrZero(monthlyCloseData.value?.expense.non_liquidity_investment_fees),
+  );
   const selectedExpenseMonthExternalExecuted = computed(() =>
-    Math.max(0, selectedExpenseMonthExecuted.value - selectedPerimeterInternalExpenseTotal.value),
+    Math.max(
+      0,
+      selectedExpenseMonthExecuted.value -
+        selectedPerimeterInternalExpenseTotal.value -
+        selectedNonLiquidityInvestmentFees.value,
+    ),
   );
   const selectedLiquidityAdjustmentTotal = computed(() =>
     toNumberOrZero(monthlyCloseData.value?.liquidity_adjustments?.total),
