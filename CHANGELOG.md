@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.61.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.60.0...moneyplanner-saas-v0.61.0) (2026-09-01)
+
+
+### Features
+
+* **monthly-close:** separate balance distribution tab ([519baa8](https://github.com/pablesite/moneyplanner-saas/commit/519baa8dcc6384762fcb8b3fbbec45d9548062ad))
+* **monthly-close:** show reserve breakdown by ownership ([75eb942](https://github.com/pablesite/moneyplanner-saas/commit/75eb942385df456f5f44dc92021c4b050d8f6678))
+
+
+### Bug Fixes
+
+* **monthly-close:** apply reserve direction immediately ([b1cc50a](https://github.com/pablesite/moneyplanner-saas/commit/b1cc50a0336b55561602dc593c4edd6434d98a8d))
+* **monthly-close:** exclude non-liquid investment fees ([02421e4](https://github.com/pablesite/moneyplanner-saas/commit/02421e4533a42797bd4e52e3dd384701f929fb99))
+* **monthly-close:** separate shared reserve from personal plans ([f58da81](https://github.com/pablesite/moneyplanner-saas/commit/f58da81bf429af3fb751a4ff72828d88765a84dd))
+* **monthly-close:** tolerate numeric reserve adjustments ([f2b1f7f](https://github.com/pablesite/moneyplanner-saas/commit/f2b1f7fb0596e55a670402ffb0a9bab30c3b686a))
+
 ## [0.60.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.59.0...moneyplanner-saas-v0.60.0) (2026-08-31)
 
 
