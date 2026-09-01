@@ -132,6 +132,15 @@ describe('settlement presentation', () => {
       retainedOrAllocated: 1000,
       towardPersonal: 3000,
     });
+    expect(page.reserveOwnershipGroups).toMatchObject([
+      {
+        ownershipLabel: 'Pablo 61 % · Ana 39 %',
+        destinationName: 'Compartida',
+        totalNumber: 1000,
+        reserveNumber: 1000,
+        allocationNumber: 0,
+      },
+    ]);
     expect(page.destinations[0]?.ownership).toBe('Pablo 61 % · Ana 39 %');
     expect(page.recommendations[0]).toMatchObject({
       sourceAssetId: 100,

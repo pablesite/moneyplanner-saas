@@ -1263,7 +1263,8 @@
 
 .mc-settlement-member-list,
 .mc-settlement-evidence,
-.mc-settlement-compensations {
+.mc-settlement-compensations,
+.mc-settlement-reserve-groups {
   display: grid;
   gap: 12px;
   padding-bottom: 16px;
@@ -1275,10 +1276,29 @@
 
 .mc-settlement-member-list article,
 .mc-settlement-evidence article,
-.mc-settlement-compensations article {
+.mc-settlement-compensations article,
+.mc-settlement-reserve-groups article {
   padding: 13px 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
+}
+
+.mc-settlement-reserve-groups article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 16px;
+}
+
+.mc-settlement-reserve-groups article > div {
+  display: grid;
+  gap: 2px;
+}
+
+.mc-settlement-reserve-groups article > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--faint);
+  font-size: 12px;
 }
 
 .mc-settlement-member-list dl {

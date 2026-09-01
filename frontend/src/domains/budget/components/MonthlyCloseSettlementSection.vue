@@ -67,7 +67,7 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
         <article>
           <span>Reservado o asignado</span>
           <strong>{{ formatMoney(page.summary.retainedOrAllocated) }} {{ page.currency }}</strong>
-          <small>Obligaciones recurrentes del próximo mes</small>
+          <small>Gastos previstos y aportaciones del próximo mes</small>
         </article>
         <article>
           <span>Hacia cuentas personales</span>
@@ -185,6 +185,34 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
       </section>
 
       <div class="mc-settlement-details">
+        <details v-if="page.reserveOwnershipGroups.length">
+          <summary>Desglose de reserva por titularidad</summary>
+          <div class="mc-settlement-reserve-groups">
+            <article v-for="group in page.reserveOwnershipGroups" :key="group.key">
+              <div>
+                <strong>{{ group.ownershipLabel }}</strong>
+                <small>{{ group.destinationName }}</small>
+              </div>
+              <strong>{{ formatMoney(group.totalNumber) }} {{ page.currency }}</strong>
+              <p>
+                <span v-if="group.reserveNumber > 0">
+                  Gastos {{ formatMoney(group.reserveNumber) }}
+                </span>
+                <span v-if="group.reserveNumber > 0 && group.allocationNumber > 0"> · </span>
+                <span v-if="group.allocationNumber > 0">
+                  Inversión {{ formatMoney(group.allocationNumber) }}
+                </span>
+              </p>
+              <p v-if="group.memberAmounts.length">
+                <span v-for="(member, index) in group.memberAmounts" :key="member.memberId">
+                  <span v-if="index > 0"> · </span>{{ member.name }}
+                  {{ formatMoney(member.value) }}
+                </span>
+              </p>
+            </article>
+          </div>
+        </details>
+
         <details>
           <summary>Desglose por miembro</summary>
           <div class="mc-settlement-member-list">

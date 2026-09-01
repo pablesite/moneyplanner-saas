@@ -144,6 +144,71 @@ function buildMemberRows(rows: SettlementMemberRow[], memberById: Map<number, Fa
   }));
 }
 
+function buildReserveOwnershipGroups(
+  reserves: SettlementReserveRow[],
+  allocationById: Map<number, SettlementAllocation>,
+  accountById: Map<number, SettlementAccountRow>,
+  memberById: Map<number, FamilyMember>,
+) {
+  const groups = new Map<
+    string,
+    {
+      key: string;
+      ownershipId: number;
+      destinationName: string;
+      totalNumber: number;
+      reserveNumber: number;
+      allocationNumber: number;
+      memberAmounts: Map<number, number>;
+    }
+  >();
+
+  for (const reserve of reserves) {
+    const key = `${reserve.ownership_id}:${reserve.settlement_account_id}`;
+    const group = groups.get(key) ?? {
+      key,
+      ownershipId: reserve.ownership_id,
+      destinationName:
+        accountById.get(reserve.settlement_account_id)?.name ??
+        `Cuenta ${reserve.settlement_account_id}`,
+      totalNumber: 0,
+      reserveNumber: 0,
+      allocationNumber: 0,
+      memberAmounts: new Map<number, number>(),
+    };
+    const reserveAmount = amount(reserve.amount);
+    group.totalNumber += reserveAmount;
+    if (reserve.kind === 'allocation') group.allocationNumber += reserveAmount;
+    else group.reserveNumber += reserveAmount;
+    reserve.members.forEach((member) => {
+      group.memberAmounts.set(
+        member.member_id,
+        (group.memberAmounts.get(member.member_id) ?? 0) + amount(member.amount),
+      );
+    });
+    groups.set(key, group);
+  }
+
+  return [...groups.values()]
+    .map((group) => {
+      const allocation = allocationById.get(group.ownershipId);
+      const memberAmounts = [...group.memberAmounts.entries()].map(([memberId, value]) => ({
+        memberId,
+        name: memberById.get(memberId)?.name ?? `Miembro ${memberId}`,
+        value,
+      }));
+      return {
+        ...group,
+        ownershipLabel:
+          allocation == null
+            ? memberAmounts.map((member) => member.name).join(' · ') || 'Titularidad sin reparto'
+            : allocationLabel(allocation),
+        memberAmounts,
+      };
+    })
+    .sort((left, right) => right.totalNumber - left.totalNumber);
+}
+
 function buildAllocationRows(allocations: SettlementAllocation[]) {
   return allocations.map((allocation) => ({
     ...allocation,
@@ -274,6 +339,12 @@ export function buildSettlementPage(
     destinations,
     recommendations: buildRecommendations(recommendations, accountById, memberById),
     members: buildMemberRows(normalized.economicBalances, memberById),
+    reserveOwnershipGroups: buildReserveOwnershipGroups(
+      reserves,
+      allocationById,
+      accountById,
+      memberById,
+    ),
     allocations: buildAllocationRows(allocations),
     compensations: buildCompensationRows(normalized.compensations, memberById),
     blockers: buildQualityRows(normalized.blockers),
