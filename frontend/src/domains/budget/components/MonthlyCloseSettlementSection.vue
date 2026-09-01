@@ -1,14 +1,24 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { ASectHead, AButton, AInfoHint, AState, AMetaPill } from '@/domains/ui';
 import type { SettlementPage } from '../settlementPresentation';
 
-defineProps<{
+const props = defineProps<{
   page: SettlementPage;
   busy?: boolean;
   locked?: boolean;
   formatMoney: (value: number, decimals?: number) => string;
   formatSignedMoney: (value: number, decimals?: number) => string;
 }>();
+
+const operatingDestination = computed(() =>
+  props.page.destinations.find((destination) => destination.role === 'operating'),
+);
+const operatingReserveGroups = computed(() =>
+  props.page.reserveOwnershipGroups.filter(
+    (group) => group.destinationName === operatingDestination.value?.name,
+  ),
+);
 
 const emit = defineEmits<{
   configure: [];
@@ -41,8 +51,8 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
   <section v-if="page.isVisible" class="mc-settlement">
     <ASectHead
       eyebrow="Distribución del saldo"
-      title="Qué se queda y qué se transfiere"
-      subtitle="Core atribuye cada euro por titularidad y conserva primero las obligaciones del próximo mes."
+      title="Prepara las transferencias"
+      subtitle="La reserva compartida se conserva primero; el resto vuelve a las cuentas personales."
     >
       <template #hint>
         <AInfoHint label="Cómo se calcula">
@@ -58,58 +68,6 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
     </ASectHead>
 
     <div v-if="page.isReady" class="mc-settlement-body">
-      <div class="mc-settlement-summary">
-        <article>
-          <span>Saldo económico</span>
-          <strong>{{ formatMoney(page.summary.distributable) }} {{ page.currency }}</strong>
-          <small>Disponible entre todos los miembros</small>
-        </article>
-        <article>
-          <span>Reserva Kutxa compartida</span>
-          <strong
-            >{{ formatMoney(page.summary.sharedOperatingReserve) }} {{ page.currency }}</strong
-          >
-          <small>Este es el único importe que modifica “Retener más o menos”</small>
-        </article>
-        <article>
-          <span>Previsión fuera de Kutxa</span>
-          <strong>{{ formatMoney(page.summary.personalOrAllocated) }} {{ page.currency }}</strong>
-          <small>Gastos personales y aportaciones de inversión</small>
-        </article>
-      </div>
-
-      <div class="mc-settlement-destinations">
-        <div class="mc-settlement-table-head" aria-hidden="true">
-          <span>Destino</span>
-          <span>Saldo actual</span>
-          <span>Saldo objetivo</span>
-          <span>Movimiento</span>
-        </div>
-        <article
-          v-for="destination in page.destinations"
-          :key="destination.id"
-          class="mc-settlement-destination"
-        >
-          <div class="mc-settlement-destination-main">
-            <AMetaPill>{{ destination.roleLabel }}</AMetaPill>
-            <strong>{{ destination.name }}</strong>
-            <small>{{ destination.ownership }}</small>
-            <small v-if="destination.reasons.length">{{ destination.reasons.join(' · ') }}</small>
-          </div>
-          <div data-label="Saldo actual">
-            <strong>{{ formatMoney(destination.observed) }} {{ page.currency }}</strong>
-          </div>
-          <div data-label="Saldo objetivo">
-            <strong>{{ formatMoney(destination.target) }} {{ page.currency }}</strong>
-          </div>
-          <div data-label="Movimiento">
-            <strong :class="destination.movement < 0 ? 'mc-settlement-out' : 'mc-settlement-in'">
-              {{ formatSignedMoney(destination.movement) }} {{ page.currency }}
-            </strong>
-          </div>
-        </article>
-      </div>
-
       <section class="mc-settlement-routes">
         <div class="mc-settlement-subhead">
           <div>
@@ -186,11 +144,20 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
         </AState>
       </section>
 
+      <section v-if="operatingDestination" class="mc-settlement-fund">
+        <div>
+          <p class="eyebrow">Después de transferir</p>
+          <h3>{{ operatingDestination.name }}</h3>
+          <small>Reserva compartida neta de tarjetas para el próximo mes.</small>
+        </div>
+        <strong>{{ formatMoney(operatingDestination.target) }} {{ page.currency }}</strong>
+      </section>
+
       <div class="mc-settlement-details">
-        <details v-if="page.reserveOwnershipGroups.length">
-          <summary>Desglose de reserva por titularidad</summary>
+        <details v-if="operatingReserveGroups.length">
+          <summary>Qué compone la reserva compartida</summary>
           <div class="mc-settlement-reserve-groups">
-            <article v-for="group in page.reserveOwnershipGroups" :key="group.key">
+            <article v-for="group in operatingReserveGroups" :key="group.key">
               <div>
                 <strong>{{ group.ownershipLabel }}</strong>
                 <small>{{ group.destinationName }}</small>
@@ -216,7 +183,7 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
         </details>
 
         <details>
-          <summary>Desglose por miembro</summary>
+          <summary>Cómo se reparte entre vosotros</summary>
           <div class="mc-settlement-member-list">
             <article v-for="member in page.members" :key="member.member_id">
               <div class="mc-settlement-member-head">
@@ -253,27 +220,8 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
           </div>
         </details>
 
-        <details v-if="page.allocations.length">
-          <summary>Evidencia de titularidad</summary>
-          <div class="mc-settlement-evidence">
-            <article v-for="allocation in page.allocations" :key="allocation.ownership_id">
-              <div>
-                <strong>{{ allocation.label }}</strong>
-                <small>{{ allocation.basisLabel }}</small>
-              </div>
-              <p v-if="allocation.allocation_basis === 'recurring_income_12m'">
-                {{ formatDate(allocation.window_start) }} –
-                {{ formatDate(allocation.window_end) }} ·
-                {{ formatMoney(allocation.totalIncomeNumber) }} {{ allocation.base_currency }} ·
-                {{ allocation.eligible_transaction_count ?? 0 }} ingresos ponderables
-              </p>
-              <p v-else>Porcentaje pactado, independiente de los ingresos del periodo.</p>
-            </article>
-          </div>
-        </details>
-
         <details v-if="page.compensations.length">
-          <summary>Compensaciones por pagos cruzados</summary>
+          <summary>Ajustes de movimientos del mes</summary>
           <div class="mc-settlement-compensations">
             <article v-for="compensation in page.compensations" :key="compensation.transaction_id">
               <div>
@@ -287,6 +235,25 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
               <span v-for="member in compensation.members" :key="member.member_id">
                 {{ member.name }} {{ formatSignedMoney(member.amountNumber) }} {{ page.currency }}
               </span>
+            </article>
+          </div>
+        </details>
+
+        <details v-if="page.allocations.length">
+          <summary>Criterio de titularidad</summary>
+          <div class="mc-settlement-evidence">
+            <article v-for="allocation in page.allocations" :key="allocation.ownership_id">
+              <div>
+                <strong>{{ allocation.label }}</strong>
+                <small>{{ allocation.basisLabel }}</small>
+              </div>
+              <p v-if="allocation.allocation_basis === 'recurring_income_12m'">
+                {{ formatDate(allocation.window_start) }} –
+                {{ formatDate(allocation.window_end) }} ·
+                {{ formatMoney(allocation.totalIncomeNumber) }} {{ allocation.base_currency }} ·
+                {{ allocation.eligible_transaction_count ?? 0 }} ingresos ponderables
+              </p>
+              <p v-else>Porcentaje pactado, independiente de los ingresos del periodo.</p>
             </article>
           </div>
         </details>

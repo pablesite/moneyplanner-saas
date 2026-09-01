@@ -243,6 +243,11 @@ watch(
 );
 
 type MonthlyCloseStepId = Parameters<typeof setActiveMonthlyCloseStep>[0];
+type MonthlyCloseTab = 'close' | 'distribution';
+
+const activeMonthlyCloseTab = ref<MonthlyCloseTab>(
+  route.query.tab === 'distribution' ? 'distribution' : 'close',
+);
 
 onMounted(() => {
   const query = route.query ?? {};
@@ -283,11 +288,22 @@ function onStepChange(id: string): void {
   setActiveMonthlyCloseStep(id as MonthlyCloseStepId);
 }
 
+function setMonthlyCloseTab(tab: MonthlyCloseTab): void {
+  activeMonthlyCloseTab.value = tab;
+  const query = {
+    ...route.query,
+    ...(tab === 'distribution' ? { tab } : {}),
+  };
+  if (tab === 'close') delete query.tab;
+  void router.replace({ query });
+}
+
 function goToBudget(): void {
   router.push({ name: 'budget-dashboard' });
 }
 
 function goToCloseStep(): void {
+  setMonthlyCloseTab('close');
   setActiveMonthlyCloseStep('result' as MonthlyCloseStepId);
 }
 
@@ -301,6 +317,7 @@ function prepareSettlementTransfer(
       year: String(fiscalYear.value),
       month: String(selectedExecutionMonth.value),
       step: 'result',
+      tab: 'distribution',
     },
   }).fullPath;
   void router.push({
@@ -505,7 +522,33 @@ async function closeSettlementConfiguration(): Promise<void> {
       </div>
     </section>
 
-    <section class="sect mc-stepper-section" aria-label="Pasos del cierre mensual">
+    <nav class="mc-tabs-bar" aria-label="Secciones del cierre mensual">
+      <div class="tabs">
+        <AButton
+          class="tab"
+          :class="{ on: activeMonthlyCloseTab === 'close' }"
+          :aria-pressed="activeMonthlyCloseTab === 'close'"
+          @click="setMonthlyCloseTab('close')"
+        >
+          Cierre
+        </AButton>
+        <AButton
+          v-if="settlementPage.isVisible"
+          class="tab"
+          :class="{ on: activeMonthlyCloseTab === 'distribution' }"
+          :aria-pressed="activeMonthlyCloseTab === 'distribution'"
+          @click="setMonthlyCloseTab('distribution')"
+        >
+          Distribución
+        </AButton>
+      </div>
+    </nav>
+
+    <section
+      v-if="activeMonthlyCloseTab === 'close'"
+      class="sect mc-stepper-section"
+      aria-label="Pasos del cierre mensual"
+    >
       <div class="mc-stepper-row">
         <AStepper
           :steps="stepperSteps"
@@ -533,6 +576,7 @@ async function closeSettlementConfiguration(): Promise<void> {
     </section>
 
     <MonthlyCloseHero
+      v-if="activeMonthlyCloseTab === 'close'"
       :month-label="selectedExecutionMonthLabel"
       :eligible-income="selectedMonthlyFinancialResult.eligibleIncome"
       :total-outflows="selectedMonthlyFinancialResult.totalOutflows"
@@ -551,6 +595,7 @@ async function closeSettlementConfiguration(): Promise<void> {
     <AState v-if="monthlyCloseError" status="error">{{ monthlyCloseError }}</AState>
 
     <BudgetMonthlyCloseLiquiditySection
+      v-if="activeMonthlyCloseTab === 'close'"
       :is-monthly-close-view="isMonthlyCloseView"
       :active-monthly-close-step="activeMonthlyCloseStep"
       :is-close-locked="isCloseLocked"
@@ -581,6 +626,7 @@ async function closeSettlementConfiguration(): Promise<void> {
     />
 
     <BudgetMonthlyCloseIncomeSection
+      v-if="activeMonthlyCloseTab === 'close'"
       :is-monthly-close-view="isMonthlyCloseView"
       :active-monthly-close-step="activeMonthlyCloseStep"
       :is-close-locked="isCloseLocked"
@@ -611,6 +657,7 @@ async function closeSettlementConfiguration(): Promise<void> {
     />
 
     <BudgetMonthlyCloseExpenseSection
+      v-if="activeMonthlyCloseTab === 'close'"
       :is-monthly-close-view="isMonthlyCloseView"
       :active-monthly-close-step="activeMonthlyCloseStep"
       :is-close-locked="isCloseLocked"
@@ -648,6 +695,7 @@ async function closeSettlementConfiguration(): Promise<void> {
     />
 
     <BudgetMonthlyCloseResultSection
+      v-if="activeMonthlyCloseTab === 'close'"
       :is-monthly-close-view="isMonthlyCloseView"
       :active-monthly-close-step="activeMonthlyCloseStep"
       :selected-liquidity-start-base="selectedLiquidityStartBase"
@@ -690,7 +738,7 @@ async function closeSettlementConfiguration(): Promise<void> {
     />
 
     <MonthlyCloseSettlementSection
-      v-if="activeMonthlyCloseStep === 'result'"
+      v-if="activeMonthlyCloseTab === 'distribution'"
       :page="settlementPage"
       :format-money="formatMoney"
       :format-signed-money="formatSignedMoney"
@@ -703,7 +751,10 @@ async function closeSettlementConfiguration(): Promise<void> {
       @movement="openSettlementMovement"
     />
 
-    <section v-if="planImpact || planImpactLoading" class="sect mc-plan-impact">
+    <section
+      v-if="activeMonthlyCloseTab === 'close' && (planImpact || planImpactLoading)"
+      class="sect mc-plan-impact"
+    >
       <ASectHead
         eyebrow="Impacto en Mi Plan"
         title="Lectura del cierre mensual"

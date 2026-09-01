@@ -192,7 +192,7 @@ describe('settlement presentation', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Qué se queda y qué se transfiere');
+    expect(wrapper.text()).toContain('Prepara las transferencias');
     expect(wrapper.text()).toContain('Compartida → Personal Pablo');
     await wrapper
       .findAll('button')
