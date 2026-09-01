@@ -71,8 +71,12 @@ const operatingOptions = computed<ASelectItem[]>(() => [
 
 type ReserveAdjustmentDirection = 'more' | 'less';
 
-function reserveAdjustmentMagnitude(value: string): string {
-  return value.trim().replace(/^-/, '');
+function normalizeReserveAdjustment(value: unknown): string {
+  return String(value ?? '0').trim();
+}
+
+function reserveAdjustmentMagnitude(value: unknown): string {
+  return normalizeReserveAdjustment(value).replace(/^-/, '');
 }
 
 const reserveAdjustmentDirection = ref<ReserveAdjustmentDirection>('more');
@@ -159,7 +163,7 @@ function hydrate(next: SettlementConfiguration): void {
   form.normalizationTransactionIds = next.normalization_transactions.map(
     (row) => row.transaction_id,
   );
-  form.operatingReserveAdjustment = next.operating_reserve_adjustment ?? '0';
+  form.operatingReserveAdjustment = normalizeReserveAdjustment(next.operating_reserve_adjustment);
   reserveAdjustmentDirection.value =
     Number(form.operatingReserveAdjustment.replace(',', '.')) < 0 ? 'less' : 'more';
   dirty.value = false;
@@ -279,7 +283,9 @@ async function saveReserveAdjustment(): Promise<void> {
   error.value = null;
   try {
     const next = await saveOperatingReserveAdjustment({
-      operating_reserve_adjustment: form.operatingReserveAdjustment.replace(',', '.'),
+      operating_reserve_adjustment: normalizeReserveAdjustment(
+        form.operatingReserveAdjustment,
+      ).replace(',', '.'),
     });
     hydrate(next);
     emit('changed', next);

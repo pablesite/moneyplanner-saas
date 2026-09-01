@@ -199,6 +199,30 @@ afterEach(() => {
 });
 
 describe('SettlementConfigurationSheet', () => {
+  it('normalizes a numeric reserve adjustment returned by older API responses', async () => {
+    mocks.getConfiguration.mockResolvedValueOnce({
+      ...(await mocks.getConfiguration()),
+      is_enabled: true,
+      operating_reserve_adjustment: 0,
+    });
+    mount(SettlementConfigurationSheet, {
+      attachTo: document.body,
+      props: { open: true, year: 2026, month: 8 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await flushPromises();
+
+    const recalculateButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Recalcular reserva'),
+    );
+    recalculateButton!.click();
+    await flushPromises();
+
+    expect(mocks.saveOperatingReserveAdjustment).toHaveBeenCalledWith({
+      operating_reserve_adjustment: '0',
+    });
+  });
+
   it('sends a negative reserve adjustment when retaining less on mobile', async () => {
     const activeConfiguration = {
       ...(await mocks.getConfiguration()),
