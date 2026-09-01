@@ -65,14 +65,16 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
           <small>Disponible entre todos los miembros</small>
         </article>
         <article>
-          <span>Reservado o asignado</span>
-          <strong>{{ formatMoney(page.summary.retainedOrAllocated) }} {{ page.currency }}</strong>
-          <small>Gastos previstos y aportaciones del próximo mes</small>
+          <span>Reserva Kutxa compartida</span>
+          <strong
+            >{{ formatMoney(page.summary.sharedOperatingReserve) }} {{ page.currency }}</strong
+          >
+          <small>Este es el único importe que modifica “Retener más o menos”</small>
         </article>
         <article>
-          <span>Hacia cuentas personales</span>
-          <strong>{{ formatMoney(page.summary.towardPersonal) }} {{ page.currency }}</strong>
-          <small>Transferencias recomendadas hacia cuentas personales</small>
+          <span>Previsión fuera de Kutxa</span>
+          <strong>{{ formatMoney(page.summary.personalOrAllocated) }} {{ page.currency }}</strong>
+          <small>Gastos personales y aportaciones de inversión</small>
         </article>
       </div>
 

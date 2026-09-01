@@ -273,10 +273,20 @@ function buildSummary(
   reserves: SettlementReserveRow[],
   recommendations: SettlementRecommendationRow[],
   personalAccountIds: Set<number>,
+  operatingAccountIds: Set<number>,
 ) {
+  const retainedOrAllocated = reserves.reduce(
+    (total, reserve) => total + amount(reserve.amount),
+    0,
+  );
+  const sharedOperatingReserve = reserves
+    .filter((reserve) => operatingAccountIds.has(reserve.settlement_account_id))
+    .reduce((total, reserve) => total + amount(reserve.amount), 0);
   return {
     distributable: amount(reconciliation?.economic_total),
-    retainedOrAllocated: reserves.reduce((total, reserve) => total + amount(reserve.amount), 0),
+    retainedOrAllocated,
+    sharedOperatingReserve,
+    personalOrAllocated: retainedOrAllocated - sharedOperatingReserve,
     towardPersonal: recommendations
       .filter((recommendation) => personalAccountIds.has(recommendation.to_account_id))
       .reduce((total, recommendation) => total + amount(recommendation.amount), 0),
@@ -313,6 +323,9 @@ export function buildSettlementPage(
       .filter((account) => account.role === 'personal_destination')
       .map((account) => account.account_id),
   );
+  const operatingAccountIds = new Set(
+    accounts.filter((account) => account.role === 'operating').map((account) => account.account_id),
+  );
 
   const destinations = buildDestinations(accounts, reserves, allocationById);
 
@@ -335,7 +348,13 @@ export function buildSettlementPage(
     isFrozen: normalized.isFrozen,
     currency: normalized.currency,
     targetPeriod: normalized.targetPeriod,
-    summary: buildSummary(normalized.reconciliation, reserves, recommendations, personalAccountIds),
+    summary: buildSummary(
+      normalized.reconciliation,
+      reserves,
+      recommendations,
+      personalAccountIds,
+      operatingAccountIds,
+    ),
     destinations,
     recommendations: buildRecommendations(recommendations, accountById, memberById),
     members: buildMemberRows(normalized.economicBalances, memberById),

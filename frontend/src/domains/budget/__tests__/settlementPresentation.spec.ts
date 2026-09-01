@@ -130,6 +130,8 @@ describe('settlement presentation', () => {
     expect(page.summary).toEqual({
       distributable: 4000,
       retainedOrAllocated: 1000,
+      sharedOperatingReserve: 1000,
+      personalOrAllocated: 0,
       towardPersonal: 3000,
     });
     expect(page.reserveOwnershipGroups).toMatchObject([
