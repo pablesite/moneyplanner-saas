@@ -2,7 +2,7 @@
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 
-**Last review:** 2026-08-17 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
+**Last review:** 2026-09-10 | **SaaS Version:** see `VERSION` | **Core Version:** see `core/VERSION`
 
 ---
 
@@ -230,7 +230,7 @@ One consolidated family portfolio. Core owns domain and calculations; the first 
 | SaaS CI quality checks                    | ✅ Implemented | `.github/workflows/quality.yml`                                                                                                                                                                                                                                                                                                                             |
 | Cloud deployment                          | 🔄 In progress | Planned for private SaaS at `https://arkenstone.app`; see `docs/operations/production-deploy.md` and production deployment task specs.                                                                                                                                                                                                                      |
 | Support runbook                           | 🔄 In progress | Draft runbook created at `docs/operations/production-deploy.md`; finalization tracked in phase 5.                                                                                                                                                                                                                                                           |
-| Production backups                        | ✅ Implemented | Daily Restic timer on Arda creates verified logical Core/SaaS PostgreSQL and Passbolt MariaDB dumps plus an online Uptime Kuma SQLite copy before the encrypted snapshot. Retention is 14 daily, 8 weekly and 12 monthly snapshots; success/failure notifications reuse Uptime Kuma Telegram. Full repository check and restore drill passed on 2026-08-02. |
+| Production backups                        | ✅ Implemented | Daily Restic timer on Arda creates verified logical Core/SaaS PostgreSQL and Passbolt MariaDB dumps plus an online Uptime Kuma SQLite copy before the encrypted snapshot. Retention is 14 daily, 8 weekly and 12 monthly snapshots; success/failure notifications reuse Uptime Kuma Telegram. Full repository check and artifact restore drill passed on 2026-09-10. |
 | End-to-end smoke test                     | 🔄 In progress | Production smoke planned in `docs/tasks/production-deployment/phase-5-production-runbook-smoke/qa.md`; see `docs/roadmap/saas-pilot-integration-checklist.md`.                                                                                                                                                                                              |
 
 ---
