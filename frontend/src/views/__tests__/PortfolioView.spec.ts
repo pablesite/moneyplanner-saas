@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getWorkspace: vi.fn(),
   getMembers: vi.fn(),
   getAllocationScopes: vi.fn(),
+  getAllocation: vi.fn(),
   getStrategies: vi.fn(),
   getOperationOptions: vi.fn(),
   route: { query: {} as Record<string, string> },
@@ -25,6 +26,7 @@ vi.mock('@/domains/portfolio/api', () => ({
     getWorkspace: mocks.getWorkspace,
     getMembers: mocks.getMembers,
     getAllocationScopes: mocks.getAllocationScopes,
+    getAllocation: mocks.getAllocation,
     getStrategies: mocks.getStrategies,
     getOperationOptions: mocks.getOperationOptions,
   },
@@ -216,6 +218,80 @@ describe('PortfolioView', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
+  });
+
+  it('shows only the value exposed to each class for a partially declared product', async () => {
+    mocks.route.query = { tab: 'allocation' };
+    mocks.getAllocation.mockResolvedValue({
+      data: {
+        ownership_id: 1,
+        on_date: '2025-12-31',
+        currency: 'EUR',
+        strategy: null,
+        total_value: '10000',
+        by_class: [
+          {
+            asset_class: 'equity',
+            value: '7000',
+            actual_percent: '70',
+            target_percent: null,
+            min_percent: null,
+            max_percent: null,
+            drift_value: null,
+            band: 'unplanned',
+          },
+          {
+            asset_class: 'unclassified',
+            value: '3000',
+            actual_percent: '30',
+            target_percent: null,
+            min_percent: null,
+            max_percent: null,
+            drift_value: null,
+            band: 'unplanned',
+          },
+        ],
+        by_position: [
+          {
+            position_id: 3,
+            name: 'Fondo parcial',
+            asset_class: 'equity',
+            value: '10000',
+            actual_percent: '100',
+            target_percent: '60',
+            class_share: '100',
+            drift_value: '4000',
+            band: 'derived',
+            class_breakdown: [
+              { asset_class: 'equity', value: '7000', actual_percent: '70' },
+              { asset_class: 'unclassified', value: '3000', actual_percent: '30' },
+            ],
+          },
+        ],
+      },
+    });
+    const wrapper = mount(PortfolioView, {
+      global: { plugins: [createPinia()], stubs: { PortfolioBasketsPanel: true } },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    for (const row of wrapper.findAll('.a-pf-allocation-class')) await row.trigger('click');
+
+    const rows = wrapper.findAll('.a-pf-allocation-position');
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.isVisible())).toBe(true);
+    expect(rows[0]!.text()).toContain('7.000,00');
+    expect(rows[1]!.text()).toContain('3.000,00');
+    for (const row of rows) {
+      expect(row.text()).toContain('Fondo parcial');
+      expect(row.text()).toContain('Exposición');
+      expect(row.text()).not.toContain('10.000,00');
+      // El objetivo del producto completo no se replica en cada subyacente.
+      expect(row.findAll('td')[3]!.text()).toBe('—');
+      expect(row.findAll('td')[5]!.text()).toBe('—');
+    }
+    expect(wrapper.text()).toContain('Sin clasificar');
+    wrapper.unmount();
   });
 
   it('renders the family summary and opens a position detail without operation forms', async () => {

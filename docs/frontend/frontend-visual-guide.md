@@ -147,3 +147,7 @@ Define how to build a frontend that feels coherent, elegant, modern, and easy to
    - `docs/frontend/frontend-visual-contract.md`
 3. For the SaaS-only Direction A foundation, use:
    - `frontend/src/styles/design-system.css`
+
+## Cartera — composición por clases (2026-09-10)
+
+Asignación muestra las fracciones de productos mixtos bajo sus clases por el valor realmente expuesto, con estado «Exposición» y sin atribuir a cada fracción el objetivo del producto completo. La parte desconocida permanece visible como «Sin clasificar». En Diversificación, las clases usan el total de posiciones e indican cobertura y exclusión del efectivo de contenedores; las otras dimensiones mantienen su base declarada.

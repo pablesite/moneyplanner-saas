@@ -415,6 +415,10 @@ export type AllocationPositionRow = {
   position_id: number;
   name: string;
   asset_class: string;
+  class_breakdown?: { asset_class: string; value: string; actual_percent: string }[];
+  composition_source?: 'holdings' | 'breakdown' | 'classification';
+  composition_observed_on?: string | null;
+  class_covered_percent?: string;
   value: string;
   actual_percent: string;
   target_percent: string | null;
@@ -634,6 +638,7 @@ export type PortfolioExposure = {
     status: 'ready' | 'partial' | 'insufficient';
     covered_percent: string;
     source: 'holdings' | 'manual' | 'mixed';
+    percent_basis?: 'positions_total';
     rows: { asset_class: string; value: string; percent: string }[];
   };
   concentration: {

@@ -48,6 +48,7 @@ Core canonical documentation lives in:
 3. Family and ownership bootstrap is executed in Core through the relevant Core endpoint.
 4. Core validates browser-originated SaaS JWTs against the internal SaaS session-introspection endpoint. The only bypass is a two-minute, purpose-bound token accepted exclusively by the family bootstrap endpoint.
 5. Portfolio attention and Plan capital precedence are Core read contracts (`/api/portfolio/alerts/` and the projection classification). SaaS owns their presentation and deep links; Core keeps the alert rules, per-user isolation and the no-double-counting valuation rule.
+6. Core resolves the dated class composition used by portfolio exposure, allocation and workspace reads. SaaS displays the returned per-class position values and coverage; it does not derive a separate look-through allocation.
 
 ## Related Documents
 

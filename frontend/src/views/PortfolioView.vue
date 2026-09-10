@@ -280,12 +280,32 @@ function bandLabel(band: string): string {
       below: 'Por debajo',
       unplanned: 'Sin planear',
       derived: 'Hereda',
+      exposure: 'Exposición',
     }[band] ?? band
   );
 }
 
 function positionsOfClass(assetClass: string) {
-  return (allocation.value?.by_position ?? []).filter((row) => row.asset_class === assetClass);
+  return (allocation.value?.by_position ?? []).flatMap((row) => {
+    if (!row.class_breakdown) return row.asset_class === assetClass ? [row] : [];
+    const slice = row.class_breakdown.find((item) => item.asset_class === assetClass);
+    if (!slice) return [];
+    const wholePosition =
+      row.class_breakdown.length === 1 &&
+      row.asset_class === assetClass &&
+      assetClass !== 'unclassified';
+    return [
+      {
+        ...row,
+        ...slice,
+        // Un objetivo del producto no es un objetivo de cada una de sus fracciones.
+        target_percent: wholePosition ? row.target_percent : null,
+        class_share: wholePosition ? row.class_share : null,
+        drift_value: wholePosition ? row.drift_value : null,
+        band: wholePosition ? row.band : 'exposure',
+      },
+    ];
+  });
 }
 const setupPositionId = ref<number | null>(null);
 const expandedClasses = ref(new Set<string>());
@@ -914,7 +934,18 @@ async function onBasketSaved(message: string) {
 
 async function onPortfolioSaved(message: string) {
   successMessage.value = message;
-  await Promise.all([store.refresh(query.value), loadOperationOptions(), loadAlerts()]);
+  await Promise.all([
+    store.refresh(query.value),
+    loadOperationOptions(),
+    loadAlerts(),
+    loadAllocation(),
+    ...(exposure.value !== null ? [loadExposure()] : []),
+  ]);
+}
+
+async function onHoldingsSaved(message: string) {
+  successMessage.value = message;
+  await Promise.all([store.refresh(query.value), loadExposure(), loadAllocation(), loadAlerts()]);
 }
 
 watch(
@@ -1702,7 +1733,9 @@ watch(
         <p class="a-pf-allocation-note">
           El desvío es cuánto te separas del objetivo: <strong>positivo</strong> si vas sobrado,
           <strong>negativo</strong> si te quedas corto. Solo se marca en rojo lo que se ha salido de
-          su banda, que es lo único que pide una decisión.
+          su banda, que es lo único que pide una decisión. Las filas de productos mixtos muestran la
+          parte expuesta a cada clase; no son objetivos de compra. Lo que falta en una ficha
+          permanece en «Sin clasificar».
         </p>
 
         <!-- Lo que has decidido aportar y todavía no has ejecutado vive aquí, debajo de
@@ -1788,6 +1821,11 @@ watch(
               <small>
                 {{ exposureSourceLabel(exposure.classes.source) }}: las tenencias prevalecen sobre
                 el reparto manual.
+                <template v-if="exposure.classes.percent_basis === 'positions_total'">
+                  Clasificado el {{ formatPct(Number(exposure.classes.covered_percent) / 100, 1) }}
+                  del valor de las posiciones. Los porcentajes incluyen la parte sin clasificar y
+                  excluyen el efectivo de los contenedores.
+                </template>
               </small>
             </header>
             <ul class="a-pf-exposure-bars">
@@ -2102,12 +2140,7 @@ watch(
       :options="operationOptionsData"
       :initial-position-id="holdingsPositionId"
       @close="holdingsOpen = false"
-      @saved="
-        (message) => {
-          successMessage = message;
-          void loadExposure();
-        }
-      "
+      @saved="onHoldingsSaved"
     />
     <PortfolioRulesModal
       :open="rulesOpen"
