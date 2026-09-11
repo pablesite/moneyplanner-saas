@@ -310,15 +310,10 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('TIR anualizada');
     expect(wrapper.text()).toMatch(/11,0\s+%\s+acumulada/);
     expect(wrapper.text()).toContain('Dónde está invertida');
-    expect(wrapper.get('.a-pf-context-disclosure').attributes('open')).toBeUndefined();
-    expect(wrapper.text()).toContain('Filtrar inventario');
     // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la
     // posición, tras un icono.
     expect(wrapper.text()).not.toContain('Registrar');
-    expect(wrapper.find('[aria-label^="Operaciones de cartera"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain('Importar CSV');
-    // Los recurrentes son botones de icono: su nombre vive en `aria-label`, no en el texto.
-    expect(wrapper.find('[aria-label="Configurar posiciones · 1 pendientes"]').exists()).toBe(true);
+    expect(wrapper.find('[aria-label="Más acciones de cartera"]').exists()).toBe(true);
 
     await wrapper.findAll('.a-pf-tabs-bar .tab')[1]!.trigger('click');
     await wrapper.get('.a-pf-position-list button').trigger('click');
@@ -354,6 +349,9 @@ describe('PortfolioView', () => {
 
   it('opens from the current investment policy and keeps the policy range prominent', async () => {
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
+    await flushPromises();
+
+    await wrapper.findAll('.a-pf-tabs-bar .tab')[1]!.trigger('click');
     await flushPromises();
 
     expect(wrapper.text()).toContain('Periodo');

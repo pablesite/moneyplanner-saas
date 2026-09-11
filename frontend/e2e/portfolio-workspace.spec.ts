@@ -259,12 +259,13 @@ test('portfolio workspace keeps secondary controls progressive on desktop', asyn
   await loginAndOpenPortfolio(page);
 
   await expect(page.getByText('12.000,00 €').first()).toBeVisible();
+  await expect(page.locator('.a-pf-context-disclosure')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Posiciones', exact: true }).click();
   const inventoryFilters = page.locator('.a-pf-context-disclosure');
   await expect(inventoryFilters).not.toHaveAttribute('open', '');
   await inventoryFilters.locator('summary').click();
   await expect(inventoryFilters).toHaveAttribute('open', '');
   await expect(inventoryFilters.getByRole('button', { name: 'Clase de activo' })).toBeVisible();
-  await page.getByRole('button', { name: 'Posiciones', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Fondo Global' })).toBeVisible();
   await page.getByRole('button', { name: 'Evolución', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Evolución', exact: true })).toHaveAttribute(

@@ -48,6 +48,7 @@ import {
   AKpiBand,
   AMetaPill,
   APageHead,
+  ARowMenu,
   ASectHead,
   ASelect,
   AState,
@@ -82,6 +83,19 @@ const activeTab = ref<PortfolioTab>(
     ? (route.query.tab as PortfolioTab)
     : 'summary',
 );
+
+const pageMenuItems = computed(() => [
+  { id: 'import', label: 'Importar CSV' },
+  { id: 'containers', label: 'Gestionar contenedores' },
+  {
+    id: 'setup',
+    label: pendingSetupCount.value
+      ? `Configurar posiciones (${pendingSetupCount.value} pendientes)`
+      : 'Configurar posiciones',
+  },
+  { id: 'operations', label: 'Operaciones de cartera' },
+  { id: 'resync', label: 'Actualizar desde contabilidad' },
+]);
 // La lectura útil empieza cuando entró en vigor la política que guía la cartera actual.
 // El histórico anterior sigue disponible como comparación, pero no mezcla dos enfoques
 // de inversión que no responden a la misma pregunta.
@@ -908,6 +922,26 @@ async function resyncFromAccounting() {
   }
 }
 
+function handlePageMenuAction(action: string): void {
+  if (action === 'import') {
+    importOpen.value = true;
+    return;
+  }
+  if (action === 'containers') {
+    containersOpen.value = true;
+    return;
+  }
+  if (action === 'setup') {
+    setupOpen.value = true;
+    return;
+  }
+  if (action === 'operations') {
+    openOperation();
+    return;
+  }
+  if (action === 'resync') void resyncFromAccounting();
+}
+
 async function restorePosition(position: PositionPerformance) {
   actionError.value = null;
   try {
@@ -1019,53 +1053,12 @@ watch(
         </AButton>
         <span v-if="scopeIsFiltered">Todo el panel describe el subconjunto filtrado</span>
       </template>
-      <!-- Los tres recurrentes van como icono: se usan a menudo, su etiqueta ocupaba la
-           mitad de la cabecera y el nombre completo queda en `title` y `aria-label`. -->
       <template #actions>
-        <AButton variant="ghost" @click="importOpen = true">Importar CSV</AButton>
-        <AButton variant="ghost" @click="containersOpen = true">Contenedores</AButton>
-        <AButton
-          variant="icon"
-          title="Configurar posiciones"
-          :aria-label="
-            pendingSetupCount
-              ? `Configurar posiciones · ${pendingSetupCount} pendientes`
-              : 'Configurar posiciones'
-          "
-          :class="{ 'has-badge': pendingSetupCount }"
-          @click="setupOpen = true"
-        >
-          <svg v-bind="iconAttrs" aria-hidden="true">
-            <circle cx="12" cy="12" r="3" />
-            <path
-              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-            />
-          </svg>
-        </AButton>
-        <AButton
-          variant="icon"
-          title="Operaciones de cartera"
-          aria-label="Operaciones de cartera: splits, traspasos, identificadores y ajustes"
-          @click="openOperation()"
-        >
-          <svg v-bind="iconAttrs" aria-hidden="true">
-            <path d="M8 3v4M16 3v4M4 11h16" />
-            <rect x="4" y="5" width="16" height="16" rx="2" />
-            <path d="m9 16 2 2 4-4" />
-          </svg>
-        </AButton>
-        <AButton
-          variant="icon"
-          title="Actualizar desde contabilidad"
-          aria-label="Actualizar desde contabilidad"
-          :loading="resyncing"
-          @click="resyncFromAccounting"
-        >
-          <svg v-bind="iconAttrs" aria-hidden="true">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-            <path d="M21 3v6h-6" />
-          </svg>
-        </AButton>
+        <ARowMenu
+          :items="pageMenuItems"
+          label="Más acciones de cartera"
+          @select="handlePageMenuAction"
+        />
         <AButton
           variant="icon"
           title="Volver a Patrimonio"
@@ -1101,7 +1094,11 @@ watch(
       </div>
     </nav>
 
-    <section class="sect a-pf-filter-section" aria-label="Filtros de cartera">
+    <section
+      v-if="activeTab !== 'summary'"
+      class="sect a-pf-filter-section"
+      aria-label="Filtros de cartera"
+    >
       <details class="a-pf-context-disclosure">
         <summary>
           <span>
@@ -1157,7 +1154,11 @@ watch(
       </details>
     </section>
 
-    <section class="sect a-pf-period-section" aria-label="Periodo de análisis">
+    <section
+      v-if="activeTab !== 'summary'"
+      class="sect a-pf-period-section"
+      aria-label="Periodo de análisis"
+    >
       <div>
         <p class="eyebrow">Periodo</p>
         <h2>{{ policyPeriodDescription }}</h2>
@@ -1224,7 +1225,7 @@ watch(
         completar el inicio y cierre del periodo.
       </AState>
       <AState
-        v-if="store.quality.status !== 'ready'"
+        v-if="store.quality.status !== 'ready' && activeTab !== 'summary'"
         :status="store.quality.status === 'needs_review' ? 'error' : 'neutral'"
         layout="inline"
       >
