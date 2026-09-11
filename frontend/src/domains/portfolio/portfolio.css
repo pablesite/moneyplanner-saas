@@ -61,6 +61,58 @@
   overflow: hidden;
 }
 
+.dir-a .sect.a-pf-filter-section.is-summary {
+  display: flex;
+  justify-content: end;
+  margin-top: calc(var(--space-5) * -1);
+  margin-bottom: calc(var(--space-5) * -1);
+  overflow: visible;
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure {
+  position: relative;
+  border: 0;
+  background: transparent;
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure > summary {
+  min-height: 32px;
+  padding: 0;
+  gap: var(--space-2);
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure > summary > span:first-child {
+  display: inline;
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure > summary strong {
+  font-size: 0.75rem;
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-filter-context,
+.dir-a .a-pf-filter-section.is-summary .a-pf-filters {
+  display: none;
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure[open] {
+  min-width: min(100%, 620px);
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  box-shadow: 0 16px 32px -18px rgb(0 0 0 / 0.55);
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure[open] .a-pf-filter-context,
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure[open] .a-pf-filters {
+  display: flex;
+  margin-inline: 0;
+}
+
+.dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure[open] .a-pf-filter-context {
+  display: block;
+  margin-block: var(--space-3);
+}
+
 .dir-a .a-pf-context-disclosure,
 .dir-a .a-pf-quality-disclosure,
 .dir-a .a-pf-risk-disclosure,

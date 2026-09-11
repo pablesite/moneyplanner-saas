@@ -1095,17 +1095,19 @@ watch(
     </nav>
 
     <section
-      v-if="activeTab !== 'summary'"
       class="sect a-pf-filter-section"
+      :class="{ 'is-summary': activeTab === 'summary' }"
       aria-label="Filtros de cartera"
     >
       <details class="a-pf-context-disclosure">
         <summary>
           <span>
-            <strong>Filtrar inventario</strong>
-            <small>Posiciones, contenedor, clase y divisa</small>
+            <strong>{{ activeTab === 'summary' ? 'Filtrar' : 'Filtrar inventario' }}</strong>
+            <small v-if="activeTab !== 'summary'">Posiciones, contenedor, clase y divisa</small>
           </span>
-          <span class="a-pf-disclosure-action">Mostrar filtros</span>
+          <span class="a-pf-disclosure-action">
+            {{ activeTab === 'summary' ? 'Ver cartera parcial' : 'Mostrar filtros' }}
+          </span>
         </summary>
         <p class="a-pf-filter-context">
           Estos filtros cambian las posiciones que ves, no el mandato ni la propuesta de asignación.
