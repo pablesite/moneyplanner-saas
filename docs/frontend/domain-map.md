@@ -133,6 +133,8 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 
 ### `portfolio` — Cartera de inversión
 
+La aportación inteligente mantiene el importe y el origen mientras se corrigen los datos: al cambiar cualquiera invalida la simulación anterior. La propuesta muestra si el origen ya era efectivo del ámbito o dinero nuevo, el disponible, reserva táctica, efectivo acumulado para mínimos y remanente operativo. Los bloqueos de valoración, FX, titularidad o cobertura incluyen su fecha y acción correctiva. La pestaña Exposición usa el mismo ámbito de titularidad y efectivo que Asignación.
+
 **Origen:** Core-backed
 **Cliente:** `coreApi`
 **Ruta:** `/cartera`

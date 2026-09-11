@@ -161,9 +161,12 @@ export const corePortfolioApi = {
   deleteCommitment(id: number) {
     return coreApi.delete(`/api/portfolio/commitments/${id}/`);
   },
-  getExposure(onDate?: string) {
+  getExposure(ownershipId?: number, onDate?: string) {
     return coreApi.get<PortfolioExposure>('/api/portfolio/exposure/', {
-      params: onDate ? { on_date: onDate } : {},
+      params: {
+        ...(ownershipId ? { ownership_id: ownershipId } : {}),
+        ...(onDate ? { on_date: onDate } : {}),
+      },
     });
   },
   getPositionExposures(positionId: number) {
@@ -217,10 +220,11 @@ export const corePortfolioApi = {
       params: { ownership_id: ownershipId },
     });
   },
-  solveContribution(ownershipId: number, amount: string) {
+  solveContribution(ownershipId: number, amount: string, sourceAccountId?: number) {
     return coreApi.post<ContributionSolve>('/api/portfolio/contribution/solve/', {
       ownership_id: ownershipId,
       amount,
+      ...(sourceAccountId ? { source_account_id: sourceAccountId } : {}),
     });
   },
   getBaskets(params: { ownership_id?: number; status?: string } = {}) {

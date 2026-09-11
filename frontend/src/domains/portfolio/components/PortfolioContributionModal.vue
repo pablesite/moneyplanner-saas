@@ -25,6 +25,16 @@ const solved = ref<ContributionSolve | null>(null);
 const solving = ref(false);
 const saving = ref(false);
 const error = ref<string | null>(null);
+let revision = 0;
+watch(
+  [amount, sourceAccountId, () => props.ownershipId],
+  () => {
+    revision += 1;
+    solved.value = null;
+    error.value = null;
+  },
+  { flush: 'sync' },
+);
 
 const sourceOptions = computed(() => [
   { value: '', label: 'Sin declarar todavía' },
@@ -80,25 +90,28 @@ function skippedText(row: {
 
 async function solve() {
   if (!props.ownershipId || !amount.value) return;
+  const requestRevision = revision;
   solving.value = true;
   error.value = null;
   solved.value = null;
   try {
-    solved.value = (
+    const result = (
       await corePortfolioApi.solveContribution(
         props.ownershipId,
         normalizeNumberInput(amount.value),
+        sourceAccountId.value ? Number(sourceAccountId.value) : undefined,
       )
     ).data;
+    if (requestRevision === revision) solved.value = result;
   } catch (caught: unknown) {
-    error.value = toApiErrorMessage(caught);
+    if (requestRevision === revision) error.value = toApiErrorMessage(caught);
   } finally {
     solving.value = false;
   }
 }
 
 async function keep() {
-  if (!props.ownershipId || !amount.value) return;
+  if (!props.ownershipId || !amount.value || solved.value?.status !== 'ok') return;
   saving.value = true;
   error.value = null;
   try {
@@ -121,6 +134,7 @@ async function keep() {
 watch(
   () => props.open,
   (open) => {
+    revision += 1;
     if (!open) return;
     // Se abre con lo que el presupuesto tenía previsto invertir: es el importe que ya
     // habías decidido, y sigue siendo editable.
@@ -149,7 +163,13 @@ watch(
       <div class="ui-item-form-grid">
         <label class="ui-item-form-field">
           <span class="ui-item-form-label">Importe</span>
-          <input v-model="amount" class="input" inputmode="decimal" placeholder="0,00" />
+          <input
+            v-model="amount"
+            :disabled="saving"
+            class="input"
+            inputmode="decimal"
+            placeholder="0,00"
+          />
           <!-- Sugerir el mes entero cuando ya has aportado la mitad propone aportar dos
                veces lo planeado. Y una recolocación no es dinero nuevo: lo que cuenta es
                lo aportado menos lo desinvertido. -->
@@ -169,6 +189,7 @@ watch(
           </span>
           <ASelect
             v-model="sourceAccountId"
+            :disabled="saving"
             :options="sourceOptions"
             :searchable="false"
             class="select"
@@ -176,9 +197,55 @@ watch(
         </label>
       </div>
 
-      <AButton variant="ghost" :loading="solving" :disabled="!amount" @click="solve">
+      <AButton
+        variant="ghost"
+        :loading="solving"
+        :disabled="!amount || solving || saving"
+        @click="solve"
+      >
         Calcular reparto
       </AButton>
+
+      <div v-if="solved?.quality" class="a-pf-contribution-note" aria-live="polite">
+        <strong>Datos a {{ solved.quality.on_date }}</strong>
+        <span v-if="solved.quality.status === 'ready'"
+          >Datos suficientes para calcular el reparto.</span
+        >
+        <AState v-if="solved.status === 'blocked'" status="error" layout="inline">
+          Reparto bloqueado. Corrige los datos indicados y vuelve a calcular.
+        </AState>
+        <div v-for="(row, index) in solved.quality.issues" :key="`${row.code}-${index}`">
+          <strong>{{ row.message }}</strong>
+          <span v-if="row.observed_on"> Dato del {{ row.observed_on }}.</span>
+          <p>{{ row.action }}</p>
+        </div>
+      </div>
+      <div v-if="solved?.funding" class="a-pf-contribution-note">
+        <strong>{{
+          solved.funding.kind === 'internal'
+            ? 'Efectivo ya incluido en la cartera'
+            : 'Aportación desde fuera de la cartera'
+        }}</strong>
+        <span v-if="solved.funding.kind === 'unspecified'"
+          >Simulación con dinero nuevo. Selecciona el origen para comprobar su saldo y
+          titularidad.</span
+        >
+        <span v-else
+          >{{ solved.funding.name }} · Disponible: {{ solved.funding.available }}
+          {{ solved.funding.currency }}</span
+        >
+        <span v-if="solved.cash">Efectivo de este ámbito: {{ money(solved.cash.total) }}.</span>
+        <span v-if="solved.liquidity?.reserve_destination">
+          Reserva táctica: {{ money(solved.reserved_cash ?? '0') }} ·
+          {{
+            solved.liquidity.reserve_movement === 'transfer' ? 'Se transferirá a' : 'Permanece en'
+          }}
+          {{ solved.liquidity.reserve_destination }}.
+        </span>
+        <span v-if="solved.liquidity && Number(solved.leftover) > 0"
+          >El importe sin colocar permanece en el origen.</span
+        >
+      </div>
 
       <AState v-if="solved?.status === 'no_strategy'" status="empty" layout="inline">
         Este ámbito no tiene política escrita, así que no hay contra qué repartir.
@@ -269,7 +336,7 @@ watch(
             <dt>
               Liquidez táctica
               <AInfoHint
-                label="La parte que tu política reserva a liquidez. No se contabiliza nada por ella: se queda donde está."
+                label="La reserva permanece en el efectivo de la cartera o se transfiere a la cuenta de destino indicada. Guardar la cesta no mueve dinero."
               />
             </dt>
             <dd class="mono">{{ money(solved.reserved_cash ?? '0') }}</dd>

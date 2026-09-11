@@ -158,13 +158,13 @@ async function loadAlerts() {
   }
 }
 
-// La exposición no depende del periodo ni de los filtros de inventario: describe la
-// cartera de hoy, que es la que puedes cambiar.
+// La exposición no depende del periodo ni de los filtros de inventario: describe el
+// mandato vigente que puedes cambiar, con el mismo efectivo que la asignación.
 async function loadExposure() {
   exposureLoading.value = true;
   exposureError.value = null;
   try {
-    exposure.value = (await corePortfolioApi.getExposure()).data;
+    exposure.value = (await corePortfolioApi.getExposure(ownershipId.value ?? undefined)).data;
   } catch (error: unknown) {
     exposureError.value = toApiErrorMessage(error);
     exposure.value = null;
@@ -1825,6 +1825,10 @@ watch(
                   Clasificado el {{ formatPct(Number(exposure.classes.covered_percent) / 100, 1) }}
                   del valor de las posiciones. Los porcentajes incluyen la parte sin clasificar y
                   excluyen el efectivo de los contenedores.
+                </template>
+                <template v-else>
+                  Clasificado el {{ formatPct(Number(exposure.classes.covered_percent) / 100, 1) }}
+                  del mandato, incluido su efectivo vinculado.
                 </template>
               </small>
             </header>

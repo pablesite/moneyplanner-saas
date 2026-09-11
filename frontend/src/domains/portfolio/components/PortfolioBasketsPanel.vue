@@ -267,7 +267,8 @@ watch([() => props.ownershipId, showHistory], load, { immediate: true });
         clase: ese dinero fue a las demás.
       </p>
       <p v-if="Number(basket.reserved_cash) > 0" class="a-pf-basket-note">
-        {{ money(basket.reserved_cash) }} se quedan como liquidez, sin movimiento.
+        {{ money(basket.reserved_cash) }} de reserva táctica. Las transferencias necesarias aparecen
+        como líneas de efectivo.
       </p>
       <p v-if="Number(basket.leftover) > 0" class="a-pf-basket-note">
         {{ money(basket.leftover) }} sin colocar: no cabían en ningún destino.

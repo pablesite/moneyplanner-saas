@@ -436,6 +436,12 @@ export type PortfolioAllocation = {
   strategy: { id: number; effective_from: string; note: string; target_total: string } | null;
   total_value: string;
   position_count: number;
+  cash: { total: string; on_date: string };
+  quality: {
+    status: 'ready' | 'review' | 'blocked';
+    on_date: string;
+    issues: ContributionQualityIssue[];
+  };
   // Lo que el presupuesto tenía previsto invertir este mes, lo que ya llevas aportado
   // —neto de desinversiones, porque recolocar no es dinero nuevo— y lo que queda. Este
   // último es el punto de partida editable: elegir otra cifra no reescribe el presupuesto.
@@ -495,7 +501,29 @@ export type ContributionLine = {
 };
 
 export type ContributionSolve = {
-  status: 'ok' | 'no_strategy' | 'incomplete_strategy';
+  status: 'ok' | 'no_strategy' | 'incomplete_strategy' | 'blocked';
+  quality?: {
+    status: 'ready' | 'review' | 'blocked';
+    on_date: string;
+    issues: ContributionQualityIssue[];
+  };
+  cash?: { total: string; on_date: string };
+  funding?: {
+    kind: 'internal' | 'external' | 'unspecified';
+    name: string | null;
+    available: string | null;
+    currency?: string;
+  };
+  liquidity?: {
+    existing_cash: string;
+    portfolio_before: string;
+    portfolio_after: string;
+    tactical_reserve: string;
+    accumulated: string;
+    operating_remainder: string;
+    reserve_movement: 'retain' | 'transfer';
+    reserve_destination: string | null;
+  };
   declared_percent?: string;
   amount: string;
   reserved_cash?: string;
@@ -530,6 +558,15 @@ export type ContributionSolve = {
     reason: string;
     breach_cost: string;
   }[];
+};
+
+export type ContributionQualityIssue = {
+  code: string;
+  message: string;
+  action: string;
+  severity: 'blocker' | 'warning';
+  observed_on: string | null;
+  position_id: number | null;
 };
 
 export type ContributionBasketLine = {
@@ -633,12 +670,14 @@ export type PortfolioExposure = {
   currency: string;
   total_value: string;
   position_count: number;
+  cash?: { total: string; on_date: string } | null;
+  composition_total?: string;
   dimensions: ExposureDimension[];
   classes: {
     status: 'ready' | 'partial' | 'insufficient';
     covered_percent: string;
     source: 'holdings' | 'manual' | 'mixed';
-    percent_basis?: 'positions_total';
+    percent_basis?: 'positions_total' | 'positions_and_cash';
     rows: { asset_class: string; value: string; percent: string }[];
   };
   concentration: {

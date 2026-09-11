@@ -68,4 +68,14 @@ describe('portfolio api', () => {
       row_ids: [12],
     });
   });
+
+  it('uses the allocation ownership when reading exposure', async () => {
+    mocks.coreApi.get.mockResolvedValue({ data: {} });
+
+    await corePortfolioApi.getExposure(7, '2025-03-01');
+
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/exposure/', {
+      params: { ownership_id: 7, on_date: '2025-03-01' },
+    });
+  });
 });
