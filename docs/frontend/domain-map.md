@@ -135,6 +135,8 @@ La Fase 6 completa el ciclo de vida: `PlanEventsTimeline` confirma la baja media
 
 La aportación inteligente mantiene el importe y el origen mientras se corrigen los datos: al cambiar cualquiera invalida la simulación anterior. La propuesta muestra si el origen ya era efectivo del ámbito o dinero nuevo, el disponible, reserva táctica, efectivo acumulado para mínimos y remanente operativo. Los bloqueos de valoración, FX, titularidad o cobertura incluyen su fecha y acción correctiva. La pestaña Exposición usa el mismo ámbito de titularidad y efectivo que Asignación.
 
+La revisión muestra el efecto previsto sobre importe, pesos y bandas antes de guardar. El token de revisión impide guardar o contabilizar una cesta si han cambiado importe, política, fecha o datos. Los filtros globales siguen siendo del inventario; Asignación declara por separado el mandato y la fecha de la foto. En el editor de política se mantiene la fecha para corregir la versión vigente y se cambia únicamente para crear una versión nueva.
+
 **Origen:** Core-backed
 **Cliente:** `coreApi`
 **Ruta:** `/cartera`

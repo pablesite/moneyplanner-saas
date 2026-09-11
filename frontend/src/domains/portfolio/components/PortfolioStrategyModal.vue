@@ -229,7 +229,7 @@ watch(
             <span class="ui-item-form-label">
               Vigente desde
               <AInfoHint
-                label="La política se versiona por fecha. Cambiar esta fecha crea una versión nueva y conserva la anterior, para que una decisión pasada se juzgue contra lo que estaba escrito entonces."
+                label="Mantén esta fecha para corregir la versión vigente. Cámbiala solo si la política empieza en otra fecha: entonces se crea una versión nueva y las decisiones anteriores conservan la suya."
               />
             </span>
             <input v-model="effectiveFrom" class="input" type="date" required />

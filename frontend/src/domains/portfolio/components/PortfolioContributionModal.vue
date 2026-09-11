@@ -121,6 +121,7 @@ async function keep() {
       props.ownershipId,
       normalizeNumberInput(amount.value),
       sourceAccountId.value ? Number(sourceAccountId.value) : undefined,
+      solved.value.review_token,
     );
     emit('saved', 'Cesta guardada. Nada se ha contabilizado todavía.');
     emit('close');
@@ -256,6 +257,27 @@ watch(
       </AState>
 
       <template v-else-if="solved?.status === 'ok'">
+        <div v-if="solved.impact" class="a-pf-contribution-note">
+          <strong>Así quedaría el mandato</strong>
+          <span>
+            {{ money(solved.impact.before_total) }} → {{ money(solved.impact.after_total) }}
+          </span>
+          <ul class="a-pf-contribution-lines">
+            <li v-for="row in solved.impact.rows" :key="`impact-${row.asset_class}`">
+              <span>
+                {{ className(row.asset_class) }}
+                <small>
+                  {{ formatPct(Number(row.before_percent) / 100, 1) }} →
+                  {{ formatPct(Number(row.after_percent) / 100, 1) }} · {{ row.before_band }} →
+                  {{ row.after_band }}
+                </small>
+              </span>
+              <strong class="mono"
+                >{{ money(row.before_value) }} → {{ money(row.after_value) }}</strong
+              >
+            </li>
+          </ul>
+        </div>
         <div v-if="solved.commitments?.length" class="a-pf-contribution-note">
           <strong>Compromisos primero</strong>
           <span v-for="row in solved.commitments" :key="row.position_id">

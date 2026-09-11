@@ -78,4 +78,17 @@ describe('portfolio api', () => {
       params: { ownership_id: 7, on_date: '2025-03-01' },
     });
   });
+
+  it('persists the reviewed proposal token with a contribution basket', async () => {
+    mocks.coreApi.post.mockResolvedValue({ data: {} });
+
+    await corePortfolioApi.createBasket(7, '500', 12, 'reviewed-inputs');
+
+    expect(mocks.coreApi.post).toHaveBeenCalledWith('/api/portfolio/baskets/', {
+      ownership_id: 7,
+      amount: '500',
+      source_account_id: 12,
+      review_token: 'reviewed-inputs',
+    });
+  });
 });

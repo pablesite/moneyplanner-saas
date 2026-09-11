@@ -45,6 +45,7 @@ function money(value: string | number): string {
 const reasonLabels: Record<string, string> = {
   policy: '',
   below_minimum: 'Acumula en la plataforma hasta llegar a su mínimo de entrada',
+  tactical_reserve: 'Reserva táctica',
 };
 
 function lineReason(reason: string): string {
@@ -273,6 +274,13 @@ watch([() => props.ownershipId, showHistory], load, { immediate: true });
       <p v-if="Number(basket.leftover) > 0" class="a-pf-basket-note">
         {{ money(basket.leftover) }} sin colocar: no cabían en ningún destino.
       </p>
+      <div v-if="basket.explanation?.impact" class="a-pf-basket-note">
+        <strong>Impacto revisado</strong>
+        <span>
+          {{ money(basket.explanation.impact.before_total) }} →
+          {{ money(basket.explanation.impact.after_total) }}
+        </span>
+      </div>
 
       <div v-if="basket.status === 'draft'" class="a-pf-basket-actions">
         <label class="ui-item-form-field">

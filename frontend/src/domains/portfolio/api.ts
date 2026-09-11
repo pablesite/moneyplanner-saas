@@ -230,11 +230,17 @@ export const corePortfolioApi = {
   getBaskets(params: { ownership_id?: number; status?: string } = {}) {
     return coreApi.get<ContributionBasket[]>('/api/portfolio/baskets/', { params });
   },
-  createBasket(ownershipId: number, amount: string, sourceAccountId?: number) {
+  createBasket(
+    ownershipId: number,
+    amount: string,
+    sourceAccountId?: number,
+    reviewToken?: string,
+  ) {
     return coreApi.post<ContributionBasket>('/api/portfolio/baskets/', {
       ownership_id: ownershipId,
       amount,
       ...(sourceAccountId ? { source_account_id: sourceAccountId } : {}),
+      ...(reviewToken ? { review_token: reviewToken } : {}),
     });
   },
   confirmBasket(id: number, lineIds?: number[], sourceAccountId?: number) {

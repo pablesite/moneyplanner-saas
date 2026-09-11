@@ -524,6 +524,8 @@ export type ContributionSolve = {
     reserve_movement: 'retain' | 'transfer';
     reserve_destination: string | null;
   };
+  review_token?: string;
+  impact?: ContributionImpact;
   declared_percent?: string;
   amount: string;
   reserved_cash?: string;
@@ -560,6 +562,21 @@ export type ContributionSolve = {
   }[];
 };
 
+export type ContributionImpact = {
+  before_total: string;
+  after_total: string;
+  rows: {
+    asset_class: string;
+    before_value: string;
+    after_value: string;
+    before_percent: string;
+    after_percent: string;
+    before_band: string;
+    after_band: string;
+    target_percent: string | null;
+  }[];
+};
+
 export type ContributionQualityIssue = {
   code: string;
   message: string;
@@ -591,6 +608,8 @@ export type ContributionBasket = {
   status: 'draft' | 'confirmed' | 'discarded';
   source_account_id: number | null;
   explanation: {
+    review_token?: string;
+    impact?: ContributionImpact;
     commitments?: {
       position_id: number;
       amount: string;

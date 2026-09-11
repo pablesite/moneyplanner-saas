@@ -1102,6 +1102,10 @@ watch(
     </nav>
 
     <section class="sect a-pf-filter-section" aria-label="Filtros de cartera">
+      <p class="a-pf-filter-context">
+        <strong>Inventario:</strong> estos filtros cambian las posiciones que ves, no el mandato ni
+        la propuesta de asignación.
+      </p>
       <div class="context-rail a-pf-filters">
         <label class="context-field">
           <span class="sr-only">Titularidad</span>
@@ -1614,7 +1618,7 @@ watch(
           title="Dónde quieres estar"
           :subtitle="
             allocation?.strategy
-              ? `Política vigente desde ${formatShortMonthYear(allocation.strategy.effective_from)}`
+              ? `Mandato ${ownershipLabel} · política vigente desde ${formatShortMonthYear(allocation.strategy.effective_from)} · foto a ${allocation.on_date}`
               : 'Sin política escrita todavía: la cartera puede decirte dónde estás, pero no si es donde querías estar.'
           "
         >
@@ -1623,7 +1627,7 @@ watch(
               v-model="ownershipId"
               :options="ownershipOptions"
               :searchable="false"
-              aria-label="Ámbito de titularidad"
+              aria-label="Mandato de titularidad para asignación"
               class="filter-ctrl"
             />
             <AButton variant="ghost" :disabled="!ownershipId" @click="strategyOpen = true">
@@ -1731,6 +1735,10 @@ watch(
         <!-- Fuera de la tabla a propósito: dentro de un contenedor con scroll el globo
              de ayuda se recorta y en móvil no se llega a leer. -->
         <p class="a-pf-allocation-note">
+          <strong>Mandato:</strong> el selector de arriba cambia la política y la propuesta; no los
+          filtros de inventario. Editar la fecha vigente corrige esa versión; elegir otra fecha crea
+          una versión nueva.
+          <br />
           El desvío es cuánto te separas del objetivo: <strong>positivo</strong> si vas sobrado,
           <strong>negativo</strong> si te quedas corto. Solo se marca en rojo lo que se ha salido de
           su banda, que es lo único que pide una decisión. Las filas de productos mixtos muestran la
