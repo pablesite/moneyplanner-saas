@@ -336,10 +336,21 @@ describe('PortfolioView', () => {
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
     await flushPromises();
 
+    expect(mocks.getWorkspace).toHaveBeenCalledTimes(1);
+    expect(mocks.getWorkspace).toHaveBeenLastCalledWith({
+      date_from: '2022-03-01',
+      include_timeline: false,
+    });
+
     expect(wrapper.find('.a-pf-risk-disclosure').exists()).toBe(false);
 
     await wrapper.findAll('.a-pf-tabs-bar .tab')[4]!.trigger('click');
     await flushPromises();
+
+    expect(mocks.getWorkspace).toHaveBeenLastCalledWith({
+      date_from: '2022-03-01',
+      include_timeline: true,
+    });
 
     expect(wrapper.get('.a-pf-risk-disclosure').attributes('open')).toBeUndefined();
     await wrapper.get('.a-pf-risk-disclosure summary').trigger('click');
@@ -357,7 +368,10 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('Periodo');
     expect(wrapper.text()).toContain('La estrategia vigente se lee desde mar 2022.');
     expect(wrapper.get('[aria-label="Periodo de política"]')).toBeDefined();
-    expect(mocks.getWorkspace).toHaveBeenLastCalledWith({ date_from: '2022-03-01' });
+    expect(mocks.getWorkspace).toHaveBeenLastCalledWith({
+      date_from: '2022-03-01',
+      include_timeline: false,
+    });
   });
 
   it('restores the Patrimonio context carried by the entry route', async () => {

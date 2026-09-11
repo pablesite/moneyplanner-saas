@@ -111,6 +111,7 @@ const currency = ref(String(route.query.currency ?? 'all'));
 const customFrom = ref(String(route.query.from ?? ''));
 const customTo = ref(String(route.query.to ?? dateToIso(new Date())));
 const selectedPolicyPeriod = ref(String(route.query.policy ?? 'current'));
+const workspaceReady = ref(false);
 const strategies = ref<AllocationStrategy[]>([]);
 const selectedPosition = ref<PositionPerformance | null>(null);
 const operationOptionsData = ref<PortfolioOperationOptions | null>(null);
@@ -445,6 +446,9 @@ const policyPeriodDescription = computed(() => {
 
 const query = computed<PortfolioQuery>(() => {
   const result: PortfolioQuery = {};
+  // La serie histórica es el cálculo más caro del workspace y Resumen no la utiliza.
+  // Se solicita al abrir Evolución, que es la única pestaña que la representa.
+  result.include_timeline = activeTab.value === 'evolution';
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
   // Los tres filtros de inventario viajan a Core, que recalcula sobre ese subconjunto:
   // una rentabilidad no se suma entre posiciones, así que no es derivable aquí. La tabla
@@ -999,17 +1003,20 @@ watch(
 watch(
   query,
   (nextQuery) => {
-    void store.refresh(nextQuery);
+    if (workspaceReady.value) void store.refresh(nextQuery);
   },
   { deep: true },
 );
 
-onMounted(() => {
+onMounted(async () => {
   void store.loadMembers();
-  void store.refresh(query.value);
   void loadOperationOptions();
   void loadAlerts();
-  void loadStrategies();
+  // La política fija el periodo inicial. Esperarla evita cargar primero todo el
+  // histórico y volver a calcularlo cuando llega la fecha de vigencia.
+  await loadStrategies();
+  workspaceReady.value = true;
+  void store.refresh(query.value);
 });
 
 // Asignación y riesgo se leen por ámbito de titularidad. `immediate` permite abrir ambas

@@ -64,6 +64,25 @@ async function mockPortfolio(page: Page) {
       });
     }
     if (path === '/api/family-members/') return json(route, []);
+    if (path === '/api/portfolio/strategies/') {
+      return json(route, [
+        {
+          id: 1,
+          ownership_id: 1,
+          effective_from: '2022-03-01',
+          note: '',
+          max_cost_share: '0.005',
+          min_line_amount: '0',
+          targets: [],
+          target_total: '0',
+          created_at: '2022-03-01T00:00:00Z',
+        },
+      ]);
+    }
+    if (path === '/api/portfolio/operations/options/') {
+      return json(route, { positions: [], cash_accounts: [], asset_classes: [] });
+    }
+    if (path === '/api/portfolio/alerts/') return json(route, { alerts: [] });
     if (path === '/api/portfolio/instruments/') {
       return json(route, [
         {
@@ -256,7 +275,26 @@ async function loginAndOpenPortfolio(page: Page) {
 test.beforeEach(async ({ page }) => mockPortfolio(page));
 
 test('portfolio workspace keeps secondary controls progressive on desktop', async ({ page }) => {
+  let workspaceRequests = 0;
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/api/portfolio/workspace/') workspaceRequests += 1;
+  });
+  const workspaceRequest = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === '/api/portfolio/workspace/',
+  );
+  const workspaceResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === '/api/portfolio/workspace/',
+  );
+  const instrumentsResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === '/api/portfolio/instruments/',
+  );
   await loginAndOpenPortfolio(page);
+  const initialWorkspace = await workspaceRequest;
+  expect(new URL(initialWorkspace.url()).searchParams.get('include_timeline')).toBe('false');
+  expect((await workspaceResponse).status()).toBe(200);
+  expect((await instrumentsResponse).status()).toBe(200);
+  await page.waitForTimeout(100);
+  expect(workspaceRequests).toBe(1);
 
   await expect(page.getByText('12.000,00 €').first()).toBeVisible();
   await expect(page.locator('.a-pf-context-disclosure')).toHaveCount(1);
@@ -268,7 +306,13 @@ test('portfolio workspace keeps secondary controls progressive on desktop', asyn
   await expect(inventoryFilters).toHaveAttribute('open', '');
   await expect(inventoryFilters.getByRole('button', { name: 'Clase de activo' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Fondo Global' })).toBeVisible();
+  const timelineRequest = page.waitForRequest(
+    (request) =>
+      new URL(request.url()).pathname === '/api/portfolio/workspace/' &&
+      new URL(request.url()).searchParams.get('include_timeline') === 'true',
+  );
   await page.getByRole('button', { name: 'Evolución', exact: true }).click();
+  await timelineRequest;
   await expect(page.getByRole('button', { name: 'Evolución', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',

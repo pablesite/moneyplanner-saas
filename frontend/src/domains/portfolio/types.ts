@@ -159,6 +159,7 @@ export type PortfolioQuery = {
   container_id?: number;
   asset_class?: string;
   currency?: string;
+  include_timeline?: boolean;
   class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
