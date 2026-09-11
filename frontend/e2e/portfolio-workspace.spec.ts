@@ -291,6 +291,9 @@ test('portfolio workspace keeps secondary controls progressive on desktop', asyn
   await loginAndOpenPortfolio(page);
   const initialWorkspace = await workspaceRequest;
   expect(new URL(initialWorkspace.url()).searchParams.get('include_timeline')).toBe('false');
+  expect(new URL(initialWorkspace.url()).searchParams.get('include_position_details')).toBe(
+    'false',
+  );
   expect((await workspaceResponse).status()).toBe(200);
   expect((await instrumentsResponse).status()).toBe(200);
   await page.waitForTimeout(100);
@@ -299,7 +302,13 @@ test('portfolio workspace keeps secondary controls progressive on desktop', asyn
   await expect(page.getByText('12.000,00 €').first()).toBeVisible();
   await expect(page.locator('.a-pf-context-disclosure')).toHaveCount(1);
   await expect(page.getByText('Filtrar', { exact: true })).toBeVisible();
+  const detailsRequest = page.waitForRequest(
+    (request) =>
+      new URL(request.url()).pathname === '/api/portfolio/workspace/' &&
+      new URL(request.url()).searchParams.get('include_position_details') === 'true',
+  );
   await page.getByRole('button', { name: 'Posiciones', exact: true }).click();
+  await detailsRequest;
   const inventoryFilters = page.locator('.a-pf-context-disclosure');
   await expect(inventoryFilters).not.toHaveAttribute('open', '');
   await inventoryFilters.locator('summary').click();

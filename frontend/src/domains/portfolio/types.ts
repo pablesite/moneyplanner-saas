@@ -160,6 +160,7 @@ export type PortfolioQuery = {
   asset_class?: string;
   currency?: string;
   include_timeline?: boolean;
+  include_position_details?: boolean;
   class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
@@ -173,6 +174,7 @@ export type PortfolioWorkspacePayload = {
   overview: PortfolioOverview;
   performance: PortfolioPerformance;
   positions: PortfolioPositionsResponse;
+  position_details: boolean;
   timeline: PortfolioTimeline;
   quality: PortfolioQuality;
   instruments: PortfolioInstrument[];

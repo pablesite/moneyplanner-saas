@@ -21,6 +21,7 @@ export const usePortfolioStore = defineStore('portfolio', {
     scope: null as number[] | null,
     cashValue: '0',
     positions: null as PortfolioPositionsResponse | null,
+    positionDetails: true,
     timeline: null as PortfolioTimeline | null,
     quality: null as PortfolioQuality | null,
     instruments: [] as PortfolioInstrument[],
@@ -49,6 +50,7 @@ export const usePortfolioStore = defineStore('portfolio', {
         this.cashValue = payload.cash.value;
         this.performance = payload.performance;
         this.positions = payload.positions;
+        this.positionDetails = payload.position_details ?? true;
         this.timeline = payload.timeline;
         this.quality = payload.quality;
         this.instruments = payload.instruments;

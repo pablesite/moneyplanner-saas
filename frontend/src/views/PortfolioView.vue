@@ -449,6 +449,9 @@ const query = computed<PortfolioQuery>(() => {
   // La serie histórica es el cálculo más caro del workspace y Resumen no la utiliza.
   // Se solicita al abrir Evolución, que es la única pestaña que la representa.
   result.include_timeline = activeTab.value === 'evolution';
+  // Resumen compone por valor y clase; las rentabilidades por producto sólo se necesitan
+  // al abrir Posiciones. Así no se calculan ni transfieren al entrar en Cartera.
+  result.include_position_details = activeTab.value === 'positions';
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
   // Los tres filtros de inventario viajan a Core, que recalcula sobre ese subconjunto:
   // una rentabilidad no se suma entre posiciones, así que no es derivable aquí. La tabla
@@ -1497,7 +1500,10 @@ watch(
             </AButton>
           </template>
         </ASectHead>
-        <AState v-if="!visiblePositions.length" status="empty" layout="panel"
+        <AState v-if="!store.positionDetails" status="loading" layout="panel"
+          >Cargando el detalle de posiciones…</AState
+        >
+        <AState v-else-if="!visiblePositions.length" status="empty" layout="panel"
           >No hay posiciones para estos filtros.</AState
         >
         <template v-else>
