@@ -310,6 +310,8 @@ describe('PortfolioView', () => {
     expect(wrapper.text()).toContain('TIR anualizada');
     expect(wrapper.text()).toMatch(/11,0\s+%\s+acumulada/);
     expect(wrapper.text()).toContain('Dónde está invertida');
+    expect(wrapper.get('.a-pf-context-disclosure').attributes('open')).toBeUndefined();
+    expect(wrapper.text()).toContain('Filtrar inventario');
     // Registrar dinero vive en Contabilidad: aquí solo queda el mantenimiento de la
     // posición, tras un icono.
     expect(wrapper.text()).not.toContain('Registrar');
@@ -339,11 +341,13 @@ describe('PortfolioView', () => {
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
     await flushPromises();
 
-    expect(wrapper.text()).not.toContain('Cómo se ha comportado, y contra qué');
+    expect(wrapper.find('.a-pf-risk-disclosure').exists()).toBe(false);
 
     await wrapper.findAll('.a-pf-tabs-bar .tab')[4]!.trigger('click');
     await flushPromises();
 
+    expect(wrapper.get('.a-pf-risk-disclosure').attributes('open')).toBeUndefined();
+    await wrapper.get('.a-pf-risk-disclosure summary').trigger('click');
     expect(wrapper.text()).toContain('Cómo se ha comportado, y contra qué');
     expect(mocks.getAllocationScopes).toHaveBeenCalledTimes(1);
   });
@@ -352,8 +356,7 @@ describe('PortfolioView', () => {
     const wrapper = mount(PortfolioView, { global: { plugins: [createPinia()] } });
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Horizonte de análisis');
-    expect(wrapper.text()).toContain('Desde tu política de inversión');
+    expect(wrapper.text()).toContain('Periodo');
     expect(wrapper.text()).toContain('La estrategia vigente se lee desde mar 2022.');
     expect(wrapper.get('[aria-label="Periodo de política"]')).toBeDefined();
     expect(mocks.getWorkspace).toHaveBeenLastCalledWith({ date_from: '2022-03-01' });

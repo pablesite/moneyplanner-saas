@@ -419,3 +419,7 @@ Soporte PWA: registro del service worker, instalación y resiliencia offline del
 ### Composición coherente de cartera — 2026-09-10
 
 Las filas desplegables de Asignación consumen `by_position.class_breakdown`: un producto mixto aparece en cada clase por el importe expuesto, sin repetir su valor completo. El objetivo y desvío del producto completo no se presentan como objetivos de cada fracción; esas filas se etiquetan «Exposición». Diversificación muestra porcentajes de clase sobre el valor completo de las posiciones, incluida la fracción sin clasificar, e indica cobertura y exclusión del efectivo de contenedores. Al guardar tenencias se refrescan workspace, exposición, asignación y alertas; cambiar la configuración de una posición invalida también las lecturas afectadas. Plan: `core/docs/tasks/portfolio-decision-system/README.md`.
+
+### Simplificación del espacio de cartera — 2026-09-11
+
+Los filtros de inventario y las opciones avanzadas de periodo son controles progresivos: la lectura inicial conserva valor, periodo y pestañas, y abre el detalle solo cuando hace falta. Resumen muestra primero una única siguiente acción derivada de las alertas; composición, lista completa de alertas y calidad siguen disponibles sin competir con ella. Riesgo y comparación se despliegan desde Evolución. En móvil Asignación sustituye la tabla horizontal por tarjetas expandibles con estado, peso actual, objetivo, banda, desvío y productos afectados.

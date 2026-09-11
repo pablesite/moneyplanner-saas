@@ -1102,58 +1102,65 @@ watch(
     </nav>
 
     <section class="sect a-pf-filter-section" aria-label="Filtros de cartera">
-      <p class="a-pf-filter-context">
-        <strong>Inventario:</strong> estos filtros cambian las posiciones que ves, no el mandato ni
-        la propuesta de asignación.
-      </p>
-      <div class="context-rail a-pf-filters">
-        <label class="context-field">
-          <span class="sr-only">Titularidad</span>
-          <ASelect
-            v-model="memberId"
-            class="filter-ctrl"
-            aria-label="Titularidad"
-            :options="memberOptions"
-            :searchable="false"
-          />
-        </label>
-        <label class="context-field">
-          <span class="sr-only">Contenedor</span>
-          <ASelect
-            v-model="containerId"
-            class="filter-ctrl"
-            aria-label="Contenedor"
-            :options="containerOptions"
-          />
-        </label>
-        <label class="context-field">
-          <span class="sr-only">Clase de activo</span>
-          <ASelect
-            v-model="assetClass"
-            class="filter-ctrl"
-            aria-label="Clase de activo"
-            :options="classOptions"
-            :searchable="false"
-          />
-        </label>
-        <label class="context-field">
-          <span class="sr-only">Divisa</span>
-          <ASelect
-            v-model="currency"
-            class="filter-ctrl"
-            aria-label="Divisa"
-            :options="currencyOptions"
-            :searchable="false"
-          />
-        </label>
-      </div>
+      <details class="a-pf-context-disclosure">
+        <summary>
+          <span>
+            <strong>Filtrar inventario</strong>
+            <small>Posiciones, contenedor, clase y divisa</small>
+          </span>
+          <span class="a-pf-disclosure-action">Mostrar filtros</span>
+        </summary>
+        <p class="a-pf-filter-context">
+          Estos filtros cambian las posiciones que ves, no el mandato ni la propuesta de asignación.
+        </p>
+        <div class="context-rail a-pf-filters">
+          <label class="context-field">
+            <span class="sr-only">Titularidad</span>
+            <ASelect
+              v-model="memberId"
+              class="filter-ctrl"
+              aria-label="Titularidad"
+              :options="memberOptions"
+              :searchable="false"
+            />
+          </label>
+          <label class="context-field">
+            <span class="sr-only">Contenedor</span>
+            <ASelect
+              v-model="containerId"
+              class="filter-ctrl"
+              aria-label="Contenedor"
+              :options="containerOptions"
+            />
+          </label>
+          <label class="context-field">
+            <span class="sr-only">Clase de activo</span>
+            <ASelect
+              v-model="assetClass"
+              class="filter-ctrl"
+              aria-label="Clase de activo"
+              :options="classOptions"
+              :searchable="false"
+            />
+          </label>
+          <label class="context-field">
+            <span class="sr-only">Divisa</span>
+            <ASelect
+              v-model="currency"
+              class="filter-ctrl"
+              aria-label="Divisa"
+              :options="currencyOptions"
+              :searchable="false"
+            />
+          </label>
+        </div>
+      </details>
     </section>
 
     <section class="sect a-pf-period-section" aria-label="Periodo de análisis">
       <div>
-        <p class="eyebrow">Horizonte de análisis</p>
-        <h2>Desde tu política de inversión</h2>
-        <p class="muted">{{ policyPeriodDescription }}</p>
+        <p class="eyebrow">Periodo</p>
+        <h2>{{ policyPeriodDescription }}</h2>
       </div>
       <div class="a-pf-period-controls">
         <div class="mini-seg a-pf-period-presets" role="group" aria-label="Periodo rápido">
@@ -1169,21 +1176,26 @@ watch(
             {{ option.label }}
           </AButton>
         </div>
-        <ASelect
-          v-if="policyPeriodOptions.length"
-          v-model="selectedPolicyPeriod"
-          class="a-pf-policy-select"
-          aria-label="Periodo de política"
-          :options="policyPeriodOptions"
-          :searchable="false"
-          @update:model-value="period = 'policy'"
-        />
-        <ADateRange
-          v-if="period === 'custom'"
-          v-model:from="customFrom"
-          v-model:to="customTo"
-          class="a-pf-custom-range"
-        />
+        <details class="a-pf-period-more">
+          <summary>Otro periodo</summary>
+          <div>
+            <ASelect
+              v-if="policyPeriodOptions.length"
+              v-model="selectedPolicyPeriod"
+              class="a-pf-policy-select"
+              aria-label="Periodo de política"
+              :options="policyPeriodOptions"
+              :searchable="false"
+              @update:model-value="period = 'policy'"
+            />
+            <ADateRange
+              v-if="period === 'custom'"
+              v-model:from="customFrom"
+              v-model:to="customTo"
+              class="a-pf-custom-range"
+            />
+          </div>
+        </details>
       </div>
     </section>
 
@@ -1266,6 +1278,21 @@ watch(
               </template>
             </AKpiBand>
           </div>
+        </section>
+
+        <section
+          v-if="alerts?.alerts.length"
+          class="sect a-pf-next-step"
+          aria-label="Siguiente paso"
+        >
+          <div>
+            <p class="eyebrow">Siguiente paso</p>
+            <h2>{{ alerts.alerts[0].title }}</h2>
+            <p>{{ alerts.alerts[0].detail }}</p>
+          </div>
+          <AButton variant="primary" @click="handleAlertAction(alerts.alerts[0].action)">
+            {{ alertActionLabel(alerts.alerts[0]) }}
+          </AButton>
         </section>
 
         <section class="sect a-pf-composition-section">
@@ -1382,7 +1409,17 @@ watch(
           </div>
         </section>
 
-        <section class="sect">
+        <details
+          class="sect a-pf-quality-disclosure"
+          :open="!!reviewPositions.length || !!pendingSetupCount"
+        >
+          <summary>
+            <span>
+              <strong>Calidad de los datos</strong>
+              <small>Valoraciones, titularidad y divisas</small>
+            </span>
+            <span class="a-pf-disclosure-action">Ver detalle</span>
+          </summary>
           <ASectHead
             eyebrow="Calidad"
             title="Cobertura de los datos"
@@ -1426,7 +1463,7 @@ watch(
               }}</strong>
             </div>
           </div>
-        </section>
+        </details>
       </template>
 
       <section v-else-if="activeTab === 'positions'" class="sect">
@@ -1732,6 +1769,56 @@ watch(
             </tbody>
           </table>
         </div>
+        <div v-if="allocation?.by_class.length" class="a-pf-allocation-list">
+          <details
+            v-for="row in allocation.by_class"
+            :key="row.asset_class"
+            class="a-pf-allocation-card"
+          >
+            <summary>
+              <span>
+                <i class="a-pf-dot" :class="`is-${row.asset_class}`"></i>
+                <strong>{{
+                  portfolioAssetClassLabels[row.asset_class ?? 'other'] ?? row.asset_class
+                }}</strong>
+                <small>
+                  {{ formatPct(Number(row.actual_percent) / 100, 1) }} actual ·
+                  {{
+                    row.target_percent
+                      ? `${formatPct(Number(row.target_percent) / 100, 1)} objetivo`
+                      : 'sin objetivo'
+                  }}
+                </small>
+              </span>
+              <span class="a-pf-band" :class="`is-${row.band}`">{{ bandLabel(row.band) }}</span>
+            </summary>
+            <dl>
+              <div>
+                <dt>Valor</dt>
+                <dd class="mono">{{ money(row.value) }}</dd>
+              </div>
+              <div>
+                <dt>Banda</dt>
+                <dd class="mono">{{ bandRange(row) }}</dd>
+              </div>
+              <div>
+                <dt>Desvío</dt>
+                <dd class="mono" :class="driftTone(row.band)">
+                  {{ row.drift_value ? signedMoney(row.drift_value) : '—' }}
+                </dd>
+              </div>
+            </dl>
+            <ul v-if="positionsOfClass(row.asset_class ?? 'other').length">
+              <li
+                v-for="item in positionsOfClass(row.asset_class ?? 'other')"
+                :key="item.position_id"
+              >
+                <span>{{ item.name }}</span>
+                <strong class="mono">{{ money(item.value) }}</strong>
+              </li>
+            </ul>
+          </details>
+        </div>
         <!-- Fuera de la tabla a propósito: dentro de un contenedor con scroll el globo
              de ayuda se recorta y en móvil no se llega a leer. -->
         <p class="a-pf-allocation-note">
@@ -1943,18 +2030,27 @@ watch(
 
       <!-- Fase 7. El riesgo es detalle, no titular: vive debajo de la evolución y después
            del valor y la rentabilidad, que siguen siendo lo que se viene a mirar. -->
-      <section v-if="activeTab === 'evolution'" class="sect">
-        <ASectHead
-          eyebrow="Riesgo"
-          title="Cómo se ha comportado, y contra qué"
-          subtitle="Cierres de mes completos del periodo. Cada cifra dice sobre cuántos meses se ha calculado, y lo que no tiene cobertura no se pinta."
-        />
-        <PortfolioRiskPanel
-          :ownership-id="ownershipId"
-          :date-from="riskPeriod.from"
-          :date-to="riskPeriod.to"
-        />
-      </section>
+      <details v-if="activeTab === 'evolution'" class="sect a-pf-risk-disclosure">
+        <summary>
+          <span>
+            <strong>Analizar riesgo y comparación</strong>
+            <small>Volatilidad, caídas, índice y correlaciones</small>
+          </span>
+          <span class="a-pf-disclosure-action">Abrir análisis</span>
+        </summary>
+        <div class="a-pf-disclosure-body">
+          <ASectHead
+            eyebrow="Riesgo"
+            title="Cómo se ha comportado, y contra qué"
+            subtitle="Cierres de mes completos del periodo. Cada cifra dice sobre cuántos meses se ha calculado, y lo que no tiene cobertura no se pinta."
+          />
+          <PortfolioRiskPanel
+            :ownership-id="ownershipId"
+            :date-from="riskPeriod.from"
+            :date-to="riskPeriod.to"
+          />
+        </div>
+      </details>
     </template>
 
     <BaseModal
