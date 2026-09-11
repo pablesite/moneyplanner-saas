@@ -452,6 +452,9 @@ const query = computed<PortfolioQuery>(() => {
   // Resumen compone por valor y clase; las rentabilidades por producto sólo se necesitan
   // al abrir Posiciones. Así no se calculan ni transfieren al entrar en Cartera.
   result.include_position_details = activeTab.value === 'positions';
+  // Ninguna pestaña representa el libro técnico de flujos: se conserva en la API para
+  // consumidores que lo necesiten, pero no viaja en cada recálculo de esta vista.
+  result.include_flows = false;
   if (memberId.value !== 'all') result.member_id = Number(memberId.value);
   // Los tres filtros de inventario viajan a Core, que recalcula sobre ese subconjunto:
   // una rentabilidad no se suma entre posiciones, así que no es derivable aquí. La tabla

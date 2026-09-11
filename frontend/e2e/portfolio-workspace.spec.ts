@@ -294,6 +294,7 @@ test('portfolio workspace keeps secondary controls progressive on desktop', asyn
   expect(new URL(initialWorkspace.url()).searchParams.get('include_position_details')).toBe(
     'false',
   );
+  expect(new URL(initialWorkspace.url()).searchParams.get('include_flows')).toBe('false');
   expect((await workspaceResponse).status()).toBe(200);
   expect((await instrumentsResponse).status()).toBe(200);
   await page.waitForTimeout(100);

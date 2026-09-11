@@ -342,6 +342,7 @@ describe('PortfolioView', () => {
       date_from: '2022-03-01',
       include_timeline: false,
       include_position_details: false,
+      include_flows: false,
     });
 
     expect(wrapper.find('.a-pf-risk-disclosure').exists()).toBe(false);
@@ -353,6 +354,7 @@ describe('PortfolioView', () => {
       date_from: '2022-03-01',
       include_timeline: true,
       include_position_details: false,
+      include_flows: false,
     });
 
     expect(wrapper.get('.a-pf-risk-disclosure').attributes('open')).toBeUndefined();
@@ -375,6 +377,7 @@ describe('PortfolioView', () => {
       date_from: '2022-03-01',
       include_timeline: false,
       include_position_details: true,
+      include_flows: false,
     });
   });
 

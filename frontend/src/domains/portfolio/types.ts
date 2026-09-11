@@ -161,6 +161,7 @@ export type PortfolioQuery = {
   currency?: string;
   include_timeline?: boolean;
   include_position_details?: boolean;
+  include_flows?: boolean;
   class_breakdown?: PortfolioClassBreakdownRow[];
 };
 
