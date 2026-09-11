@@ -62,15 +62,17 @@
 }
 
 .dir-a .sect.a-pf-filter-section.is-summary {
-  display: flex;
-  justify-content: end;
-  margin-top: calc(var(--space-5) * -1);
-  margin-bottom: calc(var(--space-5) * -1);
+  position: relative;
+  z-index: 21;
+  height: 0;
+  margin: 0;
   overflow: visible;
 }
 
 .dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure {
   position: relative;
+  float: right;
+  top: calc(var(--space-5) * -1);
   border: 0;
   background: transparent;
 }
@@ -1306,6 +1308,18 @@
 }
 
 @container page (max-width: 560px) {
+  .dir-a .sect.a-pf-filter-section.is-summary {
+    display: flex;
+    justify-content: end;
+    height: auto;
+    margin-top: calc(var(--space-5) * -1);
+    margin-bottom: calc(var(--space-5) * -1);
+  }
+
+  .dir-a .a-pf-filter-section.is-summary .a-pf-context-disclosure {
+    top: auto;
+  }
+
   /* En pantalla estrecha el recuadro flotante tapaba el gráfico entero, y en táctil no
      hay forma de quitarlo. Deja de flotar y se coloca encima, junto a la leyenda. */
   .dir-a .a-pf-chart-tip {
