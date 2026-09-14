@@ -117,17 +117,15 @@ Expected server layout:
 
 The `.env.prod` file must stay outside git. It contains production secrets and deployment-specific values.
 
-Restic backs up production daily at 03:00 through `restic-backup.timer`. The canonical artifacts are:
+Restic backs up the whole server (Arkenstone, Feanor, Passbolt and Uptime Kuma) daily at 03:00
+through `restic-backup.timer`. The backup script, its systemd units and its exclude file are
+server-level configuration and live in the `arda` repository (`backup/restic-backup.sh`, installed
+as `/usr/local/sbin/restic-backup`), not in this repository.
 
-1. `scripts/production-restic-backup.sh`, installed as `/usr/local/sbin/restic-backup`.
-2. `ops/systemd/restic-backup.service` and `ops/systemd/restic-backup.timer`.
-3. `ops/systemd/restic-backup.exclude`, installed as `/etc/restic-backup.exclude`.
-
-The repository lives on the dedicated filesystem mounted at `/backups` and must match the UUID
-declared by the script. Before each encrypted Restic snapshot, the script creates and validates
-consistent database copies in `/datos/docker/backup-staging`: Core and SaaS PostgreSQL custom
-dumps, a Passbolt MariaDB dump and an online Uptime Kuma SQLite backup. Live database directories
-are excluded because copying them while their engines are running is not transaction-consistent.
+For Arkenstone, the script creates and validates consistent Core and SaaS PostgreSQL custom dumps
+(`core.dump`, `saas.dump`) in `/datos/docker/backup-staging` before each encrypted snapshot on
+`/backups/restic`. Live database directories are excluded because copying them while their engines
+are running is not transaction-consistent.
 
 Every run sends a success or failure message through the active Telegram notification configured
 in Uptime Kuma. Logs remain available through `journalctl -u restic-backup.service`.
@@ -331,7 +329,8 @@ Database migrations are the main rollback risk. If a deployment includes migrati
 
 ## Restore Notes
 
-Restic is the authoritative backup mechanism on the server. Before production launch, verify:
+Restic is the authoritative backup mechanism on the server (see the `arda` repository for
+installation and the full list of backed-up services). Before production launch, verify:
 
 1. The verified `saas.dump` and `core.dump` logical copies are present in the latest snapshot.
 2. `/datos/docker/compose/moneyplanner/docker-compose.prod.yml` is included.
