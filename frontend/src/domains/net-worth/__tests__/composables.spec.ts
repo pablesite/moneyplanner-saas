@@ -96,6 +96,38 @@ describe('useNetWorthViewState (core)', () => {
     expect(state.showLiabilityModal).toBe(false);
   });
 
+  it('drops the category filter left from a previous visit before loading', async () => {
+    // La vista arranca sin categoría: si el store conservaba "Inversiones", el timeline
+    // global llegaba filtrado y las comparativas del hero salían contra esa categoría.
+    const store = reactive({
+      loading: false,
+      error: null as string | null,
+      baseCurrency: 'EUR',
+      summary: makeSummary(),
+      byCategoryChart: { keys: [], assets: [], liabilities: [], unit: 'EUR' },
+      timelineCategoryFilter: 'investments' as string | null,
+      timelineCategoryFilterType: 'liability' as 'asset' | 'liability',
+      refreshAll: vi.fn(async () => undefined),
+    });
+    let filterAtLoad: string | null = 'unset';
+    store.refreshAll.mockImplementation(async () => {
+      filterAtLoad = store.timelineCategoryFilter;
+    });
+    mocks.useNetWorthStore.mockReturnValue(store);
+
+    const Harness = defineComponent({
+      setup() {
+        return useNetWorthViewState();
+      },
+      template: '<div />',
+    });
+    mount(Harness);
+    await nextTick();
+
+    expect(filterAtLoad).toBeNull();
+    expect(store.timelineCategoryFilterType).toBe('asset');
+  });
+
   it('reacts to mode changes, computes labels, edit payloads and error messages', async () => {
     const store = reactive({
       loading: false,
