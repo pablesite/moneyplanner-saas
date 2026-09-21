@@ -387,6 +387,10 @@ export function useNetWorthViewState() {
   );
 
   onMounted(async () => {
+    // La vista arranca siempre sin categoría; el filtro que quedó en el store de la visita
+    // anterior haría que el timeline "global" llegase filtrado.
+    store.timelineCategoryFilter = null;
+    store.timelineCategoryFilterType = 'asset';
     await store.refreshAll();
   });
 
