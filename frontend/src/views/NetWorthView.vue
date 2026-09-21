@@ -452,7 +452,11 @@ const globalTimelineComparisons = ref<TimelineComparisons | null>(null);
 watch(
   [timelineRows, selectedTimelineCategory],
   ([rows, cat]) => {
-    if (cat === null) {
+    // Las comparativas del hero son de todo el patrimonio: una serie filtrada por categoría
+    // (aunque llegue con la vista sin categoría, p. ej. la que quedó en el store de la
+    // visita anterior) no puede ocupar su lugar.
+    const filters = store.timeline?.filters;
+    if (cat === null && !filters?.asset_category && !filters?.liability_category) {
       globalTimelineRows.value = rows;
       globalTimelineComparisons.value = store.timeline?.comparisons ?? null;
     }
