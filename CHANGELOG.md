@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.62.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.61.0...moneyplanner-saas-v0.62.0) (2026-09-22)
+
+
+### Features
+
+* **portfolio:** review contribution proposals before execution ([155a2bc](https://github.com/pablesite/moneyplanner-saas/commit/155a2bc82fa4309143a1113f21ff548a9cd58ed2))
+* **portfolio:** show cash-aware contribution decisions ([09ebb0c](https://github.com/pablesite/moneyplanner-saas/commit/09ebb0cff67f158b3ace7331268c28f9376e9792))
+* **portfolio:** simplify decision workspace UX ([c3a7c2f](https://github.com/pablesite/moneyplanner-saas/commit/c3a7c2f1e3aebb7fd89452560cfa6a90e66c7751))
+
+
+### Bug Fixes
+
+* **net-worth:** keep hero comparisons on the whole net worth after revisiting ([ccc4798](https://github.com/pablesite/moneyplanner-saas/commit/ccc4798a07ce9c1de2501fa1d6bab48719eee2b5))
+* **portfolio:** align summary filters with tabs ([e085303](https://github.com/pablesite/moneyplanner-saas/commit/e0853039e24e4060d12e762967700ab1aba46a50))
+* **portfolio:** display consistent class exposure in allocation ([b08e1f0](https://github.com/pablesite/moneyplanner-saas/commit/b08e1f0af356db54c4ad291ae8d5c324a9f1a63a))
+* **portfolio:** keep summary filters accessible ([39da661](https://github.com/pablesite/moneyplanner-saas/commit/39da6614ec5a1692409ba16954ba2255c05458b7))
+* **portfolio:** prioritize summary value ([86baec8](https://github.com/pablesite/moneyplanner-saas/commit/86baec89ddaadbe17dc6c4ffc631ac2cf8ccab0a))
+
+
+### Performance Improvements
+
+* **portfolio:** avoid duplicate summary loading ([77b5193](https://github.com/pablesite/moneyplanner-saas/commit/77b51933d88b64f9763a9a065e01dcb6e1ef621b))
+* **portfolio:** load position details on demand ([f914e9a](https://github.com/pablesite/moneyplanner-saas/commit/f914e9ae2eebf34bfb76d0df3907175a78caa377))
+* **portfolio:** skip flow ledger in workspace ([36e512e](https://github.com/pablesite/moneyplanner-saas/commit/36e512e309d62d0adf75b85afe3b142942e3182e))
+
 ## [0.61.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.60.0...moneyplanner-saas-v0.61.0) (2026-09-01)
 
 
