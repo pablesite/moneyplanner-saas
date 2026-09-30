@@ -35,6 +35,8 @@ import type {
   PositionAllocationRule,
   PositionExposure,
   PositionHolding,
+  PositionIncomeLinks,
+  PositionIncomeLinkType,
 } from './types';
 
 export const corePortfolioApi = {
@@ -90,6 +92,30 @@ export const corePortfolioApi = {
   },
   updateContainer(id: number, payload: PortfolioContainerPayload) {
     return coreApi.patch<PortfolioContainer>(`/api/portfolio/containers/${id}/`, payload);
+  },
+  getPositionIncomeLinks(positionId: number, includeAll = false) {
+    return coreApi.get<PositionIncomeLinks>(
+      `/api/portfolio/positions/${positionId}/income-links/`,
+      {
+        params: includeAll ? { all: 1 } : undefined,
+      },
+    );
+  },
+  linkPositionIncome(
+    positionId: number,
+    transactionIds: number[],
+    operationType: PositionIncomeLinkType,
+  ) {
+    return coreApi.post<PositionIncomeLinks>(
+      `/api/portfolio/positions/${positionId}/income-links/link/`,
+      { transaction_ids: transactionIds, operation_type: operationType },
+    );
+  },
+  unlinkPositionIncome(positionId: number, transactionId: number) {
+    return coreApi.post<PositionIncomeLinks>(
+      `/api/portfolio/positions/${positionId}/income-links/unlink/`,
+      { transaction_id: transactionId },
+    );
   },
   reopenPosition(positionId: number) {
     return coreApi.post<void>(`/api/portfolio/positions/${positionId}/reopen/`);

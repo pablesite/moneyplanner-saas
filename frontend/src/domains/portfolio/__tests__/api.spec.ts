@@ -23,6 +23,29 @@ describe('portfolio api', () => {
     expect(mocks.coreApi.get).toHaveBeenCalledTimes(2);
   });
 
+  it('links and unlinks income without booking anything new', async () => {
+    mocks.coreApi.get.mockResolvedValue({ data: { linked: [], candidates: [] } });
+    mocks.coreApi.post.mockResolvedValue({ data: { linked: [], candidates: [] } });
+
+    await corePortfolioApi.getPositionIncomeLinks(4, true);
+    await corePortfolioApi.linkPositionIncome(4, [11, 12], 'dividend');
+    await corePortfolioApi.unlinkPositionIncome(4, 11);
+
+    expect(mocks.coreApi.get).toHaveBeenCalledWith('/api/portfolio/positions/4/income-links/', {
+      params: { all: 1 },
+    });
+    expect(mocks.coreApi.post).toHaveBeenNthCalledWith(
+      1,
+      '/api/portfolio/positions/4/income-links/link/',
+      { transaction_ids: [11, 12], operation_type: 'dividend' },
+    );
+    expect(mocks.coreApi.post).toHaveBeenNthCalledWith(
+      2,
+      '/api/portfolio/positions/4/income-links/unlink/',
+      { transaction_id: 11 },
+    );
+  });
+
   it('keeps preview, confirmation, setup and CSV staging as separate writes', async () => {
     mocks.coreApi.post.mockResolvedValue({ data: {} });
     const operation = {

@@ -10,6 +10,7 @@ export { default as PortfolioContributionModal } from './components/PortfolioCon
 export { default as PortfolioBasketsPanel } from './components/PortfolioBasketsPanel.vue';
 export { default as PortfolioExposureModal } from './components/PortfolioExposureModal.vue';
 export { default as PortfolioHoldingsModal } from './components/PortfolioHoldingsModal.vue';
+export { default as PortfolioIncomeLinksModal } from './components/PortfolioIncomeLinksModal.vue';
 export { default as PortfolioRulesModal } from './components/PortfolioRulesModal.vue';
 export { default as PortfolioStrategyModal } from './components/PortfolioStrategyModal.vue';
 export { default as PortfolioSetupModal } from './components/PortfolioSetupModal.vue';

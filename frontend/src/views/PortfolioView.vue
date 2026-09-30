@@ -10,6 +10,7 @@ import {
   PortfolioContributionModal,
   PortfolioExposureModal,
   PortfolioHoldingsModal,
+  PortfolioIncomeLinksModal,
   PortfolioRulesModal,
   PortfolioSetupModal,
   PortfolioContainersModal,
@@ -125,6 +126,7 @@ const exposureOpen = ref(false);
 const exposurePositionId = ref<number | null>(null);
 const holdingsOpen = ref(false);
 const holdingsPositionId = ref<number | null>(null);
+const incomeLinksPosition = ref<{ id: number; name: string } | null>(null);
 const exposure = ref<PortfolioExposure | null>(null);
 const exposureLoading = ref(false);
 const exposureError = ref<string | null>(null);
@@ -334,6 +336,11 @@ function toggleClass(key: string) {
   if (!next.delete(key)) next.add(key);
   expandedClasses.value = next;
 }
+function openIncomeLinks(position: PositionPerformance) {
+  selectedPosition.value = null;
+  incomeLinksPosition.value = { id: position.position_id, name: position.instrument_name };
+}
+
 function editPosition(id: number) {
   selectedPosition.value = null;
   setupPositionId.value = id;
@@ -2165,6 +2172,10 @@ watch(
               }}</span>
             </dd>
           </div>
+          <div v-if="toNumber(selectedPosition.performance.income) !== 0">
+            <dt>Rentas cobradas</dt>
+            <dd class="mono">{{ money(selectedPosition.performance.income) }}</dd>
+          </div>
           <div v-if="selectedPosition.attribution.method !== 'unavailable'">
             <dt>Activo / divisa</dt>
             <dd class="mono">
@@ -2177,6 +2188,9 @@ watch(
       <template #footer>
         <div v-if="selectedPosition" class="ui-modal-foot-actions">
           <AButton variant="ghost" @click="selectedPosition = null">Cerrar</AButton>
+          <AButton variant="ghost" @click="openIncomeLinks(selectedPosition)">
+            Dividendos e intereses
+          </AButton>
           <AButton variant="primary" @click="editPosition(selectedPosition.position_id)">
             Configurar posición
           </AButton>
@@ -2261,6 +2275,13 @@ watch(
           void loadExposure();
         }
       "
+    />
+    <PortfolioIncomeLinksModal
+      :open="incomeLinksPosition !== null"
+      :position-id="incomeLinksPosition?.id ?? null"
+      :position-name="incomeLinksPosition?.name"
+      @close="incomeLinksPosition = null"
+      @saved="onHoldingsSaved"
     />
     <PortfolioHoldingsModal
       :open="holdingsOpen"

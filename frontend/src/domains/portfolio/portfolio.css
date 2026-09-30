@@ -323,7 +323,7 @@
 }
 
 .dir-a .a-pf-next-step h2 {
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
   font-size: 1rem;
 }
 
@@ -429,7 +429,7 @@
 }
 
 .dir-a .a-pf-alert-row p {
-  margin: var(--space-1) 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--muted);
   font-size: 0.75rem;
   line-height: 1.45;
@@ -1268,7 +1268,7 @@
 .dir-a .a-pf-setup-context > div,
 .dir-a .a-pf-setup-coverage > div {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding: var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -1422,7 +1422,7 @@
   .dir-a .a-pf-hero-grid .a-kpi-band > .kpi {
     display: grid;
     grid-template-rows: auto;
-    gap: var(--space-1);
+    gap: var(--space-2);
     padding-block: var(--space-4);
     border-bottom: 1px solid var(--line);
   }
@@ -1642,7 +1642,7 @@
 
 .a-pf-detail-sheet .a-pf-detail-headline {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--line);
 }
@@ -1688,7 +1688,7 @@
 .a-pf-detail-sheet .a-pf-detail-return-label {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -2613,7 +2613,7 @@
 
 .dir-a .a-pf-risk-table td small {
   color: var(--muted);
-  margin-left: var(--space-1);
+  margin-left: var(--space-2);
 }
 
 .dir-a .a-pf-risk-table td em {
@@ -2887,4 +2887,43 @@
     overflow-x: auto;
     scrollbar-width: thin;
   }
+}
+
+/* Rentas vinculadas a una posición: descripción, importe y acción en una fila. */
+.dir-a-sheet .a-pf-income-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dir-a-sheet .a-pf-income-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.dir-a-sheet .a-pf-income-main {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.dir-a-sheet .a-pf-income-main small {
+  color: var(--muted);
+}
+
+.dir-a-sheet .a-pf-income-pick {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.dir-a-sheet .a-pf-income-pick > span {
+  display: grid;
+  gap: var(--space-2);
 }

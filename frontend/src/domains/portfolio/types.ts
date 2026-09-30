@@ -892,3 +892,23 @@ export type PortfolioDecisionLog = {
   }[];
   method: { kind: string; note: string };
 };
+
+export type PositionIncomeLinkType = 'dividend' | 'interest';
+
+export type PositionIncomeMovement = {
+  transaction_id: number;
+  booking_date: string;
+  description: string;
+  amount: string;
+  currency: string;
+  account_name: string;
+  category_key: string;
+  subcategory_key: string;
+  trade_id: number | null;
+  operation_type: PositionIncomeLinkType | null;
+};
+
+export type PositionIncomeLinks = {
+  linked: PositionIncomeMovement[];
+  candidates: PositionIncomeMovement[];
+};
