@@ -233,15 +233,22 @@ function toggleId(list: number[], id: number, enabled: boolean): void {
   markDirty();
 }
 
-function canJoinLate(asset: { id: number; category: string; subcategory: string }): boolean {
+function canJoinLate(asset: { id: number }): boolean {
   return (
     readOnly.value &&
     !rebaselineMode.value &&
-    asset.category === 'cash' &&
-    asset.subcategory !== 'wallet' &&
-    !selectedAssetIds.value.has(asset.id)
+    Boolean(configuration.value?.joinable_asset_ids?.includes(asset.id))
   );
 }
+
+// Once the baseline exists, accounts that already count elsewhere are not choices here.
+const sharedDestinationAssets = computed(() =>
+  readOnly.value
+    ? allocationAssets.value.filter(
+        (asset) => form.allocationAssetIds.includes(asset.id) || canJoinLate(asset),
+      )
+    : allocationAssets.value,
+);
 
 async function addAccount(asset: { id: number; name: string }, input: HTMLInputElement) {
   if (
@@ -601,10 +608,14 @@ function requestClose(): void {
           <h4>Cuentas 50/50 u otras asignaciones</h4>
           <p class="subtle">Márcalas si reciben ahorro o inversión desde el presupuesto.</p>
           <p v-if="readOnly" class="subtle">
-            También puedes añadir otra cuenta de liquidez que mueva dinero familiar: contará con el
-            saldo que tenía en el último cierre y conservará el suyo.
+            Las marcadas ya cuentan. Las demás son cuentas de liquidez que todavía no participan: al
+            añadir una, contará con el saldo que tenía en el último cierre y conservará el suyo.
           </p>
-          <label v-for="asset in allocationAssets" :key="asset.id" class="mc-settlement-check">
+          <label
+            v-for="asset in sharedDestinationAssets"
+            :key="asset.id"
+            class="mc-settlement-check"
+          >
             <input
               type="checkbox"
               :checked="form.allocationAssetIds.includes(asset.id)"

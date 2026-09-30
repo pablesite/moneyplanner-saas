@@ -234,6 +234,7 @@ describe('SettlementConfigurationSheet', () => {
     const activeConfiguration = {
       ...(await mocks.getConfiguration()),
       is_enabled: true,
+      joinable_asset_ids: [82],
       accounts: (await mocks.getConfiguration()).accounts.filter(
         (row: { asset_id: number }) => row.asset_id !== 82,
       ),
@@ -253,7 +254,8 @@ describe('SettlementConfigurationSheet', () => {
     );
     const input = (name: string) =>
       checks.find((label) => label.textContent?.includes(name))!.querySelector('input')!;
-    expect(input('Cuenta Compartida').disabled).toBe(true);
+    expect(checks.some((label) => label.textContent?.includes('Cuenta Compartida'))).toBe(false);
+    expect(checks.some((label) => label.textContent?.includes('Cuenta Pablo'))).toBe(false);
     expect(input('Cuenta Ana').disabled).toBe(false);
     input('Cuenta Ana').checked = true;
     input('Cuenta Ana').dispatchEvent(new Event('change', { bubbles: true }));

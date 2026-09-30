@@ -38,6 +38,7 @@ export type SettlementConfiguration = {
   baseline_date: string | null;
   start_date: string | null;
   can_rebaseline: boolean;
+  joinable_asset_ids?: number[];
   base_currency: string;
   operating_reserve_adjustment: string;
   readiness_status: 'not_checked' | 'ready' | 'blocked';
