@@ -708,7 +708,7 @@ function requestClose(): void {
             </template>
           </div>
           <div
-            v-if="readiness?.wallet_normalization_candidates.length"
+            v-if="!walletsShowCurrent && readiness?.wallet_normalization_candidates.length"
             class="mc-settlement-normalizations"
           >
             <h4>Transferencias que solo cerraron el sistema anterior</h4>

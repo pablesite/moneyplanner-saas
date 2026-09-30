@@ -231,6 +231,17 @@ describe('SettlementConfigurationSheet', () => {
   });
 
   it('adds a liquidity account to an active settlement after confirming', async () => {
+    mocks.getReadiness.mockResolvedValueOnce({
+      ...(await mocks.getReadiness()),
+      wallet_normalization_candidates: [
+        {
+          transaction_id: 5,
+          booking_date: '2026-09-07',
+          description: 'Traspaso por gasolina',
+          entries: [],
+        },
+      ],
+    });
     const activeConfiguration = {
       ...(await mocks.getConfiguration()),
       is_enabled: true,
@@ -256,6 +267,8 @@ describe('SettlementConfigurationSheet', () => {
       checks.find((label) => label.textContent?.includes(name))!.querySelector('input')!;
     expect(checks.some((label) => label.textContent?.includes('Cuenta Compartida'))).toBe(false);
     expect(checks.some((label) => label.textContent?.includes('Cuenta Pablo'))).toBe(false);
+    expect(document.body.textContent).not.toContain('Traspaso por gasolina');
+    expect(document.body.textContent).toContain('Saldo actual');
     expect(input('Cuenta Ana').disabled).toBe(false);
     input('Cuenta Ana').checked = true;
     input('Cuenta Ana').dispatchEvent(new Event('change', { bubbles: true }));
