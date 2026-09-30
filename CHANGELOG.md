@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.63.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.62.0...moneyplanner-saas-v0.63.0) (2026-09-30)
+
+
+### Features
+
+* **plan:** hero shows the month of the goal and demotes the ages ([945f089](https://github.com/pablesite/moneyplanner-saas/commit/945f089d96f958ccb14d1fd96412950e340e9186))
+* **portfolio:** link dividends paid outside the portfolio from the position sheet ([eca733e](https://github.com/pablesite/moneyplanner-saas/commit/eca733e0d6dc36f1ea44e4ff40250fc6563c9975))
+* **settlement:** add a liquidity account from the active settlement sheet ([e144721](https://github.com/pablesite/moneyplanner-saas/commit/e144721e1f3f162a52b8d1db81a3356d5fbe4dea))
+* **settlement:** reconcile personal wallets from the close and show current cash ([16972a0](https://github.com/pablesite/moneyplanner-saas/commit/16972a06ae879edcd64ccc9f4d0cd82450c1f404))
+
+
+### Bug Fixes
+
+* **plan:** cash flow card reflects the commitments still running ([021df65](https://github.com/pablesite/moneyplanner-saas/commit/021df65dcc9654c30f4ecc1c7f85fb5c404efcdb))
+* **settlement:** active settlement sheet lists only accounts that can still join ([98bb657](https://github.com/pablesite/moneyplanner-saas/commit/98bb65708aee56d70c4b9eef9a8985d6ff212adc))
+* **settlement:** hide wallet normalization candidates while the settlement is active ([5ad3073](https://github.com/pablesite/moneyplanner-saas/commit/5ad3073f03c996058fa7c5751579f1fe5e276cfd))
+
 ## [0.62.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.61.0...moneyplanner-saas-v0.62.0) (2026-09-22)
 
 
