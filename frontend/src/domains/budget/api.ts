@@ -117,6 +117,13 @@ export async function rebaselineSettlement(
   return response.data;
 }
 
+export async function addSettlementAccount(assetId: number): Promise<SettlementConfiguration> {
+  const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/accounts/', {
+    asset_id: assetId,
+  });
+  return response.data;
+}
+
 export async function disableSettlement(): Promise<SettlementConfiguration> {
   const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/disable/');
   return response.data;

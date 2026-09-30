@@ -86,6 +86,7 @@ Core settlement execution endpoints after explicit confirmation.
 | `GET` | `/api/budget/settlement/readiness/?year=YYYY&month=M&balance_date=YYYY-MM-DD` | Returns blockers, warnings, ownership coverage and per-wallet reconciliation for the exact optional activation date without changing balances. |
 | `POST` | `/api/budget/settlement/activate/` | Activates a ready profile from the requested first included `start_date`; Core captures the baseline on the preceding day and rejects silent date changes. |
 | `POST` | `/api/budget/settlement/rebaseline/` | Rebuilds the opening baseline, zero-sum economic adjustments and explicit wallet-normalization links while no finalized `ready` settlement exists. |
+| `POST` | `/api/budget/settlement/accounts/` | Adds one liquidity account (`asset_id`) as an allocation destination to a settlement that already has its opening baseline; rejects wallets, other currencies, accounts without ownership and accounts that already participate. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/apply/` | Atomically applies every remaining non-cancelled recommendation for a finalized close. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |

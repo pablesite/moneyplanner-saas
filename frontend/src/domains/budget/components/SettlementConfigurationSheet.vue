@@ -6,6 +6,7 @@ import { usePeopleStore } from '@/domains/people/store';
 import { useNetWorthStore } from '@/domains/net-worth/store';
 import {
   activateSettlement,
+  addSettlementAccount,
   disableSettlement,
   getSettlementConfiguration,
   getSettlementReadiness,
@@ -230,6 +231,39 @@ function toggleId(list: number[], id: number, enabled: boolean): void {
   if (enabled && index < 0) list.push(id);
   if (!enabled && index >= 0) list.splice(index, 1);
   markDirty();
+}
+
+function canJoinLate(asset: { id: number; category: string; subcategory: string }): boolean {
+  return (
+    readOnly.value &&
+    !rebaselineMode.value &&
+    asset.category === 'cash' &&
+    asset.subcategory !== 'wallet' &&
+    !selectedAssetIds.value.has(asset.id)
+  );
+}
+
+async function addAccount(asset: { id: number; name: string }, input: HTMLInputElement) {
+  if (
+    !window.confirm(
+      `${asset.name} pasará a contar en la liquidación con el saldo que tenía en el último cierre. No cambia a dónde se reparte el dinero y no podrá quitarse después. ¿Añadirla?`,
+    )
+  ) {
+    input.checked = false;
+    return;
+  }
+  saving.value = true;
+  error.value = null;
+  try {
+    const next = await addSettlementAccount(asset.id);
+    hydrate(next);
+    emit('changed', next);
+  } catch (reason) {
+    input.checked = false;
+    error.value = toBudgetErrorMessage(reason);
+  } finally {
+    saving.value = false;
+  }
 }
 
 function buildPayload(): SettlementConfigurationWrite {
@@ -566,17 +600,23 @@ function requestClose(): void {
           <p class="eyebrow">3 · Destinos compartidos previstos</p>
           <h4>Cuentas 50/50 u otras asignaciones</h4>
           <p class="subtle">Márcalas si reciben ahorro o inversión desde el presupuesto.</p>
+          <p v-if="readOnly" class="subtle">
+            También puedes añadir otra cuenta de liquidez que mueva dinero familiar: contará con el
+            saldo que tenía en el último cierre y conservará el suyo.
+          </p>
           <label v-for="asset in allocationAssets" :key="asset.id" class="mc-settlement-check">
             <input
               type="checkbox"
               :checked="form.allocationAssetIds.includes(asset.id)"
-              :disabled="readOnly"
+              :disabled="saving || (readOnly && !canJoinLate(asset))"
               @change="
-                toggleId(
-                  form.allocationAssetIds,
-                  asset.id,
-                  ($event.target as HTMLInputElement).checked,
-                )
+                readOnly
+                  ? addAccount(asset, $event.target as HTMLInputElement)
+                  : toggleId(
+                      form.allocationAssetIds,
+                      asset.id,
+                      ($event.target as HTMLInputElement).checked,
+                    )
               "
             />
             <span>{{ asset.name }}</span>

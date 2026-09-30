@@ -30,7 +30,8 @@ function blockerMessage(item: SettlementQualityItem): string {
     settlement_ownership_mismatch:
       'La titularidad de una reserva no coincide con su cuenta destino.',
     transaction_missing_ownership: 'Hay movimientos sin titularidad dentro del periodo.',
-    transaction_outside_perimeter: 'Hay una transferencia que cruza el perímetro configurado.',
+    transaction_outside_perimeter:
+      'Hay una transferencia con una cuenta que no participa en la liquidación. Añádela en Configurar.',
     unreconciled_account_balance:
       'El saldo observado de una cuenta no concilia con sus movimientos.',
     unsupported_settlement_currency: 'Todas las cuentas deben usar la moneda base para liquidar.',

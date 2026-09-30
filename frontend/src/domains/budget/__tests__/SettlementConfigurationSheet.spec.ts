@@ -74,6 +74,7 @@ const mocks = vi.hoisted(() => ({
     normalization_transactions: [],
   }),
   saveConfiguration: vi.fn(),
+  addAccount: vi.fn(),
   saveOperatingReserveAdjustment: vi.fn(),
   rebaseline: vi.fn(),
   getReadiness: vi.fn().mockResolvedValue({
@@ -183,6 +184,7 @@ vi.mock('@/domains/net-worth/store', () => ({
 
 vi.mock('@/domains/budget/api', () => ({
   activateSettlement: vi.fn(),
+  addSettlementAccount: mocks.addAccount,
   disableSettlement: vi.fn(),
   getSettlementConfiguration: mocks.getConfiguration,
   getSettlementReadiness: mocks.getReadiness,
@@ -226,6 +228,41 @@ describe('SettlementConfigurationSheet', () => {
     expect(mocks.saveOperatingReserveAdjustment).toHaveBeenCalledWith({
       operating_reserve_adjustment: '-1000.00',
     });
+  });
+
+  it('adds a liquidity account to an active settlement after confirming', async () => {
+    const activeConfiguration = {
+      ...(await mocks.getConfiguration()),
+      is_enabled: true,
+      accounts: (await mocks.getConfiguration()).accounts.filter(
+        (row: { asset_id: number }) => row.asset_id !== 82,
+      ),
+    };
+    mocks.getConfiguration.mockResolvedValueOnce(activeConfiguration);
+    mocks.addAccount.mockResolvedValue(activeConfiguration);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const wrapper = mount(SettlementConfigurationSheet, {
+      attachTo: document.body,
+      props: { open: true, year: 2026, month: 8 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await flushPromises();
+
+    const checks = Array.from(
+      document.body.querySelectorAll<HTMLLabelElement>('.mc-settlement-check'),
+    );
+    const input = (name: string) =>
+      checks.find((label) => label.textContent?.includes(name))!.querySelector('input')!;
+    expect(input('Cuenta Compartida').disabled).toBe(true);
+    expect(input('Cuenta Ana').disabled).toBe(false);
+    input('Cuenta Ana').checked = true;
+    input('Cuenta Ana').dispatchEvent(new Event('change', { bubbles: true }));
+    await flushPromises();
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(mocks.addAccount).toHaveBeenCalledWith(82);
+    expect(wrapper.emitted('changed')).toHaveLength(1);
+    confirm.mockRestore();
   });
 
   it('normalizes a numeric reserve adjustment returned by older API responses', async () => {

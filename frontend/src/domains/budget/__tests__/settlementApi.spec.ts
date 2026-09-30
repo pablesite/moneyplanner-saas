@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   activateSettlement,
+  addSettlementAccount,
   acceptSettlementRecommendation,
   applyAllSettlementRecommendations,
   applySettlementRecommendation,
@@ -53,7 +54,9 @@ describe('settlement api', () => {
       normalization_transaction_ids: [],
     });
     await disableSettlement();
+    await addSettlementAccount(80);
 
+    expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/accounts/', { asset_id: 80 });
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/activate/', {
       start_date: '2026-08-01',
     });
