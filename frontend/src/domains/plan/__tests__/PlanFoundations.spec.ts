@@ -88,7 +88,8 @@ describe('PlanFoundations', () => {
     expect(text).toContain('-646,54 €/mes');
     expect(text).toContain('Base recurrente +1.652,01 €/mes (35,1 % de tus ingresos)');
     expect(text).toContain('− compromisos temporales 2.298,55 €/mes');
-    expect(text).toContain('que vencen en 2027');
+    // Algunas cuotas (una hipoteca) siguen después: lo que llega es el margen, no el fin.
+    expect(text).toContain('margen positivo desde 2027');
   });
 
   it('deuda, patrimonio y aportación titulan con el KPI que puntúa cada nota', () => {

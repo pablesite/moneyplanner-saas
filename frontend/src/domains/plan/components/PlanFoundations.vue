@@ -61,6 +61,14 @@ function signedMonthly(value: string | null | undefined): string {
   return `${amount > 0 ? '+' : ''}${formatMoney(amount)}`;
 }
 
+// Algunas cuotas (una hipoteca) siguen después de ese año: lo que llega es el margen
+// positivo, no el fin de los compromisos.
+function recoverySuffix(cashFlow: PlanFoundations['cash_flow']): string {
+  return cashFlow.committed_recovery_year
+    ? `; margen positivo desde ${cashFlow.committed_recovery_year}`
+    : '';
+}
+
 function hasCommitments(cashFlow: PlanFoundations['cash_flow']): boolean {
   return toNumber(cashFlow.temporary_commitment_expense) > 0;
 }
@@ -140,11 +148,9 @@ function qualitySummary(flags: Record<string, boolean>): string {
         </small>
         <small v-if="hasCommitments(foundations.cash_flow)">
           − compromisos temporales
-          {{ monthlyMoney(foundations.cash_flow.temporary_commitment_expense) }}/mes<template
-            v-if="foundations.cash_flow.committed_recovery_year"
-          >
-            , que vencen en {{ foundations.cash_flow.committed_recovery_year }}</template
-          >
+          {{ monthlyMoney(foundations.cash_flow.temporary_commitment_expense) }}/mes{{
+            recoverySuffix(foundations.cash_flow)
+          }}
         </small>
       </article>
 
