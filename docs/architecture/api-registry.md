@@ -89,6 +89,7 @@ Core settlement execution endpoints after explicit confirmation.
 | `POST` | `/api/budget/settlement/accounts/` | Adds one liquidity account (`asset_id`) as an allocation destination to a settlement that already has its opening baseline; rejects wallets, other currencies, accounts without ownership and accounts that already participate (configured, frozen in the last ready close or linked broker cash). The configuration payload lists the accepted candidates in `joinable_asset_ids`. |
 | `POST` | `/api/budget/settlement/disable/` | Disables settlement without changing the existing monthly-close behavior or deleting its audit baseline. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/apply/` | Atomically applies every remaining non-cancelled recommendation for a finalized close. |
+| `POST` | `/api/budget/monthly-closes/{id}/settlement/wallet-sweep/` | For a draft close, posts one transfer per personal wallet with cash into the single shared wallet, dated on the period end. The draft `ownership_settlement.wallet_sweep` lists what it would move; each transfer adds a member compensation to the settlement. |
 | `POST` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/{action}/` | Executes `accept`, `apply`, `reconcile`, `cancel` or `reverse`; apply/reverse accept date, optional partial amount and idempotency key. |
 | `GET` | `/api/budget/monthly-closes/{id}/settlement/recommendations/{recommendation_id}/candidates/` | Lists conservatively matched posted transfers eligible for explicit reconciliation. |
 

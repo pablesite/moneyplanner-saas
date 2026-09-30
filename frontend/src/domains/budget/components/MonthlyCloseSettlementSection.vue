@@ -25,6 +25,7 @@ const emit = defineEmits<{
   transfer: [recommendation: SettlementPage['recommendations'][number]];
   manage: [recommendation: SettlementPage['recommendations'][number]];
   applyAll: [];
+  sweepWallets: [];
   movement: [transactionId: number];
 }>();
 
@@ -66,6 +67,23 @@ function openBlockerMovement(blocker: SettlementPage['blockers'][number]): void 
         <AButton variant="ghost" size="sm" @click="emit('configure')">Configurar</AButton>
       </template>
     </ASectHead>
+
+    <section v-if="page.walletSweep.length" class="mc-settlement-fund">
+      <div>
+        <p class="eyebrow">Efectivo</p>
+        <h3>Monederos personales con saldo</h3>
+        <small v-for="wallet in page.walletSweep" :key="wallet.account_id">
+          {{ wallet.name }}: {{ formatSignedMoney(wallet.amountNumber) }} {{ page.currency }} →
+          {{ wallet.to_name }}
+        </small>
+        <small>
+          Al conciliarlos quedan a cero y lo que aporta cada uno se compensa en las transferencias.
+        </small>
+      </div>
+      <AButton size="sm" :loading="busy" :disabled="locked" @click="emit('sweepWallets')">
+        Conciliar monederos
+      </AButton>
+    </section>
 
     <div v-if="page.isReady" class="mc-settlement-body">
       <section class="mc-settlement-routes">

@@ -24,6 +24,7 @@ import {
   SettlementExecutionModal,
   acceptSettlementRecommendation,
   applyAllSettlementRecommendations,
+  sweepSettlementWallets,
   applySettlementRecommendation,
   buildSettlementPage,
   cancelSettlementRecommendation,
@@ -397,6 +398,29 @@ async function applyAllSettlements(): Promise<void> {
   }
 }
 
+async function sweepWallets(): Promise<void> {
+  const closeId = monthlyCloseData.value?.monthly_close.id;
+  if (!closeId) return;
+  if (
+    !window.confirm(
+      'Se registrarán los traspasos de los monederos personales al compartido con fecha del último día del mes. ¿Continuar?',
+    )
+  ) {
+    return;
+  }
+  settlementExecutionBusy.value = true;
+  try {
+    await sweepSettlementWallets(closeId);
+    await refreshMonthlyCloseData();
+    settlementToast.value = 'Monederos conciliados.';
+  } catch (error: unknown) {
+    settlementToast.value = null;
+    monthlyCloseError.value = toBudgetErrorMessage(error);
+  } finally {
+    settlementExecutionBusy.value = false;
+  }
+}
+
 function closeSettlementExecution(): void {
   if (settlementExecutionBusy.value) return;
   settlementExecutionOpen.value = false;
@@ -748,6 +772,7 @@ async function closeSettlementConfiguration(): Promise<void> {
       @transfer="prepareSettlementTransfer"
       @manage="manageSettlementRecommendation"
       @apply-all="confirmAllSettlements"
+      @sweep-wallets="sweepWallets"
       @movement="openSettlementMovement"
     />
 

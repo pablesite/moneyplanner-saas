@@ -474,6 +474,14 @@ function walletBalanceDate(assetId: number): string {
   return new Intl.DateTimeFormat('es-ES').format(parseIsoToDate(raw));
 }
 
+// The activation count is history once the settlement runs: show what the wallet holds today.
+const walletsShowCurrent = computed(() => readOnly.value && !rebaselineMode.value);
+
+function walletCurrentBalance(assetId: number): unknown {
+  const asset = walletAssets.value.find((row) => row.id === assetId);
+  return asset?.effective_amount ?? asset?.amount ?? 0;
+}
+
 function toggleNormalization(transactionId: number, enabled: boolean): void {
   toggleId(form.normalizationTransactionIds, transactionId, enabled);
 }
@@ -637,7 +645,11 @@ function requestClose(): void {
         <section v-if="walletAssets.length" class="mc-settlement-section">
           <p class="eyebrow">4 · Efectivo físico</p>
           <h4>Separa monederos reales de ajustes ficticios</h4>
-          <p class="subtle">
+          <p v-if="walletsShowCurrent" class="subtle">
+            Los monederos marcados participan en la liquidación. Para pasar el efectivo personal al
+            monedero compartido usa «Conciliar monederos» en la pestaña Distribución del cierre.
+          </p>
+          <p v-else class="subtle">
             Selecciona los monederos que formarán parte de la liquidación e indica el efectivo
             contado en la fecha de activación. El saldo contable se actualiza al abrir este panel e
             incluye los reajustes ya registrados en Movimientos.
@@ -657,12 +669,15 @@ function requestClose(): void {
                 "
               />
               <strong>{{ asset.name }}</strong>
-              <span class="subtle">
+              <span v-if="walletsShowCurrent" class="subtle">
+                Saldo actual: {{ formattedWalletAmount(asset.id, walletCurrentBalance(asset.id)) }}
+              </span>
+              <span v-else class="subtle">
                 Saldo contable a {{ walletBalanceDate(asset.id) }}:
                 {{ formattedWalletAmount(asset.id, walletModeledBalance(asset.id)) }}
               </span>
             </label>
-            <template v-if="form.walletAssetIds.includes(asset.id)">
+            <template v-if="form.walletAssetIds.includes(asset.id) && !walletsShowCurrent">
               <label class="mc-settlement-field">
                 <span>Efectivo real contado</span>
                 <input

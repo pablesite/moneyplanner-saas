@@ -182,6 +182,33 @@ describe('settlement presentation', () => {
     expect(wrapper.emitted('movement')).toEqual([[9]]);
   });
 
+  it('offers the wallet sweep while personal wallets hold cash', async () => {
+    const settlement = readySettlement();
+    settlement.wallet_sweep = [
+      {
+        account_id: 8,
+        name: 'Monedero Pablo',
+        to_account_id: 10,
+        to_name: 'Monedero Compartido',
+        amount: '82.25',
+      },
+    ];
+    const wrapper = mount(MonthlyCloseSettlementSection, {
+      props: {
+        page: buildSettlementPage(settlement, members),
+        formatMoney: (value: number) => value.toFixed(2),
+        formatSignedMoney: (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`,
+      },
+    });
+
+    expect(wrapper.text()).toContain('Monedero Pablo: +82.25 EUR → Monedero Compartido');
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Conciliar monederos'))
+      ?.trigger('click');
+    expect(wrapper.emitted('sweepWallets')).toHaveLength(1);
+  });
+
   it('renders a manual recommendation and emits its prefill intent', async () => {
     const page = buildSettlementPage(readySettlement(), members);
     const wrapper = mount(MonthlyCloseSettlementSection, {

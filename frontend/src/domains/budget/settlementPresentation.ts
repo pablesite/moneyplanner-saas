@@ -249,6 +249,7 @@ function normalizeSettlement(settlement: OwnershipSettlement | null | undefined)
       compensations: [],
       blockers: [],
       warnings: [],
+      walletSweep: [],
     };
   }
   return {
@@ -266,6 +267,7 @@ function normalizeSettlement(settlement: OwnershipSettlement | null | undefined)
     compensations: settlement.compensations ?? [],
     blockers: settlement.quality.blockers,
     warnings: settlement.quality.warnings,
+    walletSweep: settlement.wallet_sweep ?? [],
   };
 }
 
@@ -369,5 +371,9 @@ export function buildSettlementPage(
     compensations: buildCompensationRows(normalized.compensations, memberById),
     blockers: buildQualityRows(normalized.blockers),
     warnings: buildQualityRows(normalized.warnings),
+    walletSweep: normalized.walletSweep.map((row) => ({
+      ...row,
+      amountNumber: amount(row.amount),
+    })),
   };
 }

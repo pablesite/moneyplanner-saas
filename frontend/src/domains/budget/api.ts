@@ -133,6 +133,10 @@ function recommendationActionUrl(closeId: number, recommendationId: number, acti
   return `/api/budget/monthly-closes/${closeId}/settlement/recommendations/${recommendationId}/${action}/`;
 }
 
+export async function sweepSettlementWallets(closeId: number): Promise<void> {
+  await coreApi.post(`/api/budget/monthly-closes/${closeId}/settlement/wallet-sweep/`);
+}
+
 export async function applyAllSettlementRecommendations(
   closeId: number,
   executionDate: string,

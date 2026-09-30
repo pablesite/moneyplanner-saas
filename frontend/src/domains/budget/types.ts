@@ -133,6 +133,13 @@ export type OwnershipSettlement = {
     ownership_id: number;
     members: Array<{ member_id: number; amount: string }>;
   }>;
+  wallet_sweep?: Array<{
+    account_id: number;
+    name: string;
+    to_account_id: number;
+    to_name: string;
+    amount: string;
+  }>;
   recommendations?: SettlementRecommendation[];
   reconciliation?: {
     physical_total: string;

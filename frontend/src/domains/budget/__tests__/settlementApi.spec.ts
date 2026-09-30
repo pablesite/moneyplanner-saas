@@ -14,6 +14,7 @@ import {
   rebaselineSettlement,
   reverseSettlementRecommendation,
   saveSettlementConfiguration,
+  sweepSettlementWallets,
 } from '@/domains/budget/api';
 
 const mocks = vi.hoisted(() => ({
@@ -55,6 +56,11 @@ describe('settlement api', () => {
     });
     await disableSettlement();
     await addSettlementAccount(80);
+    await sweepSettlementWallets(7);
+
+    expect(mocks.post).toHaveBeenCalledWith(
+      '/api/budget/monthly-closes/7/settlement/wallet-sweep/',
+    );
 
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/accounts/', { asset_id: 80 });
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/activate/', {
