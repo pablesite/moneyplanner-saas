@@ -29,17 +29,23 @@ export function ageInYear(birthDate: string | null, year: number): number | null
   return Number.isFinite(birthYear) ? year - birthYear : null;
 }
 
-export function yearWithAges(year: number | null, members: PlanMember[]): string {
-  if (year == null) return 'Sin fecha';
-  const ages = members
+/** "Pablo 67 años · Ana 65 años"; vacío si nadie tiene fecha de nacimiento. */
+export function agesInYear(year: number, members: PlanMember[]): string {
+  return members
     .map((member) => {
       const age = ageInYear(member.birth_date, year);
       // Nombre de pila: el apellido completo desbordaba el hero a 3 líneas.
       const firstName = member.name.split(' ')[0] ?? member.name;
       return age == null ? null : `${firstName} ${age} años`;
     })
-    .filter((value): value is string => Boolean(value));
-  return ages.length ? `${year} · ${ages.join(' · ')}` : String(year);
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+}
+
+export function yearWithAges(year: number | null, members: PlanMember[]): string {
+  if (year == null) return 'Sin fecha';
+  const ages = agesInYear(year, members);
+  return ages ? `${year} · ${ages}` : String(year);
 }
 
 export function compactYearWithAges(year: number, members: PlanMember[]): string {

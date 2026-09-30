@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { AHero, AKpiBand, AInfoHint, type AKpiItem } from '@/domains/ui';
 import { formatMoney, formatPct } from '@/lib/format';
+import { formatLongMonthYear } from '@/lib/dates';
 import type {
   FinancialPlan,
   PlanFoundations,
@@ -10,7 +11,7 @@ import type {
   ProjectionResponse,
 } from '@/domains/plan/types';
 import { projectionScenarioLabel } from '@/domains/plan/scenarioTemplates';
-import { compactYearWithAges, yearWithAges } from '@/domains/plan/age';
+import { agesInYear } from '@/domains/plan/age';
 
 const props = defineProps<{
   plan: FinancialPlan;
@@ -41,17 +42,34 @@ const sustainableShare = computed(() => {
   return target > 0 ? Math.round((sustainable / target) * 100) : 0;
 });
 const productiveCapital = computed(() => Number(summary.value.productive_capital.value ?? 0));
-const projectedCopy = computed(() =>
+// El motor es anual, pero sabe en qué mes de ese último año queda listo el capital.
+// Sin mes (el cierre cae en el año en curso) se queda en el año, como antes.
+const readinessMonth = computed(() => props.overview?.sustainable_readiness_month ?? null);
+function monthLabel(year: number, month: number): string {
+  return formatLongMonthYear(`${year}-${String(month).padStart(2, '0')}-01`);
+}
+const projectedCopy = computed(() => {
+  if (sustainableReadinessYear.value == null) return 'Sin fecha sostenible';
+  if (readinessMonth.value == null) return String(sustainableReadinessYear.value);
+  const label = monthLabel(sustainableReadinessYear.value, readinessMonth.value);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+});
+// La fecha es el dato; la edad de cada uno la acompaña, no compite con ella.
+const agesCopy = computed(() =>
   sustainableReadinessYear.value == null
-    ? 'Sin fecha sostenible'
-    : yearWithAges(sustainableReadinessYear.value, props.plan.members),
+    ? ''
+    : agesInYear(sustainableReadinessYear.value, props.plan.members),
 );
-// En pantallas estrechas el nombre sobra (ya es tu plan): "2045 · 61 años".
-const projectedCompactCopy = computed(() =>
-  sustainableReadinessYear.value == null
-    ? 'Sin fecha sostenible'
-    : compactYearWithAges(sustainableReadinessYear.value, props.plan.members),
-);
+// Se puede dejar de trabajar desde el mes siguiente al de consolidación.
+const retirementStartCopy = computed(() => {
+  if (sustainableYear.value == null) return '';
+  if (sustainableReadinessYear.value == null || readinessMonth.value == null) {
+    return `en ${sustainableYear.value}`;
+  }
+  return readinessMonth.value === 12
+    ? `desde ${monthLabel(sustainableYear.value, 1)}`
+    : `desde ${monthLabel(sustainableReadinessYear.value, readinessMonth.value + 1)}`;
+});
 // Extremos del rango etiquetados para la ⓘ: favorable (optimista, antes) y
 // prudente (conservador, después). Null si no hay spread (coinciden).
 const rangeDetail = computed(() => {
@@ -137,7 +155,7 @@ const deltaCopy = computed(() => {
     }
     return 'Con los datos actuales no hay una jubilación sostenible en el horizonte';
   }
-  const retirementCopy = `podrías dejar de trabajar en ${sustainableYear.value}`;
+  const retirementCopy = `podrías dejar de trabajar ${retirementStartCopy.value}`;
   if (gapYears.value == null || gapYears.value === 0) {
     return `Consolidado justo en ${objetivoCopy.value} · ${retirementCopy}`;
   }
@@ -216,14 +234,21 @@ const kpis = computed<AKpiItem[]>(() => [
     <div class="plan-hero-top">
       <AHero class="plan-hero-headline" :eyebrow="statusCopy">
         <template #value>
-          <div class="hero-value mono plan-hero-value-full">{{ projectedCopy }}</div>
-          <div class="hero-value mono plan-hero-value-compact">{{ projectedCompactCopy }}</div>
+          <div class="hero-value mono plan-hero-date">{{ projectedCopy }}</div>
+          <p v-if="agesCopy" class="plan-hero-ages">{{ agesCopy }}</p>
         </template>
         <template #delta>
           <span class="plan-delta-main" :class="deltaTone">{{ deltaCopy }}</span>
           <AInfoHint label="Sobre la fecha de consolidación">
-            El año principal es el cierre en que el capital queda preparado; podrías dejar de
-            trabajar al año siguiente.<template v-if="rangeDetail">
+            <template v-if="readinessMonth != null">
+              La fecha principal es el mes en que el capital queda preparado; podrías dejar de
+              trabajar desde el mes siguiente.
+            </template>
+            <template v-else>
+              El año principal es el cierre en que el capital queda preparado; podrías dejar de
+              trabajar al año siguiente.
+            </template>
+            <template v-if="rangeDetail">
               Según las hipótesis, ese cierre estaría entre {{ rangeDetail.favorable }} (favorable)
               y {{ rangeDetail.prudent }} (prudente).</template
             >

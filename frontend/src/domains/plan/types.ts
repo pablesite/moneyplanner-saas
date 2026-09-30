@@ -522,6 +522,8 @@ export type PlanOverview = {
   target_date: string;
   desired_year: number;
   sustainable_year: number | null;
+  // Mes (1-12) del cierre anterior en que el capital queda listo; null si solo hay año.
+  sustainable_readiness_month?: number | null;
   sustainable_range: ProjectionRange;
   gap_years: number | null;
   projection: ProjectionResponse;

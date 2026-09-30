@@ -3702,21 +3702,18 @@
   }
 }
 
-/* El hero muestra el nombre en escritorio; en estrecho basta "2049 · 65 años". */
-.plan-hero .plan-hero-value-compact {
-  display: none;
+/* La fecha es el titular; las edades la acompañan en una línea secundaria. */
+.plan-hero .plan-hero-ages {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
 }
 
 @container page (max-width: 560px) {
-  .plan-hero .plan-hero-value-full {
-    display: none;
-  }
-
   /* Triple selector: `.dir-a .hero-value` (56px) va después en el documento
      y ganaría un empate de especificidad. */
-  .plan-hero .hero-value.plan-hero-value-compact {
-    display: block;
-    /* Una sola línea también con dos adultos ("2049 · 65/62 años"). */
+  .plan-hero .hero-value.plan-hero-date {
+    /* Una sola línea también con el mes más largo ("Septiembre de 2049"). */
     font-size: 32px;
   }
 
