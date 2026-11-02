@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.63.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.63.0...moneyplanner-saas-v0.63.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deps:** update follow-redirects security patch ([73f42f6](https://github.com/pablesite/moneyplanner-saas/commit/73f42f675ececccddb8b9220e8ec9157712ce1e2))
+* **plan:** choose one destination for financing ([661f16f](https://github.com/pablesite/moneyplanner-saas/commit/661f16fa293b78c9e1e32b184fba08d812c30acd))
+* **plan:** edit reserve destinations in decisions ([b5e175f](https://github.com/pablesite/moneyplanner-saas/commit/b5e175f92012251b572cb0cde8dd73fda77ceb7d))
+* **plan:** make decision detail row clickable ([b67861c](https://github.com/pablesite/moneyplanner-saas/commit/b67861cd00204cf5f29d88073933781a1afef797))
+
 ## [0.63.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.62.0...moneyplanner-saas-v0.63.0) (2026-09-30)
 
 
