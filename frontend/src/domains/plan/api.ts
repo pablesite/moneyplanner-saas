@@ -120,10 +120,15 @@ export const planApi = {
   getEventBudgetLines(id: number) {
     return coreApi.get<PlanEventBudgetLines>(`/api/plan/events/${id}/budget-lines/`);
   },
-  setBudgetLineDestination(eventId: number, entryId: number, accountId: number | null) {
+  setBudgetLineDestination(
+    eventId: number,
+    entryId: number,
+    accountId: number | null,
+    applyToSeries = false,
+  ) {
     return coreApi.patch(
       `/api/plan/events/${eventId}/budget-lines/${entryId}/settlement-destination/`,
-      { settlement_account_id: accountId },
+      { settlement_account_id: accountId, ...(applyToSeries ? { apply_to_series: true } : {}) },
     );
   },
   closeEvent(id: number, payload: { effective_date: string; note?: string }) {

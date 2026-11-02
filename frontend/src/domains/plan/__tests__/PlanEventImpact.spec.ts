@@ -75,8 +75,44 @@ describe('PlanEventImpact', () => {
       .trigger('click');
     await flushPromises();
 
-    expect(planApi.setBudgetLineDestination).toHaveBeenCalledWith(4, 654, 4);
+    expect(planApi.setBudgetLineDestination).toHaveBeenCalledWith(4, 654, 4, false);
     expect(wrapper.findComponent(AToast).props('open')).toBe(true);
+  });
+
+  it('groups financing years and applies an existing destination to the whole series', async () => {
+    const line = {
+      name: 'Compra casa Atrio - financiación',
+      amount_annual: '1912.39',
+      time_profile: 'term_recurrent',
+      cashflow_role: 'temporary_commitment',
+      settlement_editable: true,
+      settlement_series_id: 654,
+      settlement_destinations: [{ id: 12, name: 'Santander compartida' }],
+    };
+    vi.mocked(planApi.getEventBudgetLines).mockResolvedValue({
+      data: {
+        ...trace,
+        expenses: [
+          { ...line, id: 654, fiscal_year: 2026, settlement_account_id: 12 },
+          { ...line, id: 655, fiscal_year: 2027, settlement_account_id: null },
+        ],
+      },
+    } as never);
+    vi.mocked(planApi.setBudgetLineDestination).mockResolvedValue({} as never);
+    const wrapper = mount(PlanEventImpact, { props: { eventId: 4 } });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('2026–2027 · 2 anualidades');
+    expect(wrapper.findAllComponents(ASelect)).toHaveLength(1);
+    expect(wrapper.findComponent(ASelect).props('modelValue')).toBe('12');
+    const save = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Guardar destino'))!;
+    expect(save.attributes('disabled')).toBeUndefined();
+    await save.trigger('click');
+    await flushPromises();
+    expect(planApi.setBudgetLineDestination).toHaveBeenCalledWith(4, 654, 12, true);
+    expect(save.attributes('disabled')).toBeDefined();
   });
 
   it('counts the full impact: manual outflow plus the debt it brought', async () => {

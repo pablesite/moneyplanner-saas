@@ -369,6 +369,7 @@ export type PlanManagedBudgetLine = {
   cashflow_role: string;
   settlement_account_id?: number | null;
   settlement_editable?: boolean;
+  settlement_series_id?: number | null;
   settlement_destinations?: { id: number; name: string }[];
 };
 

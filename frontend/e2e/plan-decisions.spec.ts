@@ -137,9 +137,11 @@ test('decisions separates pending work from incorporated events and starts in on
 
 test('a plan decision can assign the destination of a recurring expense', async ({ page }) => {
   let savedAccount: number | null = null;
+  let appliedToSeries = false;
   await page.route('**/api/plan/events/21/budget-lines/**', async (route) => {
     if (route.request().method() === 'PATCH') {
       savedAccount = route.request().postDataJSON().settlement_account_id;
+      appliedToSeries = route.request().postDataJSON().apply_to_series;
       return json(route, {});
     }
     return json(route, {
@@ -155,6 +157,19 @@ test('a plan decision can assign the destination of a recurring expense', async 
           cashflow_role: 'temporary_commitment',
           settlement_account_id: null,
           settlement_editable: true,
+          settlement_series_id: 654,
+          settlement_destinations: [{ id: 4, name: 'MyInvestor compartida' }],
+        },
+        {
+          id: 655,
+          name: 'Compra casa Atrio - financiación',
+          fiscal_year: 2027,
+          amount_annual: '11474.31',
+          time_profile: 'term_recurrent',
+          cashflow_role: 'temporary_commitment',
+          settlement_account_id: null,
+          settlement_editable: true,
+          settlement_series_id: 654,
           settlement_destinations: [{ id: 4, name: 'MyInvestor compartida' }],
         },
       ],
@@ -165,6 +180,7 @@ test('a plan decision can assign the destination of a recurring expense', async 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/plan/decisiones/eventos/21');
   await page.getByRole('button', { name: /Reforma incorporada/ }).click();
+  await expect(page.getByText('2026–2027 · 2 anualidades')).toBeVisible();
   await page
     .getByRole('button', { name: 'Cuenta destino de Compra casa Atrio - financiación 2026' })
     .click();
@@ -172,6 +188,7 @@ test('a plan decision can assign the destination of a recurring expense', async 
   await page.getByRole('button', { name: 'Guardar destino' }).click();
   await expect(page.getByText('Destino guardado.')).toBeVisible();
   expect(savedAccount).toBe(4);
+  expect(appliedToSeries).toBe(true);
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 390);
 });
 

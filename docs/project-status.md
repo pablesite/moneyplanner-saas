@@ -1,6 +1,6 @@
 # Project Status
 
-Mi Plan permite elegir la cuenta de reserva de las partidas recurrentes vinculadas a una decisión;
+Mi Plan permite elegir una sola cuenta de reserva para todas las anualidades de una financiación;
 el cálculo y los datos económicos de la partida siguen gobernados por Core. La fila completa de cada
 decisión, incluido «Ver detalle», abre su detalle.
 

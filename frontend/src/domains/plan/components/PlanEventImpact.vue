@@ -15,6 +15,24 @@ const saveError = ref<string | null>(null);
 const savingId = ref<number | null>(null);
 const savedId = ref<number | null>(null);
 const destinations = ref<Record<number, string>>({});
+type ExpenseGroup = { line: PlanManagedBudgetLine; entries: PlanManagedBudgetLine[] };
+
+const expenseGroups = computed<ExpenseGroup[]>(() => {
+  const groups: ExpenseGroup[] = [];
+  const bySeries = new Map<number, ExpenseGroup>();
+  for (const line of trace.value?.expenses ?? []) {
+    const seriesId = line.settlement_series_id;
+    const existing = seriesId != null ? bySeries.get(seriesId) : undefined;
+    if (existing) {
+      existing.entries.push(line);
+    } else {
+      const group = { line, entries: [line] };
+      groups.push(group);
+      if (seriesId != null) bySeries.set(seriesId, group);
+    }
+  }
+  return groups;
+});
 
 function total(lines: { amount_annual: string }[]): number {
   return lines.reduce((sum, line) => sum + Number(line.amount_annual), 0);
@@ -55,24 +73,31 @@ function linePeriod(line: PlanManagedBudgetLine): string {
   return String(line.fiscal_year);
 }
 
-function destinationOptions(line: PlanManagedBudgetLine) {
+function destinationOptions(group: ExpenseGroup) {
+  const { line } = group;
   const options = [{ value: '', label: 'Automática' }];
+  if (destinations.value[line.id] === '__mixed__') {
+    options.push({ value: '__mixed__', label: 'Varias cuentas' });
+  }
   for (const account of line.settlement_destinations ?? []) {
     options.push({ value: String(account.id), label: account.name });
   }
+  const selected = destinations.value[line.id];
   if (
-    line.settlement_account_id &&
-    !options.some((option) => option.value === String(line.settlement_account_id))
+    selected &&
+    selected !== '__mixed__' &&
+    !options.some((option) => option.value === selected)
   ) {
     options.push({
-      value: String(line.settlement_account_id),
+      value: selected,
       label: 'Cuenta actual no disponible',
     });
   }
   return options;
 }
 
-async function saveDestination(line: PlanManagedBudgetLine): Promise<void> {
+async function saveDestination(group: ExpenseGroup): Promise<void> {
+  const { line, entries } = group;
   savingId.value = line.id;
   savedId.value = null;
   saveError.value = null;
@@ -82,8 +107,9 @@ async function saveDestination(line: PlanManagedBudgetLine): Promise<void> {
       props.eventId,
       line.id,
       selected ? Number(selected) : null,
+      entries.length > 1,
     );
-    line.settlement_account_id = selected ? Number(selected) : null;
+    for (const entry of entries) entry.settlement_account_id = selected ? Number(selected) : null;
     savedId.value = line.id;
   } catch (err) {
     saveError.value = toApiErrorMessage(err);
@@ -97,10 +123,14 @@ onMounted(async () => {
     const { data } = await planApi.getEventBudgetLines(props.eventId);
     trace.value = data;
     destinations.value = Object.fromEntries(
-      data.expenses.map((line) => [
-        line.id,
-        line.settlement_account_id == null ? '' : String(line.settlement_account_id),
-      ]),
+      expenseGroups.value.map(({ line, entries }) => {
+        const assigned = new Set(
+          entries
+            .filter((entry) => entry.settlement_account_id != null)
+            .map((entry) => String(entry.settlement_account_id)),
+        );
+        return [line.id, assigned.size > 1 ? '__mixed__' : ([...assigned][0] ?? '')];
+      }),
     );
   } catch (err) {
     error.value = toApiErrorMessage(err);
@@ -180,34 +210,54 @@ onMounted(async () => {
       <div v-if="trace.expenses.length || trace.income.length" class="plan-impact-block">
         <p class="eyebrow">En Presupuesto</p>
         <AState v-if="saveError" status="error" layout="inline">{{ saveError }}</AState>
-        <template v-for="line in trace.expenses" :key="`expense:${line.id}`">
+        <template v-for="group in expenseGroups" :key="`expense:${group.line.id}`">
           <div class="plan-impact-row">
             <span>
-              <strong>{{ line.name }}</strong>
-              <small>{{ linePeriod(line) }}</small>
+              <strong>{{ group.line.name }}</strong>
+              <small v-if="group.entries.length > 1">
+                {{ group.entries[0]?.fiscal_year }}–{{
+                  group.entries[group.entries.length - 1]?.fiscal_year
+                }}
+                · {{ group.entries.length }} anualidades
+              </small>
+              <small v-else>{{ linePeriod(group.line) }}</small>
             </span>
-            <span class="mono">{{ formatMoney(line.amount_annual) }}</span>
+            <span v-if="group.entries.length === 1" class="mono">{{
+              formatMoney(group.line.amount_annual)
+            }}</span>
           </div>
-          <div v-if="line.settlement_editable" class="ui-item-form-grid">
+          <details v-if="group.entries.length > 1">
+            <summary>Ver importes por año</summary>
+            <div v-for="entry in group.entries" :key="entry.id" class="plan-impact-row">
+              <span>{{ entry.fiscal_year }}</span
+              ><span class="mono">{{ formatMoney(entry.amount_annual) }}</span>
+            </div>
+          </details>
+          <div v-if="group.line.settlement_editable" class="ui-item-form-grid">
             <label class="ui-item-form-field">
               <span class="ui-item-form-label">Cuenta que recibirá la reserva</span>
               <ASelect
-                :model-value="destinations[line.id] ?? ''"
-                :options="destinationOptions(line)"
-                :aria-label="`Cuenta destino de ${line.name} ${line.fiscal_year}`"
-                @update:model-value="(value) => (destinations[line.id] = String(value ?? ''))"
+                :model-value="destinations[group.line.id] ?? ''"
+                :options="destinationOptions(group)"
+                :aria-label="`Cuenta destino de ${group.line.name} ${group.line.fiscal_year}`"
+                @update:model-value="(value) => (destinations[group.line.id] = String(value ?? ''))"
               />
+              <small v-if="group.entries.length > 1">Se aplicará a todas las anualidades.</small>
             </label>
             <div class="ui-item-form-field">
               <AButton
                 variant="ghost"
                 size="sm"
-                :loading="savingId === line.id"
+                :loading="savingId === group.line.id"
                 :disabled="
                   savingId !== null ||
-                  destinations[line.id] === String(line.settlement_account_id ?? '')
+                  destinations[group.line.id] === '__mixed__' ||
+                  group.entries.every(
+                    (entry) =>
+                      destinations[group.line.id] === String(entry.settlement_account_id ?? ''),
+                  )
                 "
-                @click="saveDestination(line)"
+                @click="saveDestination(group)"
                 >Guardar destino</AButton
               >
             </div>
