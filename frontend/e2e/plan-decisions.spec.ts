@@ -130,7 +130,7 @@ test('decisions separates pending work from incorporated events and starts in on
   await expect(page.getByText('Reforma incorporada', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Excedencia descartada', { exact: true })).toBeHidden();
   await page.getByRole('button', { name: /Coche: Compra de vehículo/ }).click();
-  await expect(page.getByRole('heading', { name: 'Cuéntanos cómo sería' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nueva simulación' })).toBeVisible();
   await expect(page.getByLabel('Nombre de la decisión')).toHaveValue('Coche');
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 390);
 });
@@ -173,4 +173,22 @@ test('a plan decision can assign the destination of a recurring expense', async 
   await expect(page.getByText('Destino guardado.')).toBeVisible();
   expect(savedAccount).toBe(4);
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 390);
+});
+
+test('the visible detail label opens the decision', async ({ page }) => {
+  await page.route('**/api/plan/events/21/budget-lines/', (route) =>
+    json(route, {
+      event: { id: 21, name: 'Reforma incorporada' },
+      income: [],
+      expenses: [],
+      linked: { assets: [], liabilities: [] },
+    }),
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/plan/decisiones/eventos/21');
+  await page.getByText('Ver detalle', { exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(
+    page.getByRole('dialog').getByRole('heading', { name: 'Reforma incorporada' }),
+  ).toBeVisible();
 });

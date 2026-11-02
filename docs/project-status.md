@@ -1,7 +1,8 @@
 # Project Status
 
 Mi Plan permite elegir la cuenta de reserva de las partidas recurrentes vinculadas a una decisión;
-el cálculo y los datos económicos de la partida siguen gobernados por Core.
+el cálculo y los datos económicos de la partida siguen gobernados por Core. La fila completa de cada
+decisión, incluido «Ver detalle», abre su detalle.
 
 Current implementation status by feature area. Update this file whenever feature status changes.
 

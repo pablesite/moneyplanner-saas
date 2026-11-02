@@ -239,14 +239,15 @@ function shortDate(value: string): string {
     <!-- La lista queda limpia; el detalle y las operaciones viven en un diálogo contextual. -->
     <ol class="plan-event-list">
       <li v-for="event in events" :key="event.id">
-        <span class="plan-event-date mono">{{ formatShortMonthYear(event.planned_date) }}</span>
         <button
           type="button"
           class="plan-event-summary"
           aria-haspopup="dialog"
+          :aria-label="`Ver detalle de ${event.name}`"
           @click="openImpact(event)"
         >
-          <span>
+          <span class="plan-event-date mono">{{ formatShortMonthYear(event.planned_date) }}</span>
+          <span class="plan-event-content">
             <strong>{{ event.name }}</strong>
             <span>
               {{ scenarioTemplateLabel(event.event_type) }} ·
@@ -256,8 +257,8 @@ function shortDate(value: string): string {
               <template v-else>{{ planEventStatusLabel(event.status) }}</template>
             </span>
           </span>
+          <span class="plan-event-open" aria-hidden="true">Ver detalle</span>
         </button>
-        <span class="plan-event-open" aria-hidden="true">Ver detalle</span>
       </li>
     </ol>
 
