@@ -134,3 +134,43 @@ test('decisions separates pending work from incorporated events and starts in on
   await expect(page.getByLabel('Nombre de la decisión')).toHaveValue('Coche');
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 390);
 });
+
+test('a plan decision can assign the destination of a recurring expense', async ({ page }) => {
+  let savedAccount: number | null = null;
+  await page.route('**/api/plan/events/21/budget-lines/**', async (route) => {
+    if (route.request().method() === 'PATCH') {
+      savedAccount = route.request().postDataJSON().settlement_account_id;
+      return json(route, {});
+    }
+    return json(route, {
+      event: { id: 21, name: 'Reforma incorporada' },
+      income: [],
+      expenses: [
+        {
+          id: 654,
+          name: 'Compra casa Atrio - financiación',
+          fiscal_year: 2026,
+          amount_annual: '1912.39',
+          time_profile: 'term_recurrent',
+          cashflow_role: 'temporary_commitment',
+          settlement_account_id: null,
+          settlement_editable: true,
+          settlement_destinations: [{ id: 4, name: 'MyInvestor compartida' }],
+        },
+      ],
+      linked: { assets: [], liabilities: [] },
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/plan/decisiones/eventos/21');
+  await page.getByRole('button', { name: /Reforma incorporada/ }).click();
+  await page
+    .getByRole('button', { name: 'Cuenta destino de Compra casa Atrio - financiación 2026' })
+    .click();
+  await page.getByRole('option', { name: 'MyInvestor compartida' }).click();
+  await page.getByRole('button', { name: 'Guardar destino' }).click();
+  await expect(page.getByText('Destino guardado.')).toBeVisible();
+  expect(savedAccount).toBe(4);
+  await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 390);
+});

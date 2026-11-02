@@ -120,6 +120,12 @@ export const planApi = {
   getEventBudgetLines(id: number) {
     return coreApi.get<PlanEventBudgetLines>(`/api/plan/events/${id}/budget-lines/`);
   },
+  setBudgetLineDestination(eventId: number, entryId: number, accountId: number | null) {
+    return coreApi.patch(
+      `/api/plan/events/${eventId}/budget-lines/${entryId}/settlement-destination/`,
+      { settlement_account_id: accountId },
+    );
+  },
   closeEvent(id: number, payload: { effective_date: string; note?: string }) {
     return coreApi.post<PlanEventCloseResponse>(`/api/plan/events/${id}/close/`, payload);
   },

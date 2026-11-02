@@ -3,9 +3,10 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import PlanEventImpact from '@/domains/plan/components/PlanEventImpact.vue';
 import { planApi } from '@/domains/plan/api';
+import { ASelect, AToast } from '@/domains/ui';
 
 vi.mock('@/domains/plan/api', () => ({
-  planApi: { getEventBudgetLines: vi.fn() },
+  planApi: { getEventBudgetLines: vi.fn(), setBudgetLineDestination: vi.fn() },
 }));
 
 const trace = {
@@ -43,6 +44,41 @@ const trace = {
 };
 
 describe('PlanEventImpact', () => {
+  it('assigns a settlement destination to a plan-managed recurring expense', async () => {
+    vi.mocked(planApi.getEventBudgetLines).mockResolvedValue({
+      data: {
+        ...trace,
+        expenses: [
+          {
+            id: 654,
+            name: 'Compra casa Atrio - financiación',
+            fiscal_year: 2026,
+            amount_annual: '1912.39',
+            time_profile: 'term_recurrent',
+            cashflow_role: 'temporary_commitment',
+            settlement_account_id: null,
+            settlement_editable: true,
+            settlement_destinations: [{ id: 4, name: 'MyInvestor compartida' }],
+          },
+        ],
+      },
+    } as never);
+    vi.mocked(planApi.setBudgetLineDestination).mockResolvedValue({} as never);
+    const wrapper = mount(PlanEventImpact, { props: { eventId: 4 } });
+    await flushPromises();
+
+    wrapper.findComponent(ASelect).vm.$emit('update:modelValue', '4');
+    await wrapper.vm.$nextTick();
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Guardar destino'))!
+      .trigger('click');
+    await flushPromises();
+
+    expect(planApi.setBudgetLineDestination).toHaveBeenCalledWith(4, 654, 4);
+    expect(wrapper.findComponent(AToast).props('open')).toBe(true);
+  });
+
   it('counts the full impact: manual outflow plus the debt it brought', async () => {
     vi.mocked(planApi.getEventBudgetLines).mockResolvedValue({ data: trace } as never);
 

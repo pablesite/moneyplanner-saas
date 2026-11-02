@@ -367,6 +367,9 @@ export type PlanManagedBudgetLine = {
   amount_annual: string;
   time_profile: string;
   cashflow_role: string;
+  settlement_account_id?: number | null;
+  settlement_editable?: boolean;
+  settlement_destinations?: { id: number; name: string }[];
 };
 
 /** Activo o pasivo que trajo la decisión. Lo gobierna Patrimonio; el evento solo apunta. */
