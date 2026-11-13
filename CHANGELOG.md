@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.63.2](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.63.1...moneyplanner-saas-v0.63.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* **accounting:** allow reconciliation adjustments on real-estate and goods accounts ([29a7b89](https://github.com/pablesite/moneyplanner-saas/commit/29a7b89303c047c7f3c28cd887f53c901a2c4135))
+
 ## [0.63.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.63.0...moneyplanner-saas-v0.63.1) (2026-11-02)
 
 
