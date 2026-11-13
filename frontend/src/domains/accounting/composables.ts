@@ -458,11 +458,13 @@ export function useAccountingPage() {
       // Lo que no se puede marcar a mercado se concilia por ajuste: si no, una cuenta de
       // cripto o de crowdlending que se descuadra no tiene forma de cuadrarse, porque
       // Revalorización tampoco la admite. Cada cuenta con exactamente una vía.
-      if (isInvestmentAssetAccount(account)) {
+      if (isInvestmentCategoryAccount(account)) {
         const meta = accountPositionMetaByAccountId.value.get(account.id);
         return REVALUATION_EXCLUDED_SUBCATEGORIES.has(String(meta?.subcategory ?? ''));
       }
-      return isLiquidityAssetAccount(account);
+      // Inmuebles y bienes no se revalorizan desde aquí: el ajuste es su única vía (p. ej.
+      // dejar a cero la reserva de una vivienda ya escriturada).
+      return isLiquidityAssetAccount(account) || isInvestmentAssetAccount(account);
     }),
   );
   const manualPositionTypeOptions: { value: ManualPositionType; label: string }[] = [

@@ -107,6 +107,20 @@ function seedRefreshResponses() {
         created_at: '',
         updated_at: '',
       },
+      {
+        id: 4,
+        name: 'Reserva vivienda',
+        account_type: 'asset',
+        currency: 'EUR',
+        origin: 'user',
+        asset_id: 11,
+        liability_id: null,
+        is_active: true,
+        notes: '',
+        current_balance: '30000.00',
+        created_at: '',
+        updated_at: '',
+      },
     ],
   } as never);
   vi.mocked(coreAccountingApi.getTransactions).mockResolvedValue({
@@ -149,6 +163,17 @@ function seedNetWorthResponses() {
         currency: 'BTC',
         amount: '0.05',
         amount_base: '3000.00',
+        is_active: true,
+        tracking_mode: 'accounting',
+      },
+      {
+        id: 11,
+        name: 'Reserva vivienda',
+        category: 'real_estate',
+        subcategory: 'other',
+        currency: 'EUR',
+        amount: '30000.00',
+        amount_base: '30000.00',
         is_active: true,
         tracking_mode: 'accounting',
       },
@@ -338,7 +363,24 @@ describe('useAccountingPage', () => {
     );
     expect(options).toContain(3);
     // Un fondo sí se marca a mercado: su diferencia es ganancia o pérdida.
-    expect(options).not.toContain(7);
+    expect(options).not.toContain(2);
+
+    wrapper.unmount();
+  });
+
+  it('lets a real-estate account be reconciled by adjustment', async () => {
+    // Un inmueble no se revaloriza desde movimientos, así que sin el ajuste la reserva de
+    // una vivienda ya escriturada no tenía forma de quedar a cero.
+    const wrapper = await mountInvestmentHarness();
+
+    const adjustable = wrapper.vm.quickAdjustmentAccountOptions.map(
+      (account: { id: number }) => account.id,
+    );
+    expect(adjustable).toContain(4);
+    const revaluable = wrapper.vm.revaluationAccountOptions.map(
+      (account: { id: number }) => account.id,
+    );
+    expect(revaluable).not.toContain(4);
 
     wrapper.unmount();
   });
