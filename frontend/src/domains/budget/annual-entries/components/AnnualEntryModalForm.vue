@@ -23,6 +23,7 @@ type AnnualEntryModalFormModel = {
   cashflowRole: string;
   eventGroup: string;
   targetMonth: string;
+  termStartMonth?: string;
   termEndMonth: string;
   termEndYear: string;
   fiscalYear: string;
@@ -59,6 +60,7 @@ const props = withDefaults(
     targetMonthRecurringPlaceholder?: string;
     eventGroupPlaceholder?: string;
     termEndYearPlaceholder?: string;
+    termStartMonthPlaceholder?: string;
     termEndMonthPlaceholder?: string;
     notesPlaceholder?: string;
     currencyOptions?: string[];
@@ -85,6 +87,7 @@ const props = withDefaults(
     targetMonthRecurringPlaceholder: 'Mes previsto (opcional, 1-12)',
     eventGroupPlaceholder: 'Grupo de evento (opcional, ej: vivienda_2026)',
     termEndYearPlaceholder: 'Ano fin compromiso (ej: 2027)',
+    termStartMonthPlaceholder: 'Mes inicio (1-12)',
     termEndMonthPlaceholder: 'Mes fin (1-12)',
     notesPlaceholder: 'Notas (opcional)',
     currencyOptions: () => ['EUR', 'USD'],
@@ -274,8 +277,28 @@ const destinationOptions = computed<ASelectItem[]>(() => [
         />
       </label>
 
+      <!-- Un compromiso temporal sin fechas no se puede planificar: sus meses se piden en
+           cuanto se elige el tipo, no solo en las opciones avanzadas. -->
       <label
-        v-if="advancedOpen && showTermEndYearField && form.timeProfile === 'term_recurrent'"
+        v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
+        class="ui-item-form-field"
+      >
+        <span class="ui-item-form-label">Mes inicio compromiso</span>
+        <input
+          :value="form.termStartMonth ?? ''"
+          class="input"
+          inputmode="numeric"
+          :placeholder="termStartMonthPlaceholder"
+          @input="
+            emit('patch', {
+              termStartMonth: String(($event.target as HTMLInputElement).value ?? ''),
+            })
+          "
+        />
+      </label>
+
+      <label
+        v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
         class="ui-item-form-field"
       >
         <span class="ui-item-form-label">Mes fin compromiso</span>
@@ -291,7 +314,7 @@ const destinationOptions = computed<ASelectItem[]>(() => [
       </label>
 
       <label
-        v-if="advancedOpen && showTermEndYearField && form.timeProfile === 'term_recurrent'"
+        v-if="showTermEndYearField && form.timeProfile === 'term_recurrent'"
         class="ui-item-form-field"
       >
         <span class="ui-item-form-label">Año fin compromiso</span>

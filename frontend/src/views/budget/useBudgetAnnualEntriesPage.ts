@@ -77,6 +77,23 @@ function optionalFormNumber(value: string, enabled = true): number | null {
   return enabled && String(value).trim() ? Number(value) : null;
 }
 
+// El selector de titular trabaja con la etiqueta visible ("Pablo", "Compartido (…)"); la
+// liquidación necesita la titularidad real. Sin esta traducción la línea guardaba solo el texto
+// y quedaba sin titularidad aunque la tarjeta mostrase el nombre.
+export function ownershipIdForOwnerOption(ownerships: Ownership[], label: string): string {
+  const target = label.trim();
+  if (!target) return '';
+  for (const ownership of ownerships) {
+    if (ownership.kind === 'individual' && ownership.member?.name === target) {
+      return String(ownership.id);
+    }
+    if (ownership.kind === 'shared' && ownershipDisplayLabel(ownership) === target) {
+      return String(ownership.id);
+    }
+  }
+  return '';
+}
+
 export function useBudgetAnnualEntriesPage() {
   const settlementConfiguration = ref<SettlementConfiguration | null>(null);
   const {
@@ -254,12 +271,27 @@ export function useBudgetAnnualEntriesPage() {
     notes: string;
   }>;
 
+  function ownershipIdForOwnerLabel(label: string): string {
+    return ownershipIdForOwnerOption(store.ownerships ?? [], label);
+  }
+
+  function resolvedOwnershipId(form: { owner: string; ownershipId: string }): number | null {
+    const id = form.ownershipId || ownershipIdForOwnerLabel(form.owner);
+    return id ? Number(id) : null;
+  }
+
   function patchAnnualIncomeForm(patch: AnnualModalPatch): void {
     Object.assign(annualIncomeForm, patch);
+    if (patch.owner !== undefined && patch.ownershipId === undefined) {
+      annualIncomeForm.ownershipId = ownershipIdForOwnerLabel(patch.owner);
+    }
   }
 
   function patchAnnualExpenseForm(patch: AnnualModalPatch): void {
     Object.assign(annualExpenseForm, patch);
+    if (patch.owner !== undefined && patch.ownershipId === undefined) {
+      annualExpenseForm.ownershipId = ownershipIdForOwnerLabel(patch.owner);
+    }
     normalizeExpenseCashflowRoleForCurrentTimeProfile();
   }
 
@@ -1847,7 +1879,7 @@ export function useBudgetAnnualEntriesPage() {
       category: annualIncomeForm.category,
       subcategory: annualIncomeForm.subcategory,
       owner: annualIncomeForm.owner,
-      ownershipId: annualIncomeForm.ownershipId ? Number(annualIncomeForm.ownershipId) : null,
+      ownershipId: resolvedOwnershipId(annualIncomeForm),
       incomeType: (annualIncomeForm.isRecurrent ? 'recurrent' : 'one_off') as
         'recurrent' | 'one_off',
       timeProfile: annualIncomeForm.timeProfile,
@@ -1912,7 +1944,7 @@ export function useBudgetAnnualEntriesPage() {
       category: annualExpenseForm.category,
       subcategory: annualExpenseForm.subcategory,
       owner: annualExpenseForm.owner,
-      ownershipId: annualExpenseForm.ownershipId ? Number(annualExpenseForm.ownershipId) : null,
+      ownershipId: resolvedOwnershipId(annualExpenseForm),
       settlementAccountId:
         annualExpenseForm.timeProfile !== 'one_off' && annualExpenseForm.settlementAccountId
           ? Number(annualExpenseForm.settlementAccountId)
