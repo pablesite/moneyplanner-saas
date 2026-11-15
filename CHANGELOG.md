@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.64.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.64.0...moneyplanner-saas-v0.64.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **budget:** ask for a term's start month and save the chosen owner's ownership ([b8cbd6e](https://github.com/pablesite/moneyplanner-saas/commit/b8cbd6ea687d8784ec1a659dad289234c252d773))
+* **budget:** offer every year with budget data in the year selector ([156e86a](https://github.com/pablesite/moneyplanner-saas/commit/156e86a6faf74c7c705dc1dfc9c910bad83623f6))
+
 ## [0.64.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.63.1...moneyplanner-saas-v0.64.0) (2026-11-15)
 
 
