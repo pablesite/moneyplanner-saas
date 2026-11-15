@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.64.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.63.1...moneyplanner-saas-v0.64.0) (2026-11-15)
+
+
+### Features
+
+* **settlement:** let the household replace its operating account ([e2a6c5c](https://github.com/pablesite/moneyplanner-saas/commit/e2a6c5c359e086a6c460248e2c36989c7e77e0ce))
+
+
+### Bug Fixes
+
+* **accounting:** allow reconciliation adjustments on real-estate and goods accounts ([29a7b89](https://github.com/pablesite/moneyplanner-saas/commit/29a7b89303c047c7f3c28cd887f53c901a2c4135))
+* **budget:** plan term rows by their active months in the selected year ([99954b6](https://github.com/pablesite/moneyplanner-saas/commit/99954b63392fa9401aceed5c08f05956152acd6b))
+
 ## [0.63.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.63.0...moneyplanner-saas-v0.63.1) (2026-11-02)
 
 
