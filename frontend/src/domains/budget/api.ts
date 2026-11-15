@@ -124,6 +124,16 @@ export async function addSettlementAccount(assetId: number): Promise<SettlementC
   return response.data;
 }
 
+export async function replaceSettlementOperatingAccount(
+  assetId: number,
+): Promise<SettlementConfiguration & { rerouted_expense_count: number }> {
+  const response = await coreApi.post<SettlementConfiguration & { rerouted_expense_count: number }>(
+    '/api/budget/settlement/operating-account/',
+    { asset_id: assetId },
+  );
+  return response.data;
+}
+
 export async function disableSettlement(): Promise<SettlementConfiguration> {
   const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/disable/');
   return response.data;

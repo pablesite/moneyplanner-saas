@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import SettlementConfigurationSheet from '@/domains/budget/components/SettlementConfigurationSheet.vue';
+import { ASelect } from '@/domains/ui';
 
 const mocks = vi.hoisted(() => ({
   refreshAll: vi.fn().mockResolvedValue(undefined),
@@ -75,6 +76,7 @@ const mocks = vi.hoisted(() => ({
   }),
   saveConfiguration: vi.fn(),
   addAccount: vi.fn(),
+  replaceOperating: vi.fn(),
   saveOperatingReserveAdjustment: vi.fn(),
   rebaseline: vi.fn(),
   getReadiness: vi.fn().mockResolvedValue({
@@ -162,6 +164,17 @@ vi.mock('@/domains/net-worth/store', () => ({
         is_active: true,
       },
       {
+        id: 90,
+        name: 'Cuenta Santander Compartida',
+        category: 'cash',
+        subcategory: 'bank_account',
+        currency: 'EUR',
+        amount: '0.00',
+        effective_amount: '0.00',
+        ownership_ref: 3,
+        is_active: true,
+      },
+      {
         id: 87,
         name: 'Monedero Compartido',
         category: 'cash',
@@ -189,6 +202,7 @@ vi.mock('@/domains/budget/api', () => ({
   getSettlementConfiguration: mocks.getConfiguration,
   getSettlementReadiness: mocks.getReadiness,
   rebaselineSettlement: mocks.rebaseline,
+  replaceSettlementOperatingAccount: mocks.replaceOperating,
   saveOperatingReserveAdjustment: mocks.saveOperatingReserveAdjustment,
   saveSettlementConfiguration: mocks.saveConfiguration,
   toBudgetErrorMessage: (reason: unknown) => String(reason),
@@ -277,6 +291,72 @@ describe('SettlementConfigurationSheet', () => {
     expect(confirm).toHaveBeenCalledOnce();
     expect(mocks.addAccount).toHaveBeenCalledWith(82);
     expect(wrapper.emitted('changed')).toHaveLength(1);
+    confirm.mockRestore();
+  });
+
+  it('replaces the operating account of an active settlement after confirming', async () => {
+    const base = await mocks.getConfiguration();
+    const activeConfiguration = {
+      ...base,
+      is_enabled: true,
+      opening_balances: [
+        {
+          account_id: 1,
+          asset_id: 2,
+          member_id: 1,
+          member_name: 'Pablo',
+          amount: '1000.00',
+          currency: 'EUR',
+        },
+      ],
+    };
+    mocks.getConfiguration.mockResolvedValueOnce(activeConfiguration);
+    mocks.replaceOperating.mockResolvedValue({
+      ...activeConfiguration,
+      accounts: [
+        ...activeConfiguration.accounts.map((row: { asset_id: number }) =>
+          row.asset_id === 2 ? { ...row, role: 'allocation_destination' } : row,
+        ),
+        {
+          ...activeConfiguration.accounts[0],
+          id: 11,
+          asset_id: 90,
+          asset_name: 'Cuenta Santander Compartida',
+        },
+      ],
+      rerouted_expense_count: 2,
+    });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const wrapper = mount(SettlementConfigurationSheet, {
+      attachTo: document.body,
+      props: { open: true, year: 2026, month: 11 },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    });
+    await flushPromises();
+
+    const replacement = wrapper
+      .findAllComponents(ASelect)
+      .find((select) =>
+        (select.props('options') as { label: string }[]).some(
+          (option) => option.label === 'Elige la nueva cuenta operativa',
+        ),
+      )!;
+    const labels = (replacement.props('options') as { label: string }[]).map((row) => row.label);
+    // Ni la operativa actual, ni los destinos personales, ni un monedero pueden sustituirla.
+    expect(labels).toEqual(['Elige la nueva cuenta operativa', 'Cuenta Santander Compartida']);
+    replacement.vm.$emit('update:modelValue', '90');
+    await flushPromises();
+    Array.from(document.body.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Sustituir cuenta operativa'))!
+      .click();
+    await flushPromises();
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(mocks.replaceOperating).toHaveBeenCalledWith(90);
+    expect(wrapper.emitted('changed')).toHaveLength(1);
+    expect(document.body.textContent).toContain(
+      'Cuenta Santander Compartida es ahora la cuenta operativa. Cuenta Compartida sigue en la liquidación como destino compartido. 2 líneas del presupuesto reservarán en Cuenta Santander Compartida.',
+    );
     confirm.mockRestore();
   });
 

@@ -11,6 +11,7 @@ import {
   getSettlementConfiguration,
   getSettlementReadiness,
   rebaselineSettlement,
+  replaceSettlementOperatingAccount,
   saveOperatingReserveAdjustment,
   saveSettlementConfiguration,
 } from '@/domains/budget/api';
@@ -249,6 +250,61 @@ const sharedDestinationAssets = computed(() =>
       )
     : allocationAssets.value,
 );
+
+const currentOperatingAccount = computed(
+  () => configuration.value?.accounts.find((account) => account.role === 'operating') ?? null,
+);
+// Con la base ya creada la operativa no se reescribe: se sustituye. Puede pasar a serlo una
+// cuenta de liquidez nueva o un destino compartido, nunca un destino personal ni un monedero.
+const operatingReplacementOptions = computed<ASelectItem[]>(() => {
+  const unavailable = new Set(
+    (configuration.value?.accounts ?? [])
+      .filter((account) => account.role !== 'allocation_destination')
+      .map((account) => account.asset_id),
+  );
+  return [
+    { value: '', label: 'Elige la nueva cuenta operativa' },
+    ...operatingAssets.value
+      .filter((asset) => !unavailable.has(asset.id))
+      .map((asset) => ({ value: String(asset.id), label: asset.name })),
+  ];
+});
+const operatingReplacementId = ref('');
+const operatingReplacementNotice = ref<string | null>(null);
+
+async function replaceOperatingAccount(): Promise<void> {
+  const asset = operatingAssets.value.find(
+    (row) => String(row.id) === operatingReplacementId.value,
+  );
+  const previousName = currentOperatingAccount.value?.asset_name ?? 'La cuenta operativa actual';
+  if (
+    !asset ||
+    !window.confirm(
+      `${asset.name} pasará a ser la cuenta operativa desde el cierre abierto. ${previousName} seguirá en la liquidación como destino compartido, con su saldo, y las líneas del presupuesto que reservaban en ella reservarán en ${asset.name}. Los cierres ya finalizados no cambian. ¿Sustituirla?`,
+    )
+  ) {
+    return;
+  }
+  saving.value = true;
+  error.value = null;
+  operatingReplacementNotice.value = null;
+  try {
+    const next = await replaceSettlementOperatingAccount(asset.id);
+    hydrate(next);
+    emit('changed', next);
+    operatingReplacementId.value = '';
+    const rerouted = next.rerouted_expense_count;
+    operatingReplacementNotice.value = `${asset.name} es ahora la cuenta operativa. ${previousName} sigue en la liquidación como destino compartido.${
+      rerouted
+        ? ` ${rerouted} línea${rerouted === 1 ? '' : 's'} del presupuesto reservará${rerouted === 1 ? '' : 'n'} en ${asset.name}.`
+        : ''
+    }`;
+  } catch (reason) {
+    error.value = toBudgetErrorMessage(reason);
+  } finally {
+    saving.value = false;
+  }
+}
 
 async function addAccount(asset: { id: number; name: string }, input: HTMLInputElement) {
   if (
@@ -551,11 +607,45 @@ function requestClose(): void {
               }
             "
           />
+          <template v-if="existingBaseline && !rebaselineMode">
+            <p class="subtle">
+              Si cambiáis de cuenta para el día a día, sustitúyela aquí. La anterior seguirá en la
+              liquidación como destino compartido y los cierres finalizados no cambian.
+            </p>
+            <label class="mc-settlement-field">
+              <span>Nueva cuenta operativa</span>
+              <ASelect
+                :model-value="operatingReplacementId"
+                :options="operatingReplacementOptions"
+                :disabled="saving"
+                @update:model-value="(value) => (operatingReplacementId = String(value))"
+              />
+            </label>
+            <AButton
+              :disabled="!operatingReplacementId"
+              :loading="saving"
+              size="sm"
+              @click="replaceOperatingAccount"
+            >
+              Sustituir cuenta operativa
+            </AButton>
+            <AState
+              v-if="operatingReplacementNotice"
+              status="success"
+              layout="inline"
+              role="status"
+            >
+              {{ operatingReplacementNotice }}
+            </AState>
+          </template>
         </section>
 
         <section v-if="configuration.is_enabled" class="mc-settlement-section">
           <p class="eyebrow">Reserva manual</p>
-          <h4>Ajuste sobre la reserva calculada de Kutxa</h4>
+          <h4>
+            Ajuste sobre la reserva calculada de
+            {{ currentOperatingAccount?.asset_name ?? 'la cuenta operativa' }}
+          </h4>
           <p class="subtle">
             Usa un importe positivo para retener más efectivo o negativo para retener menos. No
             modifica el presupuesto y las transferencias se recalculan al guardar.

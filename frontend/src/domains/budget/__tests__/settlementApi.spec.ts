@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   activateSettlement,
   addSettlementAccount,
+  replaceSettlementOperatingAccount,
   acceptSettlementRecommendation,
   applyAllSettlementRecommendations,
   applySettlementRecommendation,
@@ -56,6 +57,7 @@ describe('settlement api', () => {
     });
     await disableSettlement();
     await addSettlementAccount(80);
+    await replaceSettlementOperatingAccount(90);
     await sweepSettlementWallets(7);
 
     expect(mocks.post).toHaveBeenCalledWith(
@@ -63,6 +65,9 @@ describe('settlement api', () => {
     );
 
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/accounts/', { asset_id: 80 });
+    expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/operating-account/', {
+      asset_id: 90,
+    });
     expect(mocks.post).toHaveBeenCalledWith('/api/budget/settlement/activate/', {
       start_date: '2026-08-01',
     });
