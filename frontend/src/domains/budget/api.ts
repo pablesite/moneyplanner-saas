@@ -117,6 +117,13 @@ export async function rebaselineSettlement(
   return response.data;
 }
 
+// Años con presupuesto, del más reciente al más antiguo: de la primera línea a la última fecha
+// de fin, siempre con el año anterior, el actual y el siguiente.
+export async function getBudgetYears(): Promise<number[]> {
+  const response = await coreApi.get<{ years: number[] }>('/api/budget/years/');
+  return response.data.years;
+}
+
 export async function addSettlementAccount(assetId: number): Promise<SettlementConfiguration> {
   const response = await coreApi.post<SettlementConfiguration>('/api/budget/settlement/accounts/', {
     asset_id: assetId,

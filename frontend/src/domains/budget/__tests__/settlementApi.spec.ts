@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   activateSettlement,
   addSettlementAccount,
+  getBudgetYears,
   replaceSettlementOperatingAccount,
   acceptSettlementRecommendation,
   applyAllSettlementRecommendations,
@@ -119,5 +120,12 @@ describe('settlement api', () => {
       '/api/budget/monthly-closes/7/settlement/recommendations/12/reconcile/',
       { transaction_id: 91 },
     );
+  });
+
+  it('reads every year with budget data from Core', async () => {
+    mocks.get.mockResolvedValue({ data: { years: [2029, 2028, 2027] } });
+
+    await expect(getBudgetYears()).resolves.toEqual([2029, 2028, 2027]);
+    expect(mocks.get).toHaveBeenCalledWith('/api/budget/years/');
   });
 });

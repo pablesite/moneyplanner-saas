@@ -2,6 +2,7 @@
 import {
   budgetApi,
   toBudgetErrorMessage,
+  getBudgetYears,
   getMonthlyClose,
   patchMonthlyClose,
   finalizeMonthlyClose,
@@ -461,12 +462,21 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     return monthlyCloseStepIds.value[idx + 1] ?? null;
   });
 
+  // Las líneas se cargan año a año, así que el año visible no dice que hay presupuesto desde
+  // 2016 o hasta el fin de un plazo: Core da el rango completo. Si falla, quedan los años
+  // cercanos y los de las líneas cargadas.
+  const budgetYears = ref<number[]>([]);
+  void getBudgetYears()
+    .then((years) => {
+      budgetYears.value = years;
+    })
+    .catch(() => undefined);
   const fiscalYearOptions = computed(() => {
     const years = new Set<number>([
       currentCalendarYear - 1,
       currentCalendarYear,
       currentCalendarYear + 1,
-      2026,
+      ...budgetYears.value,
     ]);
     for (const entry of incomeStore.entries.value) years.add(entry.fiscalYear);
     for (const entry of expenseStore.entries.value) years.add(entry.fiscalYear);

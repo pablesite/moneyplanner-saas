@@ -21,6 +21,7 @@ vi.mock('@/domains/budget', () => ({
     delete: vi.fn(async () => ({ data: {} })),
   },
   toBudgetErrorMessage: (error: unknown) => String(error),
+  getBudgetYears: vi.fn(async () => []),
   getMonthlyClose: vi.fn(async () => ({ data: null })),
   patchMonthlyClose: vi.fn(async () => ({ data: null })),
   finalizeMonthlyClose: vi.fn(async () => ({ data: null })),
