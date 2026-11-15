@@ -7,7 +7,7 @@ import {
   AnnualEntryModalForm,
 } from '@/domains/budget/annual-entries';
 import { normalizeExpenseTaxonomy } from '@/domains/budget/taxonomy';
-import { effectiveAnnualAmountForEntry } from '@/domains/budget/annual-entries/annualEntryUtils';
+import { termEntryActiveMonths } from '@/domains/budget/annual-entries/annualEntryUtils';
 import { AButton, AChevron, AInfoHint, ASparkline, AState } from '@/domains/ui';
 import { currencySymbol } from '@/lib/format';
 import { useCollapsibleGroups } from '@/lib/useCollapsibleGroups';
@@ -332,18 +332,13 @@ function targetMonthLabel(targetMonth?: number | null): string {
   return 'mes objetivo';
 }
 
+// Las entradas llegan ya prorrateadas para el año seleccionado: aquí solo se reparte ese
+// importe entre sus meses activos, sin volver a prorratearlo.
 function recurringMonthlyPlannedAmount(entry: RowEntry): number {
-  const annual = effectiveAnnualAmountForEntry(entry, entry.fiscalYear);
+  const annual = Number(entry.amountAnnual);
   if (!Number.isFinite(annual) || annual <= 0 || isOneOffEntry(entry)) return 0;
-  if (
-    'timeProfile' in entry &&
-    entry.timeProfile === 'term_recurrent' &&
-    (entry.termEndYear == null || entry.termEndYear === entry.fiscalYear)
-  ) {
-    const months = Math.min(12, Math.max(1, Number(entry.termEndMonth ?? 12)));
-    return annual / months;
-  }
-  return annual / 12;
+  const { startMonth, endMonth } = termEntryActiveMonths(entry, fiscalYear.value);
+  return annual / (endMonth - startMonth + 1);
 }
 
 function entriesForRow(sectionId: 'income' | 'expense', row: BudgetRow): RowEntry[] {
@@ -375,7 +370,7 @@ function rowPlannedMeta(sectionId: 'income' | 'expense', row: BudgetRow): string
   const entries = entriesForRow(sectionId, row);
   const money = (rows: RowEntry[], amountOf: (entry: RowEntry) => number) =>
     moneyByCurrency(rows, amountOf);
-  const annualOf = (entry: RowEntry) => effectiveAnnualAmountForEntry(entry, entry.fiscalYear);
+  const annualOf = (entry: RowEntry) => entry.amountAnnual;
   const rowSymbol = currencySymbol(currenciesOf(entries)[0] ?? 'EUR');
   const count = entries.length || row.itemsCount;
   const countText = `${count} registro${count === 1 ? '' : 's'}`;

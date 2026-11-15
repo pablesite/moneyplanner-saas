@@ -32,6 +32,7 @@ import {
 } from '@/domains/budget/taxonomy';
 import {
   effectiveAnnualAmountForEntry,
+  termEntryActiveMonths,
   useAnnualExpenseStore,
   useAnnualIncomeStore,
 } from '@/domains/budget/annual-entries';
@@ -654,7 +655,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
             ...entry,
             amountAnnual: entry.amountAnnual * allocation.fraction,
           },
-          entry.fiscalYear,
+          fiscalYear.value,
         );
         return {
           ...entry,
@@ -666,6 +667,8 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
       .filter((entry) => entry.baseAmountAnnual === 0 || entry.amountAnnual > 0),
   );
 
+  // Una línea con plazo llega con su año de alta, no con el que se está viendo: el importe
+  // y los meses activos se calculan siempre para el año seleccionado.
   const ownerAdjustedExpenseEntries = computed(() =>
     expenseEntries.value
       .map((entry) => {
@@ -675,7 +678,7 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
             ...entry,
             amountAnnual: entry.amountAnnual * allocation.fraction,
           },
-          entry.fiscalYear,
+          fiscalYear.value,
         );
         return {
           ...entry,
@@ -997,29 +1000,29 @@ export function useBudgetDashboardPage(mode: Ref<BudgetDashboardMode>) {
     const amountAnnual =
       'baseAmountAnnual' in entry
         ? entry.amountAnnual
-        : effectiveAnnualAmountForEntry(entry, entry.fiscalYear);
+        : effectiveAnnualAmountForEntry(entry, fiscalYear.value);
     if (entry.expenseType === 'one_off') {
       return entry.targetMonth === month ? toNumberOrZero(amountAnnual) : 0;
     }
-    if (
-      entry.timeProfile === 'term_recurrent' &&
-      (entry.termEndYear == null || entry.termEndYear === entry.fiscalYear)
-    ) {
-      const endMonth = Math.min(12, Math.max(1, Number(entry.termEndMonth ?? 12)));
-      if (month > endMonth) return 0;
-      return toNumberOrZero(amountAnnual) / endMonth;
-    }
-    return toNumberOrZero(amountAnnual) / 12;
+    const { startMonth, endMonth } = termEntryActiveMonths(entry, fiscalYear.value);
+    if (month < startMonth || month > endMonth) return 0;
+    return toNumberOrZero(amountAnnual) / (endMonth - startMonth + 1);
   }
 
   function monthlyPlannedAmountForIncomeEntry(
     entry: (typeof incomeEntries.value)[number],
     month: number,
   ): number {
+    const amountAnnual =
+      'baseAmountAnnual' in entry
+        ? entry.amountAnnual
+        : effectiveAnnualAmountForEntry(entry, fiscalYear.value);
     if (entry.targetMonth != null) {
-      return entry.targetMonth === month ? toNumberOrZero(entry.amountAnnual) : 0;
+      return entry.targetMonth === month ? toNumberOrZero(amountAnnual) : 0;
     }
-    return toNumberOrZero(entry.amountAnnual) / 12;
+    const { startMonth, endMonth } = termEntryActiveMonths(entry, fiscalYear.value);
+    if (month < startMonth || month > endMonth) return 0;
+    return toNumberOrZero(amountAnnual) / (endMonth - startMonth + 1);
   }
 
   const expenseSummaryByMonth = computed(() => {

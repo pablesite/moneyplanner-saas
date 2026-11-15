@@ -160,7 +160,7 @@ vi.mock('@/domains/budget/taxonomy', () => ({
   }),
 }));
 
-vi.mock('@/domains/budget/annual-entries', () => ({
+vi.mock('@/domains/budget/annual-entries', async () => ({
   AnnualEntryModalForm: defineComponent({
     name: 'AnnualEntryModalForm',
     template: '<div />',
@@ -185,6 +185,11 @@ vi.mock('@/domains/budget/annual-entries', () => ({
     return annual;
   },
   useAnnualIncomeStore: () => mockIncomeStore,
+  termEntryActiveMonths: (
+    await vi.importActual<typeof import('@/domains/budget/annual-entries/annualEntryUtils')>(
+      '@/domains/budget/annual-entries/annualEntryUtils',
+    )
+  ).termEntryActiveMonths,
   useAnnualExpenseStore: () => mockExpenseStore,
 }));
 vi.mock('@/views/budget/useBudgetAnnualEntriesPage', () => ({

@@ -50,7 +50,7 @@ vi.mock('@/domains/net-worth/api', () => ({
   premiumOwnershipApi: { getOwnerships: vi.fn(async () => ({ data: ownerships.value })) },
 }));
 
-vi.mock('@/domains/budget/annual-entries', () => ({
+vi.mock('@/domains/budget/annual-entries', async () => ({
   useAnnualExpenseStore: () => ({
     entries: expenseEntries,
     loading: { value: false },
@@ -64,6 +64,11 @@ vi.mock('@/domains/budget/annual-entries', () => ({
     loadAll: vi.fn(async () => undefined),
   }),
   effectiveAnnualAmountForEntry: (entry: { amountAnnual: number }) => entry.amountAnnual,
+  termEntryActiveMonths: (
+    await vi.importActual<typeof import('@/domains/budget/annual-entries/annualEntryUtils')>(
+      '@/domains/budget/annual-entries/annualEntryUtils',
+    )
+  ).termEntryActiveMonths,
 }));
 
 function expenseEntry(overrides: Record<string, unknown>) {

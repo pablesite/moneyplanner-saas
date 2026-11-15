@@ -4,6 +4,7 @@ import {
   effectiveAnnualAmountForEntry,
   normalizeOwnerName,
   parseAnnualAmount,
+  termEntryActiveMonths,
 } from '../annualEntryUtils';
 
 describe('annualEntryUtils (core)', () => {
@@ -50,5 +51,40 @@ describe('annualEntryUtils (core)', () => {
         'monthly',
       ),
     ).toBe('1374');
+  });
+
+  it('prorates each year of a monthly term that spans several years', () => {
+    // 36 cuotas de 36,99 € de noviembre de 2026 a octubre de 2029.
+    const renting = {
+      amountAnnual: 443.88,
+      amountInputPeriod: 'monthly' as const,
+      timeProfile: 'term_recurrent',
+      termStartMonth: 11,
+      termEndMonth: 10,
+      termEndYear: 2029,
+      fiscalYear: 2026,
+    };
+
+    expect(termEntryActiveMonths(renting, 2026)).toEqual({ startMonth: 11, endMonth: 12 });
+    expect(termEntryActiveMonths(renting, 2027)).toEqual({ startMonth: 1, endMonth: 12 });
+    expect(termEntryActiveMonths(renting, 2029)).toEqual({ startMonth: 1, endMonth: 10 });
+    expect(effectiveAnnualAmountForEntry(renting, 2026)).toBe(73.98);
+    expect(effectiveAnnualAmountForEntry(renting, 2027)).toBe(443.88);
+    expect(effectiveAnnualAmountForEntry(renting, 2029)).toBe(369.9);
+  });
+
+  it('keeps an annual term amount whole while spreading it over its active months', () => {
+    const entry = {
+      amountAnnual: 1200,
+      amountInputPeriod: 'annual' as const,
+      timeProfile: 'term_recurrent',
+      termStartMonth: 3,
+      termEndMonth: 6,
+      termEndYear: 2026,
+      fiscalYear: 2026,
+    };
+
+    expect(effectiveAnnualAmountForEntry(entry, 2026)).toBe(1200);
+    expect(termEntryActiveMonths(entry, 2026)).toEqual({ startMonth: 3, endMonth: 6 });
   });
 });
