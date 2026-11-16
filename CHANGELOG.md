@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.65.0](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.64.1...moneyplanner-saas-v0.65.0) (2026-11-16)
+
+
+### Features
+
+* **budget:** offer the new consumption subcategories in the SaaS ([69b80dd](https://github.com/pablesite/moneyplanner-saas/commit/69b80dd6f957baa5b96331efbf5e657e9edbb422))
+
 ## [0.64.1](https://github.com/pablesite/moneyplanner-saas/compare/moneyplanner-saas-v0.64.0...moneyplanner-saas-v0.64.1) (2026-11-15)
 
 
