@@ -51,6 +51,9 @@ const TIERS: TierSpec[] = [
     label: '+ Transporte, formación y compromisos',
     match: inSubcategories([
       'transport_mobility',
+      'family_personal_care',
+      'clothing',
+      'technology',
       'education_growth',
       'financial_commitments',
       'personal_loan_repayment',
@@ -58,8 +61,13 @@ const TIERS: TierSpec[] = [
     ]),
   },
   {
-    label: '+ Ocio y regalos',
-    match: inSubcategories(['leisure_lifestyle', 'gifts_donations']),
+    label: '+ Ocio, viajes y regalos',
+    match: inSubcategories([
+      'leisure_lifestyle',
+      'travel_holidays',
+      'personal_allowance',
+      'gifts_donations',
+    ]),
   },
   {
     label: '+ Ahorro e inversión',

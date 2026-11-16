@@ -20,13 +20,14 @@ This document describes the `category` and `subcategory` layer of the contract. 
 2. `financial_investments`: Inversion financiera
 3. `real_estate_assets`: Activos inmobiliarios
 4. `tangible_assets`: Activos mobiliarios
-5. `consumption_expenses`: Consumer spending
+5. `consumption_expenses`: Gastos de consumo
 
 ## Subcategories
 ### `savings_allocation`
 1. `emergency_fund`
 2. `cash_reserve`
 3. `other_savings_allocation`
+4. `short_term_savings` and `long_term_savings`: legacy keys, still accepted and shown as `other_savings_allocation`
 
 ### `financial_investments`
 1. `index_funds`
@@ -55,20 +56,33 @@ This document describes the `category` and `subcategory` layer of the contract. 
 1. `vehicle_purchase`
 2. `home_furniture_appliances`
 3. `technology_devices`
-4. `jewelry_collectibles`
-5. `other_tangible_assets`
+4. `sports_equipment`
+5. `jewelry_collectibles`
+6. `other_tangible_assets`
 
 ### `consumption_expenses`
-1. `housing_home`
-2. `living_expenses`
-3. `family_childcare`
-4. `transport_mobility`
-5. `health_wellbeing`
-6. `education_growth`
-7. `leisure_lifestyle`
-8. `gifts_donations`
-9. `financial_commitments`
-10. `other_consumption_expenses`
+Subcategories classify spending by purpose. A debt payment goes to the purpose it finances (a phone
+renting to `technology`, mortgage interest to `housing_home`); `financial_commitments` keeps only what
+has no purpose of its own, such as broker and exchange fees or interest of a loan without subcategory.
+
+| Key | Label | Scope |
+| --- | --- | --- |
+| `housing_home` | Vivienda | Utilities, internet, community fees, IBI, home insurance, cleaning, mortgage interest |
+| `living_expenses` | Alimentación | Groceries |
+| `family_childcare` | Hijos | Everything for the children, including their clothes and fertility treatment |
+| `family_personal_care` | Familia y cuidado personal | Hairdresser, cosmetics, life and funeral insurance, pets, elderly care |
+| `transport_mobility` | Transporte y movilidad | Fuel, car insurance and maintenance, parking, public transport |
+| `health_wellbeing` | Salud y bienestar | Health insurance, pharmacy, treatments, gym, sport |
+| `education_growth` | Formación y desarrollo personal | Courses, books, training |
+| `leisure_lifestyle` | Ocio y restauración | Restaurants, events, hobbies |
+| `travel_holidays` | Viajes y vacaciones | Lodging, travel transport, spending at destination |
+| `clothing` | Vestimenta | Adult clothes and shoes (children's go to `family_childcare`) |
+| `technology` | Tecnología | Subscriptions and digital services: streaming, cloud, licences, device renting |
+| `personal_allowance` | Gastos personales | A member's discretionary spending without detail; ownership says whose |
+| `gifts_donations` | Regalos y donaciones | Gifts and donations |
+| `personal_loan_repayment` | Anticipos a devolver | Money advanced for others that will be paid back (shared meal, a subscription paid in full) |
+| `financial_commitments` | Deuda: intereses y comisiones | Broker/exchange fees, default for liabilities and mortgage interest without an explicit subcategory |
+| `other_consumption_expenses` | Otros gastos de consumo | Residual |
 
 ## Behavioral rules
 1. `subcategory` must belong to the selected `category`.
@@ -93,4 +107,7 @@ This document describes the `category` and `subcategory` layer of the contract. 
 ## Implementation reference
 1. `core/backend/budget/services.py`
 2. `core/backend/budget/serializers.py`
-3. `frontend/src/domains/data-input/expenseTaxonomy.ts`
+3. `core/backend/net_worth/models.py` (`Liability.ExpenseSubcategoryOverride`)
+4. `frontend/src/domains/budget/taxonomy/expenseTaxonomy.ts` and `core/frontend/src/domains/budget/taxonomy/expenseTaxonomy.ts`
+5. Liability subcategory options in `frontend/src/domains/net-worth/components/ItemForm.vue` and `core/frontend/src/domains/net-worth/components/itemFormUtils.ts`
+6. Plan groupings in `frontend/src/domains/plan/budgetMilestones.ts` and `frontend/src/views/PlanSetupView.vue`

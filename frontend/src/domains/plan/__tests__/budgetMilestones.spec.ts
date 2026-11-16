@@ -61,7 +61,7 @@ describe('budgetExpenseTiers', () => {
     const tiers = budgetExpenseTiers(entries, 2026);
     expect(tiers.map((tier) => tier.label)).toEqual([
       'Techo, comida, familia y salud',
-      '+ Ocio y regalos',
+      '+ Ocio, viajes y regalos',
     ]);
     expect(tiers[1]!.annualExpense).toBe(13200);
   });
@@ -82,7 +82,7 @@ describe('budgetExpenseTiers', () => {
 describe('mergeTierCapitals', () => {
   const tiers = [
     { label: 'Techo, comida, familia y salud', annualExpense: 12000, monthlyExpense: 1000 },
-    { label: '+ Ocio y regalos', annualExpense: 13200, monthlyExpense: 1100 },
+    { label: '+ Ocio, viajes y regalos', annualExpense: 13200, monthlyExpense: 1100 },
   ];
 
   it('casa tramos y capitales por posición y marca alcanzados y fuera de objetivo', () => {
